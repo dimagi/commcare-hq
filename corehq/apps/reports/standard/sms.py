@@ -309,10 +309,6 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     exportable = True
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
-
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
         if filtered_types:
@@ -638,10 +634,6 @@ class MessagingEventsReport(BaseMessagingEventReport):
         PhoneNumberOrEmailFilter,
     ]
     ajax_pagination = True
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
     @property
     def headers(self):

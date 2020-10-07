@@ -10,10 +10,11 @@ fi
 function setup() {
     [ -n "$1" ] && TEST="$1"
 
-    rm *.log *.lock || true
+    rm *.log || true
 
     scripts/uninstall-requirements.sh
     pip install -r requirements/test-requirements.txt
+    hash -d pip
     pip check  # make sure there are no incompatibilities in test-requirements.txt
 
     # compile pyc files
@@ -32,8 +33,7 @@ function setup() {
     fi
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        npm install --progress=false
-        bower install --config.interactive=false
+        yarn install --progress=false --frozen-lockfile
     fi
 
     /mnt/wait.sh
@@ -41,7 +41,7 @@ function setup() {
 
 function run_tests() {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
+    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" -a "$TEST" != "python-elasticsearch-v7"]; then
         echo "Unknown test suite: $TEST"
         exit 1
     fi
@@ -56,6 +56,7 @@ function run_tests() {
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-django-migrations.sh
     delta=$((`date +%s` - $now))
 
     send_timing_metric_to_datadog "tests" $delta
@@ -102,6 +103,10 @@ function _run_tests() {
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
+    elif [ "$TEST" == "python-elasticsearch-v7" ]; then
+        export ELASTICSEARCH_7_PORT=9200
+        export ELASTICSEARCH_MAJOR_VERSION=7
+        TESTS="--attr=es_test"
     else
         TESTS=""
     fi

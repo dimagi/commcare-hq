@@ -40,6 +40,7 @@ SPECIAL_CASE_PROPERTIES_MAP = {
     'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id'),
 
     'date_opened': SpecialCaseProperty('date_opened', lambda doc: doc.get('opened_on'), 'opened_on'),
+    'closed_on': SpecialCaseProperty('closed_on', lambda doc: doc.get('closed_on'), 'closed_on'),
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on'),
 }
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())

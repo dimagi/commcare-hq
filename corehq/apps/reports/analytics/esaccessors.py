@@ -1,9 +1,13 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+from django.conf import settings
+
+from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -288,11 +292,12 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     results = form_query.run().aggregations.date_histogram.buckets_list
 
-    # Convert timestamp into timezone aware datetime. Must divide timestamp by 1000 since python's
-    # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
+    # Convert timestamp from millis -> seconds -> aware datetime
+    # ES bucket key is an epoch timestamp relative to the timezone specified,
+    # so pass timezone into fromtimestamp() to create an accurate datetime, otherwise will be treated as UTC
     results = list(map(
         lambda result:
-            (datetime.fromtimestamp(result.key // 1000).date().isoformat(), result.doc_count),
+            (datetime.fromtimestamp(result.key // 1000, timezone).date().isoformat(), result.doc_count),
         results,
     ))
     return dict(results)
@@ -304,12 +309,12 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
-def get_user_stubs(user_ids):
+def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS))
+        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
@@ -335,7 +340,20 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True, export=False):
+    USER_FILTER_CHUNK_SIZE = getattr(settings, 'USER_FILTER_CHUNK_SIZE', 10000)
+    to_ret = defaultdict(lambda: 0)
+    if not user_ids:
+        to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+            domain, startdate, enddate, None, xmlnss, by_submission_time, export))
+    else:
+        for chunk in chunked(user_ids, USER_FILTER_CHUNK_SIZE):
+            to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+                domain, startdate, enddate, chunk, xmlnss, by_submission_time, export))
+    return to_ret
 
+
+def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
+                                  xmlnss=None, by_submission_time=True, export=False):
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
@@ -346,7 +364,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
              .aggregation(
                  TermsAggregation('user_id', 'form.meta.userID').aggregation(
                      TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns')
+                         TermsAggregation('xmlns', 'xmlns.exact')
                      )
                  )
              )
@@ -362,7 +380,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
             query = query.aggregation(
                 MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
                     TermsAggregation('app_id', 'app_id').aggregation(
-                        TermsAggregation('xmlns', 'xmlns')
+                        TermsAggregation('xmlns', 'xmlns.exact')
                     )
                 )
             )
@@ -385,6 +403,13 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                 counts[key] = xmlns_bucket.doc_count
 
     return counts
+
+
+def _duration_script():
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
+    else:
+        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
@@ -412,7 +437,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -428,7 +453,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -467,7 +492,7 @@ def get_form_duration_stats_for_users(
             ExtendedStatsAggregation(
                 'duration_stats',
                 'form.meta.timeStart',
-                script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                script=_duration_script(),
             )
         )
         .size(0)
@@ -598,6 +623,11 @@ def scroll_case_names(domain, case_ids):
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
+    """
+    Returns case types for which there is at least one existing case.
+
+    get_case_types_for_domain is preferred for most uses
+    """
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
         index_class().domain(domain).size(0)
@@ -608,3 +638,14 @@ def get_case_types_for_domain_es(domain, use_case_search=False):
 
 def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
+
+
+def get_case_types_for_domain(domain):
+    """
+    Returns case types for which there is at least one existing case and any
+    defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
+    """
+    es_types = get_case_types_for_domain_es(domain)
+    data_dict_types = get_data_dict_case_types(domain)
+    return es_types | data_dict_types

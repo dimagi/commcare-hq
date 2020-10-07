@@ -48,6 +48,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     months_from_date,
 )
+from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -427,6 +428,9 @@ class CustomerAccountInvoiceFactory(object):
 
 
 def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    if not domain_exists(domain) and deleted_domain_exists(domain):
+        # domain has been deleted, ignore
+        return False
     if subscription.is_trial:
         log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
         return False
@@ -718,7 +722,11 @@ class UserLineItemFactory(FeatureLineItemFactory):
                     history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
-                    raise
+                    if not deleted_domain_exists(domain):
+                        # this checks to see if the domain still exists
+                        # before raising an error. If it was deleted the
+                        # loop will continue
+                        raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db.models import Count
 
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from pillow_retry.models import PillowError
 
 
@@ -18,4 +19,4 @@ def record_pillow_error_queue_size():
             'pillow_name': row['pillow'],
             'host': 'celery',
             'group': 'celery'
-        })
+        }, multiprocess_mode=MPM_MAX)

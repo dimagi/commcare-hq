@@ -411,6 +411,7 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
+            'show_shadow_module_v1': toggles.V1_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
@@ -672,7 +673,7 @@ def new_app(request, domain):
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Module", lang)
+        module = Module.new_module("Untitled Menu", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
         form_args = [module.id, form.id]

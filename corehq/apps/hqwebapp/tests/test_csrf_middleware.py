@@ -22,7 +22,7 @@ class TestCSRF(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(TestCSRF, cls).tearDownClass()
 

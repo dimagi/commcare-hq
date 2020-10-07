@@ -7,8 +7,11 @@ from django.views.decorators.http import require_POST
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
-from couchforms.const import MAGIC_PROPERTY, BadRequest
+from couchforms.const import MAGIC_PROPERTY
+from couchforms.exceptions import BadSubmissionRequest
 from couchforms.getters import MultimediaBug
 from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
@@ -18,12 +21,14 @@ from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
     NOAUTH,
+    API_KEY,
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_basic_ex,
     login_or_digest_ex,
+    login_or_api_key_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -86,9 +91,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             request, "Received a submission with POST.keys()", metric_tags,
             domain, app_id, user_id, authenticated, meta,
         )
-
-    if isinstance(instance, BadRequest):
-        response = HttpResponseBadRequest(instance.message)
+    except BadSubmissionRequest as e:
+        response = HttpResponseBadRequest(e.message)
         _record_metrics(metric_tags, 'known_failures', response)
         return response
 
@@ -226,7 +230,11 @@ def _noauth_post(request, domain, app_id=None):
     It mainly just checks that we are touching test data only in the right domain and submitting
     as demo_user.
     """
-    instance, _ = couchforms.get_instance_and_attachment(request)
+    try:
+        instance, _ = couchforms.get_instance_and_attachment(request)
+    except BadSubmissionRequest as e:
+        return HttpResponseBadRequest(e.message)
+
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 
@@ -310,6 +318,20 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@login_or_api_key_ex()
+@require_permission(Permissions.edit_data)
+@require_permission(Permissions.access_api)
+def _secure_post_api_key(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
@@ -320,6 +342,7 @@ def secure_post(request, domain, app_id=None):
         DIGEST: _secure_post_digest,
         BASIC: _secure_post_basic,
         NOAUTH: _noauth_post,
+        API_KEY: _secure_post_api_key,
     }
 
     if request.GET.get('authtype'):

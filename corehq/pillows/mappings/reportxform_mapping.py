@@ -1,8 +1,8 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-from corehq.util.elastic import es_index
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from corehq.util.elastic import prefix_for_tests
+from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_XFORM_HQ_INDEX_NAME
 
-REPORT_XFORM_INDEX = es_index("report_xforms_20160824_1708")
+REPORT_XFORM_INDEX = prefix_for_tests("report_xforms_20160824_1708")
 
 CASE_MAPPING_FRAGMENT = {
     'type': 'nested',
@@ -33,7 +33,7 @@ CASE_MAPPING_FRAGMENT = {
         "create": {
             'type': 'object',
             'dynamic': True,
-            'properties:': {
+            'properties': {
                 'case_type': {"type": "string", "index": "not_analyzed"},
                 'owner_id': {"type": "string", "index": "not_analyzed"},
                 'case_name': {"type": "string", "index": "not_analyzed"},
@@ -43,7 +43,7 @@ CASE_MAPPING_FRAGMENT = {
         "update": {
             'type': 'object',
             'dynamic': True,
-            'properties:': {
+            'properties': {
                 'case_type': {"type": "string", "index": "not_analyzed"},
                 'owner_id': {"type": "string", "index": "not_analyzed"},
                 'case_name': {"type": "string", "index": "not_analyzed"},
@@ -155,7 +155,7 @@ REPORT_XFORM_MAPPING = {
     ]
 }
 
-REPORT_XFORM_ALIAS = "report_xforms"
+REPORT_XFORM_ALIAS = prefix_for_tests("report_xforms")
 REPORT_XFORM_TYPE = "report_xform"
 
 REPORT_XFORM_INDEX_INFO = ElasticsearchIndexInfo(
@@ -163,4 +163,5 @@ REPORT_XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     alias=REPORT_XFORM_ALIAS,
     type=REPORT_XFORM_TYPE,
     mapping=REPORT_XFORM_MAPPING,
+    hq_index_name=REPORT_XFORM_HQ_INDEX_NAME
 )

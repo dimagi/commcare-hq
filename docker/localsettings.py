@@ -5,7 +5,7 @@ import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
@@ -21,7 +21,7 @@ USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == '
 if USE_PARTITIONED_DATABASE:
     DATABASES.update({
         'proxy': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_proxy',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -36,7 +36,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p1': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p1',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -50,7 +50,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p2': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p2',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -68,17 +68,16 @@ if USE_PARTITIONED_DATABASE:
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
     'icds-ucr': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',
+        'NAME': os.environ.get('UCR_CITUS_DB', 'commcare_ucr_citus'),
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'citus_master',
         'PORT': '5432',
         'TEST': {
-            # use the same DB for tests to skip expensive setup time in Travs
-            'NAME': 'commcare_ucr_citus',
             'SERIALIZE': False,
+            'NAME': 'test_commcare_ucr_citus'
         },
     },
 })
@@ -113,9 +112,16 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch'
-ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_HOST = 'elasticsearch2'
+ELASTICSEARCH_PORT = 6200  # ES 2 port
 ELASTICSEARCH_MAJOR_VERSION = 2
+# to enable v7 ES tests
+if os.environ.get('ELASTICSEARCH_7_PORT'):
+    ELASTICSEARCH_HOST = 'elasticsearch'
+    ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_7_PORT'))
+
+if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
 S3_BLOB_DB_SETTINGS = {
     "url": "http://minio:9980/",
@@ -234,7 +240,14 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
-LOCAL_APPS = ()
+if os.path.exists("extensions/icds/custom/icds"):
+    # code is not present in fork PR builds
+    LOCAL_APPS = (
+        # these are necessary to facilitate ICDS tests
+        "custom.icds",
+        "custom.icds_reports",
+    )
+    COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
 
 REPORTING_DATABASES = {
     'default': 'default',

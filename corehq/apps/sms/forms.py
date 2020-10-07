@@ -21,8 +21,6 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids
-from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -884,6 +882,16 @@ class BackendForm(Form):
         label=ugettext_lazy("Inbound API Key"),
         disabled=True,
     )
+    opt_out_keywords = CharField(
+        required=False,
+        label=ugettext_noop("List of opt out keywords"),
+        help_text=ugettext_lazy("A comma-separated list of keywords")
+    )
+    opt_in_keywords = CharField(
+        required=False,
+        label=ugettext_noop("List of opt in keywords"),
+        help_text=ugettext_lazy("A comma-separated list of keywords")
+    )
 
     @property
     def is_global_backend(self):
@@ -895,6 +903,8 @@ class BackendForm(Form):
             crispy.Field('name', css_class='input-xxlarge'),
             crispy.Field('description', css_class='input-xxlarge', rows="3"),
             crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+            crispy.Field('opt_out_keywords'),
+            crispy.Field('opt_in_keywords')
         ]
 
         if not self.is_global_backend:
@@ -1000,6 +1010,20 @@ class BackendForm(Form):
                 return []
             else:
                 return [domain.strip() for domain in value.split(",")]
+
+    def clean_opt_out_keywords(self):
+        keywords = self.cleaned_data.get('opt_out_keywords')
+        if not keywords:
+            return []
+        else:
+            return [kw.strip().upper() for kw in keywords.split(',')]
+
+    def clean_opt_in_keywords(self):
+        keywords = self.cleaned_data.get('opt_in_keywords')
+        if not keywords:
+            return []
+        else:
+            return [kw.strip().upper() for kw in keywords.split(',')]
 
     def clean_reply_to_phone_number(self):
         value = self.cleaned_data.get("reply_to_phone_number")
@@ -1112,145 +1136,6 @@ class BackendMapForm(Form):
             return None
 
         return self._clean_backend_id(value)
-
-
-class SendRegistrationInvitationsForm(Form):
-
-    PHONE_TYPE_ANDROID_ONLY = 'ANDROID'
-    PHONE_TYPE_ANY = 'ANY'
-
-    PHONE_CHOICES = (
-        (PHONE_TYPE_ANDROID_ONLY, ugettext_lazy("Android Only")),
-        (PHONE_TYPE_ANY, ugettext_lazy("Android or Other")),
-    )
-
-    phone_numbers = TrimmedCharField(
-        label=ugettext_lazy("Phone Number(s)"),
-        required=True,
-        widget=forms.Textarea,
-    )
-
-    app_id = ChoiceField(
-        label=ugettext_lazy("Application"),
-        required=True,
-    )
-
-    action = CharField(
-        initial='invite',
-        widget=forms.HiddenInput(),
-    )
-
-    registration_message_type = ChoiceField(
-        required=True,
-        choices=DEFAULT_CUSTOM_CHOICES,
-    )
-
-    custom_registration_message = TrimmedCharField(
-        label=ugettext_lazy("Registration Message"),
-        required=False,
-        widget=forms.Textarea,
-    )
-
-    phone_type = ChoiceField(
-        label=ugettext_lazy("Recipient phones are"),
-        required=True,
-        choices=PHONE_CHOICES,
-    )
-
-    make_email_required = ChoiceField(
-        label=ugettext_lazy("Make email required at registration"),
-        required=True,
-        choices=ENABLED_DISABLED_CHOICES,
-    )
-
-    @property
-    def android_only(self):
-        return self.cleaned_data.get('phone_type') == self.PHONE_TYPE_ANDROID_ONLY
-
-    @property
-    def require_email(self):
-        return self.cleaned_data.get('make_email_required') == ENABLED
-
-    def set_app_id_choices(self):
-        app_ids = get_built_app_ids(self.domain)
-        choices = []
-        for app_doc in iter_docs(Application.get_db(), app_ids):
-            # This will return both Application and RemoteApp docs, but
-            # they both have a name attribute
-            choices.append((app_doc['_id'], app_doc['name']))
-        choices.sort(key=lambda x: x[1])
-        self.fields['app_id'].choices = choices
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain')
-
-        super(SendRegistrationInvitationsForm, self).__init__(*args, **kwargs)
-        self.set_app_id_choices()
-
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Div(
-                'app_id',
-                crispy.Field(
-                    'phone_numbers',
-                    placeholder=_("Enter phone number(s) in international "
-                        "format. Example: +27..., +91...,"),
-                ),
-                'phone_type',
-                InlineField('action'),
-                css_class='modal-body',
-            ),
-            hqcrispy.FieldsetAccordionGroup(
-                _("Advanced"),
-                crispy.Field(
-                    'registration_message_type',
-                    data_bind='value: registration_message_type',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'custom_registration_message',
-                        placeholder=_("Enter registration SMS"),
-                    ),
-                    data_bind='visible: showCustomRegistrationMessage',
-                ),
-                'make_email_required',
-                active=False
-            ),
-            crispy.Div(
-                twbscrispy.StrictButton(
-                    _("Cancel"),
-                    data_dismiss='modal',
-                    css_class="btn btn-default",
-                ),
-                twbscrispy.StrictButton(
-                    _("Send Invitation"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                ),
-                css_class='modal-footer',
-            ),
-        )
-
-    def clean_phone_numbers(self):
-        value = self.cleaned_data.get('phone_numbers', '')
-        phone_list = [strip_plus(s.strip()) for s in value.split(',')]
-        phone_list = [phone for phone in phone_list if phone]
-        if len(phone_list) == 0:
-            raise ValidationError(_("This field is required."))
-        for phone_number in phone_list:
-            validate_phone_number(phone_number)
-        return list(set(phone_list))
-
-    def clean_custom_registration_message(self):
-        value = self.cleaned_data.get('custom_registration_message')
-        if self.cleaned_data.get('registration_message_type') == CUSTOM:
-            if not value:
-                raise ValidationError(_("Please enter a message"))
-            return value
-
-        return None
 
 
 class InitiateAddSMSBackendForm(Form):

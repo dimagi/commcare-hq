@@ -1,6 +1,13 @@
-/*global FormplayerFrontend */
-
-hqDefine('cloudcare/js/util', function () {
+/* global NProgress */
+hqDefine('cloudcare/js/util', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'integration/js/hmac_callout',
+], function (
+    $,
+    initialPageData,
+    HMACCallout
+) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
@@ -13,7 +20,6 @@ hqDefine('cloudcare/js/util', function () {
     });
 
     var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
-        // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
         if (instanceId) {
             url += '?instance_id=' + instanceId;
@@ -45,7 +51,7 @@ hqDefine('cloudcare/js/util', function () {
         if (message === undefined) {
             return;
         }
-        _show(message, $el, 30000, "alert alert-warning");
+        _show(message, $el, null, "alert alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
@@ -102,11 +108,11 @@ hqDefine('cloudcare/js/util', function () {
         return $container;
     };
 
-    var showLoading = function (selector) {
+    var showLoading = function () {
         NProgress.start();
     };
 
-    var formplayerLoading = function (selector) {
+    var formplayerLoading = function () {
         showLoading();
     };
 
@@ -153,36 +159,123 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
-    var hideLoading = function (selector) {
+    var hideLoading = function () {
         NProgress.done();
     };
 
     var reportFormplayerErrorToHQ = function (data) {
-        try {
-            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
-            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
-            if (!data.cloudcareEnv) {
-                data.cloudcareEnv = cloudcareEnv || 'unknown';
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            try {
+                var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
+                if (!data.cloudcareEnv) {
+                    data.cloudcareEnv = cloudcareEnv || 'unknown';
+                }
+                $.ajax({
+                    type: 'POST',
+                    url: initialPageData.reverse('report_formplayer_error'),
+                    data: JSON.stringify(data),
+                    contentType: "application/json",
+                    dataType: "json",
+                    success: function () {
+                        window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                    },
+                    error: function () {
+                        window.console.error('Failed to report error: ' + JSON.stringify(data));
+                    },
+                });
+            } catch (e) {
+                window.console.error(
+                    "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                    "else to report this error: " + JSON.stringify(data),
+                    e
+                );
             }
-            $.ajax({
-                type: 'POST',
-                url: reverse('report_formplayer_error'),
-                data: JSON.stringify(data),
-                contentType: "application/json",
-                dataType: "json",
-                success: function () {
-                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
-                },
-                error: function () {
-                    window.console.error('Failed to report error: ' + JSON.stringify(data));
-                },
-            });
-        } catch (e) {
-            window.console.error(
-                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
-                "else to report this error: " + JSON.stringify(data),
-                e
-            );
+        });
+    };
+
+    function chainedRenderer(matcher, transform, target) {
+        return function (tokens, idx, options, env, self) {
+            var hIndex = tokens[idx].attrIndex('href');
+            var matched = false;
+            if (hIndex >= 0) {
+                var href =  tokens[idx].attrs[hIndex][1];
+                if (matcher(href)) {
+                    transform(href, hIndex, tokens[idx]);
+                    matched = true;
+                }
+            }
+            if (matched) {
+                var aIndex = tokens[idx].attrIndex('target');
+
+                if (aIndex < 0) {
+                    tokens[idx].attrPush(['target', target]); // add new attribute
+                } else {
+                    tokens[idx].attrs[aIndex][1] = target;    // replace value of existing attr
+                }
+            }
+            return matched;
+        };
+    }
+
+    var addDelegatedClickDispatch = function (linkTarget, linkDestination) {
+        document.addEventListener('click', function (event) {
+            if (event.target.target === linkTarget) {
+                linkDestination(event.target);
+                event.preventDefault();
+            }
+        }, true);
+    };
+
+    var injectMarkdownAnchorTransforms = function () {
+        if (window.mdAnchorRender) {
+            var renderers = [];
+
+            if (initialPageData.get('dialer_enabled')) {
+                renderers.push(chainedRenderer(
+                    function (href) { return href.startsWith("tel://"); },
+                    function (href, hIndex, anchor) {
+                        var callout = href.substring("tel://".length);
+                        var url = initialPageData.reverse("dialer_view");
+                        anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
+                    },
+                    "dialer"
+                ));
+            }
+
+            if (initialPageData.get('gaen_otp_enabled')) {
+                renderers.push(chainedRenderer(
+                    function (href) { return href.startsWith("cchq://passthrough/gaen_otp/"); },
+                    function (href, hIndex, anchor) {
+                        var params = href.substring("cchq://passthrough/gaen_otp/".length);
+                        var url = initialPageData.reverse("gaen_otp_view");
+                        anchor.attrs[hIndex][1] = url + params;
+                    },
+                    "gaen_otp"
+                ));
+                addDelegatedClickDispatch('gaen_otp',
+                    function (element) {
+                        HMACCallout.unsignedCallout(element, 'otp_view', true);
+                    });
+            }
+
+            if (initialPageData.get('hmac_root_url')) {
+                renderers.push(chainedRenderer(
+                    function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
+                    function () {},
+                    "hmac_callout"
+                ));
+                addDelegatedClickDispatch('hmac_callout',
+                    function (element) {
+                        HMACCallout.signedCallout(element);
+                    });
+            }
+
+            window.mdAnchorRender = function (tokens, idx, options, env, self) {
+                renderers.forEach(function (r) {
+                    r(tokens, idx, options, env, self);
+                });
+                return self.renderToken(tokens, idx, options);
+            };
         }
     };
 
@@ -199,5 +292,6 @@ hqDefine('cloudcare/js/util', function () {
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
+        injectMarkdownAnchorTransforms: injectMarkdownAnchorTransforms,
     };
 });

@@ -9,6 +9,7 @@ from mock import Mock, patch
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.requests import get_basic_requests
+from corehq.util import as_text
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -62,13 +63,13 @@ class UnpackRequestArgsTests(SimpleTestCase):
             domain=TEST_DOMAIN,
             log_level=logging.INFO,
             payload_id=None,
-            request_body=request_body,
+            request_body=as_text(request_body),
             request_error=self.error_message,
             request_headers=self.request_headers,
             request_method=self.request_method,
             request_params=request_params,
             request_url='http://localhost:9080/api/person/',
-            response_body=self.content_json,
+            response_body=as_text(self.content_json),
             response_status=self.status_code,
         )
 
@@ -181,3 +182,44 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs = ConnectionSettings()
         cs.client_secret = 'secret'
         self.assertEqual(cs.plaintext_client_secret, 'secret')
+
+
+class NotifyAddressesTests(SimpleTestCase):
+
+    def test_default(self):
+        cs = ConnectionSettings()
+        self.assertEqual(cs.notify_addresses, [])
+
+    def test_empty(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = ""
+        self.assertEqual(cs.notify_addresses, [])
+
+    def test_one(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com"])
+
+    def test_comma(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com,user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])
+
+    def test_space(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])
+
+    def test_commaspace(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com, user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])
+
+    def test_mess(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com,,, ,  user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])

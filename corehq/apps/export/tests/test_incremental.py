@@ -23,6 +23,7 @@ from corehq.apps.export.models.incremental import (
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.export.tests.util import DEFAULT_CASE_TYPE, new_case
@@ -33,9 +34,11 @@ from corehq.motech.models import ConnectionSettings
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.test_utils import trap_extra_setup
 
 
+@es_test
 class TestIncrementalExport(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -111,7 +114,8 @@ class TestIncrementalExport(TestCase):
 
     def _cleanup_case(self, case_id):
         def _clean():
-            self.es.delete(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type, case_id)
+            interface = ElasticsearchInterface(self.es)
+            interface.delete_doc(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type, case_id)
             self.es.indices.refresh(CASE_INDEX_INFO.index)
         return _clean
 

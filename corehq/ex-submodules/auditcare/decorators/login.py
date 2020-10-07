@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import logout
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from auditcare import models
 from auditcare.models import AccessAudit
@@ -186,7 +186,7 @@ def lockout_response(request):
             'cooloff_time': COOLOFF_TIME,
             'failure_limit': FAILURE_LIMIT,
         })
-        return render_to_response(LOCKOUT_TEMPLATE, context)
+        return render(request, LOCKOUT_TEMPLATE, context)
 
     if LOCKOUT_URL:
         return HttpResponseRedirect(LOCKOUT_URL)

@@ -6,6 +6,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
@@ -13,6 +14,7 @@ from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import flag_enabled
 
 
+@es_test
 class TestPaginateReleases(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -45,7 +47,7 @@ class TestPaginateReleases(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         delete_es_index(APP_INDEX_INFO.index)
         super(TestPaginateReleases, cls).tearDownClass()

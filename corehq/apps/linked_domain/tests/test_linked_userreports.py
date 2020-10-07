@@ -1,7 +1,6 @@
 import json
 
 from mock import patch
-from tastypie.models import ApiKey
 
 from dimagi.utils.couch.undo import is_deleted, soft_delete
 
@@ -21,7 +20,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util import reverse
 
 
@@ -140,7 +139,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         django_user = couch_user.get_django_user()
         self.addCleanup(delete_all_users)
 
-        api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+        api_key, _ = HQApiKey.objects.get_or_create(user=django_user)
         auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % api_key.key}
         self.domain_link.save()
 

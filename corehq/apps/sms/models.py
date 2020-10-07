@@ -5,6 +5,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -18,22 +19,12 @@ from dimagi.utils.couch import CriticalSection
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms import util as smsutil
-from corehq.apps.sms.messages import (
-    MSG_MOBILE_WORKER_ANDROID_INVITATION,
-    MSG_MOBILE_WORKER_INVITATION_START,
-    MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_REGISTRATION_INSTALL_COMMCARE,
-    get_message,
-)
 from corehq.apps.sms.mixin import (
     BadSMSConfigException,
-    CommCareMobileContactMixin,
-    InvalidFormatException,
     PhoneNumberInUseException,
     apply_leniency,
 )
 from corehq.apps.users.models import CouchUser
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
@@ -189,6 +180,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
+    STATUS_PENDING = 'STATUS_PENDING'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -272,8 +264,19 @@ class SMSBase(UUIDGeneratorMixin, Log):
             domain=self.domain
         )
 
+    def set_status_pending(self):
+        """Mark message as sent with backend status pending"""
+        self.error = False
+        self.system_error_message = SMSBase.STATUS_PENDING
+        self.save()
+
+    def is_status_pending(self):
+        return not self.error and self.system_error_message == SMSBase.STATUS_PENDING
+
 
 class SMS(SMSBase):
+    class Meta:
+        indexes = [models.Index(fields=['processed_timestamp'])]
 
     def to_json(self):
         from corehq.apps.sms.serializers import SMSSerializer
@@ -355,7 +358,7 @@ class QueuedSMS(SMSBase):
     def get_queued_sms(cls):
         return cls.objects.filter(
             datetime_to_process__lte=datetime.utcnow(),
-        )
+        ).order_by('datetime_to_process')
 
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
@@ -1523,335 +1526,6 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
 
-class SelfRegistrationInvitation(models.Model):
-    PHONE_TYPE_ANDROID = 'android'
-    PHONE_TYPE_OTHER = 'other'
-    PHONE_TYPE_CHOICES = (
-        (PHONE_TYPE_ANDROID, ugettext_lazy('Android')),
-        (PHONE_TYPE_OTHER, ugettext_lazy('Other')),
-    )
-
-    STATUS_PENDING = 'pending'
-    STATUS_REGISTERED = 'registered'
-    STATUS_EXPIRED = 'expired'
-
-    domain = models.CharField(max_length=126, null=False, db_index=True)
-    phone_number = models.CharField(max_length=30, null=False, db_index=True)
-    token = models.CharField(max_length=126, null=False, unique=True, db_index=True)
-    app_id = models.CharField(max_length=126, null=True)
-    expiration_date = models.DateField(null=False)
-    created_date = models.DateTimeField(null=False)
-    phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
-    registered_date = models.DateTimeField(null=True)
-
-    # True if we are assuming that the recipient has an Android phone
-    android_only = models.BooleanField(default=False)
-
-    # True to make email address a required field on the self-registration page
-    require_email = models.BooleanField(default=False)
-
-    # custom user data that will be set to the CommCareUser's user_data property
-    # when it is created
-    custom_user_data = jsonfield.JSONField(default=dict)
-
-    class Meta(object):
-        app_label = 'sms'
-
-    @property
-    @memoized
-    def odk_url(self):
-        if not self.app_id:
-            return None
-
-        try:
-            return self.get_app_odk_url(self.domain, self.app_id)
-        except Http404:
-            return None
-
-    @property
-    def already_registered(self):
-        return self.registered_date is not None
-
-    @property
-    def expired(self):
-        """
-        The invitation is valid until 11:59pm UTC on the expiration date.
-        """
-        return datetime.utcnow().date() > self.expiration_date
-
-    @property
-    def status(self):
-        if self.already_registered:
-            return self.STATUS_REGISTERED
-        elif self.expired:
-            return self.STATUS_EXPIRED
-        else:
-            return self.STATUS_PENDING
-
-    def completed(self):
-        self.registered_date = datetime.utcnow()
-        self.save()
-
-    def send_step1_sms(self, custom_message=None):
-        from corehq.apps.sms.api import send_sms
-
-        if self.android_only:
-            self.send_step2_android_sms(custom_message)
-            return
-
-        send_sms(
-            self.domain,
-            None,
-            self.phone_number,
-            custom_message or get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
-        )
-
-    def send_step2_java_sms(self):
-        from corehq.apps.sms.api import send_sms
-        send_sms(
-            self.domain,
-            None,
-            self.phone_number,
-            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
-        )
-
-    def get_user_registration_url(self):
-        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
-        return absolute_reverse(
-            CommCareUserSelfRegistrationView.urlname,
-            args=[self.domain, self.token]
-        )
-
-    @classmethod
-    def get_app_info_url(cls, domain, app_id):
-        from corehq.apps.sms.views import InvitationAppInfoView
-        return absolute_reverse(
-            InvitationAppInfoView.urlname,
-            args=[domain, app_id]
-        )
-
-    @classmethod
-    def get_sms_install_link(cls, domain, app_id):
-        """
-        If CommCare detects this SMS on the phone during start up,
-        it gives the user the option to install the given app.
-        """
-        app_info_url = cls.get_app_info_url(domain, app_id)
-        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url.encode('utf-8')).decode('utf-8')
-
-    def send_step2_android_sms(self, custom_message=None):
-        from corehq.apps.sms.api import send_sms
-
-        registration_url = self.get_user_registration_url()
-
-        if custom_message:
-            message = custom_message.format(registration_url)
-        else:
-            message = get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,),
-                domain=self.domain)
-
-        send_sms(
-            self.domain,
-            None,
-            self.phone_number,
-            message
-        )
-
-        if self.odk_url:
-            send_sms(
-                self.domain,
-                None,
-                self.phone_number,
-                self.get_sms_install_link(self.domain, self.app_id),
-            )
-
-    def expire(self):
-        self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
-        self.save()
-
-    @classmethod
-    def get_unexpired_invitations(cls, phone_number):
-        current_date = datetime.utcnow().date()
-        return cls.objects.filter(
-            phone_number=phone_number,
-            expiration_date__gte=current_date,
-            registered_date__isnull=True
-        )
-
-    @classmethod
-    def expire_invitations(cls, phone_number):
-        """
-        Expire all invitations for the given phone number that have not
-        yet expired.
-        """
-        for invitation in cls.get_unexpired_invitations(phone_number):
-            invitation.expire()
-
-    @classmethod
-    def by_token(cls, token):
-        try:
-            return cls.objects.get(token=token)
-        except cls.DoesNotExist:
-            return None
-
-    @classmethod
-    def by_phone(cls, phone_number, expire_duplicates=True):
-        """
-        Look up the unexpired invitation for the given phone number.
-        In the case of duplicates, only the most recent invitation
-        is returned.
-        If expire_duplicates is True, then any duplicates are automatically
-        expired.
-        Returns the invitation, or None if no unexpired invitations exist.
-        """
-        phone_number = apply_leniency(phone_number)
-        result = cls.get_unexpired_invitations(phone_number).order_by('-created_date')
-
-        if len(result) == 0:
-            return None
-
-        invitation = result[0]
-        if expire_duplicates and len(result) > 1:
-            for i in result[1:]:
-                i.expire()
-
-        return invitation
-
-    @classmethod
-    def get_app_odk_url(cls, domain, app_id):
-        """
-        Get the latest starred build (or latest build if none are
-        starred) for the app and return it's odk install url.
-        """
-        app = get_app(domain, app_id, latest=True)
-
-        if not app.copy_of:
-            # If latest starred build is not found, use the latest build
-            app = get_app(domain, app_id, latest=True, target='build')
-
-        if not app.copy_of:
-            # If no build is found, return None
-            return None
-
-        return app.get_short_odk_url(with_media=True)
-
-    @classmethod
-    def initiate_workflow(cls, domain, users, app_id=None,
-            days_until_expiration=30, custom_first_message=None,
-            android_only=False, require_email=False):
-        """
-        If app_id is passed in, then an additional SMS will be sent to Android
-        phones containing a link to the latest starred build (or latest
-        build if no starred build exists) for the app. Once ODK is installed,
-        it will automatically search for this SMS and install this app.
-
-        If app_id is left blank, the additional SMS is not sent, and once
-        ODK is installed it just skips the automatic app install step.
-        """
-        success_numbers = []
-        invalid_format_numbers = []
-        numbers_in_use = []
-
-        for user_info in users:
-            phone_number = apply_leniency(user_info.phone_number)
-            try:
-                CommCareMobileContactMixin.validate_number_format(phone_number)
-            except InvalidFormatException:
-                invalid_format_numbers.append(phone_number)
-                continue
-
-            if PhoneNumber.get_reserved_number(phone_number):
-                numbers_in_use.append(phone_number)
-                continue
-
-            cls.expire_invitations(phone_number)
-
-            expiration_date = (datetime.utcnow().date() +
-                timedelta(days=days_until_expiration))
-
-            invitation = cls(
-                domain=domain,
-                phone_number=phone_number,
-                token=uuid.uuid4().hex,
-                app_id=app_id,
-                expiration_date=expiration_date,
-                created_date=datetime.utcnow(),
-                android_only=android_only,
-                require_email=require_email,
-                custom_user_data=user_info.custom_user_data or {},
-            )
-
-            if android_only:
-                invitation.phone_type = cls.PHONE_TYPE_ANDROID
-
-            invitation.save()
-            invitation.send_step1_sms(custom_first_message)
-            success_numbers.append(phone_number)
-
-        return (success_numbers, invalid_format_numbers, numbers_in_use)
-
-    @classmethod
-    def send_install_link(cls, domain, users, app_id, custom_message=None):
-        """
-        This method sends two SMS to each user: 1) an SMS with the link to the
-        Google Play store to install Commcare, and 2) an install SMS for the
-        given app.
-
-        Use this method to reinstall CommCare on a user's phone. The user must
-        already have a mobile worker account. If the user doesn't yet have a
-        mobile worker account, use SelfRegistrationInvitation.initiate_workflow()
-        so that they can set one up as part of the process.
-
-        :param domain: the name of the domain this request is for
-        :param users: a list of SelfRegistrationUserInfo objects
-        :param app_id: the app_id of the app for which to send the install link
-        :param custom_message: (optional) a custom message to use when sending the
-        Google Play URL.
-        """
-        from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
-
-        if custom_message:
-            custom_message = custom_message.format(GOOGLE_PLAY_STORE_COMMCARE_URL)
-
-        domain_translated_message = custom_message or get_message(
-            MSG_REGISTRATION_INSTALL_COMMCARE,
-            domain=domain,
-            context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
-        )
-        sms_install_link = cls.get_sms_install_link(domain, app_id)
-
-        success_numbers = []
-        invalid_format_numbers = []
-        error_numbers = []
-
-        for user in users:
-            try:
-                CommCareMobileContactMixin.validate_number_format(user.phone_number)
-            except InvalidFormatException:
-                invalid_format_numbers.append(user.phone_number)
-                continue
-
-            phone_number = PhoneNumber.get_two_way_number(user.phone_number)
-            if phone_number:
-                if phone_number.domain != domain:
-                    error_numbers.append(user.phone_number)
-                    continue
-                user_translated_message = custom_message or get_message(
-                    MSG_REGISTRATION_INSTALL_COMMCARE,
-                    verified_number=phone_number,
-                    context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
-                )
-                send_sms_to_verified_number(phone_number, user_translated_message)
-                send_sms_to_verified_number(phone_number, sms_install_link)
-            else:
-                send_sms(domain, None, user.phone_number, domain_translated_message)
-                send_sms(domain, None, user.phone_number, sms_install_link)
-
-            success_numbers.append(user.phone_number)
-
-        return (success_numbers, invalid_format_numbers, error_numbers)
-
-
 class ActiveMobileBackendManager(models.Manager):
 
     def get_queryset(self):
@@ -1932,6 +1606,11 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # Some backends use their own inbound api key and not the default hq-generated one.
     # For those, we don't show the inbound api key on the edit backend page.
     show_inbound_api_key_during_edit = True
+
+    # Custom opt in/out keywords for gateways that allows users to configure their own at
+    # the gateway level, such as twilio advanced opt out
+    opt_in_keywords = ArrayField(models.TextField(), default=list)
+    opt_out_keywords = ArrayField(models.TextField(), default=list)
 
     class Meta(object):
         db_table = 'messaging_mobilebackend'
@@ -2396,6 +2075,9 @@ class SQLSMSBackend(SQLMobileBackend):
     def send(self, msg, *args, **kwargs):
         raise NotImplementedError("Please implement this method.")
 
+    # Override in case backend is fetching gateway fees through provider API
+    using_api_to_get_fees = False
+
     @classmethod
     def get_opt_in_keywords(cls):
         """
@@ -2702,6 +2384,9 @@ class Keyword(UUIDGeneratorMixin, models.Model):
 
     last_modified = models.DateTimeField(auto_now=True)
 
+    # For use with linked domains - the upstream keyword
+    upstream_id = models.CharField(max_length=126, null=True)
+
     def is_structured_sms(self):
         return self.keywordaction_set.filter(action=KeywordAction.ACTION_STRUCTURED_SMS).count() > 0
 
@@ -2875,7 +2560,7 @@ class Email(models.Model):
     couch_recipient = models.CharField(max_length=126, db_index=True)
 
     # The MessagingSubEvent that this email is tied to
-    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', on_delete=models.PROTECT)
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     # Email details
     recipient_address = models.CharField(max_length=255, db_index=True)

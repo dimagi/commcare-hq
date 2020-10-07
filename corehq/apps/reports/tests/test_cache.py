@@ -55,8 +55,8 @@ class ReportCacheTest(TestCase):
         self.web_user2 = WebUser.create(self.domain, 'w2', 'secret', None, None)
 
     def tearDown(self):
-        self.web_user1.delete()
-        self.web_user2.delete()
+        self.web_user1.delete(deleted_by=None)
+        self.web_user2.delete(deleted_by=None)
         self.test_domain.delete()
         super(ReportCacheTest, self).tearDown()
 

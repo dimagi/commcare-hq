@@ -1,0 +1,2 @@
+class DuplicateApiKeyName(Exception):
+    pass

@@ -10,10 +10,10 @@ from requests import ConnectionError
 from tastypie.bundle import Bundle
 
 from corehq.apps.api.es import (
-    CaseES,
+    CaseESView,
     ElasticAPIQuerySet,
-    XFormES,
-    es_search_by_params,
+    FormESView,
+    es_query_from_get_params,
 )
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_4 import (
@@ -35,11 +35,11 @@ class MockApi(namedtuple('MockApi', 'query_set resource serializer')):
 
 def _get_case_mock(project, params):
     # this is mostly copy/paste/modified from CommCareCaseResource
-    es_query = es_search_by_params(params, project)
+    es_query = es_query_from_get_params(params, project)
     query_set = ElasticAPIQuerySet(
         payload=es_query,
         model=ESCase,
-        es_client=CaseES(project),
+        es_client=CaseESView(project),
     ).order_by('server_modified_on')
 
     return MockApi(
@@ -50,19 +50,12 @@ def _get_case_mock(project, params):
 def _get_form_mock(project, params):
     # this is mostly copy/paste/modified from XFormInstanceResource
     include_archived = 'include_archived' in params
-    es_query = es_search_by_params(params, project, ['include_archived'])
-    if include_archived:
-        es_query['filter']['and'].append({'or': [
-            {'term': {'doc_type': 'xforminstance'}},
-            {'term': {'doc_type': 'xformarchived'}},
-        ]})
-    else:
-        es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
+    es_query = es_query_from_get_params(params, project, ['include_archived'])
 
     query_set = ElasticAPIQuerySet(
         payload=es_query,
         model=ESXFormInstance,
-        es_client=XFormES(project),
+        es_client=FormESView(project),
     ).order_by('received_on')
     return MockApi(
         query_set, XFormInstanceResource(), XFormInstanceSerializer()

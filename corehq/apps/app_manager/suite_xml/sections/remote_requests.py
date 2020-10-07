@@ -12,6 +12,8 @@ from corehq.apps.app_manager.suite_xml.sections.details import (
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
+    Instance,
+    Itemset,
     PushFrame,
     QueryData,
     QueryPrompt,
@@ -78,6 +80,11 @@ class RemoteRequestFactory(object):
     def _build_instances(self):
         query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
         claim_relevant_xpaths = [self.module.search_config.relevant]
+        prompt_select_instances = [
+            Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
+            for prop in self.module.search_config.properties
+            if prop.itemset.instance_id
+        ]
 
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.app,
@@ -86,8 +93,9 @@ class RemoteRequestFactory(object):
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
+
         # sorted list to prevent intermittent test failures
-        return sorted(list(instances), key=lambda i: i.id)
+        return sorted(list(instances) + prompt_select_instances, key=lambda i: i.id)
 
     def _build_session(self):
         return RemoteRequestSession(
@@ -147,14 +155,25 @@ class RemoteRequestFactory(object):
         return default_query_datums + extra_query_datums
 
     def _build_query_prompts(self):
-        return [
-            QueryPrompt(
-                key=p.name,
-                display=Display(
-                    text=Text(locale_id=id_strings.search_property_locale(self.module, p.name)),
-                ),
-            ) for p in self.module.search_config.properties
-        ]
+        prompts = []
+        for prop in self.module.search_config.properties:
+            kwargs = {
+                'key': prop.name,
+                'display': Display(text=Text(locale_id=id_strings.search_property_locale(self.module, prop.name))),
+            }
+            if prop.appearance and self.app.enable_search_prompt_appearance:
+                kwargs['appearance'] = prop.appearance
+            if prop.input_:
+                kwargs['input_'] = prop.input_
+            if prop.itemset.nodeset:
+                kwargs['itemset'] = Itemset(
+                    nodeset=prop.itemset.nodeset,
+                    label_ref=prop.itemset.label,
+                    value_ref=prop.itemset.value,
+                    sort_ref=prop.itemset.sort,
+                )
+            prompts.append(QueryPrompt(**kwargs))
+        return prompts
 
     def _build_stack(self):
         stack = Stack()

@@ -61,8 +61,8 @@ class StateHashTest(TestCase):
         sync = self.device.last_sync
         self.assertEqual(CaseStateHash(EMPTY_HASH), sync.log.get_state_hash())
 
-        c1 = CaseBlock(case_id="abc123", create=True, owner_id=self.user.user_id)
-        c2 = CaseBlock(case_id="123abc", create=True, owner_id=self.user.user_id)
+        c1 = CaseBlock.deprecated_init(case_id="abc123", create=True, owner_id=self.user.user_id)
+        c2 = CaseBlock.deprecated_init(case_id="123abc", create=True, owner_id=self.user.user_id)
         self.device.post_changes([c1, c2])
 
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")

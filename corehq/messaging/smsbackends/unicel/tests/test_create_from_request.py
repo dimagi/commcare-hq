@@ -44,7 +44,7 @@ class IncomingPostTest(TestCase):
         self.message_utf_hex = '0939093F0928094D092609400020091509300924093E00200939094800200907093800200938092E092F00200915093E092E002009390948003F'
 
     def tearDown(self):
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         self.domain.delete()
         super().tearDown()
 

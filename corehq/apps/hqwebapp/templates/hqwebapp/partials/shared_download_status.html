@@ -2,7 +2,9 @@
 {% load i18n %}
 {% block results %}
   <div class="alert alert-success">
-    <h3>{{ on_complete_long }}</h3>
+    {% if on_complete_long %}
+      <h3>{{ on_complete_long }}</h3>
+    {% endif %}
     <p>{%  trans "Your download is ready." %} <a href="{% url "retrieve_download" download_id %}?get_file=1">{{ link_text }}</a></p>
   </div>
 {% endblock results %}

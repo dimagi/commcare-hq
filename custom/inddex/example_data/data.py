@@ -74,7 +74,7 @@ def _update_case_id_properties(domain, user):
                 update[k] = case_ids_by_external_id[v]
         if update:
             case_blocks.append(
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,

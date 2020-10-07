@@ -32,7 +32,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
         self.url = reverse('commcare_user_confirm_account', args=[self.domain, self.user.get_id])
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_expected_workflow(self):

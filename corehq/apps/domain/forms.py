@@ -110,14 +110,14 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
+    SECURE_SESSION_TIMEOUT, MONITOR_2FA_CHANGES
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -315,6 +315,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    default_geocoder_location = Field(
+        widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
+        label=ugettext_noop("Default project location"),
+        required=False,
+        help_text=ugettext_lazy("Please select your project's default location.")
+    )
+
     logo = ImageField(
         label=ugettext_lazy("Custom Logo"),
         required=False,
@@ -381,8 +388,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -420,6 +427,12 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean_default_geocoder_location(self):
+        data = self.cleaned_data.get('default_geocoder_location')
+        if isinstance(data, dict):
+            return data
+        return json.loads(data or '{}')
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -491,6 +504,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
+        domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
@@ -522,6 +536,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
+        if not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+            del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -582,6 +598,13 @@ class PrivacySecurityForm(forms.Form):
         help_text=ugettext_lazy("All web users on this project will be logged out after {} minutes "
                                 "of inactivity").format(settings.SECURE_TIMEOUT)
     )
+    secure_sessions_timeout = IntegerField(
+        label=ugettext_lazy("Inactivity Timeout Length"),
+        required=False,
+        help_text=ugettext_lazy("Override the default {}-minute length of the inactivity timeout. Has no effect "
+                                "unless inactivity timeout is on. Note that when this is updated, users may need "
+                                "to log out and back in for it to take effect.").format(settings.SECURE_TIMEOUT)
+    )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
         required=False,
@@ -601,6 +624,10 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("All mobile workers in this project will be required to have a strong password")
     )
+    ga_opt_out = BooleanField(
+        label=ugettext_lazy("Disable Google Analytics"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -610,16 +637,21 @@ class PrivacySecurityForm(forms.Form):
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
-        self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
-        self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
-        self.helper[6] = twbscrispy.PrependedText('strong_mobile_passwords', '')
+        self.helper[3] = crispy.Field('secure_sessions_timeout')
+        self.helper[4] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
+        self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
+        self.helper[8] = twbscrispy.PrependedText('ga_opt_out', '')
 
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(8)
+            self.helper.layout.pop(7)
             self.helper.layout.pop(6)
-            self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
-            self.helper.layout.pop(4)
+            self.helper.layout.pop(5)
+        if not SECURE_SESSION_TIMEOUT.enabled(domain):
+            self.helper.layout.pop(3)
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
@@ -637,7 +669,15 @@ class PrivacySecurityForm(forms.Form):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
-        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
+        domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
+
+        new_two_factor_auth_setting = self.cleaned_data.get('two_factor_auth', False)
+        if domain.two_factor_auth != new_two_factor_auth_setting and MONITOR_2FA_CHANGES.enabled(domain.name):
+            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
+            status = "ON" if new_two_factor_auth_setting else "OFF"
+            monitor_2fa_soft_assert(False, f'{domain.name} turned 2FA {status}')
+        domain.two_factor_auth = new_two_factor_auth_setting
+
         domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
@@ -649,6 +689,7 @@ class PrivacySecurityForm(forms.Form):
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
         domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+        domain.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
 
         domain.save()
 
@@ -1252,7 +1293,7 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
+class HQSetPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),

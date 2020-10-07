@@ -27,7 +27,7 @@ hqDefine("linked_domain/js/domain_links", [
         if (self.type === 'app' && self.detail && self.detail.app_id) {
             self.update_url = initialPageData.reverse('app_settings', self.detail.app_id);
         }
-        self.hasError = ko.observable(false);
+        self.error = ko.observable("");
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
@@ -38,11 +38,15 @@ hqDefine("linked_domain/js/domain_links", [
                 'type': self.type,
                 'detail': self.detail,
             }}).done(function (data) {
-                self.last_update(data.last_update);
-                self.hasSuccess(true);
+                if (data.error) {
+                    self.error(data.error);
+                } else {
+                    self.last_update(data.last_update);
+                    self.hasSuccess(true);
+                }
                 self.showSpinner(false);
             }).fail(function () {
-                self.hasError(true);
+                self.error(gettext("Error updating."));
                 self.showSpinner(false);
             });
         };

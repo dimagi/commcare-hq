@@ -1,8 +1,7 @@
-/* globals FormplayerFrontend */
 hqDefine("cloudcare/js/formplayer/main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-        window.GMAPS_API_KEY = initialPageData('maps_api_key'); // maps api is loaded on-demand
+        window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
         var options = {
             apps: initialPageData('apps'),
             language: initialPageData('language'),
@@ -14,8 +13,11 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
             useLiveQuery: initialPageData('use_live_query'),
+            changeFormLanguage: initialPageData('change_form_language'),
         };
-        FormplayerFrontend.start(options);
+        hqImport("cloudcare/js/formplayer/app").start(options);
+
+        hqImport("cloudcare/js/util").injectMarkdownAnchorTransforms();
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),

@@ -751,7 +751,7 @@ class TestUserPhoneNumberSync(TestCase):
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
         self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
 
-        self.mobile_worker1.retire()
+        self.mobile_worker1.retire(deleted_by=None)
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
         self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
 

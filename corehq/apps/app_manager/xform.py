@@ -40,7 +40,7 @@ from .exceptions import (
 )
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
-VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 
 
 def parse_xml(string):
@@ -366,11 +366,11 @@ def raise_if_none(message):
     return decorator
 
 
-class CaseBlock(object):
+class XFormCaseBlock(object):
 
     @classmethod
     def make_parent_case_block(cls, xform, node_path, parent_path, case_id_xpath=None):
-        case_block = CaseBlock(xform, node_path)
+        case_block = XFormCaseBlock(xform, node_path)
         id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=case_id_xpath)
         xform.add_bind(
             nodeset='%scase/@case_id' % node_path,
@@ -690,7 +690,7 @@ class XForm(WrappedNode):
         return self.media_references("image", lang=lang)
 
     def audio_references(self, lang=None):
-        return self.media_references("audio", lang=lang) + self.media_references("expanded-audio", lang=lang)
+        return self.media_references("audio", lang=lang)
 
     def video_references(self, lang=None):
         return self.media_references("video", lang=lang) + self.media_references("video-inline", lang=lang)
@@ -1358,7 +1358,7 @@ class XForm(WrappedNode):
         if 'usercase_update' in actions and actions['usercase_update'].update:
             self._add_usercase_bind(usercase_path)
             usercase_block = _make_elem('{x}commcare_usercase')
-            case_block = CaseBlock(self, usercase_path)
+            case_block = XFormCaseBlock(self, usercase_path)
             case_block.add_update_block(actions['usercase_update'].update)
             usercase_block.append(case_block.elem)
             self.data_node.append(usercase_block)
@@ -1534,14 +1534,14 @@ class XForm(WrappedNode):
             case_block = None
         else:
             extra_updates = {}
-            case_block = CaseBlock(self)
+            case_block = XFormCaseBlock(self)
             module = form.get_module()
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
                     DELEGATION_ID = 'delegation_id'
                     outer_block = _make_elem('{x}cc_delegation_stub', {DELEGATION_ID: ''})
-                    delegation_case_block = CaseBlock(self, path)
+                    delegation_case_block = XFormCaseBlock(self, path)
                     delegation_case_block.add_close_block('true()')
                     session_delegation_id = "instance('commcaresession')/session/data/%s" % DELEGATION_ID
                     path_to_delegation_id = self.resolve_path("%s@%s" % (path, DELEGATION_ID))
@@ -1633,7 +1633,7 @@ class XForm(WrappedNode):
                     subcase_node = parent_node
                     path = base_path
 
-                subcase_block = CaseBlock(self, path)
+                subcase_block = XFormCaseBlock(self, path)
                 subcase_node.insert(0, subcase_block.elem)
                 subcase_block.add_create_block(
                     relevance=self.action_relevance(subcase.condition),
@@ -1787,7 +1787,7 @@ class XForm(WrappedNode):
             path = tag + '/'
             base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
-            case_block = CaseBlock(self, path=path)
+            case_block = XFormCaseBlock(self, path=path)
 
             if bind_case_id_xpath:
                 self.add_bind(
@@ -1897,7 +1897,7 @@ class XForm(WrappedNode):
 
             path, subcase_node = get_action_path(action)
 
-            open_case_block = CaseBlock(self, path)
+            open_case_block = XFormCaseBlock(self, path)
             subcase_node.insert(0, open_case_block.elem)
             open_case_block.add_create_block(
                 relevance=self.action_relevance(action.open_condition),
@@ -1996,7 +1996,7 @@ class XForm(WrappedNode):
             for parent_path, updates in sorted(updates_by_case.items()):
                 node = make_nested_subnode(parent_base, parent_path)
                 node_path = '%sparents/%s/' % (base_node_path or '', parent_path)
-                parent_case_block = CaseBlock.make_parent_case_block(
+                parent_case_block = XFormCaseBlock.make_parent_case_block(
                     self,
                     node_path,
                     parent_path,

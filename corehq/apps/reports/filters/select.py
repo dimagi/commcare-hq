@@ -10,7 +10,7 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.export.models.incremental import IncrementalExport
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
@@ -73,7 +73,7 @@ class CaseTypeMixin(object):
 
     @property
     def options(self):
-        case_types = sorted(get_case_types_for_domain_es(self.domain))
+        case_types = sorted(get_case_types_for_domain(self.domain))
         return [(case, "%s" % case) for case in case_types
                 if case != USER_LOCATION_OWNER_MAP_TYPE]
 
@@ -102,14 +102,24 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
     label = ugettext_lazy("Application")
-    default_text = ugettext_lazy("Select Application [Latest Build Version]")
+
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        default_text = ugettext_lazy("Select Application")
+    else:
+        default_text = ugettext_lazy("Select Application [Latest Build Version]")
 
     @property
     def options(self):
         apps_for_domain = get_brief_apps_in_domain(self.domain)
-        return [(app.get_id, _("%(name)s [up to build %(version)s]") % {
-            'name': app.name,
-            'version': app.version}) for app in apps_for_domain]
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            return [(app.get_id, _("{name}".format(
+                name=app.name))) for app in apps_for_domain
+            ]
+        else:
+            return [(app.get_id, _("{name} [up to build {version}]".format(
+                name=app.name,
+                version=app.version))) for app in apps_for_domain
+            ]
 
 
 class RepeaterFilter(BaseSingleOptionFilter):
@@ -120,14 +130,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        repeaters = self._get_repeaters()
-        return list(map(
-            lambda repeater: (repeater.get_id, '{}: {}'.format(
-                repeater.doc_type,
-                repeater.url,
-            )),
-            repeaters,
-        ))
+        return [(r.get_id, str(r)) for r in self._get_repeaters()]
 
     def _get_repeaters(self):
         return get_repeaters_by_domain(self.domain)

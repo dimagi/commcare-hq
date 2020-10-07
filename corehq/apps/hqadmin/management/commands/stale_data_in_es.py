@@ -12,6 +12,7 @@ from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.retry import retry_on
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import CaseES, FormES
@@ -28,8 +29,10 @@ from corehq.util.doc_processor.progress import (
     ProgressManager,
 )
 from corehq.util.doc_processor.sql import resumable_sql_model_iterator
+from corehq.elastic import ESError
 from corehq.util.pagination import PaginationEventHandler
 from memoized import memoized
+
 
 CHUNK_SIZE = 1000
 
@@ -54,6 +57,8 @@ def get_csv_args(delimiter):
         'lineterminator': '\n',
     }
 
+
+retry_on_es_timeout = retry_on(ESError, delays=[2**x for x in range(10)])
 
 class Command(BaseCommand):
     """
@@ -219,6 +224,7 @@ class CaseBackend:
                 yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, domain
 
     @staticmethod
+    @retry_on_es_timeout
     def _get_es_modified_dates(case_ids):
         results = (
             CaseES(es_instance_alias=ES_EXPORT_INSTANCE)

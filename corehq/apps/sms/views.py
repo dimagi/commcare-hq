@@ -67,8 +67,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_timepicker,
     use_typeahead,
 )
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import (
@@ -94,7 +93,6 @@ from corehq.apps.sms.forms import (
     BackendMapForm,
     ComposeMessageForm,
     InitiateAddSMSBackendForm,
-    SendRegistrationInvitationsForm,
     SettingsForm,
     SubscribeSMSForm,
 )
@@ -107,12 +105,10 @@ from corehq.apps.sms.models import (
     MessagingEvent,
     PhoneLoadBalancingMixin,
     PhoneNumber,
-    SelfRegistrationInvitation,
     SQLLastReadMessage,
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
-from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
@@ -188,16 +184,6 @@ class BaseMessagingSectionView(BaseDomainView):
     @property
     def section_url(self):
         return reverse("sms_default", args=[self.domain])
-
-
-class BaseAdvancedMessagingSectionView(BaseMessagingSectionView):
-    """
-    Just like BaseMessagingSectionView, only requires access to inbound SMS
-    as well.
-    """
-    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
-    def dispatch(self, *args, **kwargs):
-        return super(BaseAdvancedMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
 class ComposeMessageView(BaseMessagingSectionView):
@@ -1180,6 +1166,8 @@ class AddGatewayViewMixin(object):
             if self.use_load_balancing:
                 self.backend.load_balancing_numbers = self.backend_form.cleaned_data['phone_numbers']
 
+            self.backend.opt_out_keywords = self.backend_form.cleaned_data.get('opt_out_keywords')
+            self.backend.opt_in_keywords = self.backend_form.cleaned_data.get('opt_in_keywords')
             self.backend.save()
             if not self.backend.is_global:
                 self.backend.set_shared_domains(self.backend_form.cleaned_data.get('authorized_domains'))
@@ -1293,6 +1281,8 @@ class EditDomainGatewayView(AddDomainGatewayView):
             'give_other_domains_access': len(authorized_domains) > 0,
             'authorized_domains': ','.join(authorized_domains),
             'reply_to_phone_number': self.backend.reply_to_phone_number,
+            'opt_out_keywords': ','.join(self.backend.opt_out_keywords),
+            'opt_in_keywords': ','.join(self.backend.opt_in_keywords),
         }
         initial.update(self.backend.get_extra_fields())
 
@@ -1915,178 +1905,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
 
-class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPaginatedViewMixin):
-    template_name = 'sms/manage_registration_invitations.html'
-    urlname = 'sms_manage_registration_invitations'
-    page_title = ugettext_lazy('Manage Registration Invitations')
-
-    limit_text = ugettext_noop("invitations per page")
-    empty_notification = ugettext_noop("No registration invitations sent yet.")
-    loading_message = ugettext_noop("Loading invitations...")
-    strict_domain_fetching = True
-
-    @property
-    @memoized
-    def invitations_form(self):
-        if self.request.method == 'POST':
-            return SendRegistrationInvitationsForm(self.request.POST, domain=self.domain)
-        else:
-            return SendRegistrationInvitationsForm(domain=self.domain)
-
-    @property
-    @memoized
-    def project_timezone(self):
-        return get_timezone_for_user(None, self.domain)
-
-    @property
-    def page_context(self):
-        context = self.pagination_context
-        context.update({
-            'form': self.invitations_form,
-            'sms_mobile_worker_registration_enabled':
-                self.domain_object.sms_mobile_worker_registration_enabled,
-        })
-        return context
-
-    @property
-    def total(self):
-        return SelfRegistrationInvitation.objects.filter(domain=self.domain).count()
-
-    @property
-    def column_names(self):
-        return [
-            _('Created On'),
-            _('Phone Number'),
-            _('Status'),
-            _('Expiration Date'),
-            _('Application'),
-            _('Phone Type'),
-        ]
-
-    def format_status(self, invitation):
-        if invitation.status == SelfRegistrationInvitation.STATUS_REGISTERED:
-            registered_date = (ServerTime(invitation.registered_date)
-                               .user_time(self.project_timezone)
-                               .done()
-                               .strftime(SERVER_DATETIME_FORMAT))
-            return _("Registered on %(date)s") % {'date': registered_date}
-        else:
-            return {
-                SelfRegistrationInvitation.STATUS_PENDING: _("Pending"),
-                SelfRegistrationInvitation.STATUS_EXPIRED: _("Expired"),
-            }.get(invitation.status)
-
-    @property
-    def paginated_list(self):
-        invitations = SelfRegistrationInvitation.objects.filter(
-            domain=self.domain
-        ).order_by('-created_date')
-        doc_info_cache = {}
-        for invitation in invitations[self.skip:self.skip + self.limit]:
-            if invitation.app_id in doc_info_cache:
-                doc_info = doc_info_cache[invitation.app_id]
-            else:
-                doc_info = get_doc_info_by_id(self.domain, invitation.app_id)
-                doc_info_cache[invitation.app_id] = doc_info
-            yield {
-                'itemData': {
-                    'id': invitation.pk,
-                    'created_date': (ServerTime(invitation.created_date)
-                                     .user_time(self.project_timezone)
-                                     .done()
-                                     .strftime(SERVER_DATETIME_FORMAT)),
-                    'phone_number': '+%s' % invitation.phone_number,
-                    'status': self.format_status(invitation),
-                    'expiration_date': invitation.expiration_date.strftime(SERVER_DATE_FORMAT),
-                    'app_name': doc_info.display,
-                    'app_link': doc_info.link,
-                    'phone_type': dict(SelfRegistrationInvitation.PHONE_TYPE_CHOICES).get(invitation.phone_type),
-                },
-                'template': 'invitations-template',
-            }
-
-    def post(self, *args, **kwargs):
-        if self.request.POST.get('action') == 'invite':
-            if not self.domain_object.sms_mobile_worker_registration_enabled:
-                return self.get(*args, **kwargs)
-            if self.invitations_form.is_valid():
-                phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
-                app_id = self.invitations_form.cleaned_data.get('app_id')
-                custom_registration_message = self.invitations_form.cleaned_data.get('custom_registration_message')
-                result = SelfRegistrationInvitation.initiate_workflow(
-                    self.domain,
-                    [SelfRegistrationUserInfo(p) for p in phone_numbers],
-                    app_id=app_id,
-                    custom_first_message=custom_registration_message,
-                    android_only=self.invitations_form.android_only,
-                    require_email=self.invitations_form.require_email,
-                )
-                success_numbers, invalid_format_numbers, numbers_in_use = result
-                if success_numbers:
-                    messages.success(
-                        self.request,
-                        _("Invitations sent to: %(phone_numbers)s") % {
-                            'phone_numbers': ','.join(success_numbers),
-                        }
-                    )
-                if invalid_format_numbers:
-                    messages.error(
-                        self.request,
-                        _("Invitations could not be sent to: %(phone_numbers)s. "
-                          "These number(s) are in an invalid format.") % {
-                            'phone_numbers': ','.join(invalid_format_numbers)
-                        }
-                    )
-                if numbers_in_use:
-                    messages.error(
-                        self.request,
-                        _("Invitations could not be sent to: %(phone_numbers)s. "
-                          "These number(s) are already in use.") % {
-                            'phone_numbers': ','.join(numbers_in_use)
-                        }
-                    )
-            return self.get(*args, **kwargs)
-        else:
-            if not self.domain_object.sms_mobile_worker_registration_enabled:
-                raise Http404()
-            return self.paginate_crud_response
-
-
-class InvitationAppInfoView(View, DomainViewMixin):
-    """
-    This view is accessed by CommCare automatically by logged-out users during
-    installation of an app in the mobile worker self-registration workflow.
-    """
-    urlname = 'sms_registration_invitation_app_info'
-
-    @property
-    @memoized
-    def app_id(self):
-        app_id = self.kwargs.get('app_id')
-        if not app_id:
-            raise Http404()
-        return app_id
-
-    @property
-    @memoized
-    def odk_url(self):
-        try:
-            odk_url = SelfRegistrationInvitation.get_app_odk_url(self.domain, self.app_id)
-        except Http404:
-            odk_url = None
-
-        if odk_url:
-            return odk_url
-
-        raise Http404()
-
-    def get(self, *args, **kwargs):
-        url = bytes(self.odk_url).strip()
-        response = b'ccapp: %s signature: %s' % (url, sign(url))
-        response = base64.b64encode(response)
-        return HttpResponse(response)
-
-
 class IncomingBackendView(View):
 
     def __init__(self, *args, **kwargs):
@@ -2152,7 +1970,14 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
             templates = wa_active_backend.get_all_templates()
-            for template in templates:
-                template['template_string'] = wa_active_backend.generate_template_string(template)
-            context.update({'wa_templates': templates})
+            if templates is not None:
+                for template in templates:
+                    template['template_string'] = wa_active_backend.generate_template_string(template)
+                context.update({'wa_templates': templates})
+            else:
+                messages.error(
+                    self.request,
+                    wa_active_backend.get_generic_name()
+                    + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
+                )
         return context

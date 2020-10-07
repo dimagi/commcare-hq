@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
@@ -23,6 +24,7 @@ from corehq.apps.users.models import (
 )
 
 
+@es_test
 class AllCommCareUsersTest(TestCase):
 
     @classmethod
@@ -42,6 +44,7 @@ class AllCommCareUsersTest(TestCase):
             cls.ccdomain.name,
             Permissions(
                 edit_apps=True,
+                view_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
                 view_roles=True,
@@ -99,7 +102,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='retired_user_email@example.com',
         )
-        cls.retired_user.retire()
+        cls.retired_user.retire(deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -183,13 +186,13 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='deleted_email@example.com',
         )
-        deleted_user.retire()
+        deleted_user.retire(deleted_by=None)
         self.assertNotIn(
             deleted_user.username,
             [user.username for user in
              get_all_commcare_users_by_domain(self.ccdomain.name)]
         )
-        deleted_user.delete()
+        deleted_user.delete(deleted_by=None)
 
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]

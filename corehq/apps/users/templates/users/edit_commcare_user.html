@@ -10,11 +10,14 @@
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
   {% initial_page_data "couch_user_username" couch_user.username %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
   {% initial_page_data "hide_password_feedback" hide_password_feedback %}
-  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
   {% initial_page_data "path" request.path %}
   {% initial_page_data "is_delete_allowed" is_delete_allowed %}
+  {% initial_page_data "metadata" couch_user.metadata %}
   {% if couch_user.is_demo_user %}
     <p class="alert alert-warning">
       {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}
@@ -26,8 +29,8 @@
     {% if commtrack_enabled or uses_locations %}
       <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
     {% endif %}
-    {% if not request.is_view_only %}
-      <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
+    {% if not request.is_view_only or token %}
+      <li><a href="#user-password" data-toggle="tab">{% trans "Security" %}</a></li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
       <li><a href="#user-permanent" data-toggle="tab">{% trans "Actions" %}</a></li>
@@ -57,13 +60,29 @@
         </div>
       </div>
     {% endif %}
-    {% if not request.is_view_only %}
-      <div class="tab-pane" id="user-password">
-        <div class="panel-body">
+    <div class="tab-pane" id="user-password">
+      <div class="panel-body">
+        {% if not request.is_view_only %}
           {% include 'users/partials/reset_password.html' %}
-        </div>
+          <div class="spacer"></div>
+        {% endif %}
+        {% if token %}
+          <fieldset>
+            <legend>{% trans 'Two Factor Authentication' %}</legend>
+            <div class="form form-horizontal">
+              <div class="form-group">
+                <label class="control-label col-sm-3 col-md-2">
+                  {% trans "Backup Token" %}
+                </label>
+                <div class="controls col-sm-9 col-md-8 col-lg-6">
+                  <input type="text" class="form-control" disabled value="{{ token }}" />
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        {% endif %}
       </div>
-    {% endif %}
+    </div>
     {% if not is_currently_logged_in_user and not request.is_view_only %}
       <div class="tab-pane" id="user-permanent">
         <div class="panel-body">

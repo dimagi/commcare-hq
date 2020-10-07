@@ -44,7 +44,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
     def tearDown(self):
         for user in self.domain.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
         super(TestCreditLines, self).tearDown()
 
     def test_product_line_item_credits(self):
@@ -496,7 +496,7 @@ class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
 
     def tearDown(self):
         for user in self.domain.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
         super(BaseAccountingTest, self).tearDown()
 
     @classmethod

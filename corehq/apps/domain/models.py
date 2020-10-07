@@ -309,6 +309,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
+    default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
@@ -437,6 +438,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # when turned on, use settings.SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
+    secure_sessions_timeout = IntegerProperty()
 
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
@@ -447,6 +449,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
+
+    ga_opt_out = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -503,6 +507,20 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def is_secure_session_required(name):
         domain_obj = Domain.get_by_name(name)
         return domain_obj and domain_obj.secure_sessions
+
+    @staticmethod
+    @quickcache(['name'], timeout=24 * 60 * 60)
+    def secure_timeout(name):
+        domain_obj = Domain.get_by_name(name)
+        if not domain_obj:
+            return None
+
+        if domain_obj.secure_sessions:
+            if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
+                return domain_obj.secure_sessions_timeout or settings.SECURE_TIMEOUT
+            return settings.SECURE_TIMEOUT
+
+        return None
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
@@ -782,19 +800,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-    @classmethod
-    def get_module_by_name(cls, domain_name):
-        """
-        import and return the python module corresponding to domain_name, or
-        None if it doesn't exist.
-        """
-        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
-
-        try:
-            return import_module(module_name) if module_name else None
-        except ImportError:
-            return None
-
     @property
     @memoized
     def commtrack_settings(self):
@@ -860,6 +865,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         super(Domain, self).clear_caches()
         self.get_by_name.clear(self.__class__, self.name)
         self.is_secure_session_required.clear(self.name)
+        self.secure_timeout.clear(self.name)
         domain_restricts_superusers.clear(self.name)
 
     def get_daily_outbound_sms_limit(self):

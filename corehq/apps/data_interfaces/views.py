@@ -511,7 +511,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)
-            OTPMiddleware().process_request(_request)
+            OTPMiddleware(lambda req: None)(_request)
 
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(
@@ -605,7 +605,7 @@ def find_by_id(request, domain):
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Close Cases")
+    page_title = ugettext_lazy("Automatically Update Cases")
 
     limit_text = ugettext_lazy("rules per page")
     empty_notification = ugettext_lazy("You have no case rules.")

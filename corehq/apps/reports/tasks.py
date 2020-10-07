@@ -18,22 +18,14 @@ from soil.util import expose_blob_download
 
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import filters
-from corehq.apps.es.domains import DomainES
-from corehq.apps.es.forms import FormES
+from corehq.apps.es import AppES, DomainES, FormES, filters
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
-from corehq.elastic import (
-    ES_META,
-    get_es_new,
-    send_to_elasticsearch,
-    stream_es_query,
-)
+from corehq.elastic import send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
@@ -44,7 +36,6 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
@@ -114,8 +105,8 @@ def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
     for domain, user_count in commcare_users_by_domain.items():
         metrics_gauge(metric_name, user_count, tags={
-            'domain': '_other' if domain is () else domain
-        })
+            'domain': '_other' if domain == () else domain
+        }, multiprocess_mode='max')
 
 
 def summarize_user_counts(commcare_users_by_domain, n):
@@ -165,12 +156,13 @@ def is_app_active(app_id, domain):
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
-    es = get_es_new()
-    q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
-    results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
-    for r in results:
-        props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
-        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
+    query = AppES().is_build(False).values_list('_id', 'domain', scroll=True)
+    for doc_id, domain in query:
+        doc = {
+            "_id": doc_id,
+            "cp_is_active": is_app_active(doc_id, domain),
+        }
+        send_to_elasticsearch('apps', doc, es_merge_update=True)
 
 
 @task(serializer='pickle', ignore_result=True)
@@ -248,6 +240,7 @@ def build_form_multimedia_zip(
         datespan,
         user_types,
         download_id,
+        owner_id,
 ):
     from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
@@ -267,7 +260,7 @@ def build_form_multimedia_zip(
             _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
         with open(temp_path, 'rb') as f:
             zip_name = 'multimedia-{}'.format(unidecode(export.name))
-            _save_and_expose_zip(f, zip_name, domain, download_id)
+            _save_and_expose_zip(f, zip_name, domain, download_id, owner_id)
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
@@ -329,7 +322,7 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                 DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
 
 
-def _save_and_expose_zip(f, zip_name, domain, download_id):
+def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
     expiry_minutes = 60
     get_blob_db().put(
         f,
@@ -345,6 +338,7 @@ def _save_and_expose_zip(f, zip_name, domain, download_id):
         mimetype='application/zip',
         content_disposition=safe_filename_header(zip_name, 'zip'),
         download_id=download_id,
+        owner_ids=[owner_id],
     )
 
 

@@ -12,6 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
+from django.conf import settings
 from django.utils.dateparse import parse_date
 
 from corehq.apps.case_search.const import (
@@ -31,21 +32,11 @@ from . import filters, queries
 
 
 class CaseSearchES(CaseES):
-    index = CASE_SEARCH_ALIAS
+    index = "case_search"
 
     @property
     def builtin_filters(self):
         return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
-
-    @property
-    def _case_property_queries(self):
-        """
-        Returns all current case_property queries
-        """
-        try:
-            return self.es_query['query']['filtered']['query']['bool']['must']
-        except (KeyError, TypeError):
-            return []
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
@@ -270,7 +261,7 @@ def _base_property_query(case_property_name, query):
         CASE_PROPERTIES_PATH,
         queries.filtered(
             query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name)
         )
     )
 

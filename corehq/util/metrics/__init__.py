@@ -118,7 +118,7 @@ from celery.task import periodic_task
 from django.conf import settings
 from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
-from .const import COMMON_TAGS, ALERT_INFO
+from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
 from .metrics import (
     DebugMetrics,
     DelegatedMetrics,
@@ -140,34 +140,21 @@ __all__ = [
     'bucket_value',
 ]
 
-_metrics = []
-
-
-def _get_metrics_provider():
-    if not _metrics:
-        providers = []
-        for provider_path in settings.METRICS_PROVIDERS:
-            provider = to_function(provider_path)()
-            providers.append(provider)
-
-        if not providers:
-            metrics = DebugMetrics()
-        elif len(providers) > 1:
-            metrics = DelegatedMetrics(providers)
-        else:
-            metrics = providers[0]
-        _metrics.append(metrics)
-    return _metrics[-1]
-
 
 def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
     provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
+def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '',
+                  multiprocess_mode: str = MPM_ALL):
+    """
+    kwargs:
+        multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed
+            to PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
+    """
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags=tags, documentation=documentation)
+    provider.gauge(name, value, tags=tags, documentation=documentation, multiprocess_mode=multiprocess_mode)
 
 
 def metrics_histogram(
@@ -181,7 +168,7 @@ def metrics_histogram(
     )
 
 
-def metrics_gauge_task(name, fn, run_every):
+def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     """
     Helper for easily registering gauges to run periodically
 
@@ -194,6 +181,8 @@ def metrics_gauge_task(name, fn, run_every):
             'commcare.my.metric', my_calculation_function, run_every=crontab(minute=0)
         )
 
+    kwargs:
+        multiprocess_mode: See PrometheusMetrics._gauge for documentation.
     """
     _enforce_prefix(name, 'commcare')
 
@@ -202,8 +191,7 @@ def metrics_gauge_task(name, fn, run_every):
     @wraps(fn)
     def inner(*args, **kwargs):
         from corehq.util.metrics import metrics_gauge
-        # TODO: make this use prometheus push gateway
-        metrics_gauge(name, fn(*args, **kwargs))
+        metrics_gauge(name, fn(*args, **kwargs), multiprocess_mode=multiprocess_mode)
 
     return inner
 
@@ -300,3 +288,38 @@ class metrics_track_errors(ContextDecorator):
             metrics_counter(self.succeeded_name)
         else:
             metrics_counter(self.failed_name)
+
+
+def push_metrics():
+    provider = _get_metrics_provider()
+    provider.push_metrics()
+
+
+_metrics = []
+
+
+def _get_metrics_provider():
+    if not _metrics:
+        _global_setup()
+        providers = []
+        for provider_path in settings.METRICS_PROVIDERS:
+            provider = to_function(provider_path)()
+            providers.append(provider)
+
+        if not providers:
+            metrics = DebugMetrics()
+        elif len(providers) > 1:
+            metrics = DelegatedMetrics(providers)
+        else:
+            metrics = providers[0]
+        _metrics.append(metrics)
+    return _metrics[-1]
+
+
+def _global_setup():
+    if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+        try:
+            from ddtrace import tracer
+            tracer.enabled = False
+        except ImportError:
+            pass

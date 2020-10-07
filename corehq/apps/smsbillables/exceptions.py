@@ -10,5 +10,5 @@ class RetryBillableTaskException(Exception):
     pass
 
 
-class ProviderFeeNotSupportedException(Exception):
+class DeliveredBillableException(Exception):
     pass

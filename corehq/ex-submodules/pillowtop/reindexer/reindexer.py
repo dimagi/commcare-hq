@@ -1,11 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
 from corehq.util.es.elasticsearch import TransportError
-from corehq.util.es.elasticsearch import bulk
 from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
-    initialize_mapping_if_necessary,
+    initialize_index_and_mapping,
     set_index_normal_settings,
     set_index_reindex_settings,
 )
@@ -141,19 +140,17 @@ class PillowChangeProviderReindexer(Reindexer):
                 pillow_logging.info("Processed %s docs", i)
 
 
-def _clean_index(es, index_info):
+def clean_index(es, index_info):
     if es.indices.exists(index_info.index):
         es.indices.delete(index=index_info.index)
 
 
-def _prepare_index_for_reindex(es, index_info):
-    if not es.indices.exists(index_info.index):
-        es.indices.create(index=index_info.index, body=index_info.meta)
-    initialize_mapping_if_necessary(es, index_info)
+def prepare_index_for_reindex(es, index_info):
+    initialize_index_and_mapping(es, index_info)
     set_index_reindex_settings(es, index_info.index)
 
 
-def _prepare_index_for_usage(es, index_info):
+def prepare_index_for_usage(es, index_info):
     set_index_normal_settings(es, index_info.index)
     es.indices.refresh(index_info.index)
 
@@ -174,17 +171,17 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
         self.in_place = in_place
 
     def clean(self):
-        _clean_index(self.es, self.index_info)
+        clean_index(self.es, self.index_info)
 
     def reindex(self):
         if not self.in_place and not self.start_from:
-            _prepare_index_for_reindex(self.es, self.index_info)
+            prepare_index_for_reindex(self.es, self.index_info)
             if isinstance(self.pillow_or_processor, ConstructedPillow):
                 _set_checkpoint(self.pillow_or_processor)
 
         super(ElasticPillowReindexer, self).reindex()
 
-        _prepare_index_for_usage(self.es, self.index_info)
+        prepare_index_for_usage(self.es, self.index_info)
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
@@ -248,7 +245,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         self.pillow = pillow
 
     def clean(self):
-        _clean_index(self.es, self.index_info)
+        clean_index(self.es, self.index_info)
 
     def reindex(self):
         if not self.es.indices.exists(self.index_info.index):
@@ -262,14 +259,14 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         )
 
         if not self.in_place and (self.reset or not processor.has_started()):
-            _prepare_index_for_reindex(self.es, self.index_info)
+            prepare_index_for_reindex(self.es, self.index_info)
             if self.pillow:
                 _set_checkpoint(self.pillow)
 
         processor.run()
 
         try:
-            _prepare_index_for_usage(self.es, self.index_info)
+            prepare_index_for_usage(self.es, self.index_info)
         except TransportError:
             raise Exception(
                 'The Elasticsearch index was missing after reindex! If the index was manually deleted '

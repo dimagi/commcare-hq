@@ -38,7 +38,7 @@ class TestAccountConfirmation(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     def test_confirm_account(self):
 

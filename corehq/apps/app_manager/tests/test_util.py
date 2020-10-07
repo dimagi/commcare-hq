@@ -166,12 +166,17 @@ class TestGlobalAppConfig(TestCase):
                 response
             )
 
-    def test_args(self):
+    def test_load_from_build(self):
+        config = self._fresh_config(self.v3_build.id)
         with self.assertRaises(AssertionError):
-            # should not be id of a copy
-            config = GlobalAppConfig.by_app_id(self.domain, self.v3_build.id)
             config.get_latest_app_version(build_profile_id='')
 
+    def test_missing_app(self):
+        config = self._fresh_config('missing_id')
         with self.assertRaises(Http404):
-            config = GlobalAppConfig.by_app_id(self.domain, 'wrong-id')
             config.get_latest_app_version(build_profile_id='')
+
+    def _fresh_config(self, app_id):
+        config = GlobalAppConfig.by_app_id(self.domain, app_id)
+        config.app_prompt = 'on'
+        return config

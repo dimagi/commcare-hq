@@ -4,13 +4,15 @@
 {% load compress %}
 {% load menu_tags %}
 
+{% block plan_breadcrumbs %}{% endblock %}
 
 {% block form_content %}
-  <p>
-    {% blocktrans %}
-      You are renewing your CommCare {{ plan_edition }} plan.
+  <p class="lead text-center">
+    {% blocktrans with plan.name as p %}
+      You are renewing your <strong>{{ p }} Edition</strong> subscription.
     {% endblocktrans %}
   </p>
+  {% include 'accounting/partials/confirm_plan_summary.html' %}
 
   <form class="form"
         method="post"
@@ -18,15 +20,13 @@
     {% csrf_token %}
 
     <input type="hidden" name="from_plan_page" value="true" />
-    <input type="hidden" name="plan_edition" data-bind="{{ plan_edition }}">
+    <input type="hidden" name="plan_edition" value="{{ current_edition }}">
 
-    <div class="form-actions">
-      <div class="col-xs-offset-2">
-        <button type="submit"
-                class="btn btn-primary btn-lg">
-          {% trans 'Next' %}
-        </button>
-      </div>
+    <div class="text-center plan-next">
+      <button type="submit"
+              class="btn btn-primary btn-lg">
+        {% trans 'Next' %}
+      </button>
     </div>
   </form>
 {% endblock %}

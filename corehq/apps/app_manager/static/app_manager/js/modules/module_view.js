@@ -1,12 +1,14 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
+        $('.multiselect-caselist').select2();
+        
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
-
+        
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;
@@ -210,7 +212,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#sourceModuleForms').koApplyBindings(new ShadowModule(
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
-                shadowOptions.excluded_form_ids
+                shadowOptions.excluded_form_ids,
+                shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {

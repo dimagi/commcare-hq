@@ -1,5 +1,9 @@
 from collections import namedtuple
 
+from django.conf import settings
+
+from couchdbkit import ResourceNotFound
+
 from dimagi.utils.logging import notify_exception
 
 SubModelSpec = namedtuple('SubModelSpec', [
@@ -126,7 +130,9 @@ class SyncCouchToSQLMixin(object):
         if sync_to_sql:
             try:
                 self._migration_do_sync()
-            except:
+            except Exception as e:
+                if settings.UNIT_TESTING:
+                    raise e
                 sql_class_name = self._migration_get_sql_model_class().__name__
                 couch_class_name = self.__class__.__name__
                 notify_exception(None,
@@ -185,7 +191,10 @@ class SyncSQLToCouchMixin(object):
         if not self._migration_couch_id:
             return None
         cls = self._migration_get_couch_model_class()
-        return cls.get(str(self._migration_couch_id))
+        try:
+            return cls.get(str(self._migration_couch_id))
+        except ResourceNotFound:
+            return None
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()
@@ -222,7 +231,9 @@ class SyncSQLToCouchMixin(object):
         if sync_to_couch:
             try:
                 self._migration_do_sync()
-            except:
+            except Exception as e:
+                if settings.UNIT_TESTING:
+                    raise e
                 couch_class_name = self._migration_get_couch_model_class().__name__
                 sql_class_name = self.__class__.__name__
                 notify_exception(None,

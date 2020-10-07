@@ -46,7 +46,7 @@ class CustomRecipientTest(TestCase):
         self.user.set_location(self.child_location)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.child_location.delete()
         self.parent_location.delete()
         self.child_location_type.delete()

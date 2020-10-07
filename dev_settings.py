@@ -67,7 +67,7 @@ LOCAL_LOGGING_CONFIG = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',

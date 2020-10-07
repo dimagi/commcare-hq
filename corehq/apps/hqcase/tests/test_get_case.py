@@ -23,7 +23,7 @@ class GetCaseTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super(GetCaseTest, cls).tearDownClass()
 
     def setUp(self):

@@ -14,7 +14,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
 from couchforms.models import doc_types
 
-from corehq.apps.api.es import ElasticAPIQuerySet, XFormES, es_search
+from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -49,7 +49,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_all_built_app_results,
     get_apps_in_domain,
 )
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
@@ -146,23 +146,15 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
-        return MOCK_XFORM_ES or XFormES(domain)
+        return MOCK_XFORM_ES or FormESView(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        include_archived = 'include_archived' in bundle.request.GET
         try:
-            es_query = es_search(bundle.request, domain, ['include_archived'])
+            es_query = es_query_from_get_params(bundle.request.GET, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(str(e))
-        if include_archived:
-            es_query['filter']['and'].append({'or': [
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}},
-            ]})
-        else:
-            es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
-        # Note that XFormES is used only as an ES client, for `run_query` against the proper index
+        # Note that FormESView is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=es_query,
             model=ESXFormInstance,
@@ -285,6 +277,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
     opened_by = fields.CharField(attribute='opened_by', null=True)
+    closed_by = fields.CharField(attribute='closed_by', null=True)
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
@@ -292,7 +285,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         return self.case_es(domain).get_document(case_id)
 
     class Meta(v0_3.CommCareCaseResource.Meta):
-        max_limit = 1000
+        max_limit = 5000
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified', 'indexed_on']
         object_class = ESCase
@@ -382,7 +375,9 @@ class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecific
         return get_apps_in_domain(domain, include_remote=False)
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
+        # support returning linked applications upon receiving an application request
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'],
+                                       additional_doc_types=[LinkedApplication._doc_type])
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()
@@ -464,7 +459,8 @@ class ApplicationResource(BaseApplicationResource):
     def dehydrate_modules(self, bundle):
         app = bundle.obj
 
-        if app.doc_type == Application._doc_type:
+        # support returning linked applications upon receiving an application list request
+        if app.doc_type in [Application._doc_type, LinkedApplication._doc_type]:
             return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
             return []

@@ -13,3 +13,7 @@ class RemoteAuthError(RemoteRequestError):
 
 class ActionNotPermitted(RemoteRequestError):
     pass
+
+
+class UnsupportedActionError(Exception):
+    pass

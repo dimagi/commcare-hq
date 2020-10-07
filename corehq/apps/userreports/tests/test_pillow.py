@@ -5,12 +5,14 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase, override_settings
 
 import mock
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import topics
@@ -94,7 +96,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 class ConfigurableReportTableManagerDbTest(TestCase):
     def tearDown(self):
         for data_source in DynamicDataSourceProvider().get_all_data_sources():
-            data_source.delete()
+            data_source.get_db().delete_doc(data_source.get_id)
 
     def test_table_adapters(self):
         data_source_1 = get_sample_data_source()
@@ -172,6 +174,26 @@ class ConfigurableReportTableManagerDbTest(TestCase):
             {data_source_1._id, data_source_2._id},
             set([table_adapter.config._id for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
         )
+
+    @patch("corehq.apps.cachehq.mixins.invalidate_document")
+    def test_bad_spec_error(self, _):
+        ExpressionFactory.register("missing_expression", lambda x, y: x)
+        data_source_1 = get_sample_data_source()
+        data_source_1.configured_indicators[0] = {
+            "column_id": "date",
+            "type": "expression",
+            "expression": {
+                "type": "missing_expression",
+            },
+            "datatype": "datetime"
+        }
+        data_source_1.save()
+        del ExpressionFactory.spec_map["missing_expression"]
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([DynamicDataSourceProvider()])
+        table_manager.bootstrap()
+        self.assertEqual(0, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(0, len(table_manager.table_adapters_by_domain[ds_1_domain]))
 
     def _copy_data_source(self, data_source):
         data_source_json = data_source.to_json()
@@ -569,14 +591,14 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -655,14 +677,14 @@ class ReuseEvaluationContextTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -739,14 +761,14 @@ class AsyncIndicatorTest(TestCase):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -784,14 +806,14 @@ class AsyncIndicatorTest(TestCase):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=child_id,
                     case_name='child-name',
@@ -844,14 +866,14 @@ class AsyncIndicatorTest(TestCase):
         for i in range(3):
             form, cases = post_case_blocks(
                 [
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -916,7 +938,7 @@ def _save_sql_case(doc):
     with drop_connected_signals(case_post_save):
         form, cases = post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=doc['_id'],
                     case_name=doc['name'],

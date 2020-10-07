@@ -262,15 +262,6 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def bulk_get_revs(target_db, doc_ids):
-    """
-    return (_id, _rev) for every existing doc in doc_ids
-    if a doc id is not found in target_db, it is excluded from the result
-    """
-    result = target_db.all_docs(keys=list(doc_ids)).all()
-    return [(row['id'], row['value']['rev']) for row in result if not row.get('error')]
-
-
 def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
     """
     Map `fn` over every doc in `db` matching `ids`
@@ -365,3 +356,42 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
 
 def stale_ok():
     return settings.COUCH_STALE_QUERY
+
+
+def bulk_get_revs(target_db, doc_ids):
+    """
+    return (_id, _rev) for every existing doc in doc_ids
+    if a doc id is not found in target_db, it is excluded from the result
+    """
+    result = target_db.all_docs(keys=list(doc_ids)).all()
+    return [(row['id'], row['value']['rev']) for row in result if not row.get('error')]
+
+
+def get_revisions_info(db, doc_id):
+    """
+    :return: a list of revisions ordered newest to oldest.  Eg:
+    [{'rev': '3-583f2b050fc2099775b5a6ee573c0822', 'status': 'available'},
+     {'rev': '2-1584c6ba63613203ae5aa03bdf34fa9e', 'status': 'available'},
+     {'rev': '1-73ce55ebe921edf14e37a144706b1070', 'status': 'missing'}]
+    """
+    return db._request_session.get(
+        url=f'{db.uri}/{doc_id}',
+        params={'revs_info': 'true'}
+    ).json()['_revs_info']
+
+
+def get_old_rev(db, doc_id, rev):
+    return db._request_session.get(
+        url=f'{db.uri}/{doc_id}',
+        params={'rev': rev}
+    ).json()
+
+
+def iter_old_doc_versions(db, doc_id):
+    """
+    Returns an generator of old versions of the document
+    Note that there may be unavailable old revisions not included
+    """
+    for rev in get_revisions_info(db, doc_id):
+        if rev['status'] == 'available':
+            yield get_old_rev(db, doc_id, rev['rev'])

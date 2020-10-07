@@ -331,7 +331,7 @@ def save_case_updates(domain, case_id, case_updates):
             kwargs[case_property] = value
         else:
             case_update[case_property] = value
-    case_block = CaseBlock(
+    case_block = CaseBlock.deprecated_init(
         case_id=case_id,
         create=False,
         update=case_update,

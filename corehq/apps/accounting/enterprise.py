@@ -1,6 +1,8 @@
 import re
 from datetime import datetime, timedelta
 
+from couchdbkit import ResourceNotFound
+
 from django.utils.translation import ugettext as _
 
 from memoized import memoized
@@ -22,7 +24,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, Invitation, UserRole
 from corehq.util.quickcache import quickcache
 
 
@@ -136,10 +138,23 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]'),
-                _('Last Access Date [UTC]')] + headers
+        return [_('Email Address'), _('Name'), _('Role'), _('Last Login [UTC]'),
+                _('Last Access Date [UTC]'), _('Status')] + headers
 
     def rows_for_domain(self, domain_obj):
+
+        def _get_role_name(role):
+            if role:
+                if role == 'admin':
+                    return role
+                else:
+                    role_id = role[len('user-role:'):]
+                    try:
+                        return UserRole.get(role_id).name
+                    except ResourceNotFound:
+                        return _('Unknown Role')
+            else:
+                return 'N/A'
         rows = []
         for user in get_all_user_rows(domain_obj.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
@@ -150,11 +165,23 @@ class EnterpriseWebUserReport(EnterpriseReport):
                 last_accessed_domain = domain_membership.last_accessed
             rows.append(
                 [
-                    user.full_name,
                     user.username,
+                    user.full_name,
                     user.role_label(domain_obj.name),
                     self.format_date(user.last_login),
-                    last_accessed_domain
+                    last_accessed_domain,
+                    _('Active User')
+                ]
+                + self.domain_properties(domain_obj))
+        for invite in Invitation.by_domain(domain_obj.name):
+            rows.append(
+                [
+                    invite.email,
+                    'N/A',
+                    _get_role_name(invite.role),
+                    'N/A',
+                    'N/A',
+                    _('Invited')
                 ]
                 + self.domain_properties(domain_obj))
         return rows
@@ -172,8 +199,8 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseMobileWorkerReport, self).headers
-        return [_('Username'), _('Name'), _('Created Date [UTC]'), _('Last Sync [UTC]'),
-                _('Last Submission [UTC]'), _('CommCare Version')] + headers
+        return [_('Username'), _('Name'), _('Email Address'), _('Role'), _('Created Date [UTC]'),
+                _('Last Sync [UTC]'), _('Last Submission [UTC]'), _('CommCare Version'), _('User ID')] + headers
 
     def rows_for_domain(self, domain_obj):
         rows = []
@@ -183,10 +210,13 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
             rows.append([
                 re.sub(r'@.*', '', user.username),
                 user.full_name,
+                user.email,
+                user.role_label(domain_obj.name),
                 self.format_date(user.created_on),
                 self.format_date(user.reporting_metadata.last_sync_for_user.sync_date),
                 self.format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
+                user.user_id
             ] + self.domain_properties(domain_obj))
         return rows
 

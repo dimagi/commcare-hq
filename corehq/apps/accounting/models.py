@@ -154,6 +154,11 @@ class SoftwarePlanEdition(object):
         PRO,
         ADVANCED,
     ]
+    SELF_RENEWABLE_EDITIONS = [
+        ADVANCED,
+        PRO,
+        STANDARD,
+    ]
 
 
 class SoftwarePlanVisibility(object):
@@ -3400,6 +3405,15 @@ class CreditLine(models.Model):
             account=account, subscription__exact=None, is_active=True
         ).filter(
             is_product=is_product, feature_type__exact=feature_type
+        ).all()
+
+    @classmethod
+    def get_non_general_credits_for_account(cls, account):
+        return cls.objects.filter(
+            account=account, subscription__exact=None, is_active=True
+        ).filter(
+            Q(is_product=True) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod

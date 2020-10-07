@@ -19,22 +19,22 @@
       <div class="controls">
         <table class="table table-bordered">
           <thead>
-          <tr>
-            <th>{% trans 'Phone Number' %}</th>
-            <th>{% trans 'Action' %}</th>
-          </tr>
+            <tr>
+              <th class="col-sm-4">{% trans 'Phone Number' %}</th>
+              <th class="col-sm-8">{% trans 'Action' %}</th>
+            </tr>
           </thead>
           <tbody data-bind="foreach: phone_numbers">
-          <tr>
-            <td><input type="text" data-bind="value: phone_number" /></td>
-            <td>
-              <button type="button"
-                      class="btn btn-danger"
-                      data-bind="click: $parent.removePhoneNumber">
-                <i class="fa fa-times"></i> {% trans 'Remove' %}
-              </button>
-            </td>
-          </tr>
+            <tr>
+              <td><input type="text" class="form-control" data-bind="value: phone_number" /></td>
+              <td>
+                <button type="button"
+                        class="btn btn-danger"
+                        data-bind="click: $parent.removePhoneNumber">
+                  <i class="fa fa-times"></i> {% trans 'Remove' %}
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
         <div>

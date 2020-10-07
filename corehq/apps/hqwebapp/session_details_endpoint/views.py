@@ -7,11 +7,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from dimagi.utils.parsing import json_format_datetime
-
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
+from corehq.middleware import TimeoutMiddleware
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -55,10 +54,7 @@ class SessionDetailsView(View):
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
-        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
-
-        session.set_expiry(timeout * 60)
-        session['last_request'] = json_format_datetime(datetime.datetime.utcnow())
+        TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=data.get('domain'))
         session.save()
 
         domains = set()

@@ -111,9 +111,11 @@
   <div class="container">
     <div class="spacer"></div>
     <div class="col-xs-6 col-sm-4 col-xs-offset-3 col-sm-offset-4">
-      <div class="appicon appicon-default js-start-app" <% if (imageUrl) { %>style="background-image: url('<%= imageUrl %>');"<% } %>>
+      <div class="appicon appicon-default js-start-app">
         <% if (!imageUrl) { %>
           <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
+        <% } else { %>
+          <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
         <% } %>
         <div class="appicon-title">
           <h3><%= appName %></h3>
@@ -125,9 +127,11 @@
 </script>
 
 <script id="row-template" type="text/template">
-  <div class="appicon appicon-default" <% if (imageUrl) { %>style="background-image: url('<%= imageUrl %>');"<% } %>>
+  <div class="appicon appicon-default">
     <% if (!imageUrl) { %>
       <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
+    <% } else { %>
+      <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
     <% } %>
     <div class="appicon-title">
       <h3><%- name %></h3>

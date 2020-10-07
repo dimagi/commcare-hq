@@ -26,6 +26,8 @@ from corehq.motech.openmrs.tasks import (
     import_patients_with_importer,
     poll_openmrs_atom_feeds,
 )
+from corehq.motech.views import ConnectionSettingsListView
+from corehq.util.view_utils import absolute_reverse
 
 TEST_DOMAIN = 'test-domain'
 
@@ -277,8 +279,8 @@ class OwnerTests(LocationHierarchyTestCase):
     def tearDownClass(cls):
         cls.bad_group.delete()
         cls.group.delete()
-        cls.mobile_worker.delete()
-        cls.web_user.delete()
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.web_user.delete(deleted_by=None)
         super().tearDownClass()
 
     def test_location_owner(self):
@@ -321,6 +323,9 @@ class OwnerTests(LocationHierarchyTestCase):
         """
         Notify on invalid owner_id
         """
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[TEST_DOMAIN])
+
         with get_importer() as importer:
             self.assertEqual(importer.owner_id, '123456')
             import_patients_with_importer(importer.to_json())
@@ -330,8 +335,20 @@ class OwnerTests(LocationHierarchyTestCase):
                 'Error importing patients for project space "test-domain" from '
                 'OpenMRS Importer "<OpenmrsImporter None admin@http://www.example.com/openmrs>": '
                 'owner_id "123456" is invalid.\r\n'
-                'Project space: test-domain\r\n'
-                'Remote API base URL: http://www.example.com/openmrs',
+                '\r\n'
+                f'Project space: {TEST_DOMAIN}\r\n'
+                'Remote API base URL: http://www.example.com/openmrs\r\n'
+                '\r\n'
+                '*Why am I getting this email?*\r\n'
+                'This address is configured in CommCare HQ as a notification '
+                'address for integration errors.\r\n'
+                '\r\n'
+                '*How do I unsubscribe?*\r\n'
+                'Open Connection Settings in CommCare HQ '
+                f'({connection_settings_url}) and remove your email address '
+                'from the "Addresses to send notifications" field for remote '
+                'connections. If necessary, please provide an alternate '
+                'address.',
 
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
@@ -341,17 +358,33 @@ class OwnerTests(LocationHierarchyTestCase):
         """
         Notify if owner_id is set to a NON-case-sharing group
         """
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[TEST_DOMAIN])
+
         with get_importer() as importer:
             importer.owner_id = self.bad_group._id
             import_patients_with_importer(importer.to_json())
             self.send_mail_mock.delay.assert_called_with(
                 'MOTECH Error',
 
-                'Error importing patients for project space "test-domain" from '
-                'OpenMRS Importer "<OpenmrsImporter None admin@http://www.example.com/openmrs>": '
-                f'owner_id "{importer.owner_id}" is invalid.\r\n'
-                'Project space: test-domain\r\n'
-                'Remote API base URL: http://www.example.com/openmrs',
+                f'Error importing patients for project space "{TEST_DOMAIN}" '
+                'from OpenMRS Importer "<OpenmrsImporter None '
+                'admin@http://www.example.com/openmrs>": owner_id '
+                f'"{importer.owner_id}" is invalid.\r\n'
+                '\r\n'
+                f'Project space: {TEST_DOMAIN}\r\n'
+                'Remote API base URL: http://www.example.com/openmrs\r\n'
+                '\r\n'
+                '*Why am I getting this email?*\r\n'
+                'This address is configured in CommCare HQ as a notification '
+                'address for integration errors.\r\n'
+                '\r\n'
+                '*How do I unsubscribe?*\r\n'
+                'Open Connection Settings in CommCare HQ '
+                f'({connection_settings_url}) and remove your email address '
+                'from the "Addresses to send notifications" field for remote '
+                'connections. If necessary, please provide an alternate '
+                'address.',
 
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
@@ -396,7 +429,7 @@ class OpenmrsAtomFeedsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.repeater.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.location.delete()
         cls.location_type.delete()
         cls.domain.delete()

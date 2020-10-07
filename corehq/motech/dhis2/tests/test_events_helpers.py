@@ -39,7 +39,7 @@ class TestDhis2EventsHelpers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.location.delete()
         cls.domain.delete()
         super().tearDownClass()

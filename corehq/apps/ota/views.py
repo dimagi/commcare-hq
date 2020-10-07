@@ -36,7 +36,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -49,16 +48,12 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-from corehq.apps.users.util import (
-    update_device_meta,
-    update_last_sync,
-    update_latest_builds,
-)
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
+from custom.icds_core.view_utils import check_authorization
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -104,37 +99,22 @@ def search(request, domain):
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
-    try:
-        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
-        search_es = case_search_criteria.search_es
-    except QueryMergeException as e:
-        return _handle_query_merge_exception(request, e)
+
+    case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    search_es = case_search_criteria.search_es
+
     try:
         hits = search_es.run().raw_hits
     except Exception as e:
-        return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
+        notify_exception(request, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        return HttpResponse(status=500)
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
-
-
-def _handle_query_merge_exception(request, exception):
-    notify_exception(request, str(exception), details=dict(
-        exception_type=type(exception),
-        original_query=getattr(exception, "original_query", None),
-        query_addition=getattr(exception, "query_addition", None)
-    ))
-    return HttpResponse(status=500)
-
-
-def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, str(exception), details=dict(
-        exception_type=type(exception),
-        **query_addition_debug_details
-    ))
-    return HttpResponse(status=500)
 
 
 @location_safe
@@ -193,6 +173,7 @@ def get_restore_params(request):
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
         'case_sync': request.GET.get('case_sync'),
+        'skip_fixtures': request.GET.get('skip_fixtures') == 'true',
     }
 
 
@@ -201,8 +182,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
-                         openrosa_version=None,
-                         case_sync=None):
+                         openrosa_version=None, case_sync=None,
+                         skip_fixtures=False):
     """
     :param domain: Domain being restored from
     :param couch_user: User performing restore
@@ -219,6 +200,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param user_id: ID of user performing restore (used in case of deleted user with same username)
     :param openrosa_version:
     :param case_sync: Override default case sync algorithm
+    :param skip_fixtures: Do not include fixtures in sync payload
     :return: Tuple of (http response, timing context or None)
     """
 
@@ -262,7 +244,15 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         and LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
     )
 
+    # Ensure fixtures are included if sync is full rather than incremental
+    if not since:
+        skip_fixtures = False
+
     app = get_app_cached(domain, app_id) if app_id else None
+    if app:
+        error_response = check_authorization(domain, couch_user, app.master_id)
+        if error_response:
+            return error_response, None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -282,6 +272,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         ),
         is_async=async_restore_enabled,
         case_sync=case_sync,
+        skip_fixtures=skip_fixtures
     )
     return restore_config.get_response(), restore_config.timing_context
 
@@ -300,23 +291,24 @@ def heartbeat(request, domain, app_build_id):
     """
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
-
-    info = {"app_id": app_id}
+    master_app_id = app_id
     try:
-        # mobile will send master app_id
-        config = GlobalAppConfig.by_app_id(domain, app_id)
+        info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
-        notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
-        config = GlobalAppConfig.by_app_id(domain, app.master_id)
-    else:
-        info.update({
-            "latest_apk_version": config.get_latest_apk_version(),
-            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
-        })
+        notify_exception(request, 'Received an invalid heartbeat request')
+        master_app_id = app.master_id if app else None
+        info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
+
+    info["app_id"] = app_id
+    if master_app_id:
+        error_response = check_authorization(domain, request.couch_user, master_app_id)
+        if error_response:
+            return error_response
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)

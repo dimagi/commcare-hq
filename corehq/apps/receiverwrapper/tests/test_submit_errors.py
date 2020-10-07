@@ -56,7 +56,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete()
+        cls.couch_user.delete(deleted_by=None)
         cls.domain.delete()
         super(SubmissionErrorTest, cls).tearDownClass()
 

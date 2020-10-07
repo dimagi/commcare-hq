@@ -28,6 +28,10 @@ def get_custom_data_models(domain_link, limit_types=None):
     return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain, params)
 
 
+def get_fixture(domain_link):
+    return _do_simple_request('linked_domain:fixtures', domain_link)
+
+
 def get_user_roles(domain_link):
     return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
@@ -68,6 +72,22 @@ def get_ucr_config(domain_link, report_config_id):
         "report": ReportConfiguration.wrap(response["report"]),
         "datasource": DataSourceConfiguration.wrap(response["datasource"]),
     }
+
+
+def get_data_dictionary(domain_link):
+    return _do_simple_request('linked_domain:data_dictionary', domain_link)
+
+
+def get_dialer_settings(domain_link):
+    return _do_simple_request('linked_domain:dialer_settings', domain_link)
+
+
+def get_otp_settings(domain_link):
+    return _do_simple_request('linked_domain:otp_settings', domain_link)
+
+
+def get_hmac_callout_settings(domain_link):
+    return _do_simple_request('linked_domain:hmac_callout_settings', domain_link)
 
 
 def _convert_app_from_remote_linking_source(app_json):

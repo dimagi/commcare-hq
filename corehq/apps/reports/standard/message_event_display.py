@@ -83,20 +83,20 @@ def get_sms_status_display(sms):
         if error:
             error_message = SMS.ERROR_MESSAGES.get(error, error)
             return '%s - %s' % (_('Error'), _(error_message))
-        else:
-            return _('Error')
-    elif not sms.processed:
+        return _('Error')
+    if not sms.processed:
         return _('Queued')
+    if sms.direction == INCOMING:
+        return _('Received')
+    if sms.is_status_pending():
+        detail = " " + _("message ID: {id}").format(id=sms.backend_message_id)
     else:
-        if sms.direction == INCOMING:
-            return _('Received')
-        elif sms.direction == OUTGOING:
-            if sms.workflow == WORKFLOW_FORWARD:
-                return _('Forwarded')
-            else:
-                return _('Sent')
-        else:
-            return _('Unknown')
+        detail = ""
+    if sms.direction == OUTGOING:
+        if sms.workflow == WORKFLOW_FORWARD:
+            return _('Forwarded') + detail
+        return _('Sent') + detail
+    return _('Unknown') + detail
 
 
 def _get_keyword_display(keyword_id, content_cache):

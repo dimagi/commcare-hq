@@ -9,7 +9,7 @@ Editing the model
 -----------------
 
 ``CustomDataFieldsDefinition``
-    This is a couch doc describing a particular schema.  It lists the
+    This is a SQL model describing a particular schema.  It lists the
     entity type, but aside from that is completely generic - there are no
     special functions here for *Custom User Data*, for example.
 

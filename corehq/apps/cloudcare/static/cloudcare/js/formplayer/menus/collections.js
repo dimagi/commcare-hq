@@ -1,11 +1,10 @@
-/*global FormplayerFrontend, Util */
+/*global Backbone */
 
-FormplayerFrontend.module("Menus.Collections", function (Collections, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/menus/collections", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Util = hqImport("cloudcare/js/formplayer/utils/util");
 
-    Collections.MenuSelect = Backbone.Collection.extend({
-
-        model: FormplayerFrontend.Menus.Models.MenuSelect,
-
+    var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
             'title',
             'type',
@@ -45,7 +44,11 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'isPersistentDetail',
         ],
 
-        parse: function (response, request) {
+        formProperties: [
+            'langs',
+        ],
+
+        parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
             if (response.selections) {
@@ -67,6 +70,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
                 return response.details;
             } else if (response.tree) {
                 // form entry time, doggy
+                _.extend(this, _.pick(response, this.formProperties));
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
             }
         },
@@ -76,5 +80,9 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });
+
+    return function (response, options) {
+        return new MenuSelect(response, options);
+    };
 });
 

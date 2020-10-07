@@ -33,10 +33,10 @@
   <link type="text/css"
         rel="stylesheet"
         media="screen"
-        href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
+        href="{% static "jquery-ui-built-themes/redmond/jquery-ui.min.css" %}" />
 
   <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-  <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+  <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/base/jquery-ui.min.css' %}">
   <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
   <link type="text/css"
         rel="stylesheet"
@@ -69,13 +69,11 @@
 {% include 'formplayer/confirmation_modal.html' %}
 {% include 'formplayer/users.html' %}
 {% include 'formplayer/progress.html' %}
-
-{# javascript #}
-{% include 'formplayer/dependencies.html' %}
 {% include 'formplayer/query_view.html' %}
 
-{% block js %}{% endblock %}
-{% block js-inline %}{% endblock %}
+{% block js %}{{ block.super }}
+  {% include 'formplayer/dependencies.html' %}
+{% endblock %}
 
 <div class="initial-page-data" class="hide">
   {% block initial_page_data %}

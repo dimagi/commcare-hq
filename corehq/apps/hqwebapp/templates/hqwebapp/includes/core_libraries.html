@@ -17,11 +17,7 @@
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
 {% endif %}
 
-{% if request.use_legacy_jquery %}
-    <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
-{% else %}
-    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-{% endif %}
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 {% compress js %}
     <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
     <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
@@ -31,20 +27,38 @@
 {% if jquery_ui %}
     {% compress js %}
         <!-- UI libraries needed for all other widgets and interactions -->
-        <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
+
+        <!-- this defines jquery ui ($.ui) so this MUST come first -->
+        <script src="{% static 'jquery-ui/ui/version.js' %}"></script>
+
+        <!-- all files originally in core.js, as that file now requires use of an AMD and it will be deprecated in 1.13 -->
+        <script src="{% static 'jquery-ui/ui/data.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/disable-selection.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/focusable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/form.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/ie.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/keycode.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/labels.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/plugin.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/safe-active-element.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/safe-blur.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/scroll-parent.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/tabbable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/unique-id.js' %}"></script>
+
         <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
 
         <!-- Individual widgets and interactions -->
-        <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/mouse.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/menu.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/autocomplete.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/button.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/datepicker.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/draggable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/resizable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/droppable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widgets/sortable.js' %}"></script>
     {% endcompress %}
 {% endif %}
 
@@ -71,7 +85,7 @@
 {% endcompress %}
 
 {% if ko or hq %}
-    <script src="{% static 'knockout/dist/knockout.js' %}"></script>{# already minified #}
+    <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
 
     {% if hq %}
         {% compress js %}

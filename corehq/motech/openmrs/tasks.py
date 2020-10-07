@@ -123,7 +123,7 @@ def get_addpatient_caseblock(patient, importer, owner_id):
     """
     case_id = uuid.uuid4().hex
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=True,
         case_id=case_id,
         owner_id=owner_id,
@@ -139,7 +139,7 @@ def get_updatepatient_caseblock(case, patient, importer):
     Updates a case with imported patient details. Does not change owner.
     """
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=False,
         case_id=case.get_id,
         case_name=case_name,

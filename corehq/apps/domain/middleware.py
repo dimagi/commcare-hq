@@ -1,9 +1,11 @@
+# Use modern Python
+
 from django.template.response import TemplateResponse
+# External imports
 from django.utils.deprecation import MiddlewareMixin
 
-from dimagi.utils.couch.cache import cache_core
-
 from corehq.apps.accounting.models import DefaultProductPlan, Subscription
+from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.toggles import DATA_MIGRATION
 
 
@@ -46,29 +48,17 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
 class DomainHistoryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
+        if getattr(request, '_bypass_sessions', False):
+            return response
+
         if hasattr(request, 'domain') and getattr(response, '_remember_domain', True):
-            self.remember_domain_visit(request)
+            self.remember_domain_visit(request, response)
         return response
 
-    def remember_domain_visit(self, request):
-        if hasattr(request, 'couch_user') and request.couch_user:
-            set_last_visited_domain(request.couch_user, request.domain)
-
-
-def get_last_visited_domain(couch_user):
-    client = cache_core.get_redis_client()
-    return client.get(_last_visited_domain_cache_key(couch_user))
-
-
-def set_last_visited_domain(couch_user, domain):
-    client = cache_core.get_redis_client()
-    cache_expiration = 60 * 60 * 24 * 7
-    cache_key = _last_visited_domain_cache_key(couch_user)
-    client.set(cache_key, domain, timeout=cache_expiration)
-
-
-def _last_visited_domain_cache_key(couch_user):
-    return 'last-visited-domain-%s' % couch_user.username
+    def remember_domain_visit(self, request, response):
+        last_visited_domain = request.session.get('last_visited_domain')
+        if last_visited_domain != request.domain:
+            request.session['last_visited_domain'] = request.domain
 
 
 class DomainMigrationMiddleware(MiddlewareMixin):

@@ -28,7 +28,6 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
-from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.quickcache import quickcache
 
 from .models import (
@@ -401,29 +400,6 @@ class LocationFormSet(object):
 
         location_data = self.custom_location_data.get_data_to_save()
         self.location_form.save(metadata=location_data)
-
-    @property
-    @memoized
-    def user(self):
-        user_data = (self.custom_user_data.get_data_to_save()
-                     if self.custom_user_data.is_valid() else {})
-        username = self.user_form.cleaned_data.get('username', "")
-        password = self.user_form.cleaned_data.get('new_password', "")
-        first_name = self.user_form.cleaned_data.get('first_name', "")
-        last_name = self.user_form.cleaned_data.get('last_name', "")
-
-        return CommCareUser.create(
-            self.domain,
-            username,
-            password,
-            created_by=self.request.user,
-            created_via=USER_CHANGE_VIA_WEB,
-            device_id="Generated from HQ",
-            first_name=first_name,
-            last_name=last_name,
-            user_data=user_data,
-            commit=False,
-        )
 
     def _get_custom_location_data(self, bound_data, is_new):
         from .views import LocationFieldsView

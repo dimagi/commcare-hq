@@ -151,6 +151,7 @@ class Attachment(IsImageMixin):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
+        # TODO remove when Django 1 is no longer supported
         if fileobj is None:
             assert not isinstance(self.raw_content, BlobMeta), repr(self)
             # work around Django 1.11 bug, fixed in 2.0
@@ -1394,6 +1395,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.type == other.type and
             self.form_id == other.form_id
         )
+
+    def __hash__(self):
+        return hash((self.case_id, self.type, self.form_id))
 
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):

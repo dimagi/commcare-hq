@@ -34,7 +34,6 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
-from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
@@ -44,8 +43,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds.view_utils import is_icds_cas_project
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
+from custom.icds_core.view_utils import is_icds_cas_project
 
 mark_safe_lazy = lazy(mark_safe, str)
 
@@ -246,9 +244,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     )
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        api_key_status = kwargs.pop('api_key_status') if 'api_key_status' in kwargs else None
-        api_key_exists = kwargs.pop('api_key_exists') if 'api_key_exists' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -257,30 +254,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 ugettext_lazy('Username'), self.username)
             )
-
-        api_key_button = [
-            twbscrispy.StrictButton(
-                ugettext_lazy('Generate New API Key'),
-                type="button",
-                id='generate-api-key',
-                css_class='btn-default',
-            ),
-        ]
-        if api_key_exists:
-            api_key_button.append(
-                crispy.HTML('&nbsp;&nbsp;{}'.format(ugettext_lazy(
-                    'NOTE: Generating a new API Key will cause the '
-                    'current Key to become inactive.'
-                ))),
-            )
-
-        api_key_controls = [
-            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key_status),
-            hqcrispy.FormActions(
-                crispy.Div(*api_key_button),
-                css_class="form-group"
-            ),
-        ]
 
         self.fields['language'].label = ugettext_lazy("My Language")
 
@@ -310,7 +283,13 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
-                crispy.Div(*api_key_controls),
+                crispy.Div(hqcrispy.StaticField(
+                    ugettext_lazy('API Key'),
+                    mark_safe(
+                        ugettext_lazy('API key management has moved <a href="{}">here</a>.')
+                        .format(reverse(ApiKeyView.urlname))
+                    ),
+                )),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -381,7 +360,7 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
+class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
@@ -436,11 +415,7 @@ class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
         )
 
     def clean_new_password1(self):
-        password1 = decode_password(self.cleaned_data.get('new_password1'))
-        if password1 == '':
-            raise ValidationError(
-                _("Password cannot be empty"), code='new_password1_empty',
-            )
+        password1 = self.cleaned_data.get('new_password1')
         if self.project.strong_mobile_passwords:
             return clean_password(password1)
         return password1
@@ -761,7 +736,7 @@ class NewMobileWorkerForm(forms.Form):
         return clean_mobile_worker_username(self.domain, username)
 
     def clean_new_password(self):
-        cleaned_password = decode_password(self.cleaned_data.get('new_password'))
+        cleaned_password = self.cleaned_data.get('new_password')
         if self.project.strong_mobile_passwords:
             return clean_password(cleaned_password)
         return cleaned_password
@@ -1113,71 +1088,6 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         return True
 
 
-class SelfRegistrationForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain')
-        require_email = kwargs.pop('require_email', False)
-
-        super(SelfRegistrationForm, self).__init__(*args, **kwargs)
-
-        if require_email:
-            self.fields['email'].required = True
-
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-xs-4'
-        self.helper.field_class = 'col-xs-8'
-        layout_fields = [
-            crispy.Fieldset(
-                _('Register'),
-                crispy.Field('username', placeholder='sam123'),
-                crispy.Field('password'),
-                crispy.Field('password2'),
-                crispy.Field('email'),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _('Register'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
-            ),
-        ]
-        self.helper.layout = crispy.Layout(*layout_fields)
-
-    username = TrimmedCharField(
-        required=True,
-        label=ugettext_lazy('Create a Username'),
-    )
-    password = forms.CharField(
-        required=True,
-        label=ugettext_lazy('Create a Password'),
-        widget=PasswordInput(),
-    )
-    password2 = forms.CharField(
-        required=True,
-        label=ugettext_lazy('Re-enter Password'),
-        widget=PasswordInput(),
-    )
-    email = forms.EmailField(
-        required=False,
-        label=ugettext_lazy('Email address (used for tasks like resetting your password)'),
-    )
-
-    def clean_username(self):
-        return clean_mobile_worker_username(
-            self.domain,
-            self.cleaned_data.get('username')
-        )
-
-    def clean_password2(self):
-        if self.cleaned_data.get('password') != self.cleaned_data.get('password2'):
-            raise forms.ValidationError(_('Passwords do not match.'))
-
-
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
         max_length=50, help_text=ugettext_lazy('Please enter number, including country code, in digits only.')
@@ -1230,8 +1140,9 @@ class CommCareUserFormSet(object):
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
-            existing_custom_data=self.editable_user.user_data,
+            existing_custom_data=self.editable_user.metadata,
             post_dict=self.data,
+            ko_model="custom_fields",
         )
 
     def is_valid(self):
@@ -1239,7 +1150,7 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
+        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
         return self.user_form.update_user()
 
 
@@ -1340,3 +1251,7 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+
+class CreateDomainPermissionsMirrorForm(forms.Form):
+    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)

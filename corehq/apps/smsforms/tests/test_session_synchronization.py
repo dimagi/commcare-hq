@@ -47,6 +47,40 @@ def test_session_synchronization():
     assert not XFormsSessionSynchronization.clear_stale_channel_claim(SMSChannel(BACKEND_ID, phone_number_a))
 
 
+@mock.patch.object(SQLXFormsSession, 'by_session_id',
+                   lambda session_id: FakeSession.by_session_id(session_id))
+def test_auto_clear_stale_session_on_claim():
+    phone_number_a = _clean_up_number('15555555555')
+    session_a_1 = FakeSession(session_id=str(uuid4()), phone_number=phone_number_a, connection_id='Alpha')
+    session_a_2 = FakeSession(session_id=str(uuid4()), phone_number=phone_number_a, connection_id='Beta')
+
+    # Nothing set yet, so it can be claimed
+    assert XFormsSessionSynchronization.channel_is_available_for_session(session_a_1)
+    # And so can the other one
+    assert XFormsSessionSynchronization.channel_is_available_for_session(session_a_2)
+    # Claim succeeds
+    assert XFormsSessionSynchronization.claim_channel_for_session(session_a_1)
+    # Claim for same channel fails
+    assert not XFormsSessionSynchronization.channel_is_available_for_session(session_a_2)
+    assert not XFormsSessionSynchronization.claim_channel_for_session(session_a_2)
+    # Set the current active session to closed manually, leaving a dangling/stale session claim
+    session_a_1.session_is_open = False
+    # Channel is now available
+    assert XFormsSessionSynchronization.channel_is_available_for_session(session_a_2)
+    # And the call above cleared the channel claim but left the contact
+    assert (
+        XFormsSessionSynchronization.get_running_session_info_for_channel(session_a_2.get_channel())
+        == RunningSessionInfo(session_id=None, contact_id='Alpha')
+    )
+    # Claim for the channel now succeeds
+    assert XFormsSessionSynchronization.claim_channel_for_session(session_a_2)
+    # And it is now the active session for the channel
+    assert (
+        XFormsSessionSynchronization.get_running_session_info_for_channel(session_a_2.get_channel()).session_id
+        == session_a_2.session_id
+    )
+
+
 class FakeSession:
     expire_after = 60
     _global_objects = {}

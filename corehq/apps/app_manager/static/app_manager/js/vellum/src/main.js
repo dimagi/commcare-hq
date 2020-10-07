@@ -15,10 +15,10 @@ requirejs.config({
             "save-button",
             "ckeditor",
             "ckeditor-jquery",
-            "css/css!../bower_components/codemirror/lib/codemirror",
-            "css/css!../bower_components/jstree/dist/themes/default/style",
+            "css/css!../node_modules/codemirror/lib/codemirror",
+            "css/css!../node_modules/jstree/dist/themes/default/style",
             "css/css!yui-combo",
-            "css/css!../bower_components/At.js/dist/css/jquery.atwho"
+            "css/css!../node_modules/At.js/dist/css/jquery.atwho"
         ],
         "main-components": [
             "vellum/core",

@@ -7,6 +7,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
@@ -20,7 +21,7 @@ from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import get_form_ready_to_save
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from .base import BasePillowTestCase
 
@@ -28,6 +29,7 @@ from .base import BasePillowTestCase
 TEST_DOMAIN = 'user-pillow-test'
 
 
+@es_test
 class UserPillowTestBase(BasePillowTestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
@@ -35,7 +37,7 @@ class UserPillowTestBase(BasePillowTestCase):
         self.elasticsearch = get_es_new()
         delete_all_users()
         ensure_index_deleted(self.index_info.index)
-        initialize_index(self.elasticsearch, self.index_info)
+        initialize_index_and_mapping(self.elasticsearch, self.index_info)
 
     @classmethod
     def setUpClass(cls):
@@ -47,6 +49,7 @@ class UserPillowTestBase(BasePillowTestCase):
         super(UserPillowTestBase, self).tearDown()
 
 
+@es_test
 class UserPillowTest(UserPillowTestBase):
 
     def test_kafka_user_pillow(self):
@@ -55,7 +58,7 @@ class UserPillowTest(UserPillowTestBase):
     def test_kafka_user_pillow_deletion(self):
         user = self._make_and_test_user_kafka_pillow('test-kafka-user_deletion')
         # soft delete
-        user.retire()
+        user.retire(deleted_by=None)
 
         # send to kafka
         since = get_topic_offset(topics.COMMCARE_USER)

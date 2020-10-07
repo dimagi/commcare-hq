@@ -263,7 +263,7 @@ class AutoFilterTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.sheel.delete()
+        cls.sheel.delete(deleted_by=None)
         cls.nyc.delete()
         cls.somerville.delete()
         cls.cambridge.delete()

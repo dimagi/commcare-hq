@@ -27,6 +27,8 @@ from .views import (
     test_httpdigest,
     undo_remove_web_user,
     verify_phone_number,
+    delete_domain_permission_mirror,
+    create_domain_permission_mirror,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -36,7 +38,6 @@ from .views.mobile.groups import (
 )
 from .views.mobile.users import (
     CommCareUsersLookup,
-    CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
     CreateCommCareUserModal,
@@ -59,7 +60,6 @@ from .views.mobile.users import (
     reset_demo_user_restore,
     restore_commcare_user,
     toggle_demo_mode,
-    update_user_data,
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
@@ -93,6 +93,10 @@ urlpatterns = [
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
+    url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
+        name='delete_domain_permission_mirror'),
+    url(r'^enterprise/create_domain_permission_mirror/$', create_domain_permission_mirror,
+        name='create_domain_permission_mirror'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
@@ -108,7 +112,6 @@ urlpatterns = [
     url(r'^commcare/fields/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$', EditCommCareUserView.as_view(),
         name=EditCommCareUserView.urlname),
-    url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/user_data/$', update_user_data, name='update_user_data'),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
@@ -148,8 +151,6 @@ urlpatterns = [
         name=CreateCommCareUserModal.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
-    url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
-        name=CommCareUserSelfRegistrationView.urlname),
     url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname),
 ] + [

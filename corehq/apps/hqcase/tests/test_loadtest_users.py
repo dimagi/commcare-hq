@@ -32,7 +32,7 @@ class LoadtestUserTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
 

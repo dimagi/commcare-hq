@@ -20,11 +20,13 @@ domains, and they store additional mappings allowing you to query on form
 and case properties (not just metadata).
 
 Each index has a corresponding mapping file in ``corehq/pillows/mappings/``.
-Each mapping has a hash that reflects the current state of the mapping.
-This is appended to the index name so the index is called something like
+Each mapping has a hash that reflects the current state of the mapping. This
+can just be a random alphanumeric string.
+The hash is appended to the index name so the index is called something like
 ``xforms_1cce1f049a1b4d864c9c25dc42648a45``.  Each type of index has an alias
 with the short name, so you should normally be querying just ``xforms``, not
-the fully specified index+hash.
+the fully specified index+hash. All of HQ code except the index maintenance
+code uses aliases to read and write data to indices.
 
 Whenever the mapping is changed, this hash should be updated.  That will
 trigger the creation of a new index on deploy (by the ``$ ./manage.py
@@ -63,9 +65,16 @@ expected to return a ``doc_dict``, so just add the ``username`` to that.
 Building the new index
 ''''''''''''''''''''''
 Once you've made the change, you'll need to build a new index which uses
-that new mapping, so you'll have to update the hash at the top of the file.
-This can just be a random alphanumeric string.  This will trigger a preindex
-as outlined in the `Indexes` section.
+that new mapping. Updating index name in the mapping file triggers HQ to
+create the new index with new mapping and reindex all data, so you'll
+have to update the index hash and alias at the top of the mapping file.
+The hash suffix to the index can just be a random alphanumeric string and
+is usually the date of the edit by convention. The alias should also be updated
+to a new one of format ``xforms_<date-modified>`` (the date is just by convention), so that
+production operations continue to use the old alias pointing to existing index.
+This will trigger a preindex as outlined in the `Indexes` section. In subsequent commits
+alias can be flipped back to what it was, for example ``xforms``. Changing the alias
+name doesn't trigger a reindex.
 
 
 Updating indexes in a production environment

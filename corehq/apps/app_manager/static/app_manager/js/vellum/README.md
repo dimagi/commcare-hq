@@ -93,26 +93,27 @@ Tests
 Make sure everything is up to date:
 
 ```
-$ bower update
-$ npm update
+$ yarn upgrade
 ```
 
 Test in a browser:
 ```
-$ `npm bin`/http-server -c-1
-$ chromium-browser http://localhost:8080
+$ npm run testserver
+$ chromium-browser http://localhost:8088
 ```
 
 By default, the test page will load the non-built version unless a `built`
 parameter is present in the query string.
 
-Commands to run tests headlessly:
+Commands to run tests headlessly (make sure `npm run testserver` is called in the background):
 ```
-grunt test
-grunt test --grep="test grep"
+./test
 ```
 
-You can also use `grunt watch` to test as file changes happen.
+or to run a specific test:
+```
+./test "Name of specific test"
+```
 
 Contributing
 ------------
@@ -121,7 +122,7 @@ Follow the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
 
 Install dependencies:
 ```
-$ npm install
+$ yarn install
 ```
 
 Build optimized version (test locally by changing `useBuilt` in `tests/main.js`):

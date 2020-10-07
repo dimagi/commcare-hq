@@ -132,7 +132,7 @@ ENV Vars
 ~~~~~~~~
 
 * JS_SETUP=yes
-  * Run `npm` and `bower` installs
+  * Run `yarn` installs
 * TEST=[javascript|python|python-sharded]
   * javascript: extra setup and config for JS tests. Also only run JS tests
   * python: default tests

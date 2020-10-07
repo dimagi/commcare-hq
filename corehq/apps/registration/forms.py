@@ -19,7 +19,6 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -241,7 +240,7 @@ class RegisterWebUserForm(forms.Form):
         return data
 
     def clean_password(self):
-        return clean_password(decode_password(self.cleaned_data.get('password')))
+        return clean_password(self.cleaned_data.get('password'))
 
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
@@ -332,7 +331,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
                                <span data-bind="text: passwordHelp, css: color">
                                """))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        captcha = CaptchaField(_("Type the letters in the box"))
+        captcha = CaptchaField(label=_("Type the letters in the box"))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",

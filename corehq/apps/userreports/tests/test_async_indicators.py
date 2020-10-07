@@ -48,36 +48,6 @@ class RunAsynchronousTest(SimpleTestCase):
         adapter = get_indicator_adapter(indicator_configuration)
         self.assertTrue(adapter.run_asynchronous)
 
-    # def test_related_doc_expression(self):
-    #     indicator_configuration = self._create_data_source_config([{
-    #         "datatype": "string",
-    #         "type": "expression",
-    #         "column_id": "confirmed_referral_target",
-    #         "expression": {
-    #             "type": "related_doc",
-    #             "related_doc_type": "CommCareUser",
-    #             "doc_id_expression": {
-    #                 "type": "property_path",
-    #                 "property_path": ["form", "meta", "userID"]
-    #             },
-    #             "value_expression": {
-    #                 "type": "property_path",
-    #                 "property_path": [
-    #                     "user_data",
-    #                     "confirmed_referral_target"
-    #                 ]
-    #             }
-    #         }
-    #     }])
-    #
-    #     adapter = get_indicator_adapter(indicator_configuration)
-    #     self.assertTrue(adapter.run_asynchronous)
-    #
-    # def test_named_expression(self):
-    #     indicator_configuration = get_data_source_with_related_doc_type()
-    #     adapter = get_indicator_adapter(indicator_configuration)
-    #     self.assertTrue(adapter.run_asynchronous)
-
 
 class TestBulkUpdate(TestCase):
     def tearDown(self):

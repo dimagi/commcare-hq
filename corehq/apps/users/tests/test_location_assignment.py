@@ -1,15 +1,17 @@
-import copy
 from datetime import datetime
 
 from django.test import TestCase
 
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import delete_all_locations
-from corehq.apps.users.management.commands import add_multi_location_property
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import refresh_elasticsearch_index
-from corehq.util.test_utils import generate_cases
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.testing import sync_users_to_es
 
 
 class CCUserLocationAssignmentTest(TestCase):
@@ -42,7 +44,7 @@ class CCUserLocationAssignmentTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(CCUserLocationAssignmentTest, self).tearDown()
 
     def test_set_location(self):
@@ -99,12 +101,17 @@ class CCUserLocationAssignmentTest(TestCase):
         self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([])
 
+    @sync_users_to_es()
     def test_deleting_location_updates_user(self):
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
         self.user.reset_locations(self.loc_ids)
-        refresh_elasticsearch_index('users')
+        self.es.indices.refresh(USER_INDEX)
         self.loc1.sql_location.full_delete()
         self.loc2.sql_location.full_delete()
         self.assertAssignedLocations([])
+        ensure_index_deleted(USER_INDEX)
 
     def test_no_commit(self):
         self.user.set_location(self.loc1, commit=False)
@@ -112,7 +119,7 @@ class CCUserLocationAssignmentTest(TestCase):
         self.assertEqual(saved_user.get_sql_location(self.domain), None)
 
     def test_create_with_location(self):
-        self.addCleanup(self.user.delete)
+        self.addCleanup(self.user.delete, deleted_by=None)
         self.user = CommCareUser.create(
             domain=self.domain,
             username='cc2',
@@ -173,7 +180,7 @@ class WebUserLocationAssignmentTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(WebUserLocationAssignmentTest, self).tearDown()
 
     def test_set_location(self):
@@ -235,82 +242,3 @@ class WebUserLocationAssignmentTest(TestCase):
         membership = self.user.get_domain_membership(self.domain)
         self.assertNotEqual(membership.location_id, expected)
         self.assertTrue(expected in membership.assigned_location_ids)
-
-
-def cc_user(location_id=None, assigned_location_ids=None, user_data={}):
-    doc = {
-        'location_id': location_id,
-    }
-    if assigned_location_ids is not None:
-        doc['assigned_location_ids'] = assigned_location_ids
-
-    user = copy.deepcopy(doc)
-    user.update({
-        'doc_type': 'CommCareUser',
-        'user_data': user_data,
-        'domain_membership': doc
-    })
-    return user
-
-
-def user_data(val):
-    return {'commcare_location_ids': val}
-
-
-def web_user(location_id=None, assigned_location_ids=None):
-    user = cc_user(location_id, assigned_location_ids)
-
-    return {
-        'doc_type': 'WebUser',
-        'domain_memberships': [user['domain_membership']]
-    }
-
-
-@generate_cases([
-    (
-        cc_user(),
-        cc_user(),
-        False
-    ),
-    (
-        cc_user('ca', ['ca'], user_data=user_data('ca')),
-        cc_user('ca', ['ca'], user_data=user_data('ca')),
-        False
-    ),
-    (
-        cc_user('ab'),
-        cc_user('ab', ['ab'], user_data=user_data('ab')),
-        True
-    ),
-    (
-        cc_user('a', ['b']),
-        cc_user('a', ['b', 'a'], user_data=user_data('b a')),
-        True
-    ),
-    (
-        web_user(),
-        web_user(),
-        False
-    ),
-    (
-        web_user('a', ['a']),
-        web_user('a', ['a']),
-        False
-    ),
-    (
-        web_user('a'),
-        web_user('a', ['a']),
-        True
-    ),
-    (
-        web_user('a', ['b']),
-        web_user('a', ['b', 'a']),
-        True
-    ),
-])
-def test_migration(self, user, expected, should_migrate):
-    migration = add_multi_location_property.Command().migrate_user(user)
-    self.assertEqual(bool(migration), should_migrate)
-    if should_migrate:
-        actual = migration.doc
-        self.assertEqual(actual, expected)

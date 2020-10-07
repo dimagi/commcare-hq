@@ -51,7 +51,7 @@ class ImporterTest(TestCase):
         delete_all_cases()
 
     def tearDown(self):
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         self.domain_obj.delete()
         super(ImporterTest, self).tearDown()
 
@@ -393,7 +393,7 @@ class ImporterTest(TestCase):
 
         res = self.import_mock_file([
             ['case_id', 'name', 'owner_id', 'owner_name'],
-            ['', 'location-owner-id', location.group_id, ''],
+            ['', 'location-owner-id', location.location_id, ''],
             ['', 'location-owner-code', '', location.site_code],
             ['', 'location-owner-name', '', location.name],
             ['', 'duplicate-location-name', '', duplicate_loc.name],
@@ -402,9 +402,9 @@ class ImporterTest(TestCase):
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
 
-        self.assertEqual(cases['location-owner-id'].owner_id, location.group_id)
-        self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
-        self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
+        self.assertEqual(cases['location-owner-id'].owner_id, location.location_id)
+        self.assertEqual(cases['location-owner-code'].owner_id, location.location_id)
+        self.assertEqual(cases['location-owner-name'].owner_id, location.location_id)
 
         error_message = exceptions.DuplicateLocationName.title
         error_column_name = None
@@ -430,34 +430,33 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def test_columns_and_rows_align(self):
-        case_owner = CommCareUser.create(self.domain, 'username', 'pw', None, None)
-        res = self.import_mock_file([
-            ['case_id', 'name', '', 'favorite_color', 'owner_id'],
-            ['', 'Jeff', '', 'blue', case_owner._id],
-            ['', 'Caroline', '', 'yellow', case_owner._id],
-        ])
-        self.assertEqual(res['errors'], {})
-
-        case_ids = self.accessor.get_case_ids_in_domain()
-        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
-        self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
-        self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
-        self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
-        self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
+        with get_commcare_user(self.domain) as case_owner:
+            res = self.import_mock_file([
+                ['case_id', 'name', '', 'favorite_color', 'owner_id'],
+                ['', 'Jeff', '', 'blue', case_owner._id],
+                ['', 'Caroline', '', 'yellow', case_owner._id],
+            ])
+            self.assertEqual(res['errors'], {})
+            case_ids = self.accessor.get_case_ids_in_domain()
+            cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+            self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
+            self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
+            self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
+            self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
     def test_user_can_access_location(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],
-                ['', 'Leonard Nimoy', inc.group_id],
-                ['', 'Kapil Dev', dsi.group_id],
-                ['', 'Quinton Fortune', dsa.group_id],
+                ['', 'Leonard Nimoy', inc.location_id],
+                ['', 'Kapil Dev', dsi.location_id],
+                ['', 'Quinton Fortune', dsa.location_id],
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
-        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.group_id)
+        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.location_id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
         error_col = 'owner_id'
@@ -517,7 +516,7 @@ def restrict_user_to_location(test_case, location):
         yield
     finally:
         test_case.couch_user = orig_user
-        restricted_user.delete()
+        restricted_user.delete(deleted_by=None)
 
 
 @contextmanager
@@ -532,3 +531,12 @@ def make_business_units(domain, shares_cases=True):
     finally:
         for obj in dsa, dsi, inc, dimagi, bu:
             obj.delete()
+
+
+@contextmanager
+def get_commcare_user(domain_name):
+    user = CommCareUser.create(domain_name, 'username', 'pw', None, None)
+    try:
+        yield user
+    finally:
+        user.delete(deleted_by=None)

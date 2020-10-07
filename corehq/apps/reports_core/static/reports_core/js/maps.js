@@ -3,11 +3,15 @@ hqDefine('reports_core/js/maps', function () {
     var module = {},
         privates = {};
 
+    // helpful article on migrating to new mapbox api and why to include tileSize=512 and zoomOffset=-1
+    // https://docs.mapbox.com/help/troubleshooting/migrate-legacy-static-tiles-api/?/=blog&utm_source=mapbox-blog&utm_campaign=blog%7Cmapbox-blog%7Cdoc-migrate-static%7Cdeprecating-studio-classic-styles-d8892ac38cb4-20-03&utm_term=doc-migrate-static&utm_content=deprecating-studio-classic-styles-d8892ac38cb4
     var getTileLayer = function (layerId, accessToken) {
-        return L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
             id: layerId,
             accessToken: accessToken,
             maxZoom: 17,
+            tileSize: 512,
+            zoomOffset: -1,
         });
     };
 
@@ -15,15 +19,15 @@ hqDefine('reports_core/js/maps', function () {
         if (!privates.hasOwnProperty('map')) {
             mapContainer.show();
             mapContainer.empty();
-            var streets = getTileLayer('mapbox.streets', config.mapboxAccessToken),
-                satellite = getTileLayer('mapbox.satellite', config.mapboxAccessToken);
+            var streets = getTileLayer('mapbox/streets-v11', config.mapboxAccessToken),
+                satellite = getTileLayer('mapbox/satellite-streets-v11', config.mapboxAccessToken);
 
             privates.map = L.map(mapContainer[0], {
                 trackResize: false,
                 layers: [streets],
+                // remove attribution control to duplicate "Leaflet" attribute
+                attributionControl: false,
             }).setView([0, 0], 3);
-
-            L.control.scale().addTo(privates.map);
 
             var baseMaps = {};
             baseMaps[gettext("Streets")] = streets;
@@ -33,6 +37,12 @@ hqDefine('reports_core/js/maps', function () {
             privates.layerControl.addTo(privates.map);
 
             new (hqImport("reports/js/maps_utils").ZoomToFitControl)().addTo(privates.map);
+            // Add MapBox wordmark and correct attributes to map
+            // See https://docs.mapbox.com/help/how-mapbox-works/attribution/
+            new (hqImport("reports/js/maps_utils").MapBoxWordMark)().addTo(privates.map);
+            // scale is now placed on the bottom right because it is easier to layout with the attributes than with the wordmark
+            L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>').addTo(privates.map);
+            L.control.scale({position: 'bottomright'}).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
             if (privates.map.activeOverlay) {

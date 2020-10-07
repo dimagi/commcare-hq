@@ -39,7 +39,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2Ajax
 from corehq.apps.locations.dbaccessors import (
-    user_ids_at_locations,
+    mobile_user_ids_at_locations,
     user_ids_at_locations_and_descendants,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -785,7 +785,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
     def _scope_filter(self, accessible_location_ids):
         # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
         return FormSubmittedByFilter(accessible_user_ids)
 
 
@@ -912,7 +912,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to cases owned by accessible locations and their respective users Or Cases
         # Last Modified by accessible users
-        accessible_user_ids = user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 

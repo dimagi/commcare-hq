@@ -45,7 +45,6 @@ from corehq.apps.case_importer.tracking.models import (
 )
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    CaseSearchQueryAddition,
     FuzzyProperties,
     IgnorePatterns,
 )
@@ -53,6 +52,7 @@ from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
@@ -90,7 +90,6 @@ from corehq.apps.sms.models import (
     MobileBackendInvitation,
     PhoneNumber,
     QueuedSMS,
-    SelfRegistrationInvitation,
     SQLLastReadMessage,
     SQLMobileBackend,
     SQLMobileBackendMapping,
@@ -166,13 +165,6 @@ class TestDeleteDomain(TestCase):
             content_type=MessagingEvent.CONTENT_SMS,
             status=MessagingEvent.STATUS_COMPLETED
         )
-        SelfRegistrationInvitation.objects.create(
-            domain=domain_name,
-            phone_number='999123',
-            token=uuid.uuid4().hex,
-            expiration_date=datetime.utcnow().date(),
-            created_date=datetime.utcnow()
-        )
         backend = SQLMobileBackend.objects.create(domain=domain_name, is_global=False)
         SQLMobileBackendMapping.objects.create(
             domain=domain_name,
@@ -230,7 +222,6 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(PhoneNumber.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingEvent.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingSubEvent.objects.filter(parent__domain=domain).count(), number)
-        self.assertEqual(SelfRegistrationInvitation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackend.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackendMapping.objects.filter(domain=domain).count(), number)
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)
@@ -459,7 +450,6 @@ class TestDeleteDomain(TestCase):
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseSearchConfig.objects.filter(domain=domain_name),
-            CaseSearchQueryAddition.objects.filter(domain=domain_name),
             FuzzyProperties.objects.filter(domain=domain_name),
             IgnorePatterns.objects.filter(domain=domain_name),
         ], count)
@@ -467,7 +457,6 @@ class TestDeleteDomain(TestCase):
     def test_case_search(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseSearchConfig.objects.create(domain=domain_name)
-            CaseSearchQueryAddition.objects.create(domain=domain_name)
             FuzzyProperties.objects.create(domain=domain_name)
             IgnorePatterns.objects.create(domain=domain_name)
             self._assert_case_search_counts(domain_name, 1)
@@ -504,6 +493,20 @@ class TestDeleteDomain(TestCase):
 
         self._assert_consumption_counts(self.domain.name, 0)
         self._assert_consumption_counts(self.domain2.name, 1)
+
+    def _assert_custom_data_fields_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            CustomDataFieldsDefinition.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_custom_data_fields(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+
+        self.domain.delete()
+
+        self._assert_custom_data_fields_counts(self.domain.name, 0)
+        self._assert_custom_data_fields_counts(self.domain2.name, 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([

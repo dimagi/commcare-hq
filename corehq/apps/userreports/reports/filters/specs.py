@@ -28,8 +28,8 @@ from corehq.apps.userreports.reports.filters.values import (
 from corehq.apps.userreports.specs import TypeProperty
 
 
-def create_filter_value(raw_filter_spec, value):
-    _class_map = {
+class FilterValueFactory:
+    class_map = {
         'quarter': QuarterFilterValue,
         'date': DateFilterValue,
         'numeric': NumericFilterValue,
@@ -39,11 +39,14 @@ def create_filter_value(raw_filter_spec, value):
         'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
         'location_drilldown': LocationDrilldownFilterValue,
     }
-    for type_name, path_to_class in settings.CUSTOM_UCR_REPORT_FILTER_VALUES:
-        _class_map[type_name] = import_string(path_to_class)
 
-    filter_value = _class_map[raw_filter_spec['type']]
-    return filter_value(raw_filter_spec, value)
+    @classmethod
+    def from_spec(cls, spec, value):
+        return cls.class_map[spec['type']](spec, value)
+
+
+def create_filter_value(raw_filter_spec, value):
+    return FilterValueFactory.from_spec(raw_filter_spec, value)
 
 
 class FilterChoice(JsonObject):
