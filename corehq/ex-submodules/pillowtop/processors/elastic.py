@@ -87,21 +87,23 @@ class ElasticProcessor(PillowProcessor):
         # send it across
         with self._datadog_timing('load'):
             send_to_elasticsearch(
-                alias=self.index_info.alias,
+                index_info=self.index_info,
                 doc_type=self.index_info.type,
                 doc_id=change.id,
                 es_getter=self.es_getter,
                 name='ElasticProcessor',
                 data=doc_ready_to_save,
-                update=self._doc_exists(change.id),
             )
 
-    def _doc_exists(self, doc_id):
-        return self.es_interface.doc_exists(self.index_info.alias, doc_id, self.index_info.type)
-
     def _delete_doc_if_exists(self, doc_id):
-        if self._doc_exists(doc_id):
-            self.es_interface.delete_doc(self.index_info.alias, self.index_info.type, doc_id)
+        send_to_elasticsearch(
+            index_info=self.index_info,
+            doc_type=self.index_info.type,
+            doc_id=doc_id,
+            es_getter=self.es_getter,
+            name='ElasticProcessor',
+            delete=True
+        )
 
     def _datadog_timing(self, step):
         return metrics_histogram_timer(
@@ -159,9 +161,8 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
-                          retries=MAX_RETRIES, propagate_failure=settings.UNIT_TESTING,
-                          update=False, delete=False, es_merge_update=False):
+def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
+                          delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
     kwargs:
@@ -169,15 +170,19 @@ def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
+    alias = index_info.alias
     data = data if data is not None else {}
     current_tries = 0
     es_interface = ElasticsearchInterface(es_getter())
-    retries = 1 if settings.UNIT_TESTING else retries
+    retries = 1 if settings.UNIT_TESTING else MAX_RETRIES
+    propagate_failure = settings.UNIT_TESTING
     while current_tries < retries:
         try:
+            doc_exists = es_interface.doc_exists(alias, doc_id, doc_type)
             if delete:
-                es_interface.delete_doc(alias, doc_type, doc_id)
-            elif update:
+                if doc_exists:
+                    es_interface.delete_doc(alias, doc_type, doc_id)
+            elif doc_exists:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
                     es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)

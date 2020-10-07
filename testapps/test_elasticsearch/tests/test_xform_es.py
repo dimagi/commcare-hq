@@ -46,7 +46,7 @@ class XFormESTestCase(SimpleTestCase):
     def tearDownClass(cls):
         interface = ElasticsearchInterface(cls.es)
         for form in cls.forms:
-            interface.delete_doc(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
+            interface.delete_doc(XFORM_INDEX_INFO.alias, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         cls.forms = []
         super(XFormESTestCase, cls).tearDownClass()
