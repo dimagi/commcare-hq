@@ -60,7 +60,7 @@ branches:
   - ce/change-form-lang # Cal Sept 16
   - ce/case-property-recipients # Cal 9/24
   - cz/role-ui  # Norman 9/25
-  - bmb/celery-debug  # Biyeun Oct 2
   - jls/serial-answer-requests # Jenny Oct 4
+  - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
 
 submodules: {}
