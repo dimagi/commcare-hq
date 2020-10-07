@@ -112,14 +112,14 @@ def rate_limit_two_factor_setup(device):
             return None
 
     def _check_for_exceeded_rate_limits(ip, num, user):
+        global_window = global_two_factor_setup_rate_limiter.get_window_of_first_exceeded_limit()
         ip_window = two_factor_rate_limiter_per_ip.get_window_of_first_exceeded_limit('ip:{}'.format(ip))
-        user_window = two_factor_rate_limiter_per_user.get_window_of_first_exceeded_limit('user:{}'.format(user))
         number_window = \
             two_factor_rate_limiter_per_number.get_window_of_first_exceeded_limit('number:{}'.format(num))
-        global_window = global_two_factor_setup_rate_limiter.get_window_of_first_exceeded_limit()
+        user_window = two_factor_rate_limiter_per_user.get_window_of_first_exceeded_limit('user:{}'.format(user))
 
         # ensure that no rate limit windows have been exceeded
-        # order of priority (ip, number, user)
+        # order of priority (global, ip, number, user)
         if global_window is not None:
             return _status_global_rate_limited, global_window
         elif ip_window is not None:
@@ -134,8 +134,8 @@ def rate_limit_two_factor_setup(device):
     _report_current_global_two_factor_setup_rate_limiter()
 
     ip_address = get_ip_address()
-    username = device.user.username
     number = device.number
+    username = device.user.username
     method = device.method if isinstance(device, PhoneDevice) else None
 
     if ip_address and username and number and method:
@@ -213,11 +213,11 @@ global_two_factor_setup_rate_limiter = RateLimiter(
 )
 
 
-def _report_usage(ip, num, user):
-    two_factor_rate_limiter_per_ip.report_usage('ip:{}'.format(ip))
-    two_factor_rate_limiter_per_user.report_usage('user:{}'.format(user))
-    two_factor_rate_limiter_per_number.report_usage('number:{}'.format(num))
+def _report_usage(ip_address, number, username):
     global_two_factor_setup_rate_limiter.report_usage()
+    two_factor_rate_limiter_per_ip.report_usage('ip:{}'.format(ip_address))
+    two_factor_rate_limiter_per_number.report_usage('number:{}'.format(number))
+    two_factor_rate_limiter_per_user.report_usage('user:{}'.format(username))
 
 
 def _report_current_global_two_factor_setup_rate_limiter():
