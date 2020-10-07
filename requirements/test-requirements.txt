@@ -10,7 +10,7 @@ architect==0.5.6          # via -r requirements.in
 argparse==1.4.0           # via unittest2
 attrs==18.2.0             # via -r requirements.in
 babel==2.8.0              # via django-phonenumber-field
-beautifulsoup4==4.9.1     # via -r test-requirements.in
+beautifulsoup4==4.9.3     # via -r test-requirements.in
 billiard==3.5.0.4         # via -r requirements.in, celery
 boto3==1.15.12            # via -r requirements.in
 botocore==1.18.12         # via boto3, s3transfer
