@@ -134,7 +134,7 @@ parso==0.7.1              # via jedi
 pbr==5.5.0                # via mock
 pdfrw==0.4                # via weasyprint
 pexpect==4.8.0            # via ipython
-phonenumberslite==8.12.9  # via -r requirements.in
+phonenumberslite==8.12.10  # via -r requirements.in
 pickleshare==0.7.5        # via ipython
 pillow==6.2.2             # via -r requirements.in, cairosvg, django-simple-captcha
 pip-tools==5.3.1          # via -r test-requirements.in

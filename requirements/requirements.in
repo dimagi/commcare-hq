@@ -72,7 +72,7 @@ lxml~=4.3.0
 markdown==2.2.1
 mock==2.0.0
 openpyxl~=2.6
-phonenumberslite~=8.8
+phonenumberslite~=8.12
 Pillow>=6.2.2,<7.0.0
 polib==1.1.0
 prometheus-client==0.7.1
