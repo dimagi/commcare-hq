@@ -1,4 +1,5 @@
 from django.conf.urls import include, url
+from elevate.views import elevate as elevate_view
 
 from corehq.apps.cloudcare.urls import settings_urls as cloudcare_settings
 from corehq.apps.commtrack.urls import settings_urls as commtrack_settings
@@ -17,6 +18,7 @@ from corehq.apps.settings.views import (
     project_id_mapping,
     redirect_domain_settings,
     redirect_users,
+    de_elevate_request,
 )
 
 urlpatterns = [
@@ -26,6 +28,8 @@ urlpatterns = [
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
     url(r'^mobile_privileges/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
+    url(r'^elevate/$', elevate_view, {'template_name': 'settings/elevate.html'}, name='elevate'),
+    url(r'^de-elevate/$', de_elevate_request, name='de-elevate'),
 ]
 
 domain_specific = [

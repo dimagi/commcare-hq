@@ -1,10 +1,11 @@
 
 {% load i18n %}
 
-<div class="alert alert-warning alert-trial" id="cta-sudo">
+<div class="alert alert-danger alert-sudo" id="cta-sudo">
   <i class="fa fa-exclamation-triangle"></i>
   {% blocktrans %}
     You are browsing with Administrator Privileges
   {% endblocktrans %}
+  <a href="{% url 'de-elevate' %}?next={{ request.path|urlencode }}">Exit Admin</a>
   <i class="fa fa-exclamation-triangle"></i>
 </div>

@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
+from elevate.utils import revoke_elevated_privileges
 
 import qrcode
 from memoized import memoized
@@ -591,3 +592,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             },
             'template': 'deleted-user-api-key-template',
         }
+
+def de_elevate_request(request):
+    revoke_elevated_privileges(request)
+    previous_url = request.GET['next']
+    return HttpResponseRedirect(previous_url)

@@ -68,6 +68,23 @@
             {% endif %}
             {% endif %}
             <li class="nav-divider divider"></li>
+            
+            {% if request.user.is_superuser %}
+            <li class="dropdown-header nav-header">{% trans 'Sudo' %}</li>
+            <li>
+                {% if request.is_elevated %}
+                <a href="{% url 'de-elevate' %}?next={{request.path|urlencode}}" class="track-usage-link" data-category="Nav Bar" data-action="Gear Icon" data-label="De-Elevate">
+                    <i class="fa fa-exclamation-triangle dropdown-icon"></i> {% trans 'De-Elevate Privileges' %}
+                </a>
+                {% else %}
+                <a href="{% url 'elevate' %}" class="track-usage-link" data-category="Nav Bar" data-action="Gear Icon" data-label="Elevate">
+                    <i class="fa fa-exclamation-triangle dropdown-icon"></i> {% trans 'Elevate Privileges' %}
+                </a>
+                {% endif %}
+            </li>
+            <li class="nav-divider divider"></li>
+            {% endif %}
+
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
             <li>
                 <a href="{% url "my_account_settings" %}" class="track-usage-link"

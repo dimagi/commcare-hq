@@ -12,7 +12,8 @@
 }
 
 .alert-maintenance,
-.alert-trial {
+.alert-trial,
+.alert-sudo {
   z-index: @zindex-navbar;
   position: relative;
   text-align: center;
@@ -46,4 +47,14 @@
       background-color: lighten(@color-purple-dark, 5);
     }
   }
+}
+
+.alert-sudo {
+  z-index: @zindex-modal-background;
+  border: none;
+  border-radius: 0;
+  font-size: 1.1em;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
 }
