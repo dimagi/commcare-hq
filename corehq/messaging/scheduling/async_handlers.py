@@ -2,11 +2,11 @@ import json
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.casegroups.dbaccessors import search_case_groups_in_domain
-from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType
 from corehq.apps.reminders.util import get_combined_id
+from corehq.apps.reports.analytics.esaccessors import get_groups_by_querystring
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.util.quickcache import quickcache
 from django.utils.translation import ugettext as _
@@ -63,21 +63,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
     def _get_user_group_response(self, case_sharing_only=False):
         domain = self.request.domain
         query = self.data.get('searchString')
-        group_result = (
-            GroupES()
-            .domain(domain)
-            .not_deleted()
-            .search_string_query(query, default_fields=['name'])
-            .size(10)
-            .sort('name.exact')
-            .source(('_id', 'name'))
-        )
-        if case_sharing_only:
-            group_result = group_result.is_case_sharing()
-        return [
-            {'id': group['_id'], 'text': group['name']}
-            for group in group_result.run().hits
-        ]
+        return get_groups_by_querystring(domain, query, case_sharing_only)
 
     @property
     def schedule_user_organization_recipients_response(self):
