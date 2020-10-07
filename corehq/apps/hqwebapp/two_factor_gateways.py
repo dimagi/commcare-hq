@@ -97,7 +97,10 @@ def rate_limit_two_factor_setup(device):
     then those requests are also rejected.
 
     """
-    _status_rate_limited = 'rate_limited'
+    _status_global_rate_limited = 'global_rate_limited'
+    _status_ip_rate_limited = 'ip_rate_limited'
+    _status_number_rate_limited = 'number_rate_limited'
+    _status_user_rate_limited = 'user_rate_limited'
     _status_bad_request = 'bad_request'
     _status_accepted = 'accepted'
 
@@ -108,31 +111,47 @@ def rate_limit_two_factor_setup(device):
         else:
             return None
 
+    def _check_for_exceeded_rate_limits(ip, num, user):
+        global_window = global_two_factor_setup_rate_limiter.get_window_of_first_exceeded_limit()
+        ip_window = two_factor_rate_limiter_per_ip.get_window_of_first_exceeded_limit('ip:{}'.format(ip))
+        number_window = \
+            two_factor_rate_limiter_per_number.get_window_of_first_exceeded_limit('number:{}'.format(num))
+        user_window = two_factor_rate_limiter_per_user.get_window_of_first_exceeded_limit('user:{}'.format(user))
+
+        # ensure that no rate limit windows have been exceeded
+        # order of priority (global, ip, number, user)
+        if global_window is not None:
+            return _status_global_rate_limited, global_window
+        elif ip_window is not None:
+            return _status_ip_rate_limited, ip_window
+        elif number_window is not None:
+            return _status_number_rate_limited, number_window
+        elif user_window is not None:
+            return _status_user_rate_limited, user_window
+        else:
+            return _status_accepted, None
+
     _report_current_global_two_factor_setup_rate_limiter()
 
     ip_address = get_ip_address()
-    username = device.user.username
     number = device.number
+    username = device.user.username
     method = device.method if isinstance(device, PhoneDevice) else None
 
     if ip_address and username and number and method:
-        if two_factor_rate_limiter_per_ip.allow_usage('ip:{}'.format(ip_address)) \
-                and two_factor_rate_limiter_per_user.allow_usage('user:{}'.format(username)) \
-                and two_factor_rate_limiter_per_number.allow_usage('number:{}'.format(number)) \
-                and global_two_factor_setup_rate_limiter.allow_usage():
-            two_factor_rate_limiter_per_ip.report_usage('ip:{}'.format(ip_address))
-            two_factor_rate_limiter_per_user.report_usage('user:{}'.format(username))
-            two_factor_rate_limiter_per_number.report_usage('number:{}'.format(number))
-            global_two_factor_setup_rate_limiter.report_usage()
-            status = _status_accepted
-        else:
-            status = _status_rate_limited
+
+        status, window = _check_for_exceeded_rate_limits(ip_address, number, username)
+        if status == _status_accepted:
+            _report_usage(ip_address, number, username)
+
     else:
+        window = None
         status = _status_bad_request
 
     metrics_counter('commcare.two_factor.setup_requests', 1, tags={
         'status': status,
         'method': method,
+        'window': window or 'none',
     })
     return status != _status_accepted
 
@@ -192,6 +211,13 @@ global_two_factor_setup_rate_limiter = RateLimiter(
     ).get_rate_limits(),
     scope_length=0,
 )
+
+
+def _report_usage(ip_address, number, username):
+    global_two_factor_setup_rate_limiter.report_usage()
+    two_factor_rate_limiter_per_ip.report_usage('ip:{}'.format(ip_address))
+    two_factor_rate_limiter_per_number.report_usage('number:{}'.format(number))
+    two_factor_rate_limiter_per_user.report_usage('user:{}'.format(username))
 
 
 def _report_current_global_two_factor_setup_rate_limiter():
