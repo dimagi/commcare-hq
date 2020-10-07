@@ -155,7 +155,7 @@ class AppAwareSyncTests(TestCase):
                 self.assertEqual(reports[0].attrib.get('id'), '123456')
                 self.domain_obj.default_mobile_ucr_sync_interval = None
 
-    @flag_enabled('ROLE_WEBAPPS_PERMISSIONS')
+    @flag_enabled('APP_ACCESS_PERMISSIONS')
     def test_report_fixtures_provider_with_cloudcare(self):
         """
         ReportFixturesProvider should iterate only allowed apps if sync is from cloudcare
