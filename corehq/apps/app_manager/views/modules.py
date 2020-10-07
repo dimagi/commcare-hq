@@ -857,7 +857,6 @@ def _update_module_case_list(detail_type, src_module, dest_module, attrs_dict):
         setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
     else:
         src_module_detail_type = getattr(src_module.case_details, detail_type)
-        print(f"===src_module_detail_type======={src_module_detail_type}================")
         dest_module_detail_type = getattr(dest_module.case_details, detail_type)
 
         # begin overwrite

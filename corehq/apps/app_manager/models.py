@@ -2046,7 +2046,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             'pull_down_tile',
             'persist_case_context',
             'persistent_case_context_xml',
-            'print_template'
         ]
         for k, v in attr_dict.items():
             if v:
