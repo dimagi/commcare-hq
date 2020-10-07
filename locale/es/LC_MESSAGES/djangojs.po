@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-30 18:51+0000\n"
+"POT-Creation-Date: 2020-10-07 19:58+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -154,7 +154,6 @@ msgid "See Past Versions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
@@ -618,35 +617,46 @@ msgid "Inactive"
 msgstr "Inactivo"
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
+#, fuzzy
+#| msgid "Inactive"
+msgid "Deactivate"
+msgstr "Inactivo"
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
+#, fuzzy
+#| msgid "Active"
+msgid "Activate"
+msgstr "Activo"
+
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr "Eliminar"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:10
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:12
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:103
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:104
 msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:110
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:111
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:159
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:160
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:160
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:161
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -2773,7 +2783,7 @@ msgstr ""
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:316
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:320
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
@@ -2789,26 +2799,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:329
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:330
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:338
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:339
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:463
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:464
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:40
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:491
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:492
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:643
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:644
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2824,11 +2834,11 @@ msgstr ""
 msgid "Completed: "
 msgstr "Completado:"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:28
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:29
 msgid "Show Full Menu"
 msgstr "Mostrar el Menú Completo"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:35
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:36
 msgid "Hide Full Menu"
 msgstr ""
 
@@ -2981,8 +2991,8 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:118
-#: corehq/apps/users/static/users/js/mobile_workers.js:142
+#: corehq/apps/users/static/users/js/mobile_workers.js:116
+#: corehq/apps/users/static/users/js/mobile_workers.js:140
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
@@ -3440,27 +3450,27 @@ msgstr "Seleccione una Ubicación"
 msgid "Choose a primary location"
 msgstr "Elegir una ubicación principal"
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:93
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:91
 msgid "Please enter your name."
 msgstr "Por favor ingrese su nombre."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:102
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:100
 msgid "Please specify an email."
 msgstr "Por favor especifique un correo electrónico."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:144
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:142
 msgid "Checking email..."
 msgstr "Revisando correo electrónico..."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:154
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
 msgid "Please specify a password."
 msgstr "Por favor especifique una contraseña."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:174
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:172
 msgid "Please specify a project name."
 msgstr "Por favor especifique un nombre de proyecto."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:191
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:189
 msgid "Please specify."
 msgstr ""
 
@@ -3559,7 +3569,7 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:29
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:28
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
 
@@ -3902,15 +3912,15 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:47
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:46
 msgid "Password changed successfully"
 msgstr "Cambio de contraseña exitoso"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:50
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
 msgid "Password was not changed "
 msgstr "No se cambió de contraseña"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:52
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -3918,19 +3928,19 @@ msgstr ""
 "Requisitos para la Contraseña: 1 caracter especial, 1 número, 1  letra "
 "mayúscula, y largo mínimo de 8 caracteres."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
 msgid "Available Groups"
 msgstr "Grupos Disponibles"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
 msgid "Groups with this User"
 msgstr "Grupos con este Usuario"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:101
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
 msgid "Search Group..."
 msgstr "Buscar Grupo..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:112
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:111
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
@@ -3942,19 +3952,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:319
+#: corehq/apps/users/static/users/js/mobile_workers.js:315
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:321
+#: corehq/apps/users/static/users/js/mobile_workers.js:317
 msgid "Please enter a valid email address."
 msgstr "Por favor ingrese una dirección de correo válida."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:382
+#: corehq/apps/users/static/users/js/mobile_workers.js:378
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:403
+#: corehq/apps/users/static/users/js/mobile_workers.js:399
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
@@ -3977,8 +3987,7 @@ msgstr ""
 #: corehq/apps/users/static/users/js/roles.js:96
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
-"settings,deactivate or delete mobile workers. This permission also allows "
-"users to login as any mobile worker in Web Apps."
+"settings,deactivate or delete mobile workers."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:101
