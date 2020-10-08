@@ -192,7 +192,7 @@ def _target_ilm_index(doc_id, doc_type, index_info, es_interface):
         if exists and doc_exists:
             raise PillowtopIndexingError(
                 f"The document {doc_id} is found in more than one indices {found_in}, {index}")
-        else:
+        elif exists:
             doc_exists = True
             found_in = index
     return found_in or index_info.alias
@@ -225,7 +225,7 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
                 target_index = alias
             if delete:
                 try:
-                    es_interface.delete_doc(target_index, doc_type, doc_id, verify_alias=False)
+                    es_interface.delete_doc(target_index, doc_type, doc_id)
                 except NotFoundError:
                     pass
             else:

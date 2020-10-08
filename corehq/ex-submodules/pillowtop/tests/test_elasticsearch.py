@@ -10,6 +10,7 @@ from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
+from corehq.apps.es.forms import FormES
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted, prefix_for_tests
 from corehq.util.test_utils import trap_extra_setup
@@ -303,10 +304,7 @@ class TestILM(SimpleTestCase):
     def tearDown(self):
         ensure_index_deleted(self.index)
 
-    def _rollover_ilm(self):
-        self.es.indices.rollover('test_xforms', {'conditions': {'max_docs': 2}})
-
-    def _send_to_es(self, docs, wait_interval=0):
+    def _send_to_es(self, docs):
         # if wait_interval is provided, wait for ILM
         #   otherwise manually rollover
         for chunk in chunked(docs, 2):
@@ -314,29 +312,10 @@ class TestILM(SimpleTestCase):
             for doc in chunk:
                 send_to_es('forms', doc)
                 self.es.indices.refresh(self.alias)
-            if wait_interval:
-                # wait for ILM to kick in
-                time.sleep(wait_interval)
-            else:
-                # or manually rollover
-                self._rollover_ilm()
+            # wait for ILM to kick in
+            time.sleep(2)
 
     def test_index_rollsover(self):
-
-        self._send_to_es([
-            {"_id": "d1", "prop": "a"},
-            {"_id": "d2", "prop": "b"},
-            {"_id": "d3", "prop": "c"},
-            {"_id": "d4", "prop": "d"},
-            {"_id": "d5", "prop": "e"},
-        ], wait_interval=1.2)
-        get_indices_by_alias.clear(self.alias)
-        self.assertEqual(
-            len(get_indices_by_alias(self.alias)),
-            3
-        )
-
-    def test_index_rollsover_manually(self):
         self._send_to_es([
             {"_id": "d1", "prop": "a"},
             {"_id": "d2", "prop": "b"},
@@ -344,8 +323,29 @@ class TestILM(SimpleTestCase):
             {"_id": "d4", "prop": "d"},
             {"_id": "d5", "prop": "e"},
         ])
-        get_indices_by_alias.clear(self.alias)
         self.assertEqual(
             len(get_indices_by_alias(self.alias)),
             3
+        )
+        self.assertEqual(
+            FormES().remove_default_filters().ids_query(['d1', 'd4']).exclude_source().run().doc_ids,
+            ['d1', 'd4']
+        )
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            5
+        )
+
+    def test_delete(self):
+        docs = [
+            {"_id": "d1", "prop": "a"},
+            {"_id": "d2", "prop": "b"},
+            {"_id": "d3", "prop": "c"},
+        ]
+        self._send_to_es(docs)
+        send_to_es('forms', docs[1], delete=True)
+        self.es.indices.refresh(self.alias)
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            2
         )
