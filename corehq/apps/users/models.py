@@ -2160,6 +2160,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.location_id = None
             self.clear_location_delegates()
             self.update_fixture_status(UserFixtureType.LOCATION)
+            self.commtrack_supply_point = None
             self.get_domain_membership(self.domain).location_id = None
             self.get_sql_location.reset_cache(self)
             if commit:
