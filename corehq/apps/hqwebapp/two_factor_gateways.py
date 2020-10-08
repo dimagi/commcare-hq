@@ -12,9 +12,11 @@ from twilio.rest import Client
 from two_factor.models import PhoneDevice
 
 import settings
+from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, \
     RateDefinition
+from corehq.project_limits.models import RateLimitedTwoFactorLog
 from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter, metrics_gauge
@@ -143,6 +145,12 @@ def rate_limit_two_factor_setup(device):
         status, window = _check_for_exceeded_rate_limits(ip_address, number, username)
         if status == _status_accepted:
             _report_usage(ip_address, number, username)
+        else:
+            # log any attempts that are rate limited
+            clean_number = clean_phone_number(number)
+            RateLimitedTwoFactorLog.objects.create(ip_address=ip_address, phone_number=clean_number,
+                                                   username=username, method=method, status=status,
+                                                   window=window)
 
     else:
         window = None

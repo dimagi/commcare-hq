@@ -20,3 +20,16 @@ class DynamicRateDefinition(models.Model):
     def _clear_caches(self):
         from corehq.project_limits.rate_limiter import get_dynamic_rate_definition
         get_dynamic_rate_definition.clear(self.key, {})
+
+
+class RateLimitedTwoFactorLog(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    username = models.CharField(max_length=255, null=False, db_index=True)
+    ip_address = models.CharField(max_length=45, null=False, db_index=True)
+    phone_number = models.CharField(max_length=127, null=False, db_index=True)
+    # 'sms', 'call' don't expect this to change
+    method = models.CharField(max_length=4, null=False)
+    # 'second' and 'minute' are 6 characters, 16 for headroom
+    window = models.CharField(max_length=15, null=False)
+    # 'number_rate_limited' is 19 characters, 32 for headroom
+    status = models.CharField(max_length=31, null=False)
