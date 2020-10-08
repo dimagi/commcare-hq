@@ -58,9 +58,7 @@ branches:
   - fr/user-data-jit            # Farid September 2
   - mk/validate-file-extensions-2 # MK Sept 16
   - ce/case-property-recipients # Cal 9/24
-  - jls/serial-answer-requests # Jenny Oct 4
   - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
-  - nh/role-ui-mig    # Norman Oct 7
   - dependabot/pip/requirements/reportlab-3.5.53 # Daniel Oct 8
 
 submodules: {}
