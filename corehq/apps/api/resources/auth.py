@@ -150,16 +150,17 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
             return response
 
 
-class RequirePermissionAuthenticationInteral(LoginAndDomainAuthentication):
-    def __init__(self, permission, *args, **kwargs):
-        super(RequirePermissionAuthenticationInteral, self).__init__(*args, **kwargs)
-        self.permission = permission
+class NoAPIPermissionsAuthentication(LoginAndDomainAuthentication):
+    """
+    Checks for domain and login and does not check for access api permissions
+    """
+    def __init__(self, *args, **kwargs):
+        super(NoAPIPermissionsAuthentication, self).__init__(*args, **kwargs)
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
             self._get_auth_decorator(request),
             wrap_4xx_errors_for_apis,
-            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
         ], **kwargs)
 
 

@@ -8,7 +8,7 @@ from tastypie.resources import Resource
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import (
     LoginAndDomainAuthentication,
-    RequirePermissionAuthenticationInteral,
+    NoAPIPermissionsAuthentication,
 )
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist
@@ -17,7 +17,6 @@ from corehq.apps.locations.permissions import (
     LOCATION_ACCESS_DENIED,
     location_safe,
 )
-from corehq.apps.users.models import Permissions
 
 from ..models import SQLLocation
 from ..permissions import user_can_access_location_id
@@ -90,8 +89,7 @@ class InternalLocationResource(LocationResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthenticationInteral(
-            Permissions.view_locations,
+        authentication = NoAPIPermissionsAuthentication(
             allow_session_auth=True
         )
         object_class = SQLLocation
