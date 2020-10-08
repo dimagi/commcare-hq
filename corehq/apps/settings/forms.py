@@ -259,9 +259,11 @@ class HQPhoneNumberForm(PhoneNumberForm):
 class HQApiKeyForm(forms.Form):
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
-        forms.GenericIPAddressField(),
+        forms.GenericIPAddressField(
+            protocol='ipv4',
+        ),
         label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
-        required=False
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
