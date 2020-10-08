@@ -44,6 +44,10 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if not password:
             raise ValidationError(_("Please enter a password."))
 
+        captcha = self.cleaned_data.get('captcha')
+        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES and not captcha:
+            raise ValidationError(_("Please enter valid CAPTCHA"))
+
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
