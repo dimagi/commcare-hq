@@ -1,5 +1,6 @@
 import functools
 import mock
+import time
 import uuid
 
 
@@ -10,20 +11,24 @@ from corehq.util.es.elasticsearch import ConnectionError
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
-from corehq.util.elastic import ensure_index_deleted
+from corehq.util.elastic import ensure_index_deleted, prefix_for_tests
 from corehq.util.test_utils import trap_extra_setup
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.mappings.utils import transform_for_es7
+from dimagi.utils.chunked import chunked
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index_and_mapping,
     mapping_exists,
     set_index_normal_settings,
     set_index_reindex_settings,
+    MAX_DOCS,
 )
 from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
-from pillowtop.processors.elastic import send_to_elasticsearch
+from pillowtop.processors.elastic import send_to_elasticsearch, get_indices_by_alias
+from corehq.elastic import send_to_elasticsearch as send_to_es
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
@@ -194,7 +199,7 @@ class TestSendToElasticsearch(SimpleTestCase):
             old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
-            alias=self.es_alias,
+            TEST_INDEX_INFO,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
             es_getter=esgetter or get_es_new,
@@ -275,3 +280,71 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         # attempt to create the same doc twice shouldn't fail
         self._send_to_es_and_check(doc)
+
+
+@es_test
+class TestILM(SimpleTestCase):
+
+    def setUp(self):
+        self.es = get_es_new()
+        self.es_interface = ElasticsearchInterface(self.es)
+        self.index = XFORM_INDEX_INFO.index
+        self.alias = XFORM_INDEX_INFO.alias
+        XFORM_INDEX_INFO.ilm_config = prefix_for_tests(MAX_DOCS)
+        self.es.cluster.put_settings({
+            "persistent": {"indices.lifecycle.poll_interval": "1s"}
+        })
+
+        with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(self.index)
+            initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
+
+    def tearDown(self):
+        ensure_index_deleted(self.index)
+
+    def _rollover_ilm(self):
+        self.es.indices.rollover('test_xforms', {'conditions': {'max_docs': 2}})
+
+    def _send_to_es(self, docs, wait_interval=0):
+        # if wait_interval is provided, wait for ILM
+        #   otherwise manually rollover
+        for chunk in chunked(docs, 2):
+            # 2 is the max_docs per the policy
+            for doc in chunk:
+                send_to_es('forms', doc)
+                self.es.indices.refresh(self.alias)
+            if wait_interval:
+                # wait for ILM to kick in
+                time.sleep(wait_interval)
+            else:
+                # or manually rollover
+                self._rollover_ilm()
+
+    def test_index_rollsover(self):
+
+        self._send_to_es([
+            {"_id": "d1", "prop": "a"},
+            {"_id": "d2", "prop": "b"},
+            {"_id": "d3", "prop": "c"},
+            {"_id": "d4", "prop": "d"},
+            {"_id": "d5", "prop": "e"},
+        ], wait_interval=1.2)
+        get_indices_by_alias.clear(self.alias)
+        self.assertEqual(
+            len(get_indices_by_alias(self.alias)),
+            3
+        )
+
+    def test_index_rollsover_manually(self):
+        self._send_to_es([
+            {"_id": "d1", "prop": "a"},
+            {"_id": "d2", "prop": "b"},
+            {"_id": "d3", "prop": "c"},
+            {"_id": "d4", "prop": "d"},
+            {"_id": "d5", "prop": "e"},
+        ])
+        get_indices_by_alias.clear(self.alias)
+        self.assertEqual(
+            len(get_indices_by_alias(self.alias)),
+            3
+        )

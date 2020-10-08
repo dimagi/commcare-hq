@@ -168,10 +168,11 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
 
 
 @quickcache(['alias'], memoize_timeout=24 * 60 * 60, timeout=24 * 60 * 60)
-def _get_indices_by_alias(alias):
+def get_indices_by_alias(alias):
     # The cache is not invalidated. So be cautious when using this.
-    #   This designed to be used with ILM indices, where index names
+    #   This is designed to be used with ILM indices, where index names
     #   are of a predictable format such as xforms_2016-07-07-000002, xforms_2016-07-07-000001 etc
+    #   So, the cache invalidation is not an issue
     from corehq.elastic import get_es_new
     es = get_es_new()
     return list(es.indices.get_alias(alias))
@@ -187,9 +188,9 @@ def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface, skip_doc_exist
     # exists/get queries doesn't work against aliases
     #   so query all backing indices
     if settings.UNIT_TESTING:
-        _get_indices_by_alias.clear(index_info.alias)
-    indices = _get_indices_by_alias(index_info.alias)
-    # todo; _get_indices_by_alias could be stale
+        get_indices_by_alias.clear(index_info.alias)
+    indices = get_indices_by_alias(index_info.alias)
+    # todo; get_indices_by_alias could be stale
     #   so we could query the next index based on pattern even if it doesn't exist
     doc_exists = False
     found_in = None

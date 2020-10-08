@@ -36,10 +36,19 @@ def delete_es_index(es_index):
         try:
             es.indices.delete(index=es_index)
         except NotFoundError:
-            # todo; cleanup ilm indices properly
-            es.indices.delete(index=es_index + "*")
+            from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+            # could be ILM index
+            if es_index == XFORM_INDEX_INFO.index:
+                cleanup_ilm_index(es, XFORM_INDEX_INFO)
     else:
         raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
+
+
+def cleanup_ilm_index(es, index_info):
+    if index_info.is_ilm_index:
+        es.indices.delete(index=index_info.index + "*")
+        es.ilm.delete_lifecycle(index_info.ilm_config)
+        es.indices.delete_index_template(index_info.ilm_template_name)
 
 
 class DeleteProductionESIndex(Exception):

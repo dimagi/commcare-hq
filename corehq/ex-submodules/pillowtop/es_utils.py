@@ -236,7 +236,12 @@ def setup_ilm_index(es, index_info):
     try:
         es.ilm.get_lifecycle(ilm_config)
     except NotFoundError:
-        es.ilm.put_lifecycle(ilm_config, ILM_CONFIGS[ilm_config])
+        from corehq.util.elastic import TEST_ES_PREFIX
+        if ilm_config.startswith(TEST_ES_PREFIX):
+            key = ilm_config[len(TEST_ES_PREFIX):]
+        else:
+            key = ilm_config
+        es.ilm.put_lifecycle(ilm_config, ILM_CONFIGS[key])
     # setup template
     try:
         es.indices.get_index_template(index_info.ilm_template_name)
