@@ -32,7 +32,7 @@ django-phonenumber-field==2.3.1  # remove after upgrade >=3.0.1 is deemed safe
 django-prbac>=0.0.8
 django-redis-sessions==0.6.1
 django-redis==4.11.0
-django-simple-captcha==0.5.9
+django-simple-captcha==0.5.12
 django-statici18n==1.9.0
 django-tastypie==0.14.2
 django-transfer==0.4

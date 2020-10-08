@@ -51,7 +51,7 @@ django-prbac==1.0.1       # via -r requirements.in
 django-ranged-response==0.2.0  # via django-simple-captcha
 django-redis-sessions==0.6.1  # via -r requirements.in
 django-redis==4.11.0      # via -r requirements.in
-django-simple-captcha==0.5.9  # via -r requirements.in
+django-simple-captcha==0.5.12  # via -r requirements.in
 django-statici18n==1.9.0  # via -r requirements.in
 django-tastypie==0.14.2   # via -r requirements.in
 django-transfer==0.4      # via -r requirements.in
