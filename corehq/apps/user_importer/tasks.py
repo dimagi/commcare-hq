@@ -38,7 +38,7 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload
     }
     upload_record = UserUploadRecord.objects.using(DEFAULT_DB_ALIAS).get(pk=upload_record_id)
     upload_record.task_id = import_users_and_groups.request.id
-    upload_record.status = results
+    upload_record.result = results
     upload_record.save()
     DownloadBase.set_progress(task, total, total)
     return {
