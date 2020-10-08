@@ -1247,6 +1247,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         try:
             domain = self.domain
         except AttributeError:
+            # This occurs when a web user is accessing user data.
+            # Since a web user isn't tied to a specific domain, we fetch the
+            # first domain they were assigned to. This is consistent with past
+            # behaviour:
+            # https://github.com/dimagi/commcare-hq/pull/28456/files#diff-16ce9f2eb3be0695a91eca75714bb3b7L1509
             domains = self.get_domains()
             if domains:
                 domain = domains[0]
