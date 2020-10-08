@@ -36,6 +36,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
@@ -388,6 +389,7 @@ def download_practice_user_restore(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_download
 def download_index(request, domain, app_id):
     """
