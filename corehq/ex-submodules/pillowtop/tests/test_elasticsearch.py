@@ -312,7 +312,8 @@ class TestILM(SimpleTestCase):
             for doc in chunk:
                 send_to_es('forms', doc)
                 self.es.indices.refresh(self.alias)
-            # wait for ILM to kick in
+            # wait for ILM to kick in.
+            #   Is double the poll_interval to provide enough buffer for ILM process
             time.sleep(2)
 
     def test_index_rollsover(self):
@@ -336,6 +337,20 @@ class TestILM(SimpleTestCase):
             5
         )
 
+    def test_repeated_insertions(self):
+        # inserting the same doc shouldn't create duplicates
+        #   and the index shouldn't rollover
+        docs = [{"_id": "d1", "prop": "a"}] * 5
+        self._send_to_es(docs)
+        self.assertEqual(
+            len(get_indices_by_alias(self.alias)),
+            1
+        )
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            1
+        )
+
     def test_delete(self):
         docs = [
             {"_id": "d1", "prop": "a"},
@@ -348,4 +363,43 @@ class TestILM(SimpleTestCase):
         self.assertEqual(
             FormES().remove_default_filters().count(),
             2
+        )
+
+    def test_update_merge(self):
+        docs = [
+            {"_id": "d1", "prop": "a"},
+            {"_id": "d2", "prop": "b"},
+            {"_id": "d3", "prop": "c"},
+        ]
+        self._send_to_es(docs)
+        docs[1].pop("prop")
+        docs[1].update({"name": "new"})
+        send_to_es('forms', docs[1], es_merge_update=True)
+        self.es.indices.refresh(self.alias)
+        self.assertEqual(
+            FormES().remove_default_filters().ids_query(['d2']).run().hits,
+            [{"prop": "b", "name": "new", "_id": "d2"}]
+        )
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            3
+        )
+
+    def test_update(self):
+        docs = [
+            {"_id": "d1", "prop": "a"},
+            {"_id": "d2", "prop": "b"},
+            {"_id": "d3", "prop": "c"},
+        ]
+        self._send_to_es(docs)
+        docs[1].update({"prop": "new"})
+        send_to_es('forms', docs[1])
+        self.es.indices.refresh(self.alias)
+        self.assertEqual(
+            FormES().remove_default_filters().ids_query(['d2']).run().hits,
+            [{"prop": "new", "_id": "d2"}]
+        )
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            3
         )

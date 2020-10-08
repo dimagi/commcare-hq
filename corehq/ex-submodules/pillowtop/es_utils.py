@@ -108,7 +108,11 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def is_ilm_index(self):
-        return self.ilm_config and self.hq_index_name == XFORM_HQ_INDEX_NAME
+        return (
+            settings.ELASTICSEARCH_MAJOR_VERSION == 7
+            and self.ilm_config
+            and self.hq_index_name == XFORM_HQ_INDEX_NAME
+        )
 
     @property
     def meta(self):
