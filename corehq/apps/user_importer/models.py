@@ -17,7 +17,7 @@ class UserUploadRecord(models.Model):
         fieldnames = list(self.result['rows'][0]['row'].keys())
         writer = DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for row in self.status['rows']:
+        for row in self.result['rows']:
             writer.writerow(row['row'])
         csvfile.seek(0)
         return csvfile
