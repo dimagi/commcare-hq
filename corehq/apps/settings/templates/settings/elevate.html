@@ -1,5 +1,13 @@
-<form method="post">
+{% extends base_template %}
+{% load i18n %}}
+{% block title %}{% trans "Elevate Privileges" %}{% endblock %}
+{% block content %}
+  <h2>
+      {% trans "Confirm Password" %}
+  </h2>
+  <form method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit">
-</form>
+  </form>
+{% endblock %}
