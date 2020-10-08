@@ -24,8 +24,9 @@ from corehq.apps.domain.decorators import (
     oauth2_auth_no_domain,
 )
 from corehq.apps.users.decorators import (
+    require_api_permission,
+    require_permission,
     require_permission_raw,
-    require_api_permission
 )
 from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
@@ -147,6 +148,20 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
             return True
         else:
             return response
+
+
+class NoAPIPermissionsAuthentication(LoginAndDomainAuthentication):
+    """
+    Checks for domain and login and does not check for access api permissions
+    """
+    def __init__(self, *args, **kwargs):
+        super(NoAPIPermissionsAuthentication, self).__init__(*args, **kwargs)
+
+    def is_authenticated(self, request, **kwargs):
+        return self._auth_test(request, wrappers=[
+            self._get_auth_decorator(request),
+            wrap_4xx_errors_for_apis,
+        ], **kwargs)
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):
