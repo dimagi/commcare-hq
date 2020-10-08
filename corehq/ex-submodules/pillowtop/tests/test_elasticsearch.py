@@ -70,7 +70,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
         self.assertEqual(0, get_doc_count(self.es, self.es_alias))
-        self.es_interface.create_doc(self.es_alias, 'case', doc_id, doc)
+        self.es_interface.index_doc(self.es_alias, 'case', doc_id, doc)
         self.assertEqual(0, get_doc_count(self.es, self.es_alias, refresh_first=False))
         self.es.indices.refresh(self.index)
         self.assertEqual(1, get_doc_count(self.es, self.es_alias, refresh_first=False))
@@ -91,8 +91,9 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        ElasticsearchInterface(get_es_new()).create_doc(
-            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'}, False)
+        ElasticsearchInterface(get_es_new()).index_doc(
+            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'},
+            verify_alias=False)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)

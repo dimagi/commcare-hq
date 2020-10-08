@@ -189,7 +189,7 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
                     es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
                 else:
                     # use the same index API to create or update doc
-                    es_interface.update_doc(alias, doc_type, doc_id, doc=data, params=params)
+                    es_interface.index_doc(alias, doc_type, doc_id, doc=data, params=params)
             break
         except ConnectionError as ex:
             current_tries += 1
