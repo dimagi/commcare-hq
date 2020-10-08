@@ -100,7 +100,7 @@ openpyxl==2.6.4           # via -r requirements.in, commcaretranslationchecker
 pbr==5.5.0                # via mock
 pdfrw==0.4                # via weasyprint
 phonenumberslite==8.12.10  # via -r requirements.in
-pillow==6.2.2             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
+pillow==7.2.0             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements.in
 prometheus-client==0.7.1  # via -r requirements.in
