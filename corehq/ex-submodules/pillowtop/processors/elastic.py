@@ -167,7 +167,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-@quickcache(['alias'], memoize_timeout=24 * 60 * 60, timeout=24 * 60 * 60)
+@quickcache(['alias'], memoize_timeout=24 * 60 * 60, timeout=24 * 60 * 60, skip_arg=lambda *args: settings.UNIT_TESTING)
 def get_indices_by_alias(alias):
     # The cache is not invalidated. So be cautious when using this.
     #   This is designed to be used with ILM indices, where index names
@@ -178,22 +178,15 @@ def get_indices_by_alias(alias):
     return list(es.indices.get_alias(alias))
 
 
-def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface, skip_doc_exists_check=False):
-    # for ILM indices returns a tuple of (whether doc exists, the index that the doc is found in)
-    # for normal indices returns a tuple of (whether doc exists, None)
-    if not index_info.is_ilm_index:
-        return es_interface.doc_exists(index_info.alias, doc_id, doc_type), index_info.alias
-    elif skip_doc_exists_check:
-        return False, index_info.alias
-    # exists/get queries doesn't work against aliases
-    #   so query all backing indices
-    if settings.UNIT_TESTING:
-        get_indices_by_alias.clear(index_info.alias)
+def _target_ilm_index(doc_id, doc_type, index_info, es_interface):
+    # returns the backing ILM index that the doc exists in
     indices = get_indices_by_alias(index_info.alias)
     # todo; get_indices_by_alias could be stale
     #   so we could query the next index based on pattern even if it doesn't exist
     doc_exists = False
     found_in = None
+    # individual exists query on each index is faster than
+    #   ids search on the alias, so iterate through each index
     for index in indices:
         exists = es_interface.doc_exists(index, doc_id, doc_type)
         if exists and doc_exists:
@@ -202,7 +195,7 @@ def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface, skip_doc_exist
         else:
             doc_exists = True
             found_in = index
-    return doc_exists, found_in or index_info.alias
+    return found_in or index_info.alias
 
 
 def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
@@ -215,7 +208,6 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
         skip_doc_exists_check: Set this to True when the doc can be indexed without checking for its existence
             in the ILM backed indices, applicable to ILM indices only
     """
-
     alias = index_info.alias
     data = data if data is not None else {}
     current_tries = 0
@@ -225,23 +217,26 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
 
     while current_tries < retries:
         try:
-            doc_exists, target_index = _doc_exists_in_es(
-                doc_id, doc_type, index_info, es_interface,
-                skip_doc_exists_check=skip_doc_exists_check
-            )
+            if index_info.is_ilm_index and not skip_doc_exists_check:
+                target_index = _target_ilm_index(
+                    doc_id, doc_type, index_info, es_interface,
+                )
+            else:
+                target_index = alias
             if delete:
-                if doc_exists:
+                try:
                     es_interface.delete_doc(target_index, doc_type, doc_id, verify_alias=False)
-            elif doc_exists:
+                except NotFoundError:
+                    pass
+            else:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
                     es_interface.update_doc_fields(target_index, doc_type, doc_id, fields=data, params=params,
                         verify_alias=False)
                 else:
-                    es_interface.update_doc(target_index, doc_type, doc_id, doc=data, params=params,
+                    # use the same index API to create or update doc
+                    es_interface.index_doc(target_index, doc_type, doc_id, doc=data, params=params,
                         verify_alias=False)
-            else:
-                es_interface.create_doc(alias, doc_type, doc_id, doc=data)
             break
         except ConnectionError as ex:
             current_tries += 1

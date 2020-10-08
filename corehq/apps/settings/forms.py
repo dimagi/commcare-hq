@@ -28,10 +28,9 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.validators import validate_international_phonenumber
 from corehq.apps.users.models import CouchUser, HQApiKey
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 
-class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
+class HQPasswordChangeForm(PasswordChangeForm):
 
     new_password1 = forms.CharField(label=_('New password'),
                                     widget=forms.PasswordInput(),
@@ -65,11 +64,6 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
                 )
             ),
         )
-
-    def clean_old_password(self):
-        from corehq.apps.hqwebapp.utils import decode_password
-        self.cleaned_data['old_password'] = decode_password(self.cleaned_data['old_password'])
-        return super(HQPasswordChangeForm, self).clean_old_password()
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)

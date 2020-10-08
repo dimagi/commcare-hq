@@ -309,6 +309,24 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
+def get_groups_by_querystring(domain, query, case_sharing_only):
+    group_result = (
+        GroupES()
+        .domain(domain)
+        .not_deleted()
+        .search_string_query(query, default_fields=['name'])
+        .size(10)
+        .sort('name.exact')
+        .source(('_id', 'name'))
+    )
+    if case_sharing_only:
+        group_result = group_result.is_case_sharing()
+    return [
+        {'id': group['_id'], 'text': group['name']}
+        for group in group_result.run().hits
+    ]
+
+
 def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()

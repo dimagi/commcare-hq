@@ -151,6 +151,7 @@ class Permissions(DocumentSchema):
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
+    login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
 
@@ -1612,7 +1613,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def can_login_as(self, domain):
         return (
-            self.has_permission(domain, 'edit_commcare_users')
+            self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
 
@@ -3055,6 +3056,7 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+    domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
 
     class Meta(object):

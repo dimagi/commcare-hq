@@ -27,6 +27,9 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         COMBOBOX: 'combobox',
         COMBOBOX_MULTIWORD: 'multiword',
         COMBOBOX_FUZZY: 'fuzzy',
+        COLLAPSIBLE: 'group-collapse',
+        COLLAPSIBLE_OPEN: 'collapse-open',
+        COLLAPSIBLE_CLOSED: 'collapse-closed',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
@@ -55,6 +58,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         SET_LANG: 'set-lang',
         SUBMIT: 'submit-all',
         FORMATTED_QUESTIONS: 'formatted_questions',
+        CHANGE_LANG: 'change_lang',
+        CHANGE_LOCALE: 'change_locale',
 
         // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
         CONTROL_UNTYPED: -1,
