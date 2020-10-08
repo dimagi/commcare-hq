@@ -666,7 +666,7 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
                 recipient_id='recipient'
             )
-            self.assertEqual(instance.recipient, 'fake@mail.com')
+            self.assertEqual(instance.recipient.get_email(), 'fake@mail.com')
 
         with create_case(
                 self.domain,
@@ -679,7 +679,7 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
                 recipient_id='recipient'
             )
-            self.assertIsNone(instance.recipient)
+            self.assertIsNone(instance.recipient.get_email())
 
     def create_user_case(self, user):
         create_case_kwargs = {
