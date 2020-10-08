@@ -60,5 +60,6 @@ branches:
   - ce/case-property-recipients # Cal 9/24
   - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
   - bmb/redis-upgrades  # Biyeun Oct 8
+  - kev/send-timezone # Kevin Oct 8
 
 submodules: {}
