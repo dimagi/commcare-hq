@@ -14,7 +14,7 @@ class UserUploadRecord(models.Model):
 
     def get_file(self):
         csvfile = StringIO()
-        fieldnames = list(self.status['rows'][0]['row'].keys())
+        fieldnames = list(self.result['rows'][0]['row'].keys())
         writer = DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for row in self.status['rows']:
