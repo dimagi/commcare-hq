@@ -94,7 +94,7 @@ pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache~=0.5
 redis==3.5.3
-reportlab==3.0
+reportlab==3.5.53
 requests_oauthlib
 requests~=2.20
 schema
