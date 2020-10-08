@@ -188,7 +188,7 @@ simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, datadog, django-prbac
 six==1.15.0               # via -r requirements.in, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, traitlets, transifex-client, twilio, unittest2
 smartypants==2.0.1        # via pycco
-sniffer==0.4.0            # via -r dev-requirements.in
+sniffer==0.4.1            # via -r dev-requirements.in
 snowballstemmer==2.0.0    # via sphinx
 socketpool==0.5.3         # via -r requirements.in
 soupsieve==2.0.1          # via beautifulsoup4
