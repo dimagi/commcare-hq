@@ -55,6 +55,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                     "domain": user.domain,
                     "restoreAs": user.restoreAs,
                     "tz_offset_millis": (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
+                    "tz_from_browser": Intl.DateTimeFormat().resolvedOptions().timeZone,
                 }),
                 url: formplayerUrl + '/incomplete-form',
                 success: function (request) {
