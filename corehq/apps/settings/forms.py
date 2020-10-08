@@ -28,10 +28,9 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.validators import validate_international_phonenumber
 from corehq.apps.users.models import CouchUser, HQApiKey
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 
-class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
+class HQPasswordChangeForm(PasswordChangeForm):
 
     new_password1 = forms.CharField(label=_('New password'),
                                     widget=forms.PasswordInput(),
@@ -65,11 +64,6 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
                 )
             ),
         )
-
-    def clean_old_password(self):
-        from corehq.apps.hqwebapp.utils import decode_password
-        self.cleaned_data['old_password'] = decode_password(self.cleaned_data['old_password'])
-        return super(HQPasswordChangeForm, self).clean_old_password()
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)
@@ -263,21 +257,31 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 
 class HQApiKeyForm(forms.Form):
+    ALL_DOMAINS = ''
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
         forms.GenericIPAddressField(),
         label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
         required=False
     )
+    domain = forms.ChoiceField(
+        required=False,
+        help_text=ugettext_lazy("Limit the key's access to a single project space")
+    )
 
     def __init__(self, *args, **kwargs):
+        self.couch_user = kwargs.pop('couch_user')
         super().__init__(*args, **kwargs)
 
+        user_domains = self.couch_user.get_domains()
+        all_domains = (self.ALL_DOMAINS, _('All Projects'))
+        self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
         self.helper = HQFormHelper()
         self.helper.layout = Layout(
             crispy.Fieldset(
                 ugettext_lazy("Add New API Key"),
                 crispy.Field('name'),
+                crispy.Field('domain'),
                 crispy.Field('ip_allowlist'),
             ),
             hqcrispy.FormActions(
@@ -298,6 +302,7 @@ class HQApiKeyForm(forms.Form):
                 name=self.cleaned_data['name'],
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
+                domain=self.cleaned_data['domain'] or '',
             )
             return new_key
 

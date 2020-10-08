@@ -1448,16 +1448,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
-CUSTOM_DATA_FIELDS_PROFILES = StaticToggle(
-    "custom_data_fields_profiles",
-    "User field profiles",
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds support for saving a set of user fields and their values, "
-                "and applying that profile to individual users instead of specifying every field.",
-    help_link="https://confluence.dimagi.com/display/ccinternal/User+field+profiles",
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
@@ -1900,5 +1890,15 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
+    """
+)
+
+CHANGE_FORM_LANGUAGE = StaticToggle(
+    'change_form_language',
+    'Allow user to change form language in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows the user to change the language of the form content while in the form itself in Web Apps
     """
 )

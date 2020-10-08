@@ -650,6 +650,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_success(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_post') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200

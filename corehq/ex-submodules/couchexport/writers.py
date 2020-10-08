@@ -220,7 +220,7 @@ class ExportWriter(object):
         assert self._isopen
         for table_index, table in document_table:
             for i, row in enumerate(table):
-                if skip_first and i is 0:
+                if skip_first and i == 0:
                     continue
                 # update the primary component of the ID to match
                 # how many docs we've seen

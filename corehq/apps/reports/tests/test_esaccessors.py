@@ -46,6 +46,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_total_case_counts_by_owner,
     get_user_stubs,
+    get_groups_by_querystring,
     get_username_in_last_form_user_id_submitted,
     guess_form_name_from_submissions_using_xmlns,
     scroll_case_names,
@@ -972,18 +973,16 @@ class TestUserESAccessors(TestCase):
 class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):
-        self.group_name = 'justice league'
         self.domain = 'group-esaccessors-test'
         self.reporting = True
-        self.case_sharing = False
         self.es = get_es_new()
         reset_es_index(GROUP_INDEX_INFO)
 
-    def _send_group_to_es(self, _id=None):
+    def _send_group_to_es(self, name, _id=None, case_sharing=False):
         group = Group(
             domain=self.domain,
-            name=self.group_name,
-            case_sharing=self.case_sharing,
+            name=name,
+            case_sharing=case_sharing,
             reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
@@ -992,16 +991,35 @@ class TestGroupESAccessors(SimpleTestCase):
         return group
 
     def test_group_query(self):
-        self._send_group_to_es('123')
+        name = 'justice-league'
+        self._send_group_to_es(name, '123')
         results = get_group_stubs(['123'])
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
             '_id': '123',
-            'name': self.group_name,
-            'case_sharing': self.case_sharing,
+            'name': name,
+            'case_sharing': False,
             'reporting': self.reporting,
         })
+
+    def test_group_search_query(self):
+        self._send_group_to_es('Milkyway', '1')
+        self._send_group_to_es('Freeroad', '2')
+        self._send_group_to_es('Freeway', '3', True)
+        self.assertEqual(
+            get_groups_by_querystring(self.domain, 'Free', False),
+            [
+                {'id': '2', 'text': 'Freeroad'},
+                {'id': '3', 'text': 'Freeway'},
+            ]
+        )
+        self.assertEqual(
+            get_groups_by_querystring(self.domain, 'way', True),
+            [
+                {'id': '3', 'text': 'Freeway'},
+            ]
+        )
 
 
 class TestCaseESAccessors(BaseESAccessorsTest):

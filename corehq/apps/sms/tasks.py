@@ -47,7 +47,10 @@ from corehq.apps.sms.models import (
     QueuedSMS,
 )
 from corehq.apps.sms.util import is_contact_active
-from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
+from corehq.apps.smsbillables.exceptions import (
+    RetryBillableTaskException,
+    DeliveredBillableException,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.messaging.util import use_phone_entries
@@ -460,6 +463,11 @@ def store_billable(self, msg):
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
+        except DeliveredBillableException:
+            # don't retry, but do raise error for logging purposes and make sure
+            # the original message's ID is associated with the error
+            # (the backend ID is stored with it already)
+            raise DeliveredBillableException(f"msg_couch_id={msg.couch_id}")
 
 
 @no_result_task(serializer='pickle', queue='background_queue', acks_late=True)

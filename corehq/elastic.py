@@ -110,15 +110,10 @@ def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
     return ES_INSTANCES[es_instance_alias]()
 
 
-def doc_exists_in_es(index_info, doc_id_or_dict):
+def doc_exists_in_es(index_info, doc_id):
     """
-    Check if a document exists, by ID or the whole document.
+    Check if a document exists
     """
-    if isinstance(doc_id_or_dict, str):
-        doc_id = doc_id_or_dict
-    else:
-        assert isinstance(doc_id_or_dict, dict)
-        doc_id = doc_id_or_dict['_id']
     return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
@@ -131,17 +126,14 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
     index_info = ES_META[index_name]
-    doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
-        alias=index_info.alias,
+        index_info=index_info,
         doc_type=index_info.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,
-        propagate_failure=True,
-        update=doc_exists,
         delete=delete,
         es_merge_update=es_merge_update,
     )
