@@ -22,6 +22,9 @@ from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
+from couchforms.exceptions import InvalidSubmissionFileExtensionError
+
+
 class BaseSubmissionTest(TestCase):
     def setUp(self):
         super(BaseSubmissionTest, self).setUp()
@@ -123,12 +126,23 @@ class SubmissionTest(BaseSubmissionTest):
 
     @softer_assert()
     def test_submit_deprecated_form(self):
-        self._submit('simple_form.xml')
+        self._submit('simple_form.xml')  # submit a form to try again as duplicate
         response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
         xform_id = response['X-CommCareHQ-FormID']
         form = FormAccessors(self.domain.name).get_form(xform_id)
         self.assertEqual(1, len(form.history))
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
+
+    def test_invalid_form_submission_file_extension(self):
+        response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
+        expected_error = InvalidSubmissionFileExtensionError()
+        self.assertEqual(response.status_code, expected_error.status_code)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'{expected_error.message}'
+            f'</message></OpenRosaResponse>'
+        )
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
@@ -256,6 +270,7 @@ class SubmissionTestSQL(SubmissionTest):
                 if att.name != "form.xml"
             )
 
+        # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
             "image": BytesIO(b"fake image"),
             "file": BytesIO(b"text file"),
@@ -270,9 +285,11 @@ class SubmissionTestSQL(SubmissionTest):
         old_form = acc.get_form(new_form.deprecated_form_id)
         self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
-        self.assertEqual(list_attachments(old_form),
+        self.assertEqual(
+            list_attachments(old_form),
             [("file", b"text file"), ("image", b"fake image")])
-        self.assertEqual(list_attachments(new_form),
+        self.assertEqual(
+            list_attachments(new_form),
             [("file", b"text file"), ("image", b"other fake image")])
 
 
