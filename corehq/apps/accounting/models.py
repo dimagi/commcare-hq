@@ -2171,13 +2171,14 @@ class Invoice(InvoiceBase):
         return self.subscription.subscriber.domain
 
     @classmethod
-    def autopayable_invoices(cls, date_due):
+    def autopayable_invoices(cls, date_due=None):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
-            date_due=date_due,
             is_hidden=False,
             subscription__account__auto_pay_user__isnull=False,
         )
+        if date_due:
+            invoices = invoices.filter(date_due=date_due)
         return invoices
 
     def pay_invoice(self, payment_record):
