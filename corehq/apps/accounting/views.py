@@ -22,6 +22,7 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_POST
@@ -35,6 +36,7 @@ from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_unpaid_invoice_over_threshold,
@@ -94,6 +96,7 @@ from corehq.apps.accounting.forms import (
     TriggerCustomerInvoiceForm,
     TriggerInvoiceForm,
     TriggerDowngradeForm,
+    TriggerAutopaymentsForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -138,6 +141,7 @@ from corehq.apps.domain.views.accounting import (
     DomainAccountingSettings,
     InvoiceStripePaymentView,
     WireInvoiceView,
+    DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
@@ -1546,5 +1550,35 @@ class TriggerDowngradeView(BaseTriggerAccountingTestView):
                     f'Successfully triggered the downgrade process '
                     f'for project "{domain}".'
                 )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_autopay'
+    page_title = "Trigger Autopayments"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerAutopaymentsForm(self.request.POST)
+        return TriggerAutopaymentsForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            domain = self.trigger_form.cleaned_data['domain']
+            AutoPayInvoicePaymentHandler().pay_autopayable_invoices(domain=domain)
+            statements_url = reverse(DomainBillingStatementsView.urlname, args=[domain])
+            messages.success(
+                request,
+                mark_safe(
+                    f'Successfully triggered autopayments for "{domain}",'
+                    f' please check <a href="{statements_url}">billing statements</a>'
+                    f' to confirm.'
+                )
+            )
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
