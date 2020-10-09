@@ -1491,10 +1491,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
         return self.paginate_crud_response
 
 
-class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
-    urlname = 'accounting_test_downgrade'
-    page_title = "Trigger Downgrade"
-    template_name = 'accounting/trigger_downgrade.html'
+class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
+    template_name = 'accounting/trigger_accounting_tests.html'
     async_handlers = [
         Select2InvoiceTriggerHandler,
     ]
@@ -1502,9 +1500,8 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def trigger_form(self):
-        if self.request.method == 'POST':
-            return TriggerDowngradeForm(self.request.POST)
-        return TriggerDowngradeForm()
+        raise NotImplementedError("please implement self.trigger_form")
+
 
     @property
     def page_url(self):
@@ -1515,6 +1512,18 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
         return {
             'trigger_form': self.trigger_form,
         }
+
+
+class TriggerDowngradeView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_downgrade'
+    page_title = "Trigger Downgrade"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerDowngradeForm(self.request.POST)
+        return TriggerDowngradeForm()
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
