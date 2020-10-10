@@ -82,6 +82,9 @@ def login_and_domain_required(view_func):
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
+        if not domain_obj.is_active:
+            return _inactive_domain_response(req, domain_name)
+
         if not (user.is_authenticated and user.is_active):
             if _is_public_custom_report(req.path, domain_name):
                 return call_view()
@@ -90,10 +93,8 @@ def login_and_domain_required(view_func):
                 return redirect_for_login_or_domain(req, login_url=login_url)
 
         couch_user = _ensure_request_couch_user(req)
-        if not domain_obj.is_active:
-            return _inactive_domain_response(req, domain_name)
         if domain_obj.is_snapshot:
-            if not hasattr(req, 'couch_user') or not req.couch_user.is_previewer():
+            if not req.couch_user.is_previewer():
                 raise Http404()
             return call_view()
 
