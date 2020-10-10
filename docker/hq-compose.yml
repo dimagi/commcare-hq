@@ -17,6 +17,7 @@ services:
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
+      UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
     privileged: true  # allows mount inside container
     links:
       - postgres

@@ -1,8 +1,8 @@
-/*global getIx, getForIx */
-
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils");
+        Utils = hqImport("cloudcare/js/form_entry/utils"),
+        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
+
     function WebFormSession(params) {
         var self = {};
 
@@ -58,11 +58,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.blockingStatus = Const.BLOCK_NONE;
         self.lastRequestHandled = -1;
-        self.numPendingRequests = 0;
 
         // workaround for "forever loading" bugs...
         $(document).ajaxStop(function () {
-            self.NUM_PENDING_REQUESTS = 0;
             self.blockingStaus = Const.BLOCK_NONE;
         });
 
@@ -90,11 +88,23 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
-            var self = this;
-            var url = self.urls.xform;
-            if (requestParams.action === Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
-                self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self);
+            if (self.blockingStatus === Const.BLOCK_ALL) {
+                return;
             }
+            self.blockingStatus = blocking || Const.BLOCK_NONE;
+            $.publish('session.block', blocking);
+            self.onLoading();
+
+            if (requestParams.action === Const.SUBMIT) {
+                // Remove any submission tasks that have been queued up from spamming the submit button
+                self.taskQueue.clearTasks(Const.SUBMIT);
+            }
+
+            self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
+        };
+
+        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+            var self = this;
 
             requestParams.form_context = self.formContext;
             requestParams.domain = self.domain;
@@ -105,18 +115,10 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             requestParams['session_id'] = self.session_id;
             requestParams['debuggerEnabled'] = self.debuggerEnabled;
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-            if (this.blockingStatus === Const.BLOCK_ALL) {
-                return;
-            }
-            this.blockingStatus = blocking || Const.BLOCK_NONE;
-            $.publish('session.block', blocking);
 
-            this.numPendingRequests++;
-            this.onLoading();
-
-            $.ajax({
+            return $.ajax({
                 type: 'POST',
-                url: url + "/" + requestParams.action,
+                url: self.urls.xform + "/" + requestParams.action,
                 data: JSON.stringify(requestParams),
                 contentType: "application/json",
                 dataType: "json",
@@ -164,16 +166,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 }
             }
 
-            this.blockingStatus = Const.BLOCK_NONE;
-            $.publish('session.block', this.blockingStatus);
-
-            self.numPendingRequests--;
-            if (self.numPendingRequests === 0) {
-                self.onLoadingComplete();
-                self.taskQueue.execute(Const.SUBMIT);
-                // Remove any submission tasks that have been queued up from spamming the submit button
-                self.taskQueue.clearTasks(Const.SUBMIT);
-            }
+            self.blockingStatus = Const.BLOCK_NONE;
+            $.publish('session.block', self.blockingStatus);
         };
 
         self.handleFailure = function (resp, action, textStatus, failureCallback) {
@@ -235,6 +229,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 'formplayer.' + Const.PREV_QUESTION,
                 'formplayer.' + Const.QUESTIONS_FOR_INDEX,
                 'formplayer.' + Const.FORMATTED_QUESTIONS,
+                'formplayer.' + Const.CHANGE_LANG,
             ].join(' '));
             $.subscribe('formplayer.' + Const.SUBMIT, function (e, form) {
                 self.submitForm(form);
@@ -262,6 +257,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             });
             $.subscribe('formplayer.' + Const.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
+            });
+            $.subscribe('formplayer.' + Const.CHANGE_LANG, function (e, lang) {
+                self.changeLang(lang);
             });
         };
 
@@ -293,7 +291,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.answerQuestion = function (q) {
             var self = this;
-            var ix = getIx(q);
+            var ix = UI.getIx(q);
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
 
@@ -378,7 +376,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.serverRequest(
                 {
                     'action': Const.NEW_REPEAT,
-                    'ix': getIx(repeat),
+                    'ix': UI.getIx(repeat),
                 },
                 function (resp) {
                     $.publish('session.reconcile', [resp, repeat]);
@@ -387,7 +385,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = getIx(repetition.parent);
+            var juncture = UI.getIx(repetition.parent);
             var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
             this.serverRequest(
                 {
@@ -401,11 +399,11 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 Const.BLOCK_ALL);
         };
 
-        self.switchLanguage = function (lang) {
+        self.changeLang = function (lang) {
             this.serverRequest(
                 {
-                    'action': Const.SET_LANG,
-                    'lang': lang,
+                    'action': Const.CHANGE_LOCALE,
+                    'locale': lang,
                 },
                 function (resp) {
                     $.publish('session.reconcile', [resp, lang]);
@@ -431,7 +429,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     } else {
                         if (o.isValid()) {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                                _answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                                _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                             }
                         } else {
                             prevalidated = false;
@@ -465,7 +463,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                                 self.onsubmit(resp);
                             } else {
                                 $.each(resp.errors, function (ix, error) {
-                                    self.serverError(getForIx(form, ix), error);
+                                    self.serverError(UI.getForIx(form, ix), error);
                                 });
                                 // todo: mark all these messages for translation
                                 if (resp.status === 'too-many-requests') {

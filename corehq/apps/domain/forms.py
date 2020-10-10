@@ -118,7 +118,6 @@ from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
     SECURE_SESSION_TIMEOUT, MONITOR_2FA_CHANGES
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -430,10 +429,10 @@ class DomainGlobalSettingsForm(forms.Form):
         return smart_str(data)
 
     def clean_default_geocoder_location(self):
-        data = self.cleaned_data.get('default_geocoder_location', '{}')
+        data = self.cleaned_data.get('default_geocoder_location')
         if isinstance(data, dict):
             return data
-        return json.loads(data)
+        return json.loads(data or '{}')
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -505,7 +504,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
-        domain.default_geocoder_location = self.cleaned_data['default_geocoder_location']
+        domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
@@ -1294,7 +1293,7 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
+class HQSetPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),

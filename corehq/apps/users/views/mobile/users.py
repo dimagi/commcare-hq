@@ -120,7 +120,6 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq.toggles import (
-    CUSTOM_DATA_FIELDS_PROFILES,
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
 )
@@ -186,7 +185,6 @@ class EditCommCareUserView(BaseEditUserView):
             'custom_fields_profile_slug': PROFILE_SLUG,
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
             'token': self.backup_token,
         })
@@ -685,7 +683,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'bulk_download_url': bulk_download_url,
         }
 
@@ -937,7 +934,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        if CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
             return self.render_json_response({
                 "status": "failure",
                 "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""

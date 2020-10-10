@@ -34,7 +34,6 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
-from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
@@ -45,7 +44,6 @@ from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.icds_core.view_utils import is_icds_cas_project
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)
 
@@ -362,7 +360,7 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
+class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
@@ -417,11 +415,7 @@ class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
         )
 
     def clean_new_password1(self):
-        password1 = decode_password(self.cleaned_data.get('new_password1'))
-        if password1 == '':
-            raise ValidationError(
-                _("Password cannot be empty"), code='new_password1_empty',
-            )
+        password1 = self.cleaned_data.get('new_password1')
         if self.project.strong_mobile_passwords:
             return clean_password(password1)
         return password1
@@ -742,7 +736,7 @@ class NewMobileWorkerForm(forms.Form):
         return clean_mobile_worker_username(self.domain, username)
 
     def clean_new_password(self):
-        cleaned_password = decode_password(self.cleaned_data.get('new_password'))
+        cleaned_password = self.cleaned_data.get('new_password')
         if self.project.strong_mobile_passwords:
             return clean_password(cleaned_password)
         return cleaned_password

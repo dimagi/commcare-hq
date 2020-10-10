@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
+SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-scripts/pip-post-compile-edx.sh "$@"
+$SCRIPTS_DIR/pip-post-compile-edx.sh "$@"
 
 function clean_file {
     FILE_PATH=$1

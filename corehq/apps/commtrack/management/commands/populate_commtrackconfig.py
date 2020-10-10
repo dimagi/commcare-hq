@@ -41,7 +41,8 @@ class Command(PopulateSQLCommand):
             sql_submodel = getattr(obj, spec['sql_class'].__name__.lower())
             couch_submodel = doc.get(spec['couch_attr'], {})
             for attr in spec['fields']:
-                diffs.append(cls.diff_attr(attr, couch_submodel, sql_submodel, normalize=normalize))
+                diffs.append(cls.diff_attr(attr, couch_submodel, sql_submodel,
+                             wrap_couch=normalize, wrap_sql=normalize))
         diffs = [d for d in diffs if d]
         return "\n".join(diffs) if diffs else None
 

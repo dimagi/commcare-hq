@@ -11,7 +11,6 @@ hqDefine('users/js/edit_commcare_user', [
     'hqwebapp/js/knockout_bindings.ko',
     'hqwebapp/js/widgets',
     'registration/js/password',
-    'nic_compliance/js/encoder',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
