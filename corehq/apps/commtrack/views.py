@@ -2,6 +2,7 @@ import copy
 import json
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -141,7 +142,13 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             for attr in ('sqlconsumptionconfig', 'sqlstockrestoreconfig', 'sqlstocklevelsconfig'):
                 submodel = getattr(self.commtrack_settings, attr)
                 submodel.commtrack_settings = self.commtrack_settings
-                submodel.save()
+                try:
+                    submodel.full_clean()
+                    submodel.save()
+                except ValidationError as e:
+                    for key, msgs in dict(e).items():
+                        for msg in msgs:
+                            messages.error(request, _("Could not save {}: {}").format(key, msg))
 
             for loc_type in LocationType.objects.filter(domain=self.domain).all():
                 # This will update stock levels based on commtrack config
