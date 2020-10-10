@@ -196,7 +196,12 @@ class SQLActionConfig(models.Model):
         return self.action in STOCK_ACTION_ORDER
 
     def __repr__(self):
-        return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
+        return '{action} ({subaction}): {caption} ({_keyword})'.format(
+            action=self.action,
+            subaction=self.subaction,
+            caption=self.caption,
+            _keyword=self._keyword,
+        )
 
     def to_json(self):
         return {
