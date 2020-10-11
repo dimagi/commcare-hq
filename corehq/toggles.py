@@ -851,6 +851,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
     'Form linking workflow available on forms',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Form+Link+Workflow+Feature+Flag',
 )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
@@ -1890,5 +1891,15 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
+    """
+)
+
+CHANGE_FORM_LANGUAGE = StaticToggle(
+    'change_form_language',
+    'Allow user to change form language in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows the user to change the language of the form content while in the form itself in Web Apps
     """
 )

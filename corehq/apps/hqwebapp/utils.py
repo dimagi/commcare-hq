@@ -100,9 +100,9 @@ def aliased_language_name(lang_code):
         raise KeyError('Unknown language code %s' % lang_code)
 
 
-def decode_password(obfuscated_password, username=None):
+def decode_password(obfuscated_password):
     if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
-        return get_raw_password(obfuscated_password, username)
+        return get_raw_password(obfuscated_password)
     else:
         return obfuscated_password
 

@@ -52,17 +52,16 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
-    def diff_attr(cls, name, doc, obj, normalize=None, wrap=None):
+    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None):
         """
         Helper for diff_couch_and_sql
         """
         couch = doc.get(name, None)
         sql = getattr(obj, name, None)
-        if normalize:
-            couch = normalize(couch)
-            sql = normalize(sql)
-        if wrap:
-            couch = wrap(couch)
+        if wrap_couch:
+            couch = wrap_couch(couch)
+        if wrap_sql:
+            sql = wrap_sql(sql)
         if couch != sql:
             return f"{name}: couch value {couch!r} != sql value {sql!r}"
 

@@ -91,7 +91,8 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        send_to_elasticsearch(self.index, TEST_INDEX_INFO.type, doc_id, get_es_new, 'test', doc)
+        ElasticsearchInterface(get_es_new()).create_doc(
+            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'}, False)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -194,16 +195,14 @@ class TestSendToElasticsearch(SimpleTestCase):
             old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
-            alias=self.es_alias,
+            TEST_INDEX_INFO,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
             es_getter=esgetter or get_es_new,
             name='test',
             data=doc,
-            update=update,
             es_merge_update=es_merge_update,
-            delete=delete,
-            retries=1
+            delete=delete
         )
 
         if not delete:
