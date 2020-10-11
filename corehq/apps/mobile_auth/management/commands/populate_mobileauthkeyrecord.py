@@ -23,7 +23,7 @@ class Command(PopulateSQLCommand):
         for attr in ["domain", "user_id", "type", "key"]:
             diffs.append(cls.diff_attr(attr, couch, sql))
         for attr in ["valid", "expires"]:
-            diffs.append(cls.diff_attr(attr, couch, sql, couch_wrap=string_to_utc_datetime))
+            diffs.append(cls.diff_attr(attr, couch, sql, wrap_couch=string_to_utc_datetime))
         diffs = [d for d in diffs if d]
         return "\n".join(diffs) if diffs else None
 
