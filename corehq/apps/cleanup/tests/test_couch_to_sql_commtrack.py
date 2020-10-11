@@ -203,7 +203,7 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         couch['use_auto_emergency_levels'] = True
         self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
             "domain: couch value 'other_project' != sql value 'my_project'",
-            "use_auto_emergency_levels: couch value 'True' != sql value 'False'",
+            "use_auto_emergency_levels: couch value True != sql value False",
         ]))
 
     def test_diff_submodel_attributes(self):
@@ -213,9 +213,9 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         couch['ota_restore_config']['force_consumption_case_types'] = ['type2']
         couch['ota_restore_config']['section_to_consumption_types'] = {'s1': 'c1', 's2': 'c2'}
         self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
-            "min_window: couch value '4' != sql value '2'",
-            "section_to_consumption_types: couch value '{'s1': 'c1', 's2': 'c2'}' != sql value '{'s1': 'c1'}'",
-            "force_consumption_case_types: couch value '['type2']' != sql value '['type1']'",
+            "min_window: couch value 4 != sql value 2",
+            "section_to_consumption_types: couch value {'s1': 'c1', 's2': 'c2'} != sql value {'s1': 'c1'}",
+            "force_consumption_case_types: couch value ['type2'] != sql value ['type1']",
         ]))
 
     def test_diff_remove_submodel(self):
@@ -223,10 +223,10 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         sql = self._create_unsynced_sql()
         couch.pop('alert_config')
         self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
-            "stock_out_facilities: couch value 'None' != sql value 'True'",
-            "stock_out_commodities: couch value 'None' != sql value 'True'",
-            "stock_out_rates: couch value 'None' != sql value 'True'",
-            "non_report: couch value 'None' != sql value 'True'",
+            "stock_out_facilities: couch value None != sql value True",
+            "stock_out_commodities: couch value None != sql value True",
+            "stock_out_rates: couch value None != sql value True",
+            "non_report: couch value None != sql value True",
         ]))
 
     def test_diff_action_attributes(self):

@@ -63,7 +63,7 @@ class PopulateSQLCommand(BaseCommand):
         if wrap_sql:
             sql = wrap_sql(sql)
         if couch != sql:
-            return f"{name}: couch value '{couch!r}' != sql value '{sql!r}'"
+            return f"{name}: couch value {couch!r} != sql value {sql!r}"
 
     @classmethod
     def diff_lists(cls, docs, objects, attr_list):
