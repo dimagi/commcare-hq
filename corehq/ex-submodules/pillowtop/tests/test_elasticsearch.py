@@ -1,4 +1,5 @@
 import functools
+import mock
 import uuid
 
 
@@ -7,6 +8,7 @@ from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -89,7 +91,8 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        send_to_elasticsearch(self.index, TEST_INDEX_INFO.type, doc_id, get_es_new, 'test', doc)
+        ElasticsearchInterface(get_es_new()).create_doc(
+            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'}, False)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -156,6 +159,11 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+TEST_ES_META = {
+    TEST_INDEX_INFO.index: TEST_INDEX_INFO
+}
+
+
 @es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
@@ -172,9 +180,14 @@ class TestSendToElasticsearch(SimpleTestCase):
     def tearDown(self):
         ensure_index_deleted(self.index)
 
+    @mock.patch('corehq.apps.hqadmin.views.data.ES_META', TEST_ES_META)
+    @mock.patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @mock.patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
+        res = lookup_doc_in_es(doc['_id'], self.index)
+        self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):
@@ -182,16 +195,14 @@ class TestSendToElasticsearch(SimpleTestCase):
             old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
-            alias=self.es_alias,
+            TEST_INDEX_INFO,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
             es_getter=esgetter or get_es_new,
             name='test',
             data=doc,
-            update=update,
             es_merge_update=es_merge_update,
-            delete=delete,
-            retries=1
+            delete=delete
         )
 
         if not delete:

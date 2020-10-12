@@ -1,13 +1,25 @@
 /*
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
-hqDefine("hqwebapp/js/rollout_modal", function () {
-    var _trackSoftRollout = hqImport('analytix/js/google').trackCategory("Soft Rollout");
+hqDefine("hqwebapp/js/rollout_modal", [
+    'jquery',
+    'hqwebapp/js/alert_user',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+], function (
+    $,
+    alertUser,
+    initialPageData,
+    googleAnalytics,
+    kissmetricsAnalytics
+) {
+    var _trackSoftRollout = googleAnalytics.trackCategory("Soft Rollout");
 
     function snooze(slug) {
         $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         _trackSoftRollout.event("snooze", slug);
-        hqImport('analytix/js/kissmetrix').track.event("Soft Rollout snooze " + slug);
+        kissmetricsAnalytics.track.event("Soft Rollout snooze " + slug);
     }
 
     function cookieName(slug) {
@@ -15,8 +27,7 @@ hqDefine("hqwebapp/js/rollout_modal", function () {
     }
 
     $(function () {
-        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user,
-            $modal = $("#rollout-modal"),
+        var $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 
         if ($modal.length && (!$.cookie(cookieName(slug)) || $modal.data("force"))) {
@@ -31,7 +42,7 @@ hqDefine("hqwebapp/js/rollout_modal", function () {
         // User clicks to turn on flag
         $modal.on('click', '.flag-enable', function () {
             $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
+                url: initialPageData.reverse("toggle_" + slug),
                 data: {
                     on_or_off: "on",
                 },
@@ -40,12 +51,12 @@ hqDefine("hqwebapp/js/rollout_modal", function () {
                 },
                 error: function () {
                     $modal.modal('hide');
-                    alert_user(gettext('We could not turn on the new feature. You will have the opportunity ' +
+                    alertUser.alert_user(gettext('We could not turn on the new feature. You will have the opportunity ' +
                                        'to turn it on the next time you visit this page.'), 'danger');
                 },
             });
             _trackSoftRollout.event("enable", slug);
-            hqImport('analytix/js/kissmetrix').track.event("Soft Rollout enable " + slug);
+            kissmetricsAnalytics.track.event("Soft Rollout enable " + slug);
         });
 
         // User clicks to snooze
@@ -58,7 +69,7 @@ hqDefine("hqwebapp/js/rollout_modal", function () {
             var slug = $(this).data("slug"),
                 redirect = $(this).data("redirect");
             $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
+                url: initialPageData.reverse("toggle_" + slug),
                 data: {
                     on_or_off: "off",
                 },
@@ -75,7 +86,7 @@ hqDefine("hqwebapp/js/rollout_modal", function () {
                 },
             });
             _trackSoftRollout.event("disable", slug);
-            hqImport('analytix/js/kissmetrix').track.event("Soft Rollout disable " + slug);
+            kissmetricsAnalytics.track.event("Soft Rollout disable " + slug);
         });
     });
 });

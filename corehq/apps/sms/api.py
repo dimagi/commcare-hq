@@ -32,7 +32,6 @@ from corehq.apps.sms.models import (
     PhoneBlacklist,
     PhoneNumber,
     QueuedSMS,
-    SelfRegistrationInvitation,
     SQLMobileBackend,
     SQLSMSBackend,
 )
@@ -411,53 +410,6 @@ def is_registration_text(text):
     return keywords[0] in REGISTRATION_KEYWORDS
 
 
-def process_pre_registration(msg):
-    """
-    Returns True if this message was part of the SMS pre-registration
-    workflow (see corehq.apps.sms.models.SelfRegistrationInvitation).
-    Returns False if it's not part of the pre-registration workflow or
-    if the workflow has already been completed.
-    """
-    invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
-    if not invitation:
-        return False
-
-    if any_migrations_in_progress(invitation.domain):
-        raise DelayProcessing()
-
-    domain_obj = Domain.get_by_name(invitation.domain, strict=True)
-    if not domain_obj.sms_mobile_worker_registration_enabled:
-        return False
-
-    text = msg.text.strip()
-    if is_registration_text(text):
-        # Return False to let the message be processed through the SMS
-        # registration workflow
-        return False
-    elif invitation.phone_type:
-        # If the user has already indicated what kind of phone they have,
-        # but is still replying with sms, then just resend them the
-        # appropriate registration instructions
-        if invitation.phone_type == SelfRegistrationInvitation.PHONE_TYPE_ANDROID:
-            invitation.send_step2_android_sms()
-        elif invitation.phone_type == SelfRegistrationInvitation.PHONE_TYPE_OTHER:
-            invitation.send_step2_java_sms()
-        return True
-    elif text == '1':
-        invitation.phone_type = SelfRegistrationInvitation.PHONE_TYPE_ANDROID
-        invitation.save()
-        invitation.send_step2_android_sms()
-        return True
-    elif text == '2':
-        invitation.phone_type = SelfRegistrationInvitation.PHONE_TYPE_OTHER
-        invitation.save()
-        invitation.send_step2_java_sms()
-        return True
-    else:
-        invitation.send_step1_sms()
-        return True
-
-
 def process_sms_registration(msg):
     """
     This method handles registration via sms.
@@ -513,15 +465,10 @@ def process_sms_registration(msg):
                     try:
                         user_data = {}
 
-                        invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
-                        if invitation:
-                            invitation.completed()
-                            user_data = invitation.custom_user_data
-
                         username = process_username(username, domain_obj)
                         password = random_password()
                         new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
-                                                       created_via=USER_CHANGE_VIA_SMS, user_data=user_data)
+                                                       created_via=USER_CHANGE_VIA_SMS, metadata=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 
@@ -786,10 +733,7 @@ def _process_incoming(msg):
             handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
     if not handled and not is_two_way and not opt_keyword:
-        handled = process_pre_registration(msg)
-
-        if not handled:
-            handled = process_sms_registration(msg)
+        handled = process_sms_registration(msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (

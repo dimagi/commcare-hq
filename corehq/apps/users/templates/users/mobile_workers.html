@@ -6,11 +6,31 @@
 
 {% requirejs_main 'users/js/mobile_workers' %}
 
+{% block page_navigation %}{{ block.super }}
+  {% if request|ui_notify_enabled:"APP_USER_PROFILES_UPDATE"  %}
+    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+         data-slug="{{ 'APP_USER_PROFILES_UPDATE'|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">{% trans 'New feature: App User Profiles' %}</p>
+      <p>
+        {% blocktrans %}
+          Save time when creating and updating users by creating App User Profiles! Eliminate the need
+                  to set every individual field for a user! Available through our Enterprise Subscription
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
+{% endblock %}
+
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
   {% initial_page_data 'draconian_security' draconian_security %}
-  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
   {% registerurl 'location_search' domain %}
@@ -500,4 +520,4 @@
       </div>
     </div>
   </div>
-{% endblock %}
+{% endblock page_content %}

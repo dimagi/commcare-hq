@@ -292,11 +292,12 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     results = form_query.run().aggregations.date_histogram.buckets_list
 
-    # Convert timestamp into timezone aware datetime. Must divide timestamp by 1000 since python's
-    # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
+    # Convert timestamp from millis -> seconds -> aware datetime
+    # ES bucket key is an epoch timestamp relative to the timezone specified,
+    # so pass timezone into fromtimestamp() to create an accurate datetime, otherwise will be treated as UTC
     results = list(map(
         lambda result:
-            (datetime.fromtimestamp(result.key // 1000).date().isoformat(), result.doc_count),
+            (datetime.fromtimestamp(result.key // 1000, timezone).date().isoformat(), result.doc_count),
         results,
     ))
     return dict(results)
@@ -308,12 +309,30 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
-def get_user_stubs(user_ids):
+def get_groups_by_querystring(domain, query, case_sharing_only):
+    group_result = (
+        GroupES()
+        .domain(domain)
+        .not_deleted()
+        .search_string_query(query, default_fields=['name'])
+        .size(10)
+        .sort('name.exact')
+        .source(('_id', 'name'))
+    )
+    if case_sharing_only:
+        group_result = group_result.is_case_sharing()
+    return [
+        {'id': group['_id'], 'text': group['name']}
+        for group in group_result.run().hits
+    ]
+
+
+def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS))
+        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):

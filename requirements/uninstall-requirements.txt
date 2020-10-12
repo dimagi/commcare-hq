@@ -11,7 +11,9 @@ django-celery
 numpy
 ConcurrentLogHandler
 xhtml2pdf
-celery  # Remove once we are back to regular celery releases
 subprocess32
 eventlet
 contextlib2
+redis-py-cluster
+enum34
+celery # Remove once we are back to regular celery releases

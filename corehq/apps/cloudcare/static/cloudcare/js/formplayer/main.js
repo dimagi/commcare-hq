@@ -1,4 +1,3 @@
-/* globals FormplayerFrontend */
 hqDefine("cloudcare/js/formplayer/main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
@@ -14,8 +13,9 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
             useLiveQuery: initialPageData('use_live_query'),
+            changeFormLanguage: initialPageData('change_form_language'),
         };
-        FormplayerFrontend.start(options);
+        hqImport("cloudcare/js/formplayer/app").start(options);
 
         hqImport("cloudcare/js/util").injectMarkdownAnchorTransforms();
 
