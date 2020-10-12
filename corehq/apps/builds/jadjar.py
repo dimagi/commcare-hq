@@ -87,12 +87,19 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
 
             jad_file.flush()
             jar_file.flush()
-            
-            step_one = 'java -jar "%s" -addjarsig -jarfile "%s" -alias %s -keystore "%s" -storepass %s -keypass %s -inputjad "%s" -outputjad "%s"' % \
-                            (jad_tool, jar_file.name, key_alias, key_store, store_pass, key_pass, jad_file.name, jad_file.name)
 
-            step_two = 'java -jar "%s" -addcert -alias %s -keystore "%s" -storepass %s -inputjad "%s" -outputjad "%s"' % \
-                            (jad_tool, key_alias, key_store, store_pass, jad_file.name, jad_file.name)
+            step_one = (
+                f'java -jar "{jad_tool}" -addjarsig -jarfile "{jar_file.name}"'
+                f' -alias {key_alias} -keystore "{key_store}"'
+                f' -storepass {store_pass} -keypass {key_pass}'
+                f' -inputjad "{jad_file.name}" -outputjad "{jad_file.name}"'
+            )
+
+            step_two = (
+                f'java -jar "{jad_tool}" -addcert -alias {key_alias}'
+                f' -keystore "{key_store}" -storepass {store_pass}'
+                f' -inputjad "{jad_file.name}" -outputjad "{jad_file.name}"'
+            )
 
             for step in (step_one, step_two):
                 p = Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
@@ -103,15 +110,15 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
             with open(jad_file.name, encoding='utf-8') as f:
                 txt = f.read()
                 jad = JadDict.from_jad(txt, use_j2me_endpoint=use_j2me_endpoint)
-            
+
             try:
                 os.unlink(jad_file.name)
                 os.unlink(jar_file.name)
             except Exception:
                 pass
-    
+
     jad.update({
-        "MIDlet-Permissions" :
+        "MIDlet-Permissions":
             "javax.microedition.io.Connector.file.read,"
             "javax.microedition.io.Connector.ssl,"
             "javax.microedition.io.Connector.file.write,"
