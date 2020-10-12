@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timedelta
+from unittest2 import skipIf
 
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
@@ -12,7 +14,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
-from pillowtop.es_utils import initialize_index_and_mapping
+from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS
 
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -68,7 +70,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
+from corehq.util.elastic import ensure_index_deleted, reset_es_index, prefix_for_tests
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
@@ -861,6 +863,24 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u1')
         user_ids = get_username_in_last_form_user_id_submitted(self.domain, user2)
         self.assertEqual(user_ids, 'u2')
+
+
+@skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
+class TestFormESAccessorsILM(TestFormESAccessors):
+
+    def setUp(self):
+        self.es_index_info[0].ilm_config = prefix_for_tests(MAX_DOCS)
+        super(TestFormESAccessorsILM, self).setUp()
+
+    def tearDown(self):
+        super(TestFormESAccessorsILM, self).tearDown()
+        self.es_index_info[0].ilm_config = ""
+
+    def _send_form_to_es(self, *args, **kwargs):
+        ret = super(TestFormESAccessorsILM, self)._send_form_to_es(*args, **kwargs)
+        # manually try rollover
+        self.es.indices.rollover(self.es_index_info[0].alias, {'conditions': {'max_docs': 2}})
+        return ret
 
 
 @es_test

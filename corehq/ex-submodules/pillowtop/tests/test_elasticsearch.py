@@ -27,6 +27,7 @@ from pillowtop.es_utils import (
     set_index_reindex_settings,
     MAX_DOCS,
 )
+from pillowtop.utils import build_bulk_payload
 from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
@@ -305,21 +306,24 @@ class TestILM(SimpleTestCase):
             initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
 
     def tearDown(self):
+        XFORM_INDEX_INFO.ilm_config = ""
         ensure_index_deleted(self.index)
 
+    def rollover(self):
+        # wait for ILM to kick in.
+        #   Is double the poll_interval to provide enough buffer for ILM process
+        time.sleep(2)
+
     def _send_to_es(self, docs):
-        # if wait_interval is provided, wait for ILM
-        #   otherwise manually rollover
         for chunk in chunked(docs, 2):
             # 2 is the max_docs per the policy
             for doc in chunk:
                 send_to_es('forms', doc)
                 self.es.indices.refresh(self.alias)
-            # wait for ILM to kick in.
-            #   Is double the poll_interval to provide enough buffer for ILM process
-            time.sleep(2)
+            self.rollover()
 
     def test_index_rollsover(self):
+        #index should rollover 2 times making 3 total indices
         self._send_to_es([
             {"_id": "d1", "prop": "a"},
             {"_id": "d2", "prop": "b"},
@@ -406,3 +410,66 @@ class TestILM(SimpleTestCase):
             FormES().remove_default_filters().count(),
             3
         )
+
+    def test_bulk_action(self):
+        docs = [
+            ({"_id": "d1", "prop": "a"}, False),
+            ({"_id": "d2", "prop": "b"}, False),
+            ({"_id": "d3", "prop": "c"}, False),
+            ({"_id": "d4", "prop": "d"}, False),
+            ({"_id": "d5", "prop": "e"}, False),
+        ]
+        changes = [MockChange(doc, deleted) for doc, deleted in docs]
+        payload = build_bulk_payload(XFORM_INDEX_INFO, changes)
+        self.es_interface.bulk_ops(payload)
+        self.es.indices.refresh(self.alias)
+        self.rollover()
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            5
+        )
+
+        # update doc1, delete doc 2
+        docs = [
+            ({"_id": "d1", "prop": "b"}, False),
+            ({"_id": "d2", "prop": "b"}, True),
+        ]
+        changes = [MockChange(doc, deleted) for doc, deleted in docs]
+        payload = build_bulk_payload(XFORM_INDEX_INFO, changes)
+        self.es_interface.bulk_ops(payload)
+        self.es.indices.refresh(self.alias)
+        self.assertEqual(
+            FormES().remove_default_filters().count(),
+            4
+        )
+        self.assertEqual(
+            FormES().remove_default_filters().ids_query(['d1']).run().hits,
+            [{"prop": "b", "_id": "d1"}]
+        )
+
+
+class MockChange(object):
+
+    def __init__(self, doc, delete=False):
+        self.doc = doc
+        self.id = doc['_id']
+        self.delete = delete
+
+    def get_document(self):
+        return self.doc
+
+    @property
+    def deleted(self):
+        return self.delete
+
+
+@skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
+@es_test
+class TestILMManualRollover(TestILM):
+
+    def rollover(self):
+        # Test that TestILM works also with manual rollover 
+        #   without having to wait for 2seconds for automatic ILM rollover
+        # It's preferrable to use this rollover in other tests so that tests
+        #   don't take lot of time waiting for ILM to kickover
+        self.es.indices.rollover(self.alias, {'conditions': {'max_docs': 2}})

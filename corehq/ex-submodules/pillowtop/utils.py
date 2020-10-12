@@ -221,7 +221,7 @@ class ErrorCollector(object):
 
 
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None,
-        skip_doc_exists_check=True):
+        skip_doc_exists_check=False):
     """
     Builds bulk payload json to be called via Elasticsearch Bulk API
     """

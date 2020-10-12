@@ -44,7 +44,7 @@ class XFormESTestCase(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_es_index(XFORM_INDEX_INFO.alias)
+        delete_es_index(XFORM_INDEX_INFO.index)
         super(XFormESTestCase, cls).tearDownClass()
 
     def test_forms_are_in_index(self):
