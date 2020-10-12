@@ -302,15 +302,8 @@ class StockState(models.Model):
     @property
     @memoized
     def consumption_helper(self):
-        return ConsumptionHelper(
-            domain=self.get_domain(),
-            case_id=self.case_id,
-            section_id=self.section_id,
-            entry_id=self.product_id,
-            daily_consumption=self.daily_consumption,
-            balance=self.balance,
-            sql_location=self.sql_location,
-        )
+        from corehq.apps.reports.commtrack.util import get_consumption_helper_from_ledger_value
+        return get_consumption_helper_from_ledger_value(self.domain, self)
 
     @property
     def months_remaining(self):

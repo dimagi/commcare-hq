@@ -59,7 +59,6 @@ class StockLedgerValueWrapper(jsonobject.JsonObject):
 
 
 def get_consumption_helper_from_ledger_value(domain, ledger_value):
-    assert isinstance(ledger_value, StockLedgerValueWrapper)
     return ConsumptionHelper(
         domain=domain,
         case_id=ledger_value.case_id,
