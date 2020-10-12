@@ -38,7 +38,7 @@ from corehq.apps.users.models import (
     Invitation,
     UserRole,
 )
-from corehq.apps.users.util import normalize_username
+from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 required_headers = set(['username'])
@@ -343,6 +343,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             if update_progress:
                 update_progress(current)
                 current += 1
+            role_updated = False
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
@@ -474,12 +475,17 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
 
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
+                    user_current_role = user.get_role(domain=domain)
+                    role_updated = not (user_current_role and
+                                        user_current_role.get_qualified_id() == role_qualified_id)
                     user.set_role(domain, role_qualified_id)
 
                 if web_user:
                     user.update_metadata({'login_as_user': web_user})
 
                 user.save()
+                if role_updated:
+                    log_user_role_update(domain, user, upload_user)
                 if web_user:
                     if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(
