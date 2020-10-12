@@ -109,7 +109,6 @@ nose==1.3.7               # via -r test-requirements.in, django-nose, nose-exclu
 oauthlib==3.1.0           # via django-oauth-toolkit, requests-oauthlib
 openpyxl==2.6.4           # via -r requirements.in, commcaretranslationchecker
 pbr==5.5.0                # via mock
-pdfrw==0.4                # via weasyprint
 phonenumberslite==8.12.10  # via -r requirements.in
 pillow==7.2.0             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
 pip-tools==5.3.1          # via -r test-requirements.in
@@ -176,7 +175,7 @@ unittest2==1.1.0          # via -r test-requirements.in
 urllib3==1.25.10          # via botocore, elasticsearch, elasticsearch2, elasticsearch7, py-kissmetrics, requests, sentry-sdk
 user-agents==2.2.0        # via django-user-agents
 vine==1.3.0               # via amqp
-weasyprint==0.42.3        # via -r requirements.in
+weasyprint==51            # via -r requirements.in
 webencodings==0.5.1       # via cssselect2, html5lib, tinycss2
 werkzeug==0.15.3          # via -r requirements.in
 wrapt==1.12.1             # via ddtrace
@@ -185,4 +184,4 @@ xlwt==1.3.0               # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==20.2.3               # via pip-tools
-setuptools==50.3.0        # via cairocffi, cssselect2, django-websocket-redis, gunicorn, python-levenshtein, tinycss2
+setuptools==50.3.0        # via cairocffi, cssselect2, django-websocket-redis, gunicorn, python-levenshtein, tinycss2, weasyprint
