@@ -9,14 +9,13 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.apps.users.models import UserRole
 from corehq.util.django_migrations import skip_on_fresh_install
 
-GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "2a53b5901a0a1e353a6fa078919fe0d6f071eff0"
+GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "cad2c518565579dee1d79eb1897af811feae248e"
 AUTO_MIGRATE_ITEMS_LIMIT = 1000
 AUTO_MIGRATE_FAILED_MESSAGE = """
 A migration must be performed before this environment can be upgraded to the
-latest version of CommCareHQ. Instructions for running the migration can be
-found at this link:
+latest version of CommCareHQ. You should run the following management command
 
-https://github.com/dimagi/commcare-cloud/blob/master/docs/changelog/0000-example-entry.md
+python manage.py copy_web_permissions_to_all_apps
 
 You will need to checkout an older version of CommCareHQ first if you are
 unable to run the management command because it has been deleted:
@@ -63,14 +62,14 @@ def count_items_to_be_migrated():
     ).all()
     counter = 0
     for role_doc in iter_docs(UserRole.get_db(), [r['id'] for r in roles]):
-        counter = False
+        UserRole.wrap(role_doc)
         permissions = role_doc['permissions']
         if (
             permissions.get('access_all_apps') != permissions.get('view_web_apps')
             or permissions.get('allowed_app_list') != permissions.get('view_web_apps_list')
         ):
             counter += 1
-        return counter
+    return counter
 
 
 class Migration(migrations.Migration):
