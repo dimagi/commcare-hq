@@ -1,4 +1,4 @@
-from unittest import skip # pylint: disable=unused-import
+from unittest import skip  # pylint: disable=unused-import  # noqa: F401
 import mock
 
 from django.http import HttpResponse, Http404
@@ -98,7 +98,7 @@ class TestLoginAndDomainRequired(SimpleTestCase):
 
     @mock.patch('corehq.apps.domain.decorators.has_privilege', mock.Mock(return_value=False))
     @mock.patch('corehq.apps.domain.views.accounting.SubscriptionUpgradeRequiredView')
-    def test_domain_user_does_not_have_project_access__renders_subscription_upgrade(self, upgrade_required_view_class):
+    def test_domain_user_does_not_have_project_access__renders_subscription_upgrade(self, upgrade_required_view_class):  # noqa: E501
         self.user.is_member_of.return_value = True
         upgrade_required_view = mock.Mock()
         upgrade_required_view_class.return_value = upgrade_required_view
