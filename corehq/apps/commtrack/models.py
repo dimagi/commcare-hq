@@ -10,10 +10,7 @@ from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.consumption import (
-    ConsumptionConfiguration,
-    ConsumptionHelper,
-)
+from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.ext.couchdbkit import *
@@ -278,6 +275,10 @@ class StockState(models.Model):
 
     # leave a way to get unfiltered data
     include_archived = models.Manager()
+
+    @property
+    def last_modified(self):
+        return self.last_modified_date
 
     @property
     def entry_id(self):
