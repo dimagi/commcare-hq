@@ -76,7 +76,7 @@ def count_items_to_be_migrated():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0023_hqapikey_role_id'),
+        ('users', '0025_hqapikey_domain'),
     ]
 
     operations = [
