@@ -1611,10 +1611,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     @memoized
     def sql_product(self):
         from corehq.apps.products.models import SQLProduct
-        try:
-            return SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
-        except SQLProduct.DoesNotExist:
-            return None
+        return SQLProduct.objects.get_or_None(domain=self.domain, product_id=self.entry_id)
 
     @property
     def location_id(self):
