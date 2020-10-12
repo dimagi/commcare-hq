@@ -21,17 +21,12 @@ class Command(BaseCommand):
             role = UserRole.wrap(role_doc)
             total_doc_count += 1
             changed = False
-            if (
-                role.permissions.view_web_apps is not None
-                and role.permissions.access_all_apps != role.permissions.view_web_apps
-            ):
-                role.permissions.access_all_apps = role.permissions.view_web_apps
+            permissions = role_doc['permissions']
+            if permissions.get('access_all_apps') != permissions.get('view_web_apps'):
+                role.permissions.access_all_apps = permissions.get('view_web_apps', True)
                 changed = True
-            if (
-                role.permissions.view_web_apps_list
-                and role.permissions.allowed_app_list != role.permissions.view_web_apps_list
-            ):
-                role.permissions.allowed_app_list = role.permissions.view_web_apps_list
+            if permissions.get('allowed_app_list') != permissions.get('view_web_apps_list'):
+                role.permissions.allowed_app_list = permissions.get('view_web_apps_list', [])
                 changed = True
             if changed:
                 counter += 1
