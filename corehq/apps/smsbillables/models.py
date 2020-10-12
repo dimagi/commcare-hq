@@ -17,7 +17,8 @@ from corehq.apps.sms.phonenumbers_helper import (
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import (
     AmbiguousPrefixException,
-    RetryBillableTaskException
+    RetryBillableTaskException,
+    DeliveredBillableException,
 )
 from corehq.apps.smsbillables.utils import (
     log_smsbillables_error,
@@ -407,13 +408,15 @@ class SmsBillable(models.Model):
     @classmethod
     def get_charge_details_through_api(cls, backend_instance, backend_message_id):
         status, price, multipart_count = backend_instance.get_provider_charges(backend_message_id)
-        if status is None or status.lower() in [
+        if status is not None and status.lower() == 'delivered' and price is None:
+            raise DeliveredBillableException(f"backend_message_id={backend_message_id}")
+        elif status is None or status.lower() in [
             'accepted',
             'queued',
             'sending',
             'receiving',
         ] or price is None:
-            raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+            raise RetryBillableTaskException(f"backend_message_id={backend_message_id}")
 
         return abs(Decimal(price)), multipart_count
 

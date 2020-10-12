@@ -35,12 +35,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         username = self.cleaned_data.get('username', '').lower()
         return username
 
-    def clean_password(self):
-        from corehq.apps.hqwebapp.utils import decode_password
-        # decode password submitted from HQ login
-        # also pass in username to track replay attack
-        return decode_password(self.cleaned_data['password'], self.clean_username())
-
     def clean(self):
         username = self.cleaned_data.get('username')
         if username is None:
@@ -49,6 +43,10 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         password = self.cleaned_data.get('password')
         if not password:
             raise ValidationError(_("Please enter a password."))
+
+        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+            if not self.cleaned_data.get('captcha'):
+                raise ValidationError(_("Please enter valid CAPTCHA"))
 
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()

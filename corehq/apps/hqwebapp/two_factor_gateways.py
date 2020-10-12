@@ -87,9 +87,9 @@ def validate_voice_locale(locale):
                           'commcare.two_factor.setup_rate_limiter_errors')
 def rate_limit_two_factor_setup(device):
     """
-    This holds attempts per user AND attempts per IP below limits
-
-    given by two_factor_setup_rate_limiter.
+    This holds attempts per IP OR per User OR per Number below limits
+    given by two_factor_rate_limiter_per_ip, two_factor_rate_limiter_per_user,
+    and two_factor_rate_limiter_per_number, respectively
     And keeps total requests below limits given by global_two_factor_setup_rate_limiter.
 
     Requests without an IP are rejected (unusual).
@@ -97,7 +97,10 @@ def rate_limit_two_factor_setup(device):
     then those requests are also rejected.
 
     """
-    _status_rate_limited = 'rate_limited'
+    _status_global_rate_limited = 'global_rate_limited'
+    _status_ip_rate_limited = 'ip_rate_limited'
+    _status_number_rate_limited = 'number_rate_limited'
+    _status_user_rate_limited = 'user_rate_limited'
     _status_bad_request = 'bad_request'
     _status_accepted = 'accepted'
 
@@ -108,45 +111,94 @@ def rate_limit_two_factor_setup(device):
         else:
             return None
 
+    def _check_for_exceeded_rate_limits(ip, num, user):
+        global_window = global_two_factor_setup_rate_limiter.get_window_of_first_exceeded_limit()
+        ip_window = two_factor_rate_limiter_per_ip.get_window_of_first_exceeded_limit('ip:{}'.format(ip))
+        number_window = \
+            two_factor_rate_limiter_per_number.get_window_of_first_exceeded_limit('number:{}'.format(num))
+        user_window = two_factor_rate_limiter_per_user.get_window_of_first_exceeded_limit('user:{}'.format(user))
+
+        # ensure that no rate limit windows have been exceeded
+        # order of priority (global, ip, number, user)
+        if global_window is not None:
+            return _status_global_rate_limited, global_window
+        elif ip_window is not None:
+            return _status_ip_rate_limited, ip_window
+        elif number_window is not None:
+            return _status_number_rate_limited, number_window
+        elif user_window is not None:
+            return _status_user_rate_limited, user_window
+        else:
+            return _status_accepted, None
+
     _report_current_global_two_factor_setup_rate_limiter()
 
     ip_address = get_ip_address()
+    number = device.number
     username = device.user.username
     method = device.method if isinstance(device, PhoneDevice) else None
 
-    if ip_address and username and method:
-        if two_factor_setup_rate_limiter.allow_usage('ip:{}'.format(ip_address)) \
-                and two_factor_setup_rate_limiter.allow_usage('user:{}'.format(username)) \
-                and global_two_factor_setup_rate_limiter.allow_usage():
-            two_factor_setup_rate_limiter.report_usage('ip:{}'.format(ip_address))
-            two_factor_setup_rate_limiter.report_usage('user:{}'.format(username))
-            global_two_factor_setup_rate_limiter.report_usage()
-            status = _status_accepted
-        else:
-            status = _status_rate_limited
+    if ip_address and username and number and method:
+
+        status, window = _check_for_exceeded_rate_limits(ip_address, number, username)
+        if status == _status_accepted:
+            _report_usage(ip_address, number, username)
+
     else:
+        window = None
         status = _status_bad_request
 
     metrics_counter('commcare.two_factor.setup_requests', 1, tags={
         'status': status,
         'method': method,
+        'window': window or 'none',
     })
     return status != _status_accepted
 
 
-two_factor_setup_rate_limiter = RateLimiter(
-    feature_key='two_factor_setup_attempts',
+two_factor_rate_limiter_per_ip = RateLimiter(
+    feature_key='two_factor_attempts_per_ip',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'two_factor_setup_attempts',
+        'two_factor_attempts_per_ip',
         default=RateDefinition(
-            per_week=15,
-            per_day=8,
-            per_hour=5,
-            per_minute=3,
+            per_week=20000,
+            per_day=2000,
+            per_hour=1200,
+            per_minute=700,
+            per_second=60,
+        )
+    ).get_rate_limits(),
+    scope_length=1,
+)
+
+two_factor_rate_limiter_per_user = RateLimiter(
+    feature_key='two_factor_attempts_per_user',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'two_factor_attempts_per_user',
+        default=RateDefinition(
+            per_week=120,
+            per_day=40,
+            per_hour=8,
+            per_minute=2,
             per_second=1,
         )
     ).get_rate_limits(),
-    scope_length=1,  # per user OR per IP
+    scope_length=1,
+)
+
+two_factor_rate_limiter_per_number = RateLimiter(
+    feature_key='two_factor_attempts_per_number',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'two_factor_attempts_per_number',
+        default=RateDefinition(
+            per_week=120,
+            per_day=40,
+            per_hour=8,
+            per_minute=2,
+            per_second=1,
+        )
+    ).get_rate_limits(),
+    scope_length=1,
 )
 
 global_two_factor_setup_rate_limiter = RateLimiter(
@@ -159,6 +211,13 @@ global_two_factor_setup_rate_limiter = RateLimiter(
     ).get_rate_limits(),
     scope_length=0,
 )
+
+
+def _report_usage(ip_address, number, username):
+    global_two_factor_setup_rate_limiter.report_usage()
+    two_factor_rate_limiter_per_ip.report_usage('ip:{}'.format(ip_address))
+    two_factor_rate_limiter_per_number.report_usage('number:{}'.format(number))
+    two_factor_rate_limiter_per_user.report_usage('user:{}'.format(username))
 
 
 def _report_current_global_two_factor_setup_rate_limiter():

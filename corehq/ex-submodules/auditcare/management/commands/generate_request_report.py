@@ -13,7 +13,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('filename', help="Output file path")
         parser.add_argument(
-            '-d'
+            '-d',
             '--domain',
             dest='domain',
             help="Limit logs to only this domain"
@@ -43,7 +43,7 @@ class Command(BaseCommand):
             action='store_true',
             dest='display_superuser',
             default=False,
-            help="Include superusers in report, otherwise 'Dimagi User'",
+            help="Include superusers in report, otherwise 'Dimagi Support'",
         )
 
     def handle(self, filename, **options):

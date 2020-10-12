@@ -92,7 +92,7 @@ hqDefine('users/js/roles',[
                         showOption: true,
                         editPermission: self.permissions.edit_commcare_users,
                         viewPermission: self.permissions.view_commcare_users,
-                        text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings,deactivate or delete mobile workers. This permission also allows users to login as any mobile worker in Web Apps."),
+                        text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings,deactivate or delete mobile workers."),
                         showEditCheckbox: true,
                         editCheckboxLabel: "edit-commcare-users-checkbox",
                         showViewCheckbox: true,
