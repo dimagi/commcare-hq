@@ -34,7 +34,7 @@ django-redis-sessions==0.6.1
 django-redis==4.11.0
 django-simple-captcha==0.5.12
 django-statici18n==1.9.0
-django-tastypie==0.14.2
+django-tastypie==0.14.3
 django-transfer==0.4
 django-two-factor-auth~=1.12
 django-user-agents==0.3.2
