@@ -778,7 +778,6 @@ class TestUserUploadRecord(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        Invitation.objects.all().delete()
         delete_all_users()
 
     def test_user_upload_record(self):
