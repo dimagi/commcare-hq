@@ -274,7 +274,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             result = {
                 'product_id': ledger_value.sql_product.product_id,
                 'product_name': ledger_value.sql_product.name,
-                'current_stock': format_decimal(ledger_value.balance),
+                'current_stock': format_decimal(Decimal(ledger_value.balance)),
             }
 
             if self._include_advanced_data():
@@ -342,7 +342,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'location_id': None,
                         'product_name': product.name,
                         'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(ledger_value.balance),
+                        'current_stock': format_decimal(Decimal(ledger_value.balance)),
                         'count': 1,
                         'consumption': consumption,
                         'category': consumption_helper.get_stock_category(),
