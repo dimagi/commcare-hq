@@ -476,8 +476,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
                     user_current_role = user.get_role(domain=domain)
-                    role_updated = not (user_current_role and
-                                        user_current_role.get_qualified_id() == role_qualified_id)
+                    role_updated = not (user_current_role
+                                        and user_current_role.get_qualified_id() == role_qualified_id)
                     if role_updated:
                         user.set_role(domain, role_qualified_id)
 

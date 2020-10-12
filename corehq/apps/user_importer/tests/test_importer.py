@@ -32,7 +32,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
-        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None, is_superuser=True)
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
 
         permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
@@ -695,7 +696,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         cls.domain = Domain(name=cls.domain_name)
         cls.domain.strong_mobile_passwords = True
         cls.domain.save()
-        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None, is_superuser=True)
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
 
     @classmethod
     def tearDownClass(cls):
