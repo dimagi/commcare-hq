@@ -4,7 +4,7 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-alembic==0.8.6            # via -r requirements.in
+alembic==1.4.3            # via -r requirements.in
 amqp==2.6.1               # via kombu
 architect==0.5.6          # via -r requirements.in
 argparse==1.4.0           # via unittest2
@@ -129,7 +129,7 @@ pyjwt==1.7.1              # via pygithub, twilio
 pyphen==0.9.5             # via weasyprint
 pysocks==1.7.1            # via twilio
 pystache==0.5.4           # via pycco
-python-dateutil==2.8.1    # via -r requirements.in, botocore, django-tastypie, faker, freezegun
+python-dateutil==2.8.1    # via -r requirements.in, alembic, botocore, django-tastypie, faker, freezegun
 python-editor==1.0.4      # via alembic
 python-imap==1.0.0        # via -r requirements.in
 python-levenshtein==0.12.0  # via -r requirements.in

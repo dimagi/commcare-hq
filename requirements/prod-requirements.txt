@@ -4,7 +4,7 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-alembic==0.8.6            # via -r requirements.in
+alembic==1.4.3            # via -r requirements.in
 amqp==2.6.1               # via kombu
 architect==0.5.6          # via -r requirements.in
 attrs==18.2.0             # via -r requirements.in
@@ -132,7 +132,7 @@ pyopenssl==19.1.0         # via -r prod-requirements.in, ndg-httpsclient
 pyphen==0.9.5             # via weasyprint
 pysocks==1.7.1            # via twilio
 pystache==0.5.4           # via pycco
-python-dateutil==2.8.1    # via -r requirements.in, botocore, django-tastypie, faker
+python-dateutil==2.8.1    # via -r requirements.in, alembic, botocore, django-tastypie, faker
 python-editor==1.0.4      # via alembic
 python-imap==1.0.0        # via -r requirements.in
 python-levenshtein==0.12.0  # via -r requirements.in
