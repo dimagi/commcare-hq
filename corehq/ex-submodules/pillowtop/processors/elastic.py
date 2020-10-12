@@ -179,10 +179,7 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
     while current_tries < retries:
         try:
             if delete:
-                try:
-                    es_interface.delete_doc(alias, doc_type, doc_id)
-                except NotFoundError:
-                    pass
+                es_interface.delete_doc(alias, doc_type, doc_id)
             else:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:

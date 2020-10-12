@@ -250,6 +250,23 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         self._send_to_es_and_check(doc, delete=True)
 
+    def test_missing_delete(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        self._send_to_es_and_check(doc, delete=True)
+
+    def test_missing_merge(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        send_to_elasticsearch(
+            TEST_INDEX_INFO,
+            doc_type=TEST_INDEX_INFO.type,
+            doc_id=doc['_id'],
+            es_getter=get_es_new,
+            name='test',
+            data=doc,
+            es_merge_update=True,
+        )
+        self.assertEqual(0, get_doc_count(self.es, self.index))
+
     def test_connection_failure(self):
         def _bad_es_getter():
             from corehq.util.es.elasticsearch import Elasticsearch
