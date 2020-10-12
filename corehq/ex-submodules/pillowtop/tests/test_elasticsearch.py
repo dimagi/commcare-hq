@@ -6,6 +6,8 @@ import uuid
 
 from django.conf import settings
 from django.test import SimpleTestCase
+from unittest2 import skipIf
+
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es.tests.utils import es_test
@@ -284,6 +286,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         self._send_to_es_and_check(doc)
 
 
+@skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
 @es_test
 class TestILM(SimpleTestCase):
 
