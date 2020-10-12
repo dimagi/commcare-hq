@@ -2,15 +2,13 @@ import itertools
 import os
 import shlex
 from io import BytesIO
-from subprocess import PIPE
+from subprocess import PIPE, Popen
 from tempfile import NamedTemporaryFile
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.conf import settings
 
 from lxml import etree
-
-from dimagi.utils.subprocess_manager import subprocess_context
 
 CONVERTED_PATHS = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
 
@@ -97,11 +95,10 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
                             (jad_tool, key_alias, key_store, store_pass, jad_file.name, jad_file.name)
 
             for step in (step_one, step_two):
-                with subprocess_context() as subprocess:
-                    p = subprocess.Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
-                    _, stderr = p.communicate()
-                    if stderr.strip():
-                        raise Exception(stderr)
+                p = Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
+                _, stderr = p.communicate()
+                if stderr.strip():
+                    raise Exception(stderr)
 
             with open(jad_file.name, encoding='utf-8') as f:
                 txt = f.read()
