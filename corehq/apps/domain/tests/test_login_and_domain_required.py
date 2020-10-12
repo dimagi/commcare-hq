@@ -10,10 +10,10 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 
 
-
 @login_and_domain_required
 def process_request(*args, **kwargs):
     return HttpResponse('')
+
 
 @tag('unit')
 class TestLoginAndDomainRequired(SimpleTestCase):
@@ -52,7 +52,6 @@ class TestLoginAndDomainRequired(SimpleTestCase):
 
     def process_request(self):
         return process_request(self.request, self.domain_name)
-
 
     def test_invalid_domain__displays_404(self):
         self.get_domain_by_name.return_value = None
@@ -148,4 +147,3 @@ class TestLoginAndDomainRequired(SimpleTestCase):
 
         with self.assertRaises(Http404):
             self.process_request()
-
