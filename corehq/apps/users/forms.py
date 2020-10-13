@@ -41,7 +41,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import DomainMembershipError, UserRole
-from corehq.apps.users.util import cc_user_domain, format_username
+from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.icds_core.view_utils import is_icds_cas_project
 
@@ -131,6 +131,7 @@ class BaseUpdateUserForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         self.existing_user = kwargs.pop('existing_user')
+        self.request = kwargs.pop('request')
         super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -178,6 +179,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
+                log_user_role_update(self.domain, self.existing_user, self.request.user)
             except KeyError:
                 pass
         elif is_update_successful:
@@ -1121,17 +1123,18 @@ class AddPhoneNumberForm(forms.Form):
 class CommCareUserFormSet(object):
     """Combines the CommCareUser form and the Custom Data form"""
 
-    def __init__(self, domain, editable_user, request_user, data=None, *args, **kwargs):
+    def __init__(self, domain, editable_user, request_user, request, data=None, *args, **kwargs):
         self.domain = domain
         self.editable_user = editable_user
         self.request_user = request_user
+        self.request = request
         self.data = data
 
     @property
     @memoized
     def user_form(self):
         return UpdateCommCareUserInfoForm(
-            data=self.data, domain=self.domain, existing_user=self.editable_user)
+            data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
 
     @property
     @memoized
