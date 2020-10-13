@@ -62,7 +62,7 @@ django-redis-sessions==0.6.1  # via -r requirements.in
 django-redis==4.11.0      # via -r requirements.in
 django-simple-captcha==0.5.12  # via -r requirements.in
 django-statici18n==1.9.0  # via -r requirements.in
-django-tastypie==0.14.2   # via -r requirements.in
+django-tastypie==0.14.3   # via -r requirements.in
 django-transfer==0.4      # via -r requirements.in
 django-two-factor-auth==1.12.1  # via -r requirements.in
 django-user-agents==0.3.2  # via -r requirements.in
@@ -132,11 +132,10 @@ openpyxl==2.6.4           # via -r requirements.in, commcaretranslationchecker
 packaging==20.4           # via sphinx
 parso==0.7.1              # via jedi
 pbr==5.5.0                # via mock
-pdfrw==0.4                # via weasyprint
 pexpect==4.8.0            # via ipython
 phonenumberslite==8.12.10  # via -r requirements.in
 pickleshare==0.7.5        # via ipython
-pillow==6.2.2             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
+pillow==7.2.0             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
 pip-tools==5.3.1          # via -r test-requirements.in
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements.in
@@ -223,7 +222,7 @@ urllib3==1.25.10          # via botocore, elasticsearch, elasticsearch2, elastic
 user-agents==2.2.0        # via django-user-agents
 vine==1.3.0               # via amqp
 wcwidth==0.2.5            # via prompt-toolkit
-weasyprint==0.42.3        # via -r requirements.in
+weasyprint==51            # via -r requirements.in
 webencodings==0.5.1       # via cssselect2, html5lib, tinycss2
 werkzeug==0.15.3          # via -r requirements.in
 wheel==0.29.0             # via -r dev-requirements.in
@@ -234,4 +233,4 @@ zipp==3.2.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==20.2.3               # via pip-tools
-setuptools==50.3.0        # via cairocffi, cssselect2, django-websocket-redis, gunicorn, ipdb, ipython, python-levenshtein, python-termstyle, sphinx, tinycss2
+setuptools==50.3.0        # via cairocffi, cssselect2, django-websocket-redis, gunicorn, ipdb, ipython, python-levenshtein, python-termstyle, sphinx, tinycss2, weasyprint
