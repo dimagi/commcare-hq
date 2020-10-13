@@ -4095,6 +4095,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
+        if 'admin_password' in data:
+            data.pop('admin_password')
+            should_save = True
+        if 'admin_password_charset' in data:
+            data.pop('admin_password_charset')
+            should_save = True
         return should_save
 
     @classmethod
