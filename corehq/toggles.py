@@ -851,6 +851,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
     'Form linking workflow available on forms',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Form+Link+Workflow+Feature+Flag',
 )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
