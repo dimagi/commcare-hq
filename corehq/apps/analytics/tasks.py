@@ -503,7 +503,7 @@ def track_periodic_data():
                     'commcare.hubspot.web_user_rejected.email_domain',
                     1,
                     tags={
-                      'email_domain': email.split('@')[-1],
+                        'email_domain': email.split('@')[-1],
                     }
                 )
                 continue
@@ -522,7 +522,7 @@ def track_periodic_data():
                         'commcare.hubspot.web_user_rejected.domain',
                         1,
                         tags={
-                          'domain': domain,
+                            'domain': domain,
                         }
                     )
                     is_member_of_blocked_domain = True
