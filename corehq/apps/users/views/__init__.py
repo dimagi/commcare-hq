@@ -358,7 +358,8 @@ class EditWebUserView(BaseEditUserView):
             data = self.request.POST
         else:
             data = None
-        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user)
+        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user,
+                                  request=self.request)
 
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
