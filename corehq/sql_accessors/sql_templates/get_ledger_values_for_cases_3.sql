@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS get_ledger_values_for_cases_2(TEXT[], TEXT[], TEXT[], TIMESTAMP, TIMESTAMP);
+DROP FUNCTION IF EXISTS get_ledger_values_for_cases_3(TEXT[], TEXT[], TEXT[], TIMESTAMP, TIMESTAMP);
 
-CREATE FUNCTION get_ledger_values_for_cases_2(
+CREATE FUNCTION get_ledger_values_for_cases_3(
     p_case_ids TEXT[],
     p_section_ids TEXT[] DEFAULT NULL,
     p_entry_ids TEXT[] DEFAULT NULL,
@@ -14,11 +14,11 @@ DECLARE
     date_filter_start   TEXT := ' AND last_modified >= $4';
     date_filter_end     TEXT := ' AND last_modified <= $5';
 BEGIN
-    IF p_section_ids IS NOT NULL THEN
+    IF p_section_ids IS NOT NULL AND array_length(p_section_ids, 1) > 0 THEN
         select_expr := select_expr || section_filter;
     END IF;
 
-    IF p_entry_ids IS NOT NULL THEN
+    IF p_entry_ids IS NOT NULL AND array_length(p_entry_ids, 1) > 0 THEN
         select_expr := select_expr || entry_filter;
     END IF;
 
