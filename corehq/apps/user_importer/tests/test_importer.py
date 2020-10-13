@@ -763,6 +763,8 @@ class TestUserUploadRecord(TestCase):
         delete_all_users()
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
         cls.spec = {
             'username': 'hello',
             'name': 'Another One',
@@ -789,7 +791,7 @@ class TestUserUploadRecord(TestCase):
             self.domain.name,
             [self.spec],
             [],
-            None,
+            self.uploading_user,
             upload_record.pk
         ).apply()
         rows = task_result.result
