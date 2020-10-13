@@ -14,8 +14,6 @@
         "register_from_case_list": true,
         "subcases": true
     },
-    "admin_password": null,
-    "admin_password_charset": "n",
     "amplifies_project": "not_set",
     "amplifies_workers": "not_set",
     "application_version": "2.0",

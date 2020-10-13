@@ -78,7 +78,6 @@
    "use_custom_suite": false,
    "is_released": false,
    "version": 7,
-   "admin_password": null,
    "build_spec": {
        "doc_type": "BuildSpec",
        "version": "2.19.0",
@@ -513,7 +512,6 @@
    "created_from_template": null,
    "multimedia_map": {
    },
-   "admin_password_charset": "n",
    "short_odk_media_url": null,
    "archived_media": {
    },

@@ -26,14 +26,12 @@
    "application_version": "2.0",
    "platform": "nokia/s40",
    "version": 12,
-   "admin_password": null,
    "build_spec": {
        "doc_type": "BuildSpec",
        "version": "2.19.0",
        "build_number": null,
        "latest": true
    },
-   "admin_password_charset": "n",
    "logo_refs": {
    },
    "short_odk_media_url": null,

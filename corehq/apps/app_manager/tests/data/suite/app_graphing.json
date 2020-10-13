@@ -55,14 +55,12 @@
    "application_version": "2.0",
    "is_released": false,
    "version": 3,
-   "admin_password": null,
    "build_spec": {
        "doc_type": "BuildSpec",
        "version": "2.15.0",
        "build_number": null,
        "latest": true
    },
-   "admin_password_charset": "n",
    "success_message": {
    },
    "short_odk_url": null,

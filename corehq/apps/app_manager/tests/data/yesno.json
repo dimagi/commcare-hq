@@ -2,8 +2,6 @@
     "_attachments": {
         "e487c0d7a0f782d05eadd5882682ad656772616.xml": "<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/6AD5FBBB-E50A-4076-89D1-045FDFAF811C\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<image/>\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/image\" type=\"xsd:string\"/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"image-label\">\n\t\t\t\t\t\t<value>image</value>\n\t\t\t\t\t\t<value form=\"image\">jr://file/commcare/image/data/image.png</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t\t<translation lang=\"es\">\n\t\t\t\t\t<text id=\"image-label\">\n\t\t\t\t\t\t<value>image</value>\n\t\t\t\t\t\t<value form=\"image\">jr://file/commcare/image/data/image.png</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/image\">\n\t\t\t<label ref=\"jr:itext('image-label')\"/>\n\t\t</input>\n\t</h:body>\n</h:html>"
     },
-    "admin_password": null,
-    "admin_password_charset": "n",
     "application_version": "2.0",
     "attribution_notes": null,
     "build_comment": null,

@@ -794,7 +794,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'recipients', 'name',
         'text_input', 'platform', 'build_spec',
         'use_custom_suite', 'custom_suite',
-        'admin_password',
         'comment',
         'use_j2me_endpoint',
         # Application only
@@ -877,11 +876,6 @@ def edit_app_attr(request, domain, app_id, attr):
             app.practice_mobile_worker_id = None
         elif user_id:
             get_and_assert_practice_user_in_domain(user_id, request.domain)
-
-    if should_edit("admin_password"):
-        admin_password = hq_settings.get('admin_password')
-        if admin_password:
-            app.set_admin_password(admin_password)
 
     # For Normal Apps
     if should_edit("cloudcare_enabled"):

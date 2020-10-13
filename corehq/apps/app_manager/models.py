@@ -21,7 +21,6 @@ from urllib.request import urlopen
 
 from django.conf import settings
 from django.contrib import admin, messages
-from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
@@ -3975,11 +3974,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     # way for apps that already had this problem. Just keep an eye out
     is_released = BooleanProperty(default=False)
 
-    # django-style salted hash of the admin password
-    admin_password = StringProperty()
-    # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
-    admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
-
     langs = StringListProperty()
 
     secure_submissions = BooleanProperty(default=False)
@@ -4157,16 +4151,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                get_latest_build_doc(self.domain, self._id))
         return self.__class__.wrap(doc) if doc else None
 
-    def set_admin_password(self, raw_password):
-        self.admin_password = make_password(raw_password)
-
-        if raw_password.isnumeric():
-            self.admin_password_charset = 'n'
-        elif raw_password.isalnum():
-            self.admin_password_charset = 'a'
-        else:
-            self.admin_password_charset = 'x'
-
     def get_build(self):
         return self.build_spec.get_build()
 
@@ -4290,7 +4274,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def jad_settings(self):
         settings = {
-            'JavaRosa-Admin-Password': self.admin_password,
             'Profile': self.profile_loc,
             'MIDlet-Jar-URL': self.jar_url,
             #'MIDlet-Name': self.name,
