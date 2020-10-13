@@ -1,5 +1,7 @@
 from django.db import models
 
+import architect
+
 
 class DynamicRateDefinition(models.Model):
     key = models.CharField(max_length=512, blank=False, null=False, unique=True, db_index=True)
@@ -22,6 +24,7 @@ class DynamicRateDefinition(models.Model):
         get_dynamic_rate_definition.clear(self.key, {})
 
 
+@architect.install('partition', type='range', subtype='date', constraint='week', column='timestamp')
 class RateLimitedTwoFactorLog(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     username = models.CharField(max_length=255, null=False, db_index=True)
