@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS get_ledger_values_for_cases_2(TEXT[], TEXT[], TEXT[], TIMESTAMP, TIMESTAMP);
+DROP FUNCTION IF EXISTS get_ledger_values_for_cases_3(TEXT[], TEXT[], TEXT[], TIMESTAMP, TIMESTAMP);
 
-CREATE FUNCTION get_ledger_values_for_cases_2(
+CREATE FUNCTION get_ledger_values_for_cases_3(
     p_case_ids TEXT[],
     p_section_ids TEXT[] DEFAULT NULL,
     p_entry_ids TEXT[] DEFAULT NULL,
