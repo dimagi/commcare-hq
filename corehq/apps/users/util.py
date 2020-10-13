@@ -16,6 +16,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.util.model_log import log_model_change
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 
@@ -307,3 +308,19 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     if sync_datetime > last_sync.sync_date:
         return True
     return False
+
+
+def log_user_role_update(domain, user, by_user):
+    """
+    :param domain: domain name
+    :param user: couch user that got updated
+    :param by_user: django/couch user that made the update
+    """
+    user_role = user.get_role(domain)
+    message = "role: None"
+    if user_role:
+        if user_role.get_qualified_id() == 'admin':
+            message = f"role: {user_role.name}"
+        else:
+            message = f"role: {user_role.name}[{user_role.get_id}]"
+    log_model_change(by_user, user.get_django_user(), message=message)
