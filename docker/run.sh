@@ -12,7 +12,6 @@ function setup() {
 
     rm *.log || true
 
-    pip install pip-tools
     pip-sync requirements/test-requirements.txt
     hash -d pip
     pip check  # make sure there are no incompatibilities in test-requirements.txt
