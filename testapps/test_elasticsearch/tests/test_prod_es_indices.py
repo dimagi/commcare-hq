@@ -57,6 +57,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_case_search",
         "hq_index_name": "case_search",
+        "ilm_config": "",
         "index": "test_case_search_2018-05-29",
         "type": "case",
         "meta": {
@@ -80,6 +81,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqapps",
         "hq_index_name": "hqapps",
+        "ilm_config": "",
         "index": "test_hqapps_2020-02-26",
         "type": "app",
         "meta": {
@@ -100,6 +102,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqcases",
         "hq_index_name": "hqcases",
+        "ilm_config": "",
         "index": "test_hqcases_2016-03-04",
         "type": "case",
         "meta": {
@@ -123,6 +126,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqdomains",
         "hq_index_name": "hqdomains",
+        "ilm_config": "",
         "index": "test_hqdomains_2020-02-10",
         "type": "hqdomain",
         "meta": {
@@ -147,6 +151,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqgroups",
         "hq_index_name": "hqgroups",
+        "ilm_config": "",
         "index": "test_hqgroups_2017-05-29",
         "type": "group",
         "meta": {
@@ -170,6 +175,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqusers",
         "hq_index_name": "hqusers",
+        "ilm_config": "",
         "index": "test_hqusers_2017-09-07",
         "type": "user",
         "meta": {
@@ -191,6 +197,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_report_cases",
         "hq_index_name": "report_cases",
+        "ilm_config": "",
         "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
         "type": "report_case",
         "meta": {
@@ -214,6 +221,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_report_xforms",
         "hq_index_name": "report_xforms",
+        "ilm_config": "",
         "index": "test_report_xforms_20160824_1708",
         "type": "report_xform",
         "meta": {
@@ -237,6 +245,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_smslogs",
         "hq_index_name": "smslogs",
+        "ilm_config": "",
         "index": "test_smslogs_2020-01-28",
         "type": "sms",
         "meta": {
@@ -260,6 +269,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_xforms",
         "hq_index_name": "xforms",
+        "ilm_config": "",
         "index": "test_xforms_2016-07-07",
         "type": "xform",
         "meta": {

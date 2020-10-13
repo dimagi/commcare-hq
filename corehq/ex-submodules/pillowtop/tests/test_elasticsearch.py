@@ -468,7 +468,7 @@ class MockChange(object):
 class TestILMManualRollover(TestILM):
 
     def rollover(self):
-        # Test that TestILM works also with manual rollover 
+        # Test that TestILM works also with manual rollover
         #   without having to wait for 2seconds for automatic ILM rollover
         # It's preferrable to use this rollover in other tests so that tests
         #   don't take lot of time waiting for ILM to kickover
