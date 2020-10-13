@@ -38,8 +38,31 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
-    importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
-    return importer.do_import(spreadsheet)
+    has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
+    if has_domain_column:
+        mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+        sub_domains = set()
+        results = _ImportResults()
+        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+            if row_num == 1:
+                continue
+            sheet_domain = row.get('domain')
+            if sheet_domain != domain and sheet_domain not in mirror_domains:
+                err = exceptions.CaseRowError(column_name='domain')
+                err.title = _('Invalid domain')
+                err.message = _('Following rows contain invalid value for domain column.')
+                results.add_error(row_num, err)
+            else:
+                sub_domains.add(sheet_domain)
+        for sub_domain in sub_domains:
+            importer = _TimedAndThrottledImporter(sub_domain, config, task, record_form_callback)
+            importer.results = results
+            importer.has_domain_column = True
+            importer.do_import(spreadsheet)
+        return results.to_json()
+    else:
+        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
+        return importer.do_import(spreadsheet)
 
 
 class _Importer(object):
@@ -63,7 +86,10 @@ class _Importer(object):
                     continue  # skip first row (header row)
 
                 try:
-                    self.import_row(row_num, row)
+                    # check if there's a domain column, if true it's value should
+                    # match the current domain, else skip the row.
+                    if self.domain == row.get('domain', self.domain):
+                        self.import_row(row_num, row)
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
 
