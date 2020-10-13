@@ -23,7 +23,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, DomainPermissionsMirror
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import flag_enabled
