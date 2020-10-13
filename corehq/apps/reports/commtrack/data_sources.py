@@ -71,11 +71,6 @@ class CommtrackDataSourceMixin(object):
 
     @property
     @memoized
-    def project(self):
-        return Domain.get_by_name(self.domain)
-
-    @property
-    @memoized
     def active_location(self):
         loc_id = self.config.get('location_id')
         return SQLLocation.objects.get_or_None(domain=self.domain, location_id=loc_id)
@@ -279,11 +274,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             result = {
                 'product_id': ledger_value.sql_product.product_id,
                 'product_name': ledger_value.sql_product.name,
-                'current_stock': format_decimal(ledger_value.balance),
+                'current_stock': format_decimal(Decimal(ledger_value.balance)),
             }
 
             if self._include_advanced_data():
-                consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
+                consumption_helper = get_consumption_helper_from_ledger_value(self.domain, ledger_value)
                 result.update({
                     'location_id': ledger_value.location_id,
                     'category': consumption_helper.get_stock_category(),
@@ -308,7 +303,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 entry_ids=self.product_ids
             )
             for ledger_value in ledger_values:
-                consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
+                consumption_helper = get_consumption_helper_from_ledger_value(self.domain, ledger_value)
                 if ledger_value.entry_id in product_aggregation:
                     product = product_aggregation[ledger_value.entry_id]
                     product['current_stock'] = format_decimal(
@@ -347,7 +342,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'location_id': None,
                         'product_name': product.name,
                         'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(ledger_value.balance),
+                        'current_stock': format_decimal(Decimal(ledger_value.balance)),
                         'count': 1,
                         'consumption': consumption,
                         'category': consumption_helper.get_stock_category(),
@@ -401,7 +396,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         }
 
         if self._include_advanced_data():
-            consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
+            consumption_helper = get_consumption_helper_from_ledger_value(self.domain, ledger_value)
             values.update({
                 self.SLUG_LOCATION_ID: ledger_value.location_id,
                 self.SLUG_CONSUMPTION: consumption_helper.get_monthly_consumption(),
