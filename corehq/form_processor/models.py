@@ -1604,6 +1604,16 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
 
     @property
+    def sql_location(self):
+        return self.location
+
+    @property
+    @memoized
+    def sql_product(self):
+        from corehq.apps.products.models import SQLProduct
+        return SQLProduct.objects.get_or_None(domain=self.domain, product_id=self.entry_id)
+
+    @property
     def location_id(self):
         return self.location.location_id if self.location else None
 
