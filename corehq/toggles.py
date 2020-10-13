@@ -1815,6 +1815,15 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
 )
 
 
+DISABLE_HUBSPOT_DATA = StaticToggle(
+    'disable_hubspot_data',
+    'Disable collecting Hubspot data for users in these domains and '
+    'email-domains.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN]
+)
+
+
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
