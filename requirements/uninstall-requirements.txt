@@ -12,7 +12,6 @@ numpy
 ConcurrentLogHandler
 xhtml2pdf
 subprocess32
-eventlet
 contextlib2
 redis-py-cluster
 enum34
