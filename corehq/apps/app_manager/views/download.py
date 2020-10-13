@@ -235,9 +235,6 @@ def download_file(request, domain, app_id, path):
         assert target != 'none'
         path = parts[0] + '-' + target + '.' + parts[1]
 
-    if path == "app.json":
-        return JsonResponse(request.app.to_json())
-
     content_type_map = {
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
@@ -520,8 +517,5 @@ def source_files(app):
     files = download_index_files(app)
     app_json = json.dumps(
         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-    )
-    files.append(
-        ("app.json", app_json)
     )
     return sorted(files)
