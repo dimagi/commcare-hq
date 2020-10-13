@@ -29,7 +29,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
-    is_single_sheet_workbook,
+    is_single_sheet_workbook, update_audio_path_if_required,
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
@@ -41,6 +41,7 @@ from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     get_single_worksheet,
 )
+from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
 
 
 def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare, file_obj):
@@ -271,9 +272,11 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
     if not sheet_name or not rows:
         return []
 
+    older_sheet_details = get_bulk_app_sheets_by_name(app, lang, eligible_for_transifex_only=True)
+    previous_rows = older_sheet_details[sheet_name]
     if is_modules_and_forms_sheet(sheet_name):
         updater = BulkAppTranslationModulesAndFormsUpdater(app, names_map, lang=lang)
-        return updater.update(rows)
+        return updater.update(rows, previous_rows)
 
     if is_module_sheet(sheet_name):
         unique_id = names_map.get(sheet_name)
@@ -295,7 +298,7 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
                 messages.error,
                 _('Invalid form in row "%s", skipping row.') % sheet_name
             )]
-        return updater.update(rows)
+        return updater.update(rows, previous_rows)
 
     return [(
         messages.error,
@@ -355,13 +358,18 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
         self.sheet_name_to_unique_id = names_map
 
-    def update(self, rows):
+    def update(self, rows, previous_rows):
         """
         This handles updating module/form names and menu media
         (the contents of the "Menus and forms" sheet in the multi-tab upload).
         """
         self.msgs = []
-        for row in get_unicode_dicts(rows):
+        for index, row in enumerate(get_unicode_dicts(rows)):
+            previous_row = previous_rows[index]
+            error_msg = update_audio_path_if_required(row, previous_row, rows.headers, self.langs)
+            if error_msg:
+                self.msgs.append(error_msg)
+                continue
             sheet_name = row.get('menu_or_form', '')
             # The unique_id column is populated on the "Menus_and_forms" sheet in multi-sheet translation files,
             # and in the "name / menu media" row in single-sheet translation files.

@@ -15,7 +15,7 @@ from corehq.apps.app_manager.xform import WrappedNode, namespaces
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_form_from_sheet_name,
-    get_unicode_dicts,
+    get_unicode_dicts, update_audio_path_if_required,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
@@ -65,7 +65,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 # Should be a blank form with no questions added so far, shouldn't need any update so skip.
                 pass
 
-    def update(self, rows):
+    def update(self, rows, previous_rows):
         try:
             self._check_for_shadow_form_error()
         except BulkAppTranslationsException as e:
@@ -76,6 +76,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             return []
 
         # Setup
+        headers = rows.headers
         rows = get_unicode_dicts(rows)
         template_translation_el = self._get_template_translation_el()
         self._add_missing_translation_elements_to_itext(template_translation_el)
@@ -90,10 +91,14 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
             assert(translation_node.exists())
 
-            for row in rows:
+            for index, row in enumerate(rows):
                 if row['label'] in label_ids_to_skip:
                     continue
                 try:
+                    error_msg = update_audio_path_if_required(row, previous_rows[index], headers, [lang])
+                    if error_msg:
+                        self.msgs.append(error_msg)
+                        continue
                     self._add_or_remove_translations(lang, row)
                 except BulkAppTranslationsException as e:
                     self.msgs.append((messages.warning, str(e)))
