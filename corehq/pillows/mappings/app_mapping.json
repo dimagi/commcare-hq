@@ -36,9 +36,6 @@
         "platform": {
             "type": "string"
         },
-        "admin_password": {
-            "type": "string"
-        },
         "build_spec": {
             "type": "object",
             "dynamic": false,
@@ -803,9 +800,6 @@
             }
         },
         "attribution_notes": {
-            "type": "string"
-        },
-        "admin_password_charset": {
             "type": "string"
         },
         "date_created": {
