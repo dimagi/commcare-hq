@@ -21,7 +21,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.metrics.load_counters import case_load_counter
