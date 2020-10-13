@@ -90,7 +90,12 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty'},
+            'user_data': {
+                'commcare_first_name': '',
+                'commcare_last_name': '',
+                'commcare_phone_number': None,
+                'commcare_project': 'qwerty',
+            },
             'username': 'fake_user'
         })
 
@@ -116,7 +121,12 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty'},
+            'user_data': {
+                'commcare_first_name': '',
+                'commcare_last_name': '',
+                'commcare_phone_number': None,
+                'commcare_project': 'qwerty',
+            },
             'username': 'fake_user',
         })
 
