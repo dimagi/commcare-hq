@@ -59,7 +59,7 @@ django-statici18n==1.9.0  # via -r requirements.in
 django-tastypie==0.14.3   # via -r requirements.in
 django-transfer==0.4      # via -r requirements.in
 django-two-factor-auth==1.12.1  # via -r requirements.in
-django-user-agents==0.3.2  # via -r requirements.in
+django-user-agents==0.4.0  # via -r requirements.in
 django-websocket-redis==0.6.0  # via -r requirements.in
 django==2.2.16            # via -r requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-logentry-admin, django-oauth-toolkit, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
 djangorestframework==3.11.1  # via -r requirements.in
