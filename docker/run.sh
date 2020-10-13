@@ -13,7 +13,6 @@ function setup() {
     rm *.log || true
 
     pip-sync requirements/test-requirements.txt
-    hash -d pip
     pip check  # make sure there are no incompatibilities in test-requirements.txt
 
     # compile pyc files
