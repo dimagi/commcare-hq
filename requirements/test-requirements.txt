@@ -160,7 +160,7 @@ sqlagg==0.16.2            # via -r requirements.in
 sqlalchemy-postgres-copy==0.5.0  # via -r test-requirements.in
 sqlalchemy==1.3.19        # via -r requirements.in, alembic, sqlagg, sqlalchemy-postgres-copy
 sqlparse==0.3.1           # via django
-stripe==1.67.0            # via -r requirements.in
+stripe==2.54.0            # via -r requirements.in
 suds-jurko==0.6           # via -r requirements.in
 testil==1.1               # via -r test-requirements.in
 text-unidecode==1.2       # via -r requirements.in, faker
