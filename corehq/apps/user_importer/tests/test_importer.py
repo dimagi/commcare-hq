@@ -16,6 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.importer import (
     create_or_update_users_and_groups,
 )
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import (
@@ -754,3 +755,46 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+
+
+class TestUserUploadRecord(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        delete_all_users()
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.spec = {
+            'username': 'hello',
+            'name': 'Another One',
+            'password': 123,
+        }
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        UserUploadRecord.objects.all().delete()
+        super().tearDownClass()
+
+    def tearDown(self):
+        delete_all_users()
+
+    def test_user_upload_record(self):
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            user_id='5'
+        )
+        upload_record.save()
+
+        task_result = import_users_and_groups.si(
+            self.domain.name,
+            [self.spec],
+            [],
+            None,
+            upload_record.pk
+        ).apply()
+        rows = task_result.result
+
+        upload_record.refresh_from_db()
+        self.assertEqual(rows['messages'], upload_record.result)
