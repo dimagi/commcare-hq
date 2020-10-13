@@ -12,8 +12,8 @@ function setup() {
 
     rm *.log || true
 
-    scripts/uninstall-requirements.sh
-    pip install -r requirements/test-requirements.txt
+    pip install pip-tools
+    pip-sync requirements/test-requirements.txt
     hash -d pip
     pip check  # make sure there are no incompatibilities in test-requirements.txt
 
