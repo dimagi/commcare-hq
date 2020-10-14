@@ -403,6 +403,7 @@ class CaseAccessors(object):
             return CaseAccessorCouch
 
     def get_case(self, case_id):
+        self.db_accessor.get_case(case_id)
         if not case_id:
             raise CaseNotFound
         return self.db_accessor.get_case(case_id)

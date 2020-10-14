@@ -26,7 +26,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
         var hours = d.getHours();
         var minutes = d.getMinutes();
         var seconds = d.getSeconds();
-      
+
         if (minutes < 10) {
             minutes = "0" + minutes;
         }
@@ -34,7 +34,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
         if (seconds < 10) {
             seconds = "0" + seconds;
         }
-      
+
         var strTime = hours + ":" + minutes + ":" + seconds;
         var strDate = strTime + " " + d.getDate() + "-" + month[d.getMonth()];
         return(strDate);
@@ -55,7 +55,6 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
         // Attach it to the parent
         document.getElementById("divEventWindow").appendChild(newContainer);
-
 
         // Create the new date div
         var newDate = document.createElement("DIV");
@@ -117,9 +116,9 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
     }
 
     function checkTURNServer(region, turnConfig, timeout) {
-      
+
         request_no++;
-      
+
         return new Promise(function (resolve, reject) {
 
             setTimeout(function () {
@@ -153,18 +152,17 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
                         }
                     }
                     if (promiseResolved || !ice || !ice.candidate || !ice.candidate.candidate || !(ice.candidate.candidate.indexOf('typ relay') > -1)) return;
-              
+
                     promiseResolved = true;
                     resolve(true);
                 }
                 catch(err) {}
             };
-        });	
+        });
     }
 
     function isRfc1918(ipIn){
-        
-      
+
         var ipToTest = new String(ipIn);
         var rfc1918_1_re = /^10\..*$/;
         var rfc1918_2_re = /^172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31).*$/;
@@ -196,9 +194,9 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
           default:
             // code block
         }
-        
+
         // Update image to green unless it was set previously set to another
-        
+
         if (document.getElementById(docTarget).src.includes("black"))
         {
             document.getElementById(docTarget).src=staticAsset("greenLED.png");
@@ -208,7 +206,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
 
     function test_turn(region, turn_url, user, cred) {
-        
+
         checkTURNServer(region, {
         url: turn_url,
         username: user,
@@ -221,7 +219,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
 
     function iterate_through_array(region, startIp, ipsInBlock){
-      
+        
         addToSystemLog("Checking region " + region + " and startIP: " + startIp);
         
         var octets = startIp.split(".");

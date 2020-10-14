@@ -14,8 +14,10 @@ class DialerSettings(models.Model):
 
 
 class GaenOtpServerSettings(models.Model):
+    GAEN_SERVER_TYPE_OPTIONS = (('NYNJ', 'New York/New Jersey'), ('CO', 'Colorado'),)
     domain = models.CharField(max_length=128, unique=True)
     is_enabled = models.BooleanField(default=False)
+    gaen_server_type = models.CharField(max_length=255, default='NYNJ', choices=GAEN_SERVER_TYPE_OPTIONS)
     server_url = models.CharField(max_length=255)
     auth_token = models.CharField(max_length=255)
 

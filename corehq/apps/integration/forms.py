@@ -101,6 +101,17 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
         label=_("Enable GAEN OTP Server Integration"),
         required=False
     )
+
+    GAEN_SERVER_TYPE_OPTIONS = (('NYNJ', 'New York/New Jersey'), ('CO', 'Colorado'),)
+    gaen_server_type = forms.CharField(
+        label=_('GAEN Server Type'),
+        widget=forms.Select(choices=[
+            ("", ugettext_lazy("Select model type")),
+            ('NYNJ', ugettext_lazy('New York/New Jersey')),
+            ('CO', ugettext_lazy('Colorado')),
+        ]),
+    )
+
     server_url = forms.CharField(
         label=_('Server Endpoint')
     )
@@ -131,6 +142,9 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
                 hqcrispy.InlineField('is_enabled'),
             ),
             crispy.Div(
+                crispy.Field('gaen_server_type'),
+            ),
+            crispy.Div(
                 crispy.Field('server_url'),
             ),
             crispy.Div(
@@ -155,12 +169,14 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
     def initial_data(self):
         return {
             'is_enabled': self._existing_config.is_enabled,
+            'gaen_server_type': self._existing_config.gaen_server_type,
             'server_url': self._existing_config.server_url,
             'auth_token': self._existing_config.auth_token,
         }
 
     def save(self):
         self._existing_config.is_enabled = self.cleaned_data['is_enabled']
+        self._existing_config.gaen_server_type = self.cleaned_data['gaen_server_type']
         self._existing_config.server_url = self.cleaned_data['server_url']
         self._existing_config.auth_token = self.cleaned_data['auth_token']
         self._existing_config.save()

@@ -89,7 +89,9 @@ def gaen_otp_view(request, domain):
 
         try:
             case_id = request.POST['case_id']
-
+            case_id = '568b9163-f50b-432c-8da4-6bc3a5ce7a4b' #delete after testing
+            print(case_id)
+            print(CaseAccessors(domain).get_case_ids_in_domain())
             case = CaseAccessors(domain).get_case(case_id)
 
             case_name = case.name
@@ -130,6 +132,8 @@ def get_otp_response(post_data, gaen_otp_settings):
 
     if otp_response.status_code == 500:
         raise RequestException(None, None, "Error on OTP Server")
+
+    #import pdb; pdb.set_trace()
 
     try:
         return {
