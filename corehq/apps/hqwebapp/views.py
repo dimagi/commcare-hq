@@ -453,6 +453,7 @@ def login(req):
     return _login(req, domain, get_custom_login_page(req.get_host()))
 
 
+@two_factor_exempt
 @location_safe
 def domain_login(req, domain, custom_template_name=None, extra_context=None):
     # This is a wrapper around the _login view which sets a different template
