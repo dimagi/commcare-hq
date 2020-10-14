@@ -26,7 +26,7 @@ class DynamicRateDefinition(models.Model):
 
 @architect.install('partition', type='range', subtype='date', constraint='week', column='timestamp')
 class RateLimitedTwoFactorLog(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True, db_index=True)
     username = models.CharField(max_length=255, null=False, db_index=True)
     ip_address = models.CharField(max_length=45, null=False, db_index=True)
     phone_number = models.CharField(max_length=127, null=False, db_index=True)

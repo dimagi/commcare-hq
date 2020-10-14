@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name='RateLimitedTwoFactorLog',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateTimeField(auto_now_add=True)),
+                ('date', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('username', models.CharField(db_index=True, max_length=255)),
                 ('ip_address', models.CharField(db_index=True, max_length=45)),
                 ('phone_number', models.CharField(db_index=True, max_length=127)),
