@@ -367,6 +367,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
         context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
+            'reason': reason,
         },
         request=request,
     ))
