@@ -322,7 +322,7 @@ class PredictablyRandomToggle(StaticToggle):
             namespace = None  # because:
             # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
 
-        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_RANDOM_NAMESPACES}
         if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
             raise ValueError(
                 'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
@@ -390,6 +390,7 @@ NAMESPACE_DOMAIN = 'domain'
 NAMESPACE_EMAIL_DOMAIN = 'email_domain'
 NAMESPACE_OTHER = 'other'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN]
+ALL_RANDOM_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def any_toggle_enabled(*toggles):
