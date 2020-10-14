@@ -12,7 +12,6 @@ from twilio.rest import Client
 from two_factor.models import PhoneDevice
 
 import settings
-from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, \
     RateDefinition
