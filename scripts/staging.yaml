@@ -65,6 +65,6 @@ branches:
   - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
   - bmb/SAAS-11201  # Biyeun Oct 14
-  - orangejenny-patch-5 # Jenny Oct 14
+#  - orangejenny-patch-5 # Jenny Oct 14
 
 submodules: {}
