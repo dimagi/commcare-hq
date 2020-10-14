@@ -70,6 +70,8 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.functional import cached_property
 from django.conf import settings
+from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -122,6 +124,7 @@ from .const import (
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_STATES,
     RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
@@ -162,6 +165,26 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
         'status_code': status_code,
         'repeater_type': repeater_type,
     })
+
+
+class SQLRepeaterStub(models.Model):
+    """
+    This model is used to join SQLRepeatRecords. It does not reproduce
+    the behaviour of Repeater classes or instances.
+
+    It is created when its first SQLRepeatRecord is registered. See
+    ``Repeater.register()``.
+    """
+    domain = models.CharField(max_length=126)
+    couch_id = models.CharField(max_length=36)
+    is_paused = models.BooleanField(default=False)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain', 'couch_id']),
+        ]
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -931,6 +954,39 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
+
+
+class SQLRepeatRecord(models.Model):
+    domain = models.CharField(max_length=126)
+    couch_id = models.CharField(max_length=36, null=True, blank=True)
+    payload_id = models.CharField(max_length=36)
+    repeater = models.ForeignKey(SQLRepeaterStub,
+                                 on_delete=models.CASCADE,
+                                 related_name='repeat_records')
+    state = models.TextField(choices=RECORD_STATES,
+                             default=RECORD_PENDING_STATE)
+    registered_at = models.DateTimeField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['couch_id']),
+            models.Index(fields=['payload_id']),
+            models.Index(fields=['registered_at']),
+        ]
+        ordering = ['registered_at']
+
+
+class SQLRepeatRecordAttempt(models.Model):
+    repeat_record = models.ForeignKey(SQLRepeatRecord,
+                                      on_delete=models.CASCADE)
+    state = models.TextField(choices=RECORD_STATES)
+    message = models.TextField(null=True, blank=True)
+    traceback = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['created_at']
 
 
 def _get_retry_interval(last_checked, now):
