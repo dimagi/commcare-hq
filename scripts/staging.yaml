@@ -64,5 +64,6 @@ branches:
   - mk/track-role-update # MK Oct 12
   - sk/fix-ledger-incompat  # Simon Oct 13
   - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
+  - sr/case-reindex-staging # Sravan Oct 14
 
 submodules: {}
