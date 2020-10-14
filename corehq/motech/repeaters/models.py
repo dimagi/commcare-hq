@@ -410,7 +410,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         """
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
-        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
+        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
         else:
             attempt = repeat_record.handle_failure(result)
@@ -822,7 +822,7 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
-        if not _is_response(response):
+        if not is_response(response):
             return None
         response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
@@ -836,7 +836,7 @@ class RepeatRecord(Document):
         payload did not result in an API call.
         """
         now = datetime.utcnow()
-        if _is_response(response):
+        if is_response(response):
             # ^^^ Don't bother logging success in Datadog if the payload
             # did not need to be sent. (This can happen with DHIS2 if
             # the form that triggered the forwarder doesn't contain data
@@ -942,7 +942,7 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def _is_response(duck):
+def is_response(duck):
     """
     Returns True if ``duck`` has the attributes of a Requests response
     instance that this module uses, otherwise False.
