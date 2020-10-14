@@ -41,7 +41,7 @@ from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
-from corehq.toggles import deterministic_random
+from corehq.toggles import deterministic_random, DISABLE_HUBSPOT_DATA
 from corehq.util.dates import unix_time
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
@@ -494,8 +494,18 @@ def track_periodic_data():
         # max number of mobile workers
         submit = []
         for user in users_to_domains:
-            email = user.get('email')
+            email = user.get('email') or user.get('username')
             if not _email_is_valid(email):
+                continue
+
+            if DISABLE_HUBSPOT_DATA.enabled(email):
+                metrics_gauge(
+                    'commcare.hubspot.web_user_rejected.email_domain',
+                    1,
+                    tags={
+                        'email_domain': email.split('@')[-1],
+                    }
+                )
                 continue
 
             hubspot_number_of_users += 1
@@ -505,7 +515,17 @@ def track_periodic_data():
             max_export = 0
             max_report = 0
 
+            is_member_of_blocked_domain = False
             for domain in user['domains']:
+                if DISABLE_HUBSPOT_DATA.enabled(domain):
+                    metrics_gauge(
+                        'commcare.hubspot.web_user_rejected.domain',
+                        1,
+                        tags={
+                            'domain': domain,
+                        }
+                    )
+                    is_member_of_blocked_domain = True
                 if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
                     max_forms = domains_to_forms[domain]
                 if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
@@ -514,6 +534,9 @@ def track_periodic_data():
                     max_export = _get_export_count(domain)
                 if _get_report_count(domain) > max_report:
                     max_report = _get_report_count(domain)
+
+            if is_member_of_blocked_domain:
+                continue
 
             project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
