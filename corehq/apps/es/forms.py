@@ -42,7 +42,7 @@ class FormES(HQESQuery):
         return self.date_histogram('date_histogram', 'received_on', 'day', timezone=timezone)
 
     def domain_aggregation(self):
-        return self.terms_aggregation('domain', 'domain')
+        return self.terms_aggregation('domain.exact', 'domain')
 
     def only_archived(self):
         """Include only archived forms, which are normally excluded"""

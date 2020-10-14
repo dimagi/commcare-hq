@@ -239,7 +239,7 @@ class Command(BaseCommand):
         avg_ledgers_per_case = ledger_count / len(case_ids)
         case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
             .domain(self.domain).case_ids(case_ids)\
-            .aggregation(TermsAggregation('types', 'type'))\
+            .aggregation(TermsAggregation('types', 'type.exact'))\
             .size(0).run()
 
         case_types = case_types_result.aggregations.types.keys
