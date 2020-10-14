@@ -22,7 +22,8 @@ from corehq.motech.repeaters.const import (
 )
 from corehq.motech.repeaters.dbaccessors import (
     get_overdue_repeat_record_count,
-    iterate_repeat_records,
+    get_repeat_record_ids,
+    get_repeat_records_for_ids,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import (
@@ -66,15 +67,45 @@ def clean_logs():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def check_repeaters():
+    total_partitions = 16
+    # this creates a task for all partitions
+    # the Nth child task determines if a lock is available for the Nth partition
+    for current_partition in range(total_partitions):
+        check_repeaters_in_partition(current_partition, total_partitions)
+
+
+def get_repeat_record_ids_for_partition(start, partition, total_partitions):
+    all_ids = get_repeat_record_ids(due_before=start, limit=100000)
+    # any evenly distributed hash function will do
+    return [doc['id'] for doc in all_ids if hash(doc['id']) % total_partitions == partition]
+
+
+def forward_repeat_records(records, timeout):
+    for record in records:
+        if not _soft_assert(
+            datetime.utcnow() < timeout,
+            "I've been iterating repeat records for 23 hours. I quit!"
+        ):
+            return False
+
+        metrics_counter("commcare.repeaters.check.attempt_forward")
+        record.attempt_forward_now()
+
+    return True
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def check_repeaters_in_partition(partition, total_partitions):
     start = datetime.utcnow()
     twentythree_hours_sec = 23 * 60 * 60
     twentythree_hours_later = start + timedelta(hours=23)
 
     # Long timeout to allow all waiting repeat records to be iterated
+    lock_key = f"{CHECK_REPEATERS_KEY}_{partition}_in_{total_partitions}"
     check_repeater_lock = get_redis_lock(
-        CHECK_REPEATERS_KEY,
+        lock_key,
         timeout=twentythree_hours_sec,
-        name=CHECK_REPEATERS_KEY,
+        name=lock_key,
     )
     if not check_repeater_lock.acquire(blocking=False):
         metrics_counter("commcare.repeaters.check.locked_out")
@@ -85,14 +116,16 @@ def check_repeaters():
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in iterate_repeat_records(start):
-                if not _soft_assert(
-                    datetime.utcnow() < twentythree_hours_later,
-                    "I've been iterating repeat records for 23 hours. I quit!"
-                ):
+            # process repeat records by chunks until there are no more records to process
+            ids_for_partition = get_repeat_record_ids_for_partition(start, partition, total_partitions)
+            while len(ids_for_partition) > 0:
+                record_docs = get_repeat_records_for_ids(ids_for_partition)
+                # will stop if timeout is reached
+                within_timeout = forward_repeat_records(record_docs, twentythree_hours_later)
+                if not within_timeout:
                     break
-                metrics_counter("commcare.repeaters.check.attempt_forward")
-                record.attempt_forward_now()
+                # fetch ids for next chunk to process
+                ids_for_partition = get_repeat_record_ids_for_partition(start, partition, total_partitions)
             else:
                 iterating_time = datetime.utcnow() - start
                 _soft_assert(
