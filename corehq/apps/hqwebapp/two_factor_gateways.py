@@ -147,8 +147,7 @@ def rate_limit_two_factor_setup(device):
             _report_usage(ip_address, number, username)
         else:
             # log any attempts that are rate limited
-            clean_number = clean_phone_number(number)
-            RateLimitedTwoFactorLog.objects.create(ip_address=ip_address, phone_number=clean_number,
+            RateLimitedTwoFactorLog.objects.create(ip_address=ip_address, phone_number=number,
                                                    username=username, method=method, status=status,
                                                    window=window)
 
