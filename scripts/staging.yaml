@@ -66,5 +66,6 @@ branches:
   - sr/case-reindex-staging # Sravan Oct 14
   - bmb/SAAS-11201  # Biyeun Oct 14
 #  - jls/csrf-exempt-domain-login # Jenny Oct 14
+  - jls/csrf-show-reason # Jenny Oct 14
 
 submodules: {}
