@@ -502,7 +502,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self.hideLabel = ko.observable(options.hideLabel);
 
         self.colStyle = ko.computed(function () {
-            var colWidth = parseInt(12 / self.choices().length) || 1;
+            // Account for number of choices plus column for clear button
+            var colWidth = parseInt(12 / (self.choices().length + 1)) || 1;
             return 'col-xs-' + colWidth;
         });
 

@@ -56,10 +56,14 @@ branches:
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/user-data-jit            # Farid September 2
-  - mk/validate-file-extensions-2 # MK Sept 16
   - ce/case-property-recipients # Cal 9/24
-  - jls/serial-answer-requests # Jenny Oct 4
   - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
-  - nh/role-ui-mig    # Norman Oct 7
+  - bmb/redis-upgrades  # Biyeun Oct 8
+  - kev/send-timezone # Kevin Oct 8
+  - bmb/test-auto-pay  # Biyeun Oct 9
+  - mk/track-role-update # MK Oct 12
+  - sk/fix-ledger-incompat  # Simon Oct 13
+  - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
+  - sr/case-reindex-staging # Sravan Oct 14
 
 submodules: {}
