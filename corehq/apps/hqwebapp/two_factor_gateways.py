@@ -145,6 +145,8 @@ def rate_limit_two_factor_setup(device):
         if status == _status_accepted:
             _report_usage(ip_address, number, username)
         else:
+            window = window or 'unknown'
+            status = status or 'unknown'
             # log any attempts that are rate limited
             RateLimitedTwoFactorLog.objects.create(ip_address=ip_address, phone_number=number,
                                                    username=username, method=method, status=status,
