@@ -60,8 +60,8 @@ branches:
   - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
   - kev/send-timezone # Kevin Oct 8
   - bmb/test-auto-pay  # Biyeun Oct 9
-  - mk/track-role-update # MK Oct 12
-  - sk/fix-ledger-incompat  # Simon Oct 13
+#  - mk/track-role-update # MK Oct 12
+#  - sk/fix-ledger-incompat  # Simon Oct 13
   - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
   - bmb/SAAS-11201  # Biyeun Oct 14
