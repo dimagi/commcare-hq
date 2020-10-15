@@ -45,7 +45,7 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
         import_results = _ImportResults()
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
             if row_num == 1:
-                continue # skip first row (header row)
+                continue  # skip first row (header row)
             sheet_domain = row.get('domain')
             if sheet_domain != domain and sheet_domain not in mirror_domains:
                 err = exceptions.CaseRowError(column_name='domain')
