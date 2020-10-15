@@ -2469,6 +2469,23 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self,
         )
 
+    @property
+    def is_allowed_on_hubspot(self):
+        """
+        This determines whether this user's data can be present on Hubspot.
+        FYI If analytics is disabled by default in localsettings,
+        then this code is never reached.
+        """
+        from corehq.toggles import DISABLE_HUBSPOT_DATA
+        if DISABLE_HUBSPOT_DATA.enabled(self.username):
+            return False
+
+        for domain in self.get_domains():
+            if DISABLE_HUBSPOT_DATA.enabled(domain):
+                return False
+
+        return self.analytics_enabled
+
     def get_email(self):
         # Do not change the name of this method because this is implementing
         # get_email() from the CommCareMobileContactMixin

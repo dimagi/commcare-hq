@@ -178,7 +178,7 @@ def _send_post_data(url, params, data, headers):
 
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and webuser.analytics_enabled:
+    if api_key and webuser.is_allowed_on_hubspot:
         req = requests.get(
             "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                 six.moves.urllib.parse.quote(webuser.username)
@@ -206,9 +206,12 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    if ((webuser and not webuser.analytics_enabled)
-            or (not webuser and not analytics_enabled_for_email(email))):
-        # This user has analytics disabled
+    if ((webuser and not webuser.is_allowed_on_hubspot)
+            or (not webuser and (
+                    not analytics_enabled_for_email(email) or
+                    DISABLE_HUBSPOT_DATA.enabled(email)
+                ))):
+        # This user is not permitted on hubspot
         return
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
@@ -498,7 +501,9 @@ def track_periodic_data():
             if not _email_is_valid(email):
                 continue
 
-            if DISABLE_HUBSPOT_DATA.enabled(email):
+            # the OR clause is in case the email is different from the username
+            if (DISABLE_HUBSPOT_DATA.enabled(email)
+                    or DISABLE_HUBSPOT_DATA.enabled(user.get('username'))):
                 metrics_gauge(
                     'commcare.hubspot.web_user_rejected.email_domain',
                     1,
