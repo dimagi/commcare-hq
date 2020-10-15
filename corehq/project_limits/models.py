@@ -36,3 +36,8 @@ class RateLimitedTwoFactorLog(models.Model):
     window = models.CharField(max_length=15, null=False)
     # 'number_rate_limited' is 19 characters, 31 for headroom
     status = models.CharField(max_length=31, null=False)
+
+    def save(self, *args, **kwargs):
+        kwargs['window'] = kwargs['window'] or 'unknown'
+        kwargs['status'] = kwargs['status'] or 'unknown'
+        super(RateLimitedTwoFactorLog, self).save(*args, **kwargs)
