@@ -8,6 +8,7 @@ from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -15,6 +16,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
+    CHECK_REPEATERS_PARTITION_COUNT,
     CHECK_REPEATERS_KEY,
     MAX_RETRY_WAIT,
     RECORD_FAILURE_STATE,
@@ -22,8 +24,8 @@ from corehq.motech.repeaters.const import (
 )
 from corehq.motech.repeaters.dbaccessors import (
     get_overdue_repeat_record_count,
-    get_repeat_record_ids,
-    get_repeat_records_for_ids,
+    iterate_repeat_record_ids,
+    iterate_repeat_records_for_ids,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import (
@@ -67,31 +69,22 @@ def clean_logs():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def check_repeaters():
-    total_partitions = 16
     # this creates a task for all partitions
     # the Nth child task determines if a lock is available for the Nth partition
-    for current_partition in range(total_partitions):
-        check_repeaters_in_partition(current_partition, total_partitions)
+    for current_partition in range(CHECK_REPEATERS_PARTITION_COUNT):
+        check_repeaters_in_partition(current_partition, CHECK_REPEATERS_PARTITION_COUNT).delay()
 
 
-def get_repeat_record_ids_for_partition(start, partition, total_partitions):
-    all_ids = get_repeat_record_ids(due_before=start, limit=100000)
-    # any evenly distributed hash function will do
-    return [doc['id'] for doc in all_ids if hash(doc['id']) % total_partitions == partition]
+def iterate_repeat_record_ids_for_partition(start, partition, total_partitions):
+    for record_id in iterate_repeat_record_ids(start, chunk_size=100000):
+        if hash(record_id) % total_partitions == partition:
+            yield record_id
 
 
-def forward_repeat_records(records, timeout):
-    for record in records:
-        if not _soft_assert(
-            datetime.utcnow() < timeout,
-            "I've been iterating repeat records for 23 hours. I quit!"
-        ):
-            return False
-
-        metrics_counter("commcare.repeaters.check.attempt_forward")
-        record.attempt_forward_now()
-
-    return True
+def iterate_repeat_records_for_partition(start, partition, total_partitions):
+    # chunk the fetching of documents from couch
+    for chunked_ids in chunked(iterate_repeat_record_ids_for_partition(start, partition, total_partitions), 10000):
+        yield from iterate_repeat_records_for_ids(chunked_ids)
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -116,16 +109,15 @@ def check_repeaters_in_partition(partition, total_partitions):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            # process repeat records by chunks until there are no more records to process
-            ids_for_partition = get_repeat_record_ids_for_partition(start, partition, total_partitions)
-            while len(ids_for_partition) > 0:
-                record_docs = get_repeat_records_for_ids(ids_for_partition)
-                # will stop if timeout is reached
-                within_timeout = forward_repeat_records(record_docs, twentythree_hours_later)
-                if not within_timeout:
+            for record in iterate_repeat_records_for_partition(start, partition, total_partitions):
+                if not _soft_assert(
+                    datetime.utcnow() < twentythree_hours_later,
+                    "I've been iterating repeat records for 23 hours. I quit!"
+                ):
                     break
-                # fetch ids for next chunk to process
-                ids_for_partition = get_repeat_record_ids_for_partition(start, partition, total_partitions)
+
+                metrics_counter("commcare.repeaters.check.attempt_forward")
+                record.attempt_forward_now()
             else:
                 iterating_time = datetime.utcnow() - start
                 _soft_assert(
