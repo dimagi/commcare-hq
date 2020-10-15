@@ -72,7 +72,7 @@ def check_repeaters():
     # this creates a task for all partitions
     # the Nth child task determines if a lock is available for the Nth partition
     for current_partition in range(CHECK_REPEATERS_PARTITION_COUNT):
-        check_repeaters_in_partition(current_partition, CHECK_REPEATERS_PARTITION_COUNT).delay()
+        check_repeaters_in_partition.delay(current_partition, CHECK_REPEATERS_PARTITION_COUNT)
 
 
 def iterate_repeat_record_ids_for_partition(start, partition, total_partitions):
