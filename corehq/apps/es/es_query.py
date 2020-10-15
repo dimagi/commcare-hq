@@ -118,6 +118,7 @@ from corehq.elastic import (
 
 from . import aggregations, filters, queries
 from .utils import flatten_field_dict, values_list
+from corehq.util.soft_assert import soft_assert
 
 
 class ESQuery(object):
@@ -281,11 +282,37 @@ class ESQuery(object):
     def uses_aggregations(self):
         return len(self._aggregations) > 0
 
+    def _validate_agg_for_es7(self, aggregation):
+        from corehq.apps.es.aggregations import TermsAggregation
+        _assert = soft_assert(['sreddy' + '@' + 'dimagi.com'])
+        try:
+            if not isinstance(aggregation, TermsAggregation):
+                return True
+            field_name = aggregation.body['field']
+            mapping = ES_META[self.index].mapping
+            # Extract the mapping for field (could be of format form.meta.userID)
+            field_names = field_name.split(".")
+            for name in field_names:
+                if name == 'exact':
+                    mapping = mapping['fields']['exact']
+                else:
+                    mapping = mapping['properties'][name]
+            field_type = mapping.get('type')
+            index_type = mapping.get('index')
+            if field_type == 'string' and index_type != 'not_analyzed':
+                _assert(False, f'TermsAggregation on non-keyword {aggregation}')
+                return False
+        except Exception as e:
+            _assert(False, f"Error validating TermsAggregation{e}")
+            return False
+        return True
+
     def aggregation(self, aggregation):
         """
         Add the passed-in aggregation to the query
         """
         query = deepcopy(self)
+        self._validate_agg_for_es7(aggregation)
         query._aggregations.append(aggregation)
         return query
 
