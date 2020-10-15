@@ -31,7 +31,7 @@ from .es_query import HQESQuery
 class UserES(HQESQuery):
     index = 'users'
     default_filters = {
-        'not_deleted': filters.term("base_doc", "couchuser"),
+        'not_deleted': filters.term("base_doc", "CouchUser"),
         'active': filters.term("is_active", True),
     }
 
