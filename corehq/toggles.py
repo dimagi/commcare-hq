@@ -1339,6 +1339,7 @@ VIEW_APP_CHANGES = StaticToggle(
     'Improved app changes view',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://github.com/dimagi/commcare-hq/blob/ffbd79e7c55b6ed8a019091eaa69beeed705a8c0/corehq/toggles.py",
 )
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
