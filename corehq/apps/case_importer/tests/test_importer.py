@@ -384,12 +384,29 @@ class ImporterTest(TestCase):
             ['', 'name-0', 'artist-0', self.domain],
             ['', 'name-1', 'artist-1', mirror_domain1.mirror],
             ['', 'name-2', 'artist-2', mirror_domain2.mirror],
-            ['', 'name-3', 'artist-3', 'not-existing-domain']
+            ['', 'name-3', 'artist-3', self.domain],
+            ['', 'name-4', 'artist-4', self.domain],
+            ['', 'name-5', 'artist-5', 'not-existing-domain']
         )
         res = do_import(case_with_domain_file, config_1, self.domain)
-        self.assertEqual(3, res['created_count'])
+        self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(1, res['failed_count'])
+
+        # Asserting current domain
+        cur_case_ids = self.accessor.get_case_ids_in_domain()
+        cur_cases = list(self.accessor.get_cases(cur_case_ids))
+        self.assertEqual(3, len(cur_cases))
+
+        # Asserting mirror domain 1
+        md1_case_ids = CaseAccessors(mirror_domain1.mirror).get_case_ids_in_domain()
+        md1_cases = list(self.accessor.get_cases(md1_case_ids))
+        self.assertEqual(1, len(md1_cases))
+
+        # Asserting mirror domain 2
+        md2_case_ids = CaseAccessors(mirror_domain2.mirror).get_case_ids_in_domain()
+        md2_cases = list(self.accessor.get_cases(md2_case_ids))
+        self.assertEqual(1, len(md2_cases))
 
     def import_mock_file(self, rows):
         config = self._config(rows[0])
