@@ -89,9 +89,7 @@ def gaen_otp_view(request, domain):
 
         try:
             case_id = request.POST['case_id']
-            case_id = '568b9163-f50b-432c-8da4-6bc3a5ce7a4b' #delete after testing
-            print(case_id)
-            print(CaseAccessors(domain).get_case_ids_in_domain())
+            case_id = '568b9163-f50b-432c-8da4-6bc3a5ce7a4b'  # delete after testing
             case = CaseAccessors(domain).get_case(case_id)
 
             case_name = case.name
@@ -122,18 +120,28 @@ def gaen_otp_view(request, domain):
 
 
 def get_otp_response(post_data, gaen_otp_settings):
-    headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
-    otp_response = requests.post(gaen_otp_settings.server_url,
-                                 data=post_data,
-                                 headers=headers)
+    if gaen_otp_settings.gaen_server_type == "NY/NJ":
+        headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
+        otp_response = requests.post(gaen_otp_settings.server_url,
+                                     data=post_data,
+                                     headers=headers)
+    elif gaen_otp_settings.gaen_server_type == "CO":
+        headers = {"x-api-key": "%s" % gaen_otp_settings.auth_token}
+        request_url = gaen_otp_settings.server_url + "?test_date={test_date}&onset_date={onset_date}&mobile=+1{mobile}"\
+            .format(test_date=post_data['testDate'],
+                    onset_date=post_data['onsetDate'],
+                    mobile=post_data['mobile'])
+        otp_response = requests.get(request_url, headers=headers)
+        print(otp_response.status_code)
+    else:
+        #gaen_server_type is not set
+        pass
 
     if otp_response.status_code == 400:
         raise InvalidOtpRequestException(otp_response.text)
 
     if otp_response.status_code == 500:
         raise RequestException(None, None, "Error on OTP Server")
-
-    #import pdb; pdb.set_trace()
 
     try:
         return {
