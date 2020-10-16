@@ -40,7 +40,7 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
             return self.no_value if val is None else val
 
         model = self.model
-        model_data = model.data
+        model_data = list(model.data.values())[0]
 
         total = model.columns[0].get_raw_value(model_data)
         reporting = model.columns[1].get_raw_value(model_data)

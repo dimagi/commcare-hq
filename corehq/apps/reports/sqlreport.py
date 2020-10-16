@@ -267,10 +267,7 @@ class SqlData(ReportDataSource):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
-        if self.group_by:
-            return list(formatted_data.values())
-        else:
-            return [formatted_data]
+        return list(formatted_data.values())
 
     def slugs(self):
         return [c.slug for c in self.columns]
@@ -278,15 +275,6 @@ class SqlData(ReportDataSource):
     def _get_data(self, start=None, limit=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
-
-        if not self.group_by:
-            try:
-                queries = self.get_sql_queries()
-            except NotImplementedError:
-                queries = "Not implemented"
-            soft_assert('mkangia@{}'.format('dimagi.com'))(
-                self.group_by, f'SqlAgg has no group by: {self.__class__.__name__}', queries
-            )
 
         qc = self.query_context(start=start, limit=limit)
         session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
@@ -355,15 +343,11 @@ class DataFormatter(object):
                 formatted_row = self._format.format_row(row)
                 if self.filter_row(row_key, formatted_row):
                     yield row_key, formatted_row
-        elif group_by:
+        else:
             for key, row in data.items():
                 formatted_row = self._format.format_row(row)
                 if self.filter_row(key, formatted_row):
                     yield key, formatted_row
-        else:
-            formatted_row = self._format.format_row(data)
-            if self.filter_row(None, formatted_row):
-                yield None, formatted_row
 
     def filter_row(self, key, row):
         return not self.row_filter or self.row_filter(key, row)
