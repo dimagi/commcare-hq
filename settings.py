@@ -164,6 +164,8 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
+X_FRAME_OPTIONS = 'DENY'
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # time in minutes before forced logout due to inactivity
