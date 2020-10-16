@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             var user = FormplayerFrontend.getChannel().request('currentUser'),
                 lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
+                tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -105,6 +106,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "preview": params.preview,
                     "geo_location": lastRecordedLocation,
                     "tz_offset_millis": timezoneOffsetMillis,
+                    "tz_from_browser": tzFromBrowser,
                 });
                 options.url = formplayerUrl + '/' + route;
 
