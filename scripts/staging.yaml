@@ -63,6 +63,5 @@ branches:
   - sr/case-reindex-staging # Sravan Oct 14
   - bmb/SAAS-11201  # Biyeun Oct 14
   - gh/resolve-security-warnings # Graham Oct 16
-  - jls/update-case-index-relationship # Jenny Oct 19
   
 submodules: {}
