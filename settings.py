@@ -373,6 +373,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
+    'custom.covid',
     'custom.aaa',
     'custom.inddex',
 
