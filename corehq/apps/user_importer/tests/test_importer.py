@@ -1,4 +1,5 @@
 from copy import deepcopy
+from django.contrib.admin.models import LogEntry
 
 from django.test import TestCase
 
@@ -23,6 +24,7 @@ from corehq.apps.users.models import (
     CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -487,6 +489,19 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
+    def test_track_role_update(self):
+        self.assertEqual(LogEntry.objects.count(), 0)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(role=self.role.name)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        log_entry = LogEntry.objects.last()
+        self.assertEqual(
+            log_entry.change_message,
+            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
 
     def test_blank_is_active(self):
         import_users_and_groups(

@@ -486,7 +486,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
 
                 user.save()
                 if role_updated:
-                    log_user_role_update(domain, user, upload_user)
+                    log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
                     if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(
