@@ -59,8 +59,6 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.app_id = 'app_id'
 
-        self.default_user_data = {'commcare_project': self.domain}
-
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
         SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
