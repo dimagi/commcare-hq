@@ -165,6 +165,7 @@ class Command(BaseCommand):
         Role(slug=privileges.APP_USER_PROFILES,
              name='App User Profiles',
              description='Allows use of App User Profiles.'),
+        Role(slug=privileges.GEOCODER, name="Project's default location.", description=''),
     ]
 
     BOOTSTRAP_PLANS = [

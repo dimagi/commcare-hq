@@ -85,6 +85,7 @@ pro_v0 = standard_v0 + [
     privileges.TEMPLATED_INTENTS,
     privileges.RESTRICT_ACCESS_BY_LOCATION,
     privileges.REPORT_BUILDER_5,
+    privileges.GEOCODER,
 ]
 
 # Current Pro Plan
@@ -118,6 +119,7 @@ advanced_v0 = pro_v1 + [
     privileges.BUILD_PROFILES,
     privileges.ADVANCED_DOMAIN_SECURITY,
     privileges.ODATA_FEED,
+    privileges.GEOCODER,
 ]
 
 enterprise_v0 = advanced_v0 + [
