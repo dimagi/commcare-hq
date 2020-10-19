@@ -6,88 +6,185 @@ Primary Apps
 These apps are major parts of the system and most have frequent, active development.
 
 accounting
+   Billing functionality: accounts, subscriptions, software plans, etc.
+   This includes the UI for internal operations users to modify these objects.
+   Accessing this UI requires running the ``add_operations_user`` command.
 api
+   Externally-facing APIs to read and write CommCare data for a given project space.
 app_manager
+   UI for configuring and releasing CommCare applications.
+   Form Builder, for configuring forms themselves, is called here but
+   it primarily stored in the separate `Vellum <https://github.com/dimagi/Vellum/>`_ repo.
 cloudcare
+   Web Apps, a web-based interface for data entry, with essentially the same functionality
+   as CommCare Mobile, but available via HQ to both web and mobile users. This app contains the HQ
+   parts of this code, which interfaces with `Formplayer <https://github.com/dimagi/formplayer/>`_
+   to ultimately run functionality in the `commcare-core <https://github.com/dimagi/commcare-core/>`_
+   repo, which is shared with CommCare Mobile.
 domain
+   Domains, called "project spaces" in user-facing content, are the core sandboxes of CommCare. Almost
+   all features and UIs in CommCare are in the context of a domain.
 export
-fixtures
-hqcase
+   Configurations for exporting project data, typically forms or cases, to an excel download.
 hqmedia
+   Multimedia handling, primarily used in applications.
 hqwebapp
+   Core UI code for the HQ site. Includes things like the standard error pages,
+   javascript widgets, login views, etc.
 locations
+   Locations provide a hierarchical way to organize CommCare users and data.
 reports
+   Standard, pre-canned reports to view project data: Submit History, Worker Activity Report, etc.
 reports_core
+   More reporting code.
 sms
+   Features to send SMS and emails via CommCare HQ. Much of the underlying code is in ``corehq.messaging``.
 userreports
+   User-defined reports. Intertwined with other report-related apps.
 users
+   Users of CommCare HQ and/or CommCare mobile. The primary class dealing with users is ``CouchUser``,
+   a representation of the user in couch. ``CouchUser`` has the subclasses ``WebUser`` and ``CommCareUser``
+   to distinguish between admin-type users who primarily use CommCare HQ and data entry users who primarily use
+   CommCare Mobile. The distinction between web and mobile users is blurry, especially with the advent of
+   Web Apps for data entry in HQ.
 
 Secondary Apps
 ^^^^^^^^^^^^^^^^^^^^
 These apps are maintained and updated regularly, but are a bit less core than the set above.
 
+case_importer
+   Bulk import of cases.
 custom_data_fields
+   This allows users to add arbitrary data to mobile users, locations, and products, which can then
+   be referenced in applications.
 data_dictionary
+   A set of models that a project can use to define its data model: case types and case properties.
+   The data dictionary is used partially for project documentation but is also referenced in a few other
+   parts of HQ: for example, when configuring case properties to be updated in a form, app manager will
+   pull the properties' descriptions from the data dictionary.
 data_interfaces
+   Functionality for taking a few specific actions on project data, such as reassigning cases in bulk.
+   Most of this app relies heavily on standard reporting functionality.
+fixtures
+   "Fixtures" is used generally in the codebase to refer to datasets sent to the phone, which includes the
+   casedb, mobile report data, etc., but the fixtures app primarily deals with one specific type of fixture,
+   which is lookup tables.
 groups
+   Users can be assigned to groups for the purposes of sharing cases within a group and for reporting purposes.
 hqadmin
+   Internal admin functionality used by the development, support, QA, and product teams.
 linked_domain
+   Functionality to share certain configuration data between domains: apps, lookup tables, report definitions, etc.
+   Work is done in a primary "upstream" domain, and then that domain's data models are copied to one or more
+   "downstream" domains. This is most often used to set up a development => production workflow, where changes are made
+   in the development domain and then pushed to the production domain, where is where real project data is entered.
+   Linekd domains are also used by certain enterprise-type projects that manage one program across multiple regions
+   and use a separate downstream domain for each region.
 registration
+   Workflows for creating new accounts on HQ.
 reminders
+   A subset of SMS/messaging, including functionality around incoming SMS keywords. "Reminders" is a leftover term from a previous iteration of the messaging framework.
 saved_reports
+   Functionality to let users save a specific set of report filters and optionally run reports with those filters on a scheduled basis.
 toggle_ui
+   Framework for feature flags, which are used to limit internatl feature to specific domains and/or users.
 translations
+   Functionality for managing application translations, including integration with Transifex, which is used by a small number of projects.
 user_importer
+   Bulk importing of users.
 
 Tertiary Apps
 ^^^^^^^^^^^^^
 These apps may be useful parts of the system but don't have as much active development as the groups above.
 
 aggregate_ucrs
+   TODO
 analytics
+   Integrations with third-party analytics tools such as Google Analytics and Kissmetrics.
+   Also contains internal product-focused tools such as AB testing functionality.
 builds
-case_importer
+   Models relating to CommCare Mobile builds, so that app builders can control which mobile version their apps use.
 case_search
+   TODO
 dashboard
+   The tiled UI that acts as the main landing page for HQ.
 formplayer_api
+   Functionality interacting with formplayer, primarily used by SMS surveys.
 mobile_auth
+   Generates the XML needed to authorize mobile users.
 notifications
+   "Banner" notifications used by the support team to notify users of upcoming downtime,
+   ongoing issues, etc.
 ota
+   Functionality at the interface of CommCare HQ and CommCare Mobile: demo users, device logs, mobile recovery, etc.
 receiverwrapper
+   TODO
 settings
+   API keys and 2FA functionality.
 smsbillables
+   Billing functionality relating to charging for SMS, allowing us to pass carrier charges on to clients.
 smsforms
+   SMS surveys, a part of messaging that allow end users to interact with a CommCare form via SMS instead of
+   via mobile or Web Apps.
 styleguide
+   Documentation of best practices for UI development, including live examples of common patterns.
 zapier
+   Integration with `Formplayer <https://zapier.com/>`_
 
 Engineering Apps
 ^^^^^^^^^^^^^^^^
 These apps are developer-facing tools.
 
 cachehq
+   Caching functinality for CouchDB.
 case_migrations
+   Functionality to support users defining and excuting data migrations on cases. Candidate for deprecation.
 change_feed
+   Infrastructure for propagating changes in primary data stores (couch, postgres) to secondary sources (ElasticSearch).
 cleanup
+   Miscellaneous commands for cleaning up data: deleting duplicate mobile users, deleting couch documents for models that have been moved to postgres, etc.
 couch_sql_migration
+   Utiltiy code for migration form and case data from couch to postgres.
 data_analytics
+   Internal impact-related metrics.
 data_pipeline_audit
+   TODO
 domain_migration_flags
+   TODO
 dump_reload
+   TODO
 es
+   Internal APIs for creating and running ElasticSearch queries.
+hqcase
+   Utility functions for handling cases, such as the ability to programmatically submit cases.
 mocha
+   JavaScript testing framework.
 tzmigration
+   TODO
 
 Limited-Use and Retired Apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 These apps are limited to a small set of clients or on a deprecation path.
 
 appstore
+   The CommCare Exchange, a deprecated feature that allowed projects to publish their projects in a self-service manner
+   and download other organizations' projects. This process is now supported internally by the support team. The UI
+   portions of this app have been removed, but the data models are still necessary for the internal process.
 callcenter
+   The call center application setting allows an application to reference a mobile user as a case that can be monitored using CommCare.  This allows supervisors to view their workforce within CommCare.
 casegroups
+   Functionality around grouping cases in large projects and then taking action on those groups.
 commtrack
+   CommCare Supply, a large and advanced set of functionality for using CommCare in logistics management.
 consumption
+   Part of CommCare Supply.
 dropbox
+   Functionality to allow users to download large HQ files to dropbox instead of their local machines. This is likely being deprecated.
 integration
+   Various integrations with biometrics devices, third-party APIs, etc.
 ivr
+   Functionality to allow users to fill out forms using interactive voice response. Largely deprecated.
 products
+   Part of CommCare Supply.
 programs
+   Part of CommCare Supply.
