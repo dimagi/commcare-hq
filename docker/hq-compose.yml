@@ -73,15 +73,6 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
-  elasticsearch:
-    image: elasticsearch:7.9.1
-    environment:
-      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-    expose:
-      - "9200"
-    volumes:
-      - ./files/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
-
   elasticsearch2:
     image: elasticsearch:2.4.6
     environment:
