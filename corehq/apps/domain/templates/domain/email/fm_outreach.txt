@@ -1,8 +1,8 @@
 Hey,
 
 I'm emailing you because I noticed that you work for Dimagi, and you're a
-member of project space {{ domain_name }}. {{ domain_name }} has had a lot of
-submissions lately.
+member of project space {{ domain_name }}. {{ domain_name }} has a lot of
+submissions, but it's missing some information about the project.
 
 If this is a test project space, go to the internal project settings page
 {{ settings_link }} and change the "Real Project" setting to "Test" and I'll
