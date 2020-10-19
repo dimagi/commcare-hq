@@ -1,4 +1,5 @@
 import requests
+import json
 from requests.exceptions import RequestException
 from uuid import uuid4
 
@@ -126,13 +127,13 @@ def get_otp_response(post_data, gaen_otp_settings):
                                      data=post_data,
                                      headers=headers)
     elif gaen_otp_settings.gaen_server_type == "CO":
-        headers = {"x-api-key": "%s" % gaen_otp_settings.auth_token}
-        request_url = gaen_otp_settings.server_url + "?test_date={test_date}&onset_date={onset_date}&mobile=+1{mobile}"\
-            .format(test_date=post_data['testDate'],
-                    onset_date=post_data['onsetDate'],
-                    mobile=post_data['mobile'])
-        otp_response = requests.get(request_url, headers=headers)
-        print(otp_response.status_code)
+        headers = {"x-api-key": "%s" % gaen_otp_settings.auth_token,
+                   "content-type": "application/json",
+                   "accept": "application/json"}
+        json_data = json.dumps(post_data)
+        otp_response = requests.post(gaen_otp_settings.server_url,
+                                     data=json_data,
+                                     headers=headers)
     else:
         #gaen_server_type is not set
         pass
@@ -157,21 +158,36 @@ class InvalidOtpRequestException(Exception):
 
 
 def get_post_data_for_otp(request, domain):
-    post_params = {
-        'jobId': str(uuid4()),
-    }
+    if get_gaen_otp_server_settings(domain).gaen_server_type == "NY/NJ":
+        post_params = {
+            'jobId': str(uuid4()),
+        }
 
-    property_map = {
-        'phone_number': 'mobile',
-        'test_date': 'testDate',
-        'onset_date': 'onsetDate',
-        'test_type': 'testType',
-    }
-    for request_param, post_param in property_map.items():
-        if request_param in request.POST:
-            post_params[post_param] = request.POST[request_param]
+        property_map = {
+            'phone_number': 'mobile',
+            'test_date': 'testDate',
+            'onset_date': 'onsetDate',
+            'test_type': 'testType',
+        }
+        for request_param, post_param in property_map.items():
+            if request_param in request.POST:
+                post_params[post_param] = request.POST[request_param]
 
-    return post_params
+        return post_params
+    else:
+        post_params = {}
+        property_map = {
+            'phone_number': 'phone',
+            'test_date': 'testDate',
+            'onset_date': 'symptomDate',
+            'test_type': 'testType',
+            'tz_offset': 'tzOffset',
+            'padding': 'padding'
+        }
+        for request_param, post_param in property_map.items():
+            if request_param in request.POST:
+                post_params[post_param] = request.POST[request_param]
+        return post_params
 
 
 class DialerSettingsView(BaseProjectSettingsView):
