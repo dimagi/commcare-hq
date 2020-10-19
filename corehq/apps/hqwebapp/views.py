@@ -41,6 +41,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
@@ -468,6 +469,7 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     return _login(req, domain, custom_template_name, extra_context)
 
 
+@xframe_options_sameorigin
 @location_safe
 def iframe_domain_login(req, domain):
     return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
