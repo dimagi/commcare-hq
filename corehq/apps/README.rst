@@ -58,7 +58,8 @@ custom_data_fields
    This allows users to add arbitrary data to mobile users, locations, and products, which can then
    be referenced in applications.
 data_dictionary
-   A set of models that a project can use to define its data model: case types and case properties.
+   The data dictionary documents a project's data model, specifically, its case types and case properties.
+   This makes it possible to reference those definitions throughout the app-building process.
    The data dictionary is used partially for project documentation but is also referenced in a few other
    parts of HQ: for example, when configuring case properties to be updated in a form, app manager will
    pull the properties' descriptions from the data dictionary.
