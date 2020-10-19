@@ -111,7 +111,7 @@ def gaen_otp_view(request, domain):
                                                                      "case_name": case_name,
                                                                      })
     except RequestException:
-        request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
+        request_error_msg = _("""We are having problems communicating with the Exposure Notification server
                                  please try again later""")
     except InvalidOtpRequestException as e:
         request_error_msg = e.message
