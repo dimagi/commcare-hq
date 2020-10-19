@@ -15,9 +15,11 @@ CASE_TYPE = "lab_result"
 DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
+def should_skip(case):
+    return len(case.indices) != 1
+
+
 def needs_update(case):
-    if len(case.indices) != 1:
-        return False
     index = case.indices[0]
     return index.referenced_type == "patient" and index.relationship == "child"
 
@@ -38,11 +40,14 @@ def update_cases(domain):
     print(f"Found {len(case_ids)} {CASE_TYPE} cases in {domain}")
 
     case_blocks = []
+    skip_count = 0
     for case_id in case_ids:
         case = accessor.get_case(case_id)
-        if needs_update(case):
+        if should_skip(case):
+            skip_count += 1
+        elif needs_update(case):
             case_blocks.append(case_block(case))
-    print(f"{len(case_blocks)} need updating in {domain}")
+    print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped due to multiple indices.")
 
     total = 0
     for chunk in chunked(case_blocks, BATCH_SIZE):
