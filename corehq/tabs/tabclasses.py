@@ -1397,6 +1397,10 @@ class ProjectUsersTab(UITab):
                     {
                         'title': _get_web_username,
                         'urlname': EditWebUserView.urlname
+                    },
+                    {
+                        'title': _("Bulk Upload"),
+                        'urlname': 'upload_web_users'
                     }
                 ],
                 'show_in_dropdown': True,
