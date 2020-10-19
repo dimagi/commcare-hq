@@ -77,7 +77,7 @@ linked_domain
    Functionality to share certain configuration data between domains: apps, lookup tables, report definitions, etc.
    Work is done in a primary "upstream" domain, and then that domain's data models are copied to one or more
    "downstream" domains. This is most often used to set up a development => production workflow, where changes are made
-   in the development domain and then pushed to the production domain, where is where real project data is entered.
+   in the development domain and then pushed to the production domain, where real project data is entered.
    Linked domains are also used by certain enterprise-type projects that manage one program across multiple regions
    and use a separate downstream domain for each region.
 registration
