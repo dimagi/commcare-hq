@@ -3569,7 +3569,7 @@ class StripePaymentMethod(PaymentMethod):
         if self.customer_id is not None:
             try:
                 customer = self._get_stripe_customer()
-            except stripe.InvalidRequestError:
+            except stripe.error.InvalidRequestError:
                 pass
         if customer is None:
             customer = self._create_stripe_customer()
