@@ -121,22 +121,19 @@ def gaen_otp_view(request, domain):
 
 
 def get_otp_response(post_data, gaen_otp_settings):
+    headers = {}
     if gaen_otp_settings.gaen_server_type == "NY/NJ":
         headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
-        otp_response = requests.post(gaen_otp_settings.server_url,
-                                     data=post_data,
-                                     headers=headers)
+
     elif gaen_otp_settings.gaen_server_type == "CO":
         headers = {"x-api-key": "%s" % gaen_otp_settings.auth_token,
                    "content-type": "application/json",
                    "accept": "application/json"}
-        json_data = json.dumps(post_data)
-        otp_response = requests.post(gaen_otp_settings.server_url,
-                                     data=json_data,
-                                     headers=headers)
-    else:
-        #gaen_server_type is not set
-        pass
+        post_data = json.dumps(post_data)
+
+    otp_response = requests.post(gaen_otp_settings.server_url,
+                                 data=post_data,
+                                 headers=headers)
 
     if otp_response.status_code == 400:
         raise InvalidOtpRequestException(otp_response.text)
@@ -158,36 +155,28 @@ class InvalidOtpRequestException(Exception):
 
 
 def get_post_data_for_otp(request, domain):
+    post_params = {}
+    property_map = {
+        'test_date': 'testDate',
+        'test_type': 'testType',
+    }
     if get_gaen_otp_server_settings(domain).gaen_server_type == "NY/NJ":
         post_params = {
             'jobId': str(uuid4()),
         }
+        property_map['phone_number'] = 'mobile'
+        property_map['onset_date'] = 'onsetDate'
 
-        property_map = {
-            'phone_number': 'mobile',
-            'test_date': 'testDate',
-            'onset_date': 'onsetDate',
-            'test_type': 'testType',
-        }
-        for request_param, post_param in property_map.items():
-            if request_param in request.POST:
-                post_params[post_param] = request.POST[request_param]
+    elif get_gaen_otp_server_settings(domain).gaen_server_type == "CO":
+        property_map['phone_number'] = 'phone'
+        property_map['onset_date'] = 'symptomDate'
+        property_map['tz_offset'] = 'tzOffset'
+        property_map['padding'] = 'padding'
 
-        return post_params
-    else:
-        post_params = {}
-        property_map = {
-            'phone_number': 'phone',
-            'test_date': 'testDate',
-            'onset_date': 'symptomDate',
-            'test_type': 'testType',
-            'tz_offset': 'tzOffset',
-            'padding': 'padding'
-        }
-        for request_param, post_param in property_map.items():
-            if request_param in request.POST:
-                post_params[post_param] = request.POST[request_param]
-        return post_params
+    for request_param, post_param in property_map.items():
+        if request_param in request.POST:
+            post_params[post_param] = request.POST[request_param]
+    return post_params
 
 
 class DialerSettingsView(BaseProjectSettingsView):
