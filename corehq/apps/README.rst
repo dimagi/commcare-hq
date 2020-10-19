@@ -129,7 +129,7 @@ smsforms
 styleguide
    Documentation of best practices for UI development, including live examples of common patterns.
 zapier
-   Integration with `Formplayer <https://zapier.com/>`_
+   Integration with `Zapier <https://zapier.com/>`_
 
 Engineering Apps
 ^^^^^^^^^^^^^^^^
