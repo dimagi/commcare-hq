@@ -105,7 +105,7 @@ analytics
 builds
    Models relating to CommCare Mobile builds, so that app builders can control which mobile version their apps use.
 case_search
-   TODO
+   Models and utils related to searching for cases using Elasticsearch. Used for Case Claim and the Case List Explorer. 
 dashboard
    The tiled UI that acts as the main landing page for HQ.
 formplayer_api
