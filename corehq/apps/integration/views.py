@@ -13,6 +13,8 @@ from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
@@ -110,9 +112,10 @@ def gaen_otp_view(request, domain):
                                                                      "styled_otp_code": styled_otp_code,
                                                                      "case_name": case_name,
                                                                      })
-    except RequestException:
-        request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
+    except RequestException as e:
+        request_error_msg = _("""We are having problems communicating with the Exposure Notification server
                                  please try again later""")
+        notify_exception(request, message=str(e))
     except InvalidOtpRequestException as e:
         request_error_msg = e.message
 
