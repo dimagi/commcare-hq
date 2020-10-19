@@ -34,7 +34,7 @@ def case_block(case):
 
 def update_cases(domain):
     accessor = CaseAccessors(domain)
-    case_ids = CaseAccessors(domain).get_case_ids_in_domain(CASE_TYPE)
+    case_ids = accessor.get_case_ids_in_domain(CASE_TYPE)
     print(f"Found {len(case_ids)} {CASE_TYPE} cases in {domain}")
 
     case_blocks = []
