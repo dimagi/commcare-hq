@@ -548,6 +548,7 @@ def login_new_window(request):
     return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
 
 
+@xframe_options_sameorigin
 @location_safe
 @login_required
 def iframe_domain_login_new_window(request):
