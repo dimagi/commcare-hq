@@ -70,9 +70,7 @@ data_interfaces
    Functionality for taking a few specific actions on project data, such as reassigning cases in bulk.
    Most of this app relies heavily on standard reporting functionality.
 fixtures
-   "Fixtures" is used generally in the codebase to refer to datasets sent to the phone, which includes the
-   casedb, mobile report data, etc., but the fixtures app primarily deals with one specific type of fixture,
-   which is lookup tables.
+   The term "fixtures" comes from the `XML data model <https://github.com/dimagi/commcare-core/wiki/fixtures>`_ used to send custom structured data to the mobile devices (separate from case data). During the sync request with the mobile device, various different fixtures may be sent to the device including lookup tables, locations and mobile reports. This Django app only deals with the "lookup table" fixtures. It provides the UI for creating and editing them and the code to serialize them to XML.
 groups
    Users can be assigned to groups for the purposes of sharing cases within a group and for reporting purposes.
 hqadmin
