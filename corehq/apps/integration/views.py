@@ -90,7 +90,6 @@ def gaen_otp_view(request, domain):
 
         try:
             case_id = request.POST['case_id']
-            case_id = '568b9163-f50b-432c-8da4-6bc3a5ce7a4b'  # delete after testing
             case = CaseAccessors(domain).get_case(case_id)
 
             case_name = case.name
