@@ -159,7 +159,7 @@ domain_migration_flags
    are set during large data migrations such as moving case & form data from Couch -> SQL, migrating a domain to a
    different CommCare instance.
 dump_reload
-   TODO
+   Tools used to dump a domain's data to disk and reload it from disk. This is used to move a domain from one CommCare instance to another e.g. from a managed environment to self hosted environment.
 es
    Internal APIs for creating and running ElasticSearch queries.
 hqcase
