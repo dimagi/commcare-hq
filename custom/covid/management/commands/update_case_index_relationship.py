@@ -7,6 +7,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
@@ -50,7 +51,7 @@ def update_cases(domain):
 
     total = 0
     for chunk in chunked(case_blocks, BATCH_SIZE):
-        submit_case_blocks(chunk, domain, device_id=DEVICE_ID)
+        submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=SYSTEM_USER_ID)
         total += len(chunk)
         print("Updated {} cases on domain {}".format(total, domain))
 
