@@ -119,7 +119,9 @@ notifications
 ota
    Functionality at the interface of CommCare HQ and CommCare Mobile: demo users, device logs, mobile recovery, etc.
 receiverwrapper
-   TODO
+   Contains the API for receiving XML form submissions. This app mostly deals with the interfacing portion of the
+   API including auth, rate limiting etc. but not the actual data processing which is contained in the
+   `form_processor` app.
 settings
    API keys and 2FA functionality.
 smsbillables
