@@ -176,5 +176,5 @@ class Titles(object):
             DATA_FORWARDING: _("Data Forwarding"),
             PROJECT_ACCESS: _("Project Features"),
             APP_USER_PROFILES: _("App User Profiles"),
-            GEOCODER: _("Project's Default Location (Geocoder)"),
+            GEOCODER: _("Geocoder"),
         }.get(privilege, privilege)
