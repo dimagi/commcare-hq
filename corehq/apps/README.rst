@@ -1,6 +1,10 @@
 Django Apps in CommCareHQ
 #########################
 
+Most CommCare HQ functionality is contained in a django app.
+A few areas are contained in ``corehq`` or ``corehq/ex-submodules``,
+so for a full overview, check those READMEs as well.
+
 Primary Apps
 ^^^^^^^^^^^^
 These apps are major parts of the system and most have frequent, active development.
