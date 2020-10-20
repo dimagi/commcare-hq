@@ -170,7 +170,7 @@ hqcase
 mocha
    JavaScript testing framework.
 tzmigration
-   TODO
+   This relates to a timezone migration doine in 2015. See `#6341 <https://github.com/dimagi/commcare-hq/pull/6341>`_ if curious.
 
 Limited-Use and Retired Apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
