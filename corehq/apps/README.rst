@@ -151,7 +151,8 @@ couch_sql_migration
 data_analytics
    Internal impact-related metrics.
 data_pipeline_audit
-   TODO
+   Tools used to audit the async data pipeline (change feeds / pillows) to validate the integrity of secondary
+   sources (mostly Elasticsearch). These tools are not used routinely.
 domain_migration_flags
    TODO
 dump_reload
