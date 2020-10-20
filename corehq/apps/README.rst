@@ -13,7 +13,7 @@ api
    APIs to read and write CommCare data for a given project space. Most APIs are externally facing however there a 
    are a few that are used internally e.g. for report filters. APIs are built using Tastypie.
 app_manager
-   UI for configuring and releasing CommCare applications.
+   UI and tooling for configuring and releasing CommCare applications.
    Form Builder, for configuring forms themselves, is called here but
    it primarily stored in the separate `Vellum <https://github.com/dimagi/Vellum/>`_ repo.
 cloudcare
