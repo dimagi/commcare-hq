@@ -34,6 +34,8 @@ hqwebapp
    javascript widgets, login views, etc.
 locations
    Locations provide a hierarchical way to organize CommCare users and data.
+ota
+   Contains a number of the API endpoints used by CommCare mobile including sync / restore, case search, case claim, heartbeat and  recovery measures.
 reports
    Standard, pre-canned reports to view project data: Submit History, Worker Activity Report, etc.
 reports_core
@@ -117,8 +119,6 @@ mobile_auth
 notifications
    "Banner" notifications used by the support team to notify users of upcoming downtime,
    ongoing issues, etc.
-ota
-   Contains a number of the API endpoints used by CommCare mobile including sync / restore, case search, case claim, heartbeat and  recovery measures.
 receiverwrapper
    Contains the API for receiving XML form submissions. This app mostly deals with the interfacing portion of the
    API including auth, rate limiting etc. but not the actual data processing which is contained in the
