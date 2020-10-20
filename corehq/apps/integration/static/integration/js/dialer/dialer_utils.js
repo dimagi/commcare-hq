@@ -2,6 +2,8 @@
 Based on AWS boilerplate
 **/
 
+/* eslint-disable */
+
 hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
     function getFormattedDate() {
