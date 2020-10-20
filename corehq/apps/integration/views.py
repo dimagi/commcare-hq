@@ -122,10 +122,10 @@ def gaen_otp_view(request, domain):
 
 def get_otp_response(post_data, gaen_otp_settings):
     headers = {}
-    if gaen_otp_settings.gaen_server_type == "NY/NJ":
+    if gaen_otp_settings.gaen_server_type == "Nearform":
         headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
 
-    elif gaen_otp_settings.gaen_server_type == "CO":
+    elif gaen_otp_settings.gaen_server_type == "APHL":
         headers = {"x-api-key": "%s" % gaen_otp_settings.auth_token,
                    "content-type": "application/json",
                    "accept": "application/json"}
@@ -160,14 +160,14 @@ def get_post_data_for_otp(request, domain):
         'test_date': 'testDate',
         'test_type': 'testType',
     }
-    if get_gaen_otp_server_settings(domain).gaen_server_type == "NY/NJ":
+    if get_gaen_otp_server_settings(domain).gaen_server_type == "Nearform":
         post_params = {
             'jobId': str(uuid4()),
         }
         property_map['phone_number'] = 'mobile'
         property_map['onset_date'] = 'onsetDate'
 
-    elif get_gaen_otp_server_settings(domain).gaen_server_type == "CO":
+    elif get_gaen_otp_server_settings(domain).gaen_server_type == "APHL":
         property_map['phone_number'] = 'phone'
         property_map['onset_date'] = 'symptomDate'
         property_map['tz_offset'] = 'tzOffset'

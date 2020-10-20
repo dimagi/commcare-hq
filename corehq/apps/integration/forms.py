@@ -102,13 +102,13 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
         required=False
     )
 
-    GAEN_SERVER_TYPE_OPTIONS = (('NYNJ', 'New York/New Jersey'), ('CO', 'Colorado'),)
+    GAEN_SERVER_TYPE_OPTIONS = (('Nearform', 'Nearform OTP Server'), ('APHL', 'APHL Exposure Notifications'),)
     gaen_server_type = forms.CharField(
         label=_('GAEN Server Type'),
         widget=forms.Select(choices=[
             ("", ugettext_lazy("Select model type")),
-            ('NYNJ', ugettext_lazy('New York/New Jersey')),
-            ('CO', ugettext_lazy('Colorado')),
+            ('Nearform', ugettext_lazy('Nearform OTP Server')),
+            ('APHL', ugettext_lazy('APHL Exposure Notifications')),
         ]),
     )
 
