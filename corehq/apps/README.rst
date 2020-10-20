@@ -37,7 +37,7 @@ locations
 reports
    Standard, pre-canned reports to view project data: Submit History, Worker Activity Report, etc.
 reports_core
-   More reporting code.
+   More reporting code that resulted from an attempt to re-architect the report class structure.
 sms
    Features to send SMS and emails via CommCare HQ. Much of the underlying code is in ``corehq.messaging``.
 userreports
