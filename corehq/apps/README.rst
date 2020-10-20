@@ -15,7 +15,7 @@ api
 app_manager
    UI and tooling for configuring and releasing CommCare applications.
    Form Builder, for configuring forms themselves, is called here but
-   it primarily stored in the separate `Vellum <https://github.com/dimagi/Vellum/>`_ repo.
+   is primarily stored in the separate `Vellum <https://github.com/dimagi/Vellum/>`_ repo.
 cloudcare
    Web Apps, a web-based interface for data entry, with essentially the same functionality
    as CommCare Mobile, but available via HQ to both web and mobile users. This app contains the HQ
