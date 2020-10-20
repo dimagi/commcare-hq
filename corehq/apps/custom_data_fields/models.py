@@ -171,12 +171,7 @@ class CustomDataFieldsProfile(models.Model):
             UserES().domain(self.definition.domain)
                     .mobile_users()
                     .show_inactive()
-                    .filter(
-                        filters.nested('user_data_es',
-                        filters.AND(
-                            filters.term('user_data_es.key', PROFILE_SLUG),
-                            filters.term('user_data_es.value', self.id)
-                        )))
+                    .metadata(PROFILE_SLUG, self.id)
         )
 
     def to_json(self):
