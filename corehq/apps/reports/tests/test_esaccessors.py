@@ -52,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     scroll_case_names,
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
@@ -906,6 +907,7 @@ class TestUserESAccessors(TestCase):
     def tearDownClass(cls):
         cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
+        delete_all_users()
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, is_active=True):
@@ -920,7 +922,6 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(len(results), 1)
         metadata = results[0].pop('user_data_es')
         self.assertEqual({
-            'commcare_project': 'user-esaccessors-test',
             PROFILE_SLUG: self.profile.id,
             'job': 'reporter',
             'office': 'phone_booth',
