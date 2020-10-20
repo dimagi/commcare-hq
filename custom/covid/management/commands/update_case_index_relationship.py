@@ -41,8 +41,7 @@ def update_cases(domain):
 
     case_blocks = []
     skip_count = 0
-    for case_id in case_ids:
-        case = accessor.get_case(case_id)
+    for case in accessor.iter_cases(case_ids):
         if should_skip(case):
             skip_count += 1
         elif needs_update(case):
