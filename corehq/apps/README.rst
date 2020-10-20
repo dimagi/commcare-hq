@@ -62,7 +62,8 @@ custom_data_fields
    be referenced in applications.
 data_dictionary
    The data dictionary documents a project's data model, specifically, its case types and case properties.
-   This makes it possible to reference those definitions throughout the app-building process.
+   This makes it possible to reference those definitions throughout the app-building process without needing
+   to repeatedly re-parse it out of the application configuration.
    The data dictionary is used partially for project documentation but is also referenced in a few other
    parts of HQ: for example, when configuring case properties to be updated in a form, app manager will
    pull the properties' descriptions from the data dictionary.
