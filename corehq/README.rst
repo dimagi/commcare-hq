@@ -26,9 +26,9 @@ messaging
     Code to manage direct-to-user messages in CommCare HQ, most often SMS but also channels like email and
     whatsapp. Also see the ``sms`` and ``sms`` apps in ``corehq.apps``.
 motech
-    Code relating to `MOTECH <http://docs.motechproject.org/en/latest/>`_, an open source mHealth platform that HQ
-    integrates with, particularly on large solutions projects, that also integrate with other systems such as DHIS2
-    and OpenClinica.
+    MOTECH is CommCare HQ's integration layer, and allows HQ to forward data to
+    remote systems' APIs, to import data from them, and to follow workflows for
+    more complex integrations with systems like OpenMRS and DHIS2.
 pillows
     HQ-specific mappings that use the ``pillowtop`` framework in ``ex-submodules``.
 preindex
