@@ -133,8 +133,8 @@ settings
 smsbillables
    Billing functionality relating to charging for SMS, allowing us to pass carrier charges on to clients.
 smsforms
-   SMS surveys, a part of messaging that allow end users to interact with a CommCare form via SMS instead of
-   via mobile or Web Apps.
+   SMS surveys allow end users to interact with a CommCare form via SMS instead of
+   via mobile or Web Apps. This is part of ``messaging``.
 styleguide
    Documentation of best practices for UI development, including live examples of common patterns.
 zapier
