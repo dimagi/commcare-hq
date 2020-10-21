@@ -372,9 +372,15 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
 class AutoPayInvoicePaymentHandler(object):
 
-    def pay_autopayable_invoices(self, date_due):
-        """ Pays the full balance of all autopayable invoices on date_due """
+    def pay_autopayable_invoices(self, date_due=Ellipsis, domain=None):
+        """
+        Pays the full balance of all autopayable invoices on date_due
+        Note: we use Ellipsis as the default value for date_due because date_due
+        can actually be None in the db.
+        """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
+        if domain is not None:
+            autopayable_invoices = autopayable_invoices.filter(subscription__subscriber__domain=domain)
         for invoice in autopayable_invoices:
             try:
                 self._pay_invoice(invoice)
