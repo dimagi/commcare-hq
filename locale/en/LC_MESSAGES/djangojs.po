@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-14 19:12+0000\n"
+"POT-Creation-Date: 2020-10-21 19:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -65,59 +65,60 @@ msgid ""
 "href='mailto:<%= email %>'><%= email %></a> to change the list of domains."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:103
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:104
 msgid "Downgrading?"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:105
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:106
 msgid "Pausing Subscription?"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:107
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:108
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
-"Edition Plan subscription to be paused on <%= date %>.</p><p>If you have "
+"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
+"Edition Plan subscription to be paused on <%= dateHtml %>.</p><p>If you have "
 "questions or if you would like to speak to us about your subscription, "
-"please reach out to <%= email %>.</p>"
+"please reach out to <%= emailHtml %>.</p>"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:120
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:121
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to "
-"be paused on <%= date %>.</p><p>Continuing ahead will allow you to schedule "
-"your current <%= oldPlan %> Edition Plan subscription to be downgraded to "
-"the <%= newPlan %> Edition Plan on <%= date %>.</p><p>If you have questions "
-"or if you would like to speak to us about your subscription, please reach "
-"out to <%= email %>.</p>"
+"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
+"be paused on <%= dateHtml %>.</p><p>Continuing ahead will allow you to "
+"schedule your current <%- oldPlan %> Edition Plan subscription to be "
+"downgraded to the <%- newPlan %> Edition Plan on <%= dateHtml %>.</p><p>If "
+"you have questions or if you would like to speak to us about your "
+"subscription, please reach out to <%= emailHtml %>.</p>"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:136
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:137
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to "
-"be downgraded to the <%= nextSubscription %> Edition Plan on <%= date %>.</"
-"p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
-"Edition Plan subscription to be downgraded to the <%= newPlan %> Edition "
-"Plan on <%= date %>.</p><p>If you have questions or if you would like to "
-"speak to us about your subscription, please reach out to <%= email %>.</p>"
+"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
+"be downgraded to the <%- nextSubscription %> Edition Plan on <%= dateHtml %>."
+"</p><p>Continuing ahead will allow you to schedule your current <%- oldPlan "
+"%> Edition Plan subscription to be downgraded to the <%- newPlan %> Edition "
+"Plan on <%= dateHtml %>.</p><p>If you have questions or if you would like to "
+"speak to us about your subscription, please reach out to <%= emailHtml %>.</"
+"p>"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:153
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:154
 msgid ""
 "<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Continuing ahead will allow you to schedule your current <%= oldPlan %> "
-"Edition Plan subscription to be downgraded to the <%= newPlan %> Edition "
-"Plan on <%= date %>.</p>If you have questions or if you would like to speak "
-"to us about your subscription, please reach out to <%= email %>."
+"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
+"Edition Plan subscription to be downgraded to the <%- newPlan %> Edition "
+"Plan on <%= dateHtml %>.</p>If you have questions or if you would like to "
+"speak to us about your subscription, please reach out to <%= emailHtml %>."
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:246
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:247
 msgid "Billed Annually"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js:248
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js:249
 msgid "Billed Monthly"
 msgstr ""
 
@@ -2642,7 +2643,7 @@ msgstr ""
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:314
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:315
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
@@ -2669,7 +2670,7 @@ msgid "You are are back online."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:464
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:40
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:41
 msgid "Waiting for server progress"
 msgstr ""
 
@@ -2699,11 +2700,11 @@ msgstr ""
 msgid "Hide Full Menu"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:27
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:28
 msgid "Permission Denied"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:82
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:83
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
