@@ -38,4 +38,4 @@ soil
     An application to schedule long-running tasks and later retrieve their results. This is used for
     many of HQ's long-running tasks that result in a file download.
 toggle
-    A CouchDB-backed app for controlling access to functionality on a user-specific or domain-specific basis.
+    A CouchDB-backed app for feature flags that control access to functionality on a user-specific or domain-specific basis.
