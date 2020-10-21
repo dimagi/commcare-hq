@@ -1,7 +1,5 @@
 import requests
-import json
 from requests.exceptions import RequestException
-from uuid import uuid4
 
 from django.contrib import messages
 from django.http.response import Http404
@@ -120,15 +118,9 @@ def gaen_otp_view(request, domain):
 
 
 def get_otp_response(post_data, gaen_otp_settings):
-    headers = {}
-    if gaen_otp_settings.gaen_server_type == "Nearform":
-        headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
-
-    elif gaen_otp_settings.gaen_server_type == "APHL":
-        headers = {"x-api-key": "%s" % gaen_otp_settings.auth_token,
-                   "content-type": "application/json",
-                   "accept": "application/json"}
-        post_data = json.dumps(post_data)
+    headers = GaenOtpServerSettings.get_otp_request_headers(gaen_otp_settings.server_type,
+                                                            gaen_otp_settings.auth_token)
+    post_data = GaenOtpServerSettings.change_post_data_type(gaen_otp_settings.server_type, post_data)
 
     otp_response = requests.post(gaen_otp_settings.server_url,
                                  data=post_data,
@@ -154,23 +146,9 @@ class InvalidOtpRequestException(Exception):
 
 
 def get_post_data_for_otp(request, domain):
-    post_params = {}
-    property_map = {
-        'test_date': 'testDate',
-        'test_type': 'testType',
-    }
-    if get_gaen_otp_server_settings(domain).gaen_server_type == "Nearform":
-        post_params = {
-            'jobId': str(uuid4()),
-        }
-        property_map['phone_number'] = 'mobile'
-        property_map['onset_date'] = 'onsetDate'
-
-    elif get_gaen_otp_server_settings(domain).gaen_server_type == "APHL":
-        property_map['phone_number'] = 'phone'
-        property_map['onset_date'] = 'symptomDate'
-        property_map['tz_offset'] = 'tzOffset'
-        property_map['padding'] = 'padding'
+    server_type = get_gaen_otp_server_settings(domain).server_type
+    property_map = GaenOtpServerSettings.get_property_map(server_type)
+    post_params = GaenOtpServerSettings.get_post_params(server_type)
 
     for request_param, post_param in property_map.items():
         if request_param in request.POST:

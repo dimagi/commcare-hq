@@ -98,16 +98,15 @@ class DialerSettingsForm(forms.ModelForm):
 
 class GaenOtpServerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable GAEN OTP Server Integration"),
+        label=_("Enable GAEN OTP server integration"),
         required=False
     )
 
-    GAEN_SERVER_TYPE_OPTIONS = (('Nearform', 'Nearform OTP Server'), ('APHL', 'APHL Exposure Notifications'),)
-    gaen_server_type = forms.CharField(
+    server_type = forms.CharField(
         label=_('GAEN Server Type'),
         widget=forms.Select(choices=[
-            ("", ugettext_lazy("Select model type")),
-            ('Nearform', ugettext_lazy('Nearform OTP Server')),
+            ("", ugettext_lazy("Select server type")),
+            ('NEARFORM', ugettext_lazy('Nearform OTP Server')),
             ('APHL', ugettext_lazy('APHL Exposure Notifications')),
         ]),
     )
@@ -142,7 +141,7 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
                 hqcrispy.InlineField('is_enabled'),
             ),
             crispy.Div(
-                crispy.Field('gaen_server_type'),
+                crispy.Field('server_type'),
             ),
             crispy.Div(
                 crispy.Field('server_url'),
@@ -169,14 +168,14 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
     def initial_data(self):
         return {
             'is_enabled': self._existing_config.is_enabled,
-            'gaen_server_type': self._existing_config.gaen_server_type,
+            'server_type': self._existing_config.server_type,
             'server_url': self._existing_config.server_url,
             'auth_token': self._existing_config.auth_token,
         }
 
     def save(self):
         self._existing_config.is_enabled = self.cleaned_data['is_enabled']
-        self._existing_config.gaen_server_type = self.cleaned_data['gaen_server_type']
+        self._existing_config.server_type = self.cleaned_data['server_type']
         self._existing_config.server_url = self.cleaned_data['server_url']
         self._existing_config.auth_token = self.cleaned_data['auth_token']
         self._existing_config.save()
