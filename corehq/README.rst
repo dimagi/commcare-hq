@@ -23,7 +23,7 @@ fluff
 form_processor
     Code to handle receiving, processing, and storing form submissions from CommCare mobile and Web Apps.
 messaging
-    Code to manage direct-to-user messages in CammCare HQ, most often SMS but also channels like email and
+    Code to manage direct-to-user messages in CommCare HQ, most often SMS but also channels like email and
     whatsapp. Also see the ``sms`` and ``sms`` apps in ``corehq.apps``.
 motech
     Code relating to `MOTECH <http://docs.motechproject.org/en/latest/>`_, an open source mHealth platform that HQ
