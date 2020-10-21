@@ -182,7 +182,7 @@ These apps are limited to a small set of clients or on a deprecation path.
 appstore
    The CommCare Exchange, a deprecated feature that allowed projects to publish their projects in a self-service manner
    and download other organizations' projects. This process is now supported internally by the support team. The UI
-   portions of this app have been removed, but the data models are still necessary for the internal process.
+   portions of this app have been removed, but the data models are still necessary for the internal processes.
 callcenter
    The call center application setting allows an application to reference a mobile user as a case that can be monitored using CommCare.  This allows supervisors to view their workforce within CommCare.
 casegroups
