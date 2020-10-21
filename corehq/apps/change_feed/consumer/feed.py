@@ -162,6 +162,8 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
+        if self.process_num == -1:
+            return []
 
         return [
             topic_partitions[num::self.num_processes]
