@@ -549,6 +549,10 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
+            bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_commcare_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'can_access_all_locations': self.can_access_all_locations,
@@ -556,6 +560,7 @@ class ListWebUsersView(BaseRoleAccessView):
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'bulk_download_url': bulk_download_url,
         }
 
 

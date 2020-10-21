@@ -27,7 +27,7 @@
         {% endif %}
 
         {% if can_access_all_locations %}
-          <a id="bulk_download" class="btn btn-info" href="">
+          <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
             <i class="fa fa-cloud-download"></i> {% trans "Download Web Users" %}
           </a>
         {% endif %}
