@@ -161,7 +161,7 @@ data_pipeline_audit
    sources (mostly Elasticsearch). These tools are not used routinely.
 domain_migration_flags
    Dynamic flags that are used to indicate when a data migration is taking place for a specific domain. The flags are
-   checked in various places thought the code and will restrict access to certain features when enabled. These flags
+   checked in various places throughout the code and will restrict access to certain features when enabled. These flags
    are set during large data migrations such as moving case & form data from Couch -> SQL, migrating a domain to a
    different CommCare instance.
 dump_reload
