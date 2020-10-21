@@ -6,13 +6,11 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.chunked import chunked
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
@@ -75,15 +73,15 @@ def check_repeaters():
         check_repeaters_in_partition.delay(current_partition, CHECK_REPEATERS_PARTITION_COUNT)
 
 
-def iterate_repeat_record_ids_for_partition(start, partition, total_partitions):
+def _iterate_record_ids_for_partition(start, partition, total_partitions):
     for record_id in iterate_repeat_record_ids(start, chunk_size=100000):
         if hash(record_id) % total_partitions == partition:
             yield record_id
 
 
-def iterate_repeat_records_for_partition(start, partition, total_partitions):
+def _iterate_repeat_records_for_partition(start, partition, total_partitions):
     # chunk the fetching of documents from couch
-    for chunked_ids in chunked(iterate_repeat_record_ids_for_partition(start, partition, total_partitions), 10000):
+    for chunked_ids in chunked(_iterate_record_ids_for_partition(start, partition, total_partitions), 10000):
         yield from iterate_repeat_records_for_ids(chunked_ids)
 
 
@@ -109,7 +107,7 @@ def check_repeaters_in_partition(partition, total_partitions):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in iterate_repeat_records_for_partition(start, partition, total_partitions):
+            for record in _iterate_repeat_records_for_partition(start, partition, total_partitions):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
                     "I've been iterating repeat records for 23 hours. I quit!"

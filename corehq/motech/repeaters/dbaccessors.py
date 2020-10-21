@@ -1,7 +1,7 @@
 import datetime
 
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.couch.bulk import get_docs
 
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.test_utils import unit_testing_only
@@ -156,15 +156,13 @@ def _get_repeater_ids_by_domain(domain):
 
 def iterate_repeat_records_for_ids(doc_ids):
     from .models import RepeatRecord
-    return (RepeatRecord.wrap(doc) for doc in get_docs(RepeatRecord.get_db(), doc_ids))
+    return (RepeatRecord.wrap(doc) for doc in iter_docs(RepeatRecord.get_db(), doc_ids))
 
 
 def iterate_repeat_record_ids(due_before, chunk_size=10000):
     """
-    Fetch repeat record ids only
-    :param due_before: only return repeat records that are due now or sooner
-    :param chunk_size: used for pagination over the ids
-    :return: a list of repeat record ids
+    Yields repeat record ids only.
+    Use chunk_size to optimize db query. Has no effect on # of items returned.
     """
     from .models import RepeatRecord
     json_due_before = json_format_datetime(due_before)
