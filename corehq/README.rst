@@ -6,7 +6,7 @@ A few broad areas of functionality are stored directly in this directory.
 apps
     Most functionality lives in this directory. See README in this directory for details.
 blobs
-    The blob db stores large, schema-less pieces of data. It's where XForms and multimedia are stored.
+    The blob db stores large pieces of binary data. It's where form XML, multimedia, exports, temporary files, etc. are stored.
 celery_monitoring
     Tools to monitor `Celery <https://docs.celeryproject.org/en/stable/>`_, which we use for async task processing.
 couchapps
