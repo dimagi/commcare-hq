@@ -24,7 +24,7 @@ form_processor
     Code to handle receiving, processing, and storing form submissions from CommCare mobile and Web Apps.
 messaging
     Code to manage direct-to-user messages in CommCare HQ, most often SMS but also channels like email and
-    whatsapp. Also see the ``sms`` and ``sms`` apps in ``corehq.apps``.
+    whatsapp. Also see the ``sms`` and ``smsforms`` apps in ``corehq.apps``.
 motech
     MOTECH is CommCare HQ's integration layer, and allows HQ to forward data to
     remote systems' APIs, to import data from them, and to follow workflows for
