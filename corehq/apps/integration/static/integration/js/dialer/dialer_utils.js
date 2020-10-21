@@ -2,8 +2,6 @@
 Based on AWS boilerplate
 **/
 
-/* eslint-disable */
-
 hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
     function getFormattedDate() {
@@ -57,6 +55,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
         // Attach it to the parent
         document.getElementById("divEventWindow").appendChild(newContainer);
+
 
         // Create the new date div
         var newDate = document.createElement("DIV");
@@ -165,6 +164,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
     function isRfc1918(ipIn){
 
+
         var ipToTest = new String(ipIn);
         var rfc1918_1_re = /^10\..*$/;
         var rfc1918_2_re = /^172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31).*$/;
@@ -223,7 +223,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
     function iterate_through_array(region, startIp, ipsInBlock){
 
         addToSystemLog("Checking region " + region + " and startIP: " + startIp);
-        
+
         var octets = startIp.split(".");
         var first = octets[0];
         var second = octets[1];
@@ -239,11 +239,11 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
 
 
     function udpFailure() {
-      
+
         for (var region in all_regions) {
-            
+
             if (!success.hasOwnProperty(region) ){
-                
+
                 var docTarget = "";
                 switch(region) {
                 case "US-East-1":
@@ -255,7 +255,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
                 default:
                 // code block
                 }
-            
+
                 addToSystemLog("UDP 3478 failure for region : " + region);
                 document.getElementById(docTarget).src=staticAsset("redLED.png");
             }
@@ -263,24 +263,24 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
     }
 
     function testUDP() {
-      
+
         var thisStartIp;
         var thisIpsInBlock;
-        
+
         for (var member in success) delete success[member];
-        
+
 
         for (var region in all_regions) {
 
             for (var key in all_regions[region]) {
-                
+
                 for (var arrayindex = 0; arrayindex < all_regions[region][key].length; arrayindex++) {
 
                     thisStartIp = all_regions[region][key][arrayindex].startIp;
                     thisIpsInBlock = all_regions[region][key][arrayindex].ipsInBlock;
 
                     iterate_through_array(region, thisStartIp, thisIpsInBlock);
-            
+
                 }
             }
         }
