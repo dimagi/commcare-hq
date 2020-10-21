@@ -93,11 +93,12 @@ hqDefine('accounting/js/pricing_table', [
         self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
 
-            var mailto = "<a href='mailto:" + self.invoicingContact + "'>" + self.invoicingContact + "</a>";
+            var invoicingContact = _.escape(self.invoicingContact);
+            var mailtoHtml = "<a href='mailto:" + invoicingContact + "'>" + invoicingContact + "</a>";
             if (self.isDowngrade() && self.subscriptionBelowMinimum) {
                 var oldPlan = utils.capitalize(self.oCurrentPlan());
                 var newPlan = utils.capitalize(self.oSelectedPlan());
-                var newStartDate = "<strong>" + self.oStartDateAfterMinimumSubscription() + "</strong>";
+                var newStartDateHtml = "<strong>" + self.oStartDateAfterMinimumSubscription() + "</strong>";
 
                 var message = "",
                     title = gettext("Downgrading?");
@@ -105,62 +106,62 @@ hqDefine('accounting/js/pricing_table', [
                     title = gettext("Pausing Subscription?");
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
-                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> " +
-                        "Edition Plan subscription to be paused on <%= date %>.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> " +
+                        "Edition Plan subscription to be paused on <%= dateHtml %>.</p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= email %>.</p>"
+                        "please reach out to <%= emailHtml %>.</p>"
                     ))({
-                        date: newStartDate,
+                        dateHtml: newStartDateHtml,
                         newPlan: newPlan,
                         oldPlan: oldPlan,
-                        email: mailto,
+                        emailHtml: mailtoHtml,
                     });
                 } else if (self.oIsNextPlanPaused()) {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
-                        "<p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to be paused " +
-                        "on <%= date %>.</p>" +
-                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> Edition " +
-                        "Plan subscription to be downgraded to the <%= newPlan %> Edition Plan " +
-                        "on <%= date %>.</p>" +
+                        "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be paused " +
+                        "on <%= dateHtml %>.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> Edition " +
+                        "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
+                        "on <%= dateHtml %>.</p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= email %>.</p>"
+                        "please reach out to <%= emailHtml %>.</p>"
                     ))({
                         oldPlan: oldPlan,
-                        date: newStartDate,
+                        dateHtml: newStartDateHtml,
                         newPlan: newPlan,
-                        email: mailto,
+                        emailHtml: mailtoHtml,
                     });
                 } else if (self.oIsNextPlanDowngrade()) {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
-                        "<p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
-                        "to the <%= nextSubscription %> Edition Plan on <%= date %>.</p>" +
-                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> Edition " +
-                        "Plan subscription to be downgraded to the <%= newPlan %> Edition Plan " +
-                        "on <%= date %>.</p>" +
+                        "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
+                        "to the <%- nextSubscription %> Edition Plan on <%= dateHtml %>.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> Edition " +
+                        "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
+                        "on <%= dateHtml %>.</p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= email %>.</p>"
+                        "please reach out to <%= emailHtml %>.</p>"
                     ))({
                         oldPlan: oldPlan,
                         nextSubscription: self.oNextSubscription(),
-                        date: newStartDate,
+                        dateHtml: newStartDateHtml,
                         newPlan: newPlan,
-                        email: mailto,
+                        emailHtml: mailtoHtml,
                     });
                 } else {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
-                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> Edition " +
-                        "Plan subscription to be downgraded to the <%= newPlan %> Edition Plan " +
-                        "on <%= date %>.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> Edition " +
+                        "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
+                        "on <%= dateHtml %>.</p>" +
                         "If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= email %>."
+                        "please reach out to <%= emailHtml %>."
                     ))({
                         oldPlan: oldPlan,
-                        date: newStartDate,
+                        dateHtml: newStartDateHtml,
                         newPlan: newPlan,
-                        email: mailto,
+                        emailHtml: mailtoHtml,
                     });
                 }
                 var $modal = $("#modal-minimum-subscription");
