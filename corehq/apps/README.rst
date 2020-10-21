@@ -14,7 +14,7 @@ accounting
    This includes the UI for internal operations users to modify these objects.
    Accessing this UI requires running the ``add_operations_user`` command.
 api
-   APIs to read and write CommCare data for a given project space. Most APIs are externally facing. However there a 
+   APIs to read and write CommCare data for a given project space. Most APIs are externally facing. However, there
    are a few that are used internally e.g. for report filters. APIs are built using Tastypie.
 app_manager
    UI and tooling for configuring and releasing CommCare applications.
