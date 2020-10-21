@@ -78,6 +78,13 @@ class Command(BaseCommand):
             help="The batch size for this pillow. Some pillows process changes in bulk, "
             "setting this value to 1 will process each change as it comes in.",
         )
+        parser.add_argument(
+            '--use-side-process',
+            action='store_true',
+            dest='use_side_process',
+            default=False,
+            help="Set if you want to Move migrations on to side process",
+        )
 
     def handle(self, **options):
         run_all = options['run_all']
@@ -88,6 +95,7 @@ class Command(BaseCommand):
         num_processes = options['num_processes']
         process_number = options['process_number']
         processor_chunk_size = options['processor_chunk_size']
+        use_side_process = options['use_side_process']
         assert 0 <= process_number < num_processes
         assert processor_chunk_size
         if list_all:
@@ -112,7 +120,7 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number, processor_chunk_size=processor_chunk_size)
+            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number, processor_chunk_size=processor_chunk_size, use_side_process=use_side_process)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:
