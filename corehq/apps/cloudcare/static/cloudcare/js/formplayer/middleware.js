@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
     };
     var navigationMiddleware = function () {
         FormplayerFrontend.trigger("navigation");
+        $(window).scrollTop(0);
     };
     var clearVersionInfo = function () {
         FormplayerFrontend.trigger('setVersionInfo', '');
