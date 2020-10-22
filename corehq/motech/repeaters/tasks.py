@@ -99,7 +99,7 @@ def check_repeaters_in_partition(partition, total_partitions):
         name=lock_key,
     )
     if not check_repeater_lock.acquire(blocking=False):
-        metrics_counter("commcare.repeaters.check.locked_out")
+        metrics_counter("commcare.repeaters.check.locked_out", tags={'partition': partition})
         return
 
     try:
