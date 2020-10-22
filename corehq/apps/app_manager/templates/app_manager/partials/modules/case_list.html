@@ -35,6 +35,15 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
+      {% if show_require_search %}
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: requireSearch">
+            {% trans "Require user to enter a search query to see cases in Web Apps." %}
+          </label>
+        </div>
+      {% endif %}
+
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         <div class="row">
           <div class="col-sm-6">

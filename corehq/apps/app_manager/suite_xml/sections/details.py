@@ -183,6 +183,10 @@ class DetailContributor(SectionContributor):
                 for field in fields:
                     d.fields.append(field)
 
+            # Add require search option
+            if detail.require_search:
+                d.require_search = True
+
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:

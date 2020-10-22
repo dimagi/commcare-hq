@@ -157,6 +157,7 @@ class ReportModuleTests(SimpleTestCase):
 class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
+        # TODO: update
         self.attrs_dict1 = {
             'columns': True,
             'filter': True,

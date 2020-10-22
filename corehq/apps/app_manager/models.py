@@ -1975,6 +1975,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     sort_elements = SchemaListProperty(SortElement)
     sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
+    require_search = BooleanProperty()
 
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()

@@ -707,6 +707,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.customVariablesViewModel.xml.subscribe(function () {
                     self.fireChange();
                 });
+                self.requireSearch = ko.observable(spec[self.columnKey].require_search || false);
                 self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
                 self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
                 self.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -792,6 +793,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     },
                 });
                 self.on('change', function () {
+                    self.saveButton.fire('change');
+                });
+                self.requireSearch.subscribe(function () {
                     self.saveButton.fire('change');
                 });
                 self.useCaseTiles.subscribe(function () {
@@ -908,6 +912,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     ));
 
+                    data.requireSearch = self.requireSearch();
                     data.useCaseTiles = self.useCaseTiles() === "yes";
                     data.persistCaseContext = self.persistCaseContext();
                     data.persistentCaseContextXML = self.persistentCaseContextXML();

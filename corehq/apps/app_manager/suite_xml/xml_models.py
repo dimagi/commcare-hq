@@ -787,6 +787,7 @@ class Detail(OrderedXmlObject, IdNode):
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
+    require_search = SimpleBooleanField("@require-search", "true", "false")
 
     def _init_variables(self):
         if self._variables is None:
