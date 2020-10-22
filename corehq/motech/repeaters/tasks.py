@@ -85,7 +85,7 @@ def _iterate_repeat_records_for_partition(start, partition, total_partitions):
         yield from iterate_repeat_records_for_ids(chunked_ids)
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@task(queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters_in_partition(partition, total_partitions):
     start = datetime.utcnow()
     twentythree_hours_sec = 23 * 60 * 60
