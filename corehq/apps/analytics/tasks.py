@@ -35,6 +35,10 @@ from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
     get_instance_string,
     get_meta,
+    get_blocked_hubspot_domains,
+    get_blocked_hubspot_email_domains,
+    hubspot_enabled_for_user,
+    hubspot_enabled_for_email,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
@@ -178,7 +182,7 @@ def _send_post_data(url, params, data, headers):
 
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and webuser.analytics_enabled:
+    if api_key and hubspot_enabled_for_user(webuser):
         req = requests.get(
             "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                 six.moves.urllib.parse.quote(webuser.username)
@@ -189,6 +193,14 @@ def _get_user_hubspot_id(webuser):
             return None
         req.raise_for_status()
         return req.json().get("vid", None)
+    elif api_key:
+        metrics_gauge(
+            'commcare.hubspot_data.rejected.get_user_hubspot_id',
+            1,
+            tags={
+                'username': webuser.username,
+            }
+        )
     return None
 
 
@@ -206,9 +218,16 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    if ((webuser and not webuser.analytics_enabled)
-            or (not webuser and not analytics_enabled_for_email(email))):
+    if ((webuser and not hubspot_enabled_for_user(webuser))
+            or (not webuser and not hubspot_enabled_for_email(email))):
         # This user has analytics disabled
+        metrics_gauge(
+            'commcare.hubspot_data.rejected.send_form_to_hubspot',
+            1,
+            tags={
+                'username': webuser.username if webuser else email,
+            }
+        )
         return
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
@@ -461,6 +480,9 @@ def track_periodic_data():
     hubspot_number_of_users = 0
     hubspot_number_of_domains_with_forms_gt_threshold = 0
 
+    blocked_domains = get_blocked_hubspot_domains()
+    blocked_email_domains = get_blocked_hubspot_email_domains()
+
     for chunk in range(num_chunks):
         users_to_domains = (user_query
                             .size(chunk_size)
@@ -494,8 +516,30 @@ def track_periodic_data():
         # max number of mobile workers
         submit = []
         for user in users_to_domains:
-            email = user.get('email')
+            email = user.get('email') or user.get('username')
             if not _email_is_valid(email):
+                continue
+
+            email_domain = email.split('@')[-1]
+            if email_domain in blocked_email_domains:
+                metrics_gauge(
+                    'commcare.hubspot_data.rejected.periodic_task.email_domain',
+                    1,
+                    tags={
+                        'email_domain': email_domain,
+                    }
+                )
+                continue
+
+            username_email_domain = user.get('username').split('@')[-1]
+            if username_email_domain in blocked_email_domains:
+                metrics_gauge(
+                    'commcare.hubspot_data.rejected.periodic_task.username',
+                    1,
+                    tags={
+                        'username': username_email_domain,
+                    }
+                )
                 continue
 
             hubspot_number_of_users += 1
@@ -505,7 +549,18 @@ def track_periodic_data():
             max_export = 0
             max_report = 0
 
+            is_member_of_blocked_domain = False
             for domain in user['domains']:
+                if domain in blocked_domains:
+                    metrics_gauge(
+                        'commcare.hubspot_data.rejected.periodic_task.domain',
+                        1,
+                        tags={
+                            'domain': domain,
+                        }
+                    )
+                    is_member_of_blocked_domain = True
+                    break
                 if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
                     max_forms = domains_to_forms[domain]
                 if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
@@ -514,6 +569,9 @@ def track_periodic_data():
                     max_export = _get_export_count(domain)
                 if _get_report_count(domain) > max_report:
                     max_report = _get_report_count(domain)
+
+            if is_member_of_blocked_domain:
+                continue
 
             project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
