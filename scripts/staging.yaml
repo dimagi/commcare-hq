@@ -65,5 +65,6 @@ branches:
   - gh/resolve-security-warnings # Graham Oct 16
   - kev/formplayer-remove-prevalidate # Kevin Oct 20
   - dependabot/pip/requirements/django-crispy-forms-1.9.2 # Jenny Oct 22
+  - gh/improve-queueing-repeaters # Graham Oct 22
   
 submodules: {}
