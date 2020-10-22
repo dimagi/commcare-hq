@@ -57,8 +57,6 @@ branches:
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/user-data-jit            # Farid September 2
   - ce/case-property-recipients # Cal 9/24
-  - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
-  - bmb/test-auto-pay  # Biyeun Oct 9
   - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
   - bmb/SAAS-11201  # Biyeun Oct 14
