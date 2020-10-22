@@ -2040,21 +2040,24 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         in attr_dict(column, filter, and other_configurations)
         from source module to current object.
         """
-        case_tile_configuration_list = [
-            'use_case_tiles',
-            'persist_tile_on_forms',
-            'persistent_case_tile_from_module',
-            'pull_down_tile',
-            'persist_case_context',
-            'persistent_case_context_xml',
-        ]
-        for k, v in attr_dict.items():
-            if v:
-                if k == "case_tile_configuration":
-                    for ele in case_tile_configuration_list:
-                        setattr(self, ele, getattr(src_module_detail_type, ele))
-                else:
-                    setattr(self, k, getattr(src_module_detail_type, k))
+        mapping = {
+            'case_tile_configuration': [
+                'use_case_tiles',
+                'persist_tile_on_forms',
+                'persistent_case_tile_from_module',
+                'pull_down_tile',
+                'persist_case_context',
+                'persistent_case_context_xml',
+            ],
+            'columns': [
+                'columns',
+                'require_search',
+            ],
+        }
+        for key, value in attr_dict.items():
+            if value:
+                for attr in mapping.get(key, [key]):
+                    setattr(self, attr, getattr(src_module_detail_type, attr))
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

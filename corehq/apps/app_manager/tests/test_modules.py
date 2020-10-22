@@ -157,7 +157,6 @@ class ReportModuleTests(SimpleTestCase):
 class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
-        # TODO: update
         self.attrs_dict1 = {
             'columns': True,
             'filter': True,
@@ -194,13 +193,14 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.src_module_detail_type = getattr(self.src_module.case_details, "short")
         self.header_ = getattr(self.src_module_detail_type.columns[0], 'header')
         self.header_['en'] = 'status'
-        self.filter_ = setattr(self.src_module_detail_type, 'filter', 'a > b')
-        self.sort_nodeset_columns = setattr(self.src_module_detail_type, 'sort_nodeset_columns', True)
-        self.custom_variables = setattr(self.src_module_detail_type, 'custom_variables', 'def')
-        self.custom_xml = setattr(self.src_module_detail_type, 'custom_xml', 'ghi')
+        setattr(self.src_module_detail_type, 'filter', 'a > b')
+        setattr(self.src_module_detail_type, 'require_search', True)
+        setattr(self.src_module_detail_type, 'sort_nodeset_columns', True)
+        setattr(self.src_module_detail_type, 'custom_variables', 'def')
+        setattr(self.src_module_detail_type, 'custom_xml', 'ghi')
         self.print_template = getattr(self.src_module_detail_type, 'print_template')
         self.print_template['name'] = 'test'
-        self.case_tile_configuration = setattr(self.src_module_detail_type, 'persist_tile_on_forms', True)
+        setattr(self.src_module_detail_type, 'persist_tile_on_forms', True)
 
     def test_overwrite_all(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
@@ -214,6 +214,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict2)
 
         self.assertEqual(self.src_module_detail_type.columns, dest_module_detail_type.columns)
+        self.assertEqual(self.src_module_detail_type.require_search, dest_module_detail_type.require_search)
         self.assertEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
         self.remove_attrs(dest_module_detail_type)
         self.assertNotEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
