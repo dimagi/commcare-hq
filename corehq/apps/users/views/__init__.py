@@ -112,6 +112,8 @@ from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_INVITATION
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
+from custom.icds_core.const import IS_ICDS_ENVIRONMENT, IS_ICDS_STAGING_ENVIRONMENT
+from django_digest.decorators import httpdigest
 
 
 def _users_context(request, domain):
@@ -567,13 +569,20 @@ class ListRolesView(BaseRoleAccessView):
                 "Any users assigned to roles that are restricted in data access "
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
+        if (
+            toggles.APP_ACCESS_PERMISSIONS.enabled(self.domain)
+            and (IS_ICDS_ENVIRONMENT or IS_ICDS_STAGING_ENVIRONMENT)
+        ):
+            web_apps_list = get_brief_apps_in_domain(self.domain)
+        else:
+            web_apps_list = get_cloudcare_apps(self.domain)
         return {
             'user_roles': self.user_roles,
             'non_admin_roles': self.user_roles[1:],
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
-            'web_apps_list': get_cloudcare_apps(self.domain),
+            'web_apps_list': web_apps_list,
             'apps_list': get_brief_apps_in_domain(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
