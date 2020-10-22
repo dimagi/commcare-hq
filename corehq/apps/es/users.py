@@ -170,6 +170,9 @@ def is_active(active=True):
 
 
 def metadata(key, value):
+    # Note that this dict is stored in ES under the `user_data` field, and
+    # transformed into a queryable format (in ES) as `user_data_es`, but it's
+    # referenced in python as `metadata`
     return queries.nested(
         'user_data_es',
         filters.AND(
