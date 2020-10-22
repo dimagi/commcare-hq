@@ -185,11 +185,12 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, es_client, index_info, doc_filter=None, doc_transform=None):
+    def __init__(self, es_client, index_info, doc_filter=None, doc_transform=None, process_deletes=False):
         self.doc_transform = doc_transform
         self.doc_filter = doc_filter
         self.es = es_client
         self.index_info = index_info
+        self.process_deletes = process_deletes
 
     def should_process(self, doc):
         if self.doc_filter:
@@ -202,7 +203,10 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
 
         pillow_logging.info("Processing batch of %s docs", len((docs)))
 
-        changes = [self._doc_to_change(doc) for doc in docs]
+        changes = [
+            self._doc_to_change(doc) for doc in docs
+            if self.process_deletes or not is_deletion(doc.get('doc_type'))
+        ]
         error_collector = ErrorCollector()
 
         bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
@@ -240,7 +244,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         self.index_info = index_info
         self.chunk_size = chunk_size
         self.doc_processor = BulkPillowReindexProcessor(
-            self.es, self.index_info, doc_filter, doc_transform
+            self.es, self.index_info, doc_filter, doc_transform, process_deletes=self.in_place
         )
         self.pillow = pillow
 
