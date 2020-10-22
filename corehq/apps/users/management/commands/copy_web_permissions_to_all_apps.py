@@ -7,20 +7,12 @@ from corehq.util.log import with_progress_bar
 
 def _copy_permissions(role_doc):
     role = UserRole.wrap(role_doc)
-    changed = False
     permissions = role_doc['permissions']
     if permissions.get('access_all_apps') != permissions.get('view_web_apps'):
         role.permissions.access_all_apps = permissions.get('view_web_apps', True)
-        changed = True
     if permissions.get('allowed_app_list') != permissions.get('view_web_apps_list'):
         role.permissions.allowed_app_list = permissions.get('view_web_apps_list', [])
-        changed = True
-    if changed:
-        return DocUpdate(role)
-
-
-def _get_role_ids(roles):
-    return [role['id'] for role in roles]
+    return DocUpdate(role)
 
 
 class Command(BaseCommand):
@@ -33,5 +25,5 @@ class Command(BaseCommand):
             include_docs=False,
             reduce=False
         ).all()
-        role_ids = _get_role_ids(roles)
-        iter_update(UserRole.get_db(), _copy_permissions, with_progress_bar(role_ids), chunksize=2)
+        role_ids = [role['id'] for role in roles]
+        iter_update(UserRole.get_db(), _copy_permissions, with_progress_bar(role_ids), chunksize=1)
