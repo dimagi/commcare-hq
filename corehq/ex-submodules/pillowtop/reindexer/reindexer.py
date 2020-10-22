@@ -1,5 +1,9 @@
 from abc import ABCMeta, abstractmethod
 
+from elasticsearch.helpers import BulkIndexError as ESBulkIndexError
+from elasticsearch2.helpers import BulkIndexError as ES2BulkIndexError
+from elasticsearch7.helpers import BulkIndexError as ES7BulkIndexError
+
 from corehq.util.es.elasticsearch import TransportError
 from corehq.util.es.interface import ElasticsearchInterface
 
@@ -200,7 +204,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         if len(docs) == 0:
             return True
 
-        pillow_logging.info("Processing batch of %s docs", len((docs)))
+        pillow_logging.info("Processing batch of %s docs", len(docs))
 
         changes = [self._doc_to_change(doc) for doc in docs]
         error_collector = ErrorCollector()
@@ -213,6 +217,8 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         es_interface = ElasticsearchInterface(self.es)
         try:
             es_interface.bulk_ops(bulk_changes)
+        except (ESBulkIndexError, ES2BulkIndexError, ES7BulkIndexError) as e:
+            pillow_logging.error("Bulk index errors\n%s", e.errors)
         except Exception:
             pillow_logging.exception("\tException sending payload to ES")
             return False
