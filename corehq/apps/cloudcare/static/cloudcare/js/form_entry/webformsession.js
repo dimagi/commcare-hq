@@ -428,12 +428,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                             });
                         }
                     } else {
-                        if (o.isValid()) {
-                            if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                                _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
-                            }
-                        } else {
-                            prevalidated = false;
+                        if (ko.utils.unwrapObservable(o.datatype) !== "info") {
+                            _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                         }
                     }
                 };
