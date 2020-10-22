@@ -64,5 +64,6 @@ branches:
   - bmb/SAAS-11201  # Biyeun Oct 14
   - gh/resolve-security-warnings # Graham Oct 16
   - kev/formplayer-remove-prevalidate # Kevin Oct 20
+  - dependabot/pip/requirements/django-crispy-forms-1.9.2 # Jenny Oct 22
   
 submodules: {}
