@@ -25,42 +25,38 @@ class GaenOtpServerSettings(models.Model):
     server_url = models.CharField(max_length=255)
     auth_token = models.CharField(max_length=255)
 
-    @classmethod
-    def get_property_map(cls, server_type):
+    def get_property_map(self):
         property_map = {
             'test_date': 'testDate',
             'test_type': 'testType',
         }
-        if server_type == "NEARFORM":
+        if self.server_type == "NEARFORM":
             property_map['phone_number'] = 'mobile'
             property_map['onset_date'] = 'onsetDate'
 
-        elif server_type == "APHL":
+        elif self.server_type == "APHL":
             property_map['phone_number'] = 'phone'
             property_map['onset_date'] = 'symptomDate'
             property_map['tz_offset'] = 'tzOffset'
         return property_map
 
-    @classmethod
-    def get_post_params(cls, server_type):
-        if server_type == "NEARFORM":
+    def get_post_params(self):
+        if self.server_type == "NEARFORM":
             return {'jobId': str(uuid4()), }
         return {}
 
-    @classmethod
-    def change_post_data_type(cls, server_type, post_data):
-        if server_type == "APHL":
+    def change_post_data_type(self, post_data):
+        if self.server_type == "APHL":
             return json.dumps(post_data)
         return post_data
 
-    @classmethod
-    def get_otp_request_headers(cls, server_type, auth_token):
+    def get_otp_request_headers(self):
         headers = {}
-        if server_type == "NEARFORM":
-            headers = {"Authorization": "Bearer %s" % auth_token}
+        if self.server_type == "NEARFORM":
+            headers = {"Authorization": "Bearer %s" % self.auth_token}
 
-        elif server_type == "APHL":
-            headers = {"x-api-key": "%s" % auth_token,
+        elif self.server_type == "APHL":
+            headers = {"x-api-key": "%s" % self.auth_token,
                        "content-type": "application/json",
                        "accept": "application/json"}
         return headers

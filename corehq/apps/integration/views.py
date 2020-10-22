@@ -118,9 +118,8 @@ def gaen_otp_view(request, domain):
 
 
 def get_otp_response(post_data, gaen_otp_settings):
-    headers = GaenOtpServerSettings.get_otp_request_headers(gaen_otp_settings.server_type,
-                                                            gaen_otp_settings.auth_token)
-    post_data = GaenOtpServerSettings.change_post_data_type(gaen_otp_settings.server_type, post_data)
+    headers = gaen_otp_settings.get_otp_request_headers()
+    post_data = gaen_otp_settings.change_post_data_type(post_data)
 
     otp_response = requests.post(gaen_otp_settings.server_url,
                                  data=post_data,
@@ -146,9 +145,9 @@ class InvalidOtpRequestException(Exception):
 
 
 def get_post_data_for_otp(request, domain):
-    server_type = get_gaen_otp_server_settings(domain).server_type
-    property_map = GaenOtpServerSettings.get_property_map(server_type)
-    post_params = GaenOtpServerSettings.get_post_params(server_type)
+    gaen_otp_settings = get_gaen_otp_server_settings(domain)
+    property_map = gaen_otp_settings.get_property_map()
+    post_params = gaen_otp_settings.get_post_params()
 
     for request_param, post_param in property_map.items():
         if request_param in request.POST:
