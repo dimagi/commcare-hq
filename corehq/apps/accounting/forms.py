@@ -202,14 +202,14 @@ class BillingAccountBasicForm(forms.Form):
         if account is not None:
             additional_fields.append(hqcrispy.B3MultiField(
                 "Active Status",
-                crispy.Field(
+                hqcrispy.MultiInlineField(
                     'is_active',
                     data_bind="checked: is_active",
                 ),
             ))
             additional_fields.append(hqcrispy.B3MultiField(
                 "Customer Billing Account",
-                crispy.Field(
+                hqcrispy.MultiInlineField(
                     'is_customer_billing_account',
                     data_bind="checked: is_customer_billing_account",
                 ),
