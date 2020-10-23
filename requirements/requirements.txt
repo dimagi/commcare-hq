@@ -37,7 +37,7 @@ django-bulk-update==2.2.0  # via -r requirements.in
 django-celery-results==1.0.4  # via -r requirements.in
 django-compressor==2.1    # via -r requirements.in
 django-countries==4.6     # via -r requirements.in
-django-crispy-forms==1.7.0  # via -r requirements.in
+django-crispy-forms==1.9.2  # via -r requirements.in
 django-cte==1.1.4         # via -r requirements.in
 django-formtools==2.1     # via -r requirements.in, django-two-factor-auth
 django-logentry-admin==1.0.6  # via -r requirements.in
