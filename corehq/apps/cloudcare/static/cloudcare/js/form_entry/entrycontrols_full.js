@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+    var hasGeocoderPrivs = initialPageData.get('has_geocoder_privs');
     /**
      * The base Object for all entries. Each entry takes a question object
      * @param {Object} question - A question object
@@ -973,7 +973,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 } else {
                     options.enableAutoUpdate = isPhoneMode;
                 }
-                if (question.stylesContains(Const.ADDRESS)) {
+                if (question.stylesContains(Const.ADDRESS) && hasGeocoderPrivs) {
                     entry = new AddressEntry(question, {
                         broadcastStyles: question.stylesContaining(/broadcast-*/),
                     });

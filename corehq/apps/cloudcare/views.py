@@ -33,7 +33,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_for_commcare_user,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.accounting.utils import domain_is_on_trial, domain_has_privilege
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.app_manager.dbaccessors import (
@@ -219,6 +219,7 @@ class FormplayerMain(View):
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
             "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
+            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
