@@ -4,7 +4,11 @@ import traceback
 from django.core.management import call_command
 from django.db import migrations
 
+from couchdbkit import ResourceNotFound
+
 from dimagi.utils.couch.database import iter_docs
+from toggle.models import Toggle
+from toggle.shortcuts import parse_toggle
 
 from corehq.apps.users.models import UserRole
 from corehq.util.django_migrations import skip_on_fresh_install
@@ -24,36 +28,29 @@ git checkout {commit}
 """.format(commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND)
 
 
-@skip_on_fresh_install
-def _assert_migrated(apps, schema_editor):
-    """Check if migrated. Raises SystemExit if not migrated"""
-    num_items = count_items_to_be_migrated()
-
-    migrated = num_items == 0
-    if migrated:
+def copy_toggles(from_toggle_id, to_toggle_id):
+    """
+    Copies all enabled items from one toggle to another.
+    """
+    try:
+        from_toggle = Toggle.get(from_toggle_id)
+    except ResourceNotFound:
+        # if no source found this is a noop
         return
+    try:
+        to_toggle = Toggle.get(to_toggle_id)
+    except ResourceNotFound:
+        to_toggle = Toggle(slug=to_toggle_id, enabled_users=[])
 
-    if num_items < AUTO_MIGRATE_ITEMS_LIMIT:
-        try:
-            call_command(
-                "copy_web_permissions_to_all_apps"
-            )
-            migrated = count_items_to_be_migrated() == 0
-            if not migrated:
-                print("Automatic migration failed")
-        except Exception:
-            traceback.print_exc()
-    else:
-        print("Found %s items that need to be migrated." % num_items)
-        print("Too many to migrate automatically.")
+    for item in from_toggle.enabled_users:
+        if item not in to_toggle.enabled_users:
+            to_toggle.enabled_users.append(item)
+            namespace, item = parse_toggle(item)
 
-    if not migrated:
-        print("")
-        print(AUTO_MIGRATE_FAILED_MESSAGE)
-        sys.exit(1)
+    to_toggle.save()
 
 
-def count_items_to_be_migrated():
+def _count_items_to_be_migrated():
     """Return the number of items that need to be migrated"""
     roles = UserRole.view(
         'users/roles_by_domain',
@@ -72,6 +69,42 @@ def count_items_to_be_migrated():
     return counter
 
 
+@skip_on_fresh_install
+def _assert_migrated(apps, schema_editor):
+    """Check if migrated. Raises SystemExit if not migrated"""
+    num_items = _count_items_to_be_migrated()
+
+    migrated = num_items == 0
+    if migrated:
+        return
+
+    if num_items < AUTO_MIGRATE_ITEMS_LIMIT:
+        try:
+            call_command(
+                "copy_web_permissions_to_all_apps"
+            )
+            migrated = _count_items_to_be_migrated() == 0
+            if not migrated:
+                print("Automatic migration failed")
+        except Exception:
+            traceback.print_exc()
+    else:
+        print("Found %s items that need to be migrated." % num_items)
+        print("Too many to migrate automatically.")
+
+    if not migrated:
+        print("")
+        print(AUTO_MIGRATE_FAILED_MESSAGE)
+        sys.exit(1)
+
+
+@skip_on_fresh_install
+def _migrate_toggles(apps, schema_editor):
+    from_toggle_slug = 'role_webapps_permissions'
+    to_toggle_slug = 'role_app_access_permissions'
+    copy_toggles(from_toggle_slug, to_toggle_slug)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -79,5 +112,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_assert_migrated, migrations.RunPython.noop)
+        migrations.RunPython(_assert_migrated, migrations.RunPython.noop),
+        migrations.RunPython(_migrate_toggles, migrations.RunPython.noop),
     ]
