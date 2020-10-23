@@ -45,7 +45,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        ElasticsearchInterface(es).create_doc(USER_INDEX_INFO.alias, ES_META['users'].type, doc=doc, doc_id=user_id)
+        ElasticsearchInterface(es).index_doc(USER_INDEX_INFO.alias, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):

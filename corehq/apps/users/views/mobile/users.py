@@ -322,7 +322,7 @@ class EditCommCareUserView(BaseEditUserView):
         else:
             data = None
         form = CommCareUserFormSet(data=data, domain=self.domain,
-            editable_user=self.editable_user, request_user=self.request.couch_user)
+            editable_user=self.editable_user, request_user=self.request.couch_user, request=self.request)
 
         form.user_form.load_language(language_choices=get_domain_languages(self.domain))
 

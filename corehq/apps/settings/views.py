@@ -147,11 +147,13 @@ class MyAccountSettingsView(BaseMyAccountView):
                 self.request.POST,
                 domain=domain,
                 existing_user=self.request.couch_user,
+                request=self.request,
             )
         else:
             form = UpdateMyAccountInfoForm(
                 domain=domain,
                 existing_user=self.request.couch_user,
+                request=self.request,
             )
         form.load_language(language_choices)
         return form
