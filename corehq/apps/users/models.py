@@ -176,10 +176,10 @@ class Permissions(DocumentSchema):
             return True
         return master_app_id in self.view_web_apps_list
 
-    def can_access_app(self, master_app_id):
+    def can_access_app(self, app_id):
         if self.access_all_apps:
             return True
-        return master_app_id in self.allowed_app_list
+        return app_id in self.allowed_app_list
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""

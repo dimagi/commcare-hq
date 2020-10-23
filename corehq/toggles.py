@@ -742,8 +742,10 @@ ROLE_APP_ACCESS_PERMISSIONS = StaticToggle(
     'ICDS: Permit roles to access specific applications only',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description=("If this toggle is enabled for a domain then the users will not be allowed to log in if "
-    "they will have no role attached or their role is not configured to access a particular app"),
+    description=("If this toggle is enabled for a domain then the users will not be allowed to log in"
+    "and data entry will be restricted if"
+    "they will have no role attached or their role is not configured to access a particular app"
+    "This would be applicable for both mobile and web applications."),
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
