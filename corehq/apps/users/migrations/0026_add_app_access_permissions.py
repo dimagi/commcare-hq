@@ -9,7 +9,7 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.apps.users.models import UserRole
 from corehq.util.django_migrations import skip_on_fresh_install
 
-GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "cad2c518565579dee1d79eb1897af811feae248e"
+GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "a696ade5259cc5d95bc9a64cc0a2644ef3e56a92"
 AUTO_MIGRATE_ITEMS_LIMIT = 1000
 AUTO_MIGRATE_FAILED_MESSAGE = """
 A migration must be performed before this environment can be upgraded to the
