@@ -52,23 +52,23 @@ def form_session_handler(v, text, msg):
             session.modified_time = datetime.utcnow()
             session.save()
 
-            # fetch subevent to link inbound sms to
+            # fetch subevent pk to link inbound sms to
             try:
-                subevent = MessagingSubEvent.objects.get(xforms_session_id=session.pk)
+                subevent_id = MessagingSubEvent.objects.get(xforms_session_id=session.pk).pk
             except MessagingSubEvent.DoesNotExist:
-                subevent = None
+                subevent_id = None
 
             # Metadata to be applied to the inbound message
             inbound_metadata = MessageMetadata(
                 workflow=session.workflow,
                 reminder_id=session.reminder_id,
                 xforms_session_couch_id=session._id,
-                messaging_subevent_id=subevent.pk,
+                messaging_subevent_id=subevent_id,
             )
             add_msg_tags(msg, inbound_metadata)
             msg.save()
             try:
-                answer_next_question(v, text, msg, session, subevent.pk)
+                answer_next_question(v, text, msg, session, subevent_id)
             except Exception:
                 # Catch any touchforms errors
                 log_sms_exception(msg)
