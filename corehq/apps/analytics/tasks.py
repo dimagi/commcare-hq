@@ -103,6 +103,83 @@ def _track_on_hubspot(webuser, properties):
         )
 
 
+def _delete_hubspot_contact(vid):
+    """
+    Permanently deletes a Hubspot contact.
+    :param vid:  (the contact ID)
+    :return: boolean if contact was deleted
+    """
+    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    if api_key:
+
+        req = requests.delete(
+            f'https://api.hubapi.com/contacts/v1/contact/vid/{vid}',
+            params={
+                'hapikey': api_key,
+            }
+        )
+        if req.status_code == 200:
+            return True
+        if req.status_code == 429:
+            metrics_gauge(
+                'commcare.hubspot_data.rate_limited.delete_hubspot_contact',
+                1
+            )
+    return False
+
+
+def _get_contact_ids_for_emails(list_of_emails):
+    """
+    Gets a list of Contact IDs on Hubspot from a list of emails.
+    If an email in the list doesn't exist on Hubspot, it's simply ignored.
+    :param list_of_emails:
+    :return: list of contact ids
+    """
+    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    if api_key:
+        req = requests.get(
+            "https://api.hubapi.com/contacts/v1/contact/emails/batch/",
+            params={
+                'hapikey': api_key,
+                'email': list_of_emails,
+            },
+        )
+        if req.status_code == 200:
+            return req.json().keys()
+        if req.status_code == 429:
+            metrics_gauge(
+                'commcare.hubspot_data.rate_limited.get_contact_ids_for_emails',
+                1
+            )
+    return []
+
+
+def _get_contact_ids_for_email_domain(email_domain):
+    """
+    Searches Hubspot for an email domain and returns the list of matching
+    contact IDs for that email domain.
+    :param email_domain:
+    :return: list of matching contact IDs
+    """
+    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    if api_key:
+        req = requests.get(
+            "https://api.hubapi.com/contacts/v1/search/query",
+            params={
+                'hapikey': api_key,
+                'q': f'@{email_domain}',
+            },
+        )
+        if req.status_code == 200:
+            return [contact.get('vid') for contact in req.json().get('contacts')]
+        if req.status_code == 429:
+            metrics_gauge(
+                'commcare.hubspot_data.rate_limited.get_contact_ids_for_email_domain',
+                1
+            )
+    return []
+
+
 def _track_on_hubspot_by_email(email, properties):
     # Note: Hubspot recommends OAuth instead of api key
     _hubspot_post(
@@ -812,3 +889,63 @@ def get_subscription_properties_by_user(couch_user):
         '{}is_on_extended_trial_plan'.format(env): _is_on_extended_trial(),
         '{}max_edition_of_paying_plan'.format(env): _max_edition()
     }
+
+
+@periodic_task(run_every=crontab(minute="0", hour="7"), queue='background_queue')
+def cleanup_blocked_hubspot_contacts():
+    """
+    Remove any data stored about users from blocked domains and email domains
+    from Hubspot in case it somehow got there.
+    :return:
+    """
+    if not HUBSPOT_ENABLED:
+        return
+
+    # First delete any user information from users that are members of
+    # blocked domains
+    blocked_domains = get_blocked_hubspot_domains()
+    for domain in blocked_domains:
+        user_query = UserES().domain(domain).source(['email', 'username'])
+
+        total_users = user_query.count()
+        chunk_size = 30  # Hubspot recommends fewer than 100 emails per request
+        num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
+
+        for chunk in range(num_chunks):
+            blocked_users = (user_query
+                             .size(chunk_size)
+                             .start(chunk * chunk_size)
+                             .run()
+                             .hits)
+            blocked_emails = []
+            for user in blocked_users:
+                username = user.get('username')
+                user_email = user.get('email')
+                blocked_emails.append(username)
+                if user_email and user_email != username:
+                    blocked_emails.append(user_email)
+            ids_to_delete = _get_contact_ids_for_emails(set(blocked_emails))
+            num_deleted = sum([_delete_hubspot_contact(vid) for vid in ids_to_delete])
+            metrics_gauge(
+                'commcare.hubspot_data.deleted_user.blocked_domain',
+                num_deleted,
+                tags={
+                    'domain': domain,
+                    'ids_deleted': ids_to_delete,
+                }
+            )
+
+    # Next delete any user info from users that have emails or usernames ending
+    # in blocked email-domains
+    blocked_email_domains = get_blocked_hubspot_email_domains()
+    for email_domain in blocked_email_domains:
+        ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
+        num_deleted = sum([_delete_hubspot_contact(vid) for vid in ids_to_delete])
+        metrics_gauge(
+            'commcare.hubspot_data.deleted_user.blocked_email_domain',
+            num_deleted,
+            tags={
+                'email_domain': email_domain,
+                'ids_deleted': ids_to_delete,
+            }
+        )
