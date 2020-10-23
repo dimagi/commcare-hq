@@ -469,7 +469,7 @@ def track_periodic_data():
                   .web_users()
                   .last_logged_in(gte=three_months_ago)
                   .sort('date_joined', desc=True)
-                  .source(['domains', 'email', 'date_joined'])
+                  .source(['domains', 'email', 'date_joined', 'username'])
                   .analytics_enabled())
 
     total_users = user_query.count()
