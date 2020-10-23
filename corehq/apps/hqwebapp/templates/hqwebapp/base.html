@@ -244,24 +244,7 @@
         </div>
       {% endif %}
 
-      <!--[if IE]>
-        <div id="unsupported-browser"
-             class="alert alert-danger">
-          <p>
-            <i class="fa fa-warning-sign"></i>
-            <strong>
-              {% trans 'CommCare HQ does not work well with Internet Explorer.'%}
-            </strong>
-          </p>
-          <p>
-            {% blocktrans %}
-              We recommend
-              <a href="https://www.google.com/chrome">Chrome</a>
-              or <a href="http://www.mozilla.org/">Firefox</a>.
-            {% endblocktrans %}
-          </p>
-        </div>
-      <![endif]-->
+      {% include "hqwebapp/partials/unsupported_browser.html" %}
       {% block messages %}
         <div id="hq-messages-container"
              class="container-fluid messages-container">
@@ -413,6 +396,12 @@
           callback: function (ko, mapping) {
             ko.mapping = mapping;
           },
+          paths: {"modernizr": "{% static 'hqwebapp/js/lib/modernizr' %}"},
+          shim: {
+            "modernizr": {
+              exports: 'Modernizr'
+            }
+          }
         });
         requirejs([
           'hqwebapp/js/common',

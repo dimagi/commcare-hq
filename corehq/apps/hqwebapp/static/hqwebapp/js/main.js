@@ -2,6 +2,7 @@ hqDefine('hqwebapp/js/main', [
     "jquery",
     "knockout",
     "underscore",
+    "modernizr",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
     "analytix/js/google",
@@ -11,6 +12,7 @@ hqDefine('hqwebapp/js/main', [
     $,
     ko,
     _,
+    modernizr,
     initialPageData,
     alertUser,
     googleAnalytics
@@ -397,6 +399,34 @@ hqDefine('hqwebapp/js/main', [
                     $.cookie(alertCookie, id, { expires: 7, path: '/' });
                 });
             }
+        }
+
+        function isUsingRequireJS() {
+            return (typeof define === 'function' && define.amd && window.USE_REQUIREJS);
+        }
+
+        function unsupportedBrowser() {
+            // check explicitly for Safari. Relying on browser capabilities would be preferred,
+            // but our issue with Safari is described here: https://dimagi-dev.atlassian.net/browse/SUPPORT-4778
+            // (history.replaceState raises security exceptions that aren't present in other browsers).
+            // This can be verified here: (https://jsfiddle.net/j1sxxLwy/),
+            // but it's not something that can be efficiently feature-checked
+            if (window.safari !== undefined) {
+                return true;    // found a Safari browser
+            }
+
+            modernizr = isUsingRequireJS() ? modernizr : window.Modernizr;
+
+            // Try to filter out legacy browsers like Internet Explorer.
+            // We don't explicitly rely on the websqldatabase capability,
+            // but it's a decent test for modern browsers.
+            // TODO: Find more granular tests for what the website requires
+            return !modernizr.websqldatabase;
+        }
+
+        var $unsupported_browser = $("#unsupported-browser");
+        if (unsupportedBrowser()) {
+            $unsupported_browser.removeClass('hide');
         }
 
         // EULA modal
