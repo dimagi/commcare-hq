@@ -15,7 +15,7 @@ boto3==1.15.12            # via -r requirements.in
 botocore==1.18.12         # via boto3, s3transfer
 cairocffi==1.1.0          # via cairosvg, weasyprint
 cairosvg==2.4.2           # via weasyprint
-git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery  # via -r requirements.in, django-celery-results, flower
+https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl  # via -r requirements.in, django-celery-results, flower
 certifi==2020.6.20        # via -r prod-requirements.in, elasticsearch7, requests, sentry-sdk
 cffi==1.14.3              # via cairocffi, cryptography, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
