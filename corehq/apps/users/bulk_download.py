@@ -20,6 +20,7 @@ from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
     get_mobile_usernames_by_filters,
+    get_all_user_rows,
 )
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
@@ -43,7 +44,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
+def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
@@ -52,9 +53,14 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
     location_cache = LocationIdToSiteCodeCache(domain)
 
     def _get_group_names(user):
-        return sorted([
-            group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
-        ], key=alphanumeric_sort_key)
+        if not is_web_download:
+            return sorted([
+                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+            ], key=alphanumeric_sort_key)
+        elif is_web_download:
+            return sorted([
+                group_memoizer.get(id).name for id in Group.by_user_id(user['id'], wrap=False)
+            ], key=alphanumeric_sort_key)
 
     def _get_devices(user):
         """
@@ -65,6 +71,8 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
         )])
 
     def _make_user_dict(user, group_names, location_cache):
+        model_data = {}
+        uncategorized_data = {}
         model_data, uncategorized_data = (
             fields_definition.get_model_and_uncategorized(user.metadata)
         )
@@ -103,7 +111,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
             'email': user.email,
             'username': user.raw_username,
             'language': user.language,
-            'user_id': user._id,
+            'user_id': user.user_id,
             'is_active': str(user.is_active),
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
@@ -114,25 +122,69 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
             'last_sync (read only)': activity.last_sync_for_user.sync_date,
         }
 
+    def _make_web_user_dict(user, group_names):
+        model_data = {}
+        uncategorized_data = {}
+        # model_data, uncategorized_data = (
+        #     fields_definition.get_model_and_uncategorized(user.metadata)
+        # )
+        # role = UserRole.get(user['doc']['domain_memberships'][0]['role_id']).name #TO_DO: fix
+        role = ''
+        profile = None
+        activity = user['doc']['reporting_metadata']
+
+        return {
+            'data': model_data,
+            'uncategorized_data': uncategorized_data,
+            'group': group_names,
+            'first_name': user['doc']['first_name'],
+            'last_name': user['doc']['last_name'],
+            'phone-numbers': user['doc']['phone_numbers'],
+            'email': user['doc']['email'],
+            'username': user['doc']['username'],
+            'user_id': user['id'],
+            'is_active': user['doc']['is_active'],
+            'role': role if role else '',
+            'last_access_date (read only)': user['doc']['domain_memberships'][0]['last_accessed'],
+            'last_login (read only)': user['doc']['last_login'],
+            'delete': '',
+        }
+
     unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
-        group_names = _get_group_names(user)
-        user_dict = _make_user_dict(user, group_names, location_cache)
-        user_dicts.append(user_dict)
-        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
-        user_groups_length = max(user_groups_length, len(group_names))
-        max_location_length = max(max_location_length, len(user_dict["location_code"]))
-        if task:
-            DownloadBase.set_progress(task, n, total_count)
+    if is_web_download:
+        for n, user in enumerate(get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
+                                                   include_inactive=False, include_docs=True)):
+            group_names = _get_group_names(user)
+            user_dict = _make_web_user_dict(user, group_names)
+            user_dicts.append(user_dict)
+            unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
+            user_groups_length = max(user_groups_length, len(group_names))
+            if task:
+                DownloadBase.set_progress(task, n, total_count)
 
-    user_headers = [
-        'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
-    ]
+        user_headers = [
+            'name', 'phone-number', 'email', 'role', 'is_active',
+            'last_access_date (read only)', 'last_login (read only)', 'delete'
+        ]
+    elif not is_web_download:
+        for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
+            group_names = _get_group_names(user)
+            user_dict = _make_user_dict(user, group_names, location_cache)
+            user_dicts.append(user_dict)
+            unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
+            user_groups_length = max(user_groups_length, len(group_names))
+            max_location_length = max(max_location_length, len(user_dict["location_code"]))
+            if task:
+                DownloadBase.set_progress(task, n, total_count)
+
+        user_headers = [
+            'username', 'password', 'name', 'phone-number', 'email',
+            'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
+            'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
+        ]
 
     if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
         user_headers += ['user_profile']
@@ -227,7 +279,7 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     DownloadBase.set_progress(task, total_count, total_count)
 
 
-def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
+def dump_users_and_groups(domain, download_id, user_filters, task, is_web_download, owner_id):
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -252,6 +304,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
         group_memoizer,
         domain,
         user_filters,
+        is_web_download,
         task,
         users_groups_count,
     )

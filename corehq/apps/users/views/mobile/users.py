@@ -1399,8 +1399,9 @@ def download_commcare_users(request, domain):
         res = bulk_download_usernames_async.delay(domain, download.download_id,
                                                   user_filters, owner_id=request.couch_user.get_id)
     else:
-        res = bulk_download_users_async.delay(domain, download.download_id,
-                                              user_filters, owner_id=request.couch_user.get_id)
+        is_web_download = False
+        res = bulk_download_users_async.delay(domain, download.download_id, user_filters, is_web_download,
+                                              owner_id=request.couch_user.get_id)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 

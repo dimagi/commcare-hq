@@ -31,6 +31,8 @@ from .views import (
     verify_phone_number,
     delete_domain_permission_mirror,
     create_domain_permission_mirror,
+    download_web_users,
+    DownloadWebUsersStatusView,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -65,7 +67,9 @@ from .views.mobile.users import (
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
-    CommCareUserConfirmAccountView, send_confirmation_email)
+    CommCareUserConfirmAccountView,
+    send_confirmation_email,
+)
 from ..hqwebapp.decorators import waf_allow
 
 urlpatterns = [
@@ -97,6 +101,9 @@ urlpatterns = [
     url(r'^web/upload/$', waf_allow('XSS_BODY')(UploadWebUsers.as_view()), name=UploadWebUsers.urlname),
     url(r'^web/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', WebUserUploadStatusView.as_view(),
         name=WebUserUploadStatusView.urlname),
+    url(r'^web/download/$', download_web_users, name='download_web_users'),
+    url(r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        DownloadWebUsersStatusView.as_view(), name='download_web_users_status'),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
         name='delete_domain_permission_mirror'),
