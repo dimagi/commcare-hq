@@ -10,6 +10,7 @@ from corehq.apps.sms.api import (
     send_sms_to_verified_number,
 )
 from corehq.apps.sms.messages import *
+from corehq.apps.sms.models import MessagingSubEvent
 from corehq.apps.sms.util import format_message_list, get_date_format
 from corehq.apps.smsforms.app import _responses_to_text, get_responses, get_events_from_responses
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization, \
@@ -51,16 +52,23 @@ def form_session_handler(v, text, msg):
             session.modified_time = datetime.utcnow()
             session.save()
 
+            # fetch subevent to link inbound sms to
+            try:
+                subevent = MessagingSubEvent.objects.get(xforms_session_id=session.pk)
+            except MessagingSubEvent.DoesNotExist:
+                subevent = None
+
             # Metadata to be applied to the inbound message
             inbound_metadata = MessageMetadata(
                 workflow=session.workflow,
                 reminder_id=session.reminder_id,
                 xforms_session_couch_id=session._id,
+                messaging_subevent_id=subevent.pk,
             )
             add_msg_tags(msg, inbound_metadata)
             msg.save()
             try:
-                answer_next_question(v, text, msg, session)
+                answer_next_question(v, text, msg, session, subevent.pk)
             except Exception:
                 # Catch any touchforms errors
                 log_sms_exception(msg)
@@ -92,7 +100,7 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
     return (False, session)
 
 
-def answer_next_question(v, text, msg, session):
+def answer_next_question(v, text, msg, session, subevent_id):
     resp = FormplayerInterface(session.session_id, v.domain).current_question()
     event = resp.event
     valid, text, error_msg = validate_answer(event, text, v)
@@ -102,6 +110,7 @@ def answer_next_question(v, text, msg, session):
         workflow=session.workflow,
         reminder_id=session.reminder_id,
         xforms_session_couch_id=session._id,
+        messaging_subevent_id=subevent_id,
     )
 
     if valid:
