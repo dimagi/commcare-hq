@@ -63,5 +63,6 @@ branches:
   - kev/formplayer-remove-prevalidate # Kevin Oct 20
   - dependabot/pip/requirements/django-crispy-forms-1.9.2 # Jenny Oct 22
   - gh/improve-queueing-repeaters # Graham Oct 22
+  - jls/require-search-text # Jenny Oct 22
   
 submodules: {}
