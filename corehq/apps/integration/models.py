@@ -17,7 +17,7 @@ class DialerSettings(models.Model):
 
 
 class GaenOtpServerSettings(models.Model):
-    SERVER_OPTIONS = (('NEARFORM', ugettext_lazy('Nearform OTP Server')),
+    SERVER_OPTIONS = (('NEARFORM', ugettext_lazy('NearForm OTP Server')),
                       ('APHL', ugettext_lazy('APHL Exposure Notifications')),)
     domain = models.CharField(max_length=128, unique=True)
     is_enabled = models.BooleanField(default=False)

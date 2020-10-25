@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='gaenotpserversettings',
             name='server_type',
-            field=models.CharField(choices=[('NEARFORM', 'Nearform OTP Server'),
+            field=models.CharField(choices=[('NEARFORM', 'NearForm OTP Server'),
                                             ('APHL', 'APHL Exposure Notifications')],
                                    default='NEARFORM', max_length=255),
         ),

@@ -106,7 +106,7 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
         label=_('GAEN Server Type'),
         widget=forms.Select(choices=[
             ("", ugettext_lazy("Select server type")),
-            ('NEARFORM', ugettext_lazy('Nearform OTP Server')),
+            ('NEARFORM', ugettext_lazy('NearForm OTP Server')),
             ('APHL', ugettext_lazy('APHL Exposure Notifications')),
         ]),
     )
