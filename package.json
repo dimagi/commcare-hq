@@ -120,6 +120,7 @@
         "underscore.string": "^3.3.5"
     },
     "scripts": {
-        "postinstall": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib/"
+        "postinstall": "yarn run -s build:modernizr",
+        "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib"
     }
 }
