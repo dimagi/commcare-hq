@@ -81,7 +81,7 @@ psycopg2>=2.8.4  # Python 3.8 support
 py-KISSmetrics==1.0.1
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
-PyGithub==1.35
+PyGithub==1.53
 Pygments~=2.0
 pygooglechart==0.4.0
 python-dateutil~=2.6
