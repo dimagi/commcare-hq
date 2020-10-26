@@ -91,7 +91,7 @@ CASE_MAPPING = {
                             'type': {'index': 'analyzed',
                                      'type': 'string'}},
                  'type': 'multi_field'},
-        'user_id': {'type': 'string', 'index': 'not_analyzed'},
+        'user_id': {'type': 'string'},
         'version': {'type': 'string'},
         'xform_ids': {'index': 'not_analyzed',
                       'type': 'string'},
