@@ -925,7 +925,7 @@ def cleanup_blocked_hubspot_contacts():
                 if user_email and user_email != username:
                     blocked_emails.append(user_email)
             ids_to_delete = _get_contact_ids_for_emails(set(blocked_emails))
-            num_deleted = sum([_delete_hubspot_contact(vid) for vid in ids_to_delete])
+            num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
             metrics_gauge(
                 'commcare.hubspot_data.deleted_user.blocked_domain',
                 num_deleted,
@@ -940,7 +940,7 @@ def cleanup_blocked_hubspot_contacts():
     blocked_email_domains = get_blocked_hubspot_email_domains()
     for email_domain in blocked_email_domains:
         ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
-        num_deleted = sum([_delete_hubspot_contact(vid) for vid in ids_to_delete])
+        num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
         metrics_gauge(
             'commcare.hubspot_data.deleted_user.blocked_email_domain',
             num_deleted,
