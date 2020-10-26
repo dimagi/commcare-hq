@@ -64,7 +64,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'DOMPurify/dist/purify.min': 'DOMPurify',
                 'moment/moment': 'moment',
                 'crypto-js/crypto-js': 'CryptoJS',
-                'modernizr': 'Modernizr',
+                'hqwebapp/js/lib/modernizr': 'Modernizr',
             };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {

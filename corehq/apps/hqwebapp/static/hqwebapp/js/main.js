@@ -2,7 +2,7 @@ hqDefine('hqwebapp/js/main', [
     "jquery",
     "knockout",
     "underscore",
-    "modernizr",
+    "hqwebapp/js/lib/modernizr",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
     "analytix/js/google",

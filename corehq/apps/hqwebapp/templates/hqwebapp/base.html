@@ -396,9 +396,8 @@
           callback: function (ko, mapping) {
             ko.mapping = mapping;
           },
-          paths: {"modernizr": "{% static 'hqwebapp/js/lib/modernizr' %}"},
           shim: {
-            "modernizr": {
+            "hqwebapp/js/lib/modernizr": {
               exports: 'Modernizr'
             }
           }
