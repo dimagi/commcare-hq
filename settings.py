@@ -1443,7 +1443,7 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
 
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
 CUSTOM_DB_ROUTING = {
-    "aaa": "aaa-data",
+    "aaa": "aaa-data"
 }
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
