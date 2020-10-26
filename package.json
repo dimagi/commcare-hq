@@ -102,6 +102,7 @@
         "lodash": "4.17.19",
         "mocha": "2.5.3",
         "mocha-headless-chrome": "3.0.0",
+        "modernizr": "^3.11.3",
         "sinon": "2.3.2"
     },
     "engines": {
@@ -117,5 +118,8 @@
         "mem": "^4.0.0",
         "minimatch": "^3.0.2",
         "underscore.string": "^3.3.5"
+    },
+    "scripts": {
+        "postinstall": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib/"
     }
 }
