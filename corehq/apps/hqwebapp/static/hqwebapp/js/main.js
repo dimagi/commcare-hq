@@ -424,9 +424,9 @@ hqDefine('hqwebapp/js/main', [
             return !modernizr.websqldatabase;
         }
 
-        var $unsupported_browser = $("#unsupported-browser");
+        var $unsupportedBrowser = $("#unsupported-browser");
         if (unsupportedBrowser()) {
-            $unsupported_browser.removeClass('hide');
+            $unsupportedBrowser.removeClass('hide');
         }
 
         // EULA modal
