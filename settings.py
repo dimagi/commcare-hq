@@ -1010,7 +1010,6 @@ DEFAULT_ODATA_FEED_LIMIT = 25
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
-    # "icds-cas.gov.in": 'icds/login.html',
     # "default": 'login_and_password/login.html',
 }
 
@@ -1445,7 +1444,6 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
 CUSTOM_DB_ROUTING = {
     "aaa": "aaa-data",
-    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
 }
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
