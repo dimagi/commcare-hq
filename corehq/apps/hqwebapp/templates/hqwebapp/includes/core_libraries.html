@@ -15,9 +15,8 @@
 
 {% if underscore or analytics or hq %}
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/modernizr.js' %}"></script>
 {% endif %}
-
-<script src="{% static 'hqwebapp/js/lib/modernizr.js' %}"></script>
 
 <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 {% compress js %}
