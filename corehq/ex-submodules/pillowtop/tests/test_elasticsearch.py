@@ -348,13 +348,16 @@ class TestILM(SimpleTestCase):
             {"_id": "d4", "prop": "d"},
             {"_id": "d5", "prop": "e"},
         ])
+        indices = get_indices_by_alias(self.alias)
         self.assertEqual(
-            len(get_indices_by_alias(self.alias)),
+            len(indices),
             3
         )
+        raw_hits = FormES().remove_default_filters().ids_query(['d1', 'd5']).exclude_source().run().raw_hits
+        result = set([(h["_id"], h["_index"]) for h in raw_hits])
         self.assertEqual(
-            FormES().remove_default_filters().ids_query(['d1', 'd4']).exclude_source().run().doc_ids,
-            ['d1', 'd4']
+            result,
+            {("d1", indices[0]), ("d5", indices[2])}
         )
         self.assertEqual(
             FormES().remove_default_filters().count(),
