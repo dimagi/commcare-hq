@@ -124,6 +124,6 @@ class MessagingRuleProgressHelper(object):
 
 def show_messaging_dashboard(domain, couch_user):
     return (
-        not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or
-        couch_user.is_superuser
+        not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain)
+        or couch_user.is_superuser
     )

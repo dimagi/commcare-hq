@@ -52,7 +52,7 @@ from corehq.apps.smsbillables.exceptions import (
     DeliveredBillableException,
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
