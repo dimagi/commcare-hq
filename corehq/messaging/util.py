@@ -122,14 +122,6 @@ class MessagingRuleProgressHelper(object):
         return int(round(100.0 * current / total, 0))
 
 
-def use_phone_entries():
-    """
-    Phone entries are not used in ICDS because they're not needed and
-    it helps performance to avoid keeping them up to date.
-    """
-    return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
-
-
 def show_messaging_dashboard(domain, couch_user):
     return (
         not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or

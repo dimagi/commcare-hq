@@ -2065,3 +2065,7 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+# to help in performance, avoid use of phone entries in an environment that does not need them
+# so HQ does not try to keep them up to date
+USE_PHONE_ENTRIES = True
