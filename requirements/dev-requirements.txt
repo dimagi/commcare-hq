@@ -36,6 +36,7 @@ datadog==0.15.0           # via -r requirements.in
 ddtrace==0.14.1           # via -r requirements.in
 decorator==4.0.11         # via -r requirements.in, datadog, ipython, jsonpath-rw, traitlets
 defusedxml==0.5.0         # via -r requirements.in, cairosvg
+deprecated==1.2.10        # via pygithub
 diff-match-patch==20120106  # via -r requirements.in
 dimagi-memoized==1.1.3    # via -r requirements.in
 django-angular==2.2.4     # via -r requirements.in
@@ -153,7 +154,7 @@ pycodestyle==2.6.0        # via flake8
 pycparser==2.20           # via cffi
 pycryptodome==3.9.8       # via -r requirements.in
 pyflakes==2.2.0           # via flake8
-pygithub==1.35            # via -r requirements.in
+pygithub==1.53            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, ipython, pdbpp, pycco, sphinx
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio
@@ -180,7 +181,7 @@ redis==3.5.3              # via -r requirements.in, django-redis, django-redis-s
 reportlab==3.5.53         # via -r requirements.in
 requests-mock==1.8.0      # via -r test-requirements.in
 requests-oauthlib==1.3.0  # via -r requirements.in
-requests==2.24.0          # via -r requirements.in, cloudant, datadog, django-oauth-toolkit, dropbox, jenkinsapi, requests-mock, requests-oauthlib, sphinx, stripe, tinys3, twilio
+requests==2.24.0          # via -r requirements.in, cloudant, datadog, django-oauth-toolkit, dropbox, jenkinsapi, pygithub, requests-mock, requests-oauthlib, sphinx, stripe, tinys3, twilio
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.3.3         # via boto3
 schema==0.7.2             # via -r requirements.in
@@ -230,7 +231,7 @@ webencodings==0.5.1       # via cssselect2, html5lib, tinycss2
 werkzeug==0.15.3          # via -r requirements.in
 wheel==0.29.0             # via -r dev-requirements.in
 wmctrl==0.3               # via pdbpp
-wrapt==1.12.1             # via ddtrace
+wrapt==1.12.1             # via ddtrace, deprecated
 xlrd==1.0.0               # via -r requirements.in
 xlwt==1.3.0               # via -r requirements.in
 zipp==3.2.0               # via importlib-metadata
