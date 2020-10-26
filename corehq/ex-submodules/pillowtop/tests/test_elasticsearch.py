@@ -327,9 +327,16 @@ class TestILM(SimpleTestCase):
         ensure_index_deleted(self.index)
 
     def rollover(self):
-        # wait for ILM to kick in.
-        #   Is double the poll_interval to provide enough buffer for ILM process
-        time.sleep(2)
+        # wait for ILM to kick in,
+        #   polling till a new index is created for a maximum of 2 seconds
+        #   Is double the ilm poll_interval setting to provide enough buffer for ILM process
+        max_dur = 2  # seconds
+        prev_count = num_indices = len(get_indices_by_alias(self.alias))
+        dur = 0
+        while (prev_count == num_indices and dur < max_dur):
+            time.sleep(0.2)
+            dur = dur + 0.2
+            num_indices = len(get_indices_by_alias(self.alias))
 
     def _send_to_es(self, docs):
         for chunk in chunked(docs, 2):
