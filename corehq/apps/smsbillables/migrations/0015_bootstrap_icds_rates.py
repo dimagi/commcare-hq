@@ -7,4 +7,4 @@ class Migration(migrations.Migration):
         ('smsbillables', '0014_bootstrap_apposit_rates'),
     ]
 
-    operations = {}
+    operations = []
