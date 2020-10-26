@@ -206,7 +206,7 @@ def initialize_index(es, index_info):
     set_index_normal_settings(es, index)
 
 
-def get_ilm_tempalte(index_info):
+def get_ilm_template(index_info):
     from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
     assert index_info.is_ilm_index
     mapping = transform_for_es7(index_info.mapping)
@@ -252,7 +252,7 @@ def setup_ilm_index(es, index_info):
     except NotFoundError:
         es.indices.put_index_template(
             index_info.ilm_template_name,
-            get_ilm_tempalte(index_info)
+            get_ilm_template(index_info)
         )
     # bootstrap initial index
     indices = es.indices.resolve_index(index_info.alias)
