@@ -1065,6 +1065,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
 ]
 COMMCARE_EXTENSIONS = []
 
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
