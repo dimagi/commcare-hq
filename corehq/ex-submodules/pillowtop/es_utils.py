@@ -159,24 +159,22 @@ def set_index_normal_settings(es, index):
     return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 
-max_docs_policy = {
-    "policy": {
-        "phases": {
-            "hot": {
-                "actions": {
-                    "rollover": {
-                        "max_docs": "2",
+MAX_DOCS_ILM_CONFIG = 'max_docs'
+
+ILM_CONFIGS = {
+    MAX_DOCS_ILM_CONFIG: {
+        "policy": {
+            "phases": {
+                "hot": {
+                    "actions": {
+                        "rollover": {
+                            "max_docs": "2",
+                        }
                     }
                 }
             }
         }
     }
-}
-
-MAX_DOCS = 'max_docs'
-
-ILM_CONFIGS = {
-    MAX_DOCS: max_docs_policy
 }
 
 

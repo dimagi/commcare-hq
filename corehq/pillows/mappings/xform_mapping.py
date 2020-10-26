@@ -3,7 +3,7 @@ from django.conf import settings
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME, MAX_DOCS
+from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME
 
 XFORM_INDEX = prefix_for_tests(settings.ES_XFORM_INDEX_NAME)
 

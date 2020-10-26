@@ -25,10 +25,14 @@ from pillowtop.es_utils import (
     mapping_exists,
     set_index_normal_settings,
     set_index_reindex_settings,
-    MAX_DOCS,
+    MAX_DOCS_ILM_CONFIG,
 )
 from pillowtop.utils import build_bulk_payload
-from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
+from pillowtop.index_settings import (
+    disallowed_settings_by_es_version,
+    INDEX_REINDEX_SETTINGS,
+    INDEX_STANDARD_SETTINGS
+)
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch, get_indices_by_alias
@@ -313,7 +317,7 @@ class TestILM(SimpleTestCase):
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = XFORM_INDEX_INFO.index
         self.alias = XFORM_INDEX_INFO.alias
-        XFORM_INDEX_INFO.ilm_config = prefix_for_tests(MAX_DOCS)
+        XFORM_INDEX_INFO.ilm_config = prefix_for_tests(MAX_DOCS_ILM_CONFIG)
         self.es.cluster.put_settings({
             "persistent": {"indices.lifecycle.poll_interval": "1s"}
         })

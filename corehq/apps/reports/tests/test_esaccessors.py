@@ -14,7 +14,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
-from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS
+from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS_ILM_CONFIG
 
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -891,7 +891,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 class TestFormESAccessorsILM(TestFormESAccessors):
 
     def setUp(self):
-        self.es_index_info[0].ilm_config = prefix_for_tests(MAX_DOCS)
+        self.es_index_info[0].ilm_config = prefix_for_tests(MAX_DOCS_ILM_CONFIG)
         super(TestFormESAccessorsILM, self).setUp()
 
     def tearDown(self):
