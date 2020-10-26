@@ -31,6 +31,7 @@ from corehq.apps.accounting.views import (
     enterprise_dashboard_total,
     enterprise_settings,
     TriggerDowngradeView,
+    TriggerAutopaymentsView,
 )
 
 urlpatterns = [
@@ -39,6 +40,8 @@ urlpatterns = [
         name=TriggerInvoiceView.urlname),
     url(r'^trigger_downgrade/$', TriggerDowngradeView.as_view(),
         name=TriggerDowngradeView.urlname),
+    url(r'^trigger_autopayments/$', TriggerAutopaymentsView.as_view(),
+        name=TriggerAutopaymentsView.urlname),
     url(r'^trigger_customer_invoice/$', TriggerCustomerInvoiceView.as_view(),
         name=TriggerCustomerInvoiceView.urlname),
     url(r'^single_option_filter/$', AccountingSingleOptionResponseView.as_view(),

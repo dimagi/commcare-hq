@@ -42,6 +42,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.icds_core.view_utils import is_icds_cas_project
 
@@ -179,7 +180,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
-                log_user_role_update(self.domain, self.existing_user, self.request.user)
+                log_user_role_update(self.domain, self.existing_user, self.request.user, USER_CHANGE_VIA_WEB)
             except KeyError:
                 pass
         elif is_update_successful:

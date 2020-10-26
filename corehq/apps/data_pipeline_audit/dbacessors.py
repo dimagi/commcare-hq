@@ -255,4 +255,4 @@ def _get_user_base_doc_filter(doc_type):
         doc_type = doc_type[:-1]
 
     if doc_type == 'CommCareUser':
-        return es.filters.term("base_doc", "couchuser-deleted" if deleted else "couchuser")
+        return es.filters.term("base_doc", "Couchuser-Deleted" if deleted else "CouchUser")
