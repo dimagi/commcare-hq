@@ -414,6 +414,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self.submitForm = function (form) {
             var self = this,
                 accumulateAnswers,
+                // currently we always send up prevalidated=true. TODO: once confident that the var is not necessary
+                // remove from formplayer and here.
                 prevalidated = true;
 
             accumulateAnswers = function (o) {
