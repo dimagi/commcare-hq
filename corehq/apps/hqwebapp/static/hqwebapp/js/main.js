@@ -401,10 +401,6 @@ hqDefine('hqwebapp/js/main', [
             }
         }
 
-        function isUsingRequireJS() {
-            return (typeof define === 'function' && define.amd && window.USE_REQUIREJS);
-        }
-
         function unsupportedBrowser() {
             // check explicitly for Safari. Relying on browser capabilities would be preferred,
             // but our issue with Safari is described here: https://dimagi-dev.atlassian.net/browse/SUPPORT-4778
@@ -414,8 +410,6 @@ hqDefine('hqwebapp/js/main', [
             if (window.safari !== undefined) {
                 return true;    // found a Safari browser
             }
-
-            modernizr = isUsingRequireJS() ? modernizr : window.Modernizr;
 
             // Try to filter out legacy browsers like Internet Explorer.
             // We don't explicitly rely on the websqldatabase capability,

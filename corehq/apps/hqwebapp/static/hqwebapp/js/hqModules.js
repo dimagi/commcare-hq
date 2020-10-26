@@ -64,6 +64,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'DOMPurify/dist/purify.min': 'DOMPurify',
                     'moment/moment': 'moment',
                     'crypto-js/crypto-js': 'CryptoJS',
+                    'modernizr': 'Modernizr'
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
