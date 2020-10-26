@@ -257,12 +257,12 @@ def _send_post_data(url, params, data, headers):
     return response
 
 
-def _get_user_hubspot_id(webuser):
+def _get_user_hubspot_id(web_user):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and hubspot_enabled_for_user(webuser):
+    if api_key and hubspot_enabled_for_user(web_user):
         req = requests.get(
             "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                six.moves.urllib.parse.quote(webuser.username)
+                six.moves.urllib.parse.quote(web_user.username)
             ),
             params={'hapikey': api_key},
         )
@@ -275,7 +275,7 @@ def _get_user_hubspot_id(webuser):
             'commcare.hubspot_data.rejected.get_user_hubspot_id',
             1,
             tags={
-                'username': webuser.username,
+                'username': web_user.username,
             }
         )
     return None
