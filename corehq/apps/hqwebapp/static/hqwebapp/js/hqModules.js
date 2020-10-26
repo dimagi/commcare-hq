@@ -64,14 +64,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'DOMPurify/dist/purify.min': 'DOMPurify',
                     'moment/moment': 'moment',
                     'crypto-js/crypto-js': 'CryptoJS',
-                    'modernizr': 'Modernizr'
-                },
-                thirdPartyPlugins = [
-                    'jquery-form/dist/jquery.form.min',
-                    'jquery.rmi/jquery.rmi',
-                    'jquery-ui/ui/widgets/sortable',
-                    'select2/dist/js/select2.full.min',
-                ];
+                    'modernizr': 'Modernizr',
+                };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
