@@ -360,7 +360,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
-            icds_send,
             push_send,
             yo_send,
             sislog_send,
