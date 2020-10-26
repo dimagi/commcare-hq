@@ -145,7 +145,7 @@ class BillingAccountBasicForm(forms.Form):
     )
     account_basic = forms.CharField(widget=forms.HiddenInput, required=False)
     block_hubspot_data_for_all_users = forms.BooleanField(
-        label=ugettext_lazy("Enable Block Hubspot Data"),
+        label="Enable Block Hubspot Data",
         required=False,
         initial=False,
         help_text="Users in any projects connected to this account will not "
