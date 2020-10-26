@@ -74,14 +74,14 @@ def check_repeaters():
 
 
 def _iterate_record_ids_for_partition(start, partition, total_partitions):
-    for record_id in iterate_repeat_record_ids(start, chunk_size=100000):
+    for record_id in iterate_repeat_record_ids(start, chunk_size=10000):
         if hash(record_id) % total_partitions == partition:
             yield record_id
 
 
 def _iterate_repeat_records_for_partition(start, partition, total_partitions):
     # chunk the fetching of documents from couch
-    for chunked_ids in chunked(_iterate_record_ids_for_partition(start, partition, total_partitions), 10000):
+    for chunked_ids in chunked(_iterate_record_ids_for_partition(start, partition, total_partitions), 1000):
         yield from iterate_repeat_records_for_ids(chunked_ids)
 
 
