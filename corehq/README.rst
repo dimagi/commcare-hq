@@ -41,7 +41,7 @@ project_limits
 sql_accessors
     Stores custom postgres functions.
 sql_db
-    TODO
+    Code related to partitioning postgres.
 sql_proxy_accessors
     Stores custom postgres functions that use `PL/Proxy <https://plproxy.github.io/>`_.
 sql_proxy_standby_accessors
