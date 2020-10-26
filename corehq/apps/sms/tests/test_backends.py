@@ -41,7 +41,6 @@ from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
-from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.models import (
     IvoryCoastMTNBackend,
 )
@@ -180,13 +179,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             hq_api_id=PushBackend.get_api_id()
         )
         cls.push_backend.save()
-
-        cls.icds_backend = SQLICDSBackend(
-            name="ICDS",
-            is_global=True,
-            hq_api_id=SQLICDSBackend.get_api_id()
-        )
-        cls.icds_backend.save()
 
         cls.vertext_backend = VertexBackend(
             name="VERTEX",
@@ -352,7 +344,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
-    @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
