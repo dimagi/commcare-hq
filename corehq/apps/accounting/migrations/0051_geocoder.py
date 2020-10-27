@@ -11,14 +11,14 @@ def _grandfather_basic_privs(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',
         GEOCODER,
-        skip_edition='Paused,Community,Standard,Pro,Advanced',
+        skip_edition='Paused,Community,Standard,Pro',
         noinput=True,
     )
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('domain', '0007_auto_20200924_1753'),
+        ('accounting', '0049_app_user_profiles'),
     ]
 
     operations = [
