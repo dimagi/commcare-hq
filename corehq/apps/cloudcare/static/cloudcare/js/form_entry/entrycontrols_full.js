@@ -530,15 +530,42 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         var self = this;
         EntrySingleAnswer.call(this, question, options);
         self.templateType = 'dropdown';
+        self.placeholderText = gettext('Please choose an item');
 
-        self.options = ko.pureComputed(function () {
+        self.helpText = function () {
+            return gettext('Dropdown');
+        };
+
+        self.options = ko.computed(function () {
             return _.map(question.choices(), function (choice, idx) {
                 return {
                     text: choice,
                     idx: idx + 1,
+                    id: idx + 1,
                 };
             });
         });
+
+        self.options.subscribe(function () {
+            self.renderSelect2();
+            if (!self.isValid(self.rawAnswer())) {
+                self.question.error(gettext('Not a valid choice'));
+            }
+        });
+
+        self.renderSelect2 = function () {
+            var $input = $('#' + self.entryId);
+            $input.select2({
+                allowClear: true,
+                placeholder: self.placeholderText,
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+                matcher: self.matchOption,
+            });
+        };
+
+        self.afterRender = function () {
+            self.renderSelect2();
+        };
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     DropdownEntry.prototype.constructor = EntrySingleAnswer;
@@ -556,6 +583,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
      * when the user specifies combobox in the appearance attributes for a
      * single select question.
      *
+     * It uses the same UI as the dropdown, but a different matching algorithm.
+     *
      * Docs: https://confluence.dimagi.com/display/commcarepublic/Advanced+CommCare+Android+Formatting#AdvancedCommCareAndroidFormatting-SingleSelect"ComboBox"
      */
     function ComboboxEntry(question, options) {
@@ -565,54 +594,46 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         // Specifies the type of matching we will do when a user types a query
         self.matchType = options.matchType;
-        self.lengthLimit = Infinity;
-        self.placeholderText = gettext('Type to filter answers');
 
-        self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
-                return {
-                    text: choice,
-                    idx: idx + 1,
-                    id: idx + 1,
-                };
-            });
-        });
-        self.options.subscribe(function () {
-            self.renderSelect2();
-            if (!self.isValid(self.rawAnswer())) {
-                self.question.error(gettext('Not a valid choice'));
-            }
-        });
         self.helpText = function () {
             return gettext('Combobox');
         };
 
-        // If there is a prexisting answer, set the rawAnswer to the corresponding text.
-        if (question.answer()) {
-            initialOption = self.options()[self.answer() - 1];
-            self.rawAnswer(
-                initialOption ? initialOption.id : Const.NO_ANSWER
-            );
-        }
+        self.matchOption = function (params, option) {
+            var query = $.trim(params.term);
+            if (!query || !option.text) {
+                return option;
+            }
 
-        self.renderSelect2 = function () {
-            var $input = $('#' + self.entryId);
-            $input.select2({
-                allowClear: true,
-                placeholder: self.placeholderText,
-                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
-                matcher: function (params, data) {
-                    params.term = $.trim(params.term);
-                    if (!params.term) {
-                        return data;
-                    }
-                    if (ComboboxEntry.filter(params.term, data, self.matchType)) {
-                        return data;
-                    }
-                    return null;
-                },
-            });
+            var match;
+            if (self.matchType === Const.COMBOBOX_MULTIWORD) {
+                // Multiword filter, matches any choice that contains all of the words in the query
+                //
+                // Assumption is both query and choice will not be very long. Runtime is O(nm)
+                // where n is number of words in the query, and m is number of words in the choice
+                var wordsInQuery = query.split(' ');
+                var wordsInChoice = option.text.split(' ');
+
+                match = _.all(wordsInQuery, function (word) {
+                    return _.include(wordsInChoice, word) ? option : null;
+                });
+            } else if (self.matchType === Const.COMBOBOX_FUZZY) {
+                // Fuzzy filter, matches if query is "close" to answer
+                match = (
+                    (window.Levenshtein.get(option.text.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
+                    option.text.toLowerCase() === query.toLowerCase()
+                );
+            }
+
+            // If we've already matched, return true
+            if (match) {
+                return option;
+            }
+
+            // Standard filter, matches only start of word
+            return option.text.toLowerCase().startsWith(query.toLowerCase()) ? option : null;
         };
+
         self.isValid = function (value) {
             if (!value) {
                 return true;
@@ -620,46 +641,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return _.contains(self.choices(), value);
         };
 
-        self.afterRender = function () {
-            self.renderSelect2();
-        };
-
         self.enableReceiver(question, options);
     }
-
-    ComboboxEntry.filter = function (query, option, matchType) {
-        if (!query || !option.text) {
-            return true;
-        }
-
-        var match;
-        if (matchType === Const.COMBOBOX_MULTIWORD) {
-            // Multiword filter, matches any choice that contains all of the words in the query
-            //
-            // Assumption is both query and choice will not be very long. Runtime is O(nm)
-            // where n is number of words in the query, and m is number of words in the choice
-            var wordsInQuery = query.split(' ');
-            var wordsInChoice = option.text.split(' ');
-
-            match = _.all(wordsInQuery, function (word) {
-                return _.include(wordsInChoice, word);
-            });
-        } else if (matchType === Const.COMBOBOX_FUZZY) {
-            // Fuzzy filter, matches if query is "close" to answer
-            match = (
-                (window.Levenshtein.get(option.text.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
-                option.text.toLowerCase() === query.toLowerCase()
-            );
-        }
-
-        // If we've already matched, return true
-        if (match) {
-            return true;
-        }
-
-        // Standard filter, matches only start of word
-        return option.text.toLowerCase().startsWith(query.toLowerCase());
-    };
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
     ComboboxEntry.prototype.constructor = DropdownEntry;
