@@ -63,7 +63,6 @@ branches:
   - dependabot/pip/requirements/django-crispy-forms-1.9.2 # Jenny Oct 22
   - gh/improve-queueing-repeaters # Graham Oct 22
   - jls/require-search-text # Jenny Oct 22
-  - dmr/make-api-key-and-location-access-work-together  # Danny Oct 26
   - gh/messaging-report # Graham Oct 27
 
 submodules: {}
