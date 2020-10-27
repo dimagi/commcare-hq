@@ -389,7 +389,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         this.helpText = function () {
-            return 'Phone number or Numeric ID';
+            return gettext('Phone number or Numeric ID');
         };
 
         this.enableReceiver(question, options);
@@ -418,7 +418,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         this.helpText = function () {
-            return 'Decimal';
+            return gettext('Decimal');
         };
     }
     FloatEntry.prototype = Object.create(IntEntry.prototype);
