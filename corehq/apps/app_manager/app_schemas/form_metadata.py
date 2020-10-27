@@ -421,7 +421,11 @@ class _AppDiffGenerator(object):
             old_value = item[key]
         except KeyError:
             old_value = None
-        item.changes[key] = _Change(type=REMOVED, old_value=old_value)
+        if isinstance(old_value, dict):
+            change_class = _TranslationChange
+        else:
+            change_class = _Change
+        item.changes[key] = change_class(type=REMOVED, old_value=old_value)
 
     def _mark_item_added(self, item, key):
         self._set_contains_changes(item)
@@ -429,7 +433,11 @@ class _AppDiffGenerator(object):
             new_value = item[key]
         except KeyError:
             new_value = None
-        item.changes[key] = _Change(type=ADDED, new_value=new_value)
+        if isinstance(new_value, dict):
+            change_class = _TranslationChange
+        else:
+            change_class = _Change
+        item.changes[key] = change_class(type=ADDED, new_value=new_value)
 
     def _mark_item_changed(self, first_item, second_item, key):
         self._set_contains_changes(first_item)
