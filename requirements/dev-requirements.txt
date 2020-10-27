@@ -92,7 +92,7 @@ ghdiff==0.4               # via -r requirements.in
 gipc==1.0.1               # via -r requirements.in
 git-build-branch==0.1.9   # via -r dev-requirements.in
 gnureadline==6.3.8        # via -r dev-requirements.in
-graphviz==0.13.1          # via -r dev-requirements.in
+graphviz==0.14.2          # via -r dev-requirements.in
 greenlet==0.4.15          # via -r requirements.in, django-websocket-redis, gevent
 gunicorn==20.0.4          # via -r requirements.in
 hiredis==1.1.0            # via -r requirements.in
