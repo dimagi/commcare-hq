@@ -111,7 +111,7 @@ def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None
             'email': user.email,
             'username': user.raw_username,
             'language': user.language,
-            'user_id': user.user_id,
+            'user_id': user._id,
             'is_active': str(user.is_active),
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
@@ -147,7 +147,7 @@ def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None
             'role': role if role else '',
             'last_access_date (read only)': user['doc']['domain_memberships'][0]['last_accessed'],
             'last_login (read only)': user['doc']['last_login'],
-            'delete': '',
+            'remove': '',
         }
 
     unrecognized_user_data_keys = set()
@@ -166,8 +166,8 @@ def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None
                 DownloadBase.set_progress(task, n, total_count)
 
         user_headers = [
-            'name', 'phone-number', 'email', 'role', 'is_active',
-            'last_access_date (read only)', 'last_login (read only)', 'delete'
+            'name', 'username', 'phone-number', 'email', 'role', 'is_active',
+            'last_access_date (read only)', 'last_login (read only)', 'remove'
         ]
     elif not is_web_download:
         for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):

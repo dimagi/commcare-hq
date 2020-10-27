@@ -37,6 +37,7 @@ from corehq.apps.users.models import (
     CouchUser,
     Invitation,
     UserRole,
+    WebUser
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
@@ -47,7 +48,8 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
+    'last_sync (read only)', 'remove_web_user', 'domain', 'delete', 'last_access_date (read only)',
+    'last_login (read only)', 'remove'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -486,7 +488,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
 
                 user.save()
                 if role_updated:
-                    log_user_role_update(domain, user, upload_user)
+                    log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
                     if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(
