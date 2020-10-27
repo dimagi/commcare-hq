@@ -54,7 +54,8 @@ def form_session_handler(v, text, msg):
 
             # fetch subevent pk to link inbound sms to
             try:
-                subevent_id = MessagingSubEvent.objects.get(xforms_session_id=session.pk).pk
+                subevent_id = MessagingSubEvent.objects.values_list("id", flat=True)\
+                    .get(xforms_session_id=session.pk)
             except MessagingSubEvent.DoesNotExist:
                 subevent_id = None
 
