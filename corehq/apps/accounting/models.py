@@ -413,6 +413,15 @@ class BillingAccount(ValidateModelMixin, models.Model):
     restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
 
+    # Settings restricting Hubspot data
+    block_hubspot_data_for_all_users = models.BooleanField(default=False)
+    block_email_domains_from_hubspot = ArrayField(
+        models.CharField(max_length=253, null=True, blank=True),
+        blank=True,
+        null=True,
+        default=list
+    )
+
     class Meta(object):
         app_label = 'accounting'
 
