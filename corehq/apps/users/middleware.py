@@ -4,7 +4,6 @@ from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from corehq.apps.users.models import AnonymousCouchUser, CouchUser, InvalidUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
@@ -41,9 +40,6 @@ class UsersMiddleware(MiddlewareMixin):
             request.domain = view_kwargs['domain']
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
-        if not (request.user and request.user.is_authenticated):
-            # use this to add in the user if the request is using API key auth
-            HQApiKeyAuthentication().is_authenticated(request)
         if request.user and request.user.is_authenticated:
             user_id = username_to_user_id(request.user.username)
             couch_user = CouchUser.get_by_user_id(user_id)
