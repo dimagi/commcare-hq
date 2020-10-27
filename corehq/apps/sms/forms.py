@@ -4,7 +4,7 @@ import re
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms.fields import *
+from django.forms.fields import CharField, BooleanField, ChoiceField, IntegerField
 from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -17,7 +17,6 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.layout import Div
 
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -859,6 +858,10 @@ class BackendForm(Form):
     name = CharField(
         label=ugettext_noop("Name")
     )
+    display_name = CharField(
+        label=ugettext_noop("Display Name"),
+        required=False,
+    )
     description = CharField(
         label=ugettext_noop("Description"),
         widget=forms.Textarea,
@@ -901,6 +904,7 @@ class BackendForm(Form):
     def general_fields(self):
         fields = [
             crispy.Field('name', css_class='input-xxlarge'),
+            crispy.Field('display_name', css_class='input-xxlarge'),
             crispy.Field('description', css_class='input-xxlarge', rows="3"),
             crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
             crispy.Field('opt_out_keywords'),
@@ -999,6 +1003,12 @@ class BackendForm(Form):
         if not is_unique:
             raise ValidationError(_("Name is already in use."))
 
+        return value
+
+    def clean_display_name(self):
+        value = self.cleaned_data.get("display_name")
+        if re.compile(r"\d").search(value) is not None:
+            raise ValidationError(_("Display name may not contain any numbers."))
         return value
 
     def clean_authorized_domains(self):
