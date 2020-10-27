@@ -354,17 +354,14 @@
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
   <select class="form-control" data-bind="
-        options: options,
-        optionsValue: 'idx',
-        optionsText: 'text',
+        foreach: options,
         value: rawAnswer,
-        valueAllowUnset: true,
-        optionsCaption: '{% trans_html_attr 'Choose...' %}',
         attr: {
             id: entryId,
             'aria-required': $parent.required() ? 'true' : 'false',
         },
         ">
+    <option data-bind="value: idx, text: text"></option>
   </select>
 </script>
 <script type="text/html" id="choice-label-entry-ko-template">
