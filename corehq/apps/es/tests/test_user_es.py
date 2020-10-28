@@ -21,8 +21,8 @@ class TestUserES(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        initialize_index_and_mapping(get_es_new(), USER_INDEX_INFO)
         cls.elasticsearch = get_es_new()
+        initialize_index_and_mapping(cls.elasticsearch, USER_INDEX_INFO)
         cls.domain = 'test-user-es'
         cls.domain_obj = create_domain(cls.domain)
 
@@ -48,5 +48,5 @@ class TestUserES(TestCase):
             self._create_mobile_worker(metadata={'foo': 'bar'})
             self._create_mobile_worker(metadata={'foo': 'baz'})
             self._create_mobile_worker(metadata={'foo': 'womp', 'fu': 'bar'})
-        get_es_new().indices.refresh(USER_INDEX)
+        self.elasticsearch.indices.refresh(USER_INDEX)
         self.assertEqual(UserES().metadata('foo', 'bar').count(), 1)
