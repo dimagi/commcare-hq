@@ -1,10 +1,11 @@
+# See https://github.com/dimagi/label-bot
 disabled_actions:
   - triage
   - review
   - wip
   - lgtm
 
-# Lable rules
+# Label rules
 brace_expansion: true
 minus_negate: false
 
