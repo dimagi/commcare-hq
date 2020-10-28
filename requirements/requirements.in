@@ -9,7 +9,7 @@ celery @ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d
 CommcareTranslationChecker==0.9.7
 concurrent-log-handler==0.9.12
 csiphash==0.0.5
-datadog==0.15.0
+datadog==0.39.0
 ddtrace==0.14.1
 decorator==4.0.11  # required by django-digest
 defusedxml==0.5.0
