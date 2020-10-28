@@ -30,7 +30,8 @@ code uses aliases to read and write data to indices.
 
 Whenever the mapping is changed, this hash should be updated.  That will
 trigger the creation of a new index on deploy (by the ``$ ./manage.py
-ptop_preindex`` command).  Once the new index is finished, the alias is
+ptop_preindex`` command) using a temporary '_reindex' suffixed
+alias.  Once the new index is finished, the original alias is
 *flipped* (``$ ./manage.py ptop_es_manage --flip_all_aliases``) to point
 to the new index, allowing for a relatively seamless transition.
 
@@ -45,7 +46,7 @@ pillowtop must be running::
 
 You can also run a once-off reindex for a specific index::
 
-    $ ./manage.py ptop_reindexer_v2 user
+    $ ./manage.py ptop_reindexer_v2 user && ./manage.py ptop_es_manage --flip_all_aliases
 
 Changing a mapping or adding data
 ---------------------------------
@@ -67,13 +68,10 @@ Building the new index
 Once you've made the change, you'll need to build a new index which uses
 that new mapping. Updating index name in the mapping file triggers HQ to
 create the new index with new mapping and reindex all data, so you'll
-have to update the index hash and alias at the top of the mapping file.
+have to update the index hash at the top of the mapping file.
 The hash suffix to the index can just be a random alphanumeric string and
-is usually the date of the edit by convention. The alias should also be updated
-to a new one of format ``xforms_<date-modified>`` (the date is just by convention), so that
-production operations continue to use the old alias pointing to existing index.
-This will trigger a preindex as outlined in the `Indexes` section. In subsequent commits
-alias can be flipped back to what it was, for example ``xforms``. Changing the alias
+is usually the date of the edit by convention.
+This will trigger a preindex as outlined in the `Indexes` section. Changing the alias
 name doesn't trigger a reindex.
 
 
