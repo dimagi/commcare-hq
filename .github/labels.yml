@@ -2,7 +2,6 @@
 disabled_actions:
   - triage
   - review
-  - wip
   - lgtm
 
 # Label rules
@@ -15,6 +14,11 @@ rules:
 
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
+
+# WIP
+wip:
+  - 'Open for review: do not merge'
+  - 'awaiting QA'
 
 # Label management
 delete_labels: false
