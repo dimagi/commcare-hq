@@ -1066,6 +1066,10 @@ COMMCARE_EXTENSIONS = []
 
 IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 
+# to help in performance, avoid use of phone entries in an environment that does not need them
+# so HQ does not try to keep them up to date
+USE_PHONE_ENTRIES = True
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
