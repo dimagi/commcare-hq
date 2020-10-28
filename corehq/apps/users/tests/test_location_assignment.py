@@ -40,7 +40,6 @@ class CCUserLocationAssignmentTest(TestCase):
             password='***',
             created_by=None,
             created_via=None,
-            last_login=datetime.now()
         )
 
     def tearDown(self):
@@ -126,7 +125,6 @@ class CCUserLocationAssignmentTest(TestCase):
             password='***',
             created_by=None,
             created_via=None,
-            last_login=datetime.now(),
             location=self.loc1,
         )
         self.assertPrimaryLocation(self.loc1.location_id)
@@ -176,7 +174,6 @@ class WebUserLocationAssignmentTest(TestCase):
             password='***',
             created_by=None,
             created_via=None,
-            last_login=datetime.now()
         )
 
     def tearDown(self):
