@@ -117,7 +117,7 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
 
     auth_token = forms.CharField(
         label=_('Server Auth Token'),
-        widget=forms.PasswordInput
+        widget=forms.PasswordInput(render_value=True)
     )
 
     class Meta:
