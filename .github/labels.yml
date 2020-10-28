@@ -10,8 +10,8 @@ rules:
     patterns: ['requirements/**|package.json|yarn.lock']
 
 # Triage & Review workflows (disabled)
-triage_label: ~
-review_label: ~
+triage_label: ''
+review_label: ''
 
 # Label management
 delete_labels: false
