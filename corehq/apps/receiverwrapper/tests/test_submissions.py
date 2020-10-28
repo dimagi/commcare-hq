@@ -198,7 +198,7 @@ class PracticeMobileWorkerSubmissionTest(BaseSubmissionTest):
         # skip any authorization
         self.client = Client()
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
     def test_ignore_all_practice_mobile_worker_submissions_in_demo_mode(self, user_stub, *_):
         # ignore submission if from a practice mobile worker and HQ is ignoring all demo user submissions
@@ -221,10 +221,10 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         response = self._submit('simple_form.xml')
         self.assertTrue('X-CommCareHQ-FormID' in response, 'Non Demo user ID form not processed in normal mode')
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
     @softer_assert()
-    def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub, *_):
+    def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub):
         user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml')
         self.assertTrue('X-CommCareHQ-FormID' in response, 'Normal user form not processed in non-demo mode')
@@ -234,16 +234,16 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertFalse('X-CommCareHQ-FormID' in response,
                          'Practice mobile worker form processed in non-demo mode')
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
-    def test_invalid_form_xml(self, *_):
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
+    def test_invalid_form_xml(self):
         response = self._submit('invalid_form_xml.xml')
         self.assertTrue(response.status_code, 422)
         self.assertTrue("There was an error processing the form: Invalid XML" in response.content.decode('utf-8'))
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     @patch('corehq.apps.receiverwrapper.util._notify_ignored_form_submission')
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
-    def test_notification(self, user_stub, notification, *_):
+    def test_notification(self, user_stub, notification):
         user_stub.return_value = self.couch_user
         self.couch_user.is_demo_user = True
 
