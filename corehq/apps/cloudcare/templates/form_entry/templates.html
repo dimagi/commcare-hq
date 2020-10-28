@@ -364,7 +364,8 @@
     <option data-bind="value: idx, text: text"></option>
   </select>
   <span class="help-block type" data-bind="
-        text: helpText()
+        text: helpText(),
+        visible: helpText(),
     "></span>
 </script>
 <script type="text/html" id="choice-label-entry-ko-template">

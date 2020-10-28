@@ -533,7 +533,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self.placeholderText = gettext('Please choose an item');
 
         self.helpText = function () {
-            return gettext('Dropdown');
+            return "";
         };
 
         self.options = ko.computed(function () {
