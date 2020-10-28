@@ -117,7 +117,7 @@ def get_langs(request, app):
 
 
 def set_lang_cookie(response, lang):
-    response.set_cookie('lang', lang)
+    response.set_cookie('lang', lang, secure=True)
 
 
 def bail(request, domain, app_id, not_found=""):
