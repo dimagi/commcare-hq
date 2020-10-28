@@ -313,7 +313,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
-    'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
@@ -1065,6 +1064,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
 ]
 COMMCARE_EXTENSIONS = []
 
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1616,7 +1617,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
-    'corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',

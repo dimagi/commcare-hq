@@ -710,7 +710,11 @@ def update_exchange_rates():
 # Email this out on the first day and first hour of each month
 @periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
 def send_credits_on_hq_report():
-    if settings.SAAS_REPORTING_EMAIL and settings.IS_SAAS_ENVIRONMENT:
+    if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
+        'production',
+        'india',
+        'swiss'
+    ]:
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         credits_report = CreditsAutomatedReport()
         credits_report.send_report(settings.SAAS_REPORTING_EMAIL)
