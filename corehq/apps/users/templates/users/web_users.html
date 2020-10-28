@@ -197,7 +197,7 @@
     </div><!-- end .panel-body -->
   </div><!-- end .panel -->
 
-  {% if invitations and not request.is_view_only %}
+  {% if invitations %}
     <div class="panel panel-info ko-template" id="invitations-panel">
       <div class="panel-heading">
         <div class="row">
@@ -249,6 +249,7 @@
                 <!-- ko text: email_status --><!-- /ko -->
               </td>
               <td>
+                {% if not request.is_view_only %}
                 <div data-bind="visible: !actionMessage()">
                   <button type="button" class="resend-invite btn btn-default"
                           data-bind="click: resend, disable: actionInProgress">
@@ -262,6 +263,7 @@
                   </button>
                 </div>
                 <span data-bind="visible: actionMessage, text: actionMessage"></span>
+                {% endif %}
               </td>
             </tr>
           </tbody>
