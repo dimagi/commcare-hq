@@ -548,9 +548,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         self.options.subscribe(function () {
             self.renderSelect2();
-            if (!self.isValid(self.rawAnswer())) {
-                self.question.error(gettext('Not a valid choice'));
-            }
         });
 
         self.renderSelect2 = function () {
