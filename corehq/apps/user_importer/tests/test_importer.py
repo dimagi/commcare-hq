@@ -498,7 +498,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.uploading_user,
             mock.MagicMock()
         )
-        log_entry = LogEntry.objects.last()
+        log_entry = LogEntry.objects.order_by('action_time').last()
         self.assertEqual(
             log_entry.change_message,
             f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
