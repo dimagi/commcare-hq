@@ -23,7 +23,7 @@ cloudant==2.14.0          # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7  # via -r requirements.in
 concurrent-log-handler==0.9.12  # via -r requirements.in
 contextlib2==0.6.0.post1  # via schema
-cryptography==3.1.1       # via -r prod-requirements.in, pyopenssl
+cryptography==3.2         # via -r prod-requirements.in, pyopenssl
 csiphash==0.0.5           # via -r requirements.in
 cssselect2==0.3.0         # via cairosvg, weasyprint
 datadog==0.15.0           # via -r requirements.in
