@@ -4,7 +4,7 @@ minus_negate: false
 
 rules:
   - labels: ['reindex/migration']
-    patterns: ['**/migrations/**']
+    patterns: ['**/migrations/**|corehq/pillows/mappings/**']
 
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
