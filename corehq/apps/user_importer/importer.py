@@ -344,6 +344,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 update_progress(current)
                 current += 1
             role_updated = False
+            log_user_create = False
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
@@ -419,6 +420,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         kwargs['is_account_confirmed'] = is_account_confirmed
                     user = CommCareUser.create(domain, username, password, created_by=upload_user,
                                                created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
+                    log_user_create = True
                     status_row['flag'] = 'created'
 
                 if phone_number:
@@ -485,6 +487,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.update_metadata({'login_as_user': web_user})
 
                 user.save()
+                if log_user_create:
+                    user.log_user_create(upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if role_updated:
                     log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
