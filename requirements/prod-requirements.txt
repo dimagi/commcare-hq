@@ -23,13 +23,14 @@ cloudant==2.14.0          # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7  # via -r requirements.in
 concurrent-log-handler==0.9.12  # via -r requirements.in
 contextlib2==0.6.0.post1  # via schema
-cryptography==3.1.1       # via -r prod-requirements.in, pyopenssl
+cryptography==3.2         # via -r prod-requirements.in, pyopenssl
 csiphash==0.0.5           # via -r requirements.in
 cssselect2==0.3.0         # via cairosvg, weasyprint
 datadog==0.15.0           # via -r requirements.in
 ddtrace==0.14.1           # via -r requirements.in
 decorator==4.0.11         # via -r requirements.in, datadog, ipython, jsonpath-rw, traitlets
 defusedxml==0.5.0         # via -r requirements.in, cairosvg
+deprecated==1.2.10        # via pygithub
 diff-match-patch==20120106  # via -r requirements.in
 dimagi-memoized==1.1.3    # via -r requirements.in
 django-angular==2.2.4     # via -r requirements.in
@@ -122,7 +123,7 @@ pyasn1==0.4.8             # via -r prod-requirements.in, ndg-httpsclient
 pycco==0.5.1              # via -r requirements.in
 pycparser==2.20           # via cffi
 pycryptodome==3.9.8       # via -r requirements.in
-pygithub==1.35            # via -r requirements.in
+pygithub==1.53            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, ipython, pycco
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio
@@ -145,7 +146,7 @@ rcssmin==1.0.6            # via django-compressor
 redis==3.5.3              # via -r requirements.in, django-redis, django-redis-sessions, django-websocket-redis
 reportlab==3.5.53         # via -r requirements.in
 requests-oauthlib==1.3.0  # via -r requirements.in
-requests==2.24.0          # via -r requirements.in, cloudant, datadog, django-oauth-toolkit, dropbox, requests-oauthlib, stripe, tinys3, twilio
+requests==2.24.0          # via -r requirements.in, cloudant, datadog, django-oauth-toolkit, dropbox, pygithub, requests-oauthlib, stripe, tinys3, twilio
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.3.3         # via boto3
 schema==0.7.2             # via -r requirements.in
@@ -179,7 +180,7 @@ wcwidth==0.2.5            # via prompt-toolkit
 weasyprint==51            # via -r requirements.in
 webencodings==0.5.1       # via cssselect2, html5lib, tinycss2
 werkzeug==0.15.3          # via -r requirements.in
-wrapt==1.12.1             # via ddtrace
+wrapt==1.12.1             # via ddtrace, deprecated
 xlrd==1.0.0               # via -r requirements.in
 xlwt==1.3.0               # via -r requirements.in
 

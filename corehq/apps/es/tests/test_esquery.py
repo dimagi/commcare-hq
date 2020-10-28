@@ -3,7 +3,6 @@ from django.test import SimpleTestCase
 from mock import patch
 
 from corehq.apps.es import filters, forms, users
-from corehq.apps.es.aggregations import TermsAggregation
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
@@ -36,7 +35,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                                 )
                             }
                         },
-                        {'term': {'base_doc': 'CouchUser'}},
+                        {'term': {'base_doc': 'couchuser'}},
                         {'term': {'is_active': True}}
                     ],
                     "must": {
@@ -117,7 +116,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                     "filter": [
                         {
                             "term": {
-                                "base_doc": "CouchUser"
+                                "base_doc": "couchuser"
                             }
                         },
                         {
@@ -317,32 +316,3 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         }
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
         self.checkQuery(query, json_output)
-
-
-class TestAggValidation(SimpleTestCase):
-
-    def test_simple_field(self):
-        self.assertTrue(forms.FormES()._validate_agg_for_es7(
-            TermsAggregation('agg', 'user_type'))
-        )
-
-    def test_exact_field(self):
-        self.assertTrue(forms.FormES()._validate_agg_for_es7(
-            TermsAggregation('agg', 'domain.exact'))
-        )
-
-    def test_nested_field(self):
-        self.assertTrue(forms.FormES()._validate_agg_for_es7(
-            TermsAggregation('agg', 'form.meta.userID'))
-        )
-
-    def test_simple_invalid_field(self):
-        with self.assertRaises(AssertionError):
-            forms.FormES()._validate_agg_for_es7(
-                TermsAggregation('agg', '@version')
-            )
-
-    def test_alternate_es(self):
-        self.assertTrue(users.UserES()._validate_agg_for_es7(
-            TermsAggregation('agg', 'domain.exact'))
-        )
