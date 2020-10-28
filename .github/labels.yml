@@ -25,12 +25,57 @@ delete_labels: false
 
 colors:
   navy: '#0366d6'
-  orange: '#eb6420'
+  dark_orange: '#eb6420'
+  light_orange: '#fbca04'
+  royal: '#5319e7'
+  purple: '#9800c6'
+  lime: '#75ff68'
+  dark_green: '#0e8a16'
+  dark_purple: '#71239b'
+  sand: '#d38737'
+  grey: '#cfd2d6'
+  burnt_orage: '#bc4b29'
+  green: '#009800'
+  tan: '#fef2c0'
 
 labels:
 - name: 'reindex/migration'
-  color: orange
+  color: dark_orange
   description: 'Reindex or migration will be required during or before deploy'
 - name: 'dependencies'
   color: navy
   description: 'Pull requests that update a dependency file'
+- name: 'awaiting QA'
+  color: light_orange
+  description: 'QA in progress. Do not merge'
+- name: 'Open for review: do not merge'
+  color: royal
+  description: 'A work in progress'
+- name: 'product/ab-test'
+  color: purple
+  description: 'AB test for product on production devices'
+- name: 'QA Passed'
+  color: green
+  description: ''
+- name: 'QA post deploy'
+  color: tan
+  description: 'Change should be re-tested once live'
+# labels below are part of the product triage system
+- name: 'product/admin'
+  color: lime
+  description: 'Change affects admin pages only visible to super users / staff'
+- name: 'product/all-users-all-environments'
+  color: dark_green
+  description: 'Change impacts all users on all environments'
+- name: 'product/custom'
+  color: dark_purple
+  description: 'Change will only impact users on a single project'
+- name: 'product/feature-flag'
+  color: sand
+  description: 'Change will only affect users who have a specific feature flag enabled'
+- name: 'product/invisible'
+  color: grey
+  description: 'Change has no end-user visible impact'
+- name: 'product/prod-india-all-users'
+  color: burnt_orage
+  description: 'Change will only be deployed to Dimagi "SaaS" environments'
