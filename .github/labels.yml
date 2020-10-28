@@ -1,0 +1,29 @@
+# Lable rules
+brace_expansion: true
+minus_negate: false
+
+rules:
+  - labels: ['reindex/migration']
+    patterns: ['**/migrations/**']
+
+  - labels: ['dependencies']
+    patterns: ['requirements/**|package.json|yarn.lock']
+
+# Triage & Review workflows (disabled)
+triage_label: ~
+review_label: ~
+
+# Label management
+delete_labels: false
+
+colors:
+  navy: '#0366d6'
+  orange: '#eb6420'
+
+labels:
+- name: 'reindex/migration'
+  color: orange
+  description: 'Reindex or migration will be required during or before deploy'
+- name: 'dependencies'
+  color: navy
+  description: 'Pull requests that update a dependency file'
