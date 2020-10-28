@@ -1,3 +1,9 @@
+disabled_actions:
+  - triage
+  - review
+  - wip
+  - lgtm
+
 # Lable rules
 brace_expansion: true
 minus_negate: false
@@ -8,10 +14,6 @@ rules:
 
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
-
-# Triage & Review workflows (disabled)
-triage_label: ''
-review_label: ''
 
 # Label management
 delete_labels: false
