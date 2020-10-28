@@ -96,13 +96,14 @@ hqDefine("reports/js/hq_report", [
         self.handleTabularReportCookies = function (reportDatatable) {
             var defaultRowsCookieName = 'hqreport.tabularSetting.defaultRows',
                 savedPath = window.location.pathname;
-            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
+            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName, { secure: true });
             reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
 
             $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
                 $.cookie(defaultRowsCookieName, value, {
                     path: savedPath,
                     expires: 2,
+                    secure: true,
                 });
             });
         };
@@ -113,18 +114,20 @@ hqDefine("reports/js/hq_report", [
                 $.cookie(self.cookieDatespanStart, self.datespan.startdate, {
                     path: self.urlRoot,
                     expires: 1,
+                    secure: true,
                 });
                 $.cookie(self.cookieDatespanEnd, self.datespan.enddate, {
                     path: self.urlRoot,
                     expires: 1,
+                    secure: true,
                 });
             }
         };
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.cookieDatespanStart),
-                    cookie_enddate = $.cookie(self.cookieDatespanEnd),
+                var cookie_startdate = $.cookie(self.cookieDatespanStart, { secure: true }),
+                    cookie_enddate = $.cookie(self.cookieDatespanEnd, { secure: true }),
                     load_success = false;
 
                 if (cookie_enddate && cookie_startdate) {

@@ -10,7 +10,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
     $
 ) {
     function snooze(slug, domain) {
-        $.cookie(cookieName(slug, domain), true, { expires: 1, path: '/' });
+        $.cookie(cookieName(slug, domain), true, { expires: 1, path: '/', secure: true });
     }
 
     function cookieName(slug, domain) {
@@ -22,7 +22,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
             slug = $modal.data("slug"),
             domain = $modal.data("domain");
 
-        if ($modal.length && ! $.cookie(cookieName(slug, domain))) {
+        if ($modal.length && ! $.cookie(cookieName(slug, domain), { secure: true })) {
             // Show modal on page load
             $modal.modal({
                 backdrop: 'static',

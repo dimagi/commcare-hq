@@ -391,17 +391,17 @@ hqDefine('hqwebapp/js/main', [
         if ($maintenance.length) {
             var id = $maintenance.data("id"),
                 alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
+            if ($.cookie(alertCookie, { secure: true }) != id) {  // eslint-disable-line eqeqeq
                 $maintenance.removeClass('hide');
                 $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/' });
+                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: true });
                 });
             }
         }
 
         // EULA modal
         var eulaCookie = "gdpr_rollout";
-        if (!$.cookie(eulaCookie)) {
+        if (!$.cookie(eulaCookie, { secure: true })) {
             var $modal = $("#eulaModal");
             if ($modal.length) {
                 $("body").addClass("has-eula");

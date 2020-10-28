@@ -83,7 +83,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 $('#build_errors').html(data.error_html);
             });
         };
-        if ($.cookie('suppress_build_errors')) {
+        if ($.cookie('suppress_build_errors', { secure: true })) {
             $.removeCookie('suppress_build_errors', { path: '/' });
         } else {
             module.fetchAndShowFormValidation();

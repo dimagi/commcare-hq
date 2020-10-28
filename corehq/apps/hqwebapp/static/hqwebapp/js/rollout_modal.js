@@ -17,7 +17,7 @@ hqDefine("hqwebapp/js/rollout_modal", [
     var _trackSoftRollout = googleAnalytics.trackCategory("Soft Rollout");
 
     function snooze(slug) {
-        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/', secure: true });
         _trackSoftRollout.event("snooze", slug);
         kissmetricsAnalytics.track.event("Soft Rollout snooze " + slug);
     }
@@ -30,7 +30,7 @@ hqDefine("hqwebapp/js/rollout_modal", [
         var $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 
-        if ($modal.length && (!$.cookie(cookieName(slug)) || $modal.data("force"))) {
+        if ($modal.length && (!$.cookie(cookieName(slug), { secure: true }) || $modal.data("force"))) {
             // Show modal on page load
             $modal.modal({
                 backdrop: 'static',
