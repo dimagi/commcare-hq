@@ -106,7 +106,8 @@ PR labels
 
 Product labels
 ~~~~~~~~~~~~~~
-All PRs must be tagged with one of the following PR labels:
+All PRs must be tagged with one of the following PR labels. For PRs from external
+contributors the onus is on the reviewer to add the labels.
 
 - product/all-users-all-environments
 - product/prod-india-all-users
