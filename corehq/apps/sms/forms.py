@@ -1005,12 +1005,6 @@ class BackendForm(Form):
 
         return value
 
-    def clean_display_name(self):
-        value = self.cleaned_data.get("display_name")
-        if re.compile(r"\d").search(value) is not None:
-            raise ValidationError(_("Display name may not contain any numbers."))
-        return value
-
     def clean_authorized_domains(self):
         if not self.cleaned_data.get("give_other_domains_access"):
             return []
