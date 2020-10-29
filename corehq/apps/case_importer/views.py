@@ -33,6 +33,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -150,6 +151,11 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             'No cases have been submitted to this domain and there are no '
             'applications yet. You cannot import case details from an Excel '
             'file until you have existing cases or applications.')
+
+    if 'domain' in columns and not DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        raise ImporterError(
+            "You cannot upload a file without enabling"
+            "mirror a project space's permissions in other project spaces.")
 
     context = {
         'columns': columns,

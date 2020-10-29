@@ -8,7 +8,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties_for_case_type,
 )
 from corehq.apps.case_importer.util import RESERVED_FIELDS
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
 
 
 def _combine_field_specs(field_specs, exclude_fields):
@@ -99,6 +99,15 @@ def get_special_fields(domain=None):
                 description=_(
                     "The date opened property for this case will be changed. "
                     "Please do not use unless you know what you are doing"
+                )
+            )
+        )
+    if domain and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        special_fields.append(
+            FieldSpec(
+                field='domain',
+                description=_(
+                    "This field will create/update the case in the domain specified."
                 )
             )
         )
