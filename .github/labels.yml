@@ -15,6 +15,22 @@ rules:
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
 
+  - labels: ['Expected Risk: High']
+    patterns: []
+      - 'corehq/apps/registration/**.py'
+      - 'corehq/apps/registration/**.js'
+      - 'corehq/apps/api/**'
+      - 'corehq/apps/case_importer/views.py'   # bulk case importer API
+      - 'corehq/form_processor/**'
+      - 'corehq/pillows/mappings/**'
+
+  - labels: ['Expected Risk: Medium']
+    patterns:
+      - 'corehq/apps/cloudcare/**'
+      - 'corehq/apps/user_importer/**'
+      - 'corehq/apps/fixtures/**'
+      - 'corehq/apps/custom_data_fields/**'
+
 # WIP
 wip:
   - 'Open for review: do not merge'
@@ -37,6 +53,8 @@ colors:
   burnt_orage: '#bc4b29'
   green: '#009800'
   tan: '#fef2c0'
+  yellow: '#fcfa4e'
+  light_yellow: '#fffeb3'
 
 labels:
 - name: 'reindex/migration'
@@ -79,3 +97,9 @@ labels:
 - name: 'product/prod-india-all-users'
   color: burnt_orage
   description: 'Change will only be deployed to Dimagi "SaaS" environments'
+- name: 'Expected Risk: High'
+  color: yellow
+  description: 'Change affects files that have been flagged as high risk.'
+- name: 'Expected Risk: Medium'
+  color: light_yellow
+  description: 'Change affects files that have been flagged as medium risk.'

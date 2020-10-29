@@ -133,6 +133,14 @@ premature merging of the PR.
 
 .. _certain files: .github/labels.yml#L12-L13
 
+Predicted Risk
+~~~~~~~~~~~~~~
+PRs that touch certain files will be automatically flagged with a "Predicted Risk" label,
+either medium or high. This includes heavily-used workflows where a bug would have a high impact
+and also area that are technically complex, difficult to roll back, etc.
+These PRs will receive extra scrutiny and should have especially solid test coverage and/or
+manual testing. Alternatively, the PR description may explain why the PR is not genuinely high risk.
+
 QA / Work in progress
 ~~~~~~~~~~~~~~~~~~~~~~
 PRs that are not ready to be merged can be labeled with one of the following labels:
