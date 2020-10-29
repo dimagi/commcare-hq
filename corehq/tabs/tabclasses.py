@@ -1337,6 +1337,15 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
+            from corehq.apps.users.views import MobileUserLogEntryReport
+            menu.append({
+                'title': _(MobileUserLogEntryReport.name),
+                'url': reverse('domain_report_dispatcher', args=[self.domain, 'mobile_user_log_entry_report']),
+                'description': _("View history of changes to mobile workers."),
+                'subpages': [],
+                'show_in_dropdown': True,
+            })
+
         if ((self.couch_user.can_edit_groups() or self.couch_user.can_view_groups())
                 and self.has_project_access):
             is_view_only_subpage = (hasattr(self._request, 'is_view_only')
@@ -1416,6 +1425,17 @@ class ProjectUsersTab(UITab):
                                args=[self.domain]),
                 'description': _(
                     "View and manage user roles."),
+                'subpages': [],
+                'show_in_dropdown': True,
+            })
+
+
+        if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
+            from corehq.apps.users.views import WebUserLogEntryReport
+            menu.append({
+                'title': _(WebUserLogEntryReport.name),
+                'url': reverse('domain_report_dispatcher', args=[self.domain, 'web_user_log_entry_report']),
+                'description': _("View history of changes to web users."),
                 'subpages': [],
                 'show_in_dropdown': True,
             })

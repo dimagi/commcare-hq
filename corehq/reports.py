@@ -29,6 +29,7 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
+from corehq.apps.users.views import MobileUserLogEntryReport, WebUserLogEntryReport
 from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
@@ -348,5 +349,7 @@ DOMAIN_REPORTS = (
         DomainForwardingRepeatRecords,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+        MobileUserLogEntryReport,
+        WebUserLogEntryReport,
     )),
 )
