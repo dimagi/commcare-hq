@@ -77,6 +77,10 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index, prefix_for
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
+# prevent nose from picking this as a test
+prefix_for_tests.__test__ = False
+
+
 @es_test
 class BaseESAccessorsTest(TestCase):
     es_index_info = None
