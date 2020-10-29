@@ -221,7 +221,7 @@ class ErrorCollector(object):
 
 
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None,
-        skip_doc_exists_check=False):
+        force_lookup=True):
     """
     Builds bulk payload json to be called via Elasticsearch Bulk API
     """
@@ -248,7 +248,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
         return {hit["_id"]: hit["_index"] for hit in hits}
 
     def backing_index(id):
-        if not index_info.is_ilm_index or skip_doc_exists_check:
+        if not index_info.is_ilm_index or not force_lookup:
             return index_info.alias
 
         index_by_doc_id = _ilm_index_by_id([change.id for change in changes])

@@ -54,13 +54,13 @@ class ElasticProcessor(PillowProcessor):
     """
 
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None,
-            skip_doc_exists_check=False):
+            force_lookup=False):
         self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
         self.es_interface = ElasticsearchInterface(self.elasticsearch)
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
-        self.skip_doc_exists_check = skip_doc_exists_check
+        self.force_lookup = force_lookup
 
     def es_getter(self):
         return self.elasticsearch
@@ -97,7 +97,7 @@ class ElasticProcessor(PillowProcessor):
                 name='ElasticProcessor',
                 data=doc_ready_to_save,
                 # Todo; tweak based on whether its a fresh form
-                skip_doc_exists_check=self.skip_doc_exists_check,
+                force_lookup=self.force_lookup,
             )
 
     def _delete_doc_if_exists(self, doc_id):
@@ -148,7 +148,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
             error_collector = ErrorCollector()
             es_actions = build_bulk_payload(
                 self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector,
-                skip_doc_exists_check=self.skip_doc_exists_check
+                force_lookup=self.force_lookup
             )
             error_changes = error_collector.errors
 
@@ -199,14 +199,14 @@ def _target_ilm_index(doc_id, doc_type, index_info, es_interface):
 
 
 def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
-                          delete=False, es_merge_update=False, skip_doc_exists_check=False):
+                          delete=False, es_merge_update=False, force_lookup=True):
     """
     More fault tolerant es.put method
     kwargs:
         es_merge_update: Set this to True to use Elasticsearch.update instead of Elasticsearch.index
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
-        skip_doc_exists_check: Set this to True when the doc can be indexed without checking for its existence
-            in the ILM backed indices, applicable to ILM indices only
+        force_lookup: Set this to True when the doc must be looked up for its existence
+            in the ILM backed indices, applicable to ILM indices only.
     """
     alias = index_info.alias
     data = data if data is not None else {}
@@ -217,7 +217,7 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
 
     while current_tries < retries:
         try:
-            if index_info.is_ilm_index and not skip_doc_exists_check:
+            if index_info.is_ilm_index and force_lookup:
                 target_index = _target_ilm_index(
                     doc_id, doc_type, index_info, es_interface,
                 )
