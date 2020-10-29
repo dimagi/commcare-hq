@@ -1919,12 +1919,13 @@ def _get_feature_flag_items(domain):
         })
 
     if toggles.LINKED_DOMAINS.enabled(domain):
+        from corehq.apps.linked_domain.views import DomainLinkView, DomainLinkHistoryReport
         feature_flag_items.append({
-            'title': _('Linked Projects'),
+            'title': DomainLinkView.page_title,
             'url': reverse('domain_links', args=[domain])
         })
         feature_flag_items.append({
-            'title': _('Linked Project History'),
+            'title': DomainLinkHistoryReport.name,
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
     return feature_flag_items

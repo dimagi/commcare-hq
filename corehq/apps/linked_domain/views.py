@@ -521,9 +521,9 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
-    name = 'Linked Project History'
+    name = ugettext_lazy('Linked Project History')
     base_template = "reports/base_template.html"
-    section_name = 'Project Settings'
+    section_name = ugettext_lazy('Project Settings')
     slug = 'project_link_report'
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
