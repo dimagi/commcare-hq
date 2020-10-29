@@ -34,7 +34,7 @@ colors:
   dark_purple: '#71239b'
   sand: '#d38737'
   grey: '#cfd2d6'
-  burnt_orage: '#bc4b29'
+  burnt_orange: '#bc4b29'
   green: '#009800'
   tan: '#fef2c0'
 
@@ -77,5 +77,5 @@ labels:
   color: grey
   description: 'Change has no end-user visible impact'
 - name: 'product/prod-india-all-users'
-  color: burnt_orage
+  color: burnt_orange
   description: 'Change will only be deployed to Dimagi "SaaS" environments'
