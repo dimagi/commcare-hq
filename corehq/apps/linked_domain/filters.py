@@ -12,7 +12,7 @@ class DomainLinkFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        links = get_linked_domains(self.domain)
+        links = get_linked_domains(self.domain, include_deleted=True)
         return [
             (str(link.id), link.linked_domain)
             for link in links

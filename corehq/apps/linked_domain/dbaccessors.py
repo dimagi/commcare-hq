@@ -17,12 +17,13 @@ def is_linked_domain(domain):
 
 
 @quickcache(['domain'], timeout=60 * 60)
-def get_linked_domains(domain):
+def get_linked_domains(domain, include_deleted=False):
     """
     :param domain:
     :return: List of ``DomainLink`` objects for each domain linked to this one.
     """
-    return list(DomainLink.all_objects.filter(master_domain=domain).all())
+    manager = DomainLink.all_objects if include_deleted else DomainLink.objects
+    return list(manager.filter(master_domain=domain).all())
 
 
 @quickcache(['domain'], timeout=60 * 60)
