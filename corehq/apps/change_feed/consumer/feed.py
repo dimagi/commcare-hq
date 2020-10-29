@@ -162,11 +162,13 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
-
+        # do differently if self.dedicated_migration_process
         return [
             topic_partitions[num::self.num_processes]
             for num in range(self.num_processes)
         ][self.process_num]
+        # if self.dedicated_migration_process then 0 through N
+        # if not self.dedicated_migration_process then 1 through N
 
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):

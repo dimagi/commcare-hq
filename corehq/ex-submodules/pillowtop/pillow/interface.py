@@ -1,3 +1,4 @@
+import time
 from abc import ABCMeta, abstractproperty, abstractmethod
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -54,6 +55,7 @@ class PillowBase(metaclass=ABCMeta):
     retry_errors = True
     # this will be the batch size for processors that support batch processing
     processor_chunk_size = 0
+    is_dedicated_migration_process = False
 
     @abstractproperty
     def pillow_id(self):
@@ -106,7 +108,12 @@ class PillowBase(metaclass=ABCMeta):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+        if self.is_dedicated_migration_process:
+            for processor in self.processors:
+                processor.bootstrap_if_needed()
+            time.sleep(1)
+        else:
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -418,7 +425,7 @@ class ConstructedPillow(PillowBase):
     """
 
     def __init__(self, name, checkpoint, change_feed, processor,
-                 change_processed_event_handler=None, processor_chunk_size=0):
+                 change_processed_event_handler=None, processor_chunk_size=0, is_dedicated_migration_process=False):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
@@ -429,6 +436,7 @@ class ConstructedPillow(PillowBase):
             self.processors = [processor]
 
         self._change_processed_event_handler = change_processed_event_handler
+        self.is_dedicated_migration_process = is_dedicated_migration_process
 
     @property
     def topics(self):
