@@ -1,11 +1,12 @@
+import datetime
 import logging
 import os
 import sys
-from django.core.management import BaseCommand, CommandError
-from corehq.blobs.export import EXPORTERS
-from corehq.blobs.targzipdb import get_export_filename
-from corehq.util.decorators import change_log_level
 
+from django.core.management import BaseCommand, CommandError
+
+from corehq.blobs.export import EXPORTERS
+from corehq.util.decorators import change_log_level
 
 USAGE = """Usage: ./manage.py run_blob_export [options] <slug> <domain>
 
@@ -63,7 +64,7 @@ class Command(BaseCommand):
                 raise CommandError(USAGE)
 
             self.stdout.write("\nRunning exporter: {}\n{}".format(exporter_slug, '-' * 50))
-            export_filename = get_export_filename(exporter_slug, domain, extends)
+            export_filename = _get_export_filename(exporter_slug, domain, extends)
             if os.path.exists(export_filename):
                 raise CommandError(f"Export file '{export_filename}' exists. "
                                    f"Remove the file and re-run the command.")
@@ -77,3 +78,9 @@ class Command(BaseCommand):
             )
             if skips:
                 sys.exit(skips)
+
+
+def _get_export_filename(slug, domain, extends):
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')
+    _extends = '-extended' if extends else ''
+    return f'{timestamp}-{domain}-{slug}{_extends}.tar.gz'
