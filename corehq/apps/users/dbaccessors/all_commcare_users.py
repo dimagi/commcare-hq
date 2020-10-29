@@ -73,9 +73,11 @@ def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_us
     ))
 
 
-def get_all_usernames_by_domain(domain):
+def get_all_usernames_by_domain(domain, include_mobile_users=True, include_web_users=True):
     """Returns generator of all usernames by domain regardless of their active status"""
-    return (row['key'][3] for row in get_all_user_rows(domain, include_web_users=True))
+    return (row['key'][3] for row in get_all_user_rows(domain,
+                                                       include_mobile_users=include_mobile_users,
+                                                       include_web_users=include_web_users))
 
 
 def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, include_mobile_users=True):

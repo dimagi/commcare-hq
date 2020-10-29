@@ -10,7 +10,10 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.admin.models import LogEntry
+from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.http import (
@@ -69,6 +72,9 @@ from corehq.apps.registration.forms import (
     WebUserInvitationForm,
 )
 from corehq.apps.registration.utils import activate_new_user
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
@@ -81,11 +87,13 @@ from corehq.apps.sms.verify import (
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
+    require_can_edit_or_view_commcare_users,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_can_view_roles,
     require_permission_to_edit_user,
 )
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
@@ -109,8 +117,10 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices
-from corehq.const import USER_CHANGE_VIA_INVITATION
+from corehq.const import USER_CHANGE_VIA_INVITATION, USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.couch import get_document_or_404
+from corehq.util.model_log import ModelAction
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import json_error
 
 
@@ -798,6 +808,131 @@ def delete_user_role(request, domain):
     role.delete()
     # return removed id in order to remove it from UI
     return json_response({"_id": copy_id})
+
+
+class UserLogEntryReport(GenericTabularReport):
+    base_template = "reports/base_template.html"
+    section_name = ugettext_lazy('Users')
+    dispatcher = DomainReportDispatcher
+    ajax_pagination = True
+    asynchronous = False
+    sortable = False
+
+    @property
+    def fields(self):
+        fields = []
+        # TODO: user, date range, action, performed by
+        '''
+        if self.master_link:
+            fields = []
+        else:
+            fields = ['corehq.apps.linked_domain.filters.DomainLinkFilter']
+        fields.append('corehq.apps.linked_domain.filters.DomainLinkModelFilter')
+        '''
+        return fields
+
+    '''
+    TODO: delete
+    @property
+    def link_model(self):
+        return self.request.GET.get('domain_link_model')
+
+    @property
+    @memoized
+    def domain_link(self):
+        if self.request.GET.get('domain_link'):
+            try:
+                return DomainLink.all_objects.get(
+                    pk=self.request.GET.get('domain_link'),
+                    master_domain=self.domain
+                )
+            except DomainLink.DoesNotExist:
+                pass
+
+    @property
+    @memoized
+    def master_link(self):
+        return get_domain_master_link(self.domain)
+
+    @property
+    @memoized
+    def selected_link(self):
+        return self.master_link or self.domain_link
+    '''
+
+    @property
+    def total_records(self):
+        query = self._base_query()
+        return query.count()
+
+    def _base_query(self):
+        return LogEntry.objects.filter(content_type=get_content_type_for_model(User)).extra(
+            tables=["auth_user"],
+            where=["auth_user.id=django_admin_log.id",
+                   "auth_user.username in %s"],     # TODO: verify usernames don't need escaping
+            params=[tuple(self._usernames())],      # TODO: breaks if there are no usernames
+        )
+
+    def _usernames(self):
+        raise NotImplementedError()
+
+    @property
+    def shared_pagination_GET_params(self):
+        # TODO
+        return {}
+        link_id = str(self.selected_link.pk) if self.selected_link else ''
+        return [
+            {'name': 'domain_link', 'value': link_id},
+            {'name': 'domain_link_model', 'value': self.link_model},
+        ]
+
+    @property
+    def rows(self):
+        rows = self._base_query()[self.pagination.start:self.pagination.start + self.pagination.count + 1]
+        return [self._make_row(record) for record in rows]
+
+    def _make_row(self, record):
+        row = [
+            record.object_repr,
+            list(ModelAction)[record.action_flag].name,
+            User.objects.get(id=record.user_id).username,     # TODO: account for nonexistence
+            ServerTime(record.action_time).user_time(self.timezone).done().strftime(USER_DATETIME_FORMAT_WITH_SEC),
+            record.change_message,
+        ]
+        return row
+
+    @property
+    def headers(self):
+        tzname = self.timezone.localize(datetime.utcnow()).tzname()
+        columns = [
+            DataTablesColumn(_('User')),
+            DataTablesColumn(_('Action')),
+            DataTablesColumn(_('Performed By')),
+            DataTablesColumn(_('Date ({})'.format(tzname))),
+            DataTablesColumn(_('Message')),
+        ]
+
+        return DataTablesHeader(*columns)
+
+
+# TODO
+#@method_decorator(require_can_edit_or_view_commcare_users, name='dispatch')
+class MobileUserLogEntryReport(UserLogEntryReport):
+    name = ugettext_lazy('Mobile Worker History')
+    slug = 'mobile_user_log_entry_report'
+
+    def _usernames(self):
+        return get_all_usernames_by_domain(self.domain, include_web_users=False)
+
+
+# TODO
+#@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+class WebUserLogEntryReport(UserLogEntryReport):
+    name = ugettext_lazy('Web User History')
+    slug = 'web_user_log_entry_report'
+
+    def _usernames(self):
+        return get_all_usernames_by_domain(self.domain, include_mobile_users=False)
 
 
 class UserInvitationView(object):
