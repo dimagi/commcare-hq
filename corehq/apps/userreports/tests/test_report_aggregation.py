@@ -309,6 +309,31 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
             ]]
         )
 
+    def test_aggregation_no_group_by(self):
+        report_config = self._create_report(
+            aggregation_columns=[],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'aggregation': 'max'
+                }
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                'foo',
+                [
+                    ['report_column_display_number'],
+                    [4],
+                ]
+            ]]
+        )
+
     def test_sort_expression(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],

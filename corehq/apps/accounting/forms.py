@@ -144,6 +144,20 @@ class BillingAccountBasicForm(forms.Form):
         choices=PreOrPostPay.CHOICES
     )
     account_basic = forms.CharField(widget=forms.HiddenInput, required=False)
+    block_hubspot_data_for_all_users = forms.BooleanField(
+        label="Enable Block Hubspot Data",
+        required=False,
+        initial=False,
+        help_text="Users in any projects connected to this account will not "
+                  "have data sent to Hubspot",
+    )
+    block_email_domains_from_hubspot = forms.CharField(
+        label="Block Email Domains From Hubspot Data",
+        required=False,
+        help_text="(ex: dimagi.com, commcarehq.org) Anyone with a username or "
+                  "email matching an email-domain here, regardless of "
+                  "project membership, will not have data synced with Hubspot.",
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -163,6 +177,8 @@ class BillingAccountBasicForm(forms.Form):
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
                 'pre_or_post_pay': account.pre_or_post_pay,
+                'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
+                'block_email_domains_from_hubspot': ', '.join(account.block_email_domains_from_hubspot),
             }
         else:
             kwargs['initial'] = {
@@ -186,14 +202,14 @@ class BillingAccountBasicForm(forms.Form):
         if account is not None:
             additional_fields.append(hqcrispy.B3MultiField(
                 "Active Status",
-                crispy.Field(
+                hqcrispy.MultiInlineField(
                     'is_active',
                     data_bind="checked: is_active",
                 ),
             ))
             additional_fields.append(hqcrispy.B3MultiField(
                 "Customer Billing Account",
-                crispy.Field(
+                hqcrispy.MultiInlineField(
                     'is_customer_billing_account',
                     data_bind="checked: is_customer_billing_account",
                 ),
@@ -228,6 +244,18 @@ class BillingAccountBasicForm(forms.Form):
                     ),
                     data_bind="visible: showActiveAccounts"
                 ))
+            additional_fields.extend([
+                hqcrispy.B3MultiField(
+                    "Block Hubspot Data for All Users",
+                    hqcrispy.MultiInlineField(
+                        'block_hubspot_data_for_all_users',
+                    ),
+                ),
+                crispy.Field(
+                    'block_email_domains_from_hubspot',
+                    css_class='input-xxlarge',
+                ),
+            ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Basic Information',
@@ -332,6 +360,12 @@ class BillingAccountBasicForm(forms.Form):
             )
         return transfer_subs
 
+    def clean_block_email_domains_from_hubspot(self):
+        email_domains = self.cleaned_data['block_email_domains_from_hubspot']
+        if email_domains:
+            return [e.strip() for e in email_domains.split(r',')]
+        return []  # Do not return a list with an empty string
+
     @transaction.atomic
     def create_account(self):
         name = self.cleaned_data['name']
@@ -365,6 +399,8 @@ class BillingAccountBasicForm(forms.Form):
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
+        account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
+        account.block_email_domains_from_hubspot = self.cleaned_data['block_email_domains_from_hubspot']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -2740,6 +2776,36 @@ class TriggerDowngradeForm(forms.Form):
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Downgrade",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+
+class TriggerAutopaymentsForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerAutopaymentsForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Autopayments Details',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Autopayments for Project",
                     css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),

@@ -16,6 +16,7 @@ from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
+    MAX_RETRY_WAIT,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
@@ -136,7 +137,7 @@ def process_repeat_record(repeat_record):
         if repeater.paused:
             # postpone repeat record by 1 day so that these don't get picked in each cycle and
             # thus clogging the queue with repeat records with paused repeater
-            repeat_record.postpone_by(timedelta(days=1))
+            repeat_record.postpone_by(MAX_RETRY_WAIT)
             return
 
         if repeater.doc_type.endswith(DELETED_SUFFIX):
