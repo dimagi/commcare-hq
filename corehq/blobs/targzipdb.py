@@ -55,11 +55,21 @@ class TarGzipBlobDB(AbstractBlobDB):
 
     def exists(self, key):
         if self._names is None:
-            self._names = set()
-            for filename in self.extends:
-                with tarfile.open(filename, 'r:gz') as tgzfile:
-                    self._names.update(tgzfile.getnames())
+            self._names = _get_existing_names(self.extends)
         return key in self._names
 
     def size(self, key):
         raise NotImplementedError
+
+
+def _get_existing_names(existing_blob_archives):
+    if existing_blob_archives:
+        print("Loading names from existing archives")
+        print("If this fails, you might try breaking them up into smaller archives")
+        print('  eg: `$ split -n 8 <filename> "<new base filename>"')
+    existing = set()
+    for filename in existing_blob_archives:
+        print(f"Loading {filename}")
+        with tarfile.open(filename, 'r:gz') as tgzfile:
+            existing.update(tgzfile.getnames())
+    return existing
