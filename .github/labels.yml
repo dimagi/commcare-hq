@@ -16,7 +16,7 @@ rules:
     patterns: ['requirements/**|package.json|yarn.lock']
 
   - labels: ['Risk: High']
-    patterns: []
+    patterns:
       - 'corehq/apps/registration/**.py'
       - 'corehq/apps/registration/**.js'
       - 'corehq/apps/api/**'
