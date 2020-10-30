@@ -38,10 +38,7 @@
       <a class="btn btn-default" data-bind="
                 attr: {href: compareUnbuiltChangesUrl},
                 visible: savedApps().length,
-                click: function () {
-                    hqImport('analytix/js/kissmetrix').track.event('Compare App Versions: Clicked Version Preview');
-                    return true;
-                }
+                click: function () { return trackClick('Compare App Versions: Clicked Version Preview'); }
                 ">
         <i class="fa fa-exchange"></i>
         {% trans "Version Preview" %}
@@ -49,8 +46,8 @@
     {% endif %}
     <button class="btn btn-primary" data-bind="
             click: function() {
-                hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
-                          return makeNewBuild();
+              trackClick('Clicked Make New Version')
+              return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}">
@@ -209,8 +206,7 @@
                             $data.id())
                           },
                     click: function () {
-                        hqImport('analytix/js/kissmetrix').track.event('Compare App Versions: Clicked View Changes');
-                        return true;
+                        return trackClick('Compare App Versions: Clicked View Changes');
                     }
                     visible: $parent.previousBuildId($index())">
             <i class="fa fa-exchange"></i>
