@@ -35,7 +35,14 @@
   </p>
   <p>
     {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <a class="btn btn-default" data-bind="attr: {href: compareUnbuiltChangesUrl}, visible: savedApps().length">
+      <a class="btn btn-default" data-bind="
+                attr: {href: compareUnbuiltChangesUrl},
+                visible: savedApps().length,
+                click: function () {
+                    hqImport('analytix/js/kissmetrix').track.event('Compare App Versions: Clicked Version Preview');
+                    return true;
+                }
+                ">
         <i class="fa fa-exchange"></i>
         {% trans "Version Preview" %}
       </a>
@@ -201,6 +208,10 @@
                             $parent.previousBuildId($index()),
                             $data.id())
                           },
+                    click: function () {
+                        hqImport('analytix/js/kissmetrix').track.event('Compare App Versions: Clicked View Changes');
+                        return true;
+                    }
                     visible: $parent.previousBuildId($index())">
             <i class="fa fa-exchange"></i>
             {% trans "View Changes" %}
