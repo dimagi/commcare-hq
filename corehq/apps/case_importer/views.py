@@ -154,8 +154,8 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     if 'domain' in columns and not DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         raise ImporterError(
-            "You cannot upload a file without enabling"
-            "mirror a project space's permissions in other project spaces.")
+            "You have a special column `domain` in your Excel file but,"
+            "Mirror domains are not enabled for your project space.")
 
     context = {
         'columns': columns,
