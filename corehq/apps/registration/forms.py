@@ -10,12 +10,12 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
 
-from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.domain.extension_points import additional_invitation_form_fields
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -330,8 +330,6 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        captcha = CaptchaField(label=_("Type the letters in the box"))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -349,6 +347,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields.update(additional_invitation_form_fields())
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()

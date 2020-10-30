@@ -1,7 +1,6 @@
 import json
 
 from django import forms
-from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
@@ -11,13 +10,13 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-from captcha.fields import CaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from memoized import memoized
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
+from corehq.apps.domain.extension_points import additional_authentication_form_fields
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
@@ -28,8 +27,10 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("Email Address"), max_length=75,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        captcha = CaptchaField(label=_("Type the letters in the box"))
+
+    def __init__(self, *args, **kwargs):
+        super(EmailAuthenticationForm, self).__init__(*args, **kwargs)
+        self.fields.update(additional_authentication_form_fields())
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
@@ -43,10 +44,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         password = self.cleaned_data.get('password')
         if not password:
             raise ValidationError(_("Please enter a password."))
-
-        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-            if not self.cleaned_data.get('captcha'):
-                raise ValidationError(_("Please enter valid CAPTCHA"))
 
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()

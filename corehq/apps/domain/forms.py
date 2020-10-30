@@ -2,8 +2,6 @@ import datetime
 import io
 import json
 import logging
-import re
-import sys
 import uuid
 
 from django import forms
@@ -35,7 +33,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -45,7 +42,6 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -96,8 +92,8 @@ from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
     CallCenterOwnerOptionsView,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.auth import get_active_users_by_email
+from corehq.apps.domain.extension_points import custom_password_clean, additional_password_reset_form_fields
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -1124,48 +1120,19 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        strength = legacy_get_password_strength(txt)
-        message = _('Password is not strong enough. Requirements: 1 special character, '
-                    '1 number, 1 capital letter, minimum length of 8 characters.')
+    custom_clean = custom_password_clean
+    if custom_clean:
+        custom_clean(txt)
     else:
-        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-        message = _('Password is not strong enough. Try making your password more complex.')
-    if strength['score'] < 2:
-        raise forms.ValidationError(message)
+        _clean_password(txt)
     return txt
 
 
-def legacy_get_password_strength(value):
-    # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
-    # initial score rigged to reach 2 when all requirements are met
-    score = -2
-    if SPECIAL.search(value):
-        score += 1
-    if NUMBER.search(value):
-        score += 1
-    if UPPERCASE.search(value):
-        score += 1
-    if len(value) >= 8:
-        score += 1
-    return {"score": score}
-
-
-def _get_uppercase_unicode_regexp():
-    # rather than add another dependency (regex library)
-    # http://stackoverflow.com/a/17065040/10840
-    uppers = ['[']
-    for i in range(sys.maxunicode):
-        c = chr(i)
-        if c.isupper():
-            uppers.append(c)
-    uppers.append(']')
-    upper_group = "".join(uppers)
-    return re.compile(upper_group, re.UNICODE)
-
-SPECIAL = re.compile(r"\W", re.UNICODE)
-NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
-UPPERCASE = _get_uppercase_unicode_regexp()
+def _clean_password(password):
+    strength = zxcvbn(password, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    message = _('Password is not strong enough. Try making your password more complex.')
+    if strength['score'] < 2:
+        raise forms.ValidationError(message)
 
 
 class NoAutocompleteMixin(object):
@@ -1186,14 +1153,16 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
                                  "registered?"),
         'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
                                   "password."),
     }
+
+    def __init__(self, *args, **kwargs):
+        super(HQPasswordResetForm, self).__init__(*args, **kwargs)
+        self.fields.update(additional_password_reset_form_fields())
 
     def clean_email(self):
         UserModel = get_user_model()
