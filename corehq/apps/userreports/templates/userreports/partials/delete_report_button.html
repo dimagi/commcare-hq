@@ -41,8 +41,8 @@
             <ul>
               {% for app in referring_apps %}
                 <li>
-                  <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
-                  <a href="{{ app.app_url }}">{{app.app_name}}</a> app
+                  <a href="{{ app.app_url }}">{{app.app_name}}</a> &rarr;
+                  <a href="{{ app.module_url }}">{{ app.module_name}}</a>
                 </li>
               {% endfor %}
             </ul>
