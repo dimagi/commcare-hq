@@ -1347,7 +1347,7 @@ def web_user_upload_job_poll(request, domain, download_id, template="users/parti
             results = context.get('result') or defaultdict(lambda: [])
             self.response_rows = results['rows']
             self.response_errors = results['errors']
-            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'invited')]
 
         def success_count(self):
             return len(self.response_rows) - len(self.problem_rows)
