@@ -137,7 +137,7 @@ Risk
 ~~~~
 PRs that touch certain files will be automatically flagged with a "Risk" label,
 either medium or high. This includes heavily-used workflows where a bug would have a high impact
-and also area that are technically complex, difficult to roll back, etc.
+and also areas that are technically complex, difficult to roll back, etc.
 These PRs will receive extra scrutiny and should have especially solid test coverage and/or
 manual testing. Alternatively, the PR description may explain why the PR is not genuinely high risk.
 
