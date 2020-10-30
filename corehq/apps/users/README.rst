@@ -7,8 +7,8 @@ Terminology
 From a product perspective, there are two types of users:
 
 * Web users administrate projects. They primarily use CommCare HQ, typically on a desktop. Their tasks include building
-  applications, viewing reports, exporting data, etc. They manage their own accounts: they may create accounts
-  or may create an account by accepting an invitation, but in either case, they log in with their email address
+  applications, viewing reports, exporting data, etc. They manage their own accounts: they may create an account
+  directly or by accepting an invitation, but in either case, they log in with their email address
   and set their own password. Web users may use multiple domains and have a "membership" in each domain they access.
 * Mobile users collect data. They primarily use CommCare, typically on a mobile device. Their accounts
   are managed by administrators, who create their accounts and set their passwords. On projects that use
