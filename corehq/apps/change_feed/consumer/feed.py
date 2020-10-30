@@ -25,7 +25,7 @@ class KafkaChangeFeed(ChangeFeed):
     """
     sequence_format = 'json'
 
-    def __init__(self, topics, client_id, strict=False, num_processes=1, process_num=0):
+    def __init__(self, topics, client_id, strict=False, num_processes=1, process_num=0, dedicated_migration_process=False):
         """
         Create a change feed listener for a list of kafka topics, a client ID, and partition.
 
@@ -38,6 +38,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.num_processes = num_processes
         self.process_num = process_num
         self._consumer = None
+        self._dedicated_migration_process = dedicated_migration_process
 
     def __str__(self):
         return 'KafkaChangeFeed: topics: {}, client: {}'.format(self._topics, self._client_id)
@@ -130,6 +131,7 @@ class KafkaChangeFeed(ChangeFeed):
         return self._consumer
 
     def _init_consumer(self, timeout=MIN_TIMEOUT, auto_offset_reset='smallest'):
+
         """Allow re-initing the consumer if necessary
         """
         config = {
@@ -143,9 +145,11 @@ class KafkaChangeFeed(ChangeFeed):
         self._consumer = KafkaConsumer(**config)
 
         topic_partitions = []
+
         for topic in self.topics:
             for partition in self._consumer.partitions_for_topic(topic):
                 topic_partitions.append(TopicPartition(topic, partition))
+# --- this will call the _filter_partitions
 
         self._consumer.assign(self._filter_partitions(topic_partitions))
         return self._consumer
@@ -162,13 +166,21 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
-        if self.process_num == -1:
-            return []
-
-        return [
-            topic_partitions[num::self.num_processes]
-            for num in range(self.num_processes)
-        ][self.process_num]
+        # only when num_processes > 1 i.e more than 1 so define it like that here...
+        # we have to return empty string only when run_migration is true and u_sp is true
+        if not self.dedicated_migration_process:
+            return [
+                topic_partitions[num::self.num_processes]
+                for num in range(self.num_processes)
+            ][self.process_num]
+        else:
+            if self.process_num == 0:
+                return None
+            else:
+                return [
+                    topic_partitions[num::self.num_processes]
+                    for num in range(self.num_processes - 1)
+                ][self.process_num - 1]
 
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):

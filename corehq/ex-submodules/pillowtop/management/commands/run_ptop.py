@@ -53,6 +53,14 @@ class Command(BaseCommand):
             help="Run a single specific pillow name from settings.PILLOWTOPS list",
         )
         parser.add_argument(
+            '--start-process',
+            action='store',
+            dest='start_process',
+            default=0,
+            type=int,
+            help="The number from which we expect the process_num to begin and run for this pillow",
+        )
+        parser.add_argument(
             '--num-processes',
             action='store',
             dest='num_processes',
@@ -79,9 +87,9 @@ class Command(BaseCommand):
             "setting this value to 1 will process each change as it comes in.",
         )
         parser.add_argument(
-            '--use-side-process',
+            '--dedicated-migration-process',
             action='store_true',
-            dest='use_side_process',
+            dest='dedicated_migration_process',
             default=False,
             help="Set if you want to Move migrations on to side process",
         )
@@ -92,10 +100,11 @@ class Command(BaseCommand):
         list_checkpoints = options['list_checkpoints']
         pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
+        start_process = options['start_process']
         num_processes = options['num_processes']
         process_number = options['process_number']
         processor_chunk_size = options['processor_chunk_size']
-        use_side_process = options['use_side_process']
+        dedicated_migration_process = options['dedicated_migration_process']
         assert 0 <= process_number < num_processes
         assert processor_chunk_size
         if list_all:
@@ -120,7 +129,7 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number, processor_chunk_size=processor_chunk_size, use_side_process=use_side_process)
+            pillow = get_pillow_by_name(pillow_name, start_process=start_process, num_processes=num_processes, process_num=process_number, processor_chunk_size=processor_chunk_size, dedicated_migration_process=dedicated_migration_process)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:

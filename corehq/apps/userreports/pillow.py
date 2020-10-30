@@ -510,10 +510,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
-            processor_chunk_size=0):
+            processor_chunk_size=0, dedicated_migration_process=False):
         change_feed = KafkaChangeFeed(
-            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
-        )
+            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num, dedicated_migration_process=dedicated_migration_process
+        ) # empty
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -525,7 +525,9 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             processor=processor,
             checkpoint=checkpoint,
             change_processed_event_handler=event_handler,
-            processor_chunk_size=processor_chunk_size
+            processor_chunk_size=processor_chunk_size,
+            dedicated_migration_process=dedicated_migration_process,
+            process_num=process_num
         )
         # set by the superclass constructor
         assert self.processors is not None
@@ -546,7 +548,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
-                         num_processes=1, process_num=0, use_side_process=False,
+                         num_processes=1, start_process=0, process_num=0, dedicated_migration_process=False,
                          processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
 
@@ -567,14 +569,15 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         pillow_name=pillow_id,
         topics=topics,
         num_processes=num_processes,
-        process_num= -1 if ((process_num == 0) and (use_side_process == True)) else process_num,
+        process_num= process_num,
         processor_chunk_size=processor_chunk_size,
+        dedicated_migration_process=dedicated_migration_process,
     )
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
-                                num_processes=1, process_num=0,
+                                num_processes=1, process_num=0, dedicated_migration_process=False,
                                 processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
 
@@ -601,6 +604,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         process_num=process_num,
         retry_errors=True,
         processor_chunk_size=processor_chunk_size,
+        dedicated_migration_process=dedicated_migration_process,
     )
 
 

@@ -122,7 +122,7 @@ def _get_topic_offsets(topics, latest):
             for partition in partitions:
                 offsets[(topic, partition)] = None
                 offset_requests.append(OffsetRequestPayload(topic, partition, time_value, num_offsets))
-
+                     
         responses = client.send_offset_request(offset_requests)
         for r in responses:
             offsets[(r.topic, r.partition)] = r.offsets[0]

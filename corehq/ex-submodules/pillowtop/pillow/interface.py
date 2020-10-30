@@ -106,7 +106,11 @@ class PillowBase(metaclass=ABCMeta):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+        if self.process_num == 0 and self.dedicated_migration_process:
+            time.sleep(3)
+            self.process_changes(since=None, forever=False)
+        else:
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -418,10 +422,12 @@ class ConstructedPillow(PillowBase):
     """
 
     def __init__(self, name, checkpoint, change_feed, processor,
-                 change_processed_event_handler=None, processor_chunk_size=0):
+                 change_processed_event_handler=None, processor_chunk_size=0, dedicated_migration_process=False, process_num=0):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
+        self.dedicated_migration_process = dedicated_migration_process
+        self.process_num = process_num
         self.processor_chunk_size = processor_chunk_size
         if isinstance(processor, list):
             self.processors = processor
