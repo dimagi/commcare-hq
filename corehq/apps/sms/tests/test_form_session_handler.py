@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.test import TestCase
-from mock import patch, Mock
+from mock import patch, Mock, MagicMock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.handlers.form_session import form_session_handler
@@ -9,8 +9,11 @@ from corehq.apps.sms.models import (
     PhoneNumber,
     SMS,
     INCOMING,
+    MessagingEvent,
+    MessagingSubEvent
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 
 
 class MockContextManager(object):
@@ -30,10 +33,12 @@ def mock_critical_section_for_smsforms_sessions(contact_id):
        new=mock_critical_section_for_smsforms_sessions)
 class FormSessionTestCase(TestCase):
 
-    def test_open_form_session(self):
-        Domain(name='test')
-        number = PhoneNumber(
-            domain='test',
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain(name='test')
+        cls.number = PhoneNumber(
+            domain=cls.domain.name,
             owner_doc_type='CommCareCase',
             owner_id='fake-owner-id1',
             phone_number='01112223333',
@@ -44,16 +49,43 @@ class FormSessionTestCase(TestCase):
             pending_verification=False,
             contact_last_modified=datetime.utcnow()
         )
-        SQLXFormsSession.create_session_object(
-            'test',
-            Mock(get_id='contact_id'),
-            number.phone_number,
+        cls.session = SQLXFormsSession.create_session_object(
+            cls.domain.name,
+            Mock(get_id=cls.number.owner_id),
+            cls.number.phone_number,
             Mock(get_id='app_id'),
             Mock(xmlns='xmlns'),
             expire_after=24 * 60,
         )
+        cls.session.save()
+
+        cls.backend = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            domain=cls.domain,
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
+
+        cls.event = MessagingEvent.objects.create(
+            domain=cls.domain.name,
+            date=datetime.utcnow(),
+            source=MessagingEvent.SOURCE_BROADCAST,
+            content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+            status=MessagingEvent.STATUS_COMPLETED
+        )
+        cls.subevent = MessagingSubEvent.objects.create(
+            parent=cls.event,
+            date=datetime.utcnow(),
+            recipient_type=MessagingEvent.RECIPIENT_CASE,
+            content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+            xforms_session=cls.session
+        )
+
+    @patch('corehq.apps.sms.handlers.form_session.answer_next_question', MagicMock(return_value=None))
+    def test_incoming_sms_linked_form_session(self):
         msg = SMS(
-            phone_number=number.phone_number,
+            phone_number=self.number.phone_number,
             direction=INCOMING,
             date=datetime.utcnow(),
             text="test message",
@@ -63,5 +95,5 @@ class FormSessionTestCase(TestCase):
             backend_message_id=None,
             raw_text=None,
         )
-        form_session_handler(number, msg.text, msg)
+        form_session_handler(self.number, msg.text, msg)
         self.assertTrue(msg.messaging_subevent is not None)
