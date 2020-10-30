@@ -12,12 +12,11 @@ class TarGzipBlobDB(AbstractBlobDB):
     into memory first.
     """
 
-    def __init__(self, filename, extends):
+    def __init__(self, filename, already_exported):
         super().__init__()
         self.filename = filename
-        self.extends = extends
+        self._already_exported = already_exported or set()
         self._tgzfile = None
-        self._names = None
 
     def open(self, mode='r:gz'):
         self._tgzfile = tarfile.open(self.filename, mode)
@@ -54,22 +53,7 @@ class TarGzipBlobDB(AbstractBlobDB):
             self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
-        if self._names is None:
-            self._names = _get_existing_names(self.extends)
-        return key in self._names
+        return key in self._already_exported
 
     def size(self, key):
         raise NotImplementedError
-
-
-def _get_existing_names(existing_blob_archives):
-    if existing_blob_archives:
-        print("Loading names from existing archives")
-        print("If this fails, you might try breaking them up into smaller archives")
-        print('  eg: `$ split -n 8 <filename> "<new base filename>"')
-    existing = set()
-    for filename in existing_blob_archives:
-        print(f"Loading {filename}")
-        with tarfile.open(filename, 'r:gz') as tgzfile:
-            existing.update(tgzfile.getnames())
-    return existing

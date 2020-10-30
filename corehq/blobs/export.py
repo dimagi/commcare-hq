@@ -11,8 +11,8 @@ from .targzipdb import TarGzipBlobDB
 
 class BlobDbBackendExporter(object):
 
-    def __init__(self, filename, extends):
-        self.db = TarGzipBlobDB(filename, extends)
+    def __init__(self, filename, already_exported):
+        self.db = TarGzipBlobDB(filename, already_exported)
         self.src_db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -46,8 +46,8 @@ class BlobExporter(ABC):
     def slug(self):
         raise NotImplementedError
 
-    def migrate(self, filename, chunk_size=100, limit_to_db=None, extends=(),
-                force=False):
+    def migrate(self, filename, chunk_size=100, limit_to_db=None,
+                already_exported=None, force=False):
         if not self.domain:
             raise ExportError("Must specify domain")
 
@@ -57,7 +57,7 @@ class BlobExporter(ABC):
                 "To re-run the export use 'reset'".format(self.slug)
             )
 
-        migrator = BlobDbBackendExporter(filename, extends)
+        migrator = BlobDbBackendExporter(filename, already_exported)
         with migrator:
             self._migrate(migrator, chunk_size, limit_to_db)
         print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
