@@ -18,7 +18,7 @@ def _grandfather_basic_privs(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('accounting', '0049_app_user_profiles'),
+        ('accounting', '0051_hubspot_restrictions'),
     ]
 
     operations = [
