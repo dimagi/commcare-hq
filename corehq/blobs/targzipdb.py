@@ -47,10 +47,9 @@ class TarGzipBlobDB(AbstractBlobDB):
             need to use the ``dump_domain_data`` management command.
 
         """
-        if not self.exists(key):
-            tarinfo = tarfile.TarInfo(name=key)
-            tarinfo.size = in_fileobj.content_length
-            self._tgzfile.addfile(tarinfo, in_fileobj)
+        tarinfo = tarfile.TarInfo(name=key)
+        tarinfo.size = in_fileobj.content_length
+        self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
         return key in self._already_exported

@@ -27,6 +27,9 @@ class BlobDbBackendExporter(object):
 
     def process_object(self, meta):
         self.total_blobs += 1
+        if self.db.exists(meta.key):
+            return
+
         try:
             content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
@@ -34,7 +37,6 @@ class BlobDbBackendExporter(object):
         else:
             with content:
                 self.db.copy_blob(content, key=meta.key)
-        return True
 
 
 class BlobExporter(ABC):
