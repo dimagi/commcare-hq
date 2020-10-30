@@ -12,8 +12,8 @@ From a product perspective, there are two types of users:
   and set their own password. Web users may use multiple domains and have a "membership" in each domain they access.
 * Mobile users collect data. They primarily use CommCare, typically on a mobile device. Their accounts
   are managed by administrators, who create their accounts and set their passwords. On projects that use
-  Web Apps, "mobile" users don't use a mobile device. Mobile users are associated with a single domain. In code, 
-  mobile users are sometimes called "CommCare Users" since they are expected to be doing data entry in CommCare mobile app.
+  Web Apps, "mobile" users don't use a mobile device. Mobile users are associated with a single domain. In code,
+  mobile users are sometimes called "commcare" users since they are expected to be doing data entry in the CommCare mobile app.
 
 There can be overlap between groups: for example, web users can enter data using web apps or app preview, and mobile
 users can be granted access to do tasks in HQ other than data entry. Nonetheless, HQ has assumptions baked in about
@@ -23,6 +23,13 @@ how web and mobile users view the system differently. Examples:
 * The classes or users in reports filters (``All Data``, ``Project Data``, etc.) are defined partially based on the web/mobile
   distinction, and the default for reports (``Project Data``) excludes web users because they're assumed to be app builders
   who don't submit "real" data, only test data.
+
+In user-facing content, web users are called "web users" and mobile users are typically called "mobile workers"
+but occasionally "mobile users." The navigation for the Users section calls the two groups "Application Users"
+and "Project Users," but that terminology isn't used elsewhere.
+
+In code, web users are instances of ``WebUser`` and other identifiers always use ``web_user``. Mobile users are
+instances of ``CommCareUser`` but other identifiers use a mix of ``commcare_user`` and ``mobile_user``.
 
 CouchUser Class Hierachy
 ~~~~~~~~~~~~~~~~~~~~~~~~
