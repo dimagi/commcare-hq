@@ -1,8 +1,11 @@
 from datetime import timedelta
 
+from django.conf import settings
+
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
+CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 
 RECORD_PENDING_STATE = 'PENDING'
