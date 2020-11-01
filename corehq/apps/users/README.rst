@@ -20,7 +20,7 @@ users can be granted access to do tasks in HQ other than data entry. Nonetheless
 how web and mobile users view the system differently. Examples:
 
 * The menu code (``tabclasses.py``) bases some of its logic on whether the current user is web or mobile.
-* The classes or users in reports filters (``All Data``, ``Project Data``, etc.) are defined partially based on the web/mobile
+* The classes of users in reports filters (``All Data``, ``Project Data``, etc.) are defined partially based on the web/mobile
   distinction, and the default for reports (``Project Data``) excludes web users because they're assumed to be app builders
   who don't submit "real" data, only test data.
 
