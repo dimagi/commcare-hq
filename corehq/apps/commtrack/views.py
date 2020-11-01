@@ -1,4 +1,5 @@
 import copy
+import decimal
 import json
 
 from django.contrib import messages
@@ -143,12 +144,14 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 submodel = getattr(self.commtrack_settings, attr)
                 submodel.commtrack_settings = self.commtrack_settings
                 try:
-                    submodel.full_clean()
                     submodel.save()
-                except ValidationError as e:
-                    for key, msgs in dict(e).items():
-                        for msg in msgs:
-                            messages.error(request, _("Could not save {}: {}").format(key, msg))
+                except decimal.InvalidOperation:        # capture only decimal errors - too many digits, etc.
+                    try:
+                        submodel.full_clean()           # get human-readable messages
+                    except ValidationError as e:
+                        for key, msgs in dict(e).items():
+                            for msg in msgs:
+                                messages.error(request, _("Could not save {}: {}").format(key, msg))
 
             for loc_type in LocationType.objects.filter(domain=self.domain).all():
                 # This will update stock levels based on commtrack config
