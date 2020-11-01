@@ -39,7 +39,7 @@ CouchUser Class Hierachy
 Each ``CouchUser`` is associated with a Django user, an instance of ``django.contrib.auth.models.User``.
 The fields stored in ``User`` need to be synced between this object and the related couch document. The mixin
 ``DjangoUserMixin`` defines the django-related fields, and ``CouchUser.get_django_user`` can be used to get the
-``User`` asscoaited with a ``CouchUser``.
+``User`` associated with a ``CouchUser``.
 
 ``CommCareUser`` and ``WebUser`` are subclasses of ``CouchUser`` that add in logic about domain membership - with a single
 membership for each ``CommCareUser`` and multiple memberships for ``WebUser``.
