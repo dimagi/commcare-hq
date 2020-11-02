@@ -44,6 +44,7 @@ def delete_es_index(es_index):
         raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
 
 
+@unit_testing_only
 def cleanup_ilm_index(es, index_info):
     if index_info.is_ilm_index:
         es.indices.delete(index=index_info.index + "*")
