@@ -52,12 +52,8 @@ def form_session_handler(v, text, msg):
             session.modified_time = datetime.utcnow()
             session.save()
 
-            # fetch subevent pk to link inbound sms to
-            try:
-                subevent_id = MessagingSubEvent.objects.values_list("id", flat=True)\
-                    .get(xforms_session_id=session.pk)
-            except MessagingSubEvent.DoesNotExist:
-                subevent_id = None
+            subevent = session.related_subevent
+            subevent_id = subevent.id if subevent else None
 
             # Metadata to be applied to the inbound message
             inbound_metadata = MessageMetadata(
