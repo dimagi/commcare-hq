@@ -8,7 +8,8 @@ hqDefine("hqwebapp/js/downgrade_modal", [
     'hqwebapp/js/initial_page_data',
 ], function (
     kissmetrics,
-    $
+    $,
+    initialPageData
 ) {
     var secureCookies = initialPageData.get('secure_cookies');
 

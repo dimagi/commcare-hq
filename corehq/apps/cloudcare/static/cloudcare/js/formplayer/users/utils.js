@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/users/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-    var secureCookies = initialPageData.get('secure_cookies');
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    var secureCookies = initialPageData('secure_cookies');
     var Utils = {};
     Utils.Users = {
         /**
