@@ -151,7 +151,7 @@ rjsmin==1.0.12            # via django-compressor
 s3transfer==0.3.3         # via boto3
 schema==0.7.2             # via -r requirements.in
 sentry-sdk==0.14.4        # via -r requirements.in
-setproctitle==1.1.9       # via -r prod-requirements.in
+setproctitle==1.1.10      # via -r prod-requirements.in
 sh==1.09                  # via -r requirements.in
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, datadog, django-prbac
