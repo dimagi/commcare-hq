@@ -19,9 +19,9 @@
           "property_name": "_id"
       },
       "xmlns": [
-        "http://openrosa.org/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1",
-        "http://openrosa.org/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F",
-        "http://openrosa.org/formdesigner/7C8BC256-0E79-4A96-9ECB-D6D8C50CD69E"
+        "http://org.commcarehq/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1",
+        "http://org.commcarehq/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F",
+        "http://org.commcarehq/formdesigner/7C8BC256-0E79-4A96-9ECB-D6D8C50CD69E"
       ]
     },
     "configured_filter": {
@@ -93,7 +93,7 @@
               "datatype": "string"
             },
             "operator": "not_eq",
-            "property_value": "http://openrosa.org/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
+            "property_value": "http://org.commcarehq/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
           },
           "expression_if_true": {
             "type": "property_path",
@@ -126,7 +126,7 @@
               "datatype": "string"
             },
             "operator": "not_eq",
-            "property_value": "http://openrosa.org/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
+            "property_value": "http://org.commcarehq/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
           },
           "expression_if_true": {
             "type": "property_path",
@@ -161,7 +161,7 @@
               "datatype": "string"
             },
             "operator": "not_eq",
-            "property_value": "http://openrosa.org/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
+            "property_value": "http://org.commcarehq/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
           },
           "expression_if_true": {
             "type": "conditional",
@@ -173,7 +173,7 @@
                 "datatype": "string"
               },
               "type": "boolean_expression",
-              "property_value": "http://openrosa.org/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1"
+              "property_value": "http://org.commcarehq/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1"
             },
             "expression_if_true": {
               "type": "property_path",
@@ -276,7 +276,7 @@
               "datatype": "string"
             },
             "operator": "eq",
-            "property_value": "http://openrosa.org/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1"
+            "property_value": "http://org.commcarehq/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1"
           },
           "expression_if_true": {
             "type": "property_path",

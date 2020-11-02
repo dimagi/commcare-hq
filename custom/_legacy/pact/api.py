@@ -66,7 +66,7 @@ def generate_meta_block(couch_user, instance_id=None, timestart=None, timeend=No
 
     if instance_id is None:
         instance_id = uuid.uuid4().hex
-    meta_nsmap={'n0': 'http://openrosa.org/jr/xforms' }
+    meta_nsmap={'n0': 'http://org.commcarehq/jr/xforms' }
 
     meta_lxml = etree.Element("{%s}meta" % meta_nsmap['n0'], nsmap=meta_nsmap)
     sub_element(meta_lxml, '{%s}deviceID' % meta_nsmap['n0'], 'pact_case_updater')

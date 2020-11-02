@@ -15,7 +15,7 @@
                         "type": "property_name",
                         "property_name": "xmlns"
                     },
-                    "property_value": "http://openrosa.org/user-registration",
+                    "property_value": "http://org.commcarehq/user-registration",
                     "operator": "not_eq"
                 },
                 {
@@ -32,37 +32,37 @@
         "named_filters": {
             "newborn_reg": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016",
+                "property_value": "http://org.commcarehq/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016",
                 "property_name": "xmlns"
             },
             "newborn_follup": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/A4BCDED3-5D58-4312-AF6A-76A97C9530DB",
+                "property_value": "http://org.commcarehq/formdesigner/A4BCDED3-5D58-4312-AF6A-76A97C9530DB",
                 "property_name": "xmlns"
             },
             "child_reg": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199",
+                "property_value": "http://org.commcarehq/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199",
                 "property_name": "xmlns"
             },
             "child_follup": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/d2401a55c30432c0881f8a2f7eaa179338253051",
+                "property_value": "http://org.commcarehq/formdesigner/d2401a55c30432c0881f8a2f7eaa179338253051",
                 "property_name": "xmlns"
             },
             "adult_reg": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2",
+                "property_value": "http://org.commcarehq/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2",
                 "property_name": "xmlns"
             },
             "adult_follup": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/af5f05c6c5389959335491450381219523e4eaff",
+                "property_value": "http://org.commcarehq/formdesigner/af5f05c6c5389959335491450381219523e4eaff",
                 "property_name": "xmlns"
             },
             "weekly_summary": {
                 "type": "property_match",
-                "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
+                "property_value": "http://org.commcarehq/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
                 "property_name": "xmlns"
             }
 

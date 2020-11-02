@@ -27,8 +27,8 @@
       },
       "comment": null,
       "property_value": [
-        "http://openrosa.org/formdesigner/182649A1-A3BB-4F56-988C-2C103DBAA6D7",
-        "http://openrosa.org/formdesigner/F3757334-02D8-4AE0-A4EF-1E7189D9B505"
+        "http://org.commcarehq/formdesigner/182649A1-A3BB-4F56-988C-2C103DBAA6D7",
+        "http://org.commcarehq/formdesigner/F3757334-02D8-4AE0-A4EF-1E7189D9B505"
       ]
     },
     "configured_indicators": [

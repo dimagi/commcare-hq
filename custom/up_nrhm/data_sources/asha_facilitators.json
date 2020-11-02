@@ -18,8 +18,8 @@
         "property_name": "xmlns"
       },
       "property_value": [
-        "http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505",
-        "http://openrosa.org/formdesigner/6FF66DEB-0882-4DFD-B5F6-DD2E6D32FA96"
+        "http://org.commcarehq/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505",
+        "http://org.commcarehq/formdesigner/6FF66DEB-0882-4DFD-B5F6-DD2E6D32FA96"
       ]
     },
     "configured_indicators": [
@@ -56,7 +56,7 @@
             },
             "type": "boolean_expression",
             "comment": null,
-            "property_value": "http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505"
+            "property_value": "http://org.commcarehq/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505"
           },
           "expression_if_true": {
             "type": "constant",

@@ -26,8 +26,8 @@
           },
           "operator": "in",
           "property_value": [
-            "http://openrosa.org/formdesigner/DF2FBEEA-31DE-4537-9913-07D57591502C",
-            "http://openrosa.org/formdesigner/A79467FD-4CDE-47B6-8218-4394699A5C95"
+            "http://org.commcarehq/formdesigner/DF2FBEEA-31DE-4537-9913-07D57591502C",
+            "http://org.commcarehq/formdesigner/A79467FD-4CDE-47B6-8218-4394699A5C95"
           ]
         }
       ]
@@ -85,7 +85,7 @@
               "datatype": "string"
             },
             "operator": "eq",
-            "property_value": "http://openrosa.org/formdesigner/DF2FBEEA-31DE-4537-9913-07D57591502C"
+            "property_value": "http://org.commcarehq/formdesigner/DF2FBEEA-31DE-4537-9913-07D57591502C"
           },
           "expression_if_true": {
             "type": "property_path",

@@ -21,7 +21,7 @@
         "type": "property_name",
         "property_name": "xmlns"
       },
-      "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+      "property_value": "http://org.commcarehq/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
     },
     "configured_indicators": [
       {

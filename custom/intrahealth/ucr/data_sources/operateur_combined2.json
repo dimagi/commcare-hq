@@ -33,7 +33,7 @@
           },
           "type": "boolean_expression",
           "comment": null,
-          "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+          "property_value": "http://org.commcarehq/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
     },
     "configured_indicators": [
   {

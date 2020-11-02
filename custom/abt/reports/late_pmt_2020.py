@@ -21,7 +21,7 @@ from custom.abt.reports.filters_2020 import (
 )
 from custom.abt.reports.fixture_utils import get_locations
 
-INDICATORS_FORM_XMLNS = 'http://openrosa.org/formdesigner/00CEB41B-2967-4370-9EA3-BFD9BD7AF785'
+INDICATORS_FORM_XMLNS = 'http://org.commcarehq/formdesigner/00CEB41B-2967-4370-9EA3-BFD9BD7AF785'
 
 
 class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin):

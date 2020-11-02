@@ -9,19 +9,19 @@ NUMBER_OF_MONTHS_FOR_FIXTURES = 6
 MOTHER_CASE_TYPE = "pregnant_mother"
 CHILD_CASE_TYPE = "child"
 
-M4CHANGE2_FOLLOW_UP_FORM_XMLNS = 'http://openrosa.org/formdesigner/56189892f7d8b3087d98b7599e0574f8e2031da6'
-M4CHANGE2_BOOKING_FORM_XMLNS = 'http://openrosa.org/formdesigner/b9d9f943e63d5de8a6ea3a40a314bc5dafd2ef50'
-M4CHANGE2_LAB_RESULT_UPDATE_FORM_XMLNS = 'http://openrosa.org/formdesigner/c313dc769f447de3224fe13102c75b299e1e6ab3'
-M4CHANGE2_BOOKED_DELIVERY_FORM_XMLNS = 'http://openrosa.org/formdesigner/e951a60e291a2867a95d206441d876fbf204949d'
-M4CHANGE2_UNBOOKED_DELIVERY_FORM_XMLNS = 'http://openrosa.org/formdesigner/3b48e25bab6e7bd0967336b81b1e008c9ab5e6f9'
+M4CHANGE2_FOLLOW_UP_FORM_XMLNS = 'http://org.commcarehq/formdesigner/56189892f7d8b3087d98b7599e0574f8e2031da6'
+M4CHANGE2_BOOKING_FORM_XMLNS = 'http://org.commcarehq/formdesigner/b9d9f943e63d5de8a6ea3a40a314bc5dafd2ef50'
+M4CHANGE2_LAB_RESULT_UPDATE_FORM_XMLNS = 'http://org.commcarehq/formdesigner/c313dc769f447de3224fe13102c75b299e1e6ab3'
+M4CHANGE2_BOOKED_DELIVERY_FORM_XMLNS = 'http://org.commcarehq/formdesigner/e951a60e291a2867a95d206441d876fbf204949d'
+M4CHANGE2_UNBOOKED_DELIVERY_FORM_XMLNS = 'http://org.commcarehq/formdesigner/3b48e25bab6e7bd0967336b81b1e008c9ab5e6f9'
 
-M4CHANGE2R_FOLLOW_UP_FORM_XMLNS = 'http://openrosa.org/formdesigner/a336db2836b54b2c301a79ef531d30d00618577c'
-M4CHANGE2R_BOOKED_DELIVERY_FORM_XMLNS = 'http://openrosa.org/formdesigner/dffcbe5c125f3b0c6859265b0f08abec9f4d23f0'
+M4CHANGE2R_FOLLOW_UP_FORM_XMLNS = 'http://org.commcarehq/formdesigner/a336db2836b54b2c301a79ef531d30d00618577c'
+M4CHANGE2R_BOOKED_DELIVERY_FORM_XMLNS = 'http://org.commcarehq/formdesigner/dffcbe5c125f3b0c6859265b0f08abec9f4d23f0'
 
-PNC_CHILD_IMMUNIZATION_FORM_XMLNS = 'http://openrosa.org/formdesigner/4dc380eadd46dfa9915f374934af30b5596edc92'
-REG_HOME_DELIVERED_INFANT_FORM_XMLNS = 'http://openrosa.org/formdesigner/7fea595525157a9edd81b731d6b10f0b65a44ae2'
+PNC_CHILD_IMMUNIZATION_FORM_XMLNS = 'http://org.commcarehq/formdesigner/4dc380eadd46dfa9915f374934af30b5596edc92'
+REG_HOME_DELIVERED_INFANT_FORM_XMLNS = 'http://org.commcarehq/formdesigner/7fea595525157a9edd81b731d6b10f0b65a44ae2'
 
-PMTCT_CLIENTS_FORM = 'http://openrosa.org/formdesigner/E671459B-7402-4B68-9020-7F49F0D94ED5'
+PMTCT_CLIENTS_FORM = 'http://org.commcarehq/formdesigner/E671459B-7402-4B68-9020-7F49F0D94ED5'
 
 BOOKING_FORMS = [
     M4CHANGE2_BOOKING_FORM_XMLNS,

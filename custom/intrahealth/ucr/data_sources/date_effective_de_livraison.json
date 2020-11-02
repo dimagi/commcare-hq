@@ -21,7 +21,7 @@
       },
       "type": "boolean_expression",
       "comment": null,
-      "property_value": "http://openrosa.org/formdesigner/F3757334-02D8-4AE0-A4EF-1E7189D9B505"
+      "property_value": "http://org.commcarehq/formdesigner/F3757334-02D8-4AE0-A4EF-1E7189D9B505"
     },
     "configured_indicators": [
       {

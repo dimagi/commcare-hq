@@ -12,7 +12,7 @@
                 "type": "property_name",
                 "property_name": "xmlns"
             },
-            "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
+            "property_value": "http://org.commcarehq/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
             "operator": "eq"
         },
         "configured_indicators": [

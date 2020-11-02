@@ -43,7 +43,7 @@
           }
         },
         "comment": null,
-        "property_value": "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be"
+        "property_value": "http://org.commcarehq/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be"
       },
       "is_not_v2.1": {
         "operator": "eq",
@@ -135,8 +135,8 @@
       },
       "comment": null,
       "property_value": [
-        "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be",
-        "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+        "http://org.commcarehq/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be",
+        "http://org.commcarehq/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
       ]
     },
     "configured_indicators": [

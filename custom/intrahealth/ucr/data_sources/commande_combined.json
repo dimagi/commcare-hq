@@ -43,7 +43,7 @@
         },
         "type": "boolean_expression",
         "comment": null,
-        "property_value": "http://openrosa.org/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
+        "property_value": "http://org.commcarehq/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
       }
     },
     "engine_id": "ucr",
@@ -100,9 +100,9 @@
       "type": "boolean_expression",
       "comment": null,
       "property_value": [
-        "http://openrosa.org/formdesigner/9ED66735-752D-4C69-B9C8-77CEDAAA0348",
-        "http://openrosa.org/formdesigner/12b412390011cb9b13406030ab10447ffd99bdf8",
-        "http://openrosa.org/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
+        "http://org.commcarehq/formdesigner/9ED66735-752D-4C69-B9C8-77CEDAAA0348",
+        "http://org.commcarehq/formdesigner/12b412390011cb9b13406030ab10447ffd99bdf8",
+        "http://org.commcarehq/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
       ]
     },
     "configured_indicators": [

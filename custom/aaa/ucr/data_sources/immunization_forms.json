@@ -20,7 +20,7 @@
         "type": "property_name",
         "property_name": "xmlns"
       },
-      "property_value": "http://openrosa.org/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
+      "property_value": "http://org.commcarehq/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
     },
     "configured_indicators": [
       {

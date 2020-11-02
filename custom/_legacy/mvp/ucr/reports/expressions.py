@@ -1,9 +1,9 @@
 from corehq.apps.userreports.specs import TypeProperty
 from dimagi.ext.jsonobject import JsonObject
 
-NEONATE_FORM = "http://openrosa.org/formdesigner/5cd541d5a1034f02c922dc888416148a89b85ffa"
-CHILD_FORM = "http://openrosa.org/formdesigner/a591e5a20bf459c898bff3faacd552a3ebcc0f5d"
-ADULT_FORM = "http://openrosa.org/formdesigner/60666f0dc7688fdef369947196722ff2f235101e"
+NEONATE_FORM = "http://org.commcarehq/formdesigner/5cd541d5a1034f02c922dc888416148a89b85ffa"
+CHILD_FORM = "http://org.commcarehq/formdesigner/a591e5a20bf459c898bff3faacd552a3ebcc0f5d"
+ADULT_FORM = "http://org.commcarehq/formdesigner/60666f0dc7688fdef369947196722ff2f235101e"
 
 
 class TreatmentPlaceExpressionSpec(JsonObject):

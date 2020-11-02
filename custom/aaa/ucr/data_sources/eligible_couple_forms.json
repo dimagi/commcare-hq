@@ -35,7 +35,7 @@
         "property_name": "xmlns"
       },
       "property_value": [
-        "http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
+        "http://org.commcarehq/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
       ]
     },
     "configured_indicators": [

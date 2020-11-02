@@ -1,5 +1,5 @@
 # From 1 - SOP Morn Mob
-http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
+http://org.commcarehq/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
   - question: [sop_physical]
     base_path: [morning_mobilization_grp, Q1]
     comment: [sop_physical_comments]
@@ -80,7 +80,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_por: "Problema reportado: Os roceadores nao e usam todo insecticida e agua contaminada para encher os tanques das bombas."
     responsible_follow_up: "District coordinator"
 # Form 2 - Trans Veh Insp
-http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
+http://org.commcarehq/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
   - question: [current_certificate_issued]
     comment: [current_certificate_issued_comments]
     base_path: [vehicle_inspection_grp, Q1]
@@ -240,7 +240,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_por: "Problema notado: Evidencia de vazamento de insecticidas na viatura."
     responsible_follow_up: "ECO"
 # Form 3 - End of Day clean up
-http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
+http://org.commcarehq/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
   - question: [sop_return_in_ppe]
     comment: [sop_return_in_ppe_comments]
     base_path: [obs_rcd_mgmt_grp, Q1]
@@ -731,7 +731,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Carregadores nao transportam os fatos de trabalho limpos para o campo"
     responsible_follow_up: "District Coordinator"
 # Form 4 - Storekeeper
-http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
+http://org.commcarehq/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
   - question: [ledger_present]
     comment: [ledger_present_comments]
     base_path: [stock_audit_grp, Q1]
@@ -1078,7 +1078,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_por: "Problema reportado: Pesticida excedente no inventario."
     responsible_follow_up: "District Coordinator"
 # Form 5 - HO Prep & SOP Perf
-http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
+http://org.commcarehq/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
   - question: [items_removed]
     comment: [items_removed_comments]
     base_path: [household_prep_grp, Q1]

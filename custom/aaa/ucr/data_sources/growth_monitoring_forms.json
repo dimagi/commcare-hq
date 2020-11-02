@@ -35,9 +35,9 @@
         "property_name": "xmlns"
       },
       "property_value": [
-        "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
-        "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
-        "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+        "http://org.commcarehq/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+        "http://org.commcarehq/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
+        "http://org.commcarehq/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
       ]
     },
     "configured_indicators": [
@@ -52,15 +52,15 @@
             "property_name": "xmlns"
           },
           "cases": {
-            "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2": {
+            "http://org.commcarehq/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2": {
                 "type": "constant",
                 "constant": 0
             },
-            "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75": {
+            "http://org.commcarehq/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75": {
                 "type": "constant",
                 "constant": 1
             },
-            "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3": {
+            "http://org.commcarehq/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3": {
                 "type": "constant",
                 "constant": 2
             }
@@ -253,7 +253,7 @@
             "property_name": "xmlns"
           }
         },
-        "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+        "property_value": "http://org.commcarehq/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
       }
     },
     "engine_id": "aaa-data"
