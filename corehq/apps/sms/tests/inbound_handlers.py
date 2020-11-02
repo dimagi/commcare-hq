@@ -7,22 +7,8 @@ from corehq.apps.reminders.models import RECIPIENT_OWNER, RECIPIENT_USER_GROUP
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
-from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
-from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser, mock_critical_section_for_smsforms_sessions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
-
-class MockContextManager(object):
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
-
-def mock_critical_section_for_smsforms_sessions(contact_id):
-    return MockContextManager()
 
 
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
