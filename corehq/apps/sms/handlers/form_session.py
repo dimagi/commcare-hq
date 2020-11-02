@@ -10,7 +10,6 @@ from corehq.apps.sms.api import (
     send_sms_to_verified_number,
 )
 from corehq.apps.sms.messages import *
-from corehq.apps.sms.models import MessagingSubEvent
 from corehq.apps.sms.util import format_message_list, get_date_format
 from corehq.apps.smsforms.app import _responses_to_text, get_responses, get_events_from_responses
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization, \
