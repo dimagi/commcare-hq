@@ -200,7 +200,8 @@ class EntriesHelper(object):
             e = Entry()
             if self.app.enable_localized_menu_media:
                 e.command = LocalizedCommand(
-                    id=id_strings.case_list_command(module),
+                    id="search_command.m2",
+                    #id=id_strings.case_list_command(module),
                     menu_locale_id=id_strings.case_list_locale(module),
                     media_image=module.case_list.uses_image(build_profile_id=self.build_profile_id),
                     media_audio=module.case_list.uses_audio(build_profile_id=self.build_profile_id),
@@ -209,7 +210,8 @@ class EntriesHelper(object):
                 )
             else:
                 e.command = Command(
-                    id=id_strings.case_list_command(module),
+                    id="search_command.m2",
+                    #id=id_strings.case_list_command(module),
                     locale_id=id_strings.case_list_locale(module),
                     media_image=module.case_list.default_media_image,
                     media_audio=module.case_list.default_media_audio,

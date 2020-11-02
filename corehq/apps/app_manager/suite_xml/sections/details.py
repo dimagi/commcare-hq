@@ -314,8 +314,9 @@ class DetailContributor(SectionContributor):
             **relevant_kwarg
         )
         frame = PushFrame()
-        frame.add_mark()
+        #frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
+        frame.add_command(XPath.string(id_strings.menu_id(module)))
         action.stack.add_frame(frame)
         return action
 

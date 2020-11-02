@@ -250,4 +250,5 @@ class MenuContributor(SuiteContributorByModule):
             yield command
 
         if hasattr(module, 'case_list') and module.case_list.show:
-            yield Command(id=id_strings.case_list_command(module))
+            #yield Command(id=id_strings.case_list_command(module))
+            yield Command(id="search_command.m2")
