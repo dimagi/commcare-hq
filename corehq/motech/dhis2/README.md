@@ -118,7 +118,7 @@ definitions. The following is an example:
     [
       {
         "doc_type": "Dhis2FormConfig",
-        "xmlns": "http://openrosa.org/formdesigner/C3156B64-C380-4A38-B00E-C8E4D81EDCF9",
+        "xmlns": "http://org.commcarehq/formdesigner/C3156B64-C380-4A38-B00E-C8E4D81EDCF9",
         "program_id": "WomWTaHk5mx",
         "event_date": {
           "form_question": "/data/event_date"
@@ -152,7 +152,7 @@ definitions. The following is an example:
 
 There is only one Dhis2FormConfig definition in this example. The form
 is identified by its XMLNS,
-"http://openrosa.org/formdesigner/C3156B64-C380-4A38-B00E-C8E4D81EDCF9".
+"http://org.commcarehq/formdesigner/C3156B64-C380-4A38-B00E-C8E4D81EDCF9".
 
 The event date is determined from a form question, "/data/event_date".
 (It is possible to use the time when the form was opened on the device
@@ -397,7 +397,7 @@ Paste the following into "Case config":
   "form_configs": [
     {
       "doc_type": "Dhis2FormConfig",
-      "xmlns": "http://openrosa.org/formdesigner/F850C145-D805-4B35-925B-A7D35141FD13",
+      "xmlns": "http://org.commcarehq/formdesigner/F850C145-D805-4B35-925B-A7D35141FD13",
       "program_id": "uy2gU8kT1jF",
       "program_stage_id": {
         "value": "eaDHS084uMp"

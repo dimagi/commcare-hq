@@ -169,7 +169,7 @@ A shadow module duplicates all of its parent's entries. In the example below, m1
 
     <entry>
         <form>
-            http://openrosa.org/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
+            http://org.commcarehq/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
         </form>
         <command id="m0-f0">
             <text>
@@ -179,7 +179,7 @@ A shadow module duplicates all of its parent's entries. In the example below, m1
     </entry>
     <entry>
         <form>
-            http://openrosa.org/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
+            http://org.commcarehq/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
         </form>
         <command id="m1-f0">
             <text>

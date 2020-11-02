@@ -373,7 +373,7 @@ An example value of "Encounters config" might look like this:
     [
       {
         "doc_type": "OpenmrsFormConfig",
-        "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+        "xmlns": "http://org.commcarehq/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
         "openmrs_start_datetime": {
           "form_question": "/metadata/timeStart",
           "external_data_type": "omrs_date"
@@ -687,7 +687,7 @@ Here is an example ``OpenmrsFormConfig``:
     [
       {
         "doc_type": "OpenmrsFormConfig",
-        "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+        "xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
         "openmrs_form": null,
         "openmrs_visit_type": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
 
@@ -805,7 +805,7 @@ different parts.
 
 .. code-block:: javascript
 
-    "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+    "xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
 
 Atom feed integration uses the same configuration as data forwarding,
 because mapping case properties to observations normally applies to both

@@ -21,7 +21,7 @@ The following filters apply to data sources built on top of forms.
         "property_name": "xmlns"
     },
     "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
+    "property_value": "http://org.commcarehq/formdesigner/my-registration-form"
 }
 ```
 ### Filter by a set of form types using the XMLNS
@@ -35,9 +35,9 @@ The following filters apply to data sources built on top of forms.
     },
     "operator": "in",
     "property_value": [
-        "http://openrosa.org/formdesigner/my-registration-form",
-        "http://openrosa.org/formdesigner/my-follow-up-form",
-        "http://openrosa.org/formdesigner/my-close-form"
+        "http://org.commcarehq/formdesigner/my-registration-form",
+        "http://org.commcarehq/formdesigner/my-follow-up-form",
+        "http://org.commcarehq/formdesigner/my-close-form"
     ]
 }
 ```
@@ -562,8 +562,8 @@ This will return the difference in seconds between two times (i.e. start and end
         "property_name": "case_id"
     },
     "xmlns": [
-        "http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551",
-        "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+        "http://org.commcarehq/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551",
+        "http://org.commcarehq/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
     ]
 }
 ```
