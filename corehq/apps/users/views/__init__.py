@@ -1295,7 +1295,8 @@ class UploadWebUsers(BaseManageWebUserView):
             list(self.user_specs),
             list(self.group_specs),
             request.couch_user,
-            upload_record.pk
+            upload_record.pk,
+            True
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(

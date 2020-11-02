@@ -287,54 +287,56 @@ DomainInfo = namedtuple('DomainInfo', [
 ])
 
 
-def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+def get_domain_info(domain, upload_domain, user_specs, group_memoizer):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+
     domain_info_by_domain = {}
-
-    def _get_domain_info(domain):
-        domain_info = domain_info_by_domain.get(domain)
-        if domain_info:
-            return domain_info
-        if domain == upload_domain:
-            domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
-        else:
-            domain_group_memoizer = GroupMemoizer(domain)
-        domain_group_memoizer.load_all()
-        can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-        location_cache = None
-        if can_assign_locations:
-            location_cache = SiteCodeToLocationCache(domain)
-
-        domain_obj = Domain.get_by_name(domain)
-        allowed_group_names = [group.name for group in domain_group_memoizer.groups]
-        roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
-        profiles_by_name = {}
-        definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
-        if definition:
-            profiles_by_name = {
-                profile.name: profile
-                for profile in definition.get_profiles()
-            }
-        domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
-        validators = get_user_import_validators(
-            domain_obj,
-            domain_user_specs,
-            allowed_group_names,
-            list(roles_by_name),
-            list(profiles_by_name),
-            upload_domain
-        )
-
-        domain_info = DomainInfo(
-            validators,
-            can_assign_locations,
-            location_cache,
-            roles_by_name,
-            profiles_by_name,
-            domain_group_memoizer
-        )
-        domain_info_by_domain[domain] = domain_info
+    domain_info = domain_info_by_domain.get(domain)
+    if domain_info:
         return domain_info
+    if domain == upload_domain:
+        domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
+    else:
+        domain_group_memoizer = GroupMemoizer(domain)
+    domain_group_memoizer.load_all()
+    can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+    location_cache = None
+    if can_assign_locations:
+        location_cache = SiteCodeToLocationCache(domain)
+
+    domain_obj = Domain.get_by_name(domain)
+    allowed_group_names = [group.name for group in domain_group_memoizer.groups]
+    roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+    profiles_by_name = {}
+    definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
+    if definition:
+        profiles_by_name = {
+            profile.name: profile
+            for profile in definition.get_profiles()
+        }
+    domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
+    validators = get_user_import_validators(
+        domain_obj,
+        domain_user_specs,
+        allowed_group_names,
+        list(roles_by_name),
+        list(profiles_by_name),
+        upload_domain
+    )
+
+    domain_info = DomainInfo(
+        validators,
+        can_assign_locations,
+        location_cache,
+        roles_by_name,
+        profiles_by_name,
+        domain_group_memoizer
+    )
+    domain_info_by_domain[domain] = domain_info
+    return domain_info, domain_info_by_domain
+
+
+def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
 
     ret = {"errors": [], "rows": []}
 
@@ -355,7 +357,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 'row': row,
             }
 
-            domain_info = _get_domain_info(domain)
+            domain_info, domain_info_by_domain = get_domain_info(domain, upload_domain, user_specs, group_memoizer)
 
             try:
                 for validator in domain_info.validators:
@@ -579,53 +581,6 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
 
 
 def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
-    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    domain_info_by_domain = {}
-
-    def _get_domain_info(domain):
-        domain_info = domain_info_by_domain.get(domain)
-        if domain_info:
-            return domain_info
-        if domain == upload_domain:
-            domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
-        else:
-            domain_group_memoizer = GroupMemoizer(domain)
-        domain_group_memoizer.load_all()
-        can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-        location_cache = None
-        if can_assign_locations:
-            location_cache = SiteCodeToLocationCache(domain)
-
-        domain_obj = Domain.get_by_name(domain)
-        allowed_group_names = [group.name for group in domain_group_memoizer.groups]
-        roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
-        profiles_by_name = {}
-        definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
-        if definition:
-            profiles_by_name = {
-                profile.name: profile
-                for profile in definition.get_profiles()
-            }
-        domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
-        validators = get_user_import_validators(
-            domain_obj,
-            domain_user_specs,
-            allowed_group_names,
-            list(roles_by_name),
-            list(profiles_by_name),
-            upload_domain
-        )
-
-        domain_info = DomainInfo(
-            validators,
-            can_assign_locations,
-            location_cache,
-            roles_by_name,
-            profiles_by_name,
-            domain_group_memoizer
-        )
-        domain_info_by_domain[domain] = domain_info
-        return domain_info
 
     ret = {"errors": [], "rows": []}
 
@@ -640,13 +595,13 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
-            # username = normalize_username(str(username), domain) if username else None
+            # username = normalize_username(str(username), domain) if username else None #TODO: confirm still fits need
             status_row = {
                 'username': username,
                 'row': row,
             }
 
-            domain_info = _get_domain_info(domain)
+            domain_info, domain_info_by_domain = get_domain_info(domain, upload_domain, user_specs, group_memoizer)
 
             # TODO: modify get_user_import_validators for correct validators
             # try:
@@ -657,7 +612,6 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
             #     ret['rows'].append(status_row)
             #     continue
 
-            # data = row.get('data', {})
             email = row.get('email')
             first_name = row.get('first name')
             last_name = row.get('last name')
@@ -670,6 +624,10 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
                 elif status == 'Invited':
                     is_account_confirmed = False
                 remove = spec_value_to_boolean_or_none(row, 'remove')
+                role_qualified_id = None
+
+                if role:
+                    role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
 
                 if username:
                     if not upload_user.can_edit_web_users():
@@ -693,7 +651,6 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
                                 raise UserUploadError(_(
                                     "You cannot upload a web user without a role. {username} does not have a role").format(username=username)
                                 )
-                            role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
 
                             if user.is_member_of(domain):
                                 # edit existing user in the domain

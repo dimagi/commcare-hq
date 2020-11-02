@@ -47,7 +47,120 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None, total_count=None):
+def get_devices(user):
+    """
+    Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
+    """
+    return ', '.join([device.device_id for device in sorted(
+        user.devices, key=lambda d: d.last_used, reverse=True
+    )])
+
+
+def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition):
+    model_data = {}
+    uncategorized_data = {}
+    model_data, uncategorized_data = (
+        fields_definition.get_model_and_uncategorized(user.metadata)
+    )
+    role = user.get_role(domain)
+    profile = None
+    if PROFILE_SLUG in user.metadata and domain_has_privilege(domain, privileges.APP_USER_PROFILES):
+        try:
+            profile = CustomDataFieldsProfile.objects.get(id=user.metadata[PROFILE_SLUG])
+        except CustomDataFieldsProfile.DoesNotExist:
+            profile = None
+    activity = user.reporting_metadata
+
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(user.location_id))
+    except SQLLocation.DoesNotExist:
+        pass
+    for location_id in user.assigned_location_ids:
+        # skip if primary location_id, as it is already added to the start of list above
+        if location_id != user.location_id:
+            try:
+                location_codes.append(location_cache.get(location_id))
+            except SQLLocation.DoesNotExist:
+                pass
+
+    def _format_date(date):
+        return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
+
+    return {
+        'data': model_data,
+        'uncategorized_data': uncategorized_data,
+        'group': group_names,
+        'name': user.full_name,
+        'password': "********",  # dummy display string for passwords
+        'phone-number': user.phone_number,
+        'email': user.email,
+        'username': user.raw_username,
+        'language': user.language,
+        'user_id': user._id,
+        'is_active': str(user.is_active),
+        'User IMEIs (read only)': get_devices(user),
+        'location_code': location_codes,
+        'role': role.name if role else '',
+        'user_profile': profile.name if profile else '',
+        'registered_on (read only)': _format_date(user.created_on),
+        'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
+        'last_sync (read only)': activity.last_sync_for_user.sync_date,
+    }
+
+
+def make_web_user_dict(user, domain):
+    user = CouchUser.wrap_correctly(user['doc'])
+    domain_membership = user.get_domain_membership(domain)
+    role = UserRole.get(domain_membership.role_id).name
+    return {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'username': user.username,
+        'status': 'Active User',
+        'role': role,
+        'last_access_date (read only)': domain_membership.last_accessed,
+        'last_login (read only)': user.last_login,
+        'remove': '',
+    }
+
+
+def get_role_name(role):
+    if role:
+        if role == 'admin':
+            return role
+        else:
+            role_id = role[len('user-role:'):]
+            try:
+                return UserRole.get(role_id).name
+            except ResourceNotFound:
+                return ugettext('Unknown Role')
+    else:
+        return None
+
+
+def make_invited_web_user_dict(invite):
+    return {
+        'first_name': 'N/A',
+        'last_name': 'N/A',
+        'email': invite.email,
+        'username': invite.email,
+        'status': 'Invited',
+        'role': get_role_name(invite.role),
+        'last_access_date (read only)': 'N/A',
+        'last_login (read only)': 'N/A',
+        'remove': '',
+    }
+
+
+def _user_rows(user_dicts, user_headers):
+    for user_dict in user_dicts:
+        row = dict(flatten_json(user_dict))
+        yield [row.get(header) or '' for header in user_headers]
+
+
+def parse_mobile_users(group_memoizer, domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
@@ -55,164 +168,36 @@ def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None
     )
     location_cache = LocationIdToSiteCodeCache(domain)
 
-    def _get_group_names(user):
-        if not is_web_download:
-            return sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
-            ], key=alphanumeric_sort_key)
-        elif is_web_download:
-            return sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user['id'], wrap=False)
-            ], key=alphanumeric_sort_key)
-
-    def _get_devices(user):
-        """
-        Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
-        """
-        return ', '.join([device.device_id for device in sorted(
-            user.devices, key=lambda d: d.last_used, reverse=True
-        )])
-
-    def _make_user_dict(user, group_names, location_cache):
-        model_data = {}
-        uncategorized_data = {}
-        model_data, uncategorized_data = (
-            fields_definition.get_model_and_uncategorized(user.metadata)
-        )
-        role = user.get_role(domain)
-        profile = None
-        if PROFILE_SLUG in user.metadata and domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-            try:
-                profile = CustomDataFieldsProfile.objects.get(id=user.metadata[PROFILE_SLUG])
-            except CustomDataFieldsProfile.DoesNotExist:
-                profile = None
-        activity = user.reporting_metadata
-
-        location_codes = []
-        try:
-            location_codes.append(location_cache.get(user.location_id))
-        except SQLLocation.DoesNotExist:
-            pass
-        for location_id in user.assigned_location_ids:
-            # skip if primary location_id, as it is already added to the start of list above
-            if location_id != user.location_id:
-                try:
-                    location_codes.append(location_cache.get(location_id))
-                except SQLLocation.DoesNotExist:
-                    pass
-
-        def _format_date(date):
-            return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
-
-        return {
-            'data': model_data,
-            'uncategorized_data': uncategorized_data,
-            'group': group_names,
-            'name': user.full_name,
-            'password': "********",  # dummy display string for passwords
-            'phone-number': user.phone_number,
-            'email': user.email,
-            'username': user.raw_username,
-            'language': user.language,
-            'user_id': user._id,
-            'is_active': str(user.is_active),
-            'User IMEIs (read only)': _get_devices(user),
-            'location_code': location_codes,
-            'role': role.name if role else '',
-            'user_profile': profile.name if profile else '',
-            'registered_on (read only)': _format_date(user.created_on),
-            'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
-            'last_sync (read only)': activity.last_sync_for_user.sync_date,
-        }
-
-    def _make_web_user_dict(user):
-        user = CouchUser.wrap_correctly(user['doc'])
-        domain_membership = user.get_domain_membership(domain)
-        role = UserRole.get(domain_membership.role_id).name
-        return {
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'email': user.email,
-            'username': user.username,
-            'status': 'Active User',
-            'role': role,
-            'last_access_date (read only)': domain_membership.last_accessed,
-            'last_login (read only)': user.last_login,
-            'remove': '',
-        }
-
-    def _get_role_name(role):
-        if role:
-            if role == 'admin':
-                return role
-            else:
-                role_id = role[len('user-role:'):]
-                try:
-                    return UserRole.get(role_id).name
-                except ResourceNotFound:
-                    return ugettext('Unknown Role')
-        else:
-            return None
-
-    def _make_invited_web_user_dict(invite):
-        return {
-            'first_name': 'N/A',
-            'last_name': 'N/A',
-            'email': invite.email,
-            'username': invite.email,
-            'status': 'Invited',
-            'role': _get_role_name(invite.role),
-            'last_access_date (read only)': 'N/A',
-            'last_login (read only)': 'N/A',
-            'remove': '',
-        }
-
     unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    if is_web_download:
-        for n, user in enumerate(get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
-                                                   include_inactive=False, include_docs=True)):
-            user_dict = _make_web_user_dict(user)
-            user_dicts.append(user_dict)
-            if task:
-                DownloadBase.set_progress(task, n, total_count)
-        for invite in Invitation.by_domain(domain):
-            user_dict = _make_invited_web_user_dict(invite)
-            user_dicts.append(user_dict)
-            if task:
-                DownloadBase.set_progress(task, n, total_count)
+    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
+        group_names = sorted([
+            group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+        ], key=alphanumeric_sort_key)
+        user_dict = make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition)
+        user_dicts.append(user_dict)
+        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
+        user_groups_length = max(user_groups_length, len(group_names))
+        max_location_length = max(max_location_length, len(user_dict["location_code"]))
+        if task:
+            DownloadBase.set_progress(task, n, total_count)
 
-        user_headers = [
-            'first_name', 'last_name', 'username', 'email', 'role', 'last_access_date (read only)',
-            'last_login (read only)', 'status', 'remove'
-        ]
-    elif not is_web_download:
-        for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
-            group_names = _get_group_names(user)
-            user_dict = _make_user_dict(user, group_names, location_cache)
-            user_dicts.append(user_dict)
-            unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
-            user_groups_length = max(user_groups_length, len(group_names))
-            max_location_length = max(max_location_length, len(user_dict["location_code"]))
-            if task:
-                DownloadBase.set_progress(task, n, total_count)
+    user_headers = [
+        'username', 'password', 'name', 'phone-number', 'email',
+        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
+        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
+    ]
 
-        user_headers = [
-            'username', 'password', 'name', 'phone-number', 'email',
-            'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-            'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
-        ]
-
-        if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-            user_headers += ['user_profile']
-        user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
-        user_headers.extend(build_data_headers(user_data_fields))
-        user_headers.extend(build_data_headers(
-            unrecognized_user_data_keys,
-            header_prefix='uncategorized_data'
-        ))
+    if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
+        user_headers += ['user_profile']
+    user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
+    user_headers.extend(build_data_headers(user_data_fields))
+    user_headers.extend(build_data_headers(
+        unrecognized_user_data_keys,
+        header_prefix='uncategorized_data'
+    ))
     user_headers.extend(json_to_headers(
         {'group': list(range(1, user_groups_length + 1))}
     ))
@@ -220,12 +205,28 @@ def parse_users(group_memoizer, domain, user_filters, is_web_download, task=None
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
+    return user_headers, _user_rows(user_dicts, user_headers)
 
-    def _user_rows():
-        for user_dict in user_dicts:
-            row = dict(flatten_json(user_dict))
-            yield [row.get(header) or '' for header in user_headers]
-    return user_headers, _user_rows()
+
+def parse_web_users(domain, task=None, total_count=None):
+    user_dicts = []
+    for n, user in enumerate(get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
+                                               include_inactive=False, include_docs=True)):
+        user_dict = make_web_user_dict(user, domain)
+        user_dicts.append(user_dict)
+        if task:
+            DownloadBase.set_progress(task, n, total_count)
+    for m, invite in enumerate(Invitation.by_domain(domain)):
+        user_dict = make_invited_web_user_dict(invite)
+        user_dicts.append(user_dict)
+        if task:
+            DownloadBase.set_progress(task, n + m, total_count)
+
+    user_headers = [
+        'first_name', 'last_name', 'username', 'email', 'role', 'last_access_date (read only)',
+        'last_login (read only)', 'status', 'remove'
+    ]
+    return user_headers, _user_rows(user_dicts, user_headers)
 
 
 def parse_groups(groups):
@@ -319,14 +320,20 @@ def dump_users_and_groups(domain, download_id, user_filters, task, is_web_downlo
     users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
-    user_headers, user_rows = parse_users(
-        group_memoizer,
-        domain,
-        user_filters,
-        is_web_download,
-        task,
-        users_groups_count,
-    )
+    if is_web_download:
+        user_headers, user_rows = parse_web_users(
+            domain,
+            task,
+            users_groups_count,
+        )
+    else:
+        user_headers, user_rows = parse_mobile_users(
+            group_memoizer,
+            domain,
+            user_filters,
+            task,
+            users_groups_count,
+        )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
     headers = [

@@ -1076,7 +1076,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             list(self.user_specs),
             list(self.group_specs),
             request.couch_user,
-            upload_record.pk
+            upload_record.pk,
+            False,
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
