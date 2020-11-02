@@ -155,7 +155,10 @@ class WorkflowHelper(PostProcessor):
 
         for e in filter(_include_datums, self.suite.entries):
             command = e.command.id
-            module_id, form_id = command.split('-', 1)
+            if command == "search_command.m2":
+                continue
+            else:
+                module_id, form_id = command.split('-', 1)
             entries[command] = e
             if not e.datums:
                 datums[module_id][form_id] = []

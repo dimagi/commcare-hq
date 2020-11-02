@@ -207,7 +207,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
                 }
             }
-            return self.relevant().trim();
+            return (self.relevant() || "").trim();
         };
 
         self.serialize = function () {

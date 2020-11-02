@@ -26,7 +26,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, XPath
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.util.view_utils import absolute_reverse
 
@@ -60,7 +60,8 @@ class RemoteRequestFactory(object):
     def _build_remote_request_post(self):
         return RemoteRequestPost(
             url=absolute_reverse('claim_case', args=[self.domain]),
-            relevant=self.module.search_config.relevant,
+            #relevant=self.module.search_config.relevant,
+            relevant="true()",
             data=[
                 QueryData(
                     key='case_id',
@@ -178,7 +179,11 @@ class RemoteRequestFactory(object):
     def _build_stack(self):
         stack = Stack()
         frame = PushFrame()
-        frame.add_rewind(QuerySessionXPath('case_id').instance())
+        #frame.add_mark()
+        #frame.add_rewind(QuerySessionXPath('case_id').instance())
+        from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
+        frame.add_datum(StackDatum(id='case_id', value=QuerySessionXPath('case_id').instance()))
+        frame.add_command(XPath.string(id_strings.menu_id(self.module)))
         stack.add_frame(frame)
         return stack
 
