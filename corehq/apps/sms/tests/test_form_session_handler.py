@@ -55,15 +55,15 @@ class FormSessionTestCase(TestCase):
         )
 
     def _create_message_event_and_subevent(self):
-        self.event = MessagingEvent.objects.create(
+        event = MessagingEvent.objects.create(
             domain=self.domain.name,
             date=datetime.utcnow(),
             source=MessagingEvent.SOURCE_BROADCAST,
             content_type=MessagingEvent.CONTENT_SMS_SURVEY,
             status=MessagingEvent.STATUS_COMPLETED
         )
-        self.subevent = MessagingSubEvent.objects.create(
-            parent=self.event,
+        subevent = MessagingSubEvent.objects.create(
+            parent=event,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS_SURVEY,
@@ -71,9 +71,11 @@ class FormSessionTestCase(TestCase):
             xforms_session=self.session
         )
 
+        return event, subevent
+
     @patch('corehq.apps.sms.handlers.form_session.answer_next_question', MagicMock(return_value=None))
     def test_incoming_sms_linked_form_session(self):
-        self._create_message_event_and_subevent()
+        event, expected_subevent = self._create_message_event_and_subevent()
         msg = SMS(
             phone_number=self.number.phone_number,
             direction=INCOMING,
@@ -88,7 +90,7 @@ class FormSessionTestCase(TestCase):
 
         form_session_handler(self.number, msg.text, msg)
 
-        self.assertEqual(self.subevent, msg.messaging_subevent)
+        self.assertEqual(expected_subevent, msg.messaging_subevent)
 
     @patch('corehq.apps.sms.handlers.form_session.answer_next_question', MagicMock(return_value=None))
     def test_incoming_sms_not_linked_form_session(self):
@@ -108,3 +110,27 @@ class FormSessionTestCase(TestCase):
         form_session_handler(self.number, msg.text, msg)
 
         self.assertEqual(msg.messaging_subevent, None)
+
+    @patch('corehq.apps.sms.handlers.form_session.answer_next_question', MagicMock(return_value=None))
+    def test_incoming_sms_multiple_subevents_for_session(self):
+        first_event, first_subevent = self._create_message_event_and_subevent()
+        second_event, second_subevent = self._create_message_event_and_subevent()
+
+        # no message event or subevent exist
+        msg = SMS(
+            phone_number=self.number.phone_number,
+            direction=INCOMING,
+            date=datetime.utcnow(),
+            text="test message",
+            domain_scope=None,
+            backend_api=None,
+            backend_id=None,
+            backend_message_id=None,
+            raw_text=None,
+        )
+
+        form_session_handler(self.number, msg.text, msg)
+
+        # assert that the most recent subevent is used
+        self.assertNotEqual(first_subevent, msg.messaging_subevent)
+        self.assertEqual(second_subevent, msg.messaging_subevent)
