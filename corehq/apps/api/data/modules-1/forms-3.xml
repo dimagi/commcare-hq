@@ -1,9 +1,9 @@
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa">
 	<h:head>
 		<h:title>Create Sub Case</h:title>
 		<model>
 			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/98C43145-1A50-4948-945F-EBE4C9C8E4AF" uiVersion="1" version="330" name="Create Sub Case">
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/98C43145-1A50-4948-945F-EBE4C9C8E4AF" uiVersion="1" version="330" name="Create Sub Case">
 					<sub_case_name/>
 					<sub_case_number/>
 					<parent_case_name/>

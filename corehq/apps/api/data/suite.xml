@@ -685,7 +685,7 @@
     </field>
   </detail>
   <entry>
-    <form>http://openrosa.org/formdesigner/C2D2AE89-CF6F-4EB3-8D92-0805C479376D</form>
+    <form>http://org.commcarehq/formdesigner/C2D2AE89-CF6F-4EB3-8D92-0805C479376D</form>
     <command id="m0-f0">
       <text>
         <locale id="forms.m0f0"/>
@@ -693,7 +693,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/C1417AEE-F51D-4BA6-9769-381896D4CB9F</form>
+    <form>http://org.commcarehq/formdesigner/C1417AEE-F51D-4BA6-9769-381896D4CB9F</form>
     <command id="m0-f1">
       <text>
         <locale id="forms.m0f1"/>
@@ -701,7 +701,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/AE3BF1D2-D88A-4321-AA44-38D27DB4956D</form>
+    <form>http://org.commcarehq/formdesigner/AE3BF1D2-D88A-4321-AA44-38D27DB4956D</form>
     <command id="m0-f2">
       <text>
         <locale id="forms.m0f2"/>
@@ -709,7 +709,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/EB055EF1-12A9-4409-B0B7-11EF5E9F2F6A</form>
+    <form>http://org.commcarehq/formdesigner/EB055EF1-12A9-4409-B0B7-11EF5E9F2F6A</form>
     <command id="m0-f3">
       <text>
         <locale id="forms.m0f3"/>
@@ -717,7 +717,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/21D20D14-BF66-497D-8258-8356080CDB3C</form>
+    <form>http://org.commcarehq/formdesigner/21D20D14-BF66-497D-8258-8356080CDB3C</form>
     <command id="m0-f4">
       <text>
         <locale id="forms.m0f4"/>
@@ -725,7 +725,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/82B688A2-98E8-4E16-87C9-87B85E36DC8D</form>
+    <form>http://org.commcarehq/formdesigner/82B688A2-98E8-4E16-87C9-87B85E36DC8D</form>
     <command id="m0-f5">
       <text>
         <locale id="forms.m0f5"/>
@@ -733,7 +733,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/C59FC6EE-2AD7-4DD5-892A-72DED4338CDE</form>
+    <form>http://org.commcarehq/formdesigner/C59FC6EE-2AD7-4DD5-892A-72DED4338CDE</form>
     <command id="m1-f0">
       <text>
         <locale id="forms.m1f0"/>
@@ -741,7 +741,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/4B1B717C-0CF7-472E-8CC1-1CC0C45AA5E0</form>
+    <form>http://org.commcarehq/formdesigner/4B1B717C-0CF7-472E-8CC1-1CC0C45AA5E0</form>
     <command id="m1-f1">
       <text>
         <locale id="forms.m1f1"/>
@@ -753,7 +753,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/1E47917F-D81B-45BA-BDF5-2F8AC92B116F</form>
+    <form>http://org.commcarehq/formdesigner/1E47917F-D81B-45BA-BDF5-2F8AC92B116F</form>
     <command id="m1-f2">
       <text>
         <locale id="forms.m1f2"/>
@@ -765,7 +765,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/98C43145-1A50-4948-945F-EBE4C9C8E4AF</form>
+    <form>http://org.commcarehq/formdesigner/98C43145-1A50-4948-945F-EBE4C9C8E4AF</form>
     <command id="m1-f3">
       <text>
         <locale id="forms.m1f3"/>
@@ -777,7 +777,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/A27AAD4B-CBA6-42C9-B974-C23ECB5902B9</form>
+    <form>http://org.commcarehq/formdesigner/A27AAD4B-CBA6-42C9-B974-C23ECB5902B9</form>
     <command id="m1-f4">
       <text>
         <locale id="forms.m1f4"/>
@@ -789,7 +789,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/C630EB2D-8DAC-4DA5-927D-5BFAA45E677D</form>
+    <form>http://org.commcarehq/formdesigner/C630EB2D-8DAC-4DA5-927D-5BFAA45E677D</form>
     <command id="m2-f0">
       <text>
         <locale id="forms.m2f0"/>
@@ -812,7 +812,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/3B82FF50-0D85-4447-A2E9-AA4853FAAF2E</form>
+    <form>http://org.commcarehq/formdesigner/3B82FF50-0D85-4447-A2E9-AA4853FAAF2E</form>
     <command id="m3-f0">
       <text>
         <locale id="forms.m3f0"/>
@@ -843,7 +843,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/731013B3-29A0-4545-AC8E-793BFAD4201E</form>
+    <form>http://org.commcarehq/formdesigner/731013B3-29A0-4545-AC8E-793BFAD4201E</form>
     <command id="m4-f1">
       <text>
         <locale id="forms.m4f1"/>
@@ -851,7 +851,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/B1A7109D-254A-4E30-A417-B11D0AD40B19</form>
+    <form>http://org.commcarehq/formdesigner/B1A7109D-254A-4E30-A417-B11D0AD40B19</form>
     <command id="m4-f2">
       <text>
         <locale id="forms.m4f2"/>
@@ -859,7 +859,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/FAD4A0A8-4DB4-429B-B656-42A394D6108C</form>
+    <form>http://org.commcarehq/formdesigner/FAD4A0A8-4DB4-429B-B656-42A394D6108C</form>
     <command id="m5-f0">
       <display>
         <text>
@@ -870,7 +870,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/F41B6AAF-0F54-431B-AD5F-4461CC01D842</form>
+    <form>http://org.commcarehq/formdesigner/F41B6AAF-0F54-431B-AD5F-4461CC01D842</form>
     <command id="m6-f0">
       <text>
         <locale id="forms.m6f0"/>
@@ -882,7 +882,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/39A2CA97-2EB8-4A9C-A0D1-7EC813699F88</form>
+    <form>http://org.commcarehq/formdesigner/39A2CA97-2EB8-4A9C-A0D1-7EC813699F88</form>
     <command id="m7-f0">
       <text>
         <locale id="forms.m7f0"/>
@@ -895,7 +895,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/9A23C5F4-C632-49E0-8A36-9D8D848AA171</form>
+    <form>http://org.commcarehq/formdesigner/9A23C5F4-C632-49E0-8A36-9D8D848AA171</form>
     <command id="m7-f1">
       <text>
         <locale id="forms.m7f1"/>
@@ -908,7 +908,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/53B573C0-00F5-4150-982E-C4D133F187BD</form>
+    <form>http://org.commcarehq/formdesigner/53B573C0-00F5-4150-982E-C4D133F187BD</form>
     <command id="m7-f2">
       <text>
         <locale id="forms.m7f2"/>
@@ -921,7 +921,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/0B35902F-6A3F-462F-85DB-F9AD030300D1</form>
+    <form>http://org.commcarehq/formdesigner/0B35902F-6A3F-462F-85DB-F9AD030300D1</form>
     <command id="m8-f0">
       <text>
         <locale id="forms.m8f0"/>
@@ -929,7 +929,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/DEC0838F-F30F-48D5-86A4-5D7A2FC9C7F4</form>
+    <form>http://org.commcarehq/formdesigner/DEC0838F-F30F-48D5-86A4-5D7A2FC9C7F4</form>
     <command id="m8-f1">
       <text>
         <locale id="forms.m8f1"/>
@@ -937,7 +937,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/5475267C-26B6-42C2-A431-86C9EE150C26</form>
+    <form>http://org.commcarehq/formdesigner/5475267C-26B6-42C2-A431-86C9EE150C26</form>
     <command id="m8-f2">
       <text>
         <locale id="forms.m8f2"/>
@@ -945,7 +945,7 @@
     </command>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/72AE4C2A-D6C3-4038-B128-C2AA7EFAF014</form>
+    <form>http://org.commcarehq/formdesigner/72AE4C2A-D6C3-4038-B128-C2AA7EFAF014</form>
     <command id="m9-f0">
       <text>
         <locale id="forms.m9f0"/>

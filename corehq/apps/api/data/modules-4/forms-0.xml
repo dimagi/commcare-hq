@@ -1,4 +1,4 @@
-<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa">
 <h:head>
   <h:title>Reference Format Tests</h:title>
   <model>
@@ -14,7 +14,7 @@
             </group>
             <f/>
 
-			<meta xmlns:cc="http://commcarehq.org/xforms" xmlns="http://openrosa.org/jr/xforms"><deviceID/><timeStart/><timeEnd/><username/><userID/><instanceID/><cc:appVersion/></meta></data>
+			<meta xmlns:cc="http://commcarehq.org/xforms" xmlns="http://org.commcarehq/jr/xforms"><deviceID/><timeStart/><timeEnd/><username/><userID/><instanceID/><cc:appVersion/></meta></data>
 		</instance><instance id="commcaresession" src="jr://instance/session"/>
 		
         <bind nodeset="b" relevant="../a = 'y'"/>
