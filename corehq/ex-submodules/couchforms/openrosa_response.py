@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
 import six
 
-RESPONSE_XMLNS = 'http://openrosa.org/http/response'
+RESPONSE_XMLNS = 'http://org.commcarehq/http/response'
 
 
 class ResponseNature(object):

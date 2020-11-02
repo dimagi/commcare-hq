@@ -36,7 +36,7 @@ hqDefine("case/js/casexml",[
             };
             return jQueryObj;
         },
-        openrosaXFormsXMLNS: 'http://openrosa.org/jr/xforms',
+        openrosaXFormsXMLNS: 'http://org.commcarehq/jr/xforms',
         Case: {
             wrap: function (o) {
                 o.minus = function (that) {

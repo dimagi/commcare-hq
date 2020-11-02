@@ -110,7 +110,7 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
 
     Here is an example structure:
     {
-        "xmlns": "http://openrosa.org/formdesigner/5D563904-4038-4070-A0D4-CC421003E862",
+        "xmlns": "http://org.commcarehq/formdesigner/5D563904-4038-4070-A0D4-CC421003E862",
         "form": {
             "name": {
                 "en": "Brogramming Project",

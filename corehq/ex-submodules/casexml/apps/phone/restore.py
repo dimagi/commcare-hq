@@ -99,7 +99,7 @@ class StockSettings(object):
 
 class RestoreContent(object):
     start_tag_template = (
-        b'<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
+        b'<OpenRosaResponse xmlns="http://org.commcarehq/http/response"%(items)s>'
         b'<message nature="%(nature)s">Successfully restored account %(username)s!</message>'
     )
     items_template = b' items="%s"'
