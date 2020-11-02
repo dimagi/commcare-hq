@@ -33,12 +33,15 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
     get_case_types_for_domain_es,
+    get_case_and_action_counts_for_domains,
     get_completed_counts_by_user,
     get_form_counts_by_user_xmlns,
+    get_form_counts_for_domains,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
     get_form_ids_having_multimedia,
     get_forms,
+    get_last_submission_time_for_users,
     get_group_stubs,
     get_form_name_from_last_submission_for_xmlns,
     get_paged_forms_by_type,
@@ -340,6 +343,38 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], 1)
+
+    def test_get_last_submission_time_for_users(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        self._send_form_to_es(completion_time=datetime(2013, 7, 2))
+
+        results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
+        self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())
+
+    def test_get_form_counts_for_domains(self):
+        self._send_form_to_es()
+        self._send_form_to_es()
+        self._send_form_to_es(domain='other')
+
+        self.assertEqual(
+            get_form_counts_for_domains([self.domain, 'other']),
+            {self.domain: 2, 'other': 1}
+        )
+
+    def test_get_case_and_action_counts_for_domains(self):
+        self._send_case_to_es()
+        self._send_case_to_es()
+        self._send_case_to_es('other')
+        results = get_case_and_action_counts_for_domains([self.domain, 'other'])
+        self.assertEqual(
+            results,
+            {
+                self.domain: {'cases': 2, 'case_actions': 2},
+                'other': {'cases': 1, 'case_actions': 1}
+            }
+        )
 
     @run_with_all_backends
     def test_completed_out_of_range_by_user(self):
