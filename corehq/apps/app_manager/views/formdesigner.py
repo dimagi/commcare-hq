@@ -159,7 +159,6 @@ def _get_form_designer_view(request, domain, app, module, form):
             request.couch_user.username,
         ),
         'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
-        'secure_cookies': settings.SECURE_COOKIES,
     })
     context.update(_get_requirejs_context())
 
