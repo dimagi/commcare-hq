@@ -311,6 +311,11 @@ class TestSendToElasticsearch(SimpleTestCase):
 @skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
 @es_test
 class TestILM(SimpleTestCase):
+    # This test takes long time, since it has to wait
+    #   for automatic ILM to kick in and cluster to stabalize after that
+    # If you are writing any ILM related tests, you should
+    #   use the manual rollover like it's done in TestILMManualRollover
+    #   which doesn't involve waiting time.
 
     def setUp(self):
         self.es = get_es_new()
@@ -330,16 +335,12 @@ class TestILM(SimpleTestCase):
         ensure_index_deleted(self.index)
 
     def rollover(self):
-        # wait for ILM to kick in,
-        #   polling till a new index is created for a maximum of 2 seconds
-        #   Is double the ilm poll_interval setting to provide enough buffer for ILM process
-        max_dur = 2  # seconds
-        curr_count = new_count = len(get_indices_by_alias(self.alias))
-        dur = 0
-        while (curr_count == new_count and dur < max_dur):
-            time.sleep(0.2)
-            dur = dur + 0.2
-            new_count = len(get_indices_by_alias(self.alias))
+        # Wait for ILM to kick in and for cluster to stabilize
+        #   Even though 'indices.lifecycle.poll_interval' is set to 1 second
+        #   we are waiting here for 3 seconds so that cluster comes into stable state
+        #   We experimented with 2 seconds wait and ran into few test failure related to cluster state
+        # Called after every max docs are inserted to avoid unnecessary wait
+        time.sleep(3)
 
     def _send_to_es(self, docs):
         for chunk in chunked(docs, 2):
