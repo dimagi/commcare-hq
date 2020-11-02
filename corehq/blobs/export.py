@@ -12,7 +12,8 @@ from .targzipdb import TarGzipBlobDB
 class BlobDbBackendExporter(object):
 
     def __init__(self, filename, already_exported):
-        self.db = TarGzipBlobDB(filename, already_exported)
+        self.db = TarGzipBlobDB(filename)
+        self._already_exported = already_exported or set()
         self.src_db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -27,7 +28,8 @@ class BlobDbBackendExporter(object):
 
     def process_object(self, meta):
         self.total_blobs += 1
-        if self.db.exists(meta.key):
+        if meta.key in self._already_exported:
+            # This object is already in an another dump
             return
 
         try:
