@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -309,7 +310,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
-
+    context.update({'secure_cookies': settings.SECURE_COOKIES})
     response = render(request, template, context)
 
     set_lang_cookie(response, lang)

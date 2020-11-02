@@ -5,12 +5,15 @@ hqDefine("hqwebapp/js/downgrade_modal", [
     'analytix/js/kissmetrix',
     'jquery',
     'jquery.cookie/jquery.cookie',
+    'hqwebapp/js/initial_page_data',
 ], function (
     kissmetrics,
     $
 ) {
+    var secureCookies = initialPageData.get('secure_cookies');
+
     function snooze(slug, domain) {
-        $.cookie(cookieName(slug, domain), true, { expires: 1, path: '/', secure: true });
+        $.cookie(cookieName(slug, domain), true, { expires: 1, path: '/', secure: secureCookies });
     }
 
     function cookieName(slug, domain) {
@@ -22,7 +25,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
             slug = $modal.data("slug"),
             domain = $modal.data("domain");
 
-        if ($modal.length && ! $.cookie(cookieName(slug, domain), { secure: true })) {
+        if ($modal.length && ! $.cookie(cookieName(slug, domain), { secure: secureCookies })) {
             // Show modal on page load
             $modal.modal({
                 backdrop: 'static',

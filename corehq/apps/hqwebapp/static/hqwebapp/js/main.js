@@ -63,6 +63,8 @@ hqDefine('hqwebapp/js/main', [
         }
     };
 
+    var secureCookies = initialPageData.get('secure_cookies');
+
     ko.bindingHandlers.makeHqHelp = {
         update: function (element, valueAccessor) {
             var opts = valueAccessor(),
@@ -391,17 +393,17 @@ hqDefine('hqwebapp/js/main', [
         if ($maintenance.length) {
             var id = $maintenance.data("id"),
                 alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie, { secure: true }) != id) {  // eslint-disable-line eqeqeq
+            if ($.cookie(alertCookie, { secure: secureCookies }) != id) {  // eslint-disable-line eqeqeq
                 $maintenance.removeClass('hide');
                 $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: true });
+                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: secureCookies });
                 });
             }
         }
 
         // EULA modal
         var eulaCookie = "gdpr_rollout";
-        if (!$.cookie(eulaCookie, { secure: true })) {
+        if (!$.cookie(eulaCookie, { secure: secureCookies })) {
             var $modal = $("#eulaModal");
             if ($modal.length) {
                 $("body").addClass("has-eula");

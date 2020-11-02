@@ -881,7 +881,9 @@ class BasePageView(TemplateView):
         """
         The Context for the settings page
         """
-        return {}
+        return {
+            'secure_cookies': settings.SECURE_COOKIES,
+        }
 
     def get_context_data(self, **kwargs):
         context = super(BasePageView, self).get_context_data(**kwargs)

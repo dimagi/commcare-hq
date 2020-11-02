@@ -18,7 +18,7 @@ hqDefine('hqwebapp/js/mobile_experience_warning', [
             var setCookie = function () {
                 $.cookie(initialPageData.get('mobile_ux_cookie_name'), true, {
                     path: '/',
-                    secure: true,
+                    secure: initialPageData.get('secure_cookies'),
                 });
             };
 

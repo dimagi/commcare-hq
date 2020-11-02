@@ -685,6 +685,7 @@ def javascript_libraries(context, **kwargs):
         'analytics': kwargs.pop('analytics', False),
         'hq': kwargs.pop('hq', False),
         'helpers': kwargs.pop('helpers', False),
+        'secure_cookies': settings.SECURE_COOKIES,
     }
 
 

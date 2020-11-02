@@ -219,6 +219,7 @@ class FormplayerMain(View):
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
             "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
+            "secure_cookies": settings.SECURE_COOKIES,
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -281,6 +282,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
+            "secure_cookies": settings.SECURE_COOKIES,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -294,9 +296,10 @@ class PreviewAppView(TemplateView):
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
-            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
-            "environment": PREVIEW_APP_ENVIRONMENT,
-            "integrations": integration_contexts(request.domain),
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'environment': PREVIEW_APP_ENVIRONMENT,
+            'integrations': integration_contexts(request.domain),
+            'secure_cookies': settings.SECURE_COOKIES,
         })
 
 
