@@ -55,13 +55,13 @@ def parse_xml(string):
 
 
 namespaces = dict(
-    jr="{http://openrosa.org/javarosa}",
+    jr="{http://org.commcarehq/javarosa}",
     xsd="{http://www.w3.org/2001/XMLSchema}",
     h='{http://www.w3.org/1999/xhtml}',
     f='{http://www.w3.org/2002/xforms}',
     ev="{http://www.w3.org/2001/xml-events}",
-    orx="{http://openrosa.org/jr/xforms}",
-    reg="{http://openrosa.org/user/registration}",
+    orx="{http://org.commcarehq/jr/xforms}",
+    reg="{http://org.commcarehq/user/registration}",
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
     v="{http://commcarehq.org/xforms/vellum}",

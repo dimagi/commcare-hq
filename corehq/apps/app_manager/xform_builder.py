@@ -26,10 +26,10 @@ from lxml.builder import E
 
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
-        xmlns:orx="http://openrosa.org/jr/xforms"
+        xmlns:orx="http://org.commcarehq/jr/xforms"
         xmlns="http://www.w3.org/2002/xforms"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-        xmlns:jr="http://openrosa.org/javarosa">
+        xmlns:jr="http://org.commcarehq/javarosa">
     <h:head>
         <h:title>{name}</h:title>
         <model>
@@ -80,15 +80,15 @@ class XFormBuilder(object):
         """
         self.ns = {
             'h': "http://www.w3.org/1999/xhtml",
-            'orx': "http://openrosa.org/jr/xforms",
+            'orx': "http://org.commcarehq/jr/xforms",
             'x': "http://www.w3.org/2002/xforms",
             'xsd': "http://www.w3.org/2001/XMLSchema",
-            'jr': "http://openrosa.org/javarosa",
+            'jr': "http://org.commcarehq/javarosa",
             'jrm': "http://dev.commcarehq.org/jr/xforms",
         }
         strip_spaces = etree.XMLParser(remove_blank_text=True)
         if source is None:
-            xmlns = 'http://openrosa.org/formdesigner/{}'.format(uuid.uuid4())
+            xmlns = 'http://org.commcarehq/formdesigner/{}'.format(uuid.uuid4())
             self._etree = etree.XML(EMPTY_XFORM.format(name=name, xmlns=xmlns), parser=strip_spaces)
             self.ns['d'] = xmlns
             self._data = self._etree.xpath('./h:head/x:model/x:instance/d:data', namespaces=self.ns)[0]
@@ -208,7 +208,7 @@ class XFormBuilder(object):
 
         >>> xform = XFormBuilder()
         >>> xform.get_namespaced('jr:constraintMsg')
-        '{http://openrosa.org/javarosa}constraintMsg'
+        '{http://org.commcarehq/javarosa}constraintMsg'
         >>> xform.get_namespaced('constraint')
         'constraint'
 

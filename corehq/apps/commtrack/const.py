@@ -4,7 +4,7 @@ COMMTRACK_USERNAME = 'commtrack-system'
 
 COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
 
-META_XMLNS = 'http://openrosa.org/jr/xforms'
+META_XMLNS = 'http://org.commcarehq/jr/xforms'
 
 SMS_XMLNS = 'http://commtrack.org/sms_submission'
 

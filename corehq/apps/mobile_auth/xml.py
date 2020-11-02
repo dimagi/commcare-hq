@@ -64,5 +64,5 @@ class OpenRosaResponse(XmlObject):
 
     def __init__(self, *args, **kwargs):
         super(OpenRosaResponse, self).__init__(*args, **kwargs)
-        self.xmlns = 'http://openrosa.org/http/response'
+        self.xmlns = 'http://org.commcarehq/http/response'
         self.message_nature = 'submit_success'

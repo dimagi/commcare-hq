@@ -46,8 +46,8 @@ class Command(BaseCommand):
     def update_form_data(form_data, new_username):
         form_attachment_xml = form_data.get_attachment("form.xml").decode('utf-8')
         xml_elem = etree.parse(StringIO(form_attachment_xml))
-        id_elem = xml_elem.find("{http://openrosa.org/jr/xforms}meta").find(
-            "{http://openrosa.org/jr/xforms}username")
+        id_elem = xml_elem.find("{http://org.commcarehq/jr/xforms}meta").find(
+            "{http://org.commcarehq/jr/xforms}username")
         id_elem.text = new_username
 
         new_form_attachment_xml = etree.tostring(xml_elem)

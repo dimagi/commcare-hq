@@ -250,7 +250,7 @@ def get_forms_without_xmlns(app):
 
 
 def generate_random_xmlns():
-    return 'http://openrosa.org/formdesigner/{}'.format(uuid.uuid4())
+    return 'http://org.commcarehq/formdesigner/{}'.format(uuid.uuid4())
 
 
 def replace_xml(xform, new_xml):

@@ -26,22 +26,22 @@ LEGACY_SLUG_MAP = {
     LEGACY_FORMS_SUBMITTED: FORMS_SUBMITTED,
 }
 
-PCI_CHILD_FORM = 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-401500A39354'
-PCI_MOTHER_FORM = 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
-AAROHI_CHILD_FORM = 'http://openrosa.org/formdesigner/09486EF6-04C8-480C-BA11-2F8887BBBADD'
-AAROHI_MOTHER_FORM = 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'
+PCI_CHILD_FORM = 'http://org.commcarehq/formdesigner/85823851-3622-4E9E-9E86-401500A39354'
+PCI_MOTHER_FORM = 'http://org.commcarehq/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
+AAROHI_CHILD_FORM = 'http://org.commcarehq/formdesigner/09486EF6-04C8-480C-BA11-2F8887BBBADD'
+AAROHI_MOTHER_FORM = 'http://org.commcarehq/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'
 
 # https://www.commcarehq.org/a/cdc-mozambique-test/apps/view/a85dfcb5054dd6349ba696e8f8d5f425
 # https://www.commcarehq.org/a/infomovel/apps/view/44fce3b36d9d43f7f30eaaab84df6cda
-CDC_FindPatientForms = 'http://openrosa.org/formdesigner/DA10DCC2-8240-4101-B964-6F5424BD2B86'
-CDC_RegisterContactForms = 'http://openrosa.org/formdesigner/c0671536f2087bb80e460d57f60c98e5b785b955'
-CDC_NormalVisit = 'http://openrosa.org/formdesigner/74BD43B5-5253-4855-B195-F3F049B8F8CC'
-CDC_FirstVisit = 'http://openrosa.org/formdesigner/66e768cc5f551f6c42f3034ee67a869b85bac826'
-CDC_ContactRegistration = 'http://openrosa.org/formdesigner/e3aa9c0da42a616cbd28c8ce3d74f0d09718fe81'
-CDC_PatientEducation = 'http://openrosa.org/formdesigner/58d56d542f35bd8d3dd16fbd31ee4e5a3a7b35d2'
-CDC_ActivistaEducation = 'http://openrosa.org/formdesigner/b8532594e7d38cdd6c632a8249814ce5c043c03c'
-CDC_BuscaActivaVisit = 'http://openrosa.org/formdesigner/52ca9bc2d99d28a07bc60f3a353a80047a0950a8'
-CDC_RegisterPatientForms = "http://openrosa.org/formdesigner/1738a73d0c19b608912255c412674cb9c8b64629"
+CDC_FindPatientForms = 'http://org.commcarehq/formdesigner/DA10DCC2-8240-4101-B964-6F5424BD2B86'
+CDC_RegisterContactForms = 'http://org.commcarehq/formdesigner/c0671536f2087bb80e460d57f60c98e5b785b955'
+CDC_NormalVisit = 'http://org.commcarehq/formdesigner/74BD43B5-5253-4855-B195-F3F049B8F8CC'
+CDC_FirstVisit = 'http://org.commcarehq/formdesigner/66e768cc5f551f6c42f3034ee67a869b85bac826'
+CDC_ContactRegistration = 'http://org.commcarehq/formdesigner/e3aa9c0da42a616cbd28c8ce3d74f0d09718fe81'
+CDC_PatientEducation = 'http://org.commcarehq/formdesigner/58d56d542f35bd8d3dd16fbd31ee4e5a3a7b35d2'
+CDC_ActivistaEducation = 'http://org.commcarehq/formdesigner/b8532594e7d38cdd6c632a8249814ce5c043c03c'
+CDC_BuscaActivaVisit = 'http://org.commcarehq/formdesigner/52ca9bc2d99d28a07bc60f3a353a80047a0950a8'
+CDC_RegisterPatientForms = "http://org.commcarehq/formdesigner/1738a73d0c19b608912255c412674cb9c8b64629"
 
 CUSTOM_FORM = 'custom_form'
 

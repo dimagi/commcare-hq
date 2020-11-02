@@ -19,7 +19,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
     {form_properties}
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>{device_id}</n1:deviceID>
         <n1:timeStart>{time_start}</n1:timeStart>
         <n1:timeEnd>{time_end}</n1:timeEnd>
@@ -58,7 +58,7 @@ RE_DATETIME_MATCH = re.compile(r"""
 
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)
-    xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
+    xmlns = jsonobject.StringProperty(default='http://org.commcarehq/formdesigner/form-processor')
     app_id = jsonobject.StringProperty(default='123')
     form_name = jsonobject.StringProperty(default='New Form')
     device_id = jsonobject.StringProperty(default='DEV IL')

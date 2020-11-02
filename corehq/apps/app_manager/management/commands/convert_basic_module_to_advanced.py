@@ -14,9 +14,9 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 
-DUE_LIST_XMLNS = "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
-IMMUNIZATION_XMLNS = "http://openrosa.org/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
-ELIGIBLE_COUPLE_XMLNS = "http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
+DUE_LIST_XMLNS = "http://org.commcarehq/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
+IMMUNIZATION_XMLNS = "http://org.commcarehq/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
+ELIGIBLE_COUPLE_XMLNS = "http://org.commcarehq/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
 
 
 class Command(BaseCommand):

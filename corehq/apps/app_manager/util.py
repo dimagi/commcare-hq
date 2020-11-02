@@ -162,7 +162,7 @@ def save_xform(app, form, xml):
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
         uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns
-        new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
+        new_xmlns = form.xmlns or "http://org.commcarehq/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
             xml = change_xmlns(xform, GENERIC_XMLNS, new_xmlns)
         else:
@@ -171,7 +171,7 @@ def save_xform(app, form, xml):
                 if form_.form_type != 'shadow_form']
             if len(forms) > 1 or (len(forms) == 1 and forms[0] is not form):
                 if new_xmlns == tag_xmlns:
-                    new_xmlns = "http://openrosa.org/formdesigner/%s" % uid
+                    new_xmlns = "http://org.commcarehq/formdesigner/%s" % uid
                 # form most likely created by app.copy_form(...)
                 # or form is being updated with source copied from other form
                 xml = change_xmlns(xform, tag_xmlns, new_xmlns)
