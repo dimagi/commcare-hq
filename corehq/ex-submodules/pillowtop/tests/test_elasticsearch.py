@@ -359,7 +359,7 @@ class TestILM(SimpleTestCase):
             {"_id": "d4", "prop": "d"},
             {"_id": "d5", "prop": "e"},
         ])
-        indices = get_indices_by_alias(self.alias)
+        indices = sorted(get_indices_by_alias(self.alias))
         self.assertEqual(
             len(indices),
             3
