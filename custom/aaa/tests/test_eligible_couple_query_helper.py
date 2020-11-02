@@ -76,7 +76,7 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
                 '_id': _id,
                 'domain': self.domain,
                 'doc_type': "XFormInstance",
-                'xmlns': 'http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647',
+                'xmlns': 'http://org.commcarehq/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647',
                 'form': {
                     "person_case_id": 'person_case_id',
                     "create_eligible_couple": {

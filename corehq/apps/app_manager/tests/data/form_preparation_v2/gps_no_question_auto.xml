@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:vellum="http://commcarehq.org/xforms/vellum" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:jr="http://org.commcarehq/javarosa" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns:vellum="http://commcarehq.org/xforms/vellum" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <h:head>
         <h:title>New Form</h:title>
         <model>
             <instance>
-                <data xmlns="http://openrosa.org/formdesigner/D0EA1FD6-8B4D-4EE2-BE0A-7471976EE7BC" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="6" name="New Form">
+                <data xmlns="http://org.commcarehq/formdesigner/D0EA1FD6-8B4D-4EE2-BE0A-7471976EE7BC" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="6" name="New Form">
                     <text />
                     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
                         <orx:deviceID />

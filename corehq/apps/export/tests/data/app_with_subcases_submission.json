@@ -41,7 +41,7 @@
         "@name": "Followup Form",
         "@uiVersion": "1",
         "@version": "50",
-        "@xmlns": "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7",
+        "@xmlns": "http://org.commcarehq/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7",
         "add_a_prescription": "yes_then_close",
         "babies": [
             {
@@ -109,7 +109,7 @@
         "how_many_babies": "2",
         "is_this_a_delivery": "yes",
         "meta": {
-            "@xmlns": "http://openrosa.org/jr/xforms",
+            "@xmlns": "http://org.commcarehq/jr/xforms",
             "appVersion": "Formplayer Version: 2.36",
             "app_build_version": 50,
             "commcare_version": null,
@@ -182,6 +182,6 @@
     "server_modified_on": "2017-08-29T11:19:40.371423Z",
     "submit_ip": "127.0.0.1",
     "user_type": "web",
-    "xmlns": "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
+    "xmlns": "http://org.commcarehq/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
 }
 ]

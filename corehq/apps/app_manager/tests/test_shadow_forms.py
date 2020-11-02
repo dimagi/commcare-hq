@@ -19,7 +19,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory()
         self.advanced_module, self.form0 = self.factory.new_advanced_module('advanced_module', 'patient')
-        self.form0.xmlns = 'http://openrosa.org/formdesigner/firstform'
+        self.form0.xmlns = 'http://org.commcarehq/formdesigner/firstform'
         self.form0.actions.open_cases = [
             AdvancedOpenCaseAction(
                 case_type="patient",

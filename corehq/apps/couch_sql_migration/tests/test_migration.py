@@ -410,7 +410,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         form_template = """<?xml version='1.0' ?>
         <data uiVersion="1" version="1" name=""{xmlns}>
             <name>fgg</name>
-            <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+            <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
                 <n1:deviceID>354957031935664</n1:deviceID>
                 <n1:timeStart>2016-03-01T12:04:16Z</n1:timeStart>
                 <n1:timeEnd>2016-03-01T12:04:16Z</n1:timeEnd>
@@ -421,7 +421,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         </data>"""
         xml = form_template.format(
             form_id=form_id,
-            xmlns=' xmlns="http://openrosa.org/formdesigner/456"'
+            xmlns=' xmlns="http://org.commcarehq/formdesigner/456"'
         )
         submit_form_locally(xml, self.domain_name)
 
@@ -526,7 +526,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_old_form_metadata_migration(self):
         form_with_old_meta = """<?xml version="1.0" ?>
             <system uiVersion="1" version="1" xmlns="http://commcarehq.org/case">
-                <meta xmlns="http://openrosa.org/jr/xforms">
+                <meta xmlns="http://org.commcarehq/jr/xforms">
                     <deviceID/>
                     <timeStart>2013-09-18T11:41:17Z</timeStart>
                     <timeEnd>2013-09-18T11:41:17Z</timeEnd>
@@ -595,7 +595,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             'fruity_file': UploadedFile(attachment_file, 'fruity_file', content_type='image/jpeg')
         }
         xml = """<?xml version='1.0' ?>
-        <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+        <data uiVersion="1" version="1" name="" xmlns="http://org.commcarehq/formdesigner/123">
             <name>fgg</name>
             <date>2011-06-07</date>
             <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}"
@@ -608,7 +608,7 @@ class MigrationTestCase(BaseMigrationTestCase):
                     <n0:fruity_file src="fruity_file" from="local"/>
                 </n0:attachment>
             </n0:case>
-            <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+            <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
                 <n1:deviceID>354957031935664</n1:deviceID>
                 <n1:timeStart>{date}</n1:timeStart>
                 <n1:timeEnd>{date}</n1:timeEnd>
@@ -711,7 +711,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         form_id = uuid.uuid4().hex
         xml = """<?xml version='1.0' ?>
-                <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+                <data uiVersion="1" version="1" name="" xmlns="http://org.commcarehq/formdesigner/123">
                     <name>fgg</name>
                     <date>2011-06-07</date>
                     <n0:case case_id="{case_id}" user_id="user1" date_modified="{date}"
@@ -724,7 +724,7 @@ class MigrationTestCase(BaseMigrationTestCase):
                             <n0:case_name>fgg</n0:case_name>
                         </n0:create>
                     </n0:case>
-                    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
                         <n1:deviceID>354957031935664</n1:deviceID>
                         <n1:timeStart>{date}</n1:timeStart>
                         <n1:timeEnd>{date}</n1:timeEnd>
@@ -756,7 +756,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_v1_case(self):
         xml = """<?xml version="1.0" ?>
             <data name="pregnancy checklist" uiVersion="1" version="1"
-                  xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F1"
+                  xmlns="http://org.commcarehq/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F1"
                   xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
                 <name>RITA</name>
                 <age>26</age>
@@ -787,7 +787,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         update_xml = """<?xml version="1.0" ?>
             <data name="pregnancy checklist" uiVersion="1" version="1"
-                xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F"
+                xmlns="http://org.commcarehq/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F"
                 xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
                 <case>
                     <case_id>P0YJ</case_id>
@@ -1836,7 +1836,7 @@ class Diff:
 
 
 SIMPLE_FORM_XML = """<?xml version="1.0" ?>
-<n0:registration xmlns:n0="http://openrosa.org/user/registration">
+<n0:registration xmlns:n0="http://org.commcarehq/user/registration">
     <username>W4</username>
     <password>2</password>
     <uuid>P8DU7OLHVLZXU21JR10H3W8J2</uuid>
@@ -1855,7 +1855,7 @@ TEST_FORM = """
     name="Registration"
     uiVersion="1"
     version="11"
-    xmlns="http://openrosa.org/formdesigner/test-form"
+    xmlns="http://org.commcarehq/formdesigner/test-form"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <first_name>Xeenax</first_name>
@@ -1875,7 +1875,7 @@ TEST_FORM = """
             <n0:age>27</n0:age>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
         <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
@@ -1893,7 +1893,7 @@ LIST_ORDER_FORMS = ["""
 <data
     name="Visit"
     uiVersion="1" version="9"
-    xmlns="http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065"
+    xmlns="http://org.commcarehq/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <cur_num_anc>3</cur_num_anc>
@@ -1908,7 +1908,7 @@ LIST_ORDER_FORMS = ["""
             <n0:num_anc>3</n0:num_anc>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2015-07-13T11:22:58.234Z</n1:timeStart>
         <n1:timeEnd>2015-07-13T11:23:42.485Z</n1:timeEnd>
@@ -1924,7 +1924,7 @@ LIST_ORDER_FORMS = ["""
     name="Close"
     uiVersion="1"
     version="11"
-    xmlns="http://openrosa.org/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE"
+    xmlns="http://org.commcarehq/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <close_reason>pregnancy_ended</close_reason>
@@ -1937,7 +1937,7 @@ LIST_ORDER_FORMS = ["""
     >
         <n0:close/>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2015-07-13T11:24:03.544Z</n1:timeStart>
         <n1:timeEnd>2015-07-13T11:24:26.614Z</n1:timeEnd>
@@ -1954,7 +1954,7 @@ LIST_ORDER_FORMS = ["""
     Pregnancy"
     uiVersion="1"
     version="11"
-    xmlns="http://openrosa.org/formdesigner/882FC273-E436-4BA1-B8CC-9CA526FFF8C2"
+    xmlns="http://org.commcarehq/formdesigner/882FC273-E436-4BA1-B8CC-9CA526FFF8C2"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <health_id>Z1234</health_id>
@@ -1975,7 +1975,7 @@ LIST_ORDER_FORMS = ["""
             <n0:age>27</n0:age>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
         <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
@@ -1991,7 +1991,7 @@ LIST_ORDER_FORMS = ["""
     uiVersion="1"
     version="1"
     xmlns="http://commcarehq.org/case"
-    xmlns:orx="http://openrosa.org/jr/xforms"
+    xmlns:orx="http://org.commcarehq/jr/xforms"
 >
     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
         <orx:deviceID/>

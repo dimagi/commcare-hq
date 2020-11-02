@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
   <h:head>
     <h:title>Repeat Bug</h:title>
     <model>
       <instance>
-        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4A4E93C6-9D40-4E9C-8562-75F7606A3A9E" uiVersion="1" version="1" name="Repeat Bug">
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/4A4E93C6-9D40-4E9C-8562-75F7606A3A9E" uiVersion="1" version="1" name="Repeat Bug">
           <question1 />
           <repeat_name_count />
           <repeat_nam />

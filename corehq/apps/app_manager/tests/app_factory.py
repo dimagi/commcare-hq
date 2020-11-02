@@ -94,7 +94,7 @@ class AppFactory(object):
         form.unique_id = '{}_form_{}'.format(slug, index)
         form.source = ''  # set form source since we changed the unique_id
         if self.include_xmlns:
-            form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
+            form.xmlns = "http://org.commcarehq/formdesigner/{}".format(uuid.uuid4().hex)
         return form
 
     def new_shadow_form(self, module):

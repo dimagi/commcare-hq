@@ -325,7 +325,7 @@ def create_form_for_test(
 
     form = XFormInstanceSQL(
         form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
+        xmlns='http://org.commcarehq/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
         domain=domain,

@@ -155,7 +155,7 @@
     </field>
   </detail>
   <entry>
-    <form>http://openrosa.org/formdesigner/FDFADFF8-30F0-4FC3-A012-42DE521C09DD</form>
+    <form>http://org.commcarehq/formdesigner/FDFADFF8-30F0-4FC3-A012-42DE521C09DD</form>
     <command id="m0-f0">
       <text>
         <locale id="forms.m0f0"/>
@@ -166,7 +166,7 @@
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/5B595DE1-331F-4D97-9269-9F626AD67C66</form>
+    <form>http://org.commcarehq/formdesigner/5B595DE1-331F-4D97-9269-9F626AD67C66</form>
     <command id="m0-f1">
       <text>
         <locale id="forms.m0f1"/>

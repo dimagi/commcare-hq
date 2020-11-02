@@ -1,9 +1,9 @@
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
 	<h:head>
 		<h:title>Survey 1</h:title>
 		<model>
 			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/7F88A227-567E-4B5E-9747-FB3818EE1A44" uiVersion="1" version="3" name="Survey 1">
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/7F88A227-567E-4B5E-9747-FB3818EE1A44" uiVersion="1" version="3" name="Survey 1">
 					<question1/>
 					<question2>
 						<question3/>

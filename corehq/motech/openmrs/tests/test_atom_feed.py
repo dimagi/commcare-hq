@@ -295,7 +295,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             "openmrs_config": {
                 "form_configs": [{
                     "doc_type": "OpenmrsFormConfig",
-                    "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+                    "xmlns": "http://org.commcarehq/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
                     "openmrs_start_datetime": {

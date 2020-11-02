@@ -2,7 +2,7 @@
 <dots_form version="6" uiVersion="6" xmlns:cc="http://commcarehq.org/xforms"
            xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
            xmlns="http://dev.commcarehq.org/pact/dots_form">
-    <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+    <n0:meta xmlns:n0="http://org.commcarehq/jr/xforms">
         <n0:deviceID>355031041059326</n0:deviceID>
         <n0:timeStart>2013-06-26T01:43:56.875-04</n0:timeStart>
         <n0:timeEnd>2013-06-26T01:47:21.506-04</n0:timeEnd>

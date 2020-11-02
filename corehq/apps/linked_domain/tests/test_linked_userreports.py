@@ -107,7 +107,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
                         "property_name": "xmlns",
                         "datatype": None
                     },
-                    "property_value": "http://openrosa.org/formdesigner/1A255365-DAA1-4815-906D-CBD8D3A462B1",
+                    "property_value": "http://org.commcarehq/formdesigner/1A255365-DAA1-4815-906D-CBD8D3A462B1",
                     "comment": None
                 },
                 {

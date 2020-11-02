@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
   <h:head>
     <h:title>Followup</h:title>
     <model>
       <instance>
-        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/DA1A9BA7-8EBD-4172-AABD-6185F1E2CEC9" uiVersion="1" version="1" name="Followup">
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/DA1A9BA7-8EBD-4172-AABD-6185F1E2CEC9" uiVersion="1" version="1" name="Followup">
           <a_repeat jr:template="">
             <save_to_case_in_repeat vellum:role="SaveToCase" vellum:case_type="">
               <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="" />

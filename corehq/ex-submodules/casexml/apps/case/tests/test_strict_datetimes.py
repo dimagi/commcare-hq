@@ -49,7 +49,7 @@ class StrictDatetimesTestSQL(StrictDatetimesTest):
 def _make_form_from_case_blocks(case_blocks):
     form = ElementTree.Element("data")
     form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
-    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
+    form.attrib['xmlns:jrm'] = "http://org.commcarehq/jr/xforms"
     for block in case_blocks:
         form.append(block)
     return ElementTree.tostring(form)

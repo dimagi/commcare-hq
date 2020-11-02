@@ -77,7 +77,7 @@ class TestChildBeneficiarySections(TestCase):
             '_id': 'pnc_form',
             'domain': cls.domain,
             'doc_type': "XFormInstance",
-            'xmlns': 'http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE',
+            'xmlns': 'http://org.commcarehq/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE',
             'form': {
                 "child": {
                     "item": [

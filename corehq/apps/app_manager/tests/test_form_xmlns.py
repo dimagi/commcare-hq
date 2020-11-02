@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import AdvancedModule, Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import save_xform
 
-XMLNS_PREFIX = 'http://openrosa.org/formdesigner/'
+XMLNS_PREFIX = 'http://org.commcarehq/formdesigner/'
 GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
 DEFAULT_XMLNS = XMLNS_PREFIX + 'A22A5D53-037A-48DE-979B-BAA54734194E'
 

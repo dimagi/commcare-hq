@@ -1,6 +1,6 @@
 <?xml version='1.0' ?>
 <form version="1" uiVersion="1"
-    xmlns:jrm="http://openrosa.org/jr/xforms"
+    xmlns:jrm="http://org.commcarehq/jr/xforms"
     xmlns="http://commcarehq.org/test/submit">
     <data>
         <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="ad38211be256653bceac8e2156475667" user_id="ad38211be256653bceac8e2156475665" date_modified="2010-06-29T13:42:50" >

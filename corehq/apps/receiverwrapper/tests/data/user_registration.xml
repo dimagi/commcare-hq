@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<n0:registration xmlns:n0="http://openrosa.org/user/registration">
+<n0:registration xmlns:n0="http://org.commcarehq/user/registration">
     <username>MEALZ</username>
     <password>123</password>
     <uuid>HSPPFWGE9F6T94S6YU2JVLXOF</uuid>

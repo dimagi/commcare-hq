@@ -100,7 +100,7 @@ class SubmissionTest(BaseSubmissionTest):
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
-            xmlns='http://openrosa.org/user/registration',
+            xmlns='http://org.commcarehq/user/registration',
         )
 
     def test_submit_with_case(self):
@@ -139,7 +139,7 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
-            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'<OpenRosaResponse xmlns="http://org.commcarehq/http/response"><message nature="processing_failure">'
             f'{expected_error.message}'
             f'</message></OpenRosaResponse>'
         )

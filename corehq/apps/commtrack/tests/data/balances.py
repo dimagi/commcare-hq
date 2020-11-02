@@ -8,7 +8,7 @@ SohReport = namedtuple('SohReport', 'section_id product_id amount')
 
 def balance_ota_block(sp, section_id, soh_reports, datestring):
     return """
-        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{section_id}">
+        <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" xmlns="http://org.commcarehq/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{section_id}">
             {product_block}
         </ns0:balance>
     """.format(

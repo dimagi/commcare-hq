@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum" vellum:ignore="richText">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum" vellum:ignore="richText">
     <h:head>
         <h:title>Seguimento - Transferência</h:title>
         <model>
             <instance>
-                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/ff0875e16aecf82a934be6eb358b2eb7db5c091e" uiVersion="1" version="1" name="Seguimento - Transferência">
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/ff0875e16aecf82a934be6eb358b2eb7db5c091e" uiVersion="1" version="1" name="Seguimento - Transferência">
                     <follow_up_intervals vellum:comment="A comment">
                         <referral_incomplete />
                         <illness_follow_up />

@@ -86,7 +86,7 @@
     </field>
   </detail>
   <entry>
-    <form>http://openrosa.org/formdesigner/BA686A6D-51B0-49DB-9649-BBDBD5A5C09D</form>
+    <form>http://org.commcarehq/formdesigner/BA686A6D-51B0-49DB-9649-BBDBD5A5C09D</form>
     <command id="m0-f0">
       <text>
         <locale id="forms.m0f0"/>
@@ -105,7 +105,7 @@
     </assertions>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/619805E7-30BC-454E-ABF7-009680FD2311</form>
+    <form>http://org.commcarehq/formdesigner/619805E7-30BC-454E-ABF7-009680FD2311</form>
     <command id="m0-f1">
       <text>
         <locale id="forms.m0f1"/>

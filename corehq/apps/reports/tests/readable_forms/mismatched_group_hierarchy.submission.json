@@ -2,7 +2,7 @@
    "#type": "data",
    "fada_monthly_number": "36",
    "meta": {
-       "@xmlns": "http://openrosa.org/jr/xforms",
+       "@xmlns": "http://org.commcarehq/jr/xforms",
        "username": "xxx",
        "instanceID": "xxx",
        "userID": "xxx",
@@ -15,7 +15,7 @@
        "deviceID": "355136055347861"
    },
    "fada_date_admission": "2014-01-01",
-   "@xmlns": "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B",
+   "@xmlns": "http://org.commcarehq/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B",
    "@name": "Process Data",
    "facility_number_usage": "1",
    "fada_stillbirth_neonatal_death": "2",

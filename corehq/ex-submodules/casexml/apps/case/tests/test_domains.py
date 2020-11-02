@@ -5,7 +5,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 
 ALICE_XML = """<?xml version='1.0' ?>
-<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
     <name>Dinkle</name>
     <join_date>2010-08-28</join_date>
     <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-domain-test" user_id="user-xxx-alice" date_modified="2013-04-19T16:52:04.304-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
@@ -18,7 +18,7 @@ ALICE_XML = """<?xml version='1.0' ?>
             <n0:join_date>2010-08-28</n0:join_date>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>A00000245706EE</n1:deviceID>
         <n1:timeStart>2013-04-19T16:51:13.162-04</n1:timeStart>
         <n1:timeEnd>2013-04-19T16:52:13.162-04</n1:timeEnd>
@@ -30,14 +30,14 @@ ALICE_XML = """<?xml version='1.0' ?>
 </data>"""
 
 EVE_XML = """<?xml version='1.0' ?>
-<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
+<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
     <plan_to_buy_gun>no</plan_to_buy_gun>
     <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-domain-test" user_id="user-xxx-eve" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:update>
             <n0:plan_to_buy_gun>no</n0:plan_to_buy_gun>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>A00000245706EE</n1:deviceID>
         <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
         <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
@@ -49,14 +49,14 @@ EVE_XML = """<?xml version='1.0' ?>
 </data>"""
 
 ALICE_UPDATE_XML = """<?xml version='1.0' ?>
-<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
+<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
     <plan_to_buy_gun>no</plan_to_buy_gun>
     <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-domain-test" user_id="user-xxx-alice" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:update>
             <n0:plan_to_buy_gun>no</n0:plan_to_buy_gun>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>A00000245706EE</n1:deviceID>
         <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
         <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>

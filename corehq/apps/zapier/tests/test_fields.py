@@ -19,7 +19,7 @@ class TestRemoveAdvancedFields(SimpleTestCase):
                 "@name": "Test",
                 "@uiVersion": "1",
                 "@version": "6",
-                "@xmlns": "http://openrosa.org/formdesigner/test",
+                "@xmlns": "http://org.commcarehq/formdesigner/test",
                 "age": "3.052703627652293",
                 "case": {
                     "@case_id": "67dfe2a9-9413-4811-b5f5-a7c841085e9e",
@@ -75,7 +75,7 @@ class TestRemoveAdvancedFields(SimpleTestCase):
                 "length_of_cp": "",
                 "length_of_ip": "",
                 "meta": {
-                    "@xmlns": "http://openrosa.org/jr/xforms",
+                    "@xmlns": "http://org.commcarehq/jr/xforms",
                     "appVersion": "CommCare Android, version \"2.31.0\"(423345). "
                                   "App v59. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
                     "app_build_version": 59,

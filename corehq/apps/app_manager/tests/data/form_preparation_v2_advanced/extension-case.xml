@@ -1,9 +1,9 @@
-<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://org.commcarehq/javarosa" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
 			<instance>
-				<data xmlns="http://openrosa.org/formdesigner/21683C30-2763-4659-B13F-2D4AF089EF7C" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" name="New Form" uiVersion="1" version="3">
+				<data xmlns="http://org.commcarehq/formdesigner/21683C30-2763-4659-B13F-2D4AF089EF7C" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" name="New Form" uiVersion="1" version="3">
 					<mother_name/>
 					<child jr:template="">
 						<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id=""><create><case_name/><owner_id/><case_type>child1</case_type></create><index><parent case_type="parent_test_case_type"/><host case_type="parent_test_case_type" relationship="extension"/></index></case><name/>

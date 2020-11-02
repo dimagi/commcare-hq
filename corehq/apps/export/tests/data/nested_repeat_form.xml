@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
 	<h:head>
 		<h:title>Mother</h:title>
 		<model>
 			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/E011B809-6A4D-4F91-8586-6ACC0522BFD8" uiVersion="1" version="1" name="Mother">
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/E011B809-6A4D-4F91-8586-6ACC0522BFD8" uiVersion="1" version="1" name="Mother">
 					<child jr:template="">
 						<weight>
 							<name />

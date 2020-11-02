@@ -30,9 +30,9 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 </data>
 """ % FORM_XMLNS
 XFORM = """
-    <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+    <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms"
     xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    xmlns:jr="http://org.commcarehq/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
         <h:head>
             <h:title>Checkup</h:title>
             <model>

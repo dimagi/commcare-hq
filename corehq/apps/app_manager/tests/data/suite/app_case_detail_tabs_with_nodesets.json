@@ -227,7 +227,7 @@
             "forms":[  
                 {  
                     "doc_type":"Form",
-                    "xmlns":"http://openrosa.org/formdesigner/B520859B-BE3D-4DAB-B8E9-585C3E1019C5",
+                    "xmlns":"http://org.commcarehq/formdesigner/B520859B-BE3D-4DAB-B8E9-585C3E1019C5",
                     "form_filter":"",
                     "name":{  
                         "en":"Add Song"
@@ -376,7 +376,7 @@
                 },
                 {  
                     "doc_type":"Form",
-                    "xmlns":"http://openrosa.org/formdesigner/EBAB623F-3DF8-421B-A083-ED7CEF5A9A97",
+                    "xmlns":"http://org.commcarehq/formdesigner/EBAB623F-3DF8-421B-A083-ED7CEF5A9A97",
                     "form_filter":"",
                     "name":{  
                         "en":"Play Song"

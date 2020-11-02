@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 <data uiVersion="1" version="1" name="New Beneficiary" xmlns:cc="http://commcarehq.org/xforms"
 	xmlns="http://bihar.commcarehq.org/pregnancy/new">
-	<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+	<n0:meta xmlns:n0="http://org.commcarehq/jr/xforms">
 		<n0:deviceID>71WALRV4IXH2FRM86XPE9QYW3</n0:deviceID>
 		<n0:timeStart>2012-05-25T15:27:12.178+05:30</n0:timeStart>
 		<n0:timeEnd>2012-05-25T15:27:38.490+05:30</n0:timeEnd>

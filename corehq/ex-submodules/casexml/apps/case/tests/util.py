@@ -107,7 +107,7 @@ def check_xml_line_by_line(test_case, expected, actual):
 
 
 def get_case_xmlns(version):
-    return NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
+    return NS_VERSION_MAP.get(version, 'http://org.commcarehq/http/response')
 
 
 def extract_caseblocks_from_xml(payload_string, version=V2):
@@ -177,7 +177,7 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
         case_blocks = [case_blocks]
         return_single = True
 
-    XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
+    XMLNS = NS_VERSION_MAP.get(version, 'http://org.commcarehq/http/response')
     blocks_from_restore = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):

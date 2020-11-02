@@ -9,7 +9,7 @@
         "@name": "Register",
         "@uiVersion": "1",
         "@version": "11",
-        "@xmlns": "http://openrosa.org/formdesigner/0F961E26-3BE6-4D39-9FF1-E41D405346DD",
+        "@xmlns": "http://org.commcarehq/formdesigner/0F961E26-3BE6-4D39-9FF1-E41D405346DD",
         "case": {
             "@case_id": "65e55473-e83b-4d78-9dde-eaf949758997",
             "@date_modified": "2017-05-25T21:06:27.012000Z",
@@ -27,7 +27,7 @@
         },
         "estado_tarv": "1",
         "meta": {
-            "@xmlns": "http://openrosa.org/jr/xforms",
+            "@xmlns": "http://org.commcarehq/jr/xforms",
             "appVersion": "Formplayer Version: 2.33",
             "app_build_version": 18,
             "commcare_version": null,

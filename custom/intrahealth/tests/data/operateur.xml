@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<data name="Visite de l'opérateur" uiVersion="1" version="73" xmlns="http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+<data name="Visite de l'opérateur" uiVersion="1" version="73" xmlns="http://org.commcarehq/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
 	<date_question>y</date_question>
 	<products count="2" current_index="2" ids="81457658bdedd663f8b0bdadb19d8f22 81457658bdedd663f8b0bdadb19d83d8">
 		<item id="81457658bdedd663f8b0bdadb19d8f22" index="0">
@@ -152,7 +152,7 @@
 	<location_id>022027440dc8cbccf3ffa4c334929cba</location_id>
 	<cur_element>33</cur_element>
 	<n4:case case_id="5f3d63f6198f47a4a61a4f4e9b63f57f" date_modified="2016-02-15T23:22:00.224Z" user_id="9ae5c77286bc4ab00ad12e2cfe4d408b" xmlns:n4="http://commcarehq.org/case/transaction/v2"/>
-	<n5:meta xmlns:n5="http://openrosa.org/jr/xforms">
+	<n5:meta xmlns:n5="http://org.commcarehq/jr/xforms">
 		<n5:deviceID>359308055669950</n5:deviceID>
 		<n5:timeStart>2016-02-15T17:14:50.668Z</n5:timeStart>
 		<n5:timeEnd>2016-02-15T23:22:00.224Z</n5:timeEnd>

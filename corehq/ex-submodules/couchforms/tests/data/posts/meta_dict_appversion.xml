@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/badmetauser" uiVersion="1" version="200">
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/badmetauser" uiVersion="1" version="200">
   <q2_participant_gender/>
   <q3_participant_age_in_years/>
   <q4_participant_pregnant_or_has_child></q4_participant_pregnant_or_has_child>
@@ -23,7 +23,7 @@
   <reg_date_day_of_week></reg_date_day_of_week>
   <start_offset></start_offset>
   <reminder_start_date>2013-09-24</reminder_start_date>
-  <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+  <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
     <n1:deviceID>commconnect</n1:deviceID>
     <n1:timeStart>2013-07-19T21:21:31.188Z</n1:timeStart>
     <n1:timeEnd>2013-07-20T00:02:27.493Z</n1:timeEnd>

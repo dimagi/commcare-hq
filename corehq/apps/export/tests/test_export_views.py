@@ -162,7 +162,7 @@ class ExportViewTest(ViewTestCase):
         export_post_data = json.dumps({
             "doc_type": "FormExportInstance",
             "domain": self.domain.name,
-            "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
+            "xmlns": "http://org.commcarehq/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
             "last_updated": None,
             "legacy_saved_export_schema_id": None,
             "is_daily_saved_export": False,
@@ -203,7 +203,7 @@ class ExportViewTest(ViewTestCase):
         export_post_data = json.dumps({
             "doc_type": "CaseExportInstance",
             "domain": self.domain.name,
-            "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
+            "xmlns": "http://org.commcarehq/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
             "last_updated": None,
             "legacy_saved_export_schema_id": None,
             "is_daily_saved_export": False,
@@ -254,7 +254,7 @@ class ExportViewTest(ViewTestCase):
         export_post_data = json.dumps({
             "doc_type": "CaseExportInstance",
             "domain": self.domain.name,
-            "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
+            "xmlns": "http://org.commcarehq/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
             "last_updated": None,
             "legacy_saved_export_schema_id": None,
             "is_daily_saved_export": True,
@@ -307,7 +307,7 @@ class ExportViewTest(ViewTestCase):
         export_post_data = json.dumps({
             "doc_type": "CaseExportInstance",
             "domain": 'wrong-domain',
-            "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
+            "xmlns": "http://org.commcarehq/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
             "last_updated": None,
             "legacy_saved_export_schema_id": None,
             "is_daily_saved_export": False,

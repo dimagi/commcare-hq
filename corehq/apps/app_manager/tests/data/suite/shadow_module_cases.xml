@@ -113,7 +113,7 @@ Update Case">
     </field>
   </detail>
   <entry>
-    <form>http://openrosa.org/formdesigner/9750C94C-A30B-4346-84AC-40E9A46BCEE1</form>
+    <form>http://org.commcarehq/formdesigner/9750C94C-A30B-4346-84AC-40E9A46BCEE1</form>
     <command id="m0-f0">
       <text>
         <locale id="forms.m0f0"/>
@@ -124,7 +124,7 @@ Update Case">
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8</form>
+    <form>http://org.commcarehq/formdesigner/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8</form>
     <command id="m0-f1">
       <text>
         <locale id="forms.m0f1"/>
@@ -137,7 +137,7 @@ value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/9750C94C-A30B-4346-84AC-40E9A46BCEE1</form>
+    <form>http://org.commcarehq/formdesigner/9750C94C-A30B-4346-84AC-40E9A46BCEE1</form>
     <command id="m1-f0">
       <text>
         <locale id="forms.m0f0"/>
@@ -148,7 +148,7 @@ value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
     </session>
   </entry>
   <entry>
-    <form>http://openrosa.org/formdesigner/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8</form>
+    <form>http://org.commcarehq/formdesigner/72ED647F-C2C2-4ADB-A7B4-61718E31D6A8</form>
     <command id="m1-f1">
       <text>
         <locale id="forms.m0f1"/>

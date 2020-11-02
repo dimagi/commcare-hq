@@ -160,7 +160,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_form_no_userid(self):
         form = """
-        <data xmlns="http://openrosa.org/formdesigner/blah">
+        <data xmlns="http://org.commcarehq/formdesigner/blah">
             <meta>
                 <deviceID>test</deviceID>
             </meta>
@@ -216,7 +216,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
 
         def submit_form(user_id, device_id, last_sync_token):
             form = """
-            <data xmlns="http://openrosa.org/formdesigner/blah">
+            <data xmlns="http://org.commcarehq/formdesigner/blah">
                 <meta>
                     <userID>{user_id}</userID>
                     <deviceID>{device_id}</deviceID>
@@ -245,7 +245,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_form_no_userid(self):
         form = """
-        <data xmlns="http://openrosa.org/formdesigner/blah">
+        <data xmlns="http://org.commcarehq/formdesigner/blah">
             <meta>
                 <deviceID>test</deviceID>
             </meta>
@@ -288,7 +288,7 @@ class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
 
     def test_response(self):
         expected = """
-        <OpenRosaResponse xmlns="http://openrosa.org/http/response">
+        <OpenRosaResponse xmlns="http://org.commcarehq/http/response">
             <message nature='ota_restore_pending'>Asynchronous restore under way for {username}</message>
             <Sync xmlns="http://commcarehq.org/sync">
                 <progress total="{total}" done="{done}" retry-after="{retry_after}"/>

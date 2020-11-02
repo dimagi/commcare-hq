@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 <data uiVersion="1" version="1" name="Registration" xmlns:cc="http://commcarehq.org/xforms"
 	xmlns="http://bihar.commcarehq.org/pregnancy/registration">
-	<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+	<n0:meta xmlns:n0="http://org.commcarehq/jr/xforms">
 		<n0:deviceID>95NGKBTQRKFWMYH6OSIMBQEZQ</n0:deviceID>
 		<n0:timeStart>2012-04-25T14:03:39.251+05:30</n0:timeStart>
 		<n0:timeEnd>2012-04-25T14:05:45.250+05:30</n0:timeEnd>

@@ -10,9 +10,9 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory()
         self.basic_module, self.form0 = self.factory.new_basic_module('basic_module', 'parrot')
-        self.form0.xmlns = 'http://openrosa.org/formdesigner/firstform'
+        self.form0.xmlns = 'http://org.commcarehq/formdesigner/firstform'
         self.form1 = self.factory.new_form(self.basic_module)
-        self.form1.xmlns = 'http://openrosa.org/formdesigner/secondform'
+        self.form1.xmlns = 'http://org.commcarehq/formdesigner/secondform'
         self.shadow_module = self.factory.new_shadow_module('shadow_module', self.basic_module, with_form=False)
         self.child_module, self.form2 = self.factory.new_basic_module('child_module', 'parrot',
                                                                       parent_module=self.basic_module)
@@ -353,11 +353,11 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
     def test_forms_reordered(self, *args):
         expected_before = """
         <partial>
-          <form>http://openrosa.org/formdesigner/firstform</form>
-          <form>http://openrosa.org/formdesigner/secondform</form>
+          <form>http://org.commcarehq/formdesigner/firstform</form>
+          <form>http://org.commcarehq/formdesigner/secondform</form>
 
-          <form>http://openrosa.org/formdesigner/firstform</form>
-          <form>http://openrosa.org/formdesigner/secondform</form>
+          <form>http://org.commcarehq/formdesigner/firstform</form>
+          <form>http://org.commcarehq/formdesigner/secondform</form>
         </partial>
         """
         self.assertXmlPartialEqual(
@@ -369,11 +369,11 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         self.basic_module.forms = [self.form1, self.form0]
         expected_after = """
         <partial>
-          <form>http://openrosa.org/formdesigner/secondform</form>
-          <form>http://openrosa.org/formdesigner/firstform</form>
+          <form>http://org.commcarehq/formdesigner/secondform</form>
+          <form>http://org.commcarehq/formdesigner/firstform</form>
 
-          <form>http://openrosa.org/formdesigner/secondform</form>
-          <form>http://openrosa.org/formdesigner/firstform</form>
+          <form>http://org.commcarehq/formdesigner/secondform</form>
+          <form>http://org.commcarehq/formdesigner/firstform</form>
         </partial>
         """
         self.assertXmlPartialEqual(
@@ -463,15 +463,15 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
 
         # m0
         self.basic_module, self.form0 = self.factory.new_basic_module('basic_module', 'parrot')
-        self.form0.xmlns = 'http://openrosa.org/formdesigner/m0f0'
+        self.form0.xmlns = 'http://org.commcarehq/formdesigner/m0f0'
         self.form1 = self.factory.new_form(self.basic_module)
-        self.form1.xmlns = 'http://openrosa.org/formdesigner/m0f1'
+        self.form1.xmlns = 'http://org.commcarehq/formdesigner/m0f1'
 
         # m1
         self.child_module, self.form2 = self.factory.new_basic_module(
             'child_module', 'parrot', parent_module=self.basic_module
         )
-        self.form2.xmlns = 'http://openrosa.org/formdesigner/m1f0'
+        self.form2.xmlns = 'http://org.commcarehq/formdesigner/m1f0'
         self.child_module.put_in_root = True
 
         # m2
@@ -532,7 +532,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         expected_entries = ("""
             <partial>
               <entry>
-                <form>http://openrosa.org/formdesigner/m0f0</form>
+                <form>http://org.commcarehq/formdesigner/m0f0</form>
                 <command id="m0-f0">
                   <text>
                     <locale id="forms.m0f0"/>
@@ -542,7 +542,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         """                     # basic module, first form
         """
               <entry>
-                <form>http://openrosa.org/formdesigner/m0f1</form>
+                <form>http://org.commcarehq/formdesigner/m0f1</form>
                 <command id="m0-f1">
                   <text>
                     <locale id="forms.m0f1"/>
@@ -552,7 +552,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         """                     # basic module, second form
         """
               <entry>
-                <form>http://openrosa.org/formdesigner/m1f0</form>
+                <form>http://org.commcarehq/formdesigner/m1f0</form>
                 <command id="m1-f0">
                   <text>
                     <locale id="forms.m1f0"/>
@@ -562,7 +562,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         """                     # child module, first form
         """
               <entry>
-                <form>http://openrosa.org/formdesigner/m0f0</form>
+                <form>http://org.commcarehq/formdesigner/m0f0</form>
                 <command id="m2-f0">
                   <text>
                     <locale id="forms.m0f0"/>
@@ -572,7 +572,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         """                     # shadow basic module, first form
         """
               <entry>
-                <form>http://openrosa.org/formdesigner/m0f1</form>
+                <form>http://org.commcarehq/formdesigner/m0f1</form>
                 <command id="m2-f1">
                   <text>
                     <locale id="forms.m0f1"/>
@@ -582,7 +582,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         """                     # shadow basic module, second form
         """
               <entry>
-                <form>http://openrosa.org/formdesigner/m1f0</form>
+                <form>http://org.commcarehq/formdesigner/m1f0</form>
                 <command id="m3-f0">
                   <text>
                     <locale id="forms.m1f0"/>

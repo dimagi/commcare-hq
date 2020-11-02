@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:vellum="http://commcarehq.org/xforms/vellum" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:jr="http://org.commcarehq/javarosa" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns:vellum="http://commcarehq.org/xforms/vellum" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <h:head>
         <h:title>create parent</h:title>
         <model>
             <instance>
-                <data xmlns="http://openrosa.org/formdesigner/E3EC2605-2A97-41AD-8716-374F4A30A78E" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="None" name="create parent">
+                <data xmlns="http://org.commcarehq/formdesigner/E3EC2605-2A97-41AD-8716-374F4A30A78E" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="None" name="create parent">
                     <parent_name />
                     <first_child_name />
                     <repeat_child jr:template="">

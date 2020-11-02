@@ -17,7 +17,7 @@ from corehq.motech.value_source import CaseTriggerInfo
 def test_concept_directions():
     form_json = {
         "form": {
-            "@xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+            "@xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
             "pneumonia": "no",
             "malnutrition": "no",
         }
@@ -51,7 +51,7 @@ def test_start_stop_datetime_export():
     }
     form_json = {
         "form": {
-            "@xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+            "@xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
             "visit_datetime": "2018-01-01T12:00:00.00000Z",
             "meta": {"timeEnd": "2019-12-16T12:36:00.00000Z"},
         }
@@ -83,7 +83,7 @@ def test_start_stop_datetime_import():
     }
     form_json = {
         "form": {
-            "@xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+            "@xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
             "meta": {"timeEnd": "2019-12-16T12:36:00.00000Z"},
         }
     }
@@ -187,7 +187,7 @@ class GetValuesForConceptTests(SimpleTestCase):
 
 def get_form_config_dict():
     return {
-        "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+        "xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
         "openmrs_visit_type": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
         "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
         "openmrs_observations": [

@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<data uiVersion="1" version="303" name="Visit" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B">
+<data uiVersion="1" version="303" name="Visit" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B">
 	<member_available>yes</member_available>
 	<prev_counsel_topics />
 	<cur_counsel_topics>sanitation</cur_counsel_topics>
@@ -67,7 +67,7 @@
 			<n0:num_ec>1</n0:num_ec>
 		</n0:update>
 	</n0:case>
-	<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+	<n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
 		<n1:deviceID>358510043913306</n1:deviceID>
 		<n1:timeStart>2013-03-09T06:26:56.240+03</n1:timeStart>
 		<n1:timeEnd>2013-03-09T06:30:09.007+03</n1:timeEnd>

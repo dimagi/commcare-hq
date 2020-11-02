@@ -14,7 +14,7 @@ FORM_XML = """<?xml version='1.0' ?>
     xmlns:cc="http://commcarehq.org/xforms"
     xmlns="{xmlns}">
     <attachment>fgg</attachment>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>321</n1:deviceID>
         <n1:timeStart>2015-04-08T12:00:01.000000Z</n1:timeStart>
         <n1:timeEnd>2015-04-08T12:05:01.000000Z</n1:timeEnd>
@@ -26,8 +26,8 @@ FORM_XML = """<?xml version='1.0' ?>
 """
 APP_ID_1 = '123'
 APP_ID_2 = '456'
-XMLNS_1 = 'http://openrosa.org/formdesigner/abc'
-XMLNS_2 = 'http://openrosa.org/formdesigner/def'
+XMLNS_1 = 'http://org.commcarehq/formdesigner/abc'
+XMLNS_2 = 'http://org.commcarehq/formdesigner/def'
 COMBOS = [
     (APP_ID_1, XMLNS_1, True),
     (APP_ID_2, XMLNS_2, True),

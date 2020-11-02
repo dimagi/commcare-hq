@@ -42,7 +42,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
     app_json_file = 'app_with_subcases'
     form_xml_file = 'app_with_subcases_form'
     form_es_response_file = 'app_with_subcases_submission'
-    form_xmlns = "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
+    form_xmlns = "http://org.commcarehq/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
 
     @classmethod
     def setUpClass(cls):

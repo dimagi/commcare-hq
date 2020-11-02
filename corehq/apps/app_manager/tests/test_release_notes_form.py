@@ -16,9 +16,9 @@ class ReleaseFormsSetupMixin(object):
         training_module = self.factory.app.add_module(Module.new_training_module('training module', None))
         self.releases_form = self.factory.app.new_form(training_module.id, "Untitled Form", None)
         self.releases_form.is_release_notes_form=True
-        self.releases_form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
+        self.releases_form.xmlns = "http://org.commcarehq/formdesigner/{}".format(uuid.uuid4().hex)
         basic_module, self.basic_form = self.factory.new_basic_module("basic_module", "doctor", with_form=True)
-        self.basic_form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
+        self.basic_form.xmlns = "http://org.commcarehq/formdesigner/{}".format(uuid.uuid4().hex)
 
 
 @patch_get_xform_resource_overrides()

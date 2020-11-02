@@ -12,7 +12,7 @@ CONCEPT_XFORM = {
    "_id": "concept_xform",
    "domain": "test-domain",
    "form": {
-       "@xmlns": "http://openrosa.org/formdesigner/test_concepts",
+       "@xmlns": "http://org.commcarehq/formdesigner/test_concepts",
        "@uiVersion": "1",
        "@name": "Visit",
        "last_visit": "2013-09-01",
@@ -54,7 +54,7 @@ CONCEPT_XFORM = {
            }
        ],
        "meta": {
-           "@xmlns": "http://openrosa.org/jr/xforms",
+           "@xmlns": "http://org.commcarehq/jr/xforms",
            "username": "airene",
            "instanceID": "some_form",
            "userID": "some_user",
@@ -103,7 +103,7 @@ CONCEPT_XFORM = {
        "doc_type": "AuthContext"
    },
    "doc_type": "XFormInstance",
-   "xmlns": "http://openrosa.org/formdesigner/something",
+   "xmlns": "http://org.commcarehq/formdesigner/something",
    "partial_submission": False,
    "#export_tag": [
        "domain",

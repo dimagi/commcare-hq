@@ -86,7 +86,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
     def _make_form_instance(cls, form_id):
         return XFormInstanceSQL(
             form_id=form_id,
-            xmlns='http://openrosa.org/formdesigner/form-processor',
+            xmlns='http://org.commcarehq/formdesigner/form-processor',
             received_on=datetime.utcnow(),
             user_id='a-user',
             domain=cls.domain,

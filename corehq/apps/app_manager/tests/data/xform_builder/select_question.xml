@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa">
   <h:head>
     <h:title>Untitled Form</h:title>
     <model>
       <instance>
-        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/2c398446-d17d-4a97-8d7c-cefe169b4d95" uiVersion="1" version="3" name="Untitled Form">
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/2c398446-d17d-4a97-8d7c-cefe169b4d95" uiVersion="1" version="3" name="Untitled Form">
           <fav_colors/>
         </data>
       </instance>

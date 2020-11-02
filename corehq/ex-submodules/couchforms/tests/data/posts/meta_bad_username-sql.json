@@ -4,11 +4,11 @@
         "#type": "data",
         "@uiVersion": "1",
         "@version": "200",
-        "@xmlns": "http://openrosa.org/formdesigner/badmetauser",
+        "@xmlns": "http://org.commcarehq/formdesigner/badmetauser",
         "contact_phone_number": "",
         "contact_phone_number_is_verified": "",
         "meta": {
-            "@xmlns": "http://openrosa.org/jr/xforms",
+            "@xmlns": "http://org.commcarehq/jr/xforms",
             "appVersion": {
                 "#text": "2.0",
                 "@xmlns": "http://commcarehq.org/xforms"
@@ -42,7 +42,7 @@
     "initial_processing_complete": true,
     "partial_submission": false,
     "received_on": "2013-09-21T04:06:18Z",
-    "xmlns": "http://openrosa.org/formdesigner/badmetauser",
+    "xmlns": "http://org.commcarehq/formdesigner/badmetauser",
     "app_id": null,
     "auth_context": {"doc_type": "DefaultAuthContext"},
     "build_id": null,

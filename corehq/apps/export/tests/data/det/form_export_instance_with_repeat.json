@@ -923,5 +923,5 @@
     ],
     "transform_dates": true,
     "type": "form",
-    "xmlns": "http://openrosa.org/formdesigner/A7F2D818-3C6B-4B23-8B4E-02418A5EF7BF"
+    "xmlns": "http://org.commcarehq/formdesigner/A7F2D818-3C6B-4B23-8B4E-02418A5EF7BF"
 }

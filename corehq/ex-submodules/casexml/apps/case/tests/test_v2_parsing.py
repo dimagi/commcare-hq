@@ -52,7 +52,7 @@ class Version2CaseParsingTest(TestCase):
         if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(1, len(case.actions))
             [action] = case.actions
-            self.assertEqual("http://openrosa.org/case/test/create", action.xform_xmlns)
+            self.assertEqual("http://org.commcarehq/case/test/create", action.xform_xmlns)
             self.assertEqual("v2 create", action.xform_name)
             self.assertEqual("bar-user-id", case.actions[0].user_id)
 

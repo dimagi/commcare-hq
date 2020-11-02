@@ -733,7 +733,7 @@ def test_observation_mappings():
             "openmrs_provider": "",
             "case_config": {},
             "form_configs": [{
-                "xmlns": "http://openrosa.org/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
+                "xmlns": "http://org.commcarehq/formdesigner/9ECA0608-307A-4357-954D-5A79E45C3879",
                 "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
                 "openmrs_visit_type": "c23d6c9d-3f10-11e4-adec-0800271c1b75",
                 "openmrs_observations": [

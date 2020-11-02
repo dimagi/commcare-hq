@@ -1,9 +1,9 @@
-<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://org.commcarehq/javarosa" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <h:head>
 		<h:title>Register Child</h:title>
 		<model>
 			<instance>
-				<data name="Register Child" uiVersion="1" version="17" xmlns="http://openrosa.org/formdesigner/41B8B444-506A-4D18-A1AF-54CE9FA26835" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+				<data name="Register Child" uiVersion="1" version="17" xmlns="http://org.commcarehq/formdesigner/41B8B444-506A-4D18-A1AF-54CE9FA26835" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
 					<name/>
 					<parent/>
 					<subcase_0>

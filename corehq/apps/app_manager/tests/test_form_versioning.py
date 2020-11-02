@@ -14,7 +14,7 @@ from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
 
 BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa">
     <h:head>
         <h:title>New Form</h:title>
         <model>
@@ -42,7 +42,7 @@ BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 """
 
 INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://org.commcarehq/javarosa">
     <h:head>
         <h:title>New Form</h:title>
         <model>

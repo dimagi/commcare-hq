@@ -39,7 +39,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             '_id': 'bp_form',
             'domain': cls.domain,
             'doc_type': "XFormInstance",
-            'xmlns': 'http://openrosa.org/formdesigner/362f76b242d0cfdcec66776f9586dc3620e9cce5',
+            'xmlns': 'http://org.commcarehq/formdesigner/362f76b242d0cfdcec66776f9586dc3620e9cce5',
             'form': {
                 "case_open_ccs_record_1": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "pregnancy": {"past_illness": "malaria", "past_illness_details": "took_malarone"},
@@ -51,7 +51,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             '_id': 'bp_form',
             'domain': cls.domain,
             'doc_type': "XFormInstance",
-            'xmlns': 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB',
+            'xmlns': 'http://org.commcarehq/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB',
             'form': {
                 "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "date_referral": "2018-12-07",
@@ -70,7 +70,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             '_id': 'thr_form',
             'domain': cls.domain,
             'doc_type': "XFormInstance",
-            'xmlns': 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
+            'xmlns': 'http://org.commcarehq/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
             'form': {
                 "case_load_ccs_record_0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "thr_amount_1": 30,
@@ -83,7 +83,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             '_id': 'del_form',
             'domain': cls.domain,
             'doc_type': "XFormInstance",
-            'xmlns': 'http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2',
+            'xmlns': 'http://org.commcarehq/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2',
             'form': {
                 "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
@@ -95,7 +95,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             '_id': 'pnc_form',
             'domain': cls.domain,
             'doc_type': "XFormInstance",
-            'xmlns': 'http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE',
+            'xmlns': 'http://org.commcarehq/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE',
             'form': {
                 "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "child": {

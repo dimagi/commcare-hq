@@ -370,7 +370,7 @@
                     "show_count": false,
                     "unique_id": "ff6fd16dd6904462d01f35835c2a4526586a4148",
                     "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/212650CB-5F67-4FB5-848C-067EBAF6F7C1"
+                    "xmlns": "http://org.commcarehq/formdesigner/212650CB-5F67-4FB5-848C-067EBAF6F7C1"
                 },
                 {
                     "actions": {
@@ -597,7 +597,7 @@
                     "unique_id": "b44edb0f6b73b69e08f1aeda3b32163a679560b4",
                     "validation_cache": null,
                     "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
+                    "xmlns": "http://org.commcarehq/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
                 }
             ],
             "media_audio": {
@@ -1005,7 +1005,7 @@
                     "show_count": false,
                     "unique_id": "d9d5ca0cdc1c1fca6ab29d4d8d438d979de3d10a",
                     "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/49ED1C89-1916-4B83-9B78-ADEA1DE1A22D"
+                    "xmlns": "http://org.commcarehq/formdesigner/49ED1C89-1916-4B83-9B78-ADEA1DE1A22D"
                 }
             ],
             "media_audio": {
@@ -1415,7 +1415,7 @@
                     "show_count": false,
                     "unique_id": "c32f4618bce93fbc34077da7b968586c6adb0e7e",
                     "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/C7807AA5-3366-4360-8096-280C68418A25"
+                    "xmlns": "http://org.commcarehq/formdesigner/C7807AA5-3366-4360-8096-280C68418A25"
                 }
             ],
             "media_audio": {

@@ -186,7 +186,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                     'app_id': 'fe8481a39c3738749e6a4766fca99efd',
                     'doc_type': 'xforminstance',
                     'domain': 'mikesproject',
-                    'xmlns': 'http://openrosa.org/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
+                    'xmlns': 'http://org.commcarehq/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
                     }
                 },
                 {
@@ -198,7 +198,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                         'app_id': '3d622620ca00d7709625220751a7b1f9',
                         'doc_type': 'xforminstance',
                         'domain': 'jacksproject',
-                        'xmlns': 'http://openrosa.org/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
+                        'xmlns': 'http://org.commcarehq/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
                         }
                     }
                 ],

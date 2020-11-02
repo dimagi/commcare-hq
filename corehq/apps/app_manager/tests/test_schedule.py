@@ -354,8 +354,8 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
     # xmlns is added because I needed to use WrappedNode.find() in the next few tests
     xmlns = ("xmlns='http://www.w3.org/2002/xforms' "
              "xmlns:h='http://www.w3.org/1999/xhtml' "
-             "xmlns:jr='http://openrosa.org/javarosa' "
-             "xmlns:orx='http://openrosa.org/jr/xforms' "
+             "xmlns:jr='http://org.commcarehq/javarosa' "
+             "xmlns:orx='http://org.commcarehq/jr/xforms' "
              "xmlns:xsd='http://www.w3.org/2001/XMLSchema'")
 
     def test_current_schedule_phase(self):

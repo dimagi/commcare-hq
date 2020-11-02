@@ -41,7 +41,7 @@ TEST_FORM_JSON = """{
     "@name": "Registration",
     "@uiVersion": "1",
     "@version": "11",
-    "@xmlns": "http://openrosa.org/formdesigner/test-form",
+    "@xmlns": "http://org.commcarehq/formdesigner/test-form",
     "first_name": "Xeenax",
     "age": "27",
     "case": {
@@ -59,7 +59,7 @@ TEST_FORM_JSON = """{
         }
     },
     "meta": {
-        "@xmlns": "http://openrosa.org/jr/xforms",
+        "@xmlns": "http://org.commcarehq/jr/xforms",
         "deviceID": "cloudcare",
         "timeStart": "2015-07-13T11:20:11.381000Z",
         "timeEnd": "2015-08-04T18:25:56.656000Z",
@@ -75,7 +75,7 @@ TEST_FORM_JSON = """{
 }"""
 
 SIMPLE_FORM_JSON = """{
-    "@xmlns": "http://openrosa.org/user/registration",
+    "@xmlns": "http://org.commcarehq/user/registration",
     "username": "W4",
     "password": "2",
     "uuid": "P8DU7OLHVLZXU21JR10H3W8J2",
@@ -95,7 +95,7 @@ JURY_ITERATION_FORM_JSON = ("""{
     "@name": "Jury Selection",
     "@uiVersion": "1",
     "@version": "2118",
-    "@xmlns": "http://openrosa.org/formdesigner/scopesmonkey",
+    "@xmlns": "http://org.commcarehq/formdesigner/scopesmonkey",
     "case_case_juror": {
         "case": {
             "@case_id": "cf468f9a-cf80-474b-b815-d98c5b15c906",
@@ -180,7 +180,7 @@ JURY_ITERATION_FORM_JSON = ("""{
     },
     "jury_selection": "completed",
     "meta": {
-        "@xmlns": "http://openrosa.org/jr/xforms",
+        "@xmlns": "http://org.commcarehq/jr/xforms",
         "appVersion": {
             "#text": "CommCare Android, version \\"2.27.2\\"(414569). """
                     """App v2653. CommCare Version 2.27. Build 414569, built on: 2016-04-28",

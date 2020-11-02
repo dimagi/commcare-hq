@@ -475,7 +475,7 @@
            "forms": [
                {
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/33E623E4-1E60-4580-BE71-BB4E4637CDE0",
+                   "xmlns": "http://org.commcarehq/formdesigner/33E623E4-1E60-4580-BE71-BB4E4637CDE0",
                    "name": {
                        "en": "Open Parent"
                    },
@@ -588,7 +588,7 @@
                },
                {
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/57830FAF-69E4-4F4A-9A53-41C5C46E8005",
+                   "xmlns": "http://org.commcarehq/formdesigner/57830FAF-69E4-4F4A-9A53-41C5C46E8005",
                    "name": {
                        "en": "Add points"
                    },
@@ -858,7 +858,7 @@
            "forms": [
                {
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/36D0C69B-CAA7-4091-80B3-1A454F03C808",
+                   "xmlns": "http://org.commcarehq/formdesigner/36D0C69B-CAA7-4091-80B3-1A454F03C808",
                    "name": {
                        "en": "Form required"
                    },

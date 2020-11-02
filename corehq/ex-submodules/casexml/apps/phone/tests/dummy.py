@@ -31,7 +31,7 @@ def dummy_user_xml(user=None):
     project = user.domain if user else DUMMY_PROJECT
 
     return """
-    <Registration xmlns="http://openrosa.org/user/registration">
+    <Registration xmlns="http://org.commcarehq/user/registration">
         <username>{}</username>
         <password>{}</password>
         <uuid>{}</uuid>
@@ -52,7 +52,7 @@ def dummy_user_xml(user=None):
     )
 
 DUMMY_RESTORE_XML_TEMPLATE = ("""
-<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items_xml)s>
+<OpenRosaResponse xmlns="http://org.commcarehq/http/response"%(items_xml)s>
     <message nature="ota_restore_success">%(message)s</message>
     <Sync xmlns="http://commcarehq.org/sync">
         <restore_id>%(restore_id)s</restore_id>

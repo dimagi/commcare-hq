@@ -37,7 +37,7 @@ class MobileAuthTest(TestCase):
         record = new_key_record(None, None, now=self.now)
         xml = get_mobile_auth_payload([record], self.domain_name, now=self.now)
         check_xml_line_by_line(self, xml, """
-            <OpenRosaResponse xmlns="http://openrosa.org/http/response">
+            <OpenRosaResponse xmlns="http://org.commcarehq/http/response">
                 <message nature="submit_success">Here are your keys!</message>
                 <auth_keys domain="{domain}" issued="{now}">
                     <key_record valid="{now}" expires="{now_plus_30}">
@@ -56,7 +56,7 @@ class MobileAuthTest(TestCase):
         record = new_key_record(None, None, now=self.now, valid=now_minus_30)
         xml = get_mobile_auth_payload([record], self.domain_name, now=self.now)
         check_xml_line_by_line(self, xml, """
-            <OpenRosaResponse xmlns="http://openrosa.org/http/response">
+            <OpenRosaResponse xmlns="http://org.commcarehq/http/response">
                 <message nature="submit_success">Here are your keys!</message>
                 <auth_keys domain="{domain}" issued="{now}">
                     <key_record valid="{now_minus_30}" expires="{now_plus_30}">

@@ -48,7 +48,7 @@ class ReadableFormdataTest(SimpleTestCase):
         }]
         form_data = {
             "@uiVersion": "1",
-            "@xmlns": "http://openrosa.org/formdesigner/D096EE34-DF37-466C-B6D9-950A36D570AD",
+            "@xmlns": "http://org.commcarehq/formdesigner/D096EE34-DF37-466C-B6D9-950A36D570AD",
             "@name": "Untitled Form",
             "question4": "foo",
             "#type": "data",
@@ -65,7 +65,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 "@case_id": "6bc190f6-ddeb-4a42-b445-8fa348b50806"
             },
             "meta": {
-                "@xmlns": "http://openrosa.org/jr/xforms",
+                "@xmlns": "http://org.commcarehq/jr/xforms",
                 "username": "droberts@dimagi.com",
                 "instanceID": "0398f186-c35f-4437-8b6b-41800807e485",
                 "userID": "9ee0367ad4051f0fb33c75eae67d750e",
@@ -139,7 +139,7 @@ class ReadableFormdataTest(SimpleTestCase):
         }]
         form_data = {
             "@uiVersion": "1",
-            "@xmlns": "http://openrosa.org/formdesigner/432B3A7F-6EEE-4033-8740-ACCB0804C4FC",
+            "@xmlns": "http://org.commcarehq/formdesigner/432B3A7F-6EEE-4033-8740-ACCB0804C4FC",
             "@name": "Untitled Form",
             "question18": "3",
             "#type": "data",
@@ -155,7 +155,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 }
             ],
             "meta": {
-                "@xmlns": "http://openrosa.org/jr/xforms",
+                "@xmlns": "http://org.commcarehq/jr/xforms",
                 "username": "danny",
                 "instanceID": "172981b6-5eeb-4be8-bbc7-ad52f808e803",
                 "userID": "a07d4bd967a9c205287f767509600931",

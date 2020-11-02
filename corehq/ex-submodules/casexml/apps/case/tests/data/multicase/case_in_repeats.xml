@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 <data uiVersion="1" version="1" name="New Form1"
 	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-	xmlns="http://openrosa.org/formdesigner/FB088320-11E3-406A-AA3F-1D8E7A81F40D">
+	xmlns="http://org.commcarehq/formdesigner/FB088320-11E3-406A-AA3F-1D8E7A81F40D">
 	<prev_type />
 	<prev_birth_type />
 	<prev_nevirapine />

@@ -354,7 +354,7 @@ class TestReportPillow(TestCase):
             'received_on': "2013-09-20T01:33:12Z",
             "form": {
                 "meta": {
-                    "@xmlns": "http://openrosa.org/jr/xforms",
+                    "@xmlns": "http://org.commcarehq/jr/xforms",
                     "username": "someuser",
                     "instanceID": "foo",
                     "userID": "some_user_id",

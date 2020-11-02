@@ -2,14 +2,14 @@
     "_id": "e8afaec3c66745ef80e48062d4b91b56",
     "form": {
         "#type": "unicode",
-        "@xmlns": "http://openrosa.org/app/unicode",
+        "@xmlns": "http://org.commcarehq/app/unicode",
         "datum": "\u7edf\u4e00\u7801"
     },
     "history": [],
     "initial_processing_complete": true,
     "partial_submission": false,
     "received_on": "2013-09-21T04:06:18Z",
-    "xmlns": "http://openrosa.org/app/unicode",
+    "xmlns": "http://org.commcarehq/app/unicode",
     "app_id": null,
     "auth_context": {"doc_type": "DefaultAuthContext"},
     "build_id": null,

@@ -146,7 +146,7 @@
         {
           "comment": "",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/EFB9997B-2ABF-475E-A08E-E79CF5A4FF07",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/EFB9997B-2ABF-475E-A08E-E79CF5A4FF07",
           "custom_instances": [
             
           ],
@@ -325,7 +325,7 @@
         {
           "comment": "",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/E0339DDD-3DDF-4BA7-947D-81CA287166AE",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/E0339DDD-3DDF-4BA7-947D-81CA287166AE",
           "custom_instances": [
             
           ],
@@ -870,7 +870,7 @@
         {
           "comment": "",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/B2428C03-BB1A-44CA-AC2E-1376AC2B6F49",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/B2428C03-BB1A-44CA-AC2E-1376AC2B6F49",
           "custom_instances": [
             
           ],
@@ -1049,7 +1049,7 @@
         {
           "comment": "",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/F46714CE-4E1C-4F12-BB04-77D7965E7410",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/F46714CE-4E1C-4F12-BB04-77D7965E7410",
           "custom_instances": [
             
           ],

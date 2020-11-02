@@ -15,14 +15,14 @@
     "doc_type": "XFormInstance",
     "form": {
         "#type": "unicode",
-        "@xmlns": "http://openrosa.org/app/unicode",
+        "@xmlns": "http://org.commcarehq/app/unicode",
         "datum": "\u7edf\u4e00\u7801"
     },
     "history": [],
     "initial_processing_complete": true,
     "partial_submission": false,
     "received_on": "2014-01-06T21:30:43Z",
-    "xmlns": "http://openrosa.org/app/unicode",
+    "xmlns": "http://org.commcarehq/app/unicode",
     "#export_tag": ["domain", "xmlns"],
     "app_id": null,
     "auth_context": {"doc_type": "DefaultAuthContext"},

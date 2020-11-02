@@ -390,7 +390,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/fee309b204bd7a07b0dca634b8eceee0264ce788",
+                   "xmlns": "http://org.commcarehq/formdesigner/fee309b204bd7a07b0dca634b8eceee0264ce788",
                    "form_filter": "",
                    "name": {
                        "en": "Candy Loop"
@@ -785,7 +785,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/7319059A-70FB-4758-9DED-8DE24FDF6029",
+                   "xmlns": "http://org.commcarehq/formdesigner/7319059A-70FB-4758-9DED-8DE24FDF6029",
                    "name": {
                        "en": "Child Case"
                    },

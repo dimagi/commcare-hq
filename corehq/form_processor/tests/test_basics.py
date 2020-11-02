@@ -361,7 +361,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
     def _submit_dummy_form(domain, user_id, device_id='', sync_log_id=None, form_id=None):
         form_id = form_id or uuid.uuid4().hex
         form = """
-            <data xmlns="http://openrosa.org/formdesigner/blah">
+            <data xmlns="http://org.commcarehq/formdesigner/blah">
                 <meta>
                     <userID>{user_id}</userID>
                     <deviceID>{device_id}</deviceID>
@@ -397,7 +397,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
     def test_update_case_without_creating_triggers_soft_assert(self):
         def _submit_form_with_cc_version(version):
             xml = """<?xml version='1.0' ?>
-                            <system version="1" uiVersion="1" xmlns="http://commcarehq.org/case" xmlns:orx="http://openrosa.org/jr/xforms">
+                            <system version="1" uiVersion="1" xmlns="http://commcarehq.org/case" xmlns:orx="http://org.commcarehq/jr/xforms">
                                 <orx:meta xmlns:cc="http://commcarehq.org/xforms">
                                     <orx:deviceID />
                                     <orx:timeStart>2017-06-22T08:39:07.585584Z</orx:timeStart>

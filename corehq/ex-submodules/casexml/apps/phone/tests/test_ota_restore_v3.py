@@ -48,7 +48,7 @@ class TestRestoreContent(SimpleTestCase):
     def _expected(self, username, body, items=None):
         items_text = (' items="%s"' % items) if items is not None else ''
         return (
-            '<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
+            '<OpenRosaResponse xmlns="http://org.commcarehq/http/response"%(items)s>'
             '<message nature="ota_restore_success">Successfully restored account %(username)s!</message>'
             '%(body)s'
             '</OpenRosaResponse>'

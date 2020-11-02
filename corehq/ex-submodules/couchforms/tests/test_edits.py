@@ -85,10 +85,10 @@ class EditFormTest(TestCase, TestFileMixin):
 
         def _get_xml(date, form_id):
             return """<?xml version='1.0' ?>
-               <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+               <data uiVersion="1" version="1" name="" xmlns="http://org.commcarehq/formdesigner/123">
                    <name>fgg</name>
                    <date>2011-06-07</date>
-                   <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                   <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
                        <n1:deviceID>354957031935664</n1:deviceID>
                        <n1:timeStart>{date}</n1:timeStart>
                        <n1:timeEnd>{date}</n1:timeEnd>

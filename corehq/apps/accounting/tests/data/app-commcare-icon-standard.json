@@ -243,7 +243,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/E2E07B3C-9665-4247-B2E9-D0162C4B0D6C",
+                   "xmlns": "http://org.commcarehq/formdesigner/E2E07B3C-9665-4247-B2E9-D0162C4B0D6C",
                    "form_filter": "",
                    "name": {
                        "en": "Survey 1"
@@ -385,7 +385,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/5E654925-C1FA-4D1A-A172-E21BA89F01AC",
+                   "xmlns": "http://org.commcarehq/formdesigner/5E654925-C1FA-4D1A-A172-E21BA89F01AC",
                    "form_filter": "",
                    "name": {
                        "en": "Survey 2"
@@ -758,7 +758,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/7F88A227-567E-4B5E-9747-FB3818EE1A44",
+                   "xmlns": "http://org.commcarehq/formdesigner/7F88A227-567E-4B5E-9747-FB3818EE1A44",
                    "form_filter": "",
                    "name": {
                        "en": "Survey 1"
@@ -900,7 +900,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "http://openrosa.org/formdesigner/A6567651-4C52-4038-8F12-D31E61A64F60",
+                   "xmlns": "http://org.commcarehq/formdesigner/A6567651-4C52-4038-8F12-D31E61A64F60",
                    "form_filter": "",
                    "name": {
                        "en": "Survey 2"

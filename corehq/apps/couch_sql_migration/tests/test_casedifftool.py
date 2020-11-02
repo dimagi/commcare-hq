@@ -468,7 +468,7 @@ THING_FORM = """
     name="Thing"
     uiVersion="1"
     version="11"
-    xmlns="http://openrosa.org/formdesigner/thing-form"
+    xmlns="http://org.commcarehq/formdesigner/thing-form"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <thing>1</thing>
@@ -487,7 +487,7 @@ THING_FORM = """
             <n0:thing>1</n0:thing>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2014-07-13T11:20:11.381Z</n1:timeStart>
         <n1:timeEnd>2014-08-04T18:25:56.656Z</n1:timeEnd>
@@ -506,7 +506,7 @@ UPDATE_FORM = """
     name="Update"
     uiVersion="1"
     version="11"
-    xmlns="http://openrosa.org/formdesigner/update-form"
+    xmlns="http://org.commcarehq/formdesigner/update-form"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <age>27</age>
@@ -520,7 +520,7 @@ UPDATE_FORM = """
             <n0:age>27</n0:age>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
         <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
@@ -539,7 +539,7 @@ LEDGER_FORM = """
     name="Ledger"
     uiVersion="1"
     version="11"
-    xmlns="http://openrosa.org/formdesigner/ledger-form"
+    xmlns="http://org.commcarehq/formdesigner/ledger-form"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 >
     <thing>1</thing>
@@ -567,7 +567,7 @@ LEDGER_FORM = """
             <n0:thing>1</n0:thing>
         </n0:update>
     </n0:case>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:meta xmlns:n1="http://org.commcarehq/jr/xforms">
         <n1:deviceID>cloudcare</n1:deviceID>
         <n1:timeStart>2014-07-13T11:20:11.381Z</n1:timeStart>
         <n1:timeEnd>2014-08-04T18:25:56.656Z</n1:timeEnd>

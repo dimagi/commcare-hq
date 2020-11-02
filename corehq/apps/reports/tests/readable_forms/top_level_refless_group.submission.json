@@ -45,7 +45,7 @@
        }
    },
    "meta": {
-       "@xmlns": "http://openrosa.org/jr/xforms",
+       "@xmlns": "http://org.commcarehq/jr/xforms",
        "username": "xxxxxxx",
        "instanceID": "xxxxxxx",
        "userID": "xxxxxxx",

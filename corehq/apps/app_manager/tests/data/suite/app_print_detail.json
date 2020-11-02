@@ -237,7 +237,7 @@
         {
           "comment": "This form will register a new case.",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/11FAC65A-F2CD-427F-A870-CF126336AAB5",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/11FAC65A-F2CD-427F-A870-CF126336AAB5",
           "custom_instances": [
             
           ],
@@ -739,7 +739,7 @@
         {
           "comment": "This form will update a case that has already been registered.  \r\nWhile editing your form you can refer to or use existing case properties that have been saved in other forms.  \r\nYou can also save them as new case properties or update existing case properties by using the \"Case Management\" tab above.",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/52D111C9-79C6-403F-BF4C-D24B64A872E2",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/52D111C9-79C6-403F-BF4C-D24B64A872E2",
           "custom_instances": [
             
           ],
@@ -918,7 +918,7 @@
         {
           "comment": "This form will allow you to close or update a previously registered case.",
           "doc_type": "Form",
-          "xmlns": "http:\/\/openrosa.org\/formdesigner\/5CCB1614-68B3-44C0-A166-D63AA7C1D4FB",
+          "xmlns": "http:\/\/org.commcarehq\/formdesigner\/5CCB1614-68B3-44C0-A166-D63AA7C1D4FB",
           "custom_instances": [
             
           ],

@@ -237,12 +237,12 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         case_module.report_context_tile = True
         case_form = case_module.new_form("Update Fish", None)
         case_form.requires = "case"
-        case_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF"
+        case_form.xmlns = "http://org.commcarehq/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF"
 
         survey_module = cls.app.add_module(Module.new_module("Survey Module", 'en'))
         survey_module.report_context_tile = True
         survey_form = survey_module.new_form("Survey", None)
-        survey_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE"
+        survey_form.xmlns = "http://org.commcarehq/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE"
 
         with mock_report_configurations(cls.report_configs_by_id):
             cls.suite = cls.app.create_suite()
@@ -491,7 +491,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         self.assertXmlPartialEqual("""
         <partial>
           <entry>
-            <form>http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF</form>
+            <form>http://org.commcarehq/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF</form>
             <session>
               <datum id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update" detail-persistent="report_context_tile" autoselect="true"/>
               <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='fish'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
@@ -511,7 +511,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         self.assertXmlPartialEqual("""
         <partial>
           <entry>
-            <form>http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE</form>
+            <form>http://org.commcarehq/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE</form>
             <session>
               <datum id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update" detail-persistent="report_context_tile" autoselect="true"/>
             </session>

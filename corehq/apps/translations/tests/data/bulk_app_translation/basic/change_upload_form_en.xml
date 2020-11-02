@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://org.commcarehq/jr/xforms"
 xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-xmlns:jr="http://openrosa.org/javarosa"
+xmlns:jr="http://org.commcarehq/javarosa"
 xmlns:vellum="http://commcarehq.org/xforms/vellum">
     <h:head>
         <h:title>My more &amp; awesome form</h:title>
         <model>
             <instance>
-                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A181BAB5-EDDF-4888-B703-FAD79F325398" uiVersion="1" version="None" name="My more &amp; awesome form">
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://org.commcarehq/formdesigner/A181BAB5-EDDF-4888-B703-FAD79F325398" uiVersion="1" version="None" name="My more &amp; awesome form">
                     <question1/>
                     <question2/>
                     <question3>

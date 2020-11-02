@@ -15,7 +15,7 @@ XFORM_MULTI_CASES = {
     "_id": "multi-case-test",
     "domain": "test_pillows",
     "form": {
-        "@xmlns": "http://openrosa.org/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AB",
+        "@xmlns": "http://org.commcarehq/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AB",
         "case": [
             {
                 "@xmlns": "http://commcarehq.org/case/transaction/v2",
@@ -120,7 +120,7 @@ XFORM_SINGLE_CASE = {
     "_id": "single_case_form",
     "domain": "single_case",
     "form": {
-        "@xmlns": "http://openrosa.org/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AA",
+        "@xmlns": "http://org.commcarehq/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AA",
         "@uiVersion": "1",
         "@name": "Provider Chooser",
         "provider1": "617-555-2214",
@@ -139,7 +139,7 @@ XFORM_SINGLE_CASE = {
         },
         "provider5": "item22",
         "meta": {
-            "@xmlns": "http://openrosa.org/jr/xforms",
+            "@xmlns": "http://org.commcarehq/jr/xforms",
             "username": "ctsims",
             "instanceID": "34097278-ac41-4589-a100-16052d7912fa",
             "userID": "testuser",
@@ -161,7 +161,7 @@ XFORM_SINGLE_CASE = {
     "last_sync_token": None,
     "location_": [
     ],
-    "xmlns": "http://openrosa.org/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AA",
+    "xmlns": "http://org.commcarehq/formdesigner/0122B6F6-C765-49FB-B367-C6976E9286AA",
     "partial_submission": False,
     "#export_tag": [
         "domain",
@@ -209,7 +209,7 @@ CASE_WITH_OWNER_ID = {
            },
            "indices": [
            ],
-           "xform_xmlns": "http://openrosa.org/formdesigner/150B838E-B49C-44A3-B037-928DC787F17D",
+           "xform_xmlns": "http://org.commcarehq/formdesigner/150B838E-B49C-44A3-B037-928DC787F17D",
            "date": "2013-05-03T11:26:54Z"
        }
    ],
@@ -268,7 +268,7 @@ CASE_NO_OWNER_ID = {
            },
            "indices": [
            ],
-           "xform_xmlns": "http://openrosa.org/formdesigner/150B838E-B49C-44A3-B037-928DC787F17D",
+           "xform_xmlns": "http://org.commcarehq/formdesigner/150B838E-B49C-44A3-B037-928DC787F17D",
            "date": "2013-05-03T11:26:54Z"
        }
    ],
