@@ -88,7 +88,7 @@ jdcal==1.4.1              # via openpyxl
 jedi==0.17.2              # via ipython
 jinja2==2.11.2            # via -r requirements.in
 jmespath==0.10.0          # via boto3, botocore
-json-delta==2.0           # via -r requirements.in
+json-delta==2.0.2         # via -r requirements.in
 jsonfield==2.1.1          # via -r requirements.in, django-prbac
 jsonobject-couchdbkit==1.0.1  # via -r requirements.in
 jsonobject==0.9.9         # via -r requirements.in, jsonobject-couchdbkit

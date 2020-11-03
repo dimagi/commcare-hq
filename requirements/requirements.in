@@ -59,7 +59,7 @@ hiredis==1.1.0
 httpagentparser~=1.7
 iso8601==0.1.13
 Jinja2~=2.10
-json-delta==2.0
+json-delta==2.0.2
 jsonfield==2.1.1
 jsonobject-couchdbkit~=1.0.1
 jsonobject==0.9.9
