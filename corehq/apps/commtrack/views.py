@@ -139,19 +139,19 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                     setattr(self.commtrack_settings.sqlconsumptionconfig, field,
                             data['consumption_' + field])
 
-            self.commtrack_settings.save()
-            for attr in ('sqlconsumptionconfig', 'sqlstockrestoreconfig', 'sqlstocklevelsconfig'):
-                submodel = getattr(self.commtrack_settings, attr)
-                submodel.commtrack_settings = self.commtrack_settings
-                try:
+            try:
+                self.commtrack_settings.save()
+                for attr in ('sqlconsumptionconfig', 'sqlstockrestoreconfig', 'sqlstocklevelsconfig'):
+                    submodel = getattr(self.commtrack_settings, attr)
+                    submodel.commtrack_settings = self.commtrack_settings
                     submodel.save()
-                except decimal.InvalidOperation:        # capture only decimal errors - too many digits, etc.
-                    try:
-                        submodel.full_clean()           # get human-readable messages
-                    except ValidationError as e:
-                        for key, msgs in dict(e).items():
-                            for msg in msgs:
-                                messages.error(request, _("Could not save {}: {}").format(key, msg))
+            except decimal.InvalidOperation:        # capture only decimal errors, from stocklevelsconfig
+                try:
+                    self.commtrack_settings.sqlstocklevelsconfig.full_clean()  # get human-readable messages
+                except ValidationError as e:
+                    for key, msgs in dict(e).items():
+                        for msg in msgs:
+                            messages.error(request, _("Could not save {}: {}").format(key, msg))
 
             for loc_type in LocationType.objects.filter(domain=self.domain).all():
                 # This will update stock levels based on commtrack config
