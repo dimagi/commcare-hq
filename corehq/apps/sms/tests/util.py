@@ -342,3 +342,16 @@ def delete_domain_phone_numbers(domain):
     for p in PhoneNumber.by_domain(domain):
         # Clear cache and delete
         p.delete()
+
+
+class MockContextManager(object):
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+
+def mock_critical_section_for_smsforms_sessions(contact_id):
+    return MockContextManager()
