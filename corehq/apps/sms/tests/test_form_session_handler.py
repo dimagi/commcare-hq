@@ -1,3 +1,4 @@
+import contextlib
 from datetime import datetime
 
 from django.test import TestCase
@@ -12,19 +13,20 @@ from corehq.apps.sms.models import (
     MessagingEvent,
     MessagingSubEvent
 )
-from corehq.apps.sms.tests.util import mock_critical_section_for_smsforms_sessions
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 
 
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
-       new=mock_critical_section_for_smsforms_sessions)
+       new=lambda contact_id: contextlib.supress())
 class FormSessionTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = Domain(name='test')
+        cls.domain.save()
+
         cls.number = PhoneNumber(
             domain=cls.domain.name,
             owner_doc_type='CommCareCase',
@@ -37,6 +39,8 @@ class FormSessionTestCase(TestCase):
             pending_verification=False,
             contact_last_modified=datetime.utcnow()
         )
+        cls.number.save()
+
         cls.session = SQLXFormsSession.create_session_object(
             cls.domain.name,
             Mock(get_id=cls.number.owner_id),
@@ -54,6 +58,14 @@ class FormSessionTestCase(TestCase):
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.number.delete()
+        cls.backend.delete()
+        cls.session.delete()
+        cls.domain.delete()
+        super().tearDownClass()
+
     def _create_message_event_and_subevent(self):
         event = MessagingEvent.objects.create(
             domain=self.domain.name,
@@ -70,6 +82,7 @@ class FormSessionTestCase(TestCase):
             status=MessagingEvent.STATUS_IN_PROGRESS,
             xforms_session=self.session
         )
+        self.addCleanup(event.delete)  # cascades to subevent
 
         return event, subevent
 
@@ -87,6 +100,7 @@ class FormSessionTestCase(TestCase):
             backend_message_id=None,
             raw_text=None,
         )
+        self.addCleanup(msg.delete)
 
         form_session_handler(self.number, msg.text, msg)
 
@@ -106,6 +120,7 @@ class FormSessionTestCase(TestCase):
             backend_message_id=None,
             raw_text=None,
         )
+        self.addCleanup(msg.delete)
 
         form_session_handler(self.number, msg.text, msg)
 
@@ -128,6 +143,7 @@ class FormSessionTestCase(TestCase):
             backend_message_id=None,
             raw_text=None,
         )
+        self.addCleanup(msg.delete)
 
         form_session_handler(self.number, msg.text, msg)
 
