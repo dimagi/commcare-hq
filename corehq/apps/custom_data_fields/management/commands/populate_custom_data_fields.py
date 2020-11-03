@@ -25,14 +25,9 @@ class Command(PopulateSQLCommand):
         diffs = []
         for attr in ('field_type', 'domain'):
             diffs.append(cls.diff_attr(attr, doc, obj))
-        couch_fields = doc.get('fields', [])
-        sql_fields = obj.get_fields()
-        if len(couch_fields) != len(sql_fields):
-            diffs.append(f"fields: {len(couch_fields)} in couch != {len(sql_fields)} in sql")
-        else:
-            for couch_field, sql_field in list(zip(couch_fields, sql_fields)):
-                for attr in ('slug', 'is_required', 'label', 'choices', 'regex', 'regex_msg'):
-                    diffs.append(cls.diff_attr(attr, couch_field, sql_field))
+        diffs.extend(cls.diff_lists(doc.get('fields', []), obj.get_fields(), [
+            'slug', 'is_required', 'label', 'choices', 'regex', 'regex_msg'
+        ]))
         diffs = [d for d in diffs if d]
         return "\n".join(diffs) if diffs else None
 
