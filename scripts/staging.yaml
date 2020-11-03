@@ -63,7 +63,6 @@ branches:
   - gh/improve-queueing-repeaters # Graham Oct 22
   - jls/require-search-text # Jenny Oct 22
   - jls/combobox-select2 # Jenny Oct 28
-  - gh/messaging-report # Graham Oct 27
   - dependabot/pip/requirements/datadog-0.39.0 # Daniel Nov 3
 
 submodules: {}
