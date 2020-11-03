@@ -84,6 +84,16 @@
     <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
 {% endcompress %}
 
+{% comment %}
+    Analytics depend on initial page data, and hq.helpers depends on analytics.
+{% endcomment %}
+{% if analytics or hq %}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    {% endcompress %}
+    {% include 'analytics/analytics_js.html' %}
+{% endif %}
+
 {% if ko or hq %}
     <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
 
@@ -100,16 +110,6 @@
             <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
         {% endcompress %}
     {% endif %}
-{% endif %}
-
-{% comment %}
-    Analytics depend on initial page data, and hq.helpers depends on analytics.
-{% endcomment %}
-{% if analytics or hq %}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-    {% endcompress %}
-    {% include 'analytics/analytics_js.html' %}
 {% endif %}
 
 {% if hq %}

@@ -13,7 +13,6 @@ hqDefine("reports/js/hq_report", [
     kissmetrics,
     initialPageData
 ) {
-    var secureCookies = initialPageData.get('secure_cookies');
     var hqReport = function (options) {
         'use strict';
         var self = {};
@@ -99,14 +98,14 @@ hqDefine("reports/js/hq_report", [
         self.handleTabularReportCookies = function (reportDatatable) {
             var defaultRowsCookieName = 'hqreport.tabularSetting.defaultRows',
                 savedPath = window.location.pathname;
-            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName, { secure: secureCookies });
+            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName, { secure: initialPageData.get('secure_cookies') });
             reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
 
             $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
                 $.cookie(defaultRowsCookieName, value, {
                     path: savedPath,
                     expires: 2,
-                    secure: secureCookies,
+                    secure: initialPageData.get('secure_cookies'),
                 });
             });
         };
@@ -117,20 +116,20 @@ hqDefine("reports/js/hq_report", [
                 $.cookie(self.cookieDatespanStart, self.datespan.startdate, {
                     path: self.urlRoot,
                     expires: 1,
-                    secure: secureCookies,
+                    secure: initialPageData.get('secure_cookies'),
                 });
                 $.cookie(self.cookieDatespanEnd, self.datespan.enddate, {
                     path: self.urlRoot,
                     expires: 1,
-                    secure: secureCookies,
+                    secure: initialPageData.get('secure_cookies'),
                 });
             }
         };
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.cookieDatespanStart, { secure: secureCookies }),
-                    cookie_enddate = $.cookie(self.cookieDatespanEnd, { secure: secureCookies }),
+                var cookie_startdate = $.cookie(self.cookieDatespanStart, { secure: initialPageData.get('secure_cookies') }),
+                    cookie_enddate = $.cookie(self.cookieDatespanEnd, { secure: initialPageData.get('secure_cookies') }),
                     load_success = false;
 
                 if (cookie_enddate && cookie_startdate) {

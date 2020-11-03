@@ -34,8 +34,6 @@ hqDefine('export/js/download_export', [
 ) {
     'use strict';
 
-    var secureCookies = initialPageData.get('secure_cookies');
-
     var downloadFormModel = function (options) {
         assertProperties.assert(options, [
             'defaultDateRange',
@@ -65,8 +63,8 @@ hqDefine('export/js/download_export', [
             return exportData.export_id;
         }).join('.') + '_download';
         self.savedMultimediaDownloadCookieName = self.savedDownloadCookieName + '_multimedia';
-        self.savedDownloadId = $.cookie(self.savedDownloadCookieName, { secure: secureCookies });
-        self.savedMultimediaDownloadId = $.cookie(self.savedMultimediaDownloadCookieName, { secure: secureCookies });
+        self.savedDownloadId = $.cookie(self.savedDownloadCookieName, { secure: initialPageData.get('secure_cookies') });
+        self.savedMultimediaDownloadId = $.cookie(self.savedMultimediaDownloadCookieName, { secure: initialPageData.get('secure_cookies') });
         self.canResumeDownload = !!self.savedDownloadId;
         self.canResumeMultimediaDownload = !!self.savedMultimediaDownloadId;
 
@@ -239,7 +237,7 @@ hqDefine('export/js/download_export', [
         self.downloadCookieName = ko.observable();
         self.storeDownloadCookie = function () {
             if (self.downloadCookieName() && self.downloadId()) {
-                $.cookie(self.downloadCookieName(), self.downloadId(), { path: '/', secure: secureCookies });
+                $.cookie(self.downloadCookieName(), self.downloadId(), { path: '/', secure: initialPageData.get('secure_cookies') });
             }
         };
         self.clearDownloadCookie = function () {

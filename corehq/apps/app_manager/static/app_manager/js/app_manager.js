@@ -2,7 +2,6 @@
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var secureCookies = initialPageData.get('secure_cookies')
     var module = hqImport("hqwebapp/js/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
@@ -84,7 +83,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 $('#build_errors').html(data.error_html);
             });
         };
-        if ($.cookie('suppress_build_errors', { secure: secureCookies })) {
+        if ($.cookie('suppress_build_errors', { secure: initialPageData.get('secure_cookies') })) {
             $.removeCookie('suppress_build_errors', { path: '/' });
         } else {
             module.fetchAndShowFormValidation();

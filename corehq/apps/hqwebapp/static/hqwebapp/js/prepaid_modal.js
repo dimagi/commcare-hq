@@ -3,18 +3,16 @@
 */
 hqDefine("hqwebapp/js/prepaid_modal", [
     'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
     'jquery',
     'jquery.cookie/jquery.cookie',
-    'hqwebapp/js/initial_page_data',
 ], function (
     kissmetrics,
-    $,
-    initialPageData
+    initialPageData,
+    $
 ) {
-    var secureCookies = initialPageData.get('secure_cookies');
-
     function snooze(slug, domain) {
-        $.cookie(cookieName(slug, domain), true, { expires: 30, path: '/', secure: secureCookies });
+        $.cookie(cookieName(slug, domain), true, { expires: 30, path: '/', secure: initialPageData.get('secure_cookies') });
     }
 
     function cookieName(slug, domain) {
@@ -26,7 +24,7 @@ hqDefine("hqwebapp/js/prepaid_modal", [
             slug = $modal.data("slug"),
             domain = $modal.data("domain");
 
-        if ($modal.length && ! $.cookie(cookieName(slug, domain), { secure: secureCookies })) {
+        if ($modal.length && ! $.cookie(cookieName(slug, domain), { secure: initialPageData.get('secure_cookies') })) {
             // Show modal on page load
             $modal.modal({
                 backdrop: 'static',
