@@ -17,12 +17,14 @@ rules:
 
   - labels: ['Risk: High']
     patterns:
-      - 'corehq/apps/registration/**.py'
-      - 'corehq/apps/registration/**.js'
+      - 'corehq/apps/registration/*.py'
+      - 'corehq/apps/registration/*.js'
       - 'corehq/apps/api/**'
       - 'corehq/apps/case_importer/views.py'   # bulk case importer API
       - 'corehq/form_processor/**'
       - 'corehq/pillows/mappings/**'
+      - 'corehq/apps/hqwebapp/templates/hqwebapp/includes/core_libraries.html'
+      - 'corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js'
 
   - labels: ['Risk: Medium']
     patterns:
@@ -30,6 +32,8 @@ rules:
       - 'corehq/apps/user_importer/**'
       - 'corehq/apps/fixtures/**'
       - 'corehq/apps/custom_data_fields/**'
+      - 'corehq/apps/hqwebapp/templates/hqwebapp/base.html'
+      - 'corehq/apps/hqwebapp/static/hqwebapp/js/components/*.js'
 
 # WIP
 wip:
