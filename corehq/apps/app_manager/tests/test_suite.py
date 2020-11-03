@@ -197,6 +197,41 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']/field/sort"
         )
 
+    def test_require_search(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        factory.form_requires_case(form, "person")
+        module.case_details.short.require_search = True
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <detail id="m0_case_short" require-search="true">
+                    <title>
+                        <text>
+                            <locale id="cchq.case"/>
+                        </text>
+                    </title>
+                    <field sort="default">
+                        <header>
+                            <text>
+                                <locale id="m0.case_short.case_name_1.header"/>
+                            </text>
+                        </header>
+                        <template>
+                            <text>
+                                <xpath function="case_name"/>
+                            </text>
+                        </template>
+                    </field>
+                </detail>
+            </partial>
+            """,
+            suite,
+            "detail[@id='m0_case_short']"
+        )
+
     def test_callcenter_suite(self, *args):
         self._test_generic_suite('call-center')
 
