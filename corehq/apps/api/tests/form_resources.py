@@ -67,6 +67,9 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(cases), 1)
         self.assertEqual(cases[0]['id'], case_id)
 
+    def rollover(self):
+        pass
+
     def _send_forms(self, forms):
         # list of form tuples [(xmlns, received_on)]
         to_ret = []
@@ -91,6 +94,7 @@ class TestXFormInstanceResource(APIResourceTest):
             to_ret.append(backend_form)
             self.addCleanup(backend_form.delete)
             send_to_elasticsearch('forms', transform_xform_for_elasticsearch(backend_form.to_json()))
+            self.rollover()
         self.es.indices.refresh(XFORM_INDEX_INFO.alias)
         return to_ret
 
@@ -351,6 +355,10 @@ class TestXFormInstanceResourceILM(TestXFormInstanceResource):
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         XFORM_INDEX_INFO.ilm_config = None
+
+    def rollover(self):
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
+        self.es.indices.rollover(XFORM_INDEX_INFO.alias, {'conditions': {'max_docs': 1}})
 
 
 class TestReportPillow(TestCase):
