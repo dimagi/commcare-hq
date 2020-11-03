@@ -333,6 +333,8 @@ class TestILM(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
+        # cleanup for other tests
+        XFORM_INDEX_INFO.ilm_config = None
 
     def rollover(self):
         # Wait for ILM to kick in and for cluster to stabilize

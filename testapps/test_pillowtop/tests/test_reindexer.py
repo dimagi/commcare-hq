@@ -25,10 +25,11 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.util.elastic import delete_es_index, ensure_index_deleted
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.elastic import delete_es_index, ensure_index_deleted, prefix_for_tests
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case, generate_cases
-from pillowtop.es_utils import initialize_index_and_mapping
+from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS_ILM_CONFIG
+
 from pillowtop.utils import get_pillow_by_name
 from testapps.test_pillowtop.utils import real_pillow_settings
 
@@ -47,7 +48,7 @@ class PillowtopReindexerTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for index in [CASE_SEARCH_INDEX, USER_INDEX, CASE_INDEX, XFORM_INDEX]:
+        for index in [CASE_SEARCH_INDEX, USER_INDEX, CASE_INDEX, XFORM_INDEX_INFO.index]:
             ensure_index_deleted(index)
         super(PillowtopReindexerTest, cls).tearDownClass()
 
@@ -106,6 +107,19 @@ class PillowtopReindexerTest(TestCase):
         reindex_and_clean(index_id, reset=True)
 
         self._assert_form_is_in_es(form)
+
+    @run_with_all_backends
+    def test_xform_reindexer_v2_ilm(self):
+        XFORM_INDEX_INFO.ilm_config = prefix_for_tests(MAX_DOCS_ILM_CONFIG)
+        FormProcessorTestUtils.delete_all_xforms()
+        form = create_and_save_a_form(DOMAIN)
+
+        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+        reindex_and_clean(index_id, reset=True)
+
+        self._assert_form_is_in_es(form)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        XFORM_INDEX_INFO.ilm_config = None
 
     def _assert_es_empty(self, esquery=CaseES()):
         results = esquery.run()

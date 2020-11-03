@@ -151,12 +151,12 @@ def clean_index(es, index_info):
 
 def prepare_index_for_reindex(es, index_info):
     initialize_index_and_mapping(es, index_info)
-    set_index_reindex_settings(es, index_info.index)
+    set_index_reindex_settings(es, index_info.alias)
 
 
 def prepare_index_for_usage(es, index_info):
-    set_index_normal_settings(es, index_info.index)
-    es.indices.refresh(index_info.index)
+    set_index_normal_settings(es, index_info.alias)
+    es.indices.refresh(index_info.alias)
 
 
 def _set_checkpoint(pillow):
