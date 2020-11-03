@@ -26,7 +26,7 @@ contextlib2==0.6.0.post1  # via schema
 cryptography==3.2         # via -r prod-requirements.in, pyopenssl
 csiphash==0.0.5           # via -r requirements.in
 cssselect2==0.3.0         # via cairosvg, weasyprint
-datadog==0.15.0           # via -r requirements.in
+datadog==0.39.0           # via -r requirements.in
 ddtrace==0.14.1           # via -r requirements.in
 decorator==4.0.11         # via -r requirements.in, datadog, ipython, jsonpath-rw, traitlets
 defusedxml==0.5.0         # via -r requirements.in, cairosvg
@@ -154,7 +154,7 @@ sentry-sdk==0.14.4        # via -r requirements.in
 setproctitle==1.1.10      # via -r prod-requirements.in
 sh==1.09                  # via -r requirements.in
 simpleeval==0.9.10        # via -r requirements.in
-simplejson==3.17.2        # via -r requirements.in, datadog, django-prbac
+simplejson==3.17.2        # via -r requirements.in, django-prbac
 six==1.15.0               # via -r requirements.in, cryptography, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, traitlets, twilio
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3         # via -r requirements.in
