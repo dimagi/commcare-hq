@@ -1,5 +1,6 @@
 import contextlib
 from datetime import datetime
+import uuid
 
 from django.test import TestCase
 from mock import patch, Mock, MagicMock
@@ -24,7 +25,7 @@ class FormSessionTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = Domain(name='test')
+        cls.domain = Domain(name=uuid.uuid4().hex)
         cls.domain.save()
 
         cls.number = PhoneNumber(
