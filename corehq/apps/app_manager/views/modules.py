@@ -18,13 +18,14 @@ from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.http import require_GET
+from django_prbac.utils import has_privilege
 
 from lxml import etree
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
-from corehq import toggles
+from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -128,6 +129,7 @@ def get_module_template(user, module):
 def get_module_view_context(request, app, module, lang=None):
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
+        'show_require_search': app.cloudcare_enabled and has_privilege(request, privileges.CLOUDCARE),
     }
     module_brief = {
         'id': module.id,
@@ -935,6 +937,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     parent_select = params.get('parent_select', None)
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
+    require_search = params.get("requireSearch", None)
     persist_case_context = params.get('persistCaseContext', None)
     persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
@@ -969,6 +972,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
+        if require_search is not None:
+            detail.short.require_search = require_search
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml

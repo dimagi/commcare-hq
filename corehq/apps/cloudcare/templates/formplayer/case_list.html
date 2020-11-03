@@ -41,7 +41,13 @@
         <tbody>
         <tr>
           <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
-            <div class="alert alert-info">{% trans "List is empty." %}</div>
+            <div class="alert alert-info">
+              <% if (requireSearch && !searchText) { %>
+                {% trans "Please search for an item." %}
+              <% } else { %>
+                {% trans "List is empty." %}
+              <% } %>
+            </div>
           </td>
         </tr>
         </tbody>
