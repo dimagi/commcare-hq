@@ -537,13 +537,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
+            return [{text: "", id: undefined}].concat(_.map(question.choices(), function (choice, idx) {
                 return {
                     text: choice,
-                    idx: idx + 1,
                     id: idx + 1,
                 };
-            });
+            }));
         });
 
         self.options.subscribe(function () {
