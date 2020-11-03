@@ -22,8 +22,11 @@
 
 <table class="table table-striped">
   <tbody class="fa-ul" data-bind="foreach: modules">
+    <tr>      <td><pre data-bind="text: ko.toJSON($data, null, 2)"></pre></td>
+    </tr>
     <tr>
-      <td>
+      <td data-bind="using: first">
+        <tr>      <td><pre data-bind="text: ko.toJSON($data, null, 2)"></pre></td>
         <table class="table table-striped" data-bind="visible: isVisible, css: getDiffClass('module'), popover: getDiffPopover(changes['module'], 'module') ">
           <tr>
             <td>

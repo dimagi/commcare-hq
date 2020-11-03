@@ -263,7 +263,6 @@ class _AppDiffGenerator(object):
                 pass
         for module in self.second:
             modules[module.unique_id]['second'] = module
-
         return list(modules.values())
 
     def _populate_id_caches(self):

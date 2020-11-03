@@ -83,7 +83,7 @@ hqDefine('app_manager/js/summary/form_diff',[
             form_name_map: initialPageData.get("form_name_map"),
             lang: lang,
             langs: langs,
-            modules: initialPageData.get("first.modules"),
+            modules: initialPageData.get("all_changes"),
             read_only: initialPageData.get("first.read_only"),
             appId: initialPageData.get("first.app_id"),
         });
