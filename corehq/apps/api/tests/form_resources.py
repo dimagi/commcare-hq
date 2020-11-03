@@ -19,8 +19,8 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import reset_es_index
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.elastic import reset_es_index, prefix_for_tests, ensure_index_deleted
+from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS_ILM_CONFIG
 
 from .utils import APIResourceTest, FakeFormESView
 
@@ -56,7 +56,7 @@ class TestXFormInstanceResource(APIResourceTest):
         )[0]
 
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
 
         # Fetch the xform through the API
         response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
@@ -91,7 +91,7 @@ class TestXFormInstanceResource(APIResourceTest):
             to_ret.append(backend_form)
             self.addCleanup(backend_form.delete)
             send_to_elasticsearch('forms', transform_xform_for_elasticsearch(backend_form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
         return to_ret
 
     def test_get_list(self):
@@ -202,7 +202,7 @@ class TestXFormInstanceResource(APIResourceTest):
         update = forms[0].to_json()
         update['doc_type'] = 'xformarchived'
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(update))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
 
         # archived form should not be included by default
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -338,6 +338,19 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
             }
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
+
+
+@es_test
+class TestXFormInstanceResourceILM(TestXFormInstanceResource):
+
+    def setUp(self):
+        self.es = get_es_new()
+        XFORM_INDEX_INFO.ilm_config = prefix_for_tests(MAX_DOCS_ILM_CONFIG)
+        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
+
+    def tearDown(self):
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        XFORM_INDEX_INFO.ilm_config = None
 
 
 class TestReportPillow(TestCase):
