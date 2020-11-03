@@ -258,7 +258,10 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         payload_id=payload_id,
     )
     try:
-        return requests.post(None, data=data, headers=default_headers)
+        response = requests.post(None, data=data, headers=default_headers)
     except Exception as err:
         requests.notify_error(str(err))
         raise
+    if not 200 <= response.status_code < 300:
+        requests.notify_error(response.text)
+    return response
