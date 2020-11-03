@@ -11,6 +11,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 
 from corehq.apps.es import FormES
+from corehq.apps.es.tests.utils import es_test, TEST_ILM_CONFIG
 from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
 from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
@@ -28,6 +29,7 @@ from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@es_test
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'
@@ -95,7 +97,7 @@ class XFormPillowTest(TestCase):
         # soft delete the form
         with self.process_form_changes:
             FormAccessors(self.domain).soft_delete_forms([form.form_id])
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.alias)
 
         # ensure not there anymore
         results = FormES().run()
@@ -221,7 +223,7 @@ class XFormPillowTest(TestCase):
             form = get_form_ready_to_save(self.metadata, is_db_test=True)
             form_processor = FormProcessorInterface(domain=self.domain)
             form_processor.save_processed_models([form])
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.alias)
         return form, self.metadata
 
 
@@ -321,3 +323,15 @@ class TransformXformForESTest(SimpleTestCase):
         # previously raised an error
         doc_ret = transform_xform_for_elasticsearch(doc_dict)
         self.assertIsNotNone(doc_ret)
+
+
+@es_test
+class XFormPillowTestILM(XFormPillowTest):
+
+    def setUp(self):
+        XFORM_INDEX_INFO.ilm_config = TEST_ILM_CONFIG
+        super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+        XFORM_INDEX_INFO.ilm_config = None

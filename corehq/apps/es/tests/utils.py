@@ -3,9 +3,12 @@ from nose.plugins.attrib import attr
 from nose.tools import nottest
 
 from corehq.elastic import get_es_new
-from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.elastic import ensure_index_deleted, prefix_for_tests
+from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS_ILM_CONFIG
 from pillowtop.tests.utils import TEST_INDEX_INFO
+
+
+TEST_ILM_CONFIG = prefix_for_tests(MAX_DOCS_ILM_CONFIG)
 
 
 class ElasticTestMixin(object):

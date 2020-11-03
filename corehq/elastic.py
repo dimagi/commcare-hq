@@ -28,6 +28,7 @@ from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.files import TransientTempfile
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.metrics import metrics_counter
+from pillowtop.processors.elastic import eager_get_ilm_indices_by_alias
 
 
 class ESJSONSerializer(object):
@@ -201,7 +202,16 @@ def mget_query(index_name, ids):
     es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return es_interface.get_bulk_docs(es_meta.alias, es_meta.type, ids)
+        if es_meta.is_ilm_index:
+            docs = []
+            for index in eager_get_ilm_indices_by_alias(es_meta.alias):
+                try:
+                    docs = docs + es_interface.get_bulk_docs(index, es_meta.type, ids)
+                except ESError:
+                    pass
+            return docs
+        else:
+            return es_interface.get_bulk_docs(es_meta.alias, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 

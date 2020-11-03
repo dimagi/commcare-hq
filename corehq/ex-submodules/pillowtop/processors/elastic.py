@@ -178,11 +178,26 @@ def get_indices_by_alias(alias):
     return list(es.indices.get_alias(alias))
 
 
+def eager_get_ilm_indices_by_alias(alias):
+    # This is same as get_indices_by_alias but also
+    #   includes the next to-be-rolled index based on the pattern to handle
+    #   the edge case when get_indices_by_alias could be stale
+    #   When get_indices_by_alias is stale, this will return true list of indices.
+    #   When get_indices_by_alias is not stale, this will
+    #   include a non-existent index, so callers should handle it
+    # For example this prepends 'xforms_2016-07-07-000004' to a list of
+    #   ['xforms_2016-07-07-000003', 'xforms_2016-07-07-000002', 'xforms_2016-07-07-000001']
+    #   return by get_indices_by_alias
+    indices = get_indices_by_alias(alias)
+    index_suffix = indices[0].split("-")[-1]
+    next_suffix = str(int(index_suffix) + 1).zfill(len(index_suffix))
+    next_index = "-".join(indices[0].split("-")[:-1] + [next_suffix])
+    return next_index + [indices]
+
+
 def _target_ilm_index(doc_id, doc_type, index_info, es_interface):
     # returns the backing ILM index that the doc exists in
-    indices = get_indices_by_alias(index_info.alias)
-    # todo; get_indices_by_alias could be stale
-    #   so we could query the next index based on pattern even if it doesn't exist
+    indices = eager_get_ilm_indices_by_alias(index_info.alias)
     doc_exists = False
     found_in = None
     # individual exists query on each index is faster than
