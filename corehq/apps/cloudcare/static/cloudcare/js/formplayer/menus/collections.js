@@ -6,15 +6,17 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
     var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
-            'title',
-            'type',
+            'appId',
+            'appVersion',
+            'breadcrumbs',
             'clearSession',
             'notification',
-            'breadcrumbs',
-            'appVersion',
-            'appId',
             'persistentCaseTile',
+            'requireSearch',
+            'searchText',
             'tiles',
+            'title',
+            'type',
             'selections',
         ],
 
