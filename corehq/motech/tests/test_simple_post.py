@@ -75,5 +75,5 @@ def test_simple_post_400():
             verify=True,
             payload_id=TEST_PAYLOAD_ID,
         )
-        notify_mock.assert_called_with('Bad request')
+        notify_mock.assert_called_with('HTTP status code 400: Bad request')
         assert_equal(response.status_code, 400)

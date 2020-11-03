@@ -263,5 +263,6 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         requests.notify_error(str(err))
         raise
     if not 200 <= response.status_code < 300:
-        requests.notify_error(response.text)
+        message = f'HTTP status code {response.status_code}: {response.text}'
+        requests.notify_error(message)
     return response
