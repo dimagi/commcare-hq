@@ -64,5 +64,6 @@ branches:
   - jls/require-search-text # Jenny Oct 22
   - jls/combobox-select2 # Jenny Oct 28
   - dependabot/pip/requirements/datadog-0.39.0 # Daniel Nov 3
+  - nh/import_de  # Norman Nov 4
 
 submodules: {}
