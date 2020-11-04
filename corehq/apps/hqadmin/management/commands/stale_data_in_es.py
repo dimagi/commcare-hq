@@ -36,7 +36,7 @@ from memoized import memoized
 
 CHUNK_SIZE = 1000
 
-RunConfig = namedtuple('RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type'])
+RunConfig = namedtuple('RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type', 'backend'])
 DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
 
 
@@ -81,6 +81,9 @@ class Command(BaseCommand):
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
         parser.add_argument('--domain', default=ALL_DOMAINS)
+        parser.add_argument('--backed', choices=('couch', 'sql'),
+                            help='Limit to only domains on this backend. This is only applied if a domain name'
+                                 'is not specified.')
         parser.add_argument('--iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
         parser.add_argument(
             '--start',
@@ -107,6 +110,7 @@ class Command(BaseCommand):
         end = dateutil.parser.parse(options['end']) if options['end'] else default_end
         case_type = options['case_type']
         iteration_key = options['iteration_key']
+        backend = options['backend'] if not domain else None
         if iteration_key:
             print(f'\nResuming previous run. Iteration Key:\n\t"{iteration_key}"\n', file=self.stderr)
         else:
@@ -116,13 +120,15 @@ class Command(BaseCommand):
                 f'-{start.isoformat() if start != default_start else ""}'
                 f'-{end.isoformat() if end != default_end else ""}'
                 f'-{case_type or ""}'
+                f'-{backend or ""}'
             )
             print(f'\nStarting new run. Iteration key:\n\t"{iteration_key}"\n', file=self.stderr)
 
-        run_config = RunConfig(iteration_key, domain, start, end, case_type)
+        run_config = RunConfig(iteration_key, domain, start, end, case_type, backend)
 
         if run_config.domain is ALL_DOMAINS:
-            print('Running for all domains', file=self.stderr)
+            backends = f'the "{backend}" backend' if backend else 'all backends'
+            print(f'Running for all domains on {backends}', file=self.stderr)
 
         csv_writer = csv.writer(self.stdout, **get_csv_args(delimiter))
 
@@ -164,8 +170,10 @@ class CaseBackend:
 
     @staticmethod
     def _get_case_chunks(run_config):
-        yield from CaseBackend._get_sql_case_chunks(run_config)
-        yield from CaseBackend._get_couch_case_chunks(run_config)
+        if not run_config.backend or run_config.backend == 'sql':
+            yield from CaseBackend._get_sql_case_chunks(run_config)
+        if not run_config.backend or run_config.backend == 'couch':
+            yield from CaseBackend._get_couch_case_chunks(run_config)
 
     @staticmethod
     def _get_sql_case_chunks(run_config):
@@ -243,8 +251,10 @@ class FormBackend:
 
     @staticmethod
     def _get_form_chunks(run_config):
-        yield from FormBackend._get_sql_form_chunks(run_config)
-        yield from FormBackend._get_couch_form_chunks(run_config)
+        if not run_config.backend or run_config.backend == 'sql':
+            yield from FormBackend._get_sql_form_chunks(run_config)
+        if not run_config.backend or run_config.backend == 'couch':
+            yield from FormBackend._get_couch_form_chunks(run_config)
 
     @staticmethod
     def _get_sql_form_chunks(run_config):
