@@ -141,10 +141,10 @@ class Command(BaseCommand):
         try:
             for data_model in data_models:
                 try:
-                    process_data_model_fn = DATA_MODEL_BACKENDS[data_model.lower()]()
+                    process_data_model_fn = DATA_MODEL_HELPERS[data_model.lower()]()
                 except KeyError:
                     raise CommandError('Only valid options for data model are "{}"'.format(
-                        '", "'.join(DATA_MODEL_BACKENDS.keys())
+                        '", "'.join(DATA_MODEL_HELPERS.keys())
                     ))
                 data_rows = process_data_model_fn(run_config)
 
@@ -156,27 +156,20 @@ class Command(BaseCommand):
             raise
 
 
-DATA_MODEL_BACKENDS = {
-    'case': lambda: CaseBackend.run,
-    'form': lambda: FormBackend.run,
+DATA_MODEL_HELPERS = {
+    'case': lambda: CaseHelper.run,
+    'form': lambda: FormHelper.run,
 }
 
 
-class CaseBackend:
+class CaseHelper:
     @staticmethod
     def run(run_config):
-        for chunk in CaseBackend._get_case_chunks(run_config):
-            yield from CaseBackend._yield_missing_in_es(chunk)
+        for chunk in _get_doc_chunks(CaseHelper, run_config):
+            yield from CaseHelper._yield_missing_in_es(chunk)
 
     @staticmethod
-    def _get_case_chunks(run_config):
-        if not run_config.backend or run_config.backend == 'sql':
-            yield from CaseBackend._get_sql_case_chunks(run_config)
-        if not run_config.backend or run_config.backend == 'couch':
-            yield from CaseBackend._get_couch_case_chunks(run_config)
-
-    @staticmethod
-    def _get_sql_case_chunks(run_config):
+    def get_sql_chunks(run_config):
         domain = run_config.domain if run_config.domain is not ALL_DOMAINS else None
 
         accessor = CaseReindexAccessor(
@@ -194,18 +187,18 @@ class CaseBackend:
             yield matching_records
 
     @staticmethod
-    def _get_couch_case_chunks(run_config):
+    def get_couch_chunks(run_config):
         if run_config.case_type and run_config is not ALL_DOMAINS \
                 and not _should_use_sql_backend(run_config.domain):
             raise CommandError('Case type argument is not supported for couch domains!')
-        matching_records = CaseBackend._get_couch_case_data(run_config)
+        matching_records = CaseHelper._get_couch_case_data(run_config)
         print("Processing cases in Couch, which doesn't support nice progress bar", file=sys.stderr)
         yield from chunked(matching_records, CHUNK_SIZE)
 
     @staticmethod
     def _yield_missing_in_es(chunk):
         case_ids = [val[0] for val in chunk]
-        es_modified_on_by_ids = CaseBackend._get_es_modified_dates(case_ids)
+        es_modified_on_by_ids = CaseHelper._get_es_modified_dates(case_ids)
         for case_id, case_type, modified_on, domain in chunk:
             es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
             if (es_modified_on, es_domain) != (modified_on, domain):
@@ -243,21 +236,14 @@ class CaseBackend:
                 for _id, server_modified_on, domain in results}
 
 
-class FormBackend:
+class FormHelper:
     @staticmethod
     def run(run_config):
-        for chunk in FormBackend._get_form_chunks(run_config):
-            yield from FormBackend._yield_missing_in_es(chunk)
+        for chunk in _get_doc_chunks(FormHelper, run_config):
+            yield from FormHelper._yield_missing_in_es(chunk)
 
     @staticmethod
-    def _get_form_chunks(run_config):
-        if not run_config.backend or run_config.backend == 'sql':
-            yield from FormBackend._get_sql_form_chunks(run_config)
-        if not run_config.backend or run_config.backend == 'couch':
-            yield from FormBackend._get_couch_form_chunks(run_config)
-
-    @staticmethod
-    def _get_sql_form_chunks(run_config):
+    def get_sql_chunks(run_config):
         domain = run_config.domain if run_config.domain is not ALL_DOMAINS else None
 
         accessor = FormReindexAccessor(
@@ -278,7 +264,7 @@ class FormBackend:
             yield matching_records
 
     @staticmethod
-    def _get_couch_form_chunks(run_config):
+    def get_couch_chunks(run_config):
         db = XFormInstance.get_db()
         view_name = 'by_domain_doc_type_date/view'
 
@@ -328,7 +314,7 @@ class FormBackend:
     @staticmethod
     def _yield_missing_in_es(chunk):
         form_ids = [val[0] for val in chunk]
-        es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(form_ids)
+        es_modified_on_by_ids = FormHelper._get_es_modified_dates_for_forms(form_ids)
         for form_id, doc_type, xmlns, modified_on, domain in chunk:
             es_modified_on, es_doc_type, es_domain = es_modified_on_by_ids.get(form_id, (None, None, None))
             if (es_modified_on, es_doc_type, es_domain) != (modified_on, doc_type, domain):
@@ -344,6 +330,13 @@ class FormBackend:
         )
         return {_id: (iso_string_to_datetime(received_on), doc_type, domain)
                 for _id, received_on, doc_type, domain in results}
+
+
+def _get_doc_chunks(helper, run_config):
+    if not run_config.backend or run_config.backend == 'sql':
+        yield from helper.get_sql_chunks(run_config)
+    if not run_config.backend or run_config.backend == 'couch':
+        yield from helper.get_couch_chunks(run_config)
 
 
 @memoized
