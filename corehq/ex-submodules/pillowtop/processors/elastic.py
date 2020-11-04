@@ -192,7 +192,7 @@ def eager_get_ilm_indices_by_alias(alias):
     index_suffix = indices[0].split("-")[-1]
     next_suffix = str(int(index_suffix) + 1).zfill(len(index_suffix))
     next_index = "-".join(indices[0].split("-")[:-1] + [next_suffix])
-    return next_index + [indices]
+    return [next_index] + indices
 
 
 def _target_ilm_index(doc_id, doc_type, index_info, es_interface):
