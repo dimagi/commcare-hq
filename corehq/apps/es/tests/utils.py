@@ -8,6 +8,9 @@ from pillowtop.es_utils import initialize_index_and_mapping, MAX_DOCS_ILM_CONFIG
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
 
+# tell Nose that prefix_for_tests is not a test
+prefix_for_tests.__test__ = False
+
 TEST_ILM_CONFIG = prefix_for_tests(MAX_DOCS_ILM_CONFIG)
 
 
