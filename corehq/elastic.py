@@ -206,7 +206,7 @@ def mget_query(index_name, ids):
             docs = []
             for index in eager_get_ilm_indices_by_alias(es_meta.alias):
                 try:
-                    docs = docs + es_interface.get_bulk_docs(index, es_meta.type, ids)
+                    docs = docs + es_interface.get_bulk_docs(index, es_meta.type, ids, verify_alias=False)
                 except ESError:
                     pass
             return docs

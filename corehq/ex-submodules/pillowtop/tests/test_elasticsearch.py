@@ -13,7 +13,7 @@ from corehq.util.es.elasticsearch import ConnectionError
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.apps.es.forms import FormES
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, mget_query
 from corehq.util.elastic import ensure_index_deleted, prefix_for_tests
 from corehq.util.test_utils import trap_extra_setup
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -35,7 +35,11 @@ from pillowtop.index_settings import (
 )
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
-from pillowtop.processors.elastic import send_to_elasticsearch, get_indices_by_alias
+from pillowtop.processors.elastic import (
+    send_to_elasticsearch,
+    get_indices_by_alias,
+    eager_get_ilm_indices_by_alias
+)
 from corehq.elastic import send_to_elasticsearch as send_to_es
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
@@ -480,6 +484,19 @@ class TestILM(SimpleTestCase):
             [{"prop": "b", "_id": "d1"}]
         )
 
+    def test_mget(self):
+        self._send_to_es([
+            {"_id": "d1", "prop": "a"},
+            {"_id": "d2", "prop": "b"},
+            {"_id": "d3", "prop": "c"},
+            {"_id": "d4", "prop": "d"},
+            {"_id": "d5", "prop": "e"},
+        ])
+        self.assertEqual(
+            mget_query("forms", ["d1", "d4"]),
+            [{"_id": "d4", "prop": "d"}, {"_id": "d1", "prop": "a"}]
+        )
+
 
 class MockChange(object):
 
@@ -506,3 +523,18 @@ class TestILMManualRollover(TestILM):
         # It's preferrable to use this rollover in other tests so that tests
         #   don't take lot of time waiting for ILM to kickover
         self.es.indices.rollover(self.alias, {'conditions': {'max_docs': 2}})
+
+
+class TestILMGetIndices(SimpleTestCase):
+
+    @mock.patch("pillowtop.processors.elastic.get_indices_by_alias")
+    def test_eager_get_indices(self, patched_get):
+        actual_indices = [
+            "xforms-00009",
+            "xforms-00008",
+        ]
+        patched_get.return_value = actual_indices
+        self.assertEqual(
+            eager_get_ilm_indices_by_alias("xforms"),
+            ["xforms-00010"] + actual_indices
+        )
