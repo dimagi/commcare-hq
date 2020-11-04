@@ -4,6 +4,7 @@ import json
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.utils import DataError
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -145,9 +146,11 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                     submodel = getattr(self.commtrack_settings, attr)
                     submodel.commtrack_settings = self.commtrack_settings
                     submodel.save()
-            except decimal.InvalidOperation:        # capture only decimal errors, from stocklevelsconfig
+            except (decimal.InvalidOperation, DataError):      # capture only decimal errors and integer overflows
                 try:
-                    self.commtrack_settings.sqlstocklevelsconfig.full_clean()  # get human-readable messages
+                    # Get human-readable messages
+                    self.commtrack_settings.sqlstocklevelsconfig.full_clean()
+                    self.commtrack_settings.sqlconsumptionconfig.full_clean()
                 except ValidationError as e:
                     for key, msgs in dict(e).items():
                         for msg in msgs:
