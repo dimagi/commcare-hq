@@ -76,13 +76,10 @@ def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
     whitelist = [
         'CallCenterIndicatorConfig',
         'CommCareCaseGroup',
-        'CommtrackConfig',
         'HQGroupExportConfiguration',
         'Group',
         'UserRole',
-        'PerformanceConfiguration',
         'ReportConfiguration',
-        'CaseReminderHandler',
         'LinkedApplication',
     ]
     doc_type = doc_class.__name__
