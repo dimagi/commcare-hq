@@ -14,8 +14,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            f"ALTER INDEX IF EXISTS {OLD_NAME} RENAME TO {NEW_NAME}",
-            f"ALTER INDEX IF EXISTS {NEW_NAME} RENAME TO {OLD_NAME}",
+            "",
             state_operations=[
                 migrations.RemoveIndex(
                     model_name='casetransaction',
