@@ -282,6 +282,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
+            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -298,6 +299,7 @@ class PreviewAppView(TemplateView):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
+            "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
         })
 
 
