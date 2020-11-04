@@ -27,6 +27,7 @@ from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
+    get_web_user_import_validators,
     is_password,
 )
 from corehq.apps.users.account_confirmation import (
@@ -315,6 +316,7 @@ def get_domain_info(domain, upload_domain, user_specs, group_memoizer):
             for profile in definition.get_profiles()
         }
     domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
+
     validators = get_user_import_validators(
         domain_obj,
         domain_user_specs,
@@ -603,7 +605,7 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
 
             domain_info, domain_info_by_domain = get_domain_info(domain, upload_domain, user_specs, group_memoizer)
 
-            # TODO: modify get_user_import_validators for correct validators
+            # TODO: intigrate get_web_user_import_validators for correct validators
             # try:
             #     for validator in domain_info.validators:
             #         validator(row)

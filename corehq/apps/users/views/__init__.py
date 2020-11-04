@@ -574,6 +574,7 @@ class ListWebUsersView(BaseRoleAccessView):
 
 @require_can_edit_or_view_web_users
 def download_web_users(request, domain):
+    #track_workflow(request.couch_user.get_email(), 'Bulk download web users selected') #TODO uncomment for kissmetrics
     form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
@@ -1258,6 +1259,7 @@ class UploadWebUsers(BaseManageWebUserView):
 
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
+        # track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected') #TODO uncomment for kissmetrics
         try:
             self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
