@@ -169,14 +169,19 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
             cls.domain, Permissions(edit_data=True, access_api=False), 'no-api-access'
         )
         cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)
-        cls.user_with_permission = WebUser.create(cls.domain, 'permission', cls.password, None, None,
-                                                  role_id=cls.role_with_permission.get_id)
-        cls.user_without_permission = WebUser.create(cls.domain, 'no-permission', cls.password, None, None,
-                                                     role_id=cls.role_without_permission.get_id)
+        cls.user_with_permission = WebUser.create(cls.domain, 'permission', cls.password, None, None)
+        cls.user_with_permission.set_role(cls.domain, cls.role_with_permission.get_qualified_id())
+        cls.user_with_permission.save()
+        cls.user_without_permission = WebUser.create(cls.domain, 'no-permission', cls.password, None, None)
+        cls.user_without_permission.set_role(cls.domain, cls.role_without_permission.get_qualified_id())
+        cls.user_without_permission.save()
         cls.user_with_permission_but_no_api_access = WebUser.create(
-            cls.domain, 'no-api-access', cls.password, None, None,
-            role_id=cls.role_with_permission_but_no_api_access.get_id,
+            cls.domain, 'no-api-access', cls.password, None, None
         )
+        cls.user_with_permission_but_no_api_access.set_role(
+            cls.domain, cls.role_with_permission_but_no_api_access.get_qualified_id()
+        )
+        cls.user_with_permission_but_no_api_access.save()
 
     def test_login_no_auth_no_domain(self):
         self.assertAuthenticationFail(self.require_edit_data, self._get_request())
