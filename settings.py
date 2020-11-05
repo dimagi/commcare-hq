@@ -1946,6 +1946,7 @@ DOMAIN_MODULE_MAP = {
 
     'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
+    'onse-iss': 'custom.onse',
 
     # From DOMAIN_MODULE_CONFIG on production
     'test-pna': 'custom.intrahealth',
