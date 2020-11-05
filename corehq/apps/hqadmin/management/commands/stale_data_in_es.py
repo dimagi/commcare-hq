@@ -163,10 +163,10 @@ DATA_MODEL_HELPERS = {
 
 
 class CaseHelper:
-    @staticmethod
-    def run(run_config):
-        for chunk in _get_doc_chunks(CaseHelper, run_config):
-            yield from CaseHelper._yield_missing_in_es(chunk)
+    @classmethod
+    def run(cls, run_config):
+        for chunk in _get_doc_chunks(cls, run_config):
+            yield from cls._yield_missing_in_es(chunk)
 
     @staticmethod
     def get_sql_chunks(run_config):
@@ -237,10 +237,10 @@ class CaseHelper:
 
 
 class FormHelper:
-    @staticmethod
-    def run(run_config):
-        for chunk in _get_doc_chunks(FormHelper, run_config):
-            yield from FormHelper._yield_missing_in_es(chunk)
+    @classmethod
+    def run(cls, run_config):
+        for chunk in _get_doc_chunks(cls, run_config):
+            yield from cls._yield_missing_in_es(chunk)
 
     @staticmethod
     def get_sql_chunks(run_config):
