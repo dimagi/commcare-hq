@@ -65,7 +65,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 # Should be a blank form with no questions added so far, shouldn't need any update so skip.
                 pass
 
-    def update(self, rows, previous_rows):
+    def update(self, rows, old_rows):
         try:
             self._check_for_shadow_form_error()
         except BulkAppTranslationsException as e:
@@ -76,7 +76,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             return []
 
         # Setup
-        headers = rows.headers
         rows = get_unicode_dicts(rows)
         template_translation_el = self._get_template_translation_el()
         self._add_missing_translation_elements_to_itext(template_translation_el)
@@ -95,12 +94,9 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if row['label'] in label_ids_to_skip:
                     continue
                 try:
-                    error_msg = update_audio_path_if_required(row, previous_rows[index], headers, [lang])
-                    if error_msg:
-                        self.msgs.append(error_msg)
-                        continue
+                    update_audio_path_if_required(row, old_rows[index], [lang])
                     self._add_or_remove_translations(lang, row)
-                except BulkAppTranslationsException as e:
+                except (BulkAppTranslationsException, ValueError) as e:
                     self.msgs.append((messages.warning, str(e)))
 
         save_xform(self.app, self.form, etree.tostring(self.xform.xml))

@@ -205,47 +205,53 @@ def get_unicode_dicts(iterable):
     return rows
 
 
-def text_and_audio_changed(current_row, previous_row, headers):
-    text_changed = False
-    audio_path_changed = False
-    for index, header in enumerate(headers):
-        if "default_" in header and previous_row[index] != current_row[header]:
-            text_changed = True
-        if "audio_" in header and previous_row[index] != current_row[header]:
-            audio_path_changed = True
-    return text_changed, audio_path_changed
+def prepare_older_rows_dict(old_rows, headers):
+    all_rows = []
+    for row in old_rows:
+        row_dict = {}
+        for index, value in enumerate(row):
+            row_dict[headers[index]] = value
+        all_rows.append(row_dict)
+    return all_rows
 
 
-def generate_audio_path(text, lang, previous_path):
-    path_hash = md5(f'{text}_{lang}'.encode()).hexdigest()[:6]
+def generate_audio_path(text, previous_path):
+    path_hash = md5(text.encode()).hexdigest()[:6]
     file_path_arr = previous_path.split('/')
     filename_index = len(file_path_arr) - 1
     complete_filename, extension = os.path.splitext(os.path.basename(previous_path))
     filename_arr = complete_filename.split('-')
-    filename_arr[len(filename_arr) - 1] = path_hash
+    if len(filename_arr) >= 1:
+        filename_arr[len(filename_arr) - 1] = path_hash
+    else:
+        filename_arr = [path_hash]
     new_filename = '-'.join(filename_arr) + extension
     file_path_arr[filename_index] = new_filename
     return '/'.join(file_path_arr)
 
 
-def update_audio_path_if_required(current_row, previous_row, headers, langs):
+def update_audio_path_if_required(current_row, old_row, langs):
     '''
-    Compares the uploaded row with one already present on app, if text and audio path
-    both are changes it will return a Django error message format and if only text is
-    updated it will create a new audio path for that particular language.
+    Compares the uploaded row with one already present on app,
+    if only text is updated it will create a new audio path for that particular language.
+    if text and audio path both are changes it will raise a ValueError exceptions
     '''
-    text_changed, audio_path_changed = text_and_audio_changed(current_row, previous_row, headers)
-    if text_changed and audio_path_changed:
-        return (messages.error, _(
-            f"You cannot update text and audio path simulatenouly for label {current_row['label']}"
-        ))
     for lang in langs:
-        audio_header = 'audio_%s' % lang
-        if audio_header in current_row:
-            audio_path = current_row[audio_header]
-            if text_changed:
-                new_audio_path = generate_audio_path(current_row[f'default_{lang}'], lang, audio_path)
-                current_row[audio_header] = new_audio_path
+        audio_header = f'audio_{lang}'
+        default_header = f'default_{lang}'
+
+        text_changed = current_row[default_header] != old_row[default_header]
+        audio_path_changed = current_row[audio_header] != old_row[audio_header]
+
+        if text_changed and audio_path_changed:
+            raise ValueError(_(f"You cannot update text and audio path\
+            simulatenouly for label \"{current_row['label']}\" "))
+
+        if text_changed and current_row[audio_header]:
+            new_audio_path = generate_audio_path(
+                current_row[default_header],
+                current_row[audio_header])
+            current_row[audio_header] = new_audio_path
 
 
 class BulkAppTranslationUpdater(object):
