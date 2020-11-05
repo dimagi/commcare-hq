@@ -1505,6 +1505,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
+        if 'user_data' in kwargs:
+            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         metadata = metadata or {}
         metadata.update({'commcare_project': domain})
         couch_user.update_metadata(metadata)
@@ -1826,6 +1828,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
         # metadata can't be set until domain is present
+        if 'user_data' in kwargs:
+            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         commcare_user.update_metadata(metadata or {})
 
         if location:

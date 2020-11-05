@@ -110,7 +110,7 @@ class TempCommCareUser(CommCareUser):
             _id=uuid,
             date_joined=datetime.utcnow(),
             is_active=False,
-            user_data={},
+            metadata={},
             first_name='',
             last_name='',
             filter_flag=filter_flag
