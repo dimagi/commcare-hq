@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.analytics.utils import (
     get_blocked_hubspot_domains,
     get_blocked_hubspot_email_domains,
+    get_blocked_hubspot_accounts,
     is_domain_blocked_from_hubspot,
     is_email_blocked_from_hubspot,
     hubspot_enabled_for_user,
@@ -75,6 +76,11 @@ class TestBlockedHubspotData(TestCase):
     def test_get_blocked_email_domains(self):
         self.assertEqual(get_blocked_hubspot_email_domains(), ['blocked.com'])
 
+    def test_get_blocked_hubspot_accounts(self):
+        self.assertEqual(get_blocked_hubspot_accounts(), [
+            f'{self.blocked_account.name} - ID # {self.blocked_account.id}',
+        ])
+
     def test_is_domain_blocked_from_hubspot(self):
         self.assertTrue(is_domain_blocked_from_hubspot(self.blocked_domain))
         self.assertFalse(is_domain_blocked_from_hubspot(self.allowed_domain))
@@ -99,14 +105,14 @@ class TestBlockedHubspotData(TestCase):
         plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
         cls.blocked_domain_obj = create_domain(cls.blocked_domain)
-        blocked_account = BillingAccount.get_or_create_account_by_domain(
+        cls.blocked_account = BillingAccount.get_or_create_account_by_domain(
             cls.blocked_domain, created_by='test'
         )[0]
-        blocked_account.block_hubspot_data_for_all_users = True
-        blocked_account.block_email_domains_from_hubspot = ['blocked.com']
-        blocked_account.save()
+        cls.blocked_account.block_hubspot_data_for_all_users = True
+        cls.blocked_account.block_email_domains_from_hubspot = ['blocked.com']
+        cls.blocked_account.save()
         blocked_sub = Subscription.new_domain_subscription(
-            blocked_account, cls.blocked_domain, plan
+            cls.blocked_account, cls.blocked_domain, plan
         )
         blocked_sub.is_active = True
         blocked_sub.save()
