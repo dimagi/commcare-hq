@@ -52,8 +52,7 @@ from corehq.apps.smsbillables.exceptions import (
     DeliveredBillableException,
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.messaging.util import use_phone_entries
+from corehq.apps.users.models import CouchUser
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
@@ -550,7 +549,7 @@ def _sync_case_phone_number(contact_case):
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
-    if not use_phone_entries():
+    if not settings.USE_PHONE_ENTRIES:
         return
 
     try:
