@@ -974,10 +974,15 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 } else {
                     options.enableAutoUpdate = isPhoneMode;
                 }
-                if (question.stylesContains(Const.ADDRESS) && hasGeocoderPrivs) {
-                    entry = new AddressEntry(question, {
-                        broadcastStyles: question.stylesContaining(/broadcast-*/),
-                    });
+               if (question.stylesContains(Const.ADDRESS)) {
+                   if (hasGeocoderPrivs) {
+                       entry = new AddressEntry(question, {
+                            broadcastStyles: question.stylesContaining(/broadcast-*/),
+                        });
+                   } else {
+                        window.console.warn('No active entry for: ' + question.datatype());
+                        entry = new UnsupportedEntry(question, options);
+                   }
                 } else if (question.stylesContains(Const.NUMERIC)) {
                     entry = new PhoneEntry(question, options);
                 } else {
