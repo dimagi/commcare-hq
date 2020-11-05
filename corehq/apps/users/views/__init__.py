@@ -552,6 +552,7 @@ class ListWebUsersView(BaseRoleAccessView):
 
 @require_can_edit_or_view_web_users
 def download_web_users(request, domain):
+    track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
     user_filters = {}
     download = DownloadBase()
     is_web_download = True
