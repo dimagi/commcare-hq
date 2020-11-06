@@ -197,19 +197,31 @@ _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
     queue='background_queue',
 )
 def update_facility_cases_from_dhis2_data_elements():
+    dhis2_server = get_dhis2_server()
     try:
-        dhis2_server = ConnectionSettings.objects.get(
-            domain=DOMAIN, name=CONNECTION_SETTINGS_NAME
-        )
+        case_blocks = get_case_blocks()
+        case_blocks = set_case_updates(dhis2_server, case_blocks)
+        save_cases(case_blocks)
+    except Exception as err:
+        dhis2_server.get_requests().notify_exception(
+            f'Importing ONSE ISS facility cases from DHIS2 failed: {err}')
+    else:
+        # For most things we pass silently. But we can repurpose
+        # `notify_error()` to tell admins that the import went through,
+        # because it only happens once a quarter.
+        dhis2_server.get_requests().notify_error(
+            f'Successfully imported ONSE ISS facility cases from DHIS2')
+
+
+def get_dhis2_server() -> ConnectionSettings:
+    try:
+        return ConnectionSettings.objects.get(domain=DOMAIN,
+                                              name=CONNECTION_SETTINGS_NAME)
     except ConnectionSettings.DoesNotExist:
         _soft_assert(False, (
             f'ConnectionSettings {CONNECTION_SETTINGS_NAME!r} not found in '
             f'domain {DOMAIN!r} for importing DHIS2 data elements.'))
-        return
-
-    facility_case_blocks = get_case_blocks()
-    facility_case_blocks = set_case_updates(dhis2_server, facility_case_blocks)
-    save_cases(facility_case_blocks)
+        raise
 
 
 def get_case_blocks() -> Iterable[CaseBlock]:
