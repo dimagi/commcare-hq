@@ -72,6 +72,7 @@
         "less": "3.10.3",
         "marionette.approuter": "^1.0.2",
         "markdown-it": "7.0.1",
+        "modernizr": "^3.11.3",
         "moment": "2.27.0",
         "multiselect": "0.9.12",
         "npm": "6.14.6",
@@ -102,7 +103,6 @@
         "lodash": "4.17.19",
         "mocha": "2.5.3",
         "mocha-headless-chrome": "3.0.0",
-        "modernizr": "^3.11.3",
         "sinon": "2.3.2"
     },
     "engines": {
