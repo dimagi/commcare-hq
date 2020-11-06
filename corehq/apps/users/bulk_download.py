@@ -126,20 +126,6 @@ def make_web_user_dict(user, domain):
     }
 
 
-def get_role_name(role):
-    if role:
-        if role == 'admin':
-            return role
-        else:
-            role_id = role[len('user-role:'):]
-            try:
-                return UserRole.get(role_id).name
-            except ResourceNotFound:
-                return ugettext('Unknown Role')
-    else:
-        return None
-
-
 def make_invited_web_user_dict(invite):
     return {
         'first_name': 'N/A',
@@ -147,7 +133,7 @@ def make_invited_web_user_dict(invite):
         'email': invite.email,
         'username': invite.email,
         'status': ugettext('Invited'),
-        'role': get_role_name(invite.role),
+        'role': invite.get_role_name(),
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
         'remove': '',
