@@ -549,14 +549,16 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             self.renderSelect2();
         });
 
+        self.additionalSelect2Options = function () {
+            return {};
+        };
         self.renderSelect2 = function () {
             var $input = $('#' + self.entryId);
-            $input.select2({
+            $input.select2(_.extend({
                 allowClear: true,
                 placeholder: self.placeholderText,
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
-                matcher: self.matchOption,
-            });
+            }, self.additionalSelect2Options()));
         };
 
         self.afterRender = function () {
@@ -595,39 +597,17 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return gettext('Combobox');
         };
 
-        self.matchOption = function (params, option) {
-            var query = $.trim(params.term);
-            if (!query || !option.text) {
-                return option;
-            }
-
-            var match;
-            if (self.matchType === Const.COMBOBOX_MULTIWORD) {
-                // Multiword filter, matches any choice that contains all of the words in the query
-                //
-                // Assumption is both query and choice will not be very long. Runtime is O(nm)
-                // where n is number of words in the query, and m is number of words in the choice
-                var wordsInQuery = query.split(' ');
-                var wordsInChoice = option.text.split(' ');
-
-                match = _.all(wordsInQuery, function (word) {
-                    return _.include(wordsInChoice, word) ? option : null;
-                });
-            } else if (self.matchType === Const.COMBOBOX_FUZZY) {
-                // Fuzzy filter, matches if query is "close" to answer
-                match = (
-                    (window.Levenshtein.get(option.text.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
-                    option.text.toLowerCase() === query.toLowerCase()
-                );
-            }
-
-            // If we've already matched, return true
-            if (match) {
-                return option;
-            }
-
-            // Standard filter, matches only start of word
-            return option.text.toLowerCase().startsWith(query.toLowerCase()) ? option : null;
+        self.additionalSelect2Options = function () {
+            return {
+                matcher: function (params, option) {
+                    var query = $.trim(params.term);
+                    if (ComboboxEntry.filter(query, option, self.matchType)) {
+                        return option;
+                    } else {
+                        return null;
+                    }
+                }
+            };
         };
 
         self.isValid = function (value) {
@@ -639,6 +619,40 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         self.enableReceiver(question, options);
     }
+
+    ComboboxEntry.filter = function (query, option, matchType) {
+        if (!query || !option.text) {
+            return true;
+        }
+
+        var match;
+        if (matchType === Const.COMBOBOX_MULTIWORD) {
+            // Multiword filter, matches any choice that contains all of the words in the query
+            //
+            // Assumption is both query and choice will not be very long. Runtime is O(nm)
+            // where n is number of words in the query, and m is number of words in the choice
+            var wordsInQuery = query.split(' ');
+            var wordsInChoice = option.text.split(' ');
+
+            match = _.all(wordsInQuery, function (word) {
+                return _.include(wordsInChoice, word);
+            });
+        } else if (matchType === Const.COMBOBOX_FUZZY) {
+            // Fuzzy filter, matches if query is "close" to answer
+            match = (
+                (window.Levenshtein.get(option.text.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
+                option.text.toLowerCase() === query.toLowerCase()
+            );
+        }
+
+        // If we've already matched, return true
+        if (match) {
+            return true;
+        }
+
+        // Standard filter, matches only start of word
+        return option.text.toLowerCase().startsWith(query.toLowerCase());
+    };
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
     ComboboxEntry.prototype.constructor = DropdownEntry;
