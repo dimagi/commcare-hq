@@ -86,6 +86,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
+from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
 
 DataElement = namedtuple('DataElement', ['id', 'data_set'])
 
@@ -184,9 +185,6 @@ CASE_PROPERTY_MAP = {
     ),
 }
 
-DOMAIN = 'onse-iss'
-CASE_TYPE = 'facility_supervision'
-CONNECTION_SETTINGS_NAME = 'DHIS2 Facilities Import Server'
 
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
