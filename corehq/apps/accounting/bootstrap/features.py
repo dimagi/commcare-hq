@@ -122,4 +122,5 @@ advanced_v0 = pro_v1 + [
 
 enterprise_v0 = advanced_v0 + [
     privileges.APP_USER_PROFILES,
+    privileges.GEOCODER,
 ]
