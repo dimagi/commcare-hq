@@ -441,6 +441,32 @@ class CaseClaimEndpointTests(TestCase):
     @run_with_all_backends
     def test_search_endpoint(self):
         self.maxDiff = None
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        url = reverse('remote_search', kwargs={'domain': DOMAIN})
+
+        matching_criteria = [
+            {'name': 'Jamie Hand'},
+            {'name': 'Jamie Hand', '_query': 'date_opened > "2015-03-25"'},
+            {'_query': 'name = "not Jamie" or name = "Jamie Hand"'},
+        ]
+        for params in matching_criteria:
+            params.update({'case_type': CASE_TYPE})
+            response = client.get(url, params)
+            self._assert_known_search_result(response, params)
+
+        non_matching_criteria = [
+            {'name': 'Jamie Face'},
+            {'name': 'Jamie Hand', '_query': 'date_opened < "2015-03-25"'},
+            {'_query': 'name = "not Jamie" and name = "Jamie Hand"'},
+        ]
+        for params in non_matching_criteria:
+            params.update({'case_type': CASE_TYPE})
+            response = client.get(url, params)
+            self._assert_empty_search_result(response, params)
+
+    def _assert_known_search_result(self, response, message=None):
+        self.assertEqual(response.status_code, 200, message)
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
             '<case case_id="{case_id}" '
@@ -460,15 +486,14 @@ class CaseClaimEndpointTests(TestCase):
                 case_type=CASE_TYPE,
                 owner_id=OWNER_ID,
             ))
-
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('remote_search', kwargs={'domain': DOMAIN})
-        response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
         score_regex = re.compile(r'(<commcare_search_score>)(\d+.\d+)(<\/commcare_search_score>)')
-        self.assertEqual(response.status_code, 200)
         self.assertEqual(
             score_regex.sub(r'\1xxx\3',
                             re.sub(DATE_PATTERN, FIXED_DATESTAMP,
                                    re.sub(PATTERN, TIMESTAMP, response.content.decode('utf-8')))),
-            known_result)
+            known_result,
+            message)
+
+    def _assert_empty_search_result(self, response, message=None):
+        self.assertEqual(response.status_code, 200, message)
+        self.assertEqual('<results id="case" />', response.content.decode('utf-8'), message)
