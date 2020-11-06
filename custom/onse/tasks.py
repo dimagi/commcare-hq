@@ -72,14 +72,14 @@ Finally, the ``save_cases()`` function saves the ``CaseBlock``s in
 chunks of 1000.
 
 """
-from collections import namedtuple
 from datetime import date
-from typing import Iterable, Optional
+from typing import Iterable, Optional, List
 
 from celery.schedules import crontab
 from celery.task import periodic_task
 
 from casexml.apps.case.mock import CaseBlock
+from custom.onse.models import iter_mappings
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -87,104 +87,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
-
-DataElement = namedtuple('DataElement', ['id', 'data_set'])
-
-# Map CommCare case properties to DHIS2 data elements
-CASE_PROPERTY_MAP = {
-    'dhis_hmis_data_discussed': DataElement(
-        id='krUiCzsUAZr',  # HMIS Management meetings conducted
-        data_set='q1Es3k3sZem',
-    ),
-    'dhis_admissions_in_quarter': DataElement(
-        id='yCJBWuhuOLc',  # HMIS Total # of Admissions (including Maternity)
-        data_set='q1Es3k3sZem',
-    ),
-    'dhis_suspected_malaria_cases_under_5yrs': DataElement(
-        id='ttpMSWCCq6s',  # HMIS17 Malaria Under 5 years  Admissions
-        data_set='uk3Vkwy5cIe',
-    ),
-    'dhis_total_budget_for_drugs': DataElement(
-        id='P0YGSCM0OKb',  # HMIS Cumulative drug budget
-        data_set='q1Es3k3sZem',
-    ),
-    'dhis_expenditure_in_quarter': DataElement(
-        id='M2Pkr4zxryN',  # HMIS17 Cumulative actual expenditure in all programmes
-        data_set='uk3Vkwy5cIe',
-    ),
-    'dhis_health_facilities_under_hospital_management_supervision': DataElement(
-        id='M3HHFh3RDNP',  # ENVT EH # Of Health Facilities In The  District
-        data_set='iTo9FkAJTSl',
-    ),
-    'dhis_quarterly_estimated_pregnant_women_in_area': DataElement(
-        id='GxqYLY3iWcz',  # CHD EPI Pregnant women
-        data_set='XcgwcDqqE17',
-    ),
-    'dhis_ambulances_functional': DataElement(
-        id='MRqq82xATzI',  # HMIS # of Functioning Ambulances
-        data_set='q1Es3k3sZem',
-    ),
-    'dhis_what_is_the_total_number_of_beds_at_the_facility': DataElement(
-        id='asCqjKclllu',  # HMIS Bed Capacity
-        data_set='q1Es3k3sZem',
-    ),
-    'dhis_quarterly_estimated_children_under_5_in_area': DataElement(
-        id='PVYgza4lLfj',  # CMED Under 5 Population
-        data_set='rkyO2EAX45C',
-    ),
-    'dhis_prev_new_smear_positive_cases_cured': DataElement(
-        id='gKghGP99qDe',  # TBTO New Smear Positive Cured
-        data_set='VEqRXwmqhM1',
-    ),
-    'dhis_prev_new_smear_positive_cases_dead': DataElement(
-        id='yssWGMYDkdA',  # TBTO New Smear Positive Died
-        data_set='VEqRXwmqhM1',
-    ),
-    'dhis_prev_new_smear_positive_cases_treatment_failure': DataElement(
-        id='dmyxAlzfCiK',  # TBTO New Smear Positive Failure
-        data_set='VEqRXwmqhM1',
-    ),
-    'dhis_prev_new_eptb_cases_cured': DataElement(
-        id='a8nx11YujJz',  # TB New Treatment outcome New EPTB Cured
-        data_set='fOiOJU7Vt2n',
-    ),
-    'dhis_prev_new_eptb_cases_treatment_completed': DataElement(
-        id='NFRHK1cgHrc',  # TB New Treatment outcome New EPTB Treatment completed
-        data_set='fOiOJU7Vt2n',
-    ),
-    'dhis_prev_new_eptb_cases_dead': DataElement(
-        id='dzRlRptoj38',  # TBTO EPTB Died
-        data_set='VEqRXwmqhM1',
-    ),
-    'dhis_prev_new_eptb_cases_treatment_failure': DataElement(
-        id='wNKjjozXyQY',  # TB New Treatment outcome New EPTB Treatment failed
-        data_set='fOiOJU7Vt2n',
-    ),
-    # TB COMM Number of Sputum sample collection points in the catchment (BU493LnfBTD) not found
-    # TB COMM Number of Functional Sputum sample collection points in the catchment (GhUn5j5ajzK) not found
-    # NCD CC HIV Status +Ve on ART (E2TaryAVqeT) not found
-    'dhis_village_clinics': DataElement(
-        id='gtLvoz94gur',  # CHD IMCI # of Functional Village Clinics Within Catchment
-        data_set='hWDsGIjs16g',
-    ),
-    'dhis_cbdas': DataElement(
-        id='LGaHPDsUydT',  # HTS Number of CBDA/HSA
-        data_set='wLQlOnKX6yN',
-    ),
-    'dhis_village_health_committees': DataElement(
-        id='J7fogdejE3j',  # HMIS HM Active village health committees within catchment area
-        data_set='q1Es3k3sZem',
-    ),
-    'dhis_households_with_improved_latrines': DataElement(
-        id='u5erlSYbxTU',  # ENVT EH # Of Households Owning And Using Improved Sanitary Facilities
-        data_set='iTo9FkAJTSl',
-    ),
-    'dhis_households_access_to_clean_water': DataElement(
-        id='BDzMvX3y7Kc',  # HMIS # of Households with Access to Safe Drinking Water
-        data_set='q1Es3k3sZem',
-    ),
-}
-
 
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
@@ -242,42 +144,66 @@ def get_case_blocks() -> Iterable[CaseBlock]:
 
 
 def set_case_updates(
-    connection_settings: ConnectionSettings,
+    dhis2_server: ConnectionSettings,
     case_blocks: Iterable[CaseBlock]
 ) -> Iterable[CaseBlock]:
     """
-    Fetch all the data elements for the data set, because we don't know
-    in advance what category option combos to query for
+    Fetch data sets of data elements for last quarter from ``dhis2_server``
+    and update the data elements' corresponding case properties in
+    ``case_blocks``.
     """
-    # e.g. https://play.dhis2.org/dev/api/dataValueSets?orgUnit=jNb63DIHuwU
-    #   &period=2020Q2
-    #   &dataSet=QX4ZTUbOt3a  <-- The data set of the data element
-    # not https://play.dhis2.org/dev/api/dataValues?ou=jNb63DIHuwU
-    #   &pe=2020Q2
-    #   &de=gQNFkFkObU8  <-- The data element we want
-    #   &co=L4P9VSgHkF6  <-- We don't know this, and without it we get a 409
-    requests = connection_settings.get_requests()
-    endpoint = '/api/dataValueSets'
-    params = {'period': get_last_quarter()}
     for case_block in case_blocks:
-        params['orgUnit'] = case_block.external_id
+        # Several of the data elements we want belong to the same data
+        # sets. Only fetch a data set if we don't already have it.
         data_set_cache = {}
-        for case_property, (data_element, data_set) in CASE_PROPERTY_MAP.items():
-            if data_set not in data_set_cache:
-                params['dataSet'] = data_set
-                response_json = requests.get(endpoint, params).json()
-                data_set_cache[data_set] = response_json.get('dataValues', None)
-
-            if data_set_cache[data_set] is None:
+        for mapping in iter_mappings():
+            if not mapping.data_set_id:
+                raise ValueError(
+                    f'Mapping {mapping} does not include data set ID. '
+                    'Use **fetch_onse_data_set_ids** command.')
+            if mapping.data_set_id not in data_set_cache:
+                data_set_cache[mapping.data_set_id] = fetch_data_set(
+                    dhis2_server, mapping.data_set_id,
+                    # facility case external_id is set to its DHIS2 org
+                    # unit. This is the DHIS2 facility whose data we
+                    # want to import.
+                    org_unit_id=case_block.external_id,
+                )
+            if data_set_cache[mapping.data_set_id] is None:
                 # No data for this facility. `None` = "We don't know"
-                case_block.update[case_property] = None
+                case_block.update[mapping.case_property] = None
             else:
-                value = 0
-                for data_value in data_set_cache[data_set]:
-                    if data_value['dataElement'] == data_element:
-                        value += int(data_value['value'])
-                case_block.update[case_property] = value
+                case_block.update[mapping.case_property] = get_data_element_total(
+                    mapping.data_element_id,
+                    data_values=data_set_cache[mapping.data_set_id]
+                )
         yield case_block
+
+
+def fetch_data_set(
+    dhis2_server: ConnectionSettings,
+    data_set_id: str,
+    org_unit_id: str,
+) -> Optional[List[dict]]:
+    """
+    Returns a list of `DHIS2 data values`_, or ``None`` if the the given
+    org unit has no data collected for the last quarter.
+
+    Raises exceptions on connection timeout or non-200 response status.
+
+
+    .. _DHIS2 data values: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
+
+    """
+    requests = dhis2_server.get_requests()
+    endpoint = '/api/dataValueSets'
+    params = {
+        'period': get_last_quarter(),
+        'dataSet': data_set_id,
+        'orgUnit': org_unit_id,
+    }
+    response = requests.get(endpoint, params, raise_for_status=True)
+    return response.json().get('dataValues', None)
 
 
 def get_last_quarter(today: Optional[date] = None) -> str:
@@ -295,6 +221,46 @@ def get_last_quarter(today: Optional[date] = None) -> str:
         year -= 1
         last_quarter = 4
     return f"{year}Q{last_quarter}"
+
+
+def get_data_element_total(
+    data_element_id: str,
+    data_values: List[dict],
+) -> int:
+    """
+    A DHIS2 data element may be broken down by category options, and
+    ``data_values`` can contain multiple entries for the same data
+    element. This function returns the total for a given
+    ``data_element_id``.
+
+    The following doctest shows an example value for ``data_values`` as
+    might be returned by DHIS2:
+
+    >>> data_values = [
+    ...     {
+    ...         "dataElement": "f7n9E0hX8qk",
+    ...         "period": "2014Q1",
+    ...         "orgUnit": "DiszpKrYNg8",
+    ...         "categoryOption": "FNnj3jKGS7i",
+    ...         "value": "12"
+    ...     },
+    ...     {
+    ...         "dataElement": "f7n9E0hX8qk",
+    ...         "period": "2014Q1",
+    ...         "orgUnit": "DiszpKrYNg8",
+    ...         "categoryOption": "Jkhdsf8sdf4",
+    ...         "value": "16"
+    ...     }
+    ... ]
+    >>> get_data_element_total('f7n9E0hX8qk', data_values)
+    28
+
+    """
+    value = 0
+    for data_value in data_values:
+        if data_value['dataElement'] == data_element_id:
+            value += int(data_value['value'])
+    return value
 
 
 def save_cases(case_blocks):
