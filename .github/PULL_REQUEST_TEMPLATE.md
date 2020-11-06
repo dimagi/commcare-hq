@@ -13,8 +13,9 @@
 ## Safety Assurance
 
 - [ ] Risk label is set correctly
+- [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
+- [ ] QA labels are set correctly
 - [ ] I am certain that this PR will not introduce a regression for the reasons below
-- [ ] Someone on SaaS has been added as a reviewer
 
 ### Automated test coverage
 
@@ -22,11 +23,15 @@
 
 ### QA Plan
 
-- [ ] QA labels are set correctly
-
 <!--
 - Describe QA plan that along with automated test coverages proves this PR is regression free
 - Link to QA Ticket
+-->
+
+### Safety story
+<!--
+Describe any other pieces to the safety story including
+local testing, why the change is inherently safe, and/or plans to limit the blast radius of a defect.
 -->
 
 ### Rollback instructions
