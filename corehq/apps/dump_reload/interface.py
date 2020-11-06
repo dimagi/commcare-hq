@@ -5,6 +5,8 @@ import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from corehq.util.log import with_progress_bar
+
 
 class DataDumper(metaclass=ABCMeta):
     """
@@ -56,9 +58,11 @@ class DataLoader(metaclass=ABCMeta):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
-        self.stdout.write(f"Loading {extracted_dump_path} using '{self.slug}' data loader.")
+        self.stdout.write(f"Inspecting {extracted_dump_path} using '{self.slug}' data loader.")
+        line_count = _get_gzfile_line_count(file_path)
         with gzip.open(file_path) as dump_file:
-            total_object_count, loaded_object_count = self.load_objects(dump_file, force)
+            object_strings = with_progress_bar(dump_file, length=line_count, stream=self.stdout)
+            total_object_count, loaded_object_count = self.load_objects(object_strings, force)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
@@ -69,3 +73,10 @@ class DataLoader(metaclass=ABCMeta):
             )
 
         return total_object_count, loaded_object_count
+
+
+def _get_gzfile_line_count(file_path):
+    # This has to iterate through the whole file, which takes time (~15 minutes
+    # for an 11G sql.gz file), but it's worth it to predict completion time
+    with gzip.open(file_path) as f:
+        return sum(1 for _ in f)
