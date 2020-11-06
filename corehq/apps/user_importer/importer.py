@@ -343,7 +343,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             if update_progress:
                 update_progress(current)
                 current += 1
-            role_updated = False
+            log_user_create = False
+            log_role_update = False
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
@@ -419,6 +420,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         kwargs['is_account_confirmed'] = is_account_confirmed
                     user = CommCareUser.create(domain, username, password, created_by=upload_user,
                                                created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
+                    log_user_create = True
                     status_row['flag'] = 'created'
 
                 if phone_number:
@@ -476,16 +478,18 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
                     user_current_role = user.get_role(domain=domain)
-                    role_updated = not (user_current_role
+                    log_role_update = not (user_current_role
                                         and user_current_role.get_qualified_id() == role_qualified_id)
-                    if role_updated:
+                    if log_role_update:
                         user.set_role(domain, role_qualified_id)
 
                 if web_user:
                     user.update_metadata({'login_as_user': web_user})
 
                 user.save()
-                if role_updated:
+                if log_user_create:
+                    user.log_user_create(upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                if log_role_update:
                     log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
                     if not upload_user.can_edit_web_users():

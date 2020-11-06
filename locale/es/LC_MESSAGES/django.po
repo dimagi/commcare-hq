@@ -14,8 +14,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-28 19:17+0000\n"
-"PO-Revision-Date: 2020-10-21 19:12+0000\n"
+"POT-Creation-Date: 2020-11-04 21:01+0000\n"
+"PO-Revision-Date: 2020-10-28 19:18+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
@@ -1300,8 +1300,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/form_link.html:89
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html:100
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html:94
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:255
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:282
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:262
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:289
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html:33
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html:27
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html:35
@@ -1342,7 +1342,7 @@ msgstr ""
 #: corehq/apps/styleguide/example_forms.py:90
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:69
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:136
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:146
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:54
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:139
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:41
 #: corehq/apps/users/templates/users/edit_commcare_user.html:234
@@ -1357,8 +1357,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/roles_and_permissions.html:232
 #: corehq/apps/users/templates/users/roles_and_permissions.html:261
 #: corehq/apps/users/templates/users/web_users.html:172
-#: corehq/apps/users/templates/users/web_users.html:290
-#: corehq/apps/users/templates/users/web_users.html:349
+#: corehq/apps/users/templates/users/web_users.html:294
+#: corehq/apps/users/templates/users/web_users.html:353
 #: corehq/motech/forms.py:119
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:65
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:99
@@ -4059,7 +4059,7 @@ msgstr "Copiar Aplicación"
 #: corehq/apps/app_manager/forms.py:63
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html:41
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html:28
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:106
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:95
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:44
 msgid "Copy"
 msgstr "Copiar"
@@ -4380,8 +4380,8 @@ msgstr "El ID del usuario"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html:14
 #: corehq/apps/dashboard/views.py:188
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:12
-#: corehq/apps/userreports/reports/view.py:144
-#: corehq/apps/userreports/reports/view.py:621
+#: corehq/apps/userreports/reports/view.py:146
+#: corehq/apps/userreports/reports/view.py:625
 #: corehq/apps/users/landing_pages.py:26
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:116
 #: corehq/apps/users/templates/users/roles_and_permissions.html:104
@@ -5999,7 +5999,7 @@ msgstr "ID de Preguntas"
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html:14
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html:3
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:10
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:162
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:166
 #: corehq/apps/builds/templates/builds/all.html:8
 #: corehq/apps/builds/templates/builds/edit_menu.html:40
 #: corehq/apps/domain/forms.py:2262 corehq/apps/domain/forms.py:2346
@@ -6216,7 +6216,7 @@ msgstr "Agenda de Visitas"
 #: corehq/apps/users/templates/users/edit_commcare_user.html:36
 #: corehq/apps/users/templates/users/roles_and_permissions.html:109
 #: corehq/apps/users/templates/users/web_users.html:43
-#: corehq/apps/users/templates/users/web_users.html:233
+#: corehq/apps/users/templates/users/web_users.html:234
 msgid "Actions"
 msgstr "Acciones"
 
@@ -6553,8 +6553,8 @@ msgstr "Instale CommCare"
 #: corehq/apps/users/templates/users/roles_and_permissions.html:221
 #: corehq/apps/users/templates/users/roles_and_permissions.html:255
 #: corehq/apps/users/templates/users/web_users.html:148
-#: corehq/apps/users/templates/users/web_users.html:282
-#: corehq/apps/users/templates/users/web_users.html:343
+#: corehq/apps/users/templates/users/web_users.html:286
+#: corehq/apps/users/templates/users/web_users.html:347
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html:44
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:59
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:99
@@ -7205,8 +7205,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html:68
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html:69
 #: corehq/apps/users/templates/users/roles_and_permissions.html:262
-#: corehq/apps/users/templates/users/web_users.html:291
-#: corehq/apps/users/templates/users/web_users.html:350
+#: corehq/apps/users/templates/users/web_users.html:295
+#: corehq/apps/users/templates/users/web_users.html:354
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html:32
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:62
 #: corehq/motech/templates/motech/connection_settings.html:25
@@ -9111,7 +9111,7 @@ msgid "Series"
 msgstr "Serie"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/graph_configuration_modal.html:27
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:42
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:31
 msgid "Configuration"
 msgstr "Configuración"
 
@@ -9198,7 +9198,7 @@ msgid "Sync Delay (in hours)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html:57
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:337
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:332
 msgid "Data Table"
 msgstr "Tabla de Datos"
 
@@ -9809,98 +9809,98 @@ msgstr ""
 msgid "show all"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:40
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:44
 msgid "Version Preview"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:51
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:55
 msgid "Make New Version"
 msgstr "Hacer Nueva Versión"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:69
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:73
 #: corehq/apps/users/decorators.py:52
 msgid "Sorry, you don't have permission to do this action!"
 msgstr "Lo siento, ¡usted no tiene permiso para realizar esta acción!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:78
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:82
 msgid "Loading versions..."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:83
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:87
 msgid ""
 "An error occurred while fetching versions. Reload the page to try again."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:118
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:122
 msgid "Could not update"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:124
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:128
 #: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html:41
 msgid "Latest"
 msgstr "La más reciente"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:137
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:152
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:141
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:156
 msgid "Released"
 msgstr "Publicado"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:147
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:155
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:151
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:159
 msgid "In Test"
 msgstr "De Prueba"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:168
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:172
 msgid "by"
 msgstr "por"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:171
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:175
 msgid "with CommCare v."
 msgstr "con CommCare v."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:174
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:178
 msgid "Unsigned Jar"
 msgstr "Jar no firmada"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:187
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:191
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:77
 msgid "(Click here to add a comment)"
 msgstr "(Haga clic aquí para agregar un comentario)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:191
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:195
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:79
 msgid "Error updating comment.  Please try again."
 msgstr "Error al actualizar el comentario. Por favor intente de nuevo."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:206
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:213
 msgid "View Changes"
 msgstr "Ver Cambios"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:215
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:222
 msgid "Revert to this Version"
 msgstr "Revertir a esta Versión"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:227
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:234
 msgid "Publish"
 msgstr "Publicar"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:249
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:256
 msgid "Delete Version?"
 msgstr "¿Eliminar Versión?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:252
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:259
 msgid "Are you sure you want to delete this version"
 msgstr "¿Está seguro que quiere eliminar esta versión?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:256
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:263
 msgid "Delete Version"
 msgstr "Eliminar Versión"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:268
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:275
 msgid "Revert to Version?"
 msgstr "¿Revertir Versión?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:272
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:279
 msgid ""
 "\n"
 "              This version uses an outdated form of case management.\n"
@@ -9908,7 +9908,7 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:277
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:284
 msgid ""
 "\n"
 "            Are you sure you want to revert to version <span data-bind="
@@ -9916,7 +9916,7 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:283
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:290
 msgid "Revert"
 msgstr "Revertir"
 
@@ -11751,7 +11751,7 @@ msgstr "Anterior (ninguno)"
 #: corehq/apps/reports/templates/reports/filters/drilldown_options.html:30
 #: corehq/apps/settings/forms.py:98 corehq/apps/settings/forms.py:123
 #: corehq/apps/settings/forms.py:168 corehq/apps/settings/forms.py:200
-#: corehq/apps/settings/forms.py:244 corehq/apps/settings/forms.py:321
+#: corehq/apps/settings/forms.py:244 corehq/apps/settings/forms.py:323
 #: corehq/apps/userreports/reports/builder/forms.py:839
 msgid "Next"
 msgstr "Siguiente"
@@ -14582,7 +14582,7 @@ msgid "SMS Pricing"
 msgstr "Precios SMS"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:15
-#: corehq/apps/userreports/views.py:375
+#: corehq/apps/userreports/views.py:358
 msgid "Pricing"
 msgstr "Precios"
 
@@ -21070,7 +21070,7 @@ msgid "Change Project"
 msgstr "Cambiar Proyecto"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/domain_list_dropdown.html:15
-#: corehq/apps/settings/forms.py:277 corehq/apps/settings/views.py:552
+#: corehq/apps/settings/forms.py:279 corehq/apps/settings/views.py:552
 #: corehq/apps/settings/views.py:583
 msgid "All Projects"
 msgstr ""
@@ -22017,26 +22017,20 @@ msgid "Enable GAEN OTP server integration"
 msgstr ""
 
 #: corehq/apps/integration/forms.py:106
-#, fuzzy
-#| msgid "Survey Type"
 msgid "GAEN Server Type"
-msgstr "Tipo de Encuesta"
+msgstr ""
 
 #: corehq/apps/integration/forms.py:108
-#, fuzzy
-#| msgid "Select User Types"
 msgid "Select server type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/integration/forms.py:109 corehq/apps/integration/models.py:20
 msgid "NearForm OTP Server"
 msgstr ""
 
 #: corehq/apps/integration/forms.py:110 corehq/apps/integration/models.py:21
-#, fuzzy
-#| msgid "Notifications"
 msgid "APHL Exposure Notifications"
-msgstr "Notificaciones"
+msgstr ""
 
 #: corehq/apps/integration/forms.py:115
 msgid "Server Endpoint"
@@ -23524,7 +23518,7 @@ msgid "Preparing organization structure download."
 msgstr "Diagnóstico de Casos"
 
 #: corehq/apps/locations/views.py:1067
-#: corehq/apps/userreports/reports/view.py:638
+#: corehq/apps/userreports/reports/view.py:642
 #: corehq/apps/users/views/mobile/users.py:560
 #: corehq/apps/users/views/mobile/users.py:1186
 msgid "There was an unexpected error! Please try again or report an issue."
@@ -25771,8 +25765,8 @@ msgstr ""
 "+Case+Search\" target=\"_blank\"> Página de ayuda de </a> Búsqueda de Caso"
 
 #: corehq/apps/reports/standard/cases/filters.py:58
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:155
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:156
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:150
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:151
 #: corehq/apps/users/forms.py:1179
 msgid "Columns"
 msgstr "Columnas"
@@ -28004,7 +27998,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:101
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:293
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:288
 msgid "Fit all data into view"
 msgstr "Muestre todos los datos en la vista"
 
@@ -28158,19 +28152,19 @@ msgstr ""
 msgid "Token"
 msgstr ""
 
-#: corehq/apps/settings/forms.py:264
+#: corehq/apps/settings/forms.py:266
 msgid "Allowed IP Addresses (comma separated)"
 msgstr ""
 
-#: corehq/apps/settings/forms.py:269
+#: corehq/apps/settings/forms.py:271
 msgid "Limit the key's access to a single project space"
 msgstr ""
 
-#: corehq/apps/settings/forms.py:282
+#: corehq/apps/settings/forms.py:284
 msgid "Add New API Key"
 msgstr ""
 
-#: corehq/apps/settings/forms.py:289
+#: corehq/apps/settings/forms.py:291
 msgid "Generate New API Key"
 msgstr ""
 
@@ -28856,10 +28850,8 @@ msgid "Please select again"
 msgstr ""
 
 #: corehq/apps/sms/forms.py:862
-#, fuzzy
-#| msgid "Display Text"
 msgid "Display Name"
-msgstr "Texto en Pantalla"
+msgstr ""
 
 #: corehq/apps/sms/forms.py:872
 msgid "Give other domains access."
@@ -30646,38 +30638,38 @@ msgid "Could not find organization with site code '%(site_code)s'"
 msgstr ""
 "No se pudo encontrar organización con el código del sitio '%(site_code)s' "
 
-#: corehq/apps/user_importer/importer.py:396
+#: corehq/apps/user_importer/importer.py:397
 #, python-brace-format
 msgid "User with ID '{user_id}' not found"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:401
+#: corehq/apps/user_importer/importer.py:402
 #, python-format
 msgid "Changing usernames is not supported: %(username)r to %(new_username)r"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:408
+#: corehq/apps/user_importer/importer.py:409
 msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:493
+#: corehq/apps/user_importer/importer.py:497
 msgid "Only users with the edit web users permission can upload web users"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:499
+#: corehq/apps/user_importer/importer.py:503
 #, python-brace-format
 msgid ""
 "You cannot remove a web user that is not a member of this project. "
 "{web_user} is not a member."
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:507
+#: corehq/apps/user_importer/importer.py:511
 #, python-brace-format
 msgid ""
 "You cannot upload a web user without a role. {web_user} does not have a role"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:511
+#: corehq/apps/user_importer/importer.py:515
 #, python-brace-format
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
@@ -31047,7 +31039,7 @@ msgstr "No puede consultar en columnas de tipo {} "
 msgid "Unknown Date"
 msgstr "Fecha desconocida"
 
-#: corehq/apps/userreports/reports/view.py:301
+#: corehq/apps/userreports/reports/view.py:303
 msgid ""
 "It looks like there is a problem with your report. You may need to delete "
 "and recreate the report. If you believe you are seeing this message in "
@@ -31057,11 +31049,11 @@ msgstr ""
 "crearlo de nuevo. Si cree que está viendo este mensaje por error, por favor "
 "reporte un problema."
 
-#: corehq/apps/userreports/reports/view.py:415
+#: corehq/apps/userreports/reports/view.py:419
 msgid "This report has too many columns to be displayed"
 msgstr "Este reporte tiene demasiadas columnas para ser visualizado"
 
-#: corehq/apps/userreports/reports/view.py:438
+#: corehq/apps/userreports/reports/view.py:442
 msgid ""
 "The database table backing your report does not exist yet. Please wait while "
 "the report is populated."
@@ -31069,7 +31061,7 @@ msgstr ""
 "La tabla de base de datos que respalda su reporte no existe todavía. Por "
 "favor espere mientras el reporte se llena."
 
-#: corehq/apps/userreports/reports/view.py:443
+#: corehq/apps/userreports/reports/view.py:447
 msgid ""
 "The database table backing your report does not exist yet. You must rebuild "
 "the data source before viewing the report."
@@ -31077,23 +31069,23 @@ msgstr ""
 "La tabla de base de datos que respalda su reporte no existe todavía. Debe "
 "volver a desarrollar la fuente de datos antes de ver el reporte."
 
-#: corehq/apps/userreports/reports/view.py:620
+#: corehq/apps/userreports/reports/view.py:624
 msgid "Download UCR Status"
 msgstr ""
 
-#: corehq/apps/userreports/reports/view.py:636
+#: corehq/apps/userreports/reports/view.py:640
 msgid "Download Report Status"
 msgstr ""
 
-#: corehq/apps/userreports/reports/view.py:637
+#: corehq/apps/userreports/reports/view.py:641
 msgid "Preparing report download."
 msgstr ""
 
-#: corehq/apps/userreports/reports/view.py:640
+#: corehq/apps/userreports/reports/view.py:644
 msgid "Go back to report"
 msgstr ""
 
-#: corehq/apps/userreports/reports/view.py:686
+#: corehq/apps/userreports/reports/view.py:690
 msgid "Download Report"
 msgstr ""
 
@@ -31156,7 +31148,7 @@ msgstr "Reportes Configurables"
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:15
 #: corehq/apps/userreports/templates/userreports/import_report.html:15
-#: corehq/apps/userreports/views.py:845
+#: corehq/apps/userreports/views.py:828
 msgid "Import Report"
 msgstr "Importar Reporte"
 
@@ -31193,7 +31185,7 @@ msgid "Preview Data"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:11
-#: corehq/apps/userreports/views.py:1477
+#: corehq/apps/userreports/views.py:1460
 msgid "Data Source Summary"
 msgstr ""
 
@@ -31250,61 +31242,39 @@ msgstr ""
 msgid "Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:26
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:31
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:148
-#: corehq/apps/userreports/templates/userreports/report_error.html:24
-msgid "Delete Report"
-msgstr "Eliminar Reporte"
-
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:43
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:32
 msgid "Usage"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:45
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:34
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:8
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:19
 msgid "Link Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:58
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:47
 msgid "This report is not referred to by any apps in this domain."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:61
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:50
 msgid ""
 "This is a static report, which might be referred to by apps in other domains."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:66
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:55
 msgid ""
 "\n"
 "            The following apps depend on this report:\n"
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:89
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:78
 msgid "Link this report to project"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:97
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:86
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:30
 msgid "Already Linked"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:125
-msgid "Are you sure you want to delete this report?"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:128
-msgid ""
-"\n"
-"              Deleting this will break the apps below, which refer to this "
-"report.\n"
-"              In addition, there may be older app versions that depend on "
-"these reports but are not displayed here.\n"
-"              Please delete with caution.\n"
-"            "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html:13
@@ -31376,8 +31346,31 @@ msgid ""
 "        "
 msgstr ""
 
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:9
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:15
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:20
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:56
+#: corehq/apps/userreports/templates/userreports/report_error.html:24
+msgid "Delete Report"
+msgstr "Eliminar Reporte"
+
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:33
+msgid "Are you sure you want to delete this report?"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:36
+msgid ""
+"\n"
+"              Deleting this will break the apps below, which refer to this "
+"report.\n"
+"              In addition, there may be older app versions that depend on "
+"these reports but are not displayed here.\n"
+"              Please delete with caution.\n"
+"            "
+msgstr ""
+
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html:15
-#: corehq/apps/userreports/views.py:303
+#: corehq/apps/userreports/views.py:286
 msgid "Edit Report"
 msgstr "Editar Reporte"
 
@@ -31439,7 +31432,7 @@ msgstr "El Valor del Filtro no debe estar vacío."
 
 #: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html:6
 #: corehq/apps/userreports/templates/userreports/paywall/pricing.html:6
-#: corehq/apps/userreports/views.py:335 corehq/apps/userreports/views.py:360
+#: corehq/apps/userreports/views.py:318 corehq/apps/userreports/views.py:343
 #: corehq/tabs/tabclasses.py:175
 msgid "Report Builder"
 msgstr "Desarrollador de Reporte"
@@ -31503,31 +31496,31 @@ msgstr ""
 msgid "Technical Details:"
 msgstr "Detalles Técnicos:"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:81
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:76
 msgid "Save and View Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:92
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:87
 msgid "Enter report name here"
 msgstr "Ingrese aquí el nombre del reporte"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:103
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:98
 msgid "Enter report description here"
 msgstr "Ingrese aquí la descripción del formulario"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:114
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:109
 msgid "Type of Report"
 msgstr "Tipo de Reporte"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:155
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:150
 msgid "Indicators"
 msgstr "Indicadores"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:178
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:173
 msgid "User Filters"
 msgstr "Filtros de Usuario"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:186
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:181
 msgid ""
 "\n"
 "                    Add filters to your report to allow viewers to select "
@@ -31541,11 +31534,11 @@ msgstr ""
 "los datos que mostrará el reporte. Estos filtros se visualizarán en la parte "
 "de arriba de su reporte."
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:204
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:199
 msgid "Default Filters"
 msgstr "Filtros Predeterminados"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:212
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:207
 msgid ""
 "\n"
 "                    These filters are not displayed to report viewers and "
@@ -31556,19 +31549,19 @@ msgstr ""
 "Estos filtros no se muestran a los que ven el reporte y siempre son "
 "aplicados a los datos."
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:229
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:224
 msgid "Preview Report"
 msgstr "Vista Previa del Reporte"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:233
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:228
 msgid "Preview includes at most 100 cases"
 msgstr "La vista previa incluye un máximo de 100 casos"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:235
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:230
 msgid "Preview includes at most 100 forms"
 msgstr "La vista previa incluye un máximo de 100 formularios"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:245
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:240
 msgid ""
 "\n"
 "                      Properties with FORMAT <strong>Sum</strong> or "
@@ -31576,7 +31569,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:250
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:245
 msgid ""
 "\n"
 "                      This bar chart below will not be shown in the report "
@@ -31586,7 +31579,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:257
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:252
 msgid ""
 "\n"
 "                      Pie charts will show the breakdown of the first column "
@@ -31594,7 +31587,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:262
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:257
 msgid ""
 "\n"
 "                      This pie chart below will not be shown in the report "
@@ -31604,23 +31597,23 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:269
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:264
 msgid "Add Chart"
 msgstr "Agregar Gráfica"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:277
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:272
 msgid "Map Preview"
 msgstr "Vista Previa del Mapa"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:279
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:274
 msgid "Location field"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:299
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:294
 msgid "Chart Preview"
 msgstr "Vista Previa de la Gráfica"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:317
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:312
 msgid ""
 "\n"
 "                    Charts cannot be displayed with more than 25 "
@@ -31634,7 +31627,7 @@ msgstr ""
 "Guardado y Visualizado el reporte, podrá filtrar los datos para limitar el "
 "número de filas. "
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:327
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:322
 msgid ""
 "\n"
 "                      At least one indicator must not be of format \"Group By"
@@ -31645,7 +31638,7 @@ msgstr ""
 "Por lo menos un indicador no debe ser del formato \"Grupo por\" para generar "
 "gráficas."
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:341
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:336
 msgid ""
 "\n"
 "                    There was an error rendering your report preview. Please "
@@ -31680,12 +31673,12 @@ msgid "Data source from application"
 msgstr "Fuente de datos desde aplicación"
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:54
-#: corehq/apps/userreports/views.py:890
+#: corehq/apps/userreports/views.py:873
 msgid "Expression Debugger"
 msgstr "Depurador de Expresión"
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:60
-#: corehq/apps/userreports/views.py:896
+#: corehq/apps/userreports/views.py:879
 msgid "Data Source Debugger"
 msgstr "Debugger de la Fuente de los Datos"
 
@@ -31790,13 +31783,12 @@ msgstr ""
 msgid "Problem with data source spec: {}"
 msgstr "Problema con las especificaciones de fuente de datos: {}  "
 
-#: corehq/apps/userreports/ui/forms.py:277
-#: corehq/apps/userreports/views.py:1012
+#: corehq/apps/userreports/ui/forms.py:277 corehq/apps/userreports/views.py:995
 msgid "Create Data Source from Application"
 msgstr "Crear Fuente de Datos desde Aplicación"
 
 #: corehq/apps/userreports/ui/forms.py:282
-#: corehq/apps/userreports/views.py:1139
+#: corehq/apps/userreports/views.py:1122
 msgid "Create Data Source"
 msgstr "Crear Fuente de Datos"
 
@@ -31890,27 +31882,27 @@ msgstr ""
 msgid "Reports Home"
 msgstr "Inicio de Reportes"
 
-#: corehq/apps/userreports/views.py:294
+#: corehq/apps/userreports/views.py:277
 msgid "Report \"{}\" saved!"
 msgstr "¡Reporte \"{}\" guardado!"
 
-#: corehq/apps/userreports/views.py:308 corehq/apps/userreports/views.py:415
+#: corehq/apps/userreports/views.py:291 corehq/apps/userreports/views.py:398
 msgid "Create Report"
 msgstr "Crear Reporte"
 
-#: corehq/apps/userreports/views.py:356
+#: corehq/apps/userreports/views.py:339
 msgid "Subscribe"
 msgstr "Suscribirse"
 
-#: corehq/apps/userreports/views.py:423 corehq/tabs/tabclasses.py:177
+#: corehq/apps/userreports/views.py:406 corehq/tabs/tabclasses.py:177
 msgid "Create New Report"
 msgstr "Crear Nuevo Reporte "
 
-#: corehq/apps/userreports/views.py:481
+#: corehq/apps/userreports/views.py:464
 msgid "Configure Report"
 msgstr "Configurar Reporte"
 
-#: corehq/apps/userreports/views.py:800
+#: corehq/apps/userreports/views.py:783
 #, python-brace-format
 msgid ""
 "Report \"{name}\" has been deleted. <a href=\"{url}\" class=\"post-link"
@@ -31919,7 +31911,7 @@ msgstr ""
 "El reporte \"{name}\" ha sido eliminado. <a href=\"{url}\" class=\"post-link"
 "\">Deshacer</a>"
 
-#: corehq/apps/userreports/views.py:816
+#: corehq/apps/userreports/views.py:799
 msgid ""
 "This report was used in one or more applications. It has been removed from "
 "there too."
@@ -31927,57 +31919,57 @@ msgstr ""
 "Este reporte fue usado en una o más aplicaciones. También fue removido de "
 "ellas."
 
-#: corehq/apps/userreports/views.py:837
+#: corehq/apps/userreports/views.py:820
 #, python-brace-format
 msgid "Successfully restored report \"{name}\""
 msgstr "Reporte \"{name}\" restaurado exitosamente "
 
-#: corehq/apps/userreports/views.py:840
+#: corehq/apps/userreports/views.py:823
 #, python-brace-format
 msgid "Report \"{name}\" not deleted."
 msgstr "El reporte \"{name}\" no ha sido eliminado."
 
-#: corehq/apps/userreports/views.py:864
+#: corehq/apps/userreports/views.py:847
 msgid "Report created!"
 msgstr "¡Reporte creado! "
 
-#: corehq/apps/userreports/views.py:869
+#: corehq/apps/userreports/views.py:852
 msgid "Bad report source: {}"
 msgstr "Mala fuente de reporte: {}"
 
-#: corehq/apps/userreports/views.py:930 corehq/apps/userreports/views.py:963
+#: corehq/apps/userreports/views.py:913 corehq/apps/userreports/views.py:946
 msgid "Data source with id {} not found in domain {}."
 msgstr "No se encontró la fuente de datos con id {} en el dominio {}. "
 
-#: corehq/apps/userreports/views.py:937
+#: corehq/apps/userreports/views.py:920
 msgid "{} with id {} not found in domain {}."
 msgstr "{} con id {} no encontrado en el dominio {}. "
 
-#: corehq/apps/userreports/views.py:944
+#: corehq/apps/userreports/views.py:927
 msgid "Problem with expression: {}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:980
+#: corehq/apps/userreports/views.py:963
 msgid "No documents found. Check the IDs and try again."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1002
+#: corehq/apps/userreports/views.py:985
 msgid "Datasource table does not exist. Try rebuilding the datasource."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1004
+#: corehq/apps/userreports/views.py:987
 msgid "Error querying database for data."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1028 corehq/apps/userreports/views.py:1034
+#: corehq/apps/userreports/views.py:1011 corehq/apps/userreports/views.py:1017
 msgid "Data source created for '{}'"
 msgstr "Fuente de datos creada para '{}' "
 
-#: corehq/apps/userreports/views.py:1099
+#: corehq/apps/userreports/views.py:1082
 msgid "Data source \"{}\" saved!"
 msgstr "¡Fuente de datos \"{}\" guardada!"
 
-#: corehq/apps/userreports/views.py:1130
+#: corehq/apps/userreports/views.py:1113
 msgid ""
 "Data source \"{}\" has no associated table.\n"
 "Click \"Rebuild Data Source\" to recreate the table."
@@ -31985,11 +31977,11 @@ msgstr ""
 "La fuente de  datos \"{}\" no tiene una tabla asociada. \n"
 "Haga clic en \"Desarrollar de nuevo Fuente de Datos\" para recrear la tabla. "
 
-#: corehq/apps/userreports/views.py:1144
+#: corehq/apps/userreports/views.py:1127
 msgid "Edit Data Source"
 msgstr "Editar Fuente de Datos"
 
-#: corehq/apps/userreports/views.py:1168
+#: corehq/apps/userreports/views.py:1151
 #, python-brace-format
 msgid ""
 "Data source \"{name}\" has been deleted. <a href=\"{url}\" class=\"post-link"
@@ -31998,30 +31990,30 @@ msgstr ""
 "La fuente de datos \"{name}\" ha sido eliminada. <a href=\"{url}\" class="
 "\"post-link\">Deshacer</a>"
 
-#: corehq/apps/userreports/views.py:1186
+#: corehq/apps/userreports/views.py:1169
 #, python-brace-format
 msgid "Successfully restored data source \"{name}\""
 msgstr "La fuente de datos \"{name}\" ha sido restaurada exitosamente"
 
-#: corehq/apps/userreports/views.py:1189
+#: corehq/apps/userreports/views.py:1172
 #, python-brace-format
 msgid "Data source \"{name}\" not deleted."
 msgstr "La fuente de datos \"{name}\" no ha sido eliminada."
 
-#: corehq/apps/userreports/views.py:1205 corehq/apps/userreports/views.py:1256
+#: corehq/apps/userreports/views.py:1188 corehq/apps/userreports/views.py:1239
 msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
 msgstr ""
 "La tabla \"{}\" está siendo desarrollada de nuevo ahora. Los datos deberían "
 "empezar a mostrarse pronto"
 
-#: corehq/apps/userreports/views.py:1223
+#: corehq/apps/userreports/views.py:1206
 msgid ""
 "Table \"{}\" has already finished building. Rebuild table to start over."
 msgstr ""
 "La tabla \"{}\"  ya se terminó de desarrollar. Desarrolle de nuevo la tabla "
 "para volver a empezar."
 
-#: corehq/apps/userreports/views.py:1230
+#: corehq/apps/userreports/views.py:1213
 msgid ""
 "Table \"{}\" did not finish building but resume information is not "
 "available. Unfortunately, this means you need to rebuild the table."
@@ -32030,35 +32022,35 @@ msgstr ""
 "reanudación no está disponible. Desafortunadamente, esto significa que "
 "necesita volver a desarrollar la tabla. "
 
-#: corehq/apps/userreports/views.py:1238
+#: corehq/apps/userreports/views.py:1221
 msgid "Resuming rebuilding table \"{}\"."
 msgstr "Continuar desarrollando la tabla \"{}\". "
 
-#: corehq/apps/userreports/views.py:1278
+#: corehq/apps/userreports/views.py:1261
 msgid "Preview Data Source"
 msgstr "Vista Previa de la Fuente de Datos"
 
-#: corehq/apps/userreports/views.py:1311
+#: corehq/apps/userreports/views.py:1294
 msgid "You can only use 'lastndays' on date columns"
 msgstr "Solo puede usar 'últimosndías'en columnas de fecha"
 
-#: corehq/apps/userreports/views.py:1321
+#: corehq/apps/userreports/views.py:1304
 msgid "Ranges must have the format \"start..end\""
 msgstr "Los rangos deben tener el formato \"inicio..final\""
 
-#: corehq/apps/userreports/views.py:1353
+#: corehq/apps/userreports/views.py:1336
 msgid "No field named {}"
 msgstr "No hay campo nombrado {} "
 
-#: corehq/apps/userreports/views.py:1360
+#: corehq/apps/userreports/views.py:1343
 msgid "Invalid filter parameter: {}"
 msgstr "Parámetro de filtro inválido: {} "
 
-#: corehq/apps/userreports/views.py:1388
+#: corehq/apps/userreports/views.py:1371
 msgid "format must be one of the following: {}"
 msgstr "el formato debe ser uno de los siguientes: {} "
 
-#: corehq/apps/userreports/views.py:1425
+#: corehq/apps/userreports/views.py:1408
 msgid ""
 "There was a problem executing your query, please make sure your parameters "
 "are valid."
@@ -32066,17 +32058,17 @@ msgstr ""
 "Hubo un problema ejecutando su consulta, por favor asegúrese de que los "
 "parámetros son válidos."
 
-#: corehq/apps/userreports/views.py:1436
+#: corehq/apps/userreports/views.py:1419
 msgid "Filter {} not found!"
 msgstr "¡Filtro {} no encontrado!"
 
-#: corehq/apps/userreports/views.py:1588
+#: corehq/apps/userreports/views.py:1571
 msgid ""
 "Successfully linked and copied {link_info.report.title} to {', '."
 "join(successes)}. "
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1590
+#: corehq/apps/userreports/views.py:1573
 msgid "Due to errors, the report was not copied to {', '.join(failures)}"
 msgstr ""
 
@@ -33699,28 +33691,28 @@ msgstr ""
 msgid "Email Status"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:240
+#: corehq/apps/users/templates/users/web_users.html:242
 msgid "Blocked"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:246
+#: corehq/apps/users/templates/users/web_users.html:248
 msgid "Expired"
 msgstr "Expirado"
 
-#: corehq/apps/users/templates/users/web_users.html:256
+#: corehq/apps/users/templates/users/web_users.html:259
 msgid "Resend Invitation"
 msgstr "Volver a enviar Invitación"
 
-#: corehq/apps/users/templates/users/web_users.html:261
-#: corehq/apps/users/templates/users/web_users.html:284
+#: corehq/apps/users/templates/users/web_users.html:264
+#: corehq/apps/users/templates/users/web_users.html:288
 msgid "Delete Invitation"
 msgstr "Eliminar Invitación"
 
-#: corehq/apps/users/templates/users/web_users.html:287
+#: corehq/apps/users/templates/users/web_users.html:291
 msgid "Are you sure you want to delete this invitation?"
 msgstr "¿Está seguro que desea eliminar esta invitación?"
 
-#: corehq/apps/users/templates/users/web_users.html:310
+#: corehq/apps/users/templates/users/web_users.html:314
 msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
@@ -41161,11 +41153,8 @@ msgstr ""
 msgid "Enter valid JSON"
 msgstr ""
 
-#~ msgid "PIN"
-#~ msgstr "PIN"
-
 #~ msgid "ICDS Settings"
-#~ msgstr "Configuraciones ICDS"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Other Configuration"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"

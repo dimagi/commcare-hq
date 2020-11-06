@@ -15,6 +15,26 @@ rules:
   - labels: ['dependencies']
     patterns: ['requirements/**|package.json|yarn.lock']
 
+  - labels: ['Risk: High']
+    patterns:
+      - 'corehq/apps/registration/*.py'
+      - 'corehq/apps/registration/*.js'
+      - 'corehq/apps/api/**'
+      - 'corehq/apps/case_importer/views.py'   # bulk case importer API
+      - 'corehq/form_processor/**'
+      - 'corehq/pillows/mappings/**'
+      - 'corehq/apps/hqwebapp/templates/hqwebapp/includes/core_libraries.html'
+      - 'corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js'
+
+  - labels: ['Risk: Medium']
+    patterns:
+      - 'corehq/apps/cloudcare/**'
+      - 'corehq/apps/user_importer/**'
+      - 'corehq/apps/fixtures/**'
+      - 'corehq/apps/custom_data_fields/**'
+      - 'corehq/apps/hqwebapp/templates/hqwebapp/base.html'
+      - 'corehq/apps/hqwebapp/static/hqwebapp/js/components/*.js'
+
 # WIP
 wip:
   - 'Open for review: do not merge'
@@ -34,9 +54,11 @@ colors:
   dark_purple: '#71239b'
   sand: '#d38737'
   grey: '#cfd2d6'
-  burnt_orage: '#bc4b29'
+  burnt_orange: '#bc4b29'
   green: '#009800'
   tan: '#fef2c0'
+  yellow: '#fcfa4e'
+  light_yellow: '#fffeb3'
 
 labels:
 - name: 'reindex/migration'
@@ -77,5 +99,11 @@ labels:
   color: grey
   description: 'Change has no end-user visible impact'
 - name: 'product/prod-india-all-users'
-  color: burnt_orage
+  color: burnt_orange
   description: 'Change will only be deployed to Dimagi "SaaS" environments'
+- name: 'Risk: High'
+  color: yellow
+  description: 'Change affects files that have been flagged as high risk.'
+- name: 'Risk: Medium'
+  color: light_yellow
+  description: 'Change affects files that have been flagged as medium risk.'
