@@ -67,6 +67,6 @@ branches:
   - nh/import_de  # Norman Nov 4
   - jls/fix-web-apps-tiles # Jenny Nov 6
   - adil-uddin:feature/USH-212-separate-permission-for-geocoder # Adil/Jenny Nov 6
-  - mr/safari_warnings # Matt Nov 6
+  #- mr/safari_warnings # Matt Nov 6
 
 submodules: {}
