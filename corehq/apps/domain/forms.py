@@ -536,7 +536,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
-        if not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+        if not domain_has_privilege(self.domain, privileges.GEOCODER):
             del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
