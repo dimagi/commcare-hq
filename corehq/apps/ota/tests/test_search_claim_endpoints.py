@@ -447,8 +447,8 @@ class CaseClaimEndpointTests(TestCase):
 
         matching_criteria = [
             {'name': 'Jamie Hand'},
-            {'name': 'Jamie Hand', '_query': 'date_opened > "2015-03-25"'},
-            {'_query': 'name = "not Jamie" or name = "Jamie Hand"'},
+            {'name': 'Jamie Hand', '_xpath_query': 'date_opened > "2015-03-25"'},
+            {'_xpath_query': 'name = "not Jamie" or name = "Jamie Hand"'},
         ]
         for params in matching_criteria:
             params.update({'case_type': CASE_TYPE})
@@ -457,8 +457,8 @@ class CaseClaimEndpointTests(TestCase):
 
         non_matching_criteria = [
             {'name': 'Jamie Face'},
-            {'name': 'Jamie Hand', '_query': 'date_opened < "2015-03-25"'},
-            {'_query': 'name = "not Jamie" and name = "Jamie Hand"'},
+            {'name': 'Jamie Hand', '_xpath_query': 'date_opened < "2015-03-25"'},
+            {'_xpath_query': 'name = "not Jamie" and name = "Jamie Hand"'},
         ]
         for params in non_matching_criteria:
             params.update({'case_type': CASE_TYPE})
