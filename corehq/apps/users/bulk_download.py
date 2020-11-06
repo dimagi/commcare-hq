@@ -3,7 +3,6 @@ import uuid
 from django.conf import settings
 from django.utils.translation import ugettext
 
-from couchdbkit import ResourceNotFound
 from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 from soil.util import expose_download, get_download_file_path
@@ -23,6 +22,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
     get_mobile_usernames_by_filters,
     get_all_user_rows,
+    get_web_user_count,
 )
 from corehq.apps.users.models import CouchUser, UserRole, Invitation
 from corehq.util.workbook_json.excel import (
@@ -112,14 +112,17 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
 def make_web_user_dict(user, domain):
     user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
-    role = UserRole.get(domain_membership.role_id).name
+    role = UserRole.get(domain_membership.role_id)
+    role_name = ''
+    if role:
+        role_name = role.name
     return {
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
         'username': user.username,
         'status': ugettext('Active User'),
-        'role': role,
+        'role': role_name,
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
@@ -143,7 +146,7 @@ def make_invited_web_user_dict(invite):
 def get_user_rows(user_dicts, user_headers):
     for user_dict in user_dicts:
         row = dict(flatten_json(user_dict))
-        yield [row.get(header) or '' for header in user_headers]
+        yield [row.get(header, '') for header in user_headers]
 
 
 def parse_mobile_users(group_memoizer, domain, user_filters, task=None, total_count=None):
@@ -241,7 +244,7 @@ def parse_groups(groups):
     def _get_group_rows():
         for group_dict in group_dicts:
             row = dict(flatten_json(group_dict))
-            yield [row.get(header) or '' for header in group_headers]
+            yield [row.get(header, '') for header in group_headers]
     return group_headers, _get_group_rows()
 
 
@@ -285,7 +288,7 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     DownloadBase.set_progress(task, total_count, total_count)
 
 
-def dump_users_and_groups(domain, download_id, user_filters, task, is_web_download, owner_id):
+def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -306,20 +309,13 @@ def dump_users_and_groups(domain, download_id, user_filters, task, is_web_downlo
     users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
-    if is_web_download:
-        user_headers, user_rows = parse_web_users(
-            domain,
-            task,
-            users_groups_count,
-        )
-    else:
-        user_headers, user_rows = parse_mobile_users(
-            group_memoizer,
-            domain,
-            user_filters,
-            task,
-            users_groups_count,
-        )
+    user_headers, user_rows = parse_mobile_users(
+        group_memoizer,
+        domain,
+        user_filters,
+        task,
+        users_groups_count,
+    )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
     headers = [
@@ -333,6 +329,19 @@ def dump_users_and_groups(domain, download_id, user_filters, task, is_web_downlo
 
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
     _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count, owner_id)
+
+
+def dump_web_users(domain, download_id, task, owner_id):
+    users_count = get_web_user_count(domain, include_inactive=False)
+    DownloadBase.set_progress(task, 0, users_count)
+
+    user_headers, user_rows = parse_web_users(domain, task, users_count)
+
+    headers = [('users', [user_headers])]
+    rows = [('users', user_rows)]
+
+    filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count, owner_id)
 
 
 class GroupNameError(Exception):
