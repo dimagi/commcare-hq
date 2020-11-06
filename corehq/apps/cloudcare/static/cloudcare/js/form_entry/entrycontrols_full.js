@@ -606,7 +606,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                     } else {
                         return null;
                     }
-                }
+                },
             };
         };
 
