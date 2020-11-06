@@ -6,7 +6,6 @@
 {% requirejs_main 'users/js/web_users' %}
 {% block page_content %}
   {% initial_page_data "invitations" invitations %}
-  {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
   {% registerurl "delete_invitation" domain %}
   {% registerurl "delete_request" domain %}
   {% registerurl "paginate_web_users" domain %}
@@ -27,11 +26,9 @@
         </a>
         {% endif %}
 
-        {% if can_access_all_locations %}
-          <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-            <i class="fa fa-cloud-download"></i> {% trans "Download Web Users" %}
-          </a>
-        {% endif %}
+        <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+          <i class="fa fa-cloud-download"></i> {% trans "Download Web Users" %}
+        </a>
       </div>
   </p>
 

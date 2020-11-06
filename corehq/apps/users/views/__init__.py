@@ -505,15 +505,6 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     @memoized
-    def can_access_all_locations(self):
-        return self.couch_user.has_permission(self.domain, 'access_all_locations')
-
-    @property
-    def can_bulk_edit_users(self):
-        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT) and not self.request.is_view_only
-
-    @property
-    @memoized
     def role_labels(self):
         role_labels = {}
         for r in self.user_roles:
@@ -541,8 +532,6 @@ class ListWebUsersView(BaseRoleAccessView):
         bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
-            'can_access_all_locations': self.can_access_all_locations,
-            'can_bulk_edit_users': self.can_bulk_edit_users,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
