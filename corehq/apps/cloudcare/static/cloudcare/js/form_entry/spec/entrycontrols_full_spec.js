@@ -59,12 +59,13 @@ describe('Entries', function () {
         entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
-        assert.deepEqual(entry.options(), [{
+        var options = _.rest(entry.options());      // drop placeholder
+        assert.deepEqual(options, [{
             text: 'a',
-            idx: 1,
+            id: 1,
         }, {
             text: 'b',
-            idx: 2,
+            id: 2,
         }]);
 
         entry.rawAnswer(1);
