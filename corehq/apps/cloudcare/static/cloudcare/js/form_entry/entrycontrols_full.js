@@ -545,12 +545,27 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             }));
         });
 
+        self.isValid = function (value) {
+            if (!value) {
+                return true;
+            }
+            return _.contains(_.pluck(self.options(), 'text'), value);
+        };
+
         self.options.subscribe(function () {
             self.renderSelect2();
             if (!self.isValid(self.rawAnswer())) {
                 self.question.error(gettext('Not a valid choice'));
             }
         });
+
+        // If there is a prexisting answer, set the rawAnswer to the corresponding text.
+        if (question.answer()) {
+            var initialOption = _.findWhere(self.options(), {id: self.answer()});
+            self.rawAnswer(
+                initialOption ? initialOption.text : Const.NO_ANSWER
+            );
+        }
 
         self.additionalSelect2Options = function () {
             return {};
@@ -589,8 +604,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
      * Docs: https://confluence.dimagi.com/display/commcarepublic/Advanced+CommCare+Android+Formatting#AdvancedCommCareAndroidFormatting-SingleSelect"ComboBox"
      */
     function ComboboxEntry(question, options) {
-        var self = this,
-            initialOption;
+        var self = this;
         DropdownEntry.call(this, question, options);
 
         // Specifies the type of matching we will do when a user types a query
@@ -611,13 +625,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                     }
                 },
             };
-        };
-
-        self.isValid = function (value) {
-            if (!value) {
-                return true;
-            }
-            return _.contains(_.pluck(self.options(), 'text'), value);
         };
 
         self.enableReceiver(question, options);
