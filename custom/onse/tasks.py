@@ -98,31 +98,53 @@ _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
                       hour=22, minute=30),
     queue='background_queue',
 )
-def update_facility_cases_from_dhis2_data_elements():
-    dhis2_server = get_dhis2_server()
+def update_facility_cases_from_dhis2_data_elements(
+    print_notifications: bool = False
+):
+    """
+    Update facility_supervision cases with indicators collected in DHIS2
+    over the last quarter.
+
+    :param print_notifications: If True, notifications are printed,
+        otherwise they are emailed.
+
+    """
+    dhis2_server = get_dhis2_server(print_notifications)
     try:
         case_blocks = get_case_blocks()
         case_blocks = set_case_updates(dhis2_server, case_blocks)
         save_cases(case_blocks)
     except Exception as err:
-        dhis2_server.get_requests().notify_exception(
-            f'Importing ONSE ISS facility cases from DHIS2 failed: {err}')
+        message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
+        if print_notifications:
+            print(message)
+        else:
+            dhis2_server.get_requests().notify_exception(message)
     else:
-        # For most things we pass silently. But we can repurpose
-        # `notify_error()` to tell admins that the import went through,
-        # because it only happens once a quarter.
-        dhis2_server.get_requests().notify_error(
-            f'Successfully imported ONSE ISS facility cases from DHIS2')
+        message = 'Successfully imported ONSE ISS facility cases from DHIS2'
+        if print_notifications:
+            print(message)
+        else:
+            # For most things we pass silently. But we can repurpose
+            # `notify_error()` to tell admins that the import went through,
+            # because it only happens once a quarter.
+            dhis2_server.get_requests().notify_error(message)
 
 
-def get_dhis2_server() -> ConnectionSettings:
+def get_dhis2_server(
+    print_notifications: bool = False
+) -> ConnectionSettings:
     try:
         return ConnectionSettings.objects.get(domain=DOMAIN,
                                               name=CONNECTION_SETTINGS_NAME)
     except ConnectionSettings.DoesNotExist:
-        _soft_assert(False, (
-            f'ConnectionSettings {CONNECTION_SETTINGS_NAME!r} not found in '
-            f'domain {DOMAIN!r} for importing DHIS2 data elements.'))
+        message = (f'ConnectionSettings {CONNECTION_SETTINGS_NAME!r} not '
+                   f'found in domain {DOMAIN!r} for importing DHIS2 data '
+                   f'elements.')
+        if print_notifications:
+            print(message)
+        else:
+            _soft_assert(False, message)
         raise
 
 
