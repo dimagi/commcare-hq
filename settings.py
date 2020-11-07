@@ -375,6 +375,7 @@ HQ_APPS = (
     'custom.covid',
     'custom.aaa',
     'custom.inddex',
+    'custom.onse',
 
     'custom.ccqa',
 
