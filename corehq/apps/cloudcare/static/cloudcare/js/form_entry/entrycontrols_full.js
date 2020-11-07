@@ -547,6 +547,9 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         self.options.subscribe(function () {
             self.renderSelect2();
+            if (!self.isValid(self.rawAnswer())) {
+                self.question.error(gettext('Not a valid choice'));
+            }
         });
 
         self.additionalSelect2Options = function () {
@@ -614,7 +617,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             if (!value) {
                 return true;
             }
-            return _.contains(self.choices(), value);
+            return _.contains(_.pluck(self.options(), 'text'), value);
         };
 
         self.enableReceiver(question, options);
@@ -656,6 +659,24 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
     ComboboxEntry.prototype.constructor = DropdownEntry;
+    ComboboxEntry.prototype.onPreProcess = function (newValue) {
+        var value;
+        if (newValue === Const.NO_ANSWER || newValue === '') {
+            this.answer(Const.NO_ANSWER);
+            this.question.error(null);
+            return;
+        }
+
+        value = _.find(this.options(), function (d) {
+            return d.text === newValue;
+        });
+        if (value) {
+            this.answer(value.id);
+            this.question.error(null);
+        } else {
+            this.question.error(gettext('Not a valid choice'));
+        }
+    };
     ComboboxEntry.prototype.receiveMessage = function (message, field) {
         // Iterates through options and selects an option that matches message[field].
         // Registers a no answer if message[field] is not in options.
