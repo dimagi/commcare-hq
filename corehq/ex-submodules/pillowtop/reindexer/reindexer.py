@@ -160,12 +160,9 @@ def prepare_index_for_usage(es, index_info):
     es.indices.refresh(index_info.index)
 
 
-def override_alias(index_info, es_client):
+def _override_alias(index_info, es_client):
     # Override the alias during the reindex so that production
     #   could use the alias pointing to existing index for live operations.
-    #   After the reindex, the command
-    #   `./manage.py ptop_es_manage --flip_all_aliases` must be run
-    #   to reset the alias to original index_info.alias.
     if es_client.indices.exists_alias(index_info.alias):
         index_info.alias = index_info.alias + "_reindex_" + str(datetime.date.today())
 
@@ -189,7 +186,7 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
         clean_index(self.es, self.index_info)
 
     def reindex(self):
-        override_alias(self.index_info, self.es)
+        _override_alias(self.index_info, self.es)
         if not self.in_place and not self.start_from:
             prepare_index_for_reindex(self.es, self.index_info)
             if isinstance(self.pillow_or_processor, ConstructedPillow):
@@ -270,7 +267,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         clean_index(self.es, self.index_info)
 
     def reindex(self):
-        override_alias(self.index_info, self.es)
+        _override_alias(self.index_info, self.es)
         if not self.es.indices.exists(self.index_info.index):
             self.reset = True  # if the index doesn't exist always reset the processing
 
