@@ -375,6 +375,7 @@ HQ_APPS = (
     'custom.covid',
     'custom.aaa',
     'custom.inddex',
+    'custom.onse',
 
     'custom.ccqa',
 
@@ -1950,6 +1951,7 @@ DOMAIN_MODULE_MAP = {
 
     'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
+    'onse-iss': 'custom.onse',
 
     # From DOMAIN_MODULE_CONFIG on production
     'test-pna': 'custom.intrahealth',
