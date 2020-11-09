@@ -65,7 +65,6 @@ branches:
   - jls/combobox-select2 # Jenny Oct 28
   - dependabot/pip/requirements/datadog-0.39.0 # Daniel Nov 3
   - nh/import_de  # Norman Nov 4
-  - jls/fix-web-apps-tiles # Jenny Nov 6
   - adil-uddin:feature/USH-212-separate-permission-for-geocoder # Adil/Jenny Nov 6
   #- mr/safari_warnings # Matt Nov 6
   - smh/bulk-download-web-users # Steph Nov 9
