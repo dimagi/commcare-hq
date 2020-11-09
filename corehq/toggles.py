@@ -552,6 +552,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CASE_LIST_REQUIRE_SEARCH = StaticToggle(
+    'case_list_require_search',
+    'Allow case lists to be configured to not display options unless a search term is given',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",

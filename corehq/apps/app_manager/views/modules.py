@@ -129,8 +129,9 @@ def get_module_template(user, module):
 def get_module_view_context(request, app, module, lang=None):
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
-        'show_require_search': app.cloudcare_enabled and has_privilege(request, privileges.CLOUDCARE),
     }
+    if toggles.CASE_LIST_REQUIRE_SEARCH.enabled(app.domain):
+        context['show_require_search'] = app.cloudcare_enabled and has_privilege(request, privileges.CLOUDCARE)
     module_brief = {
         'id': module.id,
         'case_type': module.case_type,
