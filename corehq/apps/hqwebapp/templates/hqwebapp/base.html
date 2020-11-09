@@ -395,11 +395,6 @@
           deps: ['knockout', 'ko.mapping'],
           callback: function (ko, mapping) {
             ko.mapping = mapping;
-          },
-          shim: {
-            "hqwebapp/js/lib/modernizr": {
-              exports: 'Modernizr'
-            }
           }
         });
         requirejs([
