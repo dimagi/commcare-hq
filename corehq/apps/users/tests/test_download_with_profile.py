@@ -9,7 +9,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.bulk_download import parse_users
+from corehq.apps.users.bulk_download import parse_mobile_users
 from corehq.apps.user_importer.importer import GroupMemoizer
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -83,7 +83,7 @@ class TestDownloadMobileWorkersWithProfile(TestCase, DomainSubscriptionMixin):
         super().tearDownClass()
 
     def test_download_with_profile(self):
-        (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
+        (headers, rows) = parse_mobile_users(self.group_memoizer, self.domain_obj.name, {})
         self.assertIn('user_profile', headers)
         self.assertIn('data: _type', headers)
 
