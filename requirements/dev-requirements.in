@@ -21,7 +21,7 @@ sphinx-rtd-theme~=0.4.3
 docutils==0.15.2
 sphinxcontrib-django~=0.5
 recommonmark
-graphviz==0.13.1
+graphviz==0.14.2
 
 # linting
 flake8
