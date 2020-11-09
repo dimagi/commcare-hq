@@ -1,8 +1,10 @@
 from datetime import datetime
 from decimal import Decimal
 
+from django.conf import settings
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
+from unittest2 import skipIf
 
 from couchdbkit import ResourceConflict
 from mock import patch
@@ -325,6 +327,7 @@ class TransformXformForESTest(SimpleTestCase):
         self.assertIsNotNone(doc_ret)
 
 
+@skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
 @es_test
 class XFormPillowTestILM(XFormPillowTest):
 

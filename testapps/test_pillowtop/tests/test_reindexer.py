@@ -1,5 +1,6 @@
 import uuid
 
+from unittest2 import skipIf
 from django.conf import settings
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
@@ -108,6 +109,7 @@ class PillowtopReindexerTest(TestCase):
 
         self._assert_form_is_in_es(form)
 
+    @skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
     @run_with_all_backends
     def test_xform_reindexer_v2_ilm(self):
         XFORM_INDEX_INFO.ilm_config = prefix_for_tests(MAX_DOCS_ILM_CONFIG)

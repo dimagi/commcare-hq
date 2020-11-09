@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
+from unittest2 import skipIf
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -344,6 +345,7 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
         self._test_es_query({'include_archived': 'true'}, expected)
 
 
+@skipIf(settings.ELASTICSEARCH_MAJOR_VERSION != 7, 'Only applicable for ES7')
 @es_test
 class TestXFormInstanceResourceILM(TestXFormInstanceResource):
 
