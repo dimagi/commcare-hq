@@ -226,6 +226,9 @@ def excel_fields(request, domain):
     if search_column in excel_fields:
         excel_fields.remove(search_column)
 
+    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        excel_fields.remove('domain')
+
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
 

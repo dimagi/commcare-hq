@@ -102,13 +102,4 @@ def get_special_fields(domain=None):
                 )
             )
         )
-    if domain and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        special_fields.append(
-            FieldSpec(
-                field='domain',
-                description=_(
-                    "This field will create/update the case in the domain specified."
-                )
-            )
-        )
     return special_fields
