@@ -414,6 +414,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self.submitForm = function (form) {
             var self = this,
                 accumulateAnswers,
+                // currently we always send up prevalidated=true. TODO: once confident that the var is not necessary
+                // remove from formplayer and here.
                 prevalidated = true;
 
             accumulateAnswers = function (o) {
@@ -428,12 +430,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                             });
                         }
                     } else {
-                        if (o.isValid()) {
-                            if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                                _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
-                            }
-                        } else {
-                            prevalidated = false;
+                        if (ko.utils.unwrapObservable(o.datatype) !== "info") {
+                            _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                         }
                     }
                 };
