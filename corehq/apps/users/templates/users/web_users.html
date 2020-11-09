@@ -17,14 +17,19 @@
       However, these users cannot submit forms from phones
       using the {{ cc_name }} Application.
     {% endblocktrans %}
-    {% if not request.is_view_only %}
+
       <div class="btn-toolbar">
+        {% if not request.is_view_only %}
         <a class="btn btn-primary"
            href="{% url "invite_web_user" domain %}">
           <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
         </a>
+        {% endif %}
+
+        <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+          <i class="fa fa-cloud-download"></i> {% trans "Download Web Users" %}
+        </a>
       </div>
-    {% endif %}
   </p>
 
   {% if requests and not request.is_view_only %}
