@@ -63,10 +63,10 @@ branches:
   - gh/improve-queueing-repeaters # Graham Oct 22
   - jls/require-search-text # Jenny Oct 22
   - jls/combobox-select2 # Jenny Oct 28
-  - dependabot/pip/requirements/datadog-0.39.0 # Daniel Nov 3
   - nh/import_de  # Norman Nov 4
   - adil-uddin:feature/USH-212-separate-permission-for-geocoder # Adil/Jenny Nov 6
   #- mr/safari_warnings # Matt Nov 6
   - smh/bulk-download-web-users # Steph Nov 9
+  - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
 
 submodules: {}
