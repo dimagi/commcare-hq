@@ -26,7 +26,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         });
 
         this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('key') + '" />'),
+        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('user property') + '" />'),
             val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + django.gettext('value') + '" />');
         key_input.change(function () {
             that.fire('change');

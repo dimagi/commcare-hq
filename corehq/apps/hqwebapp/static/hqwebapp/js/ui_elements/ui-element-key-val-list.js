@@ -39,7 +39,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
             $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
         $modal_body.append($('<fieldset />'));
         $modal_body.append('<a href="#" class="btn btn-primary" data-enum-action="add"><i class="fa fa-plus"></i> ' +
-            django.gettext('Add Key &rarr; Value Mapping') + '</a>');
+            django.gettext('Add User Property &rarr; Value Mapping') + '</a>');
 
         $modal_form.append($modal_body);
         $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">' +
