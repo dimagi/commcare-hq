@@ -69,8 +69,10 @@ from corehq.apps.userreports.reports.util import (
 )
 from corehq.apps.userreports.tasks import export_ucr_async
 from corehq.apps.userreports.util import (
+    can_delete_report,
     can_edit_report,
     default_language,
+    get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
     has_report_builder_trial,
@@ -343,6 +345,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'method': 'POST',
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
+            'can_delete_report': can_delete_report(self.request, self),
+            'referring_apps': get_referring_apps(self.domain, self.report_config_id),
             'has_report_builder_trial': has_report_builder_trial(self.request),
             'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }

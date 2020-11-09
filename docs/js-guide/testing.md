@@ -6,14 +6,7 @@ Writing good tests in javascript is similar to writing good tests in any other l
 
 ### Mocking
 
-Mock any dependency with `sinon.js`. `sinon.js` is extremely easy to use.
-TODO
-
-### No AJAX calls
-TODO
-
-### Avoid asynchronous tests
-TODO
+When mocks are needed, use the `sinon.js` framework.
 
 ## Setup
 
@@ -28,11 +21,16 @@ It's recommended to install grunt globally in order to use grunt from the comman
 
 In order for the tests to run the __development server needs to be running on port 8000__.
 
-## Running tests from the command line
+## Test Organization
 
-To run all javascript tests in all the apps:
+HQ's JavaScript tests are organized around django apps. Test files are stored in the django app they test. Tests infrastructure is stored in its own django app, `mocha`.
 
-    $ grunt test
+Most django apps with JavaScript tests have a single set of tests. These will have an HTML template in `corehq/apps/<app_name>/templates/<app_name>/spec/mocha.html`, which inherits from the [mocha app's base template](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/mocha/templates/mocha/base.html). Test cases are stored in `corehq/apps/<app_name>/static/<app_name>/js/spec/<test_suite_name>_spec.js`
+
+A few django apps have multiple test "configs" that correspond to different templates. Each config template will be in `corehq/apps/<app>/templates/<app>/spec/<config>/mocha.html` and its tests will be in `corehq/apps/<app_name>/static/<app_name>/<config>/spec/`. These are defined in `Gruntfile.js` as `<app_name>/<config_name>`, e.g., `cloudcare/form_entry`.
+
+
+### Running tests from the command line
 
 To run the javascript tests for a particular app run:
 
@@ -43,38 +41,32 @@ To list all the apps available to run:
     $ grunt list
 
 
-## Running tests from the browser
+### Running tests from the browser
 
-To run tests from the browser (useful for debugging) visit this url:
+To run a django app's tests from the browser, visit this url:
 
 ```
 http://localhost:8000/mocha/<app_name>
 ```
 
-Occasionally you will see an app specified with a `/`, like `app_manager/b3`. The string after `/` specifies that the test uses an alternate configuration. To visit this suite in the browser go to:
+To run a specific config:
 
 ```
-http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
+http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/cloudcare/form_entry)
 ```
 
-## Adding a new app to test
+### Adding a new app or config
 
-There are three steps to adding a new app to test:
+There are three steps to adding a new app:
 
-  1. Add the app name to the `Gruntfile.js` file. Note: the app has to correspond to an actual Django app.
+  1. Add the django app name to the `Gruntfile.js` file.
   2. Create a mocha template in `corehq/apps/<app>/templates/<app>/spec/mocha.html` to run tests. See an example on [here](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/templates/app_manager/spec/mocha.html).
   3. Create tests that are included in the template in `corehq/apps/<app>/static/<app>/spec/`
-
-
-## Creating an alternative configuration for an app
-
-Occasionally there's a need to use a different mocha template to run tests for the same app. An example of this is if the app uses javascript that depends on bootstrap2 libraries and javascript that depends on bootstrap3 libraries. In order to create multiple configurations, specify the app in the `Gruntfile.js` like this:
+  
+To add an additional config to an existing app, specify the app in the `Gruntfile.js` like this:
 
 ```
-<app>/<config>  // (e.g. app_manager/b3)
+<app_name>/<config>  // (e.g. cloudcare/form_entry)
 ```
 
-Now mocha will look for that template in `corehq/apps/<app>/templates/<app>/spec/<config>/mocha.html`
-
-The url to visit that test suite is `http://localhost:8000/mocha/<app>/<config>`
-
+The template and tests then also being in config-specific directories, as described above.

@@ -1,4 +1,5 @@
-from datetime import date, time
+import contextlib
+from datetime import time
 
 from mock import patch
 
@@ -8,25 +9,11 @@ from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
-from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
-class MockContextManager(object):
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
-
-def mock_critical_section_for_smsforms_sessions(contact_id):
-    return MockContextManager()
-
-
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
-       new=mock_critical_section_for_smsforms_sessions)
+       new=lambda contact_id: contextlib.supress())
 class KeywordTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)
@@ -771,7 +758,7 @@ class KeywordTestCase(TouchformsTestCase):
 
 
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
-       new=mock_critical_section_for_smsforms_sessions)
+       new=lambda contact_id: contextlib.supress())
 class PartialFormSubmissionTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)

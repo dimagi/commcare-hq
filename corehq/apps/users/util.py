@@ -310,11 +310,12 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     return False
 
 
-def log_user_role_update(domain, user, by_user):
+def log_user_role_update(domain, user, by_user, updated_via):
     """
     :param domain: domain name
     :param user: couch user that got updated
     :param by_user: django/couch user that made the update
+    :param updated_via: web/bulk_importer
     """
     user_role = user.get_role(domain)
     message = "role: None"
@@ -323,4 +324,5 @@ def log_user_role_update(domain, user, by_user):
             message = f"role: {user_role.name}"
         else:
             message = f"role: {user_role.name}[{user_role.get_id}]"
+    message += f", updated_via: {updated_via}"
     log_model_change(by_user, user.get_django_user(), message=message)

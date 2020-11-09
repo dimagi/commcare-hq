@@ -41,7 +41,6 @@ from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
-from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.models import (
     IvoryCoastMTNBackend,
 )
@@ -181,13 +180,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.push_backend.save()
 
-        cls.icds_backend = SQLICDSBackend(
-            name="ICDS",
-            is_global=True,
-            hq_api_id=SQLICDSBackend.get_api_id()
-        )
-        cls.icds_backend.save()
-
         cls.vertext_backend = VertexBackend(
             name="VERTEX",
             is_global=True,
@@ -256,7 +248,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.sislog_backend.delete()
         cls.yo_backend.delete()
         cls.push_backend.delete()
-        cls.icds_backend.delete()
         cls.vertext_backend.delete()
         cls.start_enterprise_backend.delete()
         cls.ivory_coast_mtn_backend.delete()
@@ -352,7 +343,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
-    @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
@@ -369,7 +359,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
-            icds_send,
             push_send,
             yo_send,
             sislog_send,
@@ -398,7 +387,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.sislog_backend, 'sislog test', sislog_send)
         self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
         self._test_outbound_backend(self.push_backend, 'push test', push_send)
-        self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)

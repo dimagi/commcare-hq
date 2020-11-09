@@ -11,8 +11,9 @@ from .targzipdb import TarGzipBlobDB
 
 class BlobDbBackendExporter(object):
 
-    def __init__(self, filename, extends):
-        self.db = TarGzipBlobDB(filename, extends)
+    def __init__(self, filename, already_exported):
+        self.db = TarGzipBlobDB(filename)
+        self._already_exported = already_exported or set()
         self.src_db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -27,6 +28,10 @@ class BlobDbBackendExporter(object):
 
     def process_object(self, meta):
         self.total_blobs += 1
+        if meta.key in self._already_exported:
+            # This object is already in an another dump
+            return
+
         try:
             content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
@@ -34,7 +39,6 @@ class BlobDbBackendExporter(object):
         else:
             with content:
                 self.db.copy_blob(content, key=meta.key)
-        return True
 
 
 class BlobExporter(ABC):
@@ -46,8 +50,8 @@ class BlobExporter(ABC):
     def slug(self):
         raise NotImplementedError
 
-    def migrate(self, filename, chunk_size=100, limit_to_db=None, extends=(),
-                force=False):
+    def migrate(self, filename, chunk_size=100, limit_to_db=None,
+                already_exported=None, force=False):
         if not self.domain:
             raise ExportError("Must specify domain")
 
@@ -57,7 +61,7 @@ class BlobExporter(ABC):
                 "To re-run the export use 'reset'".format(self.slug)
             )
 
-        migrator = BlobDbBackendExporter(filename, extends)
+        migrator = BlobDbBackendExporter(filename, already_exported)
         with migrator:
             self._migrate(migrator, chunk_size, limit_to_db)
         print("Processed {} {} objects".format(migrator.total_blobs, self.slug))

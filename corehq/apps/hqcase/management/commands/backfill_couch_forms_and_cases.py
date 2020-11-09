@@ -178,5 +178,4 @@ def create_change_meta(doc_type, domain, doc_id, doc_rev):
 
 def publish_change(change_meta):
     topic = get_topic_for_doc_type(change_meta.document_type, DATA_SOURCE_TYPE)
-    print(topic, change_meta)
     PRODUCER.send_change(topic, change_meta)

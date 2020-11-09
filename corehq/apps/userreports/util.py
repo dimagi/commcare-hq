@@ -4,12 +4,14 @@ import hashlib
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.toggles import ENABLE_UCR_MIRRORS
+from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
 
@@ -65,6 +67,14 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
+    return _can_edit_report(request, report) and not is_linked_report(report.spec)
+
+
+def can_delete_report(request, report):
+    return _can_edit_report(request, report)
+
+
+def _can_edit_report(request, report):
     if not request.can_access_all_locations:
         return False
 
@@ -77,13 +87,28 @@ def can_edit_report(request, report):
     add_on_priv = has_report_builder_add_on_privilege(request)
     created_by_builder = report.spec.report_meta.created_by_builder
 
-    if is_linked_report(report.spec):
-        return False
-
     if created_by_builder:
         return report_builder_toggle or report_builder_beta_toggle or add_on_priv
     else:
         return ucr_toggle
+
+
+def get_referring_apps(domain, report_id):
+    to_ret = []
+    apps = get_apps_in_domain(domain)
+    for app in apps:
+        app_url = reverse('view_app', args=[domain, app.id])
+        for module in app.get_report_modules():
+            module_url = reverse('view_module', args=[domain, app.id, module.unique_id])
+            for config in module.report_configs:
+                if config.report_id == report_id:
+                    to_ret.append({
+                        "app_url": app_url,
+                        "app_name": app.name,
+                        "module_url": module_url,
+                        "module_name": module.default_name()
+                    })
+    return to_ret
 
 
 def allowed_report_builder_reports(request):

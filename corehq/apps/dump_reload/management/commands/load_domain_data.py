@@ -36,16 +36,13 @@ class Command(BaseCommand):
                                  "Use 'print_domain_stats' command to get a list of available types.")
 
     def handle(self, dump_file_path, **options):
-        self.verbosity = options.get('verbosity')
         self.force = options.get('force')
         self.use_extracted = options.get('use_extracted')
 
         if not os.path.isfile(dump_file_path):
             raise CommandError("Dump file not found: {}".format(dump_file_path))
 
-        if self.verbosity >= 2:
-            self.stdout.write("Loading data from %s." % dump_file_path)
-
+        self.stdout.write("Loading data from %s." % dump_file_path)
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
         total_object_count = 0
@@ -64,16 +61,12 @@ class Command(BaseCommand):
 
         loaded_object_count = sum(model_counts.values())
 
-        if self.verbosity >= 2:
-            self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
-            for model in sorted(model_counts):
-                self.stdout.write("{:<48}: {}".format(model, model_counts[model]))
-            self.stdout.write('{0}{0}'.format('-' * 46))
-            self.stdout.write('Loaded {}/{} objects'.format(loaded_object_count, total_object_count))
-            self.stdout.write('{0}{0}'.format('-' * 46))
-        else:
-            self.stdout.write("Loaded %d object(s) (of %d)" %
-                              (loaded_object_count, total_object_count))
+        self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
+        for model in sorted(model_counts):
+            self.stdout.write("{:<48}: {}".format(model, model_counts[model]))
+        self.stdout.write('{0}{0}'.format('-' * 46))
+        self.stdout.write('Loaded {}/{} objects'.format(loaded_object_count, total_object_count))
+        self.stdout.write('{0}{0}'.format('-' * 46))
 
     def extract_dump_archive(self, dump_file_path):
         target_dir = '_tmp_load_{}'.format(dump_file_path)
