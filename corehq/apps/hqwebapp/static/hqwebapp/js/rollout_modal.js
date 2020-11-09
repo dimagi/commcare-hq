@@ -29,7 +29,7 @@ hqDefine("hqwebapp/js/rollout_modal", [
         var $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 
-        if ($modal.length && (!$.cookie(cookieName(slug), { secure: initialPageData.get('secure_cookies') }) || $modal.data("force"))) {
+        if ($modal.length && (!$.cookie(cookieName(slug)) || $modal.data("force"))) {
             // Show modal on page load
             $modal.modal({
                 backdrop: 'static',

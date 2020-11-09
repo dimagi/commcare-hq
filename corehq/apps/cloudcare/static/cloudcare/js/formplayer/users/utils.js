@@ -35,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * Returns the restore as user from the cookies or null if it doesn't exist
          */
         getRestoreAsUser: function (domain, username) {
-            return $.cookie(Utils.Users.restoreAsKey(domain, username), { secure: initialPageData('secure_cookies') }) || null;
+            return $.cookie(Utils.Users.restoreAsKey(domain, username)) || null;
         },
 
         /**

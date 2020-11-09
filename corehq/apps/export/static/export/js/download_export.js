@@ -63,8 +63,8 @@ hqDefine('export/js/download_export', [
             return exportData.export_id;
         }).join('.') + '_download';
         self.savedMultimediaDownloadCookieName = self.savedDownloadCookieName + '_multimedia';
-        self.savedDownloadId = $.cookie(self.savedDownloadCookieName, { secure: initialPageData.get('secure_cookies') });
-        self.savedMultimediaDownloadId = $.cookie(self.savedMultimediaDownloadCookieName, { secure: initialPageData.get('secure_cookies') });
+        self.savedDownloadId = $.cookie(self.savedDownloadCookieName);
+        self.savedMultimediaDownloadId = $.cookie(self.savedMultimediaDownloadCookieName);
         self.canResumeDownload = !!self.savedDownloadId;
         self.canResumeMultimediaDownload = !!self.savedMultimediaDownloadId;
 

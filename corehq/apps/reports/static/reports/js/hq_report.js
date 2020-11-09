@@ -98,7 +98,7 @@ hqDefine("reports/js/hq_report", [
         self.handleTabularReportCookies = function (reportDatatable) {
             var defaultRowsCookieName = 'hqreport.tabularSetting.defaultRows',
                 savedPath = window.location.pathname;
-            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName, { secure: initialPageData.get('secure_cookies') });
+            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
             reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
 
             $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
@@ -128,8 +128,8 @@ hqDefine("reports/js/hq_report", [
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.cookieDatespanStart, { secure: initialPageData.get('secure_cookies') }),
-                    cookie_enddate = $.cookie(self.cookieDatespanEnd, { secure: initialPageData.get('secure_cookies') }),
+                var cookie_startdate = $.cookie(self.cookieDatespanStart),
+                    cookie_enddate = $.cookie(self.cookieDatespanEnd),
                     load_success = false;
 
                 if (cookie_enddate && cookie_startdate) {

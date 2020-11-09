@@ -50,7 +50,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
             if (!self.inlinePageListOnly) {
                 self.perPageCookieName = 'ko-pagination-' + self.slug;
-                self.perPage($.cookie(self.perPageCookieName, { secure: initialPageData.get('secure_cookies') }) || self.perPage());
+                self.perPage($.cookie(self.perPageCookieName) || self.perPage());
                 self.perPage.subscribe(function (newValue) {
                     self.goToPage(1);
                     if (self.slug) {

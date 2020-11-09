@@ -24,7 +24,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
             slug = $modal.data("slug"),
             domain = $modal.data("domain");
 
-        if ($modal.length && ! $.cookie(cookieName(slug, domain), { secure: initialPageData.get('secure_cookies') })) {
+        if ($modal.length && ! $.cookie(cookieName(slug, domain))) {
             // Show modal on page load
             $modal.modal({
                 backdrop: 'static',
