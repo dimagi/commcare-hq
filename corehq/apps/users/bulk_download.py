@@ -117,12 +117,12 @@ def make_web_user_dict(user, domain):
     if role:
         role_name = role.name
     return {
+        'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
-        'username': user.username,
-        'status': ugettext('Active User'),
         'role': role_name,
+        'status': ugettext('Active User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
@@ -131,12 +131,12 @@ def make_web_user_dict(user, domain):
 
 def make_invited_web_user_dict(invite):
     return {
+        'username': invite.email,
         'first_name': 'N/A',
         'last_name': 'N/A',
         'email': invite.email,
-        'username': invite.email,
-        'status': ugettext('Invited'),
         'role': invite.get_role_name(),
+        'status': ugettext('Invited'),
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
         'remove': '',
@@ -212,7 +212,7 @@ def parse_web_users(domain, task=None, total_count=None):
             DownloadBase.set_progress(task, n + m, total_count)
 
     user_headers = [
-        'first_name', 'last_name', 'username', 'email', 'role', 'last_access_date (read only)',
+        'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
         'last_login (read only)', 'status', 'remove'
     ]
     return user_headers, get_user_rows(user_dicts, user_headers)
