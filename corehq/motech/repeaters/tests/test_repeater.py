@@ -91,14 +91,15 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        case_block = CaseBlock.deprecated_init(
+
+        cls.case_block = CaseBlock.deprecated_init(
             case_id=CASE_ID,
             create=True,
             case_type="repeater_case",
             case_name="ABC 123",
         ).as_text()
 
-        update_case_block = CaseBlock.deprecated_init(
+        cls.update_case_block = CaseBlock.deprecated_init(
             case_id=CASE_ID,
             create=False,
             case_name="ABC 234",
@@ -109,13 +110,13 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
             cls.instance_id,
-            case_block
+            cls.case_block
         )
         cls.update_xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
             uuid.uuid4().hex,
-            update_case_block,
+            cls.update_case_block,
         )
 
         cls.domain_obj = create_domain(cls.domain)
@@ -183,6 +184,20 @@ class RepeaterTest(BaseRepeaterTest):
 
     def repeat_records(self):
         return super(RepeaterTest, self).repeat_records(self.domain)
+
+    # whatever value specified will be doubled since both case and form repeater are active
+    def _create_additional_repeat_records(self, count):
+        for _ in range(count):
+            instance_id = uuid.uuid4().hex
+            xform_xml = XFORM_XML_TEMPLATE.format(
+                "https://www.commcarehq.org/test/repeater/",
+                USER_ID,
+                instance_id,
+                self.case_block
+            )
+            with patch('corehq.motech.repeaters.models.simple_post',
+                       return_value=MockResponse(status_code=500, reason="Borked")):
+                self.post_xml(xform_xml, self.domain)
 
     @run_with_all_backends
     def test_skip_device_logs(self):
@@ -289,7 +304,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(len(self.repeat_records()), 2)
 
     @run_with_all_backends
-    def test_check_repeat_records(self):
+    def test_check_repeat_records_ignore_future_retries(self):
         self.assertEqual(len(self.repeat_records()), 2)
         self.assertEqual(self.initial_fire_call_count, 2)
 
@@ -319,8 +334,8 @@ class RepeaterTest(BaseRepeaterTest):
 
         # all records should be in SUCCESS state after force try
         for repeat_record in self.repeat_records():
-                self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
-                self.assertEqual(repeat_record.overall_tries, 1)
+            self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+            self.assertEqual(repeat_record.overall_tries, 1)
 
         # not trigger records succeeded triggered after cancellation
         with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
@@ -357,6 +372,71 @@ class RepeaterTest(BaseRepeaterTest):
         repeat_record.requeue()
         self.assertEqual(0, repeat_record.overall_tries)
         self.assertNotEqual(None, repeat_record.next_check)
+
+    @run_with_all_backends
+    def test_check_repeat_records_ignores_future_retries_multiple_partitions(self):
+        self._create_additional_repeat_records(9)
+        self.assertEqual(len(self.repeat_records()), 20)
+
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire, \
+             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
+
+    @run_with_all_backends
+    def test_repeat_record_status_check_multiple_partitions(self):
+        self._create_additional_repeat_records(9)
+        self.assertEqual(len(self.repeat_records()), 20)
+
+        # Do not trigger cancelled records
+        for repeat_record in self.repeat_records():
+            repeat_record.cancelled = True
+            repeat_record.save()
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire, \
+             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
+
+        # trigger force send records if not cancelled and tries not exhausted
+        for repeat_record in self.repeat_records():
+            with patch('corehq.motech.repeaters.models.simple_post',
+                       return_value=MockResponse(status_code=200, reason='')
+                       ) as mock_fire:
+                repeat_record.fire(force_send=True)
+                self.assertEqual(mock_fire.call_count, 1)
+
+        # all records should be in SUCCESS state after force try
+        for repeat_record in self.repeat_records():
+            self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+            self.assertEqual(repeat_record.overall_tries, 1)
+
+        # not trigger records succeeded triggered after cancellation
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire, \
+             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
+            for repeat_record in self.repeat_records():
+                self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+
+    @run_with_all_backends
+    def test_process_repeat_record_locking_multiple_partitions(self):
+        self._create_additional_repeat_records(9)
+        self.assertEqual(len(self.repeat_records()), 20)
+
+        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process, \
+             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 0)
+
+        for record in self.repeat_records():
+            # Resetting next_check should allow them to be requeued
+            record.next_check = datetime.utcnow()
+            record.save()
+
+        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process, \
+             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 20)
 
 
 class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
