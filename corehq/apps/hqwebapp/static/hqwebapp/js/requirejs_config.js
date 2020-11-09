@@ -32,7 +32,7 @@ requirejs.config({
             exports: 'nv',
         },
         "hqwebapp/js/lib/modernizr": {
-            exports: 'Modernizr'
+            exports: 'Modernizr',
         },
     },
     packages: [{
