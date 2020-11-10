@@ -45,7 +45,7 @@ def cleanup_stale_es_on_couch_domains(
         if forms_not_in_es:
             metrics_gauge(
                 'commcare.es.couch_domain.stale_docs_in_es',
-                1,
+                len(forms_not_in_es),
                 tags={
                     'domain': domain,
                 }
