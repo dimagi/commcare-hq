@@ -112,16 +112,15 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
 def make_web_user_dict(user, domain):
     user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
-    role = UserRole.get(domain_membership.role_id)
-    role_name = ''
-    if role:
-        role_name = role.name
+    role = None
+    if domain_membership.role_id:
+        role = UserRole.get(domain_membership.role_id)
     return {
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
-        'role': role_name,
+        'role': role.name if role else '',
         'status': ugettext('Active User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
