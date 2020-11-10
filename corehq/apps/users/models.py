@@ -2776,6 +2776,19 @@ class Invitation(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL,
                                     messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
 
+    def get_role_name(self):
+        if self.role:
+            if self.role == 'admin':
+                return self.role
+            else:
+                role_id = self.role[len('user-role:'):]
+                try:
+                    return UserRole.get(role_id).name
+                except ResourceNotFound:
+                    return _('Unknown Role')
+        else:
+            return None
+
 
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
