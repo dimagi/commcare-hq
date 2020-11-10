@@ -59,12 +59,13 @@ describe('Entries', function () {
         entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
-        assert.deepEqual(entry.options(), [{
+        var options = _.rest(entry.options());      // drop placeholder
+        assert.deepEqual(options, [{
             text: 'a',
-            idx: 1,
+            id: 1,
         }, {
             text: 'b',
-            idx: 2,
+            id: 2,
         }]);
 
         entry.rawAnswer(1);
@@ -137,32 +138,32 @@ describe('Entries', function () {
 
     it('Should properly filter combobox', function () {
         // Standard filter
-        assert.isTrue(Controls.ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
-        assert.isFalse(Controls.ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
+        assert.isTrue(Controls.ComboboxEntry.filter('o', { text: 'one two', id: 1 }, null));
+        assert.isFalse(Controls.ComboboxEntry.filter('t', { text: 'one two', id: 1 }, null));
 
         // Multiword filter
         assert.isTrue(
-            Controls.ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Const.COMBOBOX_MULTIWORD)
+            Controls.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, Const.COMBOBOX_MULTIWORD)
         );
         assert.isFalse(
-            Controls.ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Const.COMBOBOX_MULTIWORD)
+            Controls.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, Const.COMBOBOX_MULTIWORD)
         );
 
         // Fuzzy filter
         assert.isTrue(
-            Controls.ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isFalse(
-            Controls.ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('o', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('o', { text: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('on', { name: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('on', { text: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
         );
     });
 
