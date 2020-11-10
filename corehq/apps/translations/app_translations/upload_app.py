@@ -13,10 +13,6 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.translations.app_translations.download import (
-    get_bulk_app_sheets_by_name,
-    get_bulk_app_single_sheet_by_name,
-)
 from corehq.apps.translations.app_translations.upload_form import (
     BulkAppTranslationFormUpdater,
 )
@@ -33,10 +29,9 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
-    is_single_sheet_workbook,
-    prepare_older_rows_dict,
-    update_audio_path_if_required,
+    is_single_sheet_workbook
 )
+from corehq.apps.users.extension_points import update_audio_path_if_required, extract_older_rows
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
@@ -257,37 +252,6 @@ def _process_single_sheet(app, sheet, names_map, lang=None):
     return msgs
 
 
-def get_older_rows(app, lang, sheet_name, is_single_sheet):
-    headers = get_bulk_app_sheet_headers(
-        app, single_sheet=is_single_sheet, lang=lang, eligible_for_transifex_only=True
-    )
-    if is_single_sheet:
-        headers = list(headers[0][1])
-        older_sheet_details = get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=True)
-        all_older_rows = prepare_older_rows_dict(older_sheet_details[SINGLE_SHEET_NAME], headers)
-        module_or_form = None
-        modules_and_forms_rows = []
-        sheet_map = {}
-        for row in all_older_rows:
-            if not row['case_property'] and not row['list_or_detail'] and not row['label']:
-                modules_and_forms_rows.append(row)
-            elif module_or_form != row['menu_or_form']:
-                module_or_form = row['menu_or_form']
-                sheet_map[module_or_form] = [row]
-            else:
-                sheet_map[module_or_form].append(row)
-        older_rows = modules_and_forms_rows if sheet_name == MODULES_AND_FORMS_SHEET_NAME\
-            else sheet_map[sheet_name]
-    else:
-        for header in headers:
-            if header[0] == sheet_name:
-                headers = header[1]
-                break
-        older_sheet_details = get_bulk_app_sheets_by_name(app, lang, eligible_for_transifex_only=True)
-        older_rows = prepare_older_rows_dict(older_sheet_details[sheet_name], headers)
-    return older_rows
-
-
 def _process_rows(app, sheet_name, rows, names_map, lang=None, is_single_sheet=False):
     """
     Processes the rows of a worksheet of translations.
@@ -309,7 +273,7 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None, is_single_sheet=F
     """
     if not sheet_name or not rows:
         return []
-    older_rows = get_older_rows(app, lang, sheet_name, is_single_sheet)
+    older_rows = extract_older_rows(app, lang, sheet_name, is_single_sheet)
     if is_modules_and_forms_sheet(sheet_name):
         updater = BulkAppTranslationModulesAndFormsUpdater(app, names_map, lang=lang)
         return updater.update(rows, older_rows)

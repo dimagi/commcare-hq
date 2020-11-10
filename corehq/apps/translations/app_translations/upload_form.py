@@ -15,9 +15,10 @@ from corehq.apps.app_manager.xform import WrappedNode, namespaces
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_form_from_sheet_name,
-    get_unicode_dicts, update_audio_path_if_required,
+    get_unicode_dicts,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.apps.users.extension_points import update_audio_path_if_required
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
@@ -94,7 +95,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if row['label'] in label_ids_to_skip:
                     continue
                 try:
-                    update_audio_path_if_required(row, old_rows[index], [lang])
+                    if old_rows:
+                        update_audio_path_if_required(row, old_rows[index], [lang])
                     self._add_or_remove_translations(lang, row)
                 except (BulkAppTranslationsException, ValueError) as e:
                     self.msgs.append((messages.warning, str(e)))

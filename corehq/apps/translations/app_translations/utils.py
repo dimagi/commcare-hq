@@ -1,6 +1,3 @@
-from hashlib import md5
-import os
-from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.exceptions import (
@@ -203,55 +200,6 @@ def get_unicode_dicts(iterable):
     for row in iterable:
         rows.append({str(k): none_or_unicode(v) for k, v in row.items()})
     return rows
-
-
-def prepare_older_rows_dict(old_rows, headers):
-    all_rows = []
-    for row in old_rows:
-        row_dict = {}
-        for index, value in enumerate(row):
-            row_dict[headers[index]] = value
-        all_rows.append(row_dict)
-    return all_rows
-
-
-def generate_audio_path(text, previous_path):
-    path_hash = md5(text.encode()).hexdigest()[:6]
-    file_path_arr = previous_path.split('/')
-    filename_index = len(file_path_arr) - 1
-    complete_filename, extension = os.path.splitext(os.path.basename(previous_path))
-    filename_arr = complete_filename.split('-')
-    if len(filename_arr) >= 1:
-        filename_arr[len(filename_arr) - 1] = path_hash
-    else:
-        filename_arr = [path_hash]
-    new_filename = '-'.join(filename_arr) + extension
-    file_path_arr[filename_index] = new_filename
-    return '/'.join(file_path_arr)
-
-
-def update_audio_path_if_required(current_row, old_row, langs):
-    '''
-    Compares the uploaded row with one already present on app,
-    if only text is updated it will create a new audio path for that particular language.
-    if text and audio path both are changes it will raise a ValueError exceptions
-    '''
-    for lang in langs:
-        audio_header = f'audio_{lang}'
-        default_header = f'default_{lang}'
-
-        text_changed = current_row[default_header] != old_row[default_header]
-        audio_path_changed = current_row[audio_header] != old_row[audio_header]
-
-        if text_changed and audio_path_changed:
-            raise ValueError(_(f"You cannot update text and audio path\
-            simulatenouly for label \"{current_row['label']}\" "))
-
-        if text_changed and current_row[audio_header]:
-            new_audio_path = generate_audio_path(
-                current_row[default_header],
-                current_row[audio_header])
-            current_row[audio_header] = new_audio_path
 
 
 class BulkAppTranslationUpdater(object):
