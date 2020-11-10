@@ -144,7 +144,7 @@ ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements.in
 prometheus-client==0.7.1  # via -r requirements.in
 prompt-toolkit==3.0.7     # via ipython
-psutil==5.7.2             # via -r dev-requirements.in
+psutil==5.7.3             # via -r dev-requirements.in
 psycogreen==1.0.2         # via -r requirements.in
 psycopg2==2.8.6           # via -r requirements.in, sqlalchemy-postgres-copy
 ptyprocess==0.6.0         # via pexpect
