@@ -13,6 +13,9 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 
+from corehq.apps.hqadmin.couch_domain_utils import (
+    cleanup_stale_es_on_couch_domains,
+)
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
@@ -154,3 +157,8 @@ def _mass_email_attachment(name, rows):
         'file_obj': csv_file,
     }
     return attachment
+
+
+@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"), queue='background_queue')
+def cleanup_stale_es_on_couch_domains_task():
+    cleanup_stale_es_on_couch_domains()
