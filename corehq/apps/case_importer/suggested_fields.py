@@ -8,7 +8,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties_for_case_type,
 )
 from corehq.apps.case_importer.util import RESERVED_FIELDS
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
 
 
 def _combine_field_specs(field_specs, exclude_fields):

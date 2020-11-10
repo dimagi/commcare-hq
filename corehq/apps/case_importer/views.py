@@ -33,6 +33,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -151,6 +152,11 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             'applications yet. You cannot import case details from an Excel '
             'file until you have existing cases or applications.')
 
+    if 'domain' in columns and not DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        raise ImporterError(
+            "You have a special column `domain` in your Excel file but,"
+            "Mirror domains are not enabled for your project space.")
+
     context = {
         'columns': columns,
         'unrecognized_case_types': unrecognized_case_types,
@@ -219,6 +225,9 @@ def excel_fields(request, domain):
     # hide search column and matching case fields from the update list
     if search_column in excel_fields:
         excel_fields.remove(search_column)
+
+    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        excel_fields.remove('domain')
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
