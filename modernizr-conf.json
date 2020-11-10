@@ -4,6 +4,6 @@
       "setClasses"
     ],
     "feature-detects": [
-      "test/storage/websqldatabase"
+      "test/svg/smil"
     ]
   }

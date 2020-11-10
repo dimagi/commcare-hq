@@ -412,10 +412,10 @@ hqDefine('hqwebapp/js/main', [
             }
 
             // Try to filter out legacy browsers like Internet Explorer.
-            // We don't explicitly rely on the websqldatabase capability,
-            // but it's a decent test for modern browsers.
+            // We don't explicitly rely on SVG SMIL animation,
+            // but it's a decent test for avoiding legacy IE.
             // TODO: Find more granular tests for what the website requires
-            return !modernizr.websqldatabase;
+            return !modernizr.smil;
         }
 
         var $unsupportedBrowser = $("#unsupported-browser");
