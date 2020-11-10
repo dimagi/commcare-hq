@@ -98,7 +98,7 @@ reportlab==3.5.53
 requests_oauthlib
 requests~=2.20
 schema
-sentry-sdk==0.14.4
+sentry-sdk==0.19.2
 sh==1.09
 simpleeval~=0.9
 simplejson~=3.11
