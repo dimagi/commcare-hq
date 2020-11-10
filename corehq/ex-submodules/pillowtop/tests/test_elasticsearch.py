@@ -492,7 +492,7 @@ class TestILM(SimpleTestCase):
             {"_id": "d4", "prop": "d"},
             {"_id": "d5", "prop": "e"},
         ])
-        self.assertEqual(
+        self.assertItemsEqual(
             mget_query("forms", ["d1", "d4"]),
             [{"_id": "d4", "prop": "d"}, {"_id": "d1", "prop": "a"}]
         )
