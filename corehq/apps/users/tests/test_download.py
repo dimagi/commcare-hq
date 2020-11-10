@@ -13,7 +13,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.bulk_download import parse_users
+from corehq.apps.users.bulk_download import parse_mobile_users
 from corehq.apps.user_importer.importer import GroupMemoizer
 
 
@@ -82,7 +82,7 @@ class TestDownloadMobileWorkers(TestCase):
         super().tearDownClass()
 
     def test_download(self):
-        (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
+        (headers, rows) = parse_mobile_users(self.group_memoizer, self.domain_obj.name, {})
         self.assertNotIn('user_profile', headers)
 
         rows = list(rows)
