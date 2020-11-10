@@ -9,7 +9,7 @@ ALL_COUCH_DOMAINS = object()
 
 
 class Command(BaseCommand):
-    help = """Force a sync of data on all high priority couch db domains 
+    help = """Force a sync of data on all high priority couch db domains
     (determined by the feature flag ACTIVE_COUCH_DOMAINS)"""
 
     def add_arguments(self, parser):

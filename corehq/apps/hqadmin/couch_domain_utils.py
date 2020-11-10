@@ -96,9 +96,9 @@ def _get_all_form_ids(domain, start, end):
 
 def _get_forms_in_es(form_ids):
     return (
-        FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
-            .form_ids(form_ids)
-            .values_list('_id', flat=True)
+        FormES(
+            es_instance_alias=ES_EXPORT_INSTANCE
+        ).remove_default_filters().form_ids(form_ids).values_list('_id', flat=True)
     )
 
 
@@ -146,4 +146,3 @@ def _get_changes(domain, doc_ids):
         ]
         c.extend(changes)
     return c
-
