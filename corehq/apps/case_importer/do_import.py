@@ -23,7 +23,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics import metrics_counter, metrics_histogram
@@ -39,7 +39,7 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
-    if has_domain_column:
+    if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
         sub_domains = set()
         import_results = _ImportResults()
@@ -56,10 +56,12 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
                 sub_domains.add(sheet_domain)
         for sub_domain in sub_domains:
             importer = _TimedAndThrottledImporter(sub_domain, config, task, record_form_callback, import_results)
+            importer.multi_domain = True
             importer.do_import(spreadsheet)
         return import_results.to_json()
     else:
         importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
+        importer.multi_domain = False
         return importer.do_import(spreadsheet)
 
 
@@ -84,8 +86,10 @@ class _Importer(object):
                 try:
                     # check if there's a domain column, if true it's value should
                     # match the current domain, else skip the row.
-                    if self.domain == row.get('domain', self.domain):
-                        self.import_row(row_num, row)
+                    if self.multi_domain:
+                        if self.domain != row.get('domain'):
+                            continue
+                    self.import_row(row_num, row)
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
 

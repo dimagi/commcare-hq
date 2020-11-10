@@ -152,11 +152,6 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             'applications yet. You cannot import case details from an Excel '
             'file until you have existing cases or applications.')
 
-    if 'domain' in columns and not DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        raise ImporterError(
-            "You have a special column `domain` in your Excel file but,"
-            "Mirror domains are not enabled for your project space.")
-
     context = {
         'columns': columns,
         'unrecognized_case_types': unrecognized_case_types,
