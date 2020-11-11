@@ -78,6 +78,27 @@ describe('Entries', function () {
         assert.isTrue(spy.calledTwice);
     });
 
+    it('Should clear Dropdown on options change', function () {
+        var entry,
+            question;
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.style = { raw: Const.MINIMAL };
+        questionJSON.choices = ['a', 'b'];
+        question = UI.Question(questionJSON);
+
+        entry = question.entry;
+        assert.isTrue(entry instanceof Controls.DropdownEntry);
+
+        entry.rawAnswer(2);     // 'b'
+        assert.equal(entry.answer(), 2);
+
+        question.choices(['b', 'c', 'd']);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
+
+        question.choices(['e', 'f']);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
+    });
+
     it('Should return FloatEntry', function () {
         questionJSON.datatype = Const.FLOAT;
         var entry = UI.Question(questionJSON).entry;
@@ -114,6 +135,27 @@ describe('Entries', function () {
         assert.equal(entry.answer(), Const.NO_ANSWER);
 
         entry.rawAnswer(15);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
+    });
+
+    it('Should clear Combobox on options change', function () {
+        var entry,
+            question;
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.style = { raw: Const.COMBOBOX };
+        questionJSON.choices = ['a', 'b'];
+        question = UI.Question(questionJSON);
+
+        entry = question.entry;
+        assert.isTrue(entry instanceof Controls.ComboboxEntry);
+
+        entry.rawAnswer(2);     // 'b'
+        assert.equal(entry.answer(), 2);
+
+        question.choices(['b', 'c', 'd']);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
+
+        question.choices(['e', 'f']);
         assert.equal(entry.answer(), Const.NO_ANSWER);
     });
 

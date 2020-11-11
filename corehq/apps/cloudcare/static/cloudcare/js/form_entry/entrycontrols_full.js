@@ -550,6 +550,11 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             }));
         });
 
+        self.options.subscribe(function () {
+            // Clear answer if options change
+            self.rawAnswer(undefined);
+        });
+
         self.additionalSelect2Options = function () {
             return {};
         };
