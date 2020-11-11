@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-04 21:01+0000\n"
+"POT-Creation-Date: 2020-11-11 19:56+0000\n"
 "PO-Revision-Date: 2020-10-28 19:18+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -11189,7 +11189,7 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:464
+#: corehq/apps/cloudcare/views.py:466
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:243
 #: corehq/tabs/tabclasses.py:1362
 msgid "Web Apps Permissions"
@@ -20024,19 +20024,6 @@ msgstr ""
 msgid "This is a snapshot of "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:253
-msgid "CommCare HQ does not work well with Internet Explorer."
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:257
-msgid ""
-"\n"
-"              We recommend\n"
-"              <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
-"              or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
-"            "
-msgstr ""
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:53
 msgid "CommCare HQ Mobile is Copyright"
 msgstr ""
@@ -20089,7 +20076,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/iframe_close_window.html:5
 #: corehq/apps/hqwebapp/templates/hqwebapp/iframe_close_window.html:14
-#: corehq/apps/hqwebapp/views.py:546
+#: corehq/apps/hqwebapp/views.py:548
 msgid "Thank you for logging in!"
 msgstr ""
 
@@ -20738,6 +20725,19 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/unsupported_browser.html:8
+msgid "Your browser is unsupported, please consider another option"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/unsupported_browser.html:12
+msgid ""
+"\n"
+"        We recommend\n"
+"        <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
+"        or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
+"    "
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/prepaid_modal.html:13
 #, python-format
 msgid ""
@@ -20868,83 +20868,83 @@ msgctxt "twilio_locale"
 msgid "en"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:416 corehq/apps/hqwebapp/views.py:421
+#: corehq/apps/hqwebapp/views.py:417 corehq/apps/hqwebapp/views.py:422
 #, python-format
 msgid "Welcome back to %s!"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:474
+#: corehq/apps/hqwebapp/views.py:476
 msgid "Your session has expired"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:577
+#: corehq/apps/hqwebapp/views.py:580
 msgid ""
 "You do not have access to this file. It can only be uploaded to dropbox by "
 "the user who created it"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:608
+#: corehq/apps/hqwebapp/views.py:611
 #, python-brace-format
 msgid ""
 "Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email "
 "when it completes."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:689
+#: corehq/apps/hqwebapp/views.py:692
 msgid ""
 "Your CommCare HQ Issue Report has been sent. We are working quickly to "
 "resolve this problem."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:830
+#: corehq/apps/hqwebapp/views.py:833
 msgid "Apache License"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:834
+#: corehq/apps/hqwebapp/views.py:837
 msgid "BSD License"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:930
+#: corehq/apps/hqwebapp/views.py:933
 msgid "items per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:931
+#: corehq/apps/hqwebapp/views.py:934
 msgid "You have no items."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:932
+#: corehq/apps/hqwebapp/views.py:935
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html:19
 msgid "Loading..."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:933
+#: corehq/apps/hqwebapp/views.py:936
 msgid "Deleted Items:"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:934
+#: corehq/apps/hqwebapp/views.py:937
 msgid "New Items:"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1058
+#: corehq/apps/hqwebapp/views.py:1061
 #, python-format
 msgid "<strong>Problem Refreshing List:</strong> %s"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1076
+#: corehq/apps/hqwebapp/views.py:1079
 #, python-format
 msgid "<strong>Problem Deleting:</strong> %s"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1084
+#: corehq/apps/hqwebapp/views.py:1087
 msgid "The item's ID was not passed to the server."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1197
+#: corehq/apps/hqwebapp/views.py:1200
 #, python-format
 msgid "We've redirected you to the %s matching your query"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1252 corehq/tabs/tabclasses.py:2167
+#: corehq/apps/hqwebapp/views.py:1255 corehq/tabs/tabclasses.py:2167
 msgid "Maintenance Alerts"
 msgstr ""
 
@@ -30857,22 +30857,22 @@ msgstr ""
 msgid "Unauthorized User"
 msgstr ""
 
-#: corehq/apps/users/models.py:2665
+#: corehq/apps/users/models.py:2669
 #, python-format
 msgid "Request to join %s approved"
 msgstr ""
 
-#: corehq/apps/users/models.py:2681
+#: corehq/apps/users/models.py:2685
 #, python-format
 msgid "Request from %(name)s to join %(domain)s"
 msgstr ""
 
-#: corehq/apps/users/models.py:2742
+#: corehq/apps/users/models.py:2746
 #, python-format
 msgid "Invitation from %s to join CommCareHQ"
 msgstr ""
 
-#: corehq/apps/users/models.py:2746
+#: corehq/apps/users/models.py:2750
 msgid "Request to join CommCareHQ approved"
 msgstr ""
 
