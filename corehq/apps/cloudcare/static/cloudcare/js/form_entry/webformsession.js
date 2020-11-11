@@ -91,9 +91,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             if (self.blockingStatus === Const.BLOCK_ALL) {
                 return;
             }
-            self.blockingStatus = blocking || Const.BLOCK_NONE;
-            $.publish('session.block', blocking);
-            self.onLoading();
 
             if (requestParams.action === Const.SUBMIT) {
                 // Remove any submission tasks that have been queued up from spamming the submit button
@@ -105,6 +102,10 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             var self = this;
+
+            self.blockingStatus = blocking || Const.BLOCK_NONE;
+            $.publish('session.block', blocking);
+            self.onLoading();
 
             requestParams.form_context = self.formContext;
             requestParams.domain = self.domain;
