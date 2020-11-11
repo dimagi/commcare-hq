@@ -105,35 +105,16 @@ describe('Entries', function () {
 
         entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.ComboboxEntry);
-        assert.equal(entry.rawAnswer(), 'b');
+        assert.equal(entry.rawAnswer(), 2);
 
-        entry.rawAnswer('a');
+        entry.rawAnswer(1);
         assert.equal(entry.answer(), 1);
 
         entry.rawAnswer('');
         assert.equal(entry.answer(), Const.NO_ANSWER);
 
-        entry.rawAnswer('abc');
+        entry.rawAnswer(15);
         assert.equal(entry.answer(), Const.NO_ANSWER);
-    });
-
-    it('Should validate Combobox properly', function () {
-        var entry,
-            question;
-        questionJSON.datatype = Const.SELECT;
-        questionJSON.style = { raw: Const.COMBOBOX };
-        questionJSON.choices = ['a', 'b'];
-        question = UI.Question(questionJSON);
-
-        entry = question.entry;
-        assert.isTrue(entry instanceof Controls.ComboboxEntry);
-
-        entry.rawAnswer('a');
-        assert.equal(entry.answer(), 1);
-
-        question.choices(['c', 'd']);
-        assert.isFalse(entry.isValid(entry.rawAnswer()));
-        assert.isTrue(!!question.error());
     });
 
     it('Should properly filter combobox', function () {

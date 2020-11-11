@@ -526,6 +526,11 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         }
     };
 
+    /**
+     *  For dropdowns, each option is assigned an id, which is its index,
+     *  with the first option given index 1. Both the entry's answer and
+     *  rawAnswer contain this index value.
+     */
     function DropdownEntry(question, options) {
         var self = this;
         EntrySingleAnswer.call(this, question, options);
@@ -544,28 +549,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 };
             }));
         });
-
-        self.isValid = function (value) {
-            if (!value) {
-                return true;
-            }
-            return _.contains(_.pluck(self.options(), 'text'), value);
-        };
-
-        self.options.subscribe(function () {
-            self.renderSelect2();
-            if (!self.isValid(self.rawAnswer())) {
-                self.question.error(gettext('Not a valid choice'));
-            }
-        });
-
-        // If there is a prexisting answer, set the rawAnswer to the corresponding text.
-        if (question.answer()) {
-            var initialOption = _.findWhere(self.options(), {id: self.answer()});
-            self.rawAnswer(
-                initialOption ? initialOption.text : Const.NO_ANSWER
-            );
-        }
 
         self.additionalSelect2Options = function () {
             return {};
@@ -675,7 +658,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         }
 
         value = _.find(this.options(), function (d) {
-            return d.text === newValue;
+            return d.id === newValue;
         });
         if (value) {
             this.answer(value.id);
@@ -696,8 +679,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             var fieldByPriority = fieldsByPriority[i];
             for (var j = 0; j < options.length; j++) {
                 var option = options[j];
-                if (option.name === message[fieldByPriority]) {
-                    self.rawAnswer(option.name);
+                if (option.text === message[fieldByPriority]) {
+                    self.rawAnswer(option.id);
                     return;
                 }
             }
