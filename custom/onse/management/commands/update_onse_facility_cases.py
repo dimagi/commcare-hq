@@ -8,5 +8,5 @@ class Command(BaseCommand):
             'in DHIS2 over the last quarter.')
 
     def handle(self, *args, **options):
-        update_facility_cases_from_dhis2_data_elements.apply(
-            print_notifications=True)
+        update_facility_cases_from_dhis2_data_elements.apply(kwargs={
+            'print_notifications': True})
