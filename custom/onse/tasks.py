@@ -46,6 +46,7 @@ def update_facility_cases_from_dhis2_data_elements(
             print(message)
         else:
             dhis2_server.get_requests().notify_exception(message)
+            raise
     else:
         message = 'Successfully imported ONSE ISS facility cases from DHIS2'
         if print_notifications:
