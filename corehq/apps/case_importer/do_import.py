@@ -21,7 +21,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.metrics.load_counters import case_load_counter
@@ -38,19 +38,38 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
-    importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
-    return importer.do_import(spreadsheet)
+    has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
+    if has_domain_column:
+        mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+        sub_domains = set()
+        import_results = _ImportResults()
+        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+            if row_num == 1:
+                continue  # skip first row (header row)
+            sheet_domain = row.get('domain')
+            if sheet_domain != domain and sheet_domain not in mirror_domains:
+                err = exceptions.CaseRowError(column_name='domain')
+                err.title = _('Invalid domain')
+                err.message = _('Following rows contain invalid value for domain column.')
+                import_results.add_error(row_num, err)
+            else:
+                sub_domains.add(sheet_domain)
+        for sub_domain in sub_domains:
+            importer = _TimedAndThrottledImporter(sub_domain, config, task, record_form_callback, import_results)
+            importer.do_import(spreadsheet)
+        return import_results.to_json()
+    else:
+        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
+        return importer.do_import(spreadsheet)
 
 
 class _Importer(object):
-    def __init__(self, domain, config, task, record_form_callback):
+    def __init__(self, domain, config, task, record_form_callback, import_results=None):
         self.domain = domain
         self.config = config
         self.task = task
         self.record_form_callback = record_form_callback
-
-        self.results = _ImportResults()
-
+        self.results = import_results or _ImportResults()
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
@@ -63,7 +82,10 @@ class _Importer(object):
                     continue  # skip first row (header row)
 
                 try:
-                    self.import_row(row_num, row)
+                    # check if there's a domain column, if true it's value should
+                    # match the current domain, else skip the row.
+                    if self.domain == row.get('domain', self.domain):
+                        self.import_row(row_num, row)
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
 
@@ -166,8 +188,8 @@ class _Importer(object):
 
 
 class _TimedAndThrottledImporter(_Importer):
-    def __init__(self, domain, config, task, record_form_callback):
-        super().__init__(domain, config, task, record_form_callback)
+    def __init__(self, domain, config, task, record_form_callback, import_results=None):
+        super().__init__(domain, config, task, record_form_callback, import_results)
 
         self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
         self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
