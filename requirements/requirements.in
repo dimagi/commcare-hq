@@ -78,7 +78,7 @@ polib==1.1.0
 prometheus-client==0.7.1
 psycogreen~=1.0
 psycopg2>=2.8.4  # Python 3.8 support
-py-KISSmetrics==1.0.1
+py-KISSmetrics==1.1.0
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
 PyGithub==1.53

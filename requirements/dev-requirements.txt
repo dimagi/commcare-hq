@@ -148,7 +148,7 @@ psutil==5.7.3             # via -r dev-requirements.in
 psycogreen==1.0.2         # via -r requirements.in
 psycopg2==2.8.6           # via -r requirements.in, sqlalchemy-postgres-copy
 ptyprocess==0.6.0         # via pexpect
-py-kissmetrics==1.0.1     # via -r requirements.in
+py-kissmetrics==1.1.0     # via -r requirements.in
 pycco==0.5.1              # via -r requirements.in
 pycodestyle==2.6.0        # via flake8
 pycparser==2.20           # via cffi
