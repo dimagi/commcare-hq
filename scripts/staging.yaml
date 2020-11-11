@@ -58,7 +58,6 @@ branches:
   - fr/user-data-jit            # Farid September 2
   - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
-  - kev/formplayer-remove-prevalidate # Kevin Oct 20
   - gh/improve-queueing-repeaters # Graham Oct 22
   - jls/require-search-text # Jenny Oct 22
   - jls/combobox-select2 # Jenny Oct 28
@@ -67,5 +66,6 @@ branches:
   - mr/safari_warnings # Matt Nov 6
   - smh/bulk-download-web-users # Steph Nov 9
   - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
+  - kev/webapps-disable-submit # Kevin Nov 10
 
 submodules: {}
