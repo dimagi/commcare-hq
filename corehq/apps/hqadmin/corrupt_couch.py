@@ -159,7 +159,8 @@ def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None):
         domain_name = domain if group.get("use_domain") else None
         view = group.get("view")
         for doc_type in get_doc_types(group):
-            itr = _iter_missing_ids(db, min_tries, doc_type, domain_name, dates, view)
+            params = iteration_parameters(db, doc_type, domain_name, dates, view)
+            itr = _iter_missing_ids(db, min_tries, *params)
             try:
                 for rec in itr:
                     yield doc_type, rec["missing_and_tries"]
@@ -183,7 +184,7 @@ def get_doc_types(group):
     return group.get("doc_types", [None])
 
 
-def _iter_missing_ids(db, min_tries, doc_type, domain, date_range, view, chunk_size=1000):
+def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params):
     def data_function(**view_kwargs):
         def get_doc_ids():
             results = list(db.view(view_name, **view_kwargs))
@@ -208,6 +209,11 @@ def _iter_missing_ids(db, min_tries, doc_type, domain, date_range, view, chunk_s
         last_result["missing_and_tries"] = missing, tries
         return [last_result]
 
+    args_provider = NoSkipArgsProvider(view_params)
+    return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+
+
+def iteration_parameters(db, doc_type, domain, date_range, view, chunk_size=1000):
     if view is not None:
         view_name = view
         start = end = "-"
@@ -242,15 +248,15 @@ def _iter_missing_ids(db, min_tries, doc_type, domain, date_range, view, chunk_s
         startkey = []
         endkey = [{}]
 
-    resume_key = f"{db.dbname}.{domain}.{doc_type}.{start}-{end}"
-    args_provider = NoSkipArgsProvider({
+    view_params = {
         'startkey': startkey,
         'endkey': endkey,
         'limit': chunk_size,
         'include_docs': False,
         'reduce': False,
-    })
-    return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+    }
+    resume_key = f"{db.dbname}.{domain}.{doc_type}.{start}-{end}"
+    return resume_key, view_name, view_params
 
 
 def find_missing_ids(get_doc_ids, min_tries, limit=None):
