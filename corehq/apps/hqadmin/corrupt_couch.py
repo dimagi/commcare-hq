@@ -7,7 +7,11 @@ import attr
 
 from auditcare.models import AuditEvent
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.userreports.models import ReportConfiguration
+from corehq.motech.repeaters.models import Repeater
 from couchforms.models import XFormInstance
+from custom.m4change.models import FixtureReportResult
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
@@ -69,11 +73,21 @@ DOC_TYPES_BY_NAME = {
         "use_domain": True,
         "view": "auditcare/all_events",
     },
-    # TODO
-    #"fixtures": {"type": ...},
-    #"m4change": {"type": ...},
-    #"receiver_wrapper": {"type": ...},
-    #"meta": {"type": ...},  # probably don't need to do this one
+    "fixtures": {
+        "type": FixtureDataType,
+        "use_domain": True
+    },
+    "m4change": {
+        "type": FixtureReportResult
+    },
+    "receiver_wrapper": {
+        "type": Repeater,
+        "use_domain": True
+    },
+    "meta": {
+        "type": ReportConfiguration,
+        "use_domain": True
+    },
 }
 
 
