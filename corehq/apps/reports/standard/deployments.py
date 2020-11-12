@@ -272,22 +272,29 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         :param kwargs: extra parameters
         :return: dict
         """
-        where = Q(domain=self.domain, location_id__in=location_ids)
-        location_ancestors = SQLLocation.objects.get_ancestors(where)
-        location_by_id = {location.location_id: location for location in location_ancestors}
-        location_by_pk = {location.id: location for location in location_ancestors}
+        # list of ancestors of a location
+        ancestors_by_location = {}
+
+        def get_ancestors(loc):
+            if loc.pk in ancestors_by_location:
+                return ancestors_by_location[loc.pk]
+            all_ancestors = []
+            if loc.parent:
+                all_ancestors.extend(loc.parent)
+                if loc.parent_id in ancestors_by_location:
+                    parent_ancestors = ancestors_by_location[loc.parent_id]
+                else:
+                    parent_ancestors = get_ancestors(loc.parent)
+                all_ancestors.extend(parent_ancestors)
+
+            # note down ancestors for further searches
+            ancestors_by_location[loc.pk] = all_ancestors
+            return all_ancestors
 
         grouped_location = {}
-        for location_id in location_ids:
-
-            location_parents = []
-            current_location = location_by_id[location_id].id if location_id in location_by_id else None
-
-            while current_location is not None:
-                location_parents.append(location_by_pk[current_location])
-                current_location = location_by_pk[current_location].parent_id
-
-            grouped_location[location_id] = location_parents
+        for location in SQLLocation.objects.select_related('parent').filter(
+                domain=self.domain, location_id__in=location_ids):
+            grouped_location[location.location_id] = get_ancestors(location)
 
         return grouped_location
 
