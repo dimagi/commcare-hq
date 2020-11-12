@@ -58,7 +58,7 @@ class DataLoader(metaclass=ABCMeta):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
-        self.stdout.write(f"Inspecting {extracted_dump_path} using '{self.slug}' data loader.")
+        self.stdout.write(f"Inspecting {file_path} using '{self.slug}' data loader.")
         line_count = _get_gzfile_line_count(file_path)
         with gzip.open(file_path) as dump_file:
             object_strings = with_progress_bar(dump_file, length=line_count, stream=self.stdout)
