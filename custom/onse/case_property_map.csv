@@ -1,0 +1,23 @@
+case_property,data_element_id,data_set_id,dhis2_name
+dhis_hmis_data_discussed,krUiCzsUAZr,q1Es3k3sZem,HMIS Management meetings conducted
+dhis_admissions_in_quarter,yCJBWuhuOLc,q1Es3k3sZem,HMIS Total # of Admissions (including Maternity)
+dhis_suspected_malaria_cases_under_5yrs,ttpMSWCCq6s,uk3Vkwy5cIe,HMIS17 Malaria Under 5 years  Admissions
+dhis_total_budget_for_drugs,P0YGSCM0OKb,q1Es3k3sZem,HMIS Cumulative drug budget
+dhis_expenditure_in_quarter,M2Pkr4zxryN,uk3Vkwy5cIe,HMIS17 Cumulative actual expenditure in all programmes
+dhis_health_facilities_under_hospital_management_supervision,M3HHFh3RDNP,iTo9FkAJTSl,ENVT EH # Of Health Facilities In The  District
+dhis_quarterly_estimated_pregnant_women_in_area,GxqYLY3iWcz,XcgwcDqqE17,CHD EPI Pregnant women
+dhis_ambulances_functional,MRqq82xATzI,q1Es3k3sZem,HMIS # of Functioning Ambulances
+dhis_what_is_the_total_number_of_beds_at_the_facility,asCqjKclllu,q1Es3k3sZem,HMIS Bed Capacity
+dhis_quarterly_estimated_children_under_5_in_area,PVYgza4lLfj,rkyO2EAX45C,CMED Under 5 Population
+dhis_prev_new_smear_positive_cases_cured,gKghGP99qDe,VEqRXwmqhM1,TBTO New Smear Positive Cured
+dhis_prev_new_smear_positive_cases_dead,yssWGMYDkdA,VEqRXwmqhM1,TBTO New Smear Positive Died
+dhis_prev_new_smear_positive_cases_treatment_failure,dmyxAlzfCiK,VEqRXwmqhM1,TBTO New Smear Positive Failure
+dhis_prev_new_eptb_cases_cured,a8nx11YujJz,fOiOJU7Vt2n,TB New Treatment outcome New EPTB Cured
+dhis_prev_new_eptb_cases_treatment_completed,NFRHK1cgHrc,fOiOJU7Vt2n,TB New Treatment outcome New EPTB Treatment completed
+dhis_prev_new_eptb_cases_dead,dzRlRptoj38,VEqRXwmqhM1,TBTO EPTB Died
+dhis_prev_new_eptb_cases_treatment_failure,wNKjjozXyQY,fOiOJU7Vt2n,TB New Treatment outcome New EPTB Treatment failed
+dhis_village_clinics,gtLvoz94gur,hWDsGIjs16g,CHD IMCI # of Functional Village Clinics Within Catchment
+dhis_cbdas,LGaHPDsUydT,wLQlOnKX6yN,HTS Number of CBDA/HSA
+dhis_village_health_committees,J7fogdejE3j,q1Es3k3sZem,HMIS HM Active village health committees within catchment area
+dhis_households_with_improved_latrines,u5erlSYbxTU,iTo9FkAJTSl,ENVT EH # Of Households Owning And Using Improved Sanitary Facilities
+dhis_households_access_to_clean_water,BDzMvX3y7Kc,q1Es3k3sZem,HMIS # of Households with Access to Safe Drinking Water
