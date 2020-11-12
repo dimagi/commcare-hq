@@ -2,6 +2,7 @@ import uuid
 from contextlib import contextmanager
 
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils.dateparse import parse_datetime
 
 from celery import states
@@ -371,7 +372,8 @@ class ImporterTest(TestCase):
                          len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
     def test_multiple_domain_case_import(self):
         mirror_domain1 = DomainPermissionsMirror(source=self.domain, mirror='mirrordomain1')
         mirror_domain2 = DomainPermissionsMirror(source=self.domain, mirror='mirrordomain2')
@@ -408,26 +410,21 @@ class ImporterTest(TestCase):
         md2_cases = list(self.accessor.get_cases(md2_case_ids))
         self.assertEqual(1, len(md2_cases))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @flag_disabled('DOMAIN_PERMISSIONS_MIRROR')
-    @run_with_all_backends
-    def test_multiple_domain_case_import_without_flag(self):
-        mirror_domain1 = DomainPermissionsMirror(source=self.domain, mirror='mirrordomain1')
-        mirror_domain2 = DomainPermissionsMirror(source=self.domain, mirror='mirrordomain2')
-        mirror_domain1.save()
-        mirror_domain2.save()
+    def test_multiple_domain_case_import_mirror_domain_disabled(self):
         headers_with_domain = ['case_id', 'name', 'artist', 'domain']
         config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
         case_with_domain_file = make_worksheet_wrapper(
             ['case_id', 'name', 'artist', 'domain'],
             ['', 'name-0', 'artist-0', self.domain],
-            ['', 'name-1', 'artist-1', mirror_domain1.mirror],
-            ['', 'name-2', 'artist-2', mirror_domain2.mirror],
+            ['', 'name-1', 'artist-1', 'domain-1'],
+            ['', 'name-2', 'artist-2', 'domain-2'],
             ['', 'name-3', 'artist-3', self.domain],
             ['', 'name-4', 'artist-4', self.domain],
             ['', 'name-5', 'artist-5', 'not-existing-domain']
         )
         res = do_import(case_with_domain_file, config_1, self.domain)
-        print(f"========res======={res}===============")
         self.assertEqual(6, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['failed_count'])
