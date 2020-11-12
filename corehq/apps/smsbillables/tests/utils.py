@@ -1,3 +1,38 @@
+import uuid
+from datetime import datetime
+
+from corehq.apps.sms.models import OUTGOING, SMS
+from corehq.apps.smsbillables.models import SmsGatewayFee
+
+short_text = "This is a test text message under 160 characters."
+
+long_text = (
+    "This is a test text message that's over 160 characters in length. "
+    "Or at least it will be. Thinking about kale. I like kale. Kale is "
+    "a fantastic thing. Also bass music. I really like dat bass."
+)
+
+
+def get_fake_sms(domain, backend_api_id, backend_couch_id, text):
+    msg = SMS(
+        domain=domain,
+        phone_number='+12223334444',
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        backend_api=backend_api_id,
+        backend_id=backend_couch_id,
+        backend_message_id=uuid.uuid4().hex,
+        text=text
+    )
+    msg.save()
+    return msg
+
+
+def create_gateway_fee(backend_id, message, amount, country_code=None):
+    return SmsGatewayFee.create_new(backend_id, message.direction, amount,
+                                    country_code=country_code)
+
+
 class FakeTwilioMessage(object):
     status = 'sent'
 
