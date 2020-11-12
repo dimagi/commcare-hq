@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.urls import reverse
 
 from corehq.apps.accounting.models import Subscription, BillingAccount
+from corehq.apps.accounting.views import ManageBillingAccountView
 
 
 def get_meta(request):
@@ -65,6 +67,16 @@ def get_blocked_hubspot_email_domains():
         'block_email_domains_from_hubspot',
         flat=True,
     ) for _email in email_list]
+
+
+def get_blocked_hubspot_accounts():
+    return [
+        f'{account[1]} - ID # {account[0]}'
+        for account in BillingAccount.objects.filter(
+            block_hubspot_data_for_all_users=True,
+            is_active=True,
+        ).values_list('id', 'name')
+    ]
 
 
 def get_instance_string():
