@@ -34,21 +34,19 @@ class Command(BaseCommand):
         excludes = options.get('exclude')
         console = options.get('console')
         show_traceback = options.get('traceback')
+        requested_dumpers = options.get('dumpers')
 
-        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = 'data-dump-{}-{}.zip'.format(domain_name, utcnow)
+        self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+        zipname = 'data-dump-{}-{}.zip'.format(domain_name, self.utcnow)
 
         self.stdout.ending = None
         stats = Counter()
         # domain dumper should be first since it validates domain exists
-        dumpers = [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]
+        for dumper in [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]:
+            if requested_dumpers and dumper.slug not in requested_dumpers:
+                continue
 
-        requested_dumpers = options.get('dumpers')
-        if requested_dumpers:
-            dumpers = [dumper for dumper in dumpers if dumper.slug in requested_dumpers]
-
-        for dumper in dumpers:
-            filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)
+            filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
             stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
                 stats += dumper(domain_name, excludes).dump(stream)
@@ -66,6 +64,10 @@ class Command(BaseCommand):
 
                 os.remove(filename)
 
+        self._print_stats(stats)
+        self.stdout.write('\nData dumped to file: {}'.format(zipname))
+
+    def _print_stats(self, stats):
         self.stdout.ending = '\n'
         self.stdout.write('{0} Dump Stats {0}'.format('-' * 32))
         for model in sorted(stats):
@@ -73,8 +75,6 @@ class Command(BaseCommand):
         self.stdout.write('{0}{0}'.format('-' * 38))
         self.stdout.write('Dumped {} objects'.format(sum(stats.values())))
         self.stdout.write('{0}{0}'.format('-' * 38))
-
-        self.stdout.write('\nData dumped to file: {}'.format(zipname))
 
 
 def _get_dump_stream_filename(slug, domain, utcnow):
