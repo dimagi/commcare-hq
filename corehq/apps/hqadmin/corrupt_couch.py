@@ -204,6 +204,7 @@ def _iter_missing_ids(db, doc_type, domain, date_range, view, chunk_size=1000):
         if last_result is None:
             assert not missing
             return []
+        log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']}")
         last_result["missing_and_tries"] = missing, tries
         return [last_result]
 
