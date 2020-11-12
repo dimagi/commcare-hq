@@ -187,20 +187,23 @@ def _iter_missing_ids(db, doc_type, domain, date_range, view, chunk_size=1000):
     def data_function(**view_kwargs):
         def get_doc_ids():
             results = list(db.view(view_name, **view_kwargs))
-            if results:
-                last_results.append(results[-1])
-            return {key(r) for r in results}
+            if "limit" in view_kwargs and results:
+                nonlocal last_result
+                last_result = results[-1]
+                replace_limit_with_endkey(view_kwargs, last_result)
+            return {r["id"] for r in results}
 
-        def key(result):
-            return tuple(result["key"]) + (result["id"],)
+        def replace_limit_with_endkey(view_kwargs, last_result):
+            assert "endkey_docid" not in view_kwargs, view_kwargs
+            view_kwargs.pop("limit")
+            view_kwargs["endkey"] = last_result["key"]
+            view_kwargs["endkey_docid"] = last_result["id"]
 
-        last_results = []
+        last_result = None
         missing, tries = find_missing_ids(get_doc_ids)
-        if not last_results:
+        if last_result is None:
+            assert not missing
             return []
-        last_result = min(last_results, key=key)
-        last_key = key(last_result)
-        missing = {m[-1] for m in missing if m <= last_key}
         last_result["missing_and_tries"] = missing, tries
         return [last_result]
 
