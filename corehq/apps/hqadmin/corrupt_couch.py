@@ -206,16 +206,29 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
         if last_result is None:
             assert not missing
             return []
-        if repair:
-            for doc_id in missing:
-                db.repair(doc_id)
-            missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
+        if missing and repair:
+            missing, tries2 = repair_couch_docs(db, missing, get_doc_ids, min_tries)
+            tries += tries2
         log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']}")
         last_result["missing_and_tries"] = missing, tries
         return [last_result]
 
     args_provider = NoSkipArgsProvider(view_params)
     return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+
+
+def repair_couch_docs(db, missing, get_doc_ids, min_tries):
+    total_tries = 0
+    to_repair = len(missing)
+    for n in range(min_tries):
+        for doc_id in missing:
+            db.repair(doc_id)
+        missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
+        total_tries += tries
+        log.debug(f"repaired {to_repair - len(missing)} of {to_repair}")
+        if not missing:
+            break
+    return missing, total_tries
 
 
 def iteration_parameters(db, doc_type, domain, date_range, view, chunk_size=1000):
@@ -311,7 +324,7 @@ class CouchCluster:
 
     def repair(self, doc_id):
         for node in self._node_dbs:
-            node.get(doc_id, r=1)
+            node.get(doc_id)
 
     def view(self, *args, **kw):
         return self.db.view(*args, **kw)
