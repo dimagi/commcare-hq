@@ -893,12 +893,12 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
 
 VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
     'allow_bulk_form_actions',
-    "Allow bulk form actions in Vellum / Formdesigner",
+    "Allow bulk form actions in the Form Builder",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
     description="This shows Bulk Form Actions (mark all questions required, "
                 "set default values to matching case properties) in "
-                "Vellum's main dropdown menu.",
+                "the Form Builder's main dropdown menu.",
 )
 
 CACHE_AND_INDEX = StaticToggle(
