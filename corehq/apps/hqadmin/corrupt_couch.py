@@ -137,7 +137,7 @@ class Result:
         return round(sum(self.tries) / len(self.tries), 2) if self.tries else 0
 
 
-def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None):
+def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None, repair=False):
     if doc_name == "ALL":
         groups = dict(DOC_TYPES_BY_NAME)
         if domain is not None:
@@ -160,16 +160,12 @@ def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None):
         view = group.get("view")
         for doc_type in get_doc_types(group):
             params = iteration_parameters(db, doc_type, domain_name, dates, view)
-            itr = _iter_missing_ids(db, min_tries, *params)
+            missing_results = _iter_missing_ids(db, min_tries, *params, repair)
             try:
-                for rec in itr:
+                for rec in missing_results:
                     yield doc_type, rec["missing_and_tries"]
             finally:
-                itr.discard_state()
-
-
-#def fix_missing_doc(doc_type, doc_id):
-#    ...
+                missing_results.discard_state()
 
 
 def get_doc_types(group):
@@ -184,7 +180,7 @@ def get_doc_types(group):
     return group.get("doc_types", [None])
 
 
-def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params):
+def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair):
     def data_function(**view_kwargs):
         def get_doc_ids():
             results = list(db.view(view_name, **view_kwargs))
@@ -205,12 +201,20 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params):
         if last_result is None:
             assert not missing
             return []
+        if repair:
+            for doc_id in missing:
+                repair_missing_doc(db, doc_id)
+            missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
         log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']}")
         last_result["missing_and_tries"] = missing, tries
         return [last_result]
 
     args_provider = NoSkipArgsProvider(view_params)
     return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+
+
+def repair_missing_doc(db, doc_id, cluster_size=3):
+    db.get(doc_id, r=cluster_size)
 
 
 def iteration_parameters(db, doc_type, domain, date_range, view, chunk_size=1000):
