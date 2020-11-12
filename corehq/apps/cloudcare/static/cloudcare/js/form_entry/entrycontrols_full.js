@@ -573,6 +573,13 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     DropdownEntry.prototype.constructor = EntrySingleAnswer;
+    DropdownEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        EntrySingleAnswer.prototype.onAnswerChange.call(self, newValue);
+        _.delay(function () {
+            $("#" + self.entryId).trigger("change.select2");
+        });
+    };
     DropdownEntry.prototype.onPreProcess = function (newValue) {
         // When newValue is undefined it means we've unset the select question.
         if (newValue === Const.NO_ANSWER || newValue === undefined) {
@@ -654,13 +661,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
     ComboboxEntry.prototype.constructor = DropdownEntry;
-    ComboboxEntry.prototype.onAnswerChange = function (newValue) {
-        var self = this;
-        DropdownEntry.prototype.onAnswerChange.call(self, newValue);
-        _.delay(function () {
-            $("#" + self.entryId).trigger("change.select2");
-        });
-    };
     ComboboxEntry.prototype.onPreProcess = function (newValue) {
         var value;
         if (newValue === Const.NO_ANSWER || newValue === '') {
