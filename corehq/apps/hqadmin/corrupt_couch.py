@@ -2,25 +2,30 @@
 import logging
 from collections import defaultdict
 from itertools import chain
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import attr
+from couchdbkit import Database
+from django.conf import settings
+from memoized import memoized
 
 from auditcare.models import AuditEvent
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.userreports.models import ReportConfiguration
-from corehq.motech.repeaters.models import Repeater
 from couchforms.models import XFormInstance
 from custom.m4change.models import FixtureReportResult
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.motech.repeaters.models import Repeater
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.pagination import ResumableFunctionIterator
 
 log = logging.getLogger(__name__)
+COUCH_NODE_PORT = 15984
 DOC_TYPES_BY_NAME = {
     "forms": {
         "type": XFormInstance,
@@ -154,7 +159,7 @@ def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None, repair=
                 raise ValueError(f"domain required for {doc_name!r}")
     for name, group in groups.items():
         log.info("processing %s", name)
-        db = group["type"].get_db()
+        db = CouchCluster(group["type"].get_db())
         dates = date_range if group.get("date_range") else None
         domain_name = domain if group.get("use_domain") else None
         view = group.get("view")
@@ -203,7 +208,7 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
             return []
         if repair:
             for doc_id in missing:
-                repair_missing_doc(db, doc_id)
+                db.repair(doc_id)
             missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
         log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']}")
         last_result["missing_and_tries"] = missing, tries
@@ -211,10 +216,6 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
 
     args_provider = NoSkipArgsProvider(view_params)
     return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
-
-
-def repair_missing_doc(db, doc_id, cluster_size=3):
-    db.get(doc_id, r=cluster_size)
 
 
 def iteration_parameters(db, doc_type, domain, date_range, view, chunk_size=1000):
@@ -293,3 +294,37 @@ def find_missing_ids(get_doc_ids, min_tries, limit=None):
         no_news += 1
     log.warning(f"still finding new missing docs after {limit} queries")
     return missing, limit
+
+
+@attr.s
+class CouchCluster:
+    db = attr.ib()
+
+    @property
+    def dbname(self):
+        return self.db.dbname
+
+    @property
+    @memoized
+    def _node_dbs(self):
+        return _get_couch_node_databases(self.db)
+
+    def repair(self, doc_id):
+        for node in self._node_dbs:
+            node.get(doc_id, r=1)
+
+    def view(self, *args, **kw):
+        return self.db.view(*args, **kw)
+
+
+def _get_couch_node_databases(db, node_port=COUCH_NODE_PORT):
+    def node_url(proxy_url, node):
+        return urlunparse(proxy_url._replace(netloc=f'{auth}@{node}:{node_port}'))
+
+    resp = db.server._request_session.get(urljoin(db.server.uri, '/_membership'))
+    resp.raise_for_status()
+    membership = resp.json()
+    nodes = [node.split("@")[1] for node in membership["cluster_nodes"]]
+    proxy_url = urlparse(settings.COUCH_DATABASE)._replace(path=f"/{db.dbname}")
+    auth = proxy_url.netloc.split('@')[0]
+    return [Database(node_url(proxy_url, node)) for node in nodes]
