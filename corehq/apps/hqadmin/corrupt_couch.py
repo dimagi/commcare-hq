@@ -139,9 +139,19 @@ class Result:
 
 def iter_missing_ids(domain, doc_name="ALL", date_range=None):
     if doc_name == "ALL":
-        groups = DOC_TYPES_BY_NAME
+        groups = dict(DOC_TYPES_BY_NAME)
+        if domain is not None:
+            groups = {k: g for k, g in groups.items() if g.get("use_domain")}
+        else:
+            groups = {k: g for k, g in groups.items() if not g.get("use_domain")}
     else:
         groups = {doc_name: DOC_TYPES_BY_NAME[doc_name]}
+        if domain is not None:
+            if not groups[doc_name].get("use_domain"):
+                raise ValueError(f"domain not supported with {doc_name!r}")
+        else:
+            if groups[doc_name].get("use_domain"):
+                raise ValueError(f"domain required for {doc_name!r}")
     for name, group in groups.items():
         log.info("processing %s", name)
         db = group["type"].get_db()

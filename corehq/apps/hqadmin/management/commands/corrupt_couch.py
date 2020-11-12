@@ -14,12 +14,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('command', choices=["count-missing", "fix-missing"])
-        parser.add_argument('domain')
         parser.add_argument('doc_name', choices=list(DOC_TYPES_BY_NAME) + ["ALL"])
+        parser.add_argument('--domain')
         parser.add_argument('--date-range', help="YYYY-MM-DD..YYYY-MM-DD or 'ALL'")
         parser.add_argument('--verbose', action="store_true")
 
-    def handle(self, command, domain, doc_name=None, date_range=None, **options):
+    def handle(self, command, doc_name, domain, date_range, **options):
         setup_logging(options["verbose"])
         if date_range is None:
             date_range = (START, END)
