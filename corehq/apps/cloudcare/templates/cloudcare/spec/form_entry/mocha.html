@@ -1,8 +1,16 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
+{% block stylesheets %}{{ block.super }}
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'select2/dist/css/select2.min.css' %}" />
+{% endblock %}
+
 {% block dependencies %}
   {% include "formplayer/dependencies.html" %}
+  <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
   <script src="{% static 'jasmine-fixture/dist/jasmine-fixture.js' %}"></script>
 {% endblock %}
 
