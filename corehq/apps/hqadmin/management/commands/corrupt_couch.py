@@ -20,9 +20,10 @@ class Command(BaseCommand):
             YYYY-MM-DD..YYYY-MM-DD or 'ALL'.
             Default: {START}..{END}
         """)
+        parser.add_argument('--min-tries', type=int, default=10)
         parser.add_argument('--verbose', action="store_true")
 
-    def handle(self, command, doc_name, domain, date_range, **options):
+    def handle(self, command, doc_name, domain, date_range, min_tries, **options):
         setup_logging(options["verbose"])
         if date_range is None:
             start, end = START, END
@@ -30,7 +31,7 @@ class Command(BaseCommand):
             start, end = date_range.split("..")
         date_range = parse_date(start), parse_date(end)
         if command == "count-missing":
-            count_missing_ids(domain, doc_name, date_range)
+            count_missing_ids(min_tries, domain, doc_name, date_range)
         else:
             raise NotImplementedError
 

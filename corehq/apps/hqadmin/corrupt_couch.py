@@ -137,7 +137,7 @@ class Result:
         return round(sum(self.tries) / len(self.tries), 2) if self.tries else 0
 
 
-def iter_missing_ids(domain, doc_name="ALL", date_range=None):
+def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None):
     if doc_name == "ALL":
         groups = dict(DOC_TYPES_BY_NAME)
         if domain is not None:
@@ -159,7 +159,7 @@ def iter_missing_ids(domain, doc_name="ALL", date_range=None):
         domain_name = domain if group.get("use_domain") else None
         view = group.get("view")
         for doc_type in get_doc_types(group):
-            itr = _iter_missing_ids(db, doc_type, domain_name, dates, view)
+            itr = _iter_missing_ids(db, min_tries, doc_type, domain_name, dates, view)
             try:
                 for rec in itr:
                     yield doc_type, rec["missing_and_tries"]
@@ -183,7 +183,7 @@ def get_doc_types(group):
     return group.get("doc_types", [None])
 
 
-def _iter_missing_ids(db, doc_type, domain, date_range, view, chunk_size=1000):
+def _iter_missing_ids(db, min_tries, doc_type, domain, date_range, view, chunk_size=1000):
     def data_function(**view_kwargs):
         def get_doc_ids():
             results = list(db.view(view_name, **view_kwargs))
@@ -200,7 +200,7 @@ def _iter_missing_ids(db, doc_type, domain, date_range, view, chunk_size=1000):
             view_kwargs["endkey_docid"] = last_result["id"]
 
         last_result = None
-        missing, tries = find_missing_ids(get_doc_ids)
+        missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
         if last_result is None:
             assert not missing
             return []
@@ -253,24 +253,27 @@ def _iter_missing_ids(db, doc_type, domain, date_range, view, chunk_size=1000):
     return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
 
 
-def find_missing_ids(get_doc_ids, min_tries=5, limit=100):
+def find_missing_ids(get_doc_ids, min_tries, limit=None):
     """Find missing ids
 
     Given a function that is expected to always return the same set of
     unique ids, find all ids that are missing from some result sets.
 
-    Returns a tuple `(missing_ids, tries)
+    Returns a tuple `(missing_ids, tries)`
     """
+    if min_tries < 2:
+        raise ValueError("min_tries must be greater than 1")
+    limit = limit or min_tries * 20
     min_tries -= 1
     missing = set()
     all_ids = set()
-    no_news = 0
+    no_news = 1
     for tries in range(limit):
         next_ids = get_doc_ids()
         if all_ids:
             miss = next_ids ^ all_ids
             if any(x not in missing for x in miss):
-                no_news = 0
+                no_news = 1
                 missing.update(miss)
                 all_ids.update(miss)
         else:
@@ -278,5 +281,5 @@ def find_missing_ids(get_doc_ids, min_tries=5, limit=100):
         if no_news > min_tries:
             return missing, tries + 1
         no_news += 1
-    log.warning("still finding new missing docs after 100 queries")
-    return missing, 100
+    log.warning(f"still finding new missing docs after {limit} queries")
+    return missing, limit
