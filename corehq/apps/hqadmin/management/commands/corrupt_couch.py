@@ -5,8 +5,8 @@ from django.core.management.base import BaseCommand
 
 from ...corrupt_couch import count_missing_ids, DOC_TYPES_BY_NAME
 
-START = parse_date('2020-10-16')
-END = parse_date('2020-10-18')
+START = '2020-10-16'
+END = '2020-10-18'
 
 
 class Command(BaseCommand):
@@ -16,16 +16,19 @@ class Command(BaseCommand):
         parser.add_argument('command', choices=["count-missing", "fix-missing"])
         parser.add_argument('doc_name', choices=list(DOC_TYPES_BY_NAME) + ["ALL"])
         parser.add_argument('--domain')
-        parser.add_argument('--date-range', help="YYYY-MM-DD..YYYY-MM-DD or 'ALL'")
+        parser.add_argument('--date-range', help=f"""
+            YYYY-MM-DD..YYYY-MM-DD or 'ALL'.
+            Default: {START}..{END}
+        """)
         parser.add_argument('--verbose', action="store_true")
 
     def handle(self, command, doc_name, domain, date_range, **options):
         setup_logging(options["verbose"])
         if date_range is None:
-            date_range = (START, END)
+            start, end = START, END
         else:
             start, end = date_range.split("..")
-            date_range = parse_date(start), parse_date(end)
+        date_range = parse_date(start), parse_date(end)
         if command == "count-missing":
             count_missing_ids(domain, doc_name, date_range)
         else:
