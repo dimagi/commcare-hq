@@ -114,7 +114,6 @@ def make_web_user_dict(user, domain):
     user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
     role_name = ''
-    domain_membership.role_id = '123'
     if domain_membership.role_id:
         try:
             role_name = UserRole.get(domain_membership.role_id).name
