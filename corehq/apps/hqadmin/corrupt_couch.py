@@ -78,11 +78,18 @@ DOC_TYPES_BY_NAME = {
         "use_domain": True
     },
     "m4change": {
-        "type": FixtureReportResult
+        "type": FixtureReportResult,
+        "view": "m4change/fixture_by_composite_key",
     },
-    "receiver_wrapper": {
+    "receiver_wrapper_repeaters": {
         "type": Repeater,
-        "use_domain": True
+        "use_domain": True,
+        "view": "repeaters/repeaters",
+    },
+    "receiver_wrapper_repeat_records": {
+        "type": Repeater,
+        "use_domain": True,
+        "view": "repeaters/repeat_records",
     },
     "meta": {
         "type": ReportConfiguration,
@@ -190,8 +197,14 @@ def _iter_missing_ids(db, doc_type, domain, date_range, view, chunk_size=1000):
     if view is not None:
         view_name = view
         start = end = "-"
-        startkey = []
-        endkey = [{}]
+        assert date_range is None, date_range
+        assert doc_type is None, doc_type
+        if domain is not None:
+            startkey = [domain]
+            endkey = [domain, {}]
+        else:
+            startkey = []
+            endkey = [{}]
     elif date_range is not None:
         assert domain is not None
         assert doc_type is not None
