@@ -220,7 +220,8 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
 def repair_couch_docs(db, missing, get_doc_ids, min_tries):
     total_tries = 0
     to_repair = len(missing)
-    for n in range(min_tries):
+    max_repairs = min_tries
+    for n in range(max_repairs):
         for doc_id in missing:
             db.repair(doc_id)
         missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
