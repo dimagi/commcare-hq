@@ -65,6 +65,6 @@ branches:
   - smh/bulk-download-web-users # Steph Nov 9
   - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
   - kev/webapps-disable-submit # Kevin Nov 10
-  - gh/QA-secure-cookies # Graham Nov 12
+  - gh/secure-cookies # Graham Nov 12
 
 submodules: {}
