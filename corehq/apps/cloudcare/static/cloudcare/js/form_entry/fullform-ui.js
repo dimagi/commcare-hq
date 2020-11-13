@@ -269,7 +269,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.enableSubmitButton = ko.computed(function () {
-            return !self.isSubmitting();
+            return !self.isSubmitting() && !self.blockSubmit();
         });
 
         self.submitText = ko.computed(function () {
