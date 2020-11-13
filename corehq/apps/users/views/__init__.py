@@ -19,13 +19,14 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from soil import DownloadBase
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
@@ -107,6 +108,9 @@ from corehq.apps.users.models import (
     Invitation,
     UserRole,
     WebUser,
+)
+from corehq.apps.users.tasks import (
+    bulk_download_users_async,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_INVITATION
@@ -525,12 +529,59 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'bulk_download_url': bulk_download_url,
         }
+
+
+@require_can_edit_or_view_web_users
+def download_web_users(request, domain):
+    track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
+    user_filters = {}
+    download = DownloadBase()
+    is_web_download = True
+    res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
+                                          is_web_download, owner_id=request.couch_user.get_id)
+    download.set_task(res)
+    return redirect(DownloadWebUsersStatusView.urlname, domain, download.download_id)
+
+
+class DownloadWebUsersStatusView(BaseUserSettingsView):
+    urlname = 'download_web_users_status'
+    page_title = ugettext_noop('Download Web Users Status')
+
+    @method_decorator(require_can_edit_or_view_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ListWebUsersView.page_title,
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+        }]
+
+    def get(self, request, *args, **kwargs):
+        context = super(DownloadWebUsersStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Download Web Users Status"),
+            'progress_text': _("Preparing web user download."),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Go back to Web Users"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class ListRolesView(BaseRoleAccessView):
