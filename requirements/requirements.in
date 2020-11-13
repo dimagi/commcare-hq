@@ -10,7 +10,7 @@ CommcareTranslationChecker==0.9.7
 concurrent-log-handler==0.9.12
 csiphash==0.0.5
 datadog==0.39.0
-ddtrace==0.14.1
+ddtrace==0.44.0
 decorator==4.0.11  # required by django-digest
 defusedxml==0.5.0
 diff-match-patch==20120106
