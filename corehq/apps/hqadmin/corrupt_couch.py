@@ -58,15 +58,6 @@ DOC_TYPES_BY_NAME = {
     "users": {
         "type": CommCareUser,
         "use_domain": True,
-        "doc_types": [
-            "CommCareUser",
-            "WebUser",
-        ],
-    },
-    "groups": {
-        "type": CommCareUser,
-        "use_domain": True,
-        "exclude_types": ["users"],
     },
     "domains": {"type": Domain},
     "apps": {
@@ -145,28 +136,26 @@ class Result:
         return round(sum(self.tries) / len(self.tries), 2) if self.tries else 0
 
 
-def iter_missing_ids(min_tries, domain, doc_name="ALL", view_range=None, repair=False):
-    if doc_name == "ALL":
+def iter_missing_ids(min_tries, params, repair=False):
+    if params.doc_name == "ALL":
+        assert not params.doc_type, params
         groups = dict(DOC_TYPES_BY_NAME)
-        if domain is not None:
+        if params.domain is not None:
             groups = {k: g for k, g in groups.items() if g.get("use_domain")}
         else:
             groups = {k: g for k, g in groups.items() if not g.get("use_domain")}
     else:
-        groups = {doc_name: DOC_TYPES_BY_NAME[doc_name]}
-        if domain is not None:
-            if not groups[doc_name].get("use_domain"):
-                raise ValueError(f"domain not supported with {doc_name!r}")
-        else:
-            if groups[doc_name].get("use_domain"):
-                raise ValueError(f"domain required for {doc_name!r}")
+        groups = {params.doc_name: DOC_TYPES_BY_NAME[params.doc_name]}
     for name, group in groups.items():
+        if params.doc_type:
+            group = dict(group, doc_types=[params.doc_type])
         log.info("processing %s", name)
         db = CouchCluster(group["type"].get_db())
-        domain_name = domain if group.get("use_domain") else None
+        domain_name = params.domain if group.get("use_domain") else None
         for doc_type in get_doc_types(group):
-            params = iteration_parameters(db, doc_type, domain_name, view_range, group)
-            missing_results = _iter_missing_ids(db, min_tries, *params, repair)
+            iter_params = iteration_parameters(
+                db, doc_type, domain_name, params.view_range, group)
+            missing_results = _iter_missing_ids(db, min_tries, *iter_params, repair)
             try:
                 for rec in missing_results:
                     yield doc_type, rec["missing_info"]
@@ -205,6 +194,7 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
         last_result = None
         missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
         if last_result is None:
+            log.debug("no results %s - %s", view_kwargs['startkey'], view_kwargs['endkey'])
             assert not missing
             return []
         if missing and repair:
@@ -212,7 +202,7 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
             tries += tries2
         else:
             repaired = 0
-        log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']}")
+        log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']} {missing or ''}")
         last_result["missing_info"] = missing, tries, repaired
         return [last_result]
 
@@ -227,9 +217,12 @@ def repair_couch_docs(db, missing, get_doc_ids, min_tries):
     for n in range(max_repairs):
         for doc_id in missing:
             db.repair(doc_id)
+        repaired = missing
         missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
         total_tries += tries
-        log.debug(f"repaired {to_repair - len(missing)} of {to_repair}")
+        if log.isEnabledFor(logging.DEBUG):
+            repaired -= missing
+            log.debug(f"repaired {to_repair - len(missing)} of {to_repair}: {repaired or ''}")
         if not missing:
             break
     return missing, total_tries, to_repair - len(missing)
@@ -246,10 +239,14 @@ def iteration_parameters(db, doc_type, domain, view_range, group, chunk_size=100
         else:
             startkey = []
             endkey = []
-    elif domain is not None and doc_type is not None:
+    elif domain is not None:
         view_name = 'by_domain_doc_type_date/view'
-        startkey = [domain, doc_type]
-        endkey = [domain, doc_type]
+        if doc_type is not None:
+            startkey = [domain, doc_type]
+            endkey = [domain, doc_type]
+        else:
+            startkey = [domain]
+            endkey = [domain]
     elif doc_type is not None:
         view_name = 'all_docs/by_doc_type'
         startkey = [doc_type]
