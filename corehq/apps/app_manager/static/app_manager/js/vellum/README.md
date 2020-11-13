@@ -1,7 +1,7 @@
 Vellum
 ======
 
-[![Build Status](https://travis-ci.org/dimagi/Vellum.svg?branch=master)](https://travis-ci.org/dimagi/Vellum)
+[![Build Status](https://travis-ci.com/dimagi/Vellum.svg?branch=master)](https://travis-ci.com/dimagi/Vellum)
 
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
