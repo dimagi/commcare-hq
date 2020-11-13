@@ -53,15 +53,15 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def load_from_file(self, extracted_dump_path, force=False):
+    def load_from_file(self, extracted_dump_path, dump_meta, force=False):
         file_path = os.path.join(extracted_dump_path, '{}.gz'.format(self.slug))
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
         self.stdout.write(f"Inspecting {file_path} using '{self.slug}' data loader.")
-        line_count = _get_gzfile_line_count(file_path)
+        expected_count = sum(dump_meta[self.slug].values())
         with gzip.open(file_path) as dump_file:
-            object_strings = with_progress_bar(dump_file, length=line_count, stream=self.stdout)
+            object_strings = with_progress_bar(dump_file, length=expected_count, stream=self.stdout)
             total_object_count, loaded_object_count = self.load_objects(object_strings, force)
 
         # Warn if the file we loaded contains 0 objects.
@@ -73,10 +73,3 @@ class DataLoader(metaclass=ABCMeta):
             )
 
         return total_object_count, loaded_object_count
-
-
-def _get_gzfile_line_count(file_path):
-    # This has to iterate through the whole file, which takes time (~15 minutes
-    # for an 11G sql.gz file), but it's worth it to predict completion time
-    with gzip.open(file_path) as f:
-        return sum(1 for _ in f)

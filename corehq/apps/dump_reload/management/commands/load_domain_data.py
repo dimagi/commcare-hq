@@ -1,3 +1,4 @@
+import json
 import os
 import zipfile
 from collections import Counter
@@ -54,9 +55,10 @@ class Command(BaseCommand):
         else:
             loaders = LOADERS
 
+        dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
-            loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter)
-            total_object_count += loader_total_object_count
+            loader_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter, dump_meta)
+            total_object_count += loader_count
             model_counts.update(loader_model_counts)
 
         loaded_object_count = sum(model_counts.values())
@@ -78,13 +80,21 @@ class Command(BaseCommand):
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
         return target_dir
 
-    def _load_data(self, loader_class, extracted_dump_path, object_filter):
+    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
         try:
             loader = loader_class(object_filter, self.stdout, self.stderr)
-            return loader.load_from_file(extracted_dump_path, self.force)
+            return loader.load_from_file(extracted_dump_path, dump_meta, force=self.force)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:
             if not isinstance(e, CommandError):
                 e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)
             raise
+
+
+def _get_dump_meta(extracted_dir):
+    # The dump command should have a metadata json file of the form
+    # {dumper_slug: {model_name: count}}
+    meta_path = os.path.join(extracted_dir, 'meta.json')
+    with open(meta_path) as f:
+        return json.loads(f.read())
