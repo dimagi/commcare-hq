@@ -1,5 +1,6 @@
 import datetime
 from abc import ABCMeta, abstractmethod
+from copy import copy
 
 from elasticsearch.helpers import BulkIndexError as ESBulkIndexError
 from elasticsearch2.helpers import BulkIndexError as ES2BulkIndexError
@@ -186,6 +187,7 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
         clean_index(self.es, self.index_info)
 
     def reindex(self):
+        self.index_info = copy(self.index_info)
         _override_alias(self.index_info, self.es)
         if not self.in_place and not self.start_from:
             prepare_index_for_reindex(self.es, self.index_info)
@@ -267,6 +269,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         clean_index(self.es, self.index_info)
 
     def reindex(self):
+        self.index_info = copy(self.index_info)
         _override_alias(self.index_info, self.es)
         if not self.es.indices.exists(self.index_info.index):
             self.reset = True  # if the index doesn't exist always reset the processing

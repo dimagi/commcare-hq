@@ -92,6 +92,15 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     def __str__(self):
         return '{} ({})'.format(self.alias, self.index)
 
+    def __copy__(self):
+        return ElasticsearchIndexInfo(
+            index=self.index,
+            alias=self.alias,
+            type=self.type,
+            mapping=self.mapping.copy(),
+            hq_index_name=self.hq_index_name
+        )
+
     @property
     def meta(self):
         meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
