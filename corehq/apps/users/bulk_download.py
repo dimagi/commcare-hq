@@ -110,15 +110,23 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
     }
 
 
+def get_user_role_name(domain_membership):
+    if domain_membership.is_admin:
+        return ugettext('Admin')
+    else:
+        role_name = ''
+        if domain_membership.role_id:
+            try:
+                role_name = UserRole.get(domain_membership.role_id).name
+            except ResourceNotFound:
+                role_name = ugettext('Unknown Role')
+    return role_name
+
+
 def make_web_user_dict(user, domain):
     user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
-    role_name = ''
-    if domain_membership.role_id:
-        try:
-            role_name = UserRole.get(domain_membership.role_id).name
-        except ResourceNotFound:
-            role_name = ugettext('Unknown Role')
+    role_name = get_user_role_name(domain_membership)
     return {
         'username': user.username,
         'first_name': user.first_name,

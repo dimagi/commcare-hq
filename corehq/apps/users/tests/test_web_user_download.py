@@ -41,7 +41,7 @@ class TestDownloadMobileWorkers(TestCase):
             email='george@eliot.com',
             first_name='George',
             last_name='Eliot',
-            role_id=cls.role.get_id,
+            is_admin=True,
         )
 
         cls.invited_user = Invitation.objects.create(
@@ -74,6 +74,9 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertEqual('edith@wharton.com', spec['email'])
         self.assertEqual('App Editor', spec['role'])
         self.assertEqual('Active User', spec['status'])
+
+        spec = dict(zip(headers, rows[1]))
+        self.assertEqual('Admin', spec['role'])
 
         spec = dict(zip(headers, rows[2]))
         self.assertEqual('invited@user.com', spec['username'])
