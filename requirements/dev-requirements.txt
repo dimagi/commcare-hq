@@ -185,7 +185,7 @@ requests==2.24.0          # via -r requirements.in, cloudant, datadog, django-oa
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.3.3         # via boto3
 schema==0.7.2             # via -r requirements.in
-sentry-sdk==0.14.4        # via -r requirements.in
+sentry-sdk==0.19.3        # via -r requirements.in
 sh==1.9                   # via -r requirements.in, git-build-branch
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, django-prbac
