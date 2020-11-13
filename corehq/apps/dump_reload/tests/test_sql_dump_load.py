@@ -706,8 +706,7 @@ class DefaultDictWithKeyTests(SimpleTestCase):
 def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        prefix = '(sql) ' if for_loaded else ''
-        label = '{}{}.{}'.format(prefix, model_class._meta.app_label, model_class.__name__)
+        label = '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
         return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count

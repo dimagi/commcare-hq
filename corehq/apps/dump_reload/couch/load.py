@@ -72,7 +72,7 @@ class LoaderCallback(IterDBCallback):
             doc_id = doc['_id']
             doc_type = drop_suffix(doc['doc_type'])
             doc_class = get_document_class_by_doc_type(doc_type)
-            doc_label = '(couch) {}.{}'.format(doc_class._meta.app_label, doc_type)
+            doc_label = '{}.{}'.format(doc_class._meta.app_label, doc_type)
             if doc_id in success_ids:
                 success_doc_types.append(doc_label)
 

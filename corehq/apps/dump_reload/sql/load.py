@@ -77,7 +77,7 @@ class SqlDataLoader(DataLoader):
         _reset_sequences(load_stats)
         loaded_model_counts = Counter()
         for db_stats in load_stats:
-            model_labels = (f'(sql) {get_model_label(model)}'
+            model_labels = (f'{get_model_label(model)}'
                             for model in db_stats.model_counter.elements())
             loaded_model_counts.update(model_labels)
         return object_count, loaded_model_counts

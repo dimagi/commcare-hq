@@ -47,7 +47,7 @@ class Command(BaseCommand):
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
         total_object_count = 0
-        model_counts = Counter()
+        loaded_meta = {}
         loaders = options.get('loaders')
         object_filter = options.get('object_filter')
         if loaders:
@@ -59,15 +59,19 @@ class Command(BaseCommand):
         for loader in loaders:
             loader_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter, dump_meta)
             total_object_count += loader_count
-            model_counts.update(loader_model_counts)
+            loaded_meta[loader.slug] = loader_model_counts
 
-        loaded_object_count = sum(model_counts.values())
+        self._print_stats(loaded_meta, total_object_count)
 
+    def _print_stats(self, loaded_meta, total_object_count):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
-        for model in sorted(model_counts):
-            self.stdout.write("{:<48}: {}".format(model, model_counts[model]))
+        for loader, models in sorted(loaded_meta.items()):
+            self.stdout.write(loader)
+            for model, count in sorted(models.items()):
+                self.stdout.write(f"  {model:<50}: {count}")
         self.stdout.write('{0}{0}'.format('-' * 46))
-        self.stdout.write('Loaded {}/{} objects'.format(loaded_object_count, total_object_count))
+        loaded_object_count = sum(count for model in loaded_meta.values() for count in model.values())
+        self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
         self.stdout.write('{0}{0}'.format('-' * 46))
 
     def extract_dump_archive(self, dump_file_path):
