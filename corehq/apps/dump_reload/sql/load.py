@@ -32,8 +32,6 @@ class SqlDataLoader(DataLoader):
             __, queue = dbalias_to_workerqueue[db_alias]
             queue.put(obj)
             object_count += 1
-            if not object_count % 1000:
-                self.stdout.write(f'Loaded {object_count} SQL objects')
 
         def collect_results(dbalias_to_workerqueue) -> Tuple[list, list]:
             load_stats = []
