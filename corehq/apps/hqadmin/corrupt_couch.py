@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import attr
 from couchdbkit import Database
+from dateutil.parser import parser as parse_date
 from django.conf import settings
 from memoized import memoized
 
@@ -57,7 +58,6 @@ DOC_TYPES_BY_NAME = {
     "users": {
         "type": CommCareUser,
         "use_domain": True,
-        "date_range": True,  # TODO will this work?
         "doc_types": [
             "CommCareUser",
             "WebUser",
@@ -145,7 +145,7 @@ class Result:
         return round(sum(self.tries) / len(self.tries), 2) if self.tries else 0
 
 
-def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None, repair=False):
+def iter_missing_ids(min_tries, domain, doc_name="ALL", view_range=None, repair=False):
     if doc_name == "ALL":
         groups = dict(DOC_TYPES_BY_NAME)
         if domain is not None:
@@ -163,11 +163,9 @@ def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None, repair=
     for name, group in groups.items():
         log.info("processing %s", name)
         db = CouchCluster(group["type"].get_db())
-        dates = date_range if group.get("date_range") else None
         domain_name = domain if group.get("use_domain") else None
-        view = group.get("view")
         for doc_type in get_doc_types(group):
-            params = iteration_parameters(db, doc_type, domain_name, dates, view)
+            params = iteration_parameters(db, doc_type, domain_name, view_range, group)
             missing_results = _iter_missing_ids(db, min_tries, *params, repair)
             try:
                 for rec in missing_results:
@@ -237,40 +235,42 @@ def repair_couch_docs(db, missing, get_doc_ids, min_tries):
     return missing, total_tries, to_repair - len(missing)
 
 
-def iteration_parameters(db, doc_type, domain, date_range, view, chunk_size=1000):
-    if view is not None:
-        view_name = view
+def iteration_parameters(db, doc_type, domain, view_range, group, chunk_size=1000):
+    if "view" in group:
+        view_name = group["view"]
         start = end = "-"
-        assert date_range is None, date_range
         assert doc_type is None, doc_type
         if domain is not None:
             startkey = [domain]
-            endkey = [domain, {}]
+            endkey = [domain]
         else:
             startkey = []
-            endkey = [{}]
-    elif date_range is not None:
-        assert domain is not None
-        assert doc_type is not None
-        view_name = 'by_domain_doc_type_date/view'
-        start, end = date_range
-        startkey = [domain, doc_type, json_format_datetime(start)]
-        endkey = [domain, doc_type, json_format_datetime(end)]
+            endkey = []
     elif domain is not None and doc_type is not None:
         view_name = 'by_domain_doc_type_date/view'
-        start = end = "-"
         startkey = [domain, doc_type]
-        endkey = [domain, doc_type, {}]
+        endkey = [domain, doc_type]
     elif doc_type is not None:
         view_name = 'all_docs/by_doc_type'
-        start = end = "-"
         startkey = [doc_type]
-        endkey = [doc_type, {}]
+        endkey = [doc_type]
     else:
         view_name = 'all_docs/by_doc_type'
-        start = end = "-"
         startkey = []
-        endkey = [{}]
+        endkey = []
+    if view_range is not None:
+        assert domain or doc_type, (domain, doc_type)
+        if group.get("date_range"):
+            assert domain and doc_type and view_name == 'by_domain_doc_type_date/view', \
+                (domain, doc_type, view_name, view_range)
+            view_range = [json_format_datetime(parse_date(x)) for x in view_range]
+        start, end = view_range
+        startkey.append(start)
+        endkey.append(end)
+    else:
+        start = end = "-"
+    if startkey == endkey:
+        endkey.append({})
 
     view_params = {
         'startkey': startkey,
