@@ -103,17 +103,18 @@ DOC_TYPES_BY_NAME = {
 }
 
 
-def count_missing_ids(*args):
+def count_missing_ids(*args, repair=False):
     def log_result(rec):
+        repaired = f" repaired={rec.repaired}" if repair else ""
         log.info(
-            f"  {rec.doc_type}: missing={len(rec.missing)} "
+            f"  {rec.doc_type}:{repaired} missing={len(rec.missing)} "
             f"tries=(avg: {rec.avg_tries}, max: {rec.max_tries})"
         )
 
     doc_type = None
     rec = None
     results = defaultdict(Result)
-    for doc_type, (missing, tries) in iter_missing_ids(*args):
+    for doc_type, (missing, tries, repaired) in iter_missing_ids(*args, repair):
         if rec and doc_type != rec.doc_type:
             log_result(rec)
             results.pop(doc_type, None)
@@ -121,6 +122,7 @@ def count_missing_ids(*args):
         rec.doc_type = doc_type
         rec.missing.update(missing)
         rec.tries.append(tries)
+        rec.repaired += repaired
     if rec:
         log_result(rec)
     else:
@@ -132,6 +134,7 @@ class Result:
     doc_type = attr.ib(default=None)
     missing = attr.ib(factory=set)
     tries = attr.ib(factory=list)
+    repaired = attr.ib(default=0)
 
     @property
     def max_tries(self):
@@ -168,7 +171,7 @@ def iter_missing_ids(min_tries, domain, doc_name="ALL", date_range=None, repair=
             missing_results = _iter_missing_ids(db, min_tries, *params, repair)
             try:
                 for rec in missing_results:
-                    yield doc_type, rec["missing_and_tries"]
+                    yield doc_type, rec["missing_info"]
             finally:
                 missing_results.discard_state()
 
@@ -207,10 +210,12 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
             assert not missing
             return []
         if missing and repair:
-            missing, tries2 = repair_couch_docs(db, missing, get_doc_ids, min_tries)
+            missing, tries2, repaired = repair_couch_docs(db, missing, get_doc_ids, min_tries)
             tries += tries2
+        else:
+            repaired = 0
         log.debug(f"{len(missing)}/{tries} start={view_kwargs['startkey']}")
-        last_result["missing_and_tries"] = missing, tries
+        last_result["missing_info"] = missing, tries, repaired
         return [last_result]
 
     args_provider = NoSkipArgsProvider(view_params)
@@ -229,7 +234,7 @@ def repair_couch_docs(db, missing, get_doc_ids, min_tries):
         log.debug(f"repaired {to_repair - len(missing)} of {to_repair}")
         if not missing:
             break
-    return missing, total_tries
+    return missing, total_tries, to_repair - len(missing)
 
 
 def iteration_parameters(db, doc_type, domain, date_range, view, chunk_size=1000):

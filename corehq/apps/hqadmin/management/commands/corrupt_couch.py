@@ -31,7 +31,7 @@ class Command(BaseCommand):
             start, end = date_range.split("..")
         date_range = parse_date(start), parse_date(end)
         repair = command == "repair"
-        count_missing_ids(min_tries, domain, doc_name, date_range, repair)
+        count_missing_ids(min_tries, domain, doc_name, date_range, repair=repair)
 
 
 def setup_logging(debug=False):
