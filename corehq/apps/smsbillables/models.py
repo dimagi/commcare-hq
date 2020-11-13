@@ -280,7 +280,8 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
-        if self.direct_gateway_fee is None:
+        used_gateway_fee = self.gateway_fee is not None and self.gateway_fee.amount is not None
+        if used_gateway_fee:
             return self.multipart_count * self._single_gateway_charge
         else:
             return self._single_gateway_charge

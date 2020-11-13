@@ -174,7 +174,7 @@ class TestSMSBillablesWithAPI(TestCase):
         self.gateway_fee = create_gateway_fee(self.backend.hq_api_id, self.msg, gateway_fee)
 
         with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(api_fee, 1)):
+                   return_value=(api_fee, None)):
             create_billable_for_sms(self.msg, delay=False)
 
         sms_billables = SmsBillable.objects.filter(
