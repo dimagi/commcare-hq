@@ -169,7 +169,7 @@ class FormplayerMain(View):
             ).run()
             if login_as_users.total == 1:
                 def set_cookie(response):
-                    response.set_cookie(cookie_name, user.raw_username)
+                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
                     return response
 
                 user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
@@ -298,10 +298,16 @@ class PreviewAppView(TemplateView):
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
+<<<<<<< HEAD
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'environment': PREVIEW_APP_ENVIRONMENT,
+            'integrations': integration_contexts(request.domain),
+=======
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
+>>>>>>> adil-uddin/feature/USH-212-separate-permission-for-geocoder
         })
 
 

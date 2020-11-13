@@ -3,6 +3,7 @@ from collections import defaultdict
 from copy import deepcopy
 from functools import partial
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
@@ -117,7 +118,7 @@ def get_langs(request, app):
 
 
 def set_lang_cookie(response, lang):
-    response.set_cookie('lang', lang)
+    response.set_cookie('lang', lang, secure=settings.SECURE_COOKIES)
 
 
 def bail(request, domain, app_id, not_found=""):
