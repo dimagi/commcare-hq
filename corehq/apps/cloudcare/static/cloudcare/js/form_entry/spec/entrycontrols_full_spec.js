@@ -7,6 +7,12 @@ describe('Entries', function () {
         questionJSON,
         spy;
 
+    before(function () {
+        hqImport("hqwebapp/js/initial_page_data").register(
+            "has_geocoder_privs",
+            true
+        );
+    });
 
     beforeEach(function () {
         window.MAPBOX_ACCESS_TOKEN = 'xxx';
