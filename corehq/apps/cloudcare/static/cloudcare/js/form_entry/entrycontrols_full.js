@@ -928,6 +928,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
      * @param {Object} question - A Question object
      */
     function getEntry(question) {
+        var hasGeocoderPrivs = initialPageData.get("has_geocoder_privs");
         var entry = null;
         var options = {};
         var isMinimal = false;
@@ -956,9 +957,14 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                     options.enableAutoUpdate = isPhoneMode;
                 }
                 if (question.stylesContains(Const.ADDRESS)) {
-                    entry = new AddressEntry(question, {
-                        broadcastStyles: question.stylesContaining(/broadcast-*/),
-                    });
+                    if (hasGeocoderPrivs) {
+                        entry = new AddressEntry(question, {
+                            broadcastStyles: question.stylesContaining(/broadcast-*/),
+                        });
+                    } else {
+                        window.console.warn('No active entry for: ' + question.datatype());
+                        entry = new UnsupportedEntry(question, options);
+                    }
                 } else if (question.stylesContains(Const.NUMERIC)) {
                     entry = new PhoneEntry(question, options);
                 } else {

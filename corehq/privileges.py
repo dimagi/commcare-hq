@@ -4,6 +4,7 @@ LOOKUP_TABLES = 'lookup_tables'
 API_ACCESS = 'api_access'
 
 CLOUDCARE = 'cloudcare'
+GEOCODER = 'geocoder'
 
 ACTIVE_DATA_MANAGEMENT = 'active_data_management'
 CUSTOM_BRANDING = 'custom_branding'
@@ -120,6 +121,7 @@ MAX_PRIVILEGES = [
     DATA_FORWARDING,
     PROJECT_ACCESS,
     APP_USER_PROFILES,
+    GEOCODER,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -174,4 +176,5 @@ class Titles(object):
             DATA_FORWARDING: _("Data Forwarding"),
             PROJECT_ACCESS: _("Project Features"),
             APP_USER_PROFILES: _("App User Profiles"),
+            GEOCODER: _("Geocoder"),
         }.get(privilege, privilege)
