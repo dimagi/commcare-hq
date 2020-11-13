@@ -331,6 +331,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
+                requireSearch: this.options.requireSearch,
+                searchText: this.options.searchText,
                 sortIndices: this.options.sortIndices,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
