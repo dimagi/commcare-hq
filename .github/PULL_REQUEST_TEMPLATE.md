@@ -14,7 +14,7 @@
 
 - [ ] Risk label is set correctly
 - [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
-- [ ] QA labels are set correctly: if QA is part of the safety story, the "Awaiting QA" label is used
+- [ ] If QA is part of the safety story, the "Awaiting QA" label is used
 - [ ] I am certain that this PR will not introduce a regression for the reasons below
 
 ### Automated test coverage
