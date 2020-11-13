@@ -891,6 +891,16 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
                 "This may still cause issues if the other questions have not been calculated yet",
 )
 
+VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
+    'allow_bulk_form_actions',
+    "Allow bulk form actions in the Form Builder",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+    description="This shows Bulk Form Actions (mark all questions required, "
+                "set default values to matching case properties) in "
+                "the Form Builder's main dropdown menu.",
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
