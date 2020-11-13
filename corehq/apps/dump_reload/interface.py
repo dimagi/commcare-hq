@@ -49,7 +49,7 @@ class DataLoader(metaclass=ABCMeta):
         """
         :param object_strings: iterable of JSON encoded object strings
         :param force: True if objects should be loaded into an existing domain
-        :return: tuple(total object count, loaded object count)
+        :return: loaded object Counter
         """
         raise NotImplementedError
 
@@ -62,7 +62,7 @@ class DataLoader(metaclass=ABCMeta):
         expected_count = sum(dump_meta[self.slug].values())
         with gzip.open(file_path) as dump_file:
             object_strings = with_progress_bar(dump_file, length=expected_count, stream=self.stdout)
-            total_object_count, loaded_object_count = self.load_objects(object_strings, force)
+            loaded_object_count = self.load_objects(object_strings, force)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
@@ -72,4 +72,4 @@ class DataLoader(metaclass=ABCMeta):
                 RuntimeWarning
             )
 
-        return total_object_count, loaded_object_count
+        return loaded_object_count

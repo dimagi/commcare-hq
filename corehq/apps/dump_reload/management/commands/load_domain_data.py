@@ -46,7 +46,6 @@ class Command(BaseCommand):
         self.stdout.write("Loading data from %s." % dump_file_path)
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
-        total_object_count = 0
         loaded_meta = {}
         loaders = options.get('loaders')
         object_filter = options.get('object_filter')
@@ -57,13 +56,11 @@ class Command(BaseCommand):
 
         dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
-            loader_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter, dump_meta)
-            total_object_count += loader_count
-            loaded_meta[loader.slug] = loader_model_counts
+            loaded_meta[loader.slug] = self._load_data(loader, extracted_dir, object_filter, dump_meta)
 
-        self._print_stats(loaded_meta, total_object_count)
+        self._print_stats(loaded_meta, dump_meta)
 
-    def _print_stats(self, loaded_meta, total_object_count):
+    def _print_stats(self, loaded_meta, dump_meta):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
         for loader, models in sorted(loaded_meta.items()):
             self.stdout.write(loader)
@@ -71,6 +68,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"  {model:<50}: {count}")
         self.stdout.write('{0}{0}'.format('-' * 46))
         loaded_object_count = sum(count for model in loaded_meta.values() for count in model.values())
+        total_object_count = sum(count for model in dump_meta.values() for count in model.values())
         self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
         self.stdout.write('{0}{0}'.format('-' * 46))
 
