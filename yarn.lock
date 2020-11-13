@@ -121,9 +121,9 @@ Caret.js@INTELOGIE/Caret.js#0.3.1:
   dependencies:
     grunt "~0.4.1"
 
-DOMPurify@cure53/DOMPurify#2.0.12:
-  version "2.0.12"
-  resolved "https://codeload.github.com/cure53/DOMPurify/tar.gz/05bf3fc4dce98b0f182b8b988f9d39264144b3be"
+DOMPurify@cure53/DOMPurify#2.2.2:
+  version "2.2.2"
+  resolved "https://codeload.github.com/cure53/DOMPurify/tar.gz/7923e106c3ccfd0315ec008d5793976099baeabd"
 
 JSONStream@^1.3.4, JSONStream@^1.3.5:
   version "1.3.5"
