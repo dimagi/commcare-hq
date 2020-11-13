@@ -45,17 +45,25 @@ def bulk_download_usernames_async(domain, download_id, user_filters, owner_id):
 
 
 @task(serializer='pickle')
-def bulk_download_users_async(domain, download_id, user_filters, owner_id):
-    from corehq.apps.users.bulk_download import dump_users_and_groups, GroupNameError
+def bulk_download_users_async(domain, download_id, user_filters, is_web_download, owner_id):
+    from corehq.apps.users.bulk_download import dump_users_and_groups, dump_web_users, GroupNameError
     errors = []
     try:
-        dump_users_and_groups(
-            domain,
-            download_id,
-            user_filters,
-            bulk_download_users_async,
-            owner_id,
-        )
+        if is_web_download:
+            dump_web_users(
+                domain,
+                download_id,
+                bulk_download_users_async,
+                owner_id,
+            )
+        else:
+            dump_users_and_groups(
+                domain,
+                download_id,
+                user_filters,
+                bulk_download_users_async,
+                owner_id,
+            )
     except GroupNameError as e:
         group_urls = [
             reverse('group_members', args=[domain, group.get_id])
