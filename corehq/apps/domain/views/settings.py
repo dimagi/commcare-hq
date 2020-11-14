@@ -51,7 +51,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
@@ -492,11 +492,13 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        from corehq.apps.users.views import hide_password_feedback
+        self.extra_context['hide_password_feedback'] = hide_password_feedback()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        from corehq.apps.users.views import hide_password_feedback
+        self.extra_context['hide_password_feedback'] = hide_password_feedback()
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)

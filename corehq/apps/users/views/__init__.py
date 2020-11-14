@@ -842,7 +842,7 @@ class UserInvitationView(object):
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'hide_password_feedback': hide_password_feedback(),
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}
@@ -1270,3 +1270,7 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user.fcm_device_token = device_token
     user.save()
     return HttpResponse()
+
+
+def hide_password_feedback():
+    return settings.ENABLE_DRACONIAN_SECURITY_FEATURES

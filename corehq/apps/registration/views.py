@@ -51,6 +51,7 @@ from corehq.apps.registration.utils import (
     send_new_request_update_email,
 )
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.views import hide_password_feedback
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
@@ -234,7 +235,7 @@ class UserRegistrationView(BasePageView):
         context = {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'hide_password_feedback': hide_password_feedback(),
             'professional_features': [
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
