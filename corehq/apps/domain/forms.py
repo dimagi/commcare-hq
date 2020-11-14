@@ -43,7 +43,6 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -94,7 +93,6 @@ from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
     CallCenterOwnerOptionsView,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import custom_clean_password
 from corehq.apps.domain.models import (
