@@ -66,5 +66,6 @@ branches:
   - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
   - gh/QA-secure-cookies # Graham Nov 12
   - kev/dompurify-upgrade  # Kevin Nov 10
+  - nh/onse/by_case  # Norman Nov 14
 
 submodules: {}
