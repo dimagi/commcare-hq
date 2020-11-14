@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from typing import Iterable, Optional, List
 
@@ -13,7 +14,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
 
-
+MAX_THREAD_WORKERS = 10
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
@@ -36,9 +37,13 @@ def update_facility_cases_from_dhis2_data_elements(
     """
     dhis2_server = get_dhis2_server(print_notifications)
     try:
-        for case_block in get_case_blocks():
-            case_block = set_case_updates(dhis2_server, case_block)
-            save_case(case_block)
+        case_blocks = get_case_blocks()
+        with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
+            futures = {executor.submit(set_case_updates, dhis2_server, cb)
+                       for cb in case_blocks}
+            for future in as_completed(futures):
+                case_block = future.result()  # reraises exceptions in workers
+                save_case(case_block)
     except Exception as err:
         message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
         if print_notifications:
