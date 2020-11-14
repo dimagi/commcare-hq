@@ -6,7 +6,6 @@ from celery.task import periodic_task
 
 from casexml.apps.case.mock import CaseBlock
 from custom.onse.models import iter_mappings
-from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -37,9 +36,9 @@ def update_facility_cases_from_dhis2_data_elements(
     """
     dhis2_server = get_dhis2_server(print_notifications)
     try:
-        case_blocks = get_case_blocks()
-        case_blocks = set_case_updates(dhis2_server, case_blocks)
-        save_cases(case_blocks)
+        for case_block in get_case_blocks():
+            case_block = set_case_updates(dhis2_server, case_block)
+            save_case(case_block)
     except Exception as err:
         message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
         if print_notifications:
@@ -94,39 +93,38 @@ def get_case_blocks() -> Iterable[CaseBlock]:
 
 def set_case_updates(
     dhis2_server: ConnectionSettings,
-    case_blocks: Iterable[CaseBlock]
-) -> Iterable[CaseBlock]:
+    case_block: CaseBlock,
+) -> CaseBlock:
     """
     Fetch data sets of data elements for last quarter from ``dhis2_server``
-    and update the data elements' corresponding case properties in
-    ``case_blocks``.
+    and update the data elements corresponding case properties in
+    ``case_block`` in place.
     """
-    for case_block in case_blocks:
-        # Several of the data elements we want belong to the same data
-        # sets. Only fetch a data set if we don't already have it.
-        data_set_cache = {}
-        for mapping in iter_mappings():
-            if not mapping.data_set_id:
-                raise ValueError(
-                    f'Mapping {mapping} does not include data set ID. '
-                    'Use **fetch_onse_data_set_ids** command.')
-            if mapping.data_set_id not in data_set_cache:
-                data_set_cache[mapping.data_set_id] = fetch_data_set(
-                    dhis2_server, mapping.data_set_id,
-                    # facility case external_id is set to its DHIS2 org
-                    # unit. This is the DHIS2 facility whose data we
-                    # want to import.
-                    org_unit_id=case_block.external_id,
-                )
-            if data_set_cache[mapping.data_set_id] is None:
-                # No data for this facility. `None` = "We don't know"
-                case_block.update[mapping.case_property] = None
-            else:
-                case_block.update[mapping.case_property] = get_data_element_total(
-                    mapping.data_element_id,
-                    data_values=data_set_cache[mapping.data_set_id]
-                )
-        yield case_block
+    # Several of the data elements we want belong to the same data
+    # sets. Only fetch a data set if we don't already have it.
+    data_set_cache = {}
+    for mapping in iter_mappings():
+        if not mapping.data_set_id:
+            raise ValueError(
+                f'Mapping {mapping} does not include data set ID. '
+                'Use **fetch_onse_data_set_ids** command.')
+        if mapping.data_set_id not in data_set_cache:
+            data_set_cache[mapping.data_set_id] = fetch_data_set(
+                dhis2_server, mapping.data_set_id,
+                # facility case external_id is set to its DHIS2 org
+                # unit. This is the DHIS2 facility whose data we
+                # want to import.
+                org_unit_id=case_block.external_id,
+            )
+        if data_set_cache[mapping.data_set_id] is None:
+            # No data for this facility. `None` = "We don't know"
+            case_block.update[mapping.case_property] = None
+        else:
+            case_block.update[mapping.case_property] = get_data_element_total(
+                mapping.data_element_id,
+                data_values=data_set_cache[mapping.data_set_id]
+            )
+    return case_block
 
 
 def fetch_data_set(
@@ -212,12 +210,11 @@ def get_data_element_total(
     return value
 
 
-def save_cases(case_blocks):
+def save_case(case_block: CaseBlock):
     today = date.today().isoformat()
-    for chunk in chunked(case_blocks, 1000, collection=list):
-        submit_case_blocks(
-            [cb.as_text() for cb in chunk],
-            DOMAIN,
-            xmlns='http://commcarehq.org/dhis2-import',
-            device_id=f"dhis2-import-{DOMAIN}-{today}",
-        )
+    submit_case_blocks(
+        [case_block.as_text()],
+        DOMAIN,
+        xmlns='http://commcarehq.org/dhis2-import',
+        device_id=f"dhis2-import-{DOMAIN}-{today}",
+    )
