@@ -8,7 +8,6 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
@@ -54,6 +53,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
+from corehq.apps.domain.extension_points import custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import UserES
@@ -1272,5 +1272,6 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
     return HttpResponse()
 
 
+@memoized
 def hide_password_feedback():
-    return settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+    return bool(custom_clean_password)

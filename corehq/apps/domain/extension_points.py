@@ -13,3 +13,8 @@ def custom_domain_module(domain) -> Optional[str]:
     Returns:
         A string of the python path to the module for the domain, or None
     """
+
+
+@extension_point(result_format=ResultFormat.FIRST)
+def custom_clean_password(password) -> None:
+    """Custom function to ensure that password meets requirements"""
