@@ -58,10 +58,10 @@ class DataLoader(metaclass=ABCMeta):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
-        self.stdout.write(f"Inspecting {file_path} using '{self.slug}' data loader.")
+        self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
         expected_count = sum(dump_meta[self.slug].values())
         with gzip.open(file_path) as dump_file:
-            object_strings = with_progress_bar(dump_file, length=expected_count, stream=self.stdout)
+            object_strings = with_progress_bar(dump_file, length=expected_count)
             loaded_object_count = self.load_objects(object_strings, force)
 
         # Warn if the file we loaded contains 0 objects.
