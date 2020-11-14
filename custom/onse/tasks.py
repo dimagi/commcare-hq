@@ -1,18 +1,18 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
-from typing import Iterable, Optional, List
+from typing import Iterable, List, Optional
 
 from celery.schedules import crontab
 from celery.task import periodic_task
 
 from casexml.apps.case.mock import CaseBlock
-from custom.onse.models import iter_mappings
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
+from custom.onse.models import iter_mappings
 
 MAX_THREAD_WORKERS = 10
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
