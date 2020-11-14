@@ -14,13 +14,13 @@ def get_dbname(doc_name):
     return db.dbname
 
 
-def get_node_dbs(node_ips, dbname, node_port, username="admin"):
+def get_node_dbs(nodes, dbname, username="admin"):
     def node_url(proxy_url, node):
-        return urlunparse(proxy_url._replace(netloc=f'{auth}@{node}:{node_port}'))
+        return urlunparse(proxy_url._replace(netloc=f'{auth}@{node}'))
 
     proxy_url = urlparse(settings.COUCH_DATABASE)._replace(path=f"/{dbname}")
     auth = username + ":" + proxy_url.netloc.split('@')[0].split(":", 1)[1]
-    return [Database(node_url(proxy_url, node)) for node in node_ips]
+    return [Database(node_url(proxy_url, node)) for node in nodes]
 
 
 def print_missing_ids(*args):
