@@ -16,5 +16,5 @@ def custom_domain_module(domain) -> Optional[str]:
 
 
 @extension_point(result_format=ResultFormat.FIRST)
-def custom_clean_password(password) -> None:
+def custom_clean_password(password) -> Optional[tuple]:
     """Custom function to ensure that password meets requirements"""
