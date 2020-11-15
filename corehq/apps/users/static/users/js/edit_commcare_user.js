@@ -47,10 +47,6 @@ hqDefine('users/js/edit_commcare_user', [
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
                 } else {
                     var message = gettext('Password was not changed ');
-                    if (initialPageData.get('hide_password_feedback')) {
-                        message += gettext("Password Requirements: 1 special character, " +
-                            "1 number, 1 capital letter, minimum length of 8 characters.");
-                    }
                     alertUser.alert_user(message, 'danger');
                 }
             },
