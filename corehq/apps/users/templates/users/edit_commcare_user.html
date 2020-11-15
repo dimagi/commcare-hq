@@ -63,7 +63,12 @@
     <div class="tab-pane" id="user-password">
       <div class="panel-body">
         {% if not request.is_view_only %}
-          {% include 'users/partials/reset_password.html' %}
+          <form id="reset-password-form" class="form-horizontal" action="{% url "change_password" domain couch_user.user_id %}" method="post">
+            {% csrf_token %}
+            <div id="reset-password-form-container">
+              {% include 'users/partials/reset_password.html' %}
+            </div>
+          </form>
           <div class="spacer"></div>
         {% endif %}
         {% if token %}
