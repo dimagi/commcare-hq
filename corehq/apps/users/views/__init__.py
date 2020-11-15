@@ -1274,4 +1274,4 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
 
 @memoized
 def hide_password_feedback():
-    return bool(custom_clean_password)
+    return bool(custom_clean_password.extensions)

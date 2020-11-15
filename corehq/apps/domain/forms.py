@@ -1121,9 +1121,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    custom_clean = custom_clean_password
-    if custom_clean:
-        strength, message = custom_clean(txt)
+    if custom_clean_password.extensions:
+        strength, message = custom_clean_password(txt)
     else:
         strength, message = _clean_password(txt)
     if strength['score'] < 2:
