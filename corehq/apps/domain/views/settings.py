@@ -492,13 +492,13 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
-        from corehq.apps.users.views import hide_password_feedback
-        self.extra_context['hide_password_feedback'] = hide_password_feedback()
+        from corehq.apps.users.views import has_custom_clean_password
+        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.users.views import hide_password_feedback
-        self.extra_context['hide_password_feedback'] = hide_password_feedback()
+        from corehq.apps.users.views import has_custom_clean_password
+        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)

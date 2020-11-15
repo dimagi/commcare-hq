@@ -842,7 +842,7 @@ class UserInvitationView(object):
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),
-            'hide_password_feedback': hide_password_feedback(),
+            'hide_password_feedback': has_custom_clean_password(),
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}
@@ -1273,5 +1273,6 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
 
 
 @memoized
-def hide_password_feedback():
+def has_custom_clean_password():
+    # the environment has a custom clean password method set
     return bool(custom_clean_password.extensions)

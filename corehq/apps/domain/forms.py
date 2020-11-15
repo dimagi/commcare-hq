@@ -1121,7 +1121,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if custom_clean_password.extensions:
+    from corehq.apps.users.views import has_custom_clean_password
+    if has_custom_clean_password():
         strength, message = custom_clean_password(txt)
     else:
         strength, message = _clean_password(txt)
