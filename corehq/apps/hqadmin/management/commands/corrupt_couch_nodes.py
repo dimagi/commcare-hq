@@ -56,6 +56,7 @@ def iter_missing_ids(dbs, id_range, chunk_size=10000):
     next_id, end_id = id_range
     db0, *other_dbs = dbs
     drop = False
+    log.info(f"scan range: {next_id}..{end_id}")
     while True:
         db0_ids = query_ids(db0, (next_id, end_id), chunk_size)
         last_id = max(db0_ids) if db0_ids else {}
@@ -67,10 +68,10 @@ def iter_missing_ids(dbs, id_range, chunk_size=10000):
         else:
             drop = True
         if not any(id_sets):
-            log.info(f"final range: {next_id} - {last_id}")
+            log.info(f"final range: {next_id}..{last_id}")
             break
         missing = find_missing(id_sets)
-        log.info(f"{next_id} - {last_id} => {len(missing)}")
+        log.info(f"..{last_id} => {len(missing)}")
         yield from missing
         next_id = last_id
 
