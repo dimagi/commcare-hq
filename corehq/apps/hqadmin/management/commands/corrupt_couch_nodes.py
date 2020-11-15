@@ -53,10 +53,8 @@ def print_missing_ids(*args):
 
 
 def iter_missing_ids(dbs, id_range, chunk_size=10000):
-    start_id, end_id = id_range
+    next_id, end_id = id_range
     db0, *other_dbs = dbs
-    next_id = start_id
-    end_id = end_id or {}
     drop = False
     while True:
         db0_ids = query_ids(db0, (next_id, end_id), chunk_size)
@@ -78,13 +76,12 @@ def iter_missing_ids(dbs, id_range, chunk_size=10000):
 
 
 def query_ids(db, id_range, limit=None):
-    start, end = id_range
-    view_kwargs = {
-        "startkey": [start],
-        "endkey": [end],
-        "include_docs": False,
-        "reduce": False,
-    }
+    start_id, end_id = id_range
+    view_kwargs = {"include_docs": False, "reduce": False}
+    if start_id:
+        view_kwargs["startkey"] = start_id
+    if end_id:
+        view_kwargs["endkey"] = end_id
     if limit:
         view_kwargs["limit"] = limit
     return {rec["id"] for rec in db.view("_all_docs", **view_kwargs)}
@@ -103,7 +100,6 @@ def check_node_integrity(dbs, id_range, chunk_size=10000, min_tries=50):
     """Check each db node for consistent results over a given id range"""
     start_id, end_id = id_range
     next_ids = [start_id] * len(dbs)
-    end_id = end_id or {}
     while True:
         for i, db in enumerate(dbs):
             uri = db.uri.rsplit("@")[-1]
