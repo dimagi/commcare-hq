@@ -190,6 +190,16 @@
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
       <div class="panel-body">
+        {% if show_auto_launch %}
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: autoLaunch">
+                {% trans "In Web Apps, automatically launch case claim whenever user visits this case list" %}
+              </label>
+            </div>
+          </div>
+        {% endif %}
         <div class="form-group">
           <label for="search-display-condition" class="control-label">
             {% trans "Display condition" %}
