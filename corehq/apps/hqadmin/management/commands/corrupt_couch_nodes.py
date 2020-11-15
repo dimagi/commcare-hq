@@ -60,7 +60,7 @@ def iter_missing_ids(dbs, id_range, chunk_size=10000):
     drop = False
     while True:
         db0_ids = query_ids(db0, (next_id, end_id), chunk_size)
-        last_id = db0_ids[-1] if db0_ids else {}
+        last_id = max(db0_ids) if db0_ids else {}
         id_sets = query_dbs(other_dbs, (next_id, last_id))
         id_sets.append(db0_ids)
         if drop:
