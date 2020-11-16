@@ -9,7 +9,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
+    var searchViewModel = function (searchProperties, autoLaunch, includeClosed, defaultProperties, lang,
         searchButtonDisplayCondition, searchFilter, blacklistedOwnerIdsExpression, saveButton,
         searchFilterObservable) {
         var self = {},
@@ -111,6 +111,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
+        self.autoLaunch = ko.observable(autoLaunch);
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
@@ -226,6 +227,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
+                auto_launch: self.autoLaunch(),
                 relevant: self._getRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_filter: self.searchFilter(),
@@ -235,6 +237,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             };
         };
 
+        self.autoLaunch.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
