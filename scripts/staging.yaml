@@ -59,7 +59,6 @@ branches:
   - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
   - gh/improve-queueing-repeaters # Graham Oct 22
-  - jls/require-search-text # Jenny Oct 22
   - jls/combobox-select2 # Jenny Oct 28
   - adil-uddin:feature/USH-212-separate-permission-for-geocoder # Adil/Jenny Nov 6
   - smh/bulk-download-web-users # Steph Nov 9
@@ -68,5 +67,6 @@ branches:
   - kev/dompurify-upgrade  # Kevin Nov 10
   - nh/onse/by_case  # Norman Nov 14
   - jls/case-claim-result-filter # Jenny Nov 16
+  - jls/autolaunch-action # Jenny Nov 16
 
 submodules: {}
