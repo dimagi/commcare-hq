@@ -67,5 +67,6 @@ branches:
   - gh/QA-secure-cookies # Graham Nov 12
   - kev/dompurify-upgrade  # Kevin Nov 10
   - nh/onse/by_case  # Norman Nov 14
+  - jls/case-claim-result-filter # Jenny Nov 16
 
 submodules: {}
