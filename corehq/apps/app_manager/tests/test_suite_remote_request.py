@@ -128,6 +128,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
+    def test_case_search_filter(self, *args):
+        search_filter = "rating > 3"
+        self.module.search_config.search_filter = search_filter
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual(
+            "'{}'".format(search_filter),
+            suite.xpath('./remote-request[1]/session/query/data[@key="_xpath_query"]/@ref')[0]
+        )
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition

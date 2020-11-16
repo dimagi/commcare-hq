@@ -145,6 +145,13 @@ class RemoteRequestFactory(object):
             QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
             for c in self.module.search_config.default_properties
         ]
+        if self.module.search_config.search_filter:
+            extra_query_datums.append(
+                QueryData(
+                    key="_xpath_query",
+                    ref="'{}'".format(self.module.search_config.search_filter)
+                )
+            )
         if self.module.search_config.blacklisted_owner_ids_expression:
             extra_query_datums.append(
                 QueryData(
