@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 
 from corehq.apps.sms.models import OUTGOING, SMS
-from corehq.apps.smsbillables.models import SmsGatewayFee
 
 short_text = "This is a test text message under 160 characters."
 
