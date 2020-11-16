@@ -200,12 +200,11 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <input type="text"
-                     class="form-control"
-                     id="search-display-condition"
-                     spellcheck="false"
-                     data-bind="value: searchButtonDisplayCondition"
-              />
+              <textarea class="form-control vertical-resize"
+                       id="search-display-condition"
+                       spellcheck="false"
+                       data-bind="value: searchButtonDisplayCondition"
+              ></textarea>
             </div>
           </div>
           <div class="form-group">
@@ -215,11 +214,10 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <textarea type="text"
-                     data-bind="value: searchFilter"
-                     class="form-control vertical-resize"
-                     id="search-filter"
-                     spellcheck="false"
+              <textarea data-bind="value: searchFilter"
+                        class="form-control vertical-resize"
+                        id="search-filter"
+                        spellcheck="false"
               ></textarea>
               <p class="help-block">
                 <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
@@ -238,12 +236,11 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <input type="text"
-                     data-bind="value: relevant"
-                     class="form-control"
-                     id="claim-relevant-condition"
-                     spellcheck="false"
-              />
+              <textarea data-bind="value: relevant"
+                        class="form-control vertical-resize"
+                        id="claim-relevant-condition"
+                        spellcheck="false"
+              ></textarea>
             </div>
           </div>
           <div class="form-group">
@@ -264,12 +261,11 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <input type="text"
-                     data-bind="value: blacklistedOwnerIdsExpression"
-                     class="form-control"
-                     id="blacklisted-user-ids"
-                     spellcheck="false"
-              />
+              <textarea data-bind="value: blacklistedOwnerIdsExpression"
+                        class="form-control vertical-resize"
+                        id="blacklisted-user-ids"
+                        spellcheck="false"
+              ></textarea>
               <p class="help-block">
                 {% blocktrans %}
                   Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
