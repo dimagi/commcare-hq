@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from couchdbkit import Database
 
+from dimagi.utils.couch.database import retry_on_couch_error
+
 from .corrupt_couch import setup_logging
 from ...corrupt_couch import DOC_TYPES_BY_NAME
 
@@ -79,6 +81,7 @@ def iter_missing_ids(dbs, id_range, chunk_size=10000):
         next_id = last_id
 
 
+@retry_on_couch_error
 def query_ids(db, id_range, limit=None):
     start_id, end_id = id_range
     view_kwargs = {"include_docs": False, "reduce": False}
