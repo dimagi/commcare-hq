@@ -215,16 +215,19 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <input type="text"
+              <textarea type="text"
                      data-bind="value: searchFilter"
-                     class="form-control"
+                     class="form-control vertical-resize"
                      id="search-filter"
                      spellcheck="false"
-              />
+              ></textarea>
               <p class="help-block">
+                <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
+                  <i class="fa fa-mail-reply"></i>
+                  {% trans "Copy case list filter" %}
+                </button>
                 {% trans "Example: age > 5" %}
               </p>
-              <!-- TODO: button to copy from case list filter, if it isn't already...or just add it as help text? might be too long-->
             </div>
           </div>
           <div class="form-group">
