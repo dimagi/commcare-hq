@@ -16,6 +16,7 @@ from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from custom.m4change.models import FixtureReportResult
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
@@ -127,7 +128,11 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
     def get_missing(doc_ids):
         @retry_on_couch_error
         def get_doc_ids():
-            return {r["id"] for r in db.view("_all_docs", **view_kwargs)}
+            results = list(db.view("_all_docs", **view_kwargs))
+            try:
+                return {r["id"] for r in results}
+            except KeyError as err:
+                raise BulkFetchException(err)  # retry
 
         view_kwargs = {
             "keys": list(doc_ids),
@@ -147,8 +152,7 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
                     log.debug("repairing %s", doc_id)
                     db.repair(doc_id)
                 missing = get_missing(doc_ids)
-                log.info("repaired %s of %s missing docs",
-                         len(doc_ids) - len(missing), len(doc_ids))
+                log.info("repaired %s missing docs", len(doc_ids) - len(missing))
                 repaired += len(doc_ids) - len(missing)
                 if not missing:
                     break
@@ -156,7 +160,7 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
             if missing:
                 log.warning("could not repair %s missing docs", len(missing))
                 print("\n".join(sorted(missing)))
-        log.info(f"repaired {repaired} missing doc ids")
+        log.info(f"total: repaired {repaired} missing docs")
 
 
 @attr.s
