@@ -6,6 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from casexml.apps.case.mock import CaseBlock
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -39,11 +40,14 @@ def update_facility_cases_from_dhis2_data_elements(
     try:
         case_blocks = get_case_blocks()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
-            futures = {executor.submit(set_case_updates, dhis2_server, cb)
-                       for cb in case_blocks}
-            for future in as_completed(futures):
-                case_block = future.result()  # reraises exceptions in workers
-                save_case(case_block)
+            futures = (executor.submit(set_case_updates, dhis2_server, cb)
+                       for cb in case_blocks)
+            for futures_chunk in chunked(futures, 100):
+                case_blocks_chunk = []
+                for future in as_completed(futures_chunk):
+                    case_block = future.result()  # reraises exceptions in workers
+                    case_blocks_chunk.append(case_block)
+                save_cases(case_blocks_chunk)
     except Exception as err:
         message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
         if print_notifications:
@@ -215,10 +219,10 @@ def get_data_element_total(
     return value
 
 
-def save_case(case_block: CaseBlock):
+def save_cases(case_blocks: List[CaseBlock]):
     today = date.today().isoformat()
     submit_case_blocks(
-        [case_block.as_text()],
+        [cb.as_text() for cb in case_blocks],
         DOMAIN,
         xmlns='http://commcarehq.org/dhis2-import',
         device_id=f"dhis2-import-{DOMAIN}-{today}",
