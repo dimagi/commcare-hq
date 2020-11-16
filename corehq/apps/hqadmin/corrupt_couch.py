@@ -139,20 +139,24 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
     db = CouchCluster(DOC_TYPES_BY_NAME[doc_name]["type"].get_db())
     with open(missing_ids_file, encoding="utf-8") as missing_ids:
         missing_ids = (id.strip() for id in missing_ids if id.strip())
-        for doc_ids in chunked(missing_ids, 1000, list):
+        repaired = 0
+        for doc_ids in chunked(missing_ids, 100, list):
             missing = None
             for x in range(min_tries):
                 for doc_id in doc_ids:
+                    log.debug("repairing %s", doc_id)
                     db.repair(doc_id)
                 missing = get_missing(doc_ids)
                 log.info("repaired %s of %s missing docs",
                          len(doc_ids) - len(missing), len(doc_ids))
+                repaired += len(doc_ids) - len(missing)
                 if not missing:
                     break
                 doc_ids = missing
             if missing:
                 log.warning("could not repair %s missing docs", len(missing))
                 print("\n".join(sorted(missing)))
+        log.info(f"repaired {repaired} missing doc ids")
 
 
 @attr.s
