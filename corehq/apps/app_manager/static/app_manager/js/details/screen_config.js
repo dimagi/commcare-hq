@@ -1131,7 +1131,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         spec.searchFilter,
                         spec.blacklistedOwnerIdsExpression,
                         self.shortScreen.saveButton,
-                        self.filter.filterText,
+                        self.filter.filterText
                     );
                 }
                 if (spec.state.long !== undefined) {
