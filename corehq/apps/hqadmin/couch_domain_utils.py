@@ -25,7 +25,7 @@ def cleanup_stale_es_on_couch_domains(
     domains still using the couch db backend until we can get them migrated.
     """
     end = end_date or datetime.datetime.utcnow()
-    start = start_date or (end - datetime.timedelta(days=5))
+    start = start_date or (end - datetime.timedelta(days=2))
 
     couch_domains = domains or ACTIVE_COUCH_DOMAINS.get_enabled_domains()
 
