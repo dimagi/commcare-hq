@@ -67,7 +67,7 @@ def _get_couch_form_ids(domain, start, end):
         endkey = [domain, doc_type, json_format_datetime(end)]
         results = XFormInstance.get_db().view(
             'by_domain_doc_type_date/view', startkey=startkey, endkey=endkey,
-            reduce=False, include_docs=False
+            reduce=False, include_docs=False, r=3
         )
         form_ids.update({row['id'] for row in results})
     return form_ids
