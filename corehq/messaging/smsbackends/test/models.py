@@ -57,9 +57,13 @@ class SQLTestSMSWithAPIBackend(SQLSMSBackend):
         app_label = 'sms'
         proxy = True
 
+    # adding these because gateway_fees test expects api supported backends to have these fields.
     @classmethod
     def get_available_extra_fields(cls):
-        return []
+        return [
+            'account_sid',
+            'auth_token',
+        ]
 
     @classmethod
     def get_api_id(cls):

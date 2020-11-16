@@ -28,11 +28,6 @@ def get_fake_sms(domain, backend_api_id, backend_couch_id, text):
     return msg
 
 
-def create_gateway_fee(backend_id, message, amount, country_code=None):
-    return SmsGatewayFee.create_new(backend_id, message.direction, amount,
-                                    country_code=country_code)
-
-
 class FakeTwilioMessage(object):
     status = 'sent'
 
