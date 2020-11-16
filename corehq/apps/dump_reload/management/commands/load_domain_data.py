@@ -1,3 +1,4 @@
+import json
 import os
 import zipfile
 from collections import Counter
@@ -45,8 +46,7 @@ class Command(BaseCommand):
         self.stdout.write("Loading data from %s." % dump_file_path)
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
-        total_object_count = 0
-        model_counts = Counter()
+        loaded_meta = {}
         loaders = options.get('loaders')
         object_filter = options.get('object_filter')
         if loaders:
@@ -54,18 +54,23 @@ class Command(BaseCommand):
         else:
             loaders = LOADERS
 
+        dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
-            loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter)
-            total_object_count += loader_total_object_count
-            model_counts.update(loader_model_counts)
+            loaded_meta[loader.slug] = self._load_data(loader, extracted_dir, object_filter, dump_meta)
 
-        loaded_object_count = sum(model_counts.values())
+        self._print_stats(loaded_meta, dump_meta)
 
+    def _print_stats(self, loaded_meta, dump_meta):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
-        for model in sorted(model_counts):
-            self.stdout.write("{:<48}: {}".format(model, model_counts[model]))
+        for loader, models in sorted(loaded_meta.items()):
+            self.stdout.write(loader)
+            for model, count in sorted(models.items()):
+                expected = dump_meta[loader][model]
+                self.stdout.write(f"  {model:<50}: {count} / {expected}")
         self.stdout.write('{0}{0}'.format('-' * 46))
-        self.stdout.write('Loaded {}/{} objects'.format(loaded_object_count, total_object_count))
+        loaded_object_count = sum(count for model in loaded_meta.values() for count in model.values())
+        total_object_count = sum(count for model in dump_meta.values() for count in model.values())
+        self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
         self.stdout.write('{0}{0}'.format('-' * 46))
 
     def extract_dump_archive(self, dump_file_path):
@@ -78,13 +83,21 @@ class Command(BaseCommand):
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
         return target_dir
 
-    def _load_data(self, loader_class, extracted_dump_path, object_filter):
+    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
         try:
             loader = loader_class(object_filter, self.stdout, self.stderr)
-            return loader.load_from_file(extracted_dump_path, self.force)
+            return loader.load_from_file(extracted_dump_path, dump_meta, force=self.force)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:
             if not isinstance(e, CommandError):
                 e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)
             raise
+
+
+def _get_dump_meta(extracted_dir):
+    # The dump command should have a metadata json file of the form
+    # {dumper_slug: {model_name: count}}
+    meta_path = os.path.join(extracted_dir, 'meta.json')
+    with open(meta_path) as f:
+        return json.loads(f.read())

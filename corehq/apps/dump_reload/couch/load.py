@@ -29,9 +29,7 @@ class CouchDataLoader(DataLoader):
         self._success_counter = Counter()
 
     def load_objects(self, object_strings, force=False):
-        total_object_count = 0
         for obj_string in object_strings:
-            total_object_count += 1
             doc = json.loads(obj_string)
             doc_type = drop_suffix(doc['doc_type'])
             if self._doc_type_matches_filter(doc_type):
@@ -41,7 +39,7 @@ class CouchDataLoader(DataLoader):
         for db in self._dbs.values():
             db.commit()
 
-        return total_object_count, self._success_counter
+        return self._success_counter
 
     def _doc_type_matches_filter(self, doc_type):
         return not self.object_filter or self.object_filter.findall(doc_type)
@@ -72,7 +70,7 @@ class LoaderCallback(IterDBCallback):
             doc_id = doc['_id']
             doc_type = drop_suffix(doc['doc_type'])
             doc_class = get_document_class_by_doc_type(doc_type)
-            doc_label = '(couch) {}.{}'.format(doc_class._meta.app_label, doc_type)
+            doc_label = '{}.{}'.format(doc_class._meta.app_label, doc_type)
             if doc_id in success_ids:
                 success_doc_types.append(doc_label)
 
@@ -105,7 +103,7 @@ class ToggleLoader(DataLoader):
             count += 1
 
         self.stdout.write('Loaded {} Toggles'.format(count))
-        return count, Counter({'Toggle': count})
+        return Counter({'Toggle': count})
 
 
 class DomainLoader(DataLoader):
@@ -133,4 +131,4 @@ class DomainLoader(DataLoader):
         Domain.get_db().bulk_save([domain_dict], new_edits=False)
         self.stdout.write('Loaded Domain')
 
-        return 1, Counter({'Domain': 1})
+        return Counter({'Domain': 1})

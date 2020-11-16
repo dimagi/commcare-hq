@@ -70,7 +70,7 @@ class CouchDumpLoadTest(TestCase):
         dump_lines = [line.strip() for line in dump_output if line.strip()]
 
         with mock_out_couch() as fake_db:
-            total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
+            loaded_object_count = CouchDataLoader().load_objects(dump_lines)
 
         def _dump_line_to_doc_class(line):
             doc = json.loads(line)
@@ -83,10 +83,8 @@ class CouchDumpLoadTest(TestCase):
         expected_object_counts = Counter(
             object.__class__ for object in expected_objects
         )
-        expected_total_objects = len(expected_objects)
         self.assertDictEqual(dict(expected_object_counts), dict(actual_model_counts))
-        self.assertEqual(expected_total_objects, sum(loaded_object_count.values()))
-        self.assertEqual(expected_total_objects, total_object_count)
+        self.assertEqual(len(expected_objects), sum(loaded_object_count.values()))
 
         counts_in_fake_db = _get_doc_counts_from_fake_db(fake_db, doc_to_doc_class)
         self.assertDictEqual(dict(expected_object_counts), counts_in_fake_db)
