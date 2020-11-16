@@ -1123,18 +1123,18 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 def clean_password(txt):
     from corehq.apps.users.views import has_custom_clean_password
     if has_custom_clean_password():
-        strength, message = custom_clean_password(txt)
+        message = custom_clean_password(txt)
     else:
-        strength, message = _clean_password(txt)
-    if strength['score'] < 2:
+        message = _clean_password(txt)
+    if message:
         raise forms.ValidationError(message)
     return txt
 
 
 def _clean_password(txt):
     strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-    message = _('Password is not strong enough. Try making your password more complex.')
-    return strength, message
+    if strength['score'] < 2:
+        return _('Password is not strong enough. Try making your password more complex.')
 
 
 class NoAutocompleteMixin(object):
