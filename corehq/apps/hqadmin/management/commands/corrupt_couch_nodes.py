@@ -1,4 +1,5 @@
 import logging
+import sys
 from urllib.parse import urlparse, urlunparse
 
 from django.conf import settings
@@ -31,6 +32,8 @@ class Command(BaseCommand):
             run(dbs, id_range)
         except KeyboardInterrupt:
             log.info("abort.")
+        finally:
+            sys.stdout.flush()
 
 
 def get_dbname(doc_name):
