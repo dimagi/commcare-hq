@@ -62,7 +62,7 @@ def cleanup_stale_es_on_couch_domains(
 def _get_couch_form_ids(domain, start, end):
     "Get form IDs from the 'by_domain_doc_type_date/view' couch view"
     form_ids = set()
-    for doc_type in ['XFormInstance']:
+    for doc_type in ['XFormArchived', 'XFormInstance']:
         startkey = [domain, doc_type, json_format_datetime(start)]
         endkey = [domain, doc_type, json_format_datetime(end)]
         results = XFormInstance.get_db().view(
