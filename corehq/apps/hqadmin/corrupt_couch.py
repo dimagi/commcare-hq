@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import attr
 from couchdbkit import Database
+from couchdbkit.exceptions import ResourceNotFound
 from dateutil.parser import parser as parse_date
 from django.conf import settings
 from memoized import memoized
@@ -363,7 +364,10 @@ class CouchCluster:
     @retry_on_couch_error
     def repair(self, doc_id):
         for node in self._node_dbs:
-            node.get(doc_id)
+            try:
+                node.get(doc_id)
+            except ResourceNotFound:
+                pass
 
     def view(self, *args, **kw):
         return self.db.view(*args, **kw)
