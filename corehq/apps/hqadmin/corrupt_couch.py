@@ -132,7 +132,7 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
             try:
                 return {r["id"] for r in results}
             except KeyError as err:
-                raise BulkFetchException(err)  # retry
+                raise BulkFetchException(f"{type(err).__name__}: {err}")  # retry
 
         view_kwargs = {
             "keys": list(doc_ids),
@@ -143,6 +143,8 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
 
     db = CouchCluster(DOC_TYPES_BY_NAME[doc_name]["type"].get_db())
     with open(missing_ids_file, encoding="utf-8") as missing_ids:
+        total = sum(1 for id in missing_ids if id.strip())
+        missing_ids.seek(0)
         missing_ids = (id.strip() for id in missing_ids if id.strip())
         repaired = 0
         for doc_ids in chunked(missing_ids, 100, list):
@@ -152,15 +154,15 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
                     log.debug("repairing %s", doc_id)
                     db.repair(doc_id)
                 missing = get_missing(doc_ids)
-                log.info("repaired %s missing docs", len(doc_ids) - len(missing))
                 repaired += len(doc_ids) - len(missing)
+                log.info("repaired %s of %s missing docs", repaired, total)
                 if not missing:
                     break
                 doc_ids = missing
             if missing:
                 log.warning("could not repair %s missing docs", len(missing))
                 print("\n".join(sorted(missing)))
-        log.info(f"total: repaired {repaired} missing docs")
+    log.info("repaired %s of %s missing docs", repaired, total)
 
 
 @attr.s
