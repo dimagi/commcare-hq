@@ -1643,7 +1643,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
     'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
-    'corehq.messaging.smsbackends.test.models.SQLTestSMSWithAPIBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests
