@@ -1,19 +1,24 @@
 import datetime
+from urllib.parse import urljoin, urlparse, urlunparse
 
-from corehq.toggles import ACTIVE_COUCH_DOMAINS
-from corehq.util.metrics import metrics_gauge
+from couchdbkit import Database
 from couchforms.models import XFormInstance
+from django.conf import settings
 
-from corehq.apps.es import FormES
-from corehq.elastic import ES_EXPORT_INSTANCE
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.toggles import ACTIVE_COUCH_DOMAINS
+from corehq.util.metrics import metrics_gauge
+from corehq.apps.es import FormES
+from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.couch import bulk_get_revs
 from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
     create_form_change_meta,
 )
+
+COUCH_NODE_PORT = 15984
 
 
 def cleanup_stale_es_on_couch_domains(
@@ -59,15 +64,28 @@ def cleanup_stale_es_on_couch_domains(
                 form_es_processor.process_change(change)
 
 
-def _get_couch_form_ids(domain, start, end):
-    "Get form IDs from the 'by_domain_doc_type_date/view' couch view"
+def _get_couch_node_databases(db, node_port=COUCH_NODE_PORT):
+    def node_url(proxy_url, node):
+        return urlunparse(proxy_url._replace(netloc=f'{auth}@{node}:{node_port}'))
+
+    resp = db.server._request_session.get(urljoin(db.server.uri, '/_membership'))
+    resp.raise_for_status()
+    membership = resp.json()
+    nodes = [node.split("@")[1] for node in membership["cluster_nodes"]]
+    proxy_url = urlparse(settings.COUCH_DATABASE)._replace(path=f"/{db.dbname}")
+    auth = proxy_url.netloc.split('@')[0]
+    return [Database(node_url(proxy_url, node)) for node in nodes]
+
+
+def _get_couch_form_ids(node_db, domain, start, end):
+    """Get form IDs from the 'by_domain_doc_type_date/view' couch view"""
     form_ids = set()
     for doc_type in ['XFormArchived', 'XFormInstance']:
         startkey = [domain, doc_type, json_format_datetime(start)]
         endkey = [domain, doc_type, json_format_datetime(end)]
-        results = XFormInstance.get_db().view(
+        results = node_db.view(
             'by_domain_doc_type_date/view', startkey=startkey, endkey=endkey,
-            reduce=False, include_docs=False, r=3
+            reduce=False, include_docs=False
         )
         form_ids.update({row['id'] for row in results})
     return form_ids
@@ -82,8 +100,8 @@ def _get_all_form_ids(domain, start, end):
     all_form_ids = None
     previous_form_ids = None
     form_id_differences = []
-    for i in range(10):
-        form_ids = _get_couch_form_ids(domain, start, end)
+    for node_db in _get_couch_node_databases(XFormInstance.get_db()):
+        form_ids = _get_couch_form_ids(node_db, domain, start, end)
         if not all_form_ids:
             all_form_ids = form_ids
         else:
