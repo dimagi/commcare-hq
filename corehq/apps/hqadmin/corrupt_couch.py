@@ -14,6 +14,8 @@ from auditcare.models import AuditEvent
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from custom.m4change.models import FixtureReportResult
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
@@ -120,6 +122,38 @@ def count_missing_ids(*args, repair=False):
         log.info("no documents found")
 
 
+def repair_missing_ids(doc_name, missing_ids_file, min_tries):
+    def get_missing(doc_ids):
+        @retry_on_couch_error
+        def get_doc_ids():
+            return {r["id"] for r in db.view("_all_docs", **view_kwargs)}
+
+        view_kwargs = {
+            "keys": list(doc_ids),
+            "include_docs": False,
+            "reduce": False,
+        }
+        return find_missing_ids(get_doc_ids, min_tries)[0]
+
+    db = CouchCluster(DOC_TYPES_BY_NAME[doc_name]["type"].get_db())
+    with open(missing_ids_file, encoding="utf-8") as missing_ids:
+        missing_ids = (id.strip() for id in missing_ids if id.strip())
+        for doc_ids in chunked(missing_ids, 1000, list):
+            missing = None
+            for x in range(min_tries):
+                for doc_id in doc_ids:
+                    db.repair(doc_id)
+                missing = get_missing(doc_ids)
+                log.info("repaired %s of %s missing docs",
+                         len(doc_ids) - len(missing), len(doc_ids))
+                if not missing:
+                    break
+                doc_ids = missing
+            if missing:
+                log.warning("could not repair %s missing docs", len(missing))
+                print("\n".join(sorted(missing)))
+
+
 @attr.s
 class Result:
     doc_type = attr.ib(default=None)
@@ -177,6 +211,7 @@ def get_doc_types(group):
 
 def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair):
     def data_function(**view_kwargs):
+        @retry_on_couch_error
         def get_doc_ids():
             results = list(db.view(view_name, **view_kwargs))
             if "limit" in view_kwargs and results:
@@ -325,6 +360,7 @@ class CouchCluster:
     def _node_dbs(self):
         return _get_couch_node_databases(self.db)
 
+    @retry_on_couch_error
     def repair(self, doc_id):
         for node in self._node_dbs:
             node.get(doc_id)
