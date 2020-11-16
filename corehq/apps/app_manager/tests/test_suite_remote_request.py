@@ -20,6 +20,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.apps.case_search.models import CASE_SEARCH_XPATH_QUERY_KEY
 
 DOMAIN = 'test_domain'
 
@@ -133,9 +134,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.search_config.search_filter = search_filter
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
+        ref_path = './remote-request[1]/session/query/data[@key="{}"]/@ref'.format(CASE_SEARCH_XPATH_QUERY_KEY)
         self.assertEqual(
             "'{}'".format(search_filter),
-            suite.xpath('./remote-request[1]/session/query/data[@key="_xpath_query"]/@ref')[0]
+            suite.xpath(ref_path)[0]
         )
 
     def test_case_search_action_relevant_condition(self, *args):

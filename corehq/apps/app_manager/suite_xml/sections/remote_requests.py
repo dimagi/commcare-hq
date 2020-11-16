@@ -27,7 +27,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
-from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, CASE_SEARCH_XPATH_QUERY_KEY
 from corehq.util.view_utils import absolute_reverse
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
@@ -148,7 +148,7 @@ class RemoteRequestFactory(object):
         if self.module.search_config.search_filter:
             extra_query_datums.append(
                 QueryData(
-                    key="_xpath_query",
+                    key=CASE_SEARCH_XPATH_QUERY_KEY,
                     ref="'{}'".format(self.module.search_config.search_filter)
                 )
             )
