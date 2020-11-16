@@ -10,7 +10,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-        searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
+        searchButtonDisplayCondition, searchFilter, blacklistedOwnerIdsExpression, saveButton) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -115,6 +115,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
+        self.searchFilter = ko.observable(searchFilter);
         self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
 
         if (searchProperties.length > 0) {
@@ -215,6 +216,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 properties: self._getProperties(),
                 relevant: self._getRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
+                search_filter: self.searchFilter(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
@@ -234,6 +236,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             saveButton.fire('change');
         });
         self.searchButtonDisplayCondition.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchFilter.subscribe(function () {
             saveButton.fire('change');
         });
         self.blacklistedOwnerIdsExpression.subscribe(function () {

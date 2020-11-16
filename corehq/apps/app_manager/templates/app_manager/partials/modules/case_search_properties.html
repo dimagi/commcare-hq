@@ -208,6 +208,23 @@
           </p>
         </div>
         <div class="form-group">
+          <label for="search-filter" >
+            {% trans "Search Filter" %}
+          </label>
+          <input type="text"
+                 data-bind="value: searchFilter"
+                 class="form-control"
+                 id="search-filter"
+                 spellcheck="false"
+          />
+          <!-- TODO: button to copy from case list filter, if it isn't already...or just add it as help text? might be too long-->
+          <p class="help-block">
+            {% blocktrans %}
+              An XPath expression to filter the search results.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="form-group">
           <label for="claim-relevant-condition" >
             {% trans "Only claim cases that fulfill the following condition" %}
           </label>
