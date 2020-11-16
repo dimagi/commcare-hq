@@ -1,9 +1,9 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from typing import Iterable, List, Optional
 
+from celery import group
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
@@ -15,7 +15,7 @@ from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
 from custom.onse.models import iter_mappings
 
-MAX_THREAD_WORKERS = 10
+TASK_GROUP_SIZE = 10
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
@@ -39,15 +39,12 @@ def update_facility_cases_from_dhis2_data_elements(
     dhis2_server = get_dhis2_server(print_notifications)
     try:
         case_blocks = get_case_blocks()
-        with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
-            futures = (executor.submit(set_case_updates, dhis2_server, cb)
-                       for cb in case_blocks)
-            for futures_chunk in chunked(futures, 100):
-                case_blocks_chunk = []
-                for future in as_completed(futures_chunk):
-                    case_block = future.result()  # reraises exceptions in workers
-                    case_blocks_chunk.append(case_block)
-                save_cases(case_blocks_chunk)
+        for case_blocks_chunk in chunked(case_blocks, TASK_GROUP_SIZE):
+            # celery.chunks() returns one promise for all chunks, not a
+            # promise per chunk, so chunk first and then use group()
+            promise = group([set_case_updates.s(cb)
+                             for cb in case_blocks_chunk])()
+            save_cases(promise.get())
     except Exception as err:
         message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
         if print_notifications:
@@ -100,6 +97,7 @@ def get_case_blocks() -> Iterable[CaseBlock]:
         yield case_block
 
 
+@task(queue='background_queue')
 def set_case_updates(
     dhis2_server: ConnectionSettings,
     case_block: CaseBlock,
