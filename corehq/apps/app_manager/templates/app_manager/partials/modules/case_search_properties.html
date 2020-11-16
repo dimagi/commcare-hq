@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <legend>
@@ -190,78 +191,98 @@
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
       <div class="panel-body">
-        <div class="form-group">
-          <label for="search-display-condition" class="control-label">
-            {% trans "Display condition" %}
-          </label>
-          <input type="text"
-                 class="form-control"
-                 id="search-display-condition"
-                 spellcheck="false"
-                 data-bind="value: searchButtonDisplayCondition"
-          >
-          <p class="help-block">
-            {% blocktrans %}
-              If this XPath expression evaluates to false, the case search button will not be
-              displayed. If no expression is given, the button will always be displayed.
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <label for="search-filter" >
-            {% trans "Search Filter" %}
-          </label>
-          <input type="text"
-                 data-bind="value: searchFilter"
-                 class="form-control"
-                 id="search-filter"
-                 spellcheck="false"
-          />
-          <!-- TODO: button to copy from case list filter, if it isn't already...or just add it as help text? might be too long-->
-          <p class="help-block">
-            {% blocktrans %}
-              An XPath expression to filter the search results.
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <label for="claim-relevant-condition" >
-            {% trans "If this expression evaluates to false, the search will not be performed." %}
-          </label>
-          <input type="text"
-                 data-bind="value: relevant"
-                 class="form-control"
-                 id="claim-relevant-condition"
-                 spellcheck="false"
-          />
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: default_relevant">
+        <div class="form-horizontal">
+          <div class="form-group">
+            <label for="search-display-condition" class="control-label {% css_label_class %}">
+              {% trans "Display Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
+                    data-content="{% trans_html_attr "If this XPath expression evaluates to false, the case search button will not be displayed. If no expression is given, the button will always be displayed." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text"
+                     class="form-control"
+                     id="search-display-condition"
+                     spellcheck="false"
+                     data-bind="value: searchButtonDisplayCondition"
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="search-filter" class="control-label {% css_label_class %}">
+              {% trans "Search Filter" %}
+              <span class="hq-help-template" data-title="{% trans "Search Filter" %}"
+                    data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text"
+                     data-bind="value: searchFilter"
+                     class="form-control"
+                     id="search-filter"
+                     spellcheck="false"
+              />
+              <p class="help-block">
+                {% trans "Example: age > 5" %}
+              </p>
+              <!-- TODO: button to copy from case list filter, if it isn't already...or just add it as help text? might be too long-->
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="claim-relevant-condition" class="control-label {% css_label_class %}">
+              {% trans "Search Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Search Condition" %}"
+                    data-content="{% trans_html_attr "If this expression evaluates to false, the search will not be performed." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text"
+                     data-bind="value: relevant"
+                     class="form-control"
+                     id="claim-relevant-condition"
+                     spellcheck="false"
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}" for="search-default-relevant">
               {% trans "Don't claim cases already owned by the user" %}
             </label>
+            <div class="checkbox {% css_field_class %}">
+              <label>
+                <input type="checkbox" id="search-default-relevant" data-bind="checked: default_relevant">
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="blacklisted-user-ids" >
-            {% trans "Don't search cases owned by the following ids" %}
-          </label>
-          <input type="text"
-                 data-bind="value: blacklistedOwnerIdsExpression"
-                 class="form-control"
-                 id="blacklisted-user-ids"
-                 spellcheck="false"
-          />
-          <p class="help-block">
-            {% blocktrans %}
-              An XPath expression that will evaluate to a space separated list of ids. For example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: includeClosed"> {% trans "Include closed cases in search results" %}
+          <div class="form-group">
+            <label for="blacklisted-user-ids" class="control-label {% css_label_class %}">
+              {% trans "Don't search cases owned by the following ids" %}
+              <span class="hq-help-template" data-title="{% trans "Ignore Owners" %}"
+                    data-content="{% trans_html_attr "An XPath expression that will evaluate to a space separated list of ids." %}">
+              </span>
             </label>
+            <div class="{% css_field_class %}">
+              <input type="text"
+                     data-bind="value: blacklistedOwnerIdsExpression"
+                     class="form-control"
+                     id="blacklisted-user-ids"
+                     spellcheck="false"
+              />
+              <p class="help-block">
+                {% blocktrans %}
+                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
+                {% endblocktrans %}
+              </p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}" for="search-include-closed">
+              {% trans "Include closed cases in search results" %}
+            </label>
+            <div class="checkbox {% css_field_class %}">
+              <label>
+                <input type="checkbox" id="search-include-closed" data-bind="checked: includeClosed" />
+              </label>
+            </div>
           </div>
         </div>
       </div>
