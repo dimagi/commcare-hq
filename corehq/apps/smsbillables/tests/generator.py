@@ -7,6 +7,7 @@ from collections import namedtuple
 from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
+from dimagi.utils.modules import to_function
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
@@ -90,9 +91,10 @@ def _available_gateway_fee_backends():
 
 @unit_testing_only
 def _available_direct_fee_backends():
+    test_backend = to_function('corehq.messaging.smsbackends.test.models.SQLTestSMSWithAPIBackend')
     return [
         backend for backend in get_sms_backend_classes().values()
-        if backend.using_api_to_get_fees
+        if backend.using_api_to_get_fees and backend != test_backend
     ]
 
 
@@ -228,8 +230,11 @@ def arbitrary_non_global_backend_ids():
 
 @unit_testing_only
 def arbitrary_with_direct_fees_backends():
+    test_backend = to_function('corehq.messaging.smsbackends.test.models.SQLTestSMSWithAPIBackend')
     backends = []
     for backend in _available_direct_fee_backends():
+        if backend == test_backend:
+            continue
         backend_instance = data_gen.arbitrary_unique_name("back")
         sms_backend = backend()
         sms_backend.hq_api_id = backend.get_api_id()
