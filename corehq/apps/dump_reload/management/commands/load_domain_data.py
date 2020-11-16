@@ -31,6 +31,9 @@ class Command(BaseCommand):
                                  'domain should always be the first loader to be invoked in case of '
                                  'very first import',
                             choices=[loader.slug for loader in LOADERS])
+        parser.add_argument('--skip', dest='skip', action='append', default=[],
+                            help='Skip over the first n objects for the specified loader.  '
+                            '`--skip=sql:1000` skips the first 1000 objects in the sql dump')
         parser.add_argument('--object-filter',
                             help="Regular expression to use to selectively load data. Will be matched"
                                  " against a CouchDB 'doc_type' or Django model name: 'app_label.ModelName'."
@@ -39,6 +42,8 @@ class Command(BaseCommand):
     def handle(self, dump_file_path, **options):
         self.force = options.get('force')
         self.use_extracted = options.get('use_extracted')
+        skip = {slug: int(count) for slug, count in
+                (s.split(':') for s in options.get('skip'))}
 
         if not os.path.isfile(dump_file_path):
             raise CommandError("Dump file not found: {}".format(dump_file_path))
@@ -56,7 +61,8 @@ class Command(BaseCommand):
 
         dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
-            loaded_meta[loader.slug] = self._load_data(loader, extracted_dir, object_filter, dump_meta)
+            loaded_meta[loader.slug] = self._load_data(
+                loader, extracted_dir, object_filter, skip.get(loader.slug), dump_meta)
 
         self._print_stats(loaded_meta, dump_meta)
 
@@ -83,9 +89,9 @@ class Command(BaseCommand):
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
         return target_dir
 
-    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
+    def _load_data(self, loader_class, extracted_dump_path, object_filter, skip, dump_meta):
         try:
-            loader = loader_class(object_filter, self.stdout, self.stderr)
+            loader = loader_class(object_filter, skip, self.stdout, self.stderr)
             return loader.load_from_file(extracted_dump_path, dump_meta, force=self.force)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
