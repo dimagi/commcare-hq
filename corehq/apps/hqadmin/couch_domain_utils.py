@@ -36,6 +36,8 @@ def cleanup_stale_es_on_couch_domains(
 
     for domain in couch_domains:
         form_ids, has_discrepancies = _get_all_form_ids(domain, start, end)
+        if stdout:
+            stdout.write(f"Found {len(form_ids)} in {domain} for between {start_date} and {end_date}.")
         if has_discrepancies:
             metrics_gauge(
                 'commcare.es.couch_domain.couch_discrepancy_detected',
@@ -45,7 +47,7 @@ def cleanup_stale_es_on_couch_domains(
                 }
             )
             if stdout:
-                stdout.write(f"\nFound discrepancies in form counts for domain {domain}")
+                stdout.write(f"\tFound discrepancies in form counts for domain {domain}")
         forms_not_in_es = _get_forms_not_in_es(form_ids)
         if forms_not_in_es:
             metrics_gauge(
@@ -56,7 +58,7 @@ def cleanup_stale_es_on_couch_domains(
                 }
             )
             if stdout:
-                stdout.write(f"\nFound {len(forms_not_in_es)} forms not in es "
+                stdout.write(f"\tFound {len(forms_not_in_es)} forms not in es "
                              f"for {domain}")
             changes = _get_changes(domain, forms_not_in_es)
             form_es_processor = get_xform_pillow().processors[0]
