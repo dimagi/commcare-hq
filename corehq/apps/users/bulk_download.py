@@ -43,7 +43,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
+def parse_users(domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
@@ -118,15 +118,17 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
-        group_names = _get_group_names(user)
-        user_dict = _make_user_dict(user, group_names, location_cache)
-        user_dicts.append(user_dict)
-        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
-        user_groups_length = max(user_groups_length, len(group_names))
-        max_location_length = max(max_location_length, len(user_dict["location_code"]))
-        if task:
-            DownloadBase.set_progress(task, n, total_count)
+    for domain in user_filters['domains']:
+        for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
+            group_memoizer = load_memoizer(domain)
+            group_names = _get_group_names(user)
+            user_dict = _make_user_dict(user, group_names, location_cache)
+            user_dicts.append(user_dict)
+            unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
+            user_groups_length = max(user_groups_length, len(group_names))
+            max_location_length = max(max_location_length, len(user_dict["location_code"]))
+            if task:
+                DownloadBase.set_progress(task, n, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
@@ -227,36 +229,45 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     DownloadBase.set_progress(task, total_count, total_count)
 
 
+def load_memoizer(domain):
+    group_memoizer = GroupMemoizer(domain=domain)
+    # load groups manually instead of calling group_memoizer.load_all()
+    # so that we can detect blank groups
+    blank_groups = set()
+    for group in Group.by_domain(domain):
+        if group.name:
+            group_memoizer.add_group(group)
+        else:
+            blank_groups.add(group)
+    if blank_groups:
+        raise GroupNameError(blank_groups=blank_groups)
+
+    return group_memoizer
+
+
 def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
-    def _load_memoizer(domain):
-        group_memoizer = GroupMemoizer(domain=domain)
-        # load groups manually instead of calling group_memoizer.load_all()
-        # so that we can detect blank groups
-        blank_groups = set()
-        for group in Group.by_domain(domain):
-            if group.name:
-                group_memoizer.add_group(group)
-            else:
-                blank_groups.add(group)
-        if blank_groups:
-            raise GroupNameError(blank_groups=blank_groups)
 
-        return group_memoizer
+    domains_list = user_filters['domains']
+    if len(domains_list) == 0:  # TODO: won't be necessary once default is properly set in forms
+        domains_list = [domain]
 
-    group_memoizer = _load_memoizer(domain)
+    users_groups_count = 0
+    groups = set()
+    for download_domain in domains_list:
+        group_memoizer = load_memoizer(download_domain)
+        users_groups_count += count_users_and_groups(download_domain, user_filters, group_memoizer)
+        groups.update(group_memoizer.groups)
 
-    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
-    user_headers, user_rows = parse_users(
-        group_memoizer,
+    user_headers, user_rows = parse_users(  # TODO: adjust tests for adjusted parameters
         domain,
         user_filters,
         task,
         users_groups_count,
     )
 
-    group_headers, group_rows = parse_groups(group_memoizer.groups)
+    group_headers, group_rows = parse_groups(groups)
     headers = [
         ('users', [user_headers]),
         ('groups', [group_headers]),
