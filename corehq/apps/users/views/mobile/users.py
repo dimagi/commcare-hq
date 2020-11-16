@@ -1380,9 +1380,11 @@ def count_users(request, domain):
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
-
+    user_count = 0
+    for domain in user_filters['domains']:
+        user_count += get_commcare_users_by_filters(domain, user_filters, count_only=True)
     return json_response({
-        'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
+        'count': user_count
     })
 
 

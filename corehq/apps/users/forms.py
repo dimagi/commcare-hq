@@ -1180,7 +1180,6 @@ class CommCareUserFilterForm(forms.Form):
         choices=COLUMNS_CHOICES,
         widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=True),
     )
-    #  TODO: set defualt for domains for the self.domain
     domains = forms.MultipleChoiceField(
         required=False,
         label=_('Domains'),
@@ -1228,7 +1227,7 @@ class CommCareUserFilterForm(forms.Form):
                 crispy.Field('search_string'),
                 crispy.Field('location_id'),
                 crispy.Field('columns'),
-                crispy.Field('domains', data_initial=[self.domain]),
+                crispy.Field('domains'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -1268,6 +1267,12 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+    def clean_domains(self):
+        domains = self.data.getlist('domains[]', [self.domain])
+        if self.domain not in domains:  # always include the current domain
+            domains += [self.domain]
+        return domains
 
 
 class CreateDomainPermissionsMirrorForm(forms.Form):
