@@ -37,7 +37,8 @@ def cleanup_stale_es_on_couch_domains(
     for domain in couch_domains:
         form_ids, has_discrepancies = _get_all_form_ids(domain, start, end)
         if stdout:
-            stdout.write(f"Found {len(form_ids)} in {domain} for between {start_date} and {end_date}.")
+            stdout.write(f"Found {len(form_ids)} in {domain} for between "
+                         f"{start.isoformat()} and {end.isoformat()}.")
         if has_discrepancies:
             metrics_gauge(
                 'commcare.es.couch_domain.couch_discrepancy_detected',
