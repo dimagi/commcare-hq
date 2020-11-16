@@ -55,18 +55,23 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
             else:
                 sub_domains.add(sheet_domain)
         for sub_domain in sub_domains:
-            importer = _TimedAndThrottledImporter(sub_domain, config, task, record_form_callback, import_results)
-            importer.multi_domain = True
+            importer = _TimedAndThrottledImporter(
+                sub_domain,
+                config,
+                task,
+                record_form_callback,
+                import_results,
+                multi_domain=True
+            )
             importer.do_import(spreadsheet)
         return import_results.to_json()
     else:
-        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
-        importer.multi_domain = False
+        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback, multi_domain=False)
         return importer.do_import(spreadsheet)
 
 
 class _Importer(object):
-    def __init__(self, domain, config, task, record_form_callback, import_results=None):
+    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
         self.domain = domain
         self.config = config
         self.task = task
@@ -75,6 +80,7 @@ class _Importer(object):
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
+        self.multi_domain = multi_domain
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
@@ -192,8 +198,8 @@ class _Importer(object):
 
 
 class _TimedAndThrottledImporter(_Importer):
-    def __init__(self, domain, config, task, record_form_callback, import_results=None):
-        super().__init__(domain, config, task, record_form_callback, import_results)
+    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
+        super().__init__(domain, config, task, record_form_callback, import_results, multi_domain)
 
         self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
         self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds

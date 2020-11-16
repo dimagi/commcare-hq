@@ -372,6 +372,8 @@ class ImporterTest(TestCase):
                          len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
 
+    # This test will only run on SQL backend because of a bug in couch backend
+    # that overrides current domain with the 'domain' column value from excel
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
     def test_multiple_domain_case_import(self):
@@ -399,17 +401,28 @@ class ImporterTest(TestCase):
         cur_case_ids = self.accessor.get_case_ids_in_domain()
         cur_cases = list(self.accessor.get_cases(cur_case_ids))
         self.assertEqual(3, len(cur_cases))
+        #Asserting current domain case property
+        cases = {c.name: c for c in cur_cases}
+        self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
 
         # Asserting mirror domain 1
         md1_case_ids = CaseAccessors(mirror_domain1.mirror).get_case_ids_in_domain()
         md1_cases = list(self.accessor.get_cases(md1_case_ids))
         self.assertEqual(1, len(md1_cases))
+        # Asserting mirror domain 1 case property
+        md1_cases_pro = {c.name: c for c in md1_cases}
+        self.assertEqual(md1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
 
         # Asserting mirror domain 2
         md2_case_ids = CaseAccessors(mirror_domain2.mirror).get_case_ids_in_domain()
         md2_cases = list(self.accessor.get_cases(md2_case_ids))
         self.assertEqual(1, len(md2_cases))
+        # Asserting mirror domain 2 case propperty
+        md2_cases_pro = {c.name: c for c in md2_cases}
+        self.assertEqual(md2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
 
+    # This test will only run on SQL backend because of a bug in couch backend
+    # that overrides current domain with the 'domain' column value from excel
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @flag_disabled('DOMAIN_PERMISSIONS_MIRROR')
     def test_multiple_domain_case_import_mirror_domain_disabled(self):
@@ -433,7 +446,7 @@ class ImporterTest(TestCase):
         cur_cases = list(self.accessor.get_cases(case_ids))
         self.assertEqual(6, len(cur_cases))
         #Asserting domain case property
-        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        cases = {c.name: c for c in cur_cases}
         self.assertEqual(cases['name-0'].get_case_property('domain'), self.domain)
 
     def import_mock_file(self, rows):
