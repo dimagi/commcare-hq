@@ -49,6 +49,7 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
@@ -1397,6 +1398,8 @@ def download_commcare_users(request, domain):
         return HttpResponseRedirect(
             reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
+    if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
+        track_workflow(request.couch_user.username, 'Domain filter used for mobile download')
     if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
         res = bulk_download_usernames_async.delay(domain, download.download_id,
                                                   user_filters, owner_id=request.couch_user.get_id)
