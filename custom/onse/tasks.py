@@ -14,6 +14,13 @@ from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
 
+# The production DHIS2 server is on the other side of an
+# interoperability service that changes the URL schema from
+# "base_url/api/resource" to "service/dhis2core/api/v0/resource".
+# Its ConnectionSettings instance uses URL "service/dhis2core/api/v0/"
+# Set ``DROP_API_PREFIX = True`` to drop the "/api" before "/resource",
+# so that resource URLs end up as "service/dhis2core/api/v0/resource".
+DROP_API_PREFIX = True
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
@@ -145,7 +152,7 @@ def fetch_data_set(
 
     """
     requests = dhis2_server.get_requests()
-    endpoint = '/api/dataValueSets'
+    endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
     params = {
         'period': get_last_quarter(),
         'dataSet': data_set_id,
