@@ -1,7 +1,7 @@
 """Utilities for assessing and repairing CouchDB corruption"""
 import logging
 from collections import defaultdict
-from itertools import chain
+from itertools import chain, islice
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import attr
@@ -124,7 +124,7 @@ def count_missing_ids(*args, repair=False):
         log.info("no documents found")
 
 
-def repair_missing_ids(doc_name, missing_ids_file, min_tries):
+def repair_missing_ids(doc_name, missing_ids_file, line_range, min_tries):
     def get_missing(doc_ids):
         @retry_on_couch_error
         def get_doc_ids():
@@ -146,6 +146,11 @@ def repair_missing_ids(doc_name, missing_ids_file, min_tries):
         total = sum(1 for id in missing_ids if id.strip())
         missing_ids.seek(0)
         missing_ids = (id.strip() for id in missing_ids if id.strip())
+        if any(line_range):
+            start, stop = line_range
+            total = (stop or total) - start
+            log.info("scanning %s ids on lines %s..%s", total, start, stop or "")
+            missing_ids = islice(missing_ids, start, stop)
         repaired = 0
         for doc_ids in chunked(missing_ids, 100, list):
             missing = None

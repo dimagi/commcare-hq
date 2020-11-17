@@ -16,7 +16,8 @@ class Command(BaseCommand):
         parser.add_argument('--doc-type')
         parser.add_argument('--range', dest="view_range", help="""
             View key range. May be dates YYYY-MM-DD..YYYY-MM-DD or IDs
-            XXXX..ZZZZ, depending on the view being queried.
+            XXXX..ZZZZ, depending on the view being queried. With --missing
+            this is a range of lines in the file.
         """)
         parser.add_argument('--missing', help="""
             Path to file containing a list of newline-delimited missing ids.
@@ -32,16 +33,18 @@ class Command(BaseCommand):
                 raise CommandError(f"cannot {command} with --missing")
             if doc_name == "ALL":
                 raise CommandError("cannot repair 'ALL' with --missing")
-            if domain or doc_type or view_range:
-                raise CommandError("--missing cannot be used with --domain, "
-                                   "--doc-type, or --range")
+            if domain or doc_type:
+                raise CommandError("--missing cannot be used with --domain or --doc-type")
         setup_logging(options["verbose"])
         if view_range is not None:
             view_range = view_range.split("..", 1)
         params = QueryParams(domain, doc_name, doc_type, view_range)
         repair = command == "repair"
         if repair and missing:
-            repair_missing_ids(doc_name, missing, min_tries)
+            start, stop = view_range
+            start = int(start) if start else 0
+            stop = int(stop) if stop else None
+            repair_missing_ids(doc_name, missing, (start, stop), min_tries)
         else:
             count_missing_ids(min_tries, params, repair=repair)
 
