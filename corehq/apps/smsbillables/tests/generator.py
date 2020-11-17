@@ -7,7 +7,6 @@ from collections import namedtuple
 from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
-from dimagi.utils.modules import to_function
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
