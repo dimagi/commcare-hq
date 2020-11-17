@@ -64,7 +64,7 @@ def parse_users(domain, user_filters, task=None, total_count=None):
             user.devices, key=lambda d: d.last_used, reverse=True
         )])
 
-    def _make_user_dict(user, group_names, location_cache):
+    def _make_user_dict(user, group_names, location_cache, domain):
         model_data, uncategorized_data = (
             fields_definition.get_model_and_uncategorized(user.metadata)
         )
@@ -126,7 +126,7 @@ def parse_users(domain, user_filters, task=None, total_count=None):
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
             group_names = _get_group_names(user)
-            user_dict = _make_user_dict(user, group_names, location_cache)
+            user_dict = _make_user_dict(user, group_names, location_cache, current_domain)
             user_dicts.append(user_dict)
             unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
             user_groups_length = max(user_groups_length, len(group_names))
@@ -252,8 +252,6 @@ def load_memoizer(domain):
 def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
     domains_list = user_filters['domains']
-    if len(domains_list) == 0:  # TODO: won't be necessary once default is properly set in forms
-        domains_list = [domain]
 
     users_groups_count = 0
     groups = set()
@@ -264,7 +262,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
     DownloadBase.set_progress(task, 0, users_groups_count)
 
-    user_headers, user_rows = parse_users(  # TODO: adjust tests for adjusted parameters
+    user_headers, user_rows = parse_users(
         domain,
         user_filters,
         task,
