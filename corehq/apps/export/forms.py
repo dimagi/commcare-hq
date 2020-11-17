@@ -122,7 +122,7 @@ class CreateExportTagForm(forms.Form):
                     crispy.Field(
                         'app_type',
                         placeholder=_("Select Application Type"),
-                        data_bind="textInput: appType, event: {change: updateAppChoices}",
+                        data_bind="value: appType",
                     ),
                     data_bind="visible: showAppType()",
                 ),
