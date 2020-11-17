@@ -10,6 +10,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
@@ -1186,6 +1187,10 @@ class CommCareUserFilterForm(forms.Form):
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Add domains of the desired mobile workers'),
     )
+    is_all_domain_download = forms.BooleanField(
+        required=False,
+        label=_("Download users from all Project Spaces")
+    )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
@@ -1228,6 +1233,7 @@ class CommCareUserFilterForm(forms.Form):
                 crispy.Field('location_id'),
                 crispy.Field('columns'),
                 crispy.Field('domains'),
+                crispy.Field('is_all_domain_download', data_bind='checked: is_all_domain_download'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -1270,6 +1276,12 @@ class CommCareUserFilterForm(forms.Form):
 
     def clean_domains(self):
         domains = self.data.getlist('domains[]', [self.domain])
+        try:
+            is_all_domain_download = self.data['is_all_domain_download']
+            if is_all_domain_download == 'true' or is_all_domain_download == 'on':
+                domains = DomainPermissionsMirror.mirror_domains(self.domain)
+        except MultiValueDictKeyError:
+            pass
         if self.domain not in domains:  # always include the current domain
             domains += [self.domain]
         return domains
