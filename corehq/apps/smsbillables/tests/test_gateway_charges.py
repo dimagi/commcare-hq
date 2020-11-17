@@ -270,9 +270,7 @@ class TestGatewayChargeWithAPISupport(TestCase):
         self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
                                 self.backend.couch_id, long_text)
 
-        # the default number here has a country code of 1, so make this code different
         self.gateway_fees += [
-            # the default number here has a country code of 1, so make this code different
             SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, gateway_fee_amount),
         ]
         with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
