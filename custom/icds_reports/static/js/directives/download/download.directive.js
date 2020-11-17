@@ -360,7 +360,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.setPPRYears();
 
         } else if (year.id === latest.getFullYear()) {
-            var maxQuarter = Math.floor((latest.getMonth() + 1) / 3);
+            var maxQuarter = Math.floor(latest.getMonth() / 3);
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
@@ -474,11 +474,6 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
         vm.groupByLevels = levels;
         vm.selectedLevel = locationIndex + 1;
-    };
-
-    vm.onDataPeriodSelect = function(dataPeriod) {
-        vm.selectedDataPeriod = dataPeriod.id;
-        vm.onSelectYear({'id': vm.selectedYear});
     };
 
     /**
