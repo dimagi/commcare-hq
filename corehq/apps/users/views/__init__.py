@@ -53,7 +53,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
-from corehq.apps.domain.extension_points import custom_clean_password
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import UserES
@@ -1270,9 +1270,3 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user.fcm_device_token = device_token
     user.save()
     return HttpResponse()
-
-
-@memoized
-def has_custom_clean_password():
-    # the environment has a custom clean password method set
-    return bool(custom_clean_password.extensions)

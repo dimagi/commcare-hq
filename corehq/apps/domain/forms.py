@@ -94,7 +94,10 @@ from corehq.apps.callcenter.views import (
     CallCenterOwnerOptionsView,
 )
 from corehq.apps.domain.auth import get_active_users_by_email
-from corehq.apps.domain.extension_points import custom_clean_password
+from corehq.apps.domain.extension_points import (
+    custom_clean_password,
+    has_custom_clean_password,
+)
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -1121,7 +1124,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    from corehq.apps.users.views import has_custom_clean_password
     if has_custom_clean_password():
         message = custom_clean_password(txt)
     else:

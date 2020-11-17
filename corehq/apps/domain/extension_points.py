@@ -1,3 +1,4 @@
+from memoized import memoized
 from typing import Optional
 
 from corehq.extensions import extension_point, ResultFormat
@@ -22,3 +23,9 @@ def custom_clean_password(password) -> Optional[str]:
     Returns:
         An error message to show
     """
+
+
+@memoized
+def has_custom_clean_password():
+    # the environment has a custom clean password method set
+    return bool(custom_clean_password.extensions)

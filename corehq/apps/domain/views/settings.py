@@ -38,6 +38,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     LoginAndDomainMixin,
 )
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
     USE_PARENT_LOCATION_CHOICE,
@@ -492,12 +493,11 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
-        from corehq.apps.users.views import has_custom_clean_password
+
         self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.users.views import has_custom_clean_password
         self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')

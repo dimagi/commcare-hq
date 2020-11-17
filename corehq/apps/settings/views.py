@@ -27,7 +27,7 @@ from two_factor.views import (
     SetupView,
 )
 
-from corehq.apps.users.views import has_custom_clean_password
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.toggles import MONITOR_2FA_CHANGES
 from dimagi.utils.web import json_response
 

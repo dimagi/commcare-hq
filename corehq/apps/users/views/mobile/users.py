@@ -55,6 +55,7 @@ from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
 )
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
@@ -113,7 +114,6 @@ from corehq.apps.users.views import (
     BaseEditUserView,
     BaseUserSettingsView,
     get_domain_languages,
-    has_custom_clean_password,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
