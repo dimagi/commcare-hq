@@ -162,6 +162,3 @@ if os.path.exists("extensions/icds/custom/icds"):
 
     if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
         COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
-
-# append test backends here
-SMS_LOADED_SQL_BACKENDS += ['corehq.messaging.smsbackends.test.models.SQLTestSMSWithAPIBackend']

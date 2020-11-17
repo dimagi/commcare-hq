@@ -6,7 +6,8 @@ from mock import patch
 from corehq.apps.sms.api import create_billable_for_sms
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee
 from corehq.apps.smsbillables.tests.utils import get_fake_sms, short_text, long_text
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend, SQLTestSMSWithAPIBackend
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
 class TestGatewayChargeWithNoAPISupport(TestCase):
@@ -106,11 +107,11 @@ class TestGatewayChargeWithAPISupport(TestCase):
         super(TestGatewayChargeWithAPISupport, cls).setUpClass()
         cls.domain = 'sms_test_api_domain'
 
-        cls.backend = SQLTestSMSWithAPIBackend(
-            name="TEST API",
+        cls.backend = SQLTwilioBackend(
+            name="TEST API BACKEND",
             is_global=True,
             domain=cls.domain,
-            hq_api_id=SQLTestSMSWithAPIBackend.get_api_id()
+            hq_api_id=SQLTwilioBackend.get_api_id()
         )
         cls.backend.save()
 
