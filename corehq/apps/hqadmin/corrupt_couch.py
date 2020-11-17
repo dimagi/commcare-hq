@@ -2,6 +2,7 @@
 import logging
 from collections import defaultdict
 from itertools import chain, islice
+from json.decoder import JSONDecodeError
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import attr
@@ -128,7 +129,10 @@ def repair_missing_ids(doc_name, missing_ids_file, line_range, min_tries):
     def get_missing(doc_ids):
         @retry_on_couch_error
         def get_doc_ids():
-            results = list(db.view("_all_docs", **view_kwargs))
+            try:
+                results = list(db.view("_all_docs", **view_kwargs))
+            except JSONDecodeError as err:
+                raise BulkFetchException(f"{type(err).__name__}: {err}")  # retry
             try:
                 return {r["id"] for r in results}
             except KeyError as err:
