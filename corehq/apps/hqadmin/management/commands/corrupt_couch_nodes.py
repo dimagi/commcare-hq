@@ -15,13 +15,27 @@ log = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Query stand-alone couch nodes for missing doc ids'
+    help = """Query stand-alone couch nodes for missing document ids.
+
+    Exhaustively and efficiently find missing documents for an
+    (optional) range of ids by running against stand-alone (non-
+    clustered) couch nodes that have snapshot copies of the data from a
+    corrupt cluster. Multiple instances of this command can be run
+    simultaneously with different ranges.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('nodes', help="comma-delimited list of node IP:PORT pairs")
-        parser.add_argument('doc_name', choices=list(DOC_TYPES_BY_NAME))
-        parser.add_argument('--range', dest="id_range", help="Doc id range XXXX..ZZZZ")
-        parser.add_argument('--check-node-integrity', dest="check", action="store_true")
+        parser.add_argument('doc_name', choices=list(DOC_TYPES_BY_NAME), help="""
+            Used to choose a database in which to find missing documents.
+        """)
+        parser.add_argument('--range', dest="id_range", help="Doc id range: XXXX..ZZZZ")
+        parser.add_argument(
+            '--check-node-integrity',
+            dest="check",
+            action="store_true",
+            help="""Verify that each node returns consistent results."""
+        )
         parser.add_argument('--verbose', action="store_true")
 
     def handle(self, nodes, doc_name, id_range, **options):

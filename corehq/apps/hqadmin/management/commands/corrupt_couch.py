@@ -7,7 +7,11 @@ from ...corrupt_couch import count_missing_ids, repair_missing_ids, DOC_TYPES_BY
 
 
 class Command(BaseCommand):
-    help = 'Check for or fix corrupt couch db'
+    help = """Check for or repair corrupt couch db
+
+    Count missing forms in a given date range (slow and non-
+    authoritative). Run against production cluster.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('command', choices=["count-missing", "repair"])
@@ -24,7 +28,11 @@ class Command(BaseCommand):
             Only valid with `repair` and not valid with --domain, --doc-type,
             or --range. Unrepairable missing ids are printed to stdout.
         """)
-        parser.add_argument('--min-tries', type=int, default=10, help="default: 10")
+        parser.add_argument('--min-tries', type=int, default=10, help="""
+            Number of times to run query checking for missing ids.
+            Increase value to increase confidence of finding all
+            missing ids. Default: 10
+        """)
         parser.add_argument('--verbose', action="store_true")
 
     def handle(self, command, doc_name, domain, doc_type, view_range, missing, min_tries, **options):
