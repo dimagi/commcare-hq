@@ -82,7 +82,7 @@ class TestDownloadMobileWorkers(TestCase):
         super().tearDownClass()
 
     def test_download(self):
-        (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
+        (headers, rows) = parse_users(self.domain_obj.name, {})
         self.assertNotIn('user_profile', headers)
 
         rows = list(rows)

@@ -118,9 +118,13 @@ def parse_users(domain, user_filters, task=None, total_count=None):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for domain in user_filters['domains']:
-        for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
-            group_memoizer = load_memoizer(domain)
+    try:
+        domains_list = user_filters['domains']
+    except KeyError:
+        domains_list = [domain]
+    for current_domain in domains_list:
+        for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
+            group_memoizer = load_memoizer(current_domain)
             group_names = _get_group_names(user)
             user_dict = _make_user_dict(user, group_names, location_cache)
             user_dicts.append(user_dict)
@@ -253,9 +257,9 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
     users_groups_count = 0
     groups = set()
-    for download_domain in domains_list:
-        group_memoizer = load_memoizer(download_domain)
-        users_groups_count += count_users_and_groups(download_domain, user_filters, group_memoizer)
+    for current_domain in domains_list:
+        group_memoizer = load_memoizer(current_domain)
+        users_groups_count += count_users_and_groups(current_domain, user_filters, group_memoizer)
         groups.update(group_memoizer.groups)
 
     DownloadBase.set_progress(task, 0, users_groups_count)
