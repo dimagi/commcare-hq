@@ -1275,7 +1275,12 @@ class CommCareUserFilterForm(forms.Form):
         return search_string
 
     def clean_domains(self):
-        domains = self.data.getlist('domains[]', [self.domain])
+        try:
+            if self.data['domains']:
+                domains = self.data.getlist('domains')
+        except MultiValueDictKeyError:
+            domains = self.data.getlist('domains[]', [self.domain])
+
         try:
             is_all_domain_download = self.data['is_all_domain_download']
             if is_all_domain_download == 'true' or is_all_domain_download == 'on':
