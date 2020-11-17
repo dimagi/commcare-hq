@@ -23,8 +23,8 @@ def drop_suffix(doc_type):
 class CouchDataLoader(DataLoader):
     slug = 'couch'
 
-    def __init__(self, object_filter=None, stdout=None, stderr=None):
-        super().__init__(object_filter, stdout, stderr)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._dbs = {}
         self._success_counter = Counter()
 
