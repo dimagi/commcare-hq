@@ -422,10 +422,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=list
     )
 
-    # Default settings for data exports
-    default_export_settings = models.ForeignKey('export.DefaultExportSettings', null=True,
-                                                on_delete=models.SET_NULL)
-
     class Meta(object):
         app_label = 'accounting'
 

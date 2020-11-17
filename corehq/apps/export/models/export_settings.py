@@ -14,9 +14,12 @@ class ExportFileType(object):
 
 class DefaultExportSettings(models.Model):
     """
-    Represents the default settings for data exports
+    Represents the default settings for data exports linked to a BillingAccount
     Currently configured via the Enterprise Settings UI
     """
+
+    account = models.ForeignKey('accounting.BillingAccount', null=False, on_delete=models.CASCADE)
+
     # Forms Exports
     forms_filetype = models.CharField(max_length=25, default=ExportFileType.EXCEL_2007_PLUS,
                                       choices=ExportFileType.CHOICES)
