@@ -30,6 +30,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -675,10 +676,10 @@ class NewMobileWorkerForm(forms.Form):
                                 <i class="fa fa-warning"></i> {suggested}
                             </p>
                             <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
-                                <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
-                                    <i class="fa fa-check"></i> {strong}
-                                <!-- /ko -->
-                                <!-- ko ifnot: $root.useDraconianSecurity() -->
+                                <!-- ko ifnot: $root.skipStandardValidations() -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
+                                        <i class="fa fa-check"></i> {strong}
+                                    <!-- /ko -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
                                         {almost}
                                     <!-- /ko -->
@@ -687,11 +688,6 @@ class NewMobileWorkerForm(forms.Form):
                                     <!-- /ko -->
                                 <!-- /ko -->
 
-                                <!-- ko if: $root.useDraconianSecurity() -->
-                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {rules}
-                                    <!-- /ko -->
-                                <!-- /ko -->
                                 <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
                                     <i class="fa fa-warning"></i> {disabled}
                                 <!-- /ko -->
@@ -702,8 +698,6 @@ class NewMobileWorkerForm(forms.Form):
                             strong=_("Good Job! Your password is strong!"),
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
-                            rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
-                                "minimum length of 8 characters."),
                             disabled=_("Setting a password is disabled. "
                                        "The user will set their own password on confirming their account email."),
                         )),
@@ -715,7 +709,7 @@ class NewMobileWorkerForm(forms.Form):
                             'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
                             'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
                         }
-                    '''
+                    ''' if not has_custom_clean_password() else ''
                 ),
             )
         )
