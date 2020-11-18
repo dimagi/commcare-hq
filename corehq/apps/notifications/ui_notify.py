@@ -142,5 +142,5 @@ CASE_LIST_OVERWRITE_UPDATE = StaticUINotify(
 
 BULK_DOWNLOAD_WEB_USERS = StaticUINotify(
     'bulk_download_web_users_nov2020',
-    ends_on=datetime(2020, 11, 18),
+    ends_on=datetime(2020, 11, 20),
 )
