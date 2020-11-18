@@ -1183,13 +1183,13 @@ class CommCareUserFilterForm(forms.Form):
     )
     domains = forms.MultipleChoiceField(
         required=False,
-        label=_('Domains'),
+        label=_('Project Spaces'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Add domains of the desired mobile workers'),
+        help_text=_('Add project spaces containing the desired mobile workers'),
     )
     is_all_domain_download = forms.BooleanField(
         required=False,
-        label=_("Download users from all Project Spaces")
+        label=_("Download users from all project spaces")
     )
 
     def __init__(self, *args, **kwargs):
