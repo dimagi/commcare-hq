@@ -1282,8 +1282,7 @@ class CommCareUserFilterForm(forms.Form):
         if 'is_all_domain_download' in self.data:
             if self.data['is_all_domain_download'] == 'true' or self.data['is_all_domain_download'] == 'on':
                 domains = DomainPermissionsMirror.mirror_domains(self.domain)
-        if self.domain not in domains:  # always include the current domain
-            domains += [self.domain]
+                domains += [self.domain]
         return domains
 
 
