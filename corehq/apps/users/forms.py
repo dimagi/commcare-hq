@@ -688,6 +688,9 @@ class NewMobileWorkerForm(forms.Form):
                                     <!-- /ko -->
                                 <!-- /ko -->
 
+                                <!-- ko if: $root.skipStandardValidations() -->
+                                    <i class="fa fa-info-circle"></i> {custom_warning}
+                                <!-- /ko -->
                                 <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
                                     <i class="fa fa-warning"></i> {disabled}
                                 <!-- /ko -->
@@ -698,6 +701,7 @@ class NewMobileWorkerForm(forms.Form):
                             strong=_("Good Job! Your password is strong!"),
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
+                            custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
                             disabled=_("Setting a password is disabled. "
                                        "The user will set their own password on confirming their account email."),
                         )),
