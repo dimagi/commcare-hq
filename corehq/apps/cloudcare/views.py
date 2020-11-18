@@ -2,7 +2,6 @@ import json
 import re
 import string
 
-import sentry_sdk
 from django.conf import settings
 from django.http import (
     Http404,
@@ -15,17 +14,18 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 
+import sentry_sdk
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from text_unidecode import unidecode
+from xml2json.lib import xml2json
 
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
 
@@ -34,9 +34,10 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_for_commcare_user,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.utils import domain_is_on_trial, domain_has_privilege
-from corehq.apps.domain.models import Domain
-
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    domain_is_on_trial,
+)
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -55,7 +56,10 @@ from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.cloudcare.dbaccessors import (
+    get_application_access_for_domain,
+    get_cloudcare_apps,
+)
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
@@ -65,24 +69,27 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest_ex,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
-    waf_allow)
+    waf_allow,
+)
+from corehq.apps.integration.util import integration_contexts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from xml2json.lib import xml2json
+from corehq.util.metrics import metrics_counter
+from custom.icds_core.view_utils import get_authorization_errors
 
 
 @require_cloudcare_access
@@ -187,11 +194,21 @@ class FormplayerMain(View):
     def get_option_apps(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
         apps = self.get_web_apps_available_to_user(domain, restore_as)
+        accessible_apps = []
+        for app in apps:
+            if not get_authorization_errors(domain, request.couch_user, app['_id']):
+                accessible_apps.append(app)
+        apps = accessible_apps
         return JsonResponse(apps, safe=False)
 
     def get_main(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
         apps = self.get_web_apps_available_to_user(domain, restore_as)
+        accessible_apps = []
+        for app in apps:
+            if not get_authorization_errors(domain, request.couch_user, app['_id']):
+                accessible_apps.append(app)
+        apps = accessible_apps
 
         def _default_lang():
             try:
