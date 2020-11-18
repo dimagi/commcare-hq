@@ -35,7 +35,8 @@ _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
     queue='background_queue',
 )
 def update_facility_cases_from_dhis2_data_elements(
-    print_notifications: bool = False
+    period: Optional[str] = None,
+    print_notifications: bool = False,
 ):
     """
     Update facility_supervision cases with indicators collected in DHIS2
@@ -46,10 +47,13 @@ def update_facility_cases_from_dhis2_data_elements(
 
     """
     dhis2_server = get_dhis2_server(print_notifications)
+    if not period:
+        period = get_last_quarter()
     try:
         case_blocks = get_case_blocks()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
-            futures = (executor.submit(set_case_updates, dhis2_server, cb)
+            futures = (executor.submit(set_case_updates,
+                                       dhis2_server, cb, period)
                        for cb in case_blocks)
             for futures_chunk in chunked(futures, 100):
                 case_blocks_chunk = []
@@ -112,6 +116,7 @@ def get_case_blocks() -> Iterable[CaseBlock]:
 def set_case_updates(
     dhis2_server: ConnectionSettings,
     case_block: CaseBlock,
+    period: str,
 ) -> CaseBlock:
     """
     Fetch data sets of data elements for last quarter from ``dhis2_server``
@@ -133,6 +138,7 @@ def set_case_updates(
                 # unit. This is the DHIS2 facility whose data we
                 # want to import.
                 org_unit_id=case_block.external_id,
+                period=period,
             )
         if data_set_cache[mapping.data_set_id] is None:
             # No data for this facility. `None` = "We don't know"
@@ -149,6 +155,7 @@ def fetch_data_set(
     dhis2_server: ConnectionSettings,
     data_set_id: str,
     org_unit_id: str,
+    period: str,
 ) -> Optional[List[dict]]:
     """
     Returns a list of `DHIS2 data values`_, or ``None`` if the the given
@@ -163,7 +170,7 @@ def fetch_data_set(
     requests = dhis2_server.get_requests()
     endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
     params = {
-        'period': get_last_quarter(),
+        'period': period,
         'dataSet': data_set_id,
         'orgUnit': org_unit_id,
     }
