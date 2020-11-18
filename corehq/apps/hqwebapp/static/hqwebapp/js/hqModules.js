@@ -56,21 +56,16 @@ function hqDefine(path, dependencies, moduleAccessor) {
             define(path, dependencies, factory);
         } else {
             var thirdPartyGlobals = {
-                    'jquery': '$',
-                    'knockout': 'ko',
-                    'underscore': '_',
-                    'clipboard/dist/clipboard': 'Clipboard',
-                    'ace-builds/src-min-noconflict/ace': 'ace',
-                    'DOMPurify/dist/purify.min': 'DOMPurify',
-                    'moment/moment': 'moment',
-                    'crypto-js/crypto-js': 'CryptoJS',
-                },
-                thirdPartyPlugins = [
-                    'jquery-form/dist/jquery.form.min',
-                    'jquery.rmi/jquery.rmi',
-                    'jquery-ui/ui/widgets/sortable',
-                    'select2/dist/js/select2.full.min',
-                ];
+                'jquery': '$',
+                'knockout': 'ko',
+                'underscore': '_',
+                'clipboard/dist/clipboard': 'Clipboard',
+                'ace-builds/src-min-noconflict/ace': 'ace',
+                'DOMPurify/dist/purify.min': 'DOMPurify',
+                'moment/moment': 'moment',
+                'crypto-js/crypto-js': 'CryptoJS',
+                'hqwebapp/js/lib/modernizr': 'Modernizr',
+            };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];

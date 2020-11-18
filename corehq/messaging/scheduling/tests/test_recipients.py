@@ -2,7 +2,7 @@ import contextlib
 import uuid
 from datetime import time
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from mock import patch
 
@@ -744,11 +744,7 @@ class SchedulingRecipientTest(TestCase):
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
 
-            with patch('corehq.apps.sms.tasks.use_phone_entries') as patch1, \
-                    patch('corehq.messaging.tasks.use_phone_entries') as patch2, \
-                    patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
-
-                patch1.return_value = patch2.return_value = patch3.return_value = False
+            with override_settings(USE_PHONE_ENTRIES=False):
                 update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
                 case = CaseAccessors(self.domain).get_case(case.case_id)
 
@@ -808,12 +804,7 @@ class SchedulingRecipientTest(TestCase):
 
     @run_with_all_backends
     def test_not_using_phone_entries(self):
-        with patch('corehq.apps.sms.tasks.use_phone_entries') as patch1, \
-                patch('corehq.messaging.tasks.use_phone_entries') as patch2, \
-                patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
-
-            patch1.return_value = patch2.return_value = patch3.return_value = False
-
+        with override_settings(USE_PHONE_ENTRIES=False):
             user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
             user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
             user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)

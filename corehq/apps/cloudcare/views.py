@@ -18,6 +18,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -33,7 +34,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_for_commcare_user,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.accounting.utils import domain_is_on_trial, domain_has_privilege
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.app_manager.dbaccessors import (
@@ -219,6 +220,7 @@ class FormplayerMain(View):
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
             "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
+            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -281,6 +283,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
+            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -289,6 +292,7 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
@@ -297,6 +301,7 @@ class PreviewAppView(TemplateView):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
+            "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
         })
 
 

@@ -63,13 +63,8 @@
   <div id="reportConfig" class="ko-template">
     <div class="pull-right page-actions-toolbar">
       {% if existing_report %}
-        <a
-          id="deleteReport"
-          class="btn btn-danger"
-          href="{% url 'delete_configurable_report' domain  existing_report.get_id %}?redirect={% url 'reports_home' domain %}"
-        >
-          Delete Report
-        </a>&nbsp;
+        {% include 'userreports/partials/delete_report_button.html' with report_id=existing_report.get_id %}
+        &nbsp;
       {% endif %}
       {% if request|toggle_enabled:"LINKED_DOMAINS" %}
         {% if existing_report %}

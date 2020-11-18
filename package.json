@@ -72,6 +72,7 @@
         "less": "3.10.3",
         "marionette.approuter": "^1.0.2",
         "markdown-it": "7.0.1",
+        "modernizr": "^3.11.3",
         "moment": "2.27.0",
         "multiselect": "0.9.12",
         "npm": "6.14.6",
@@ -117,5 +118,9 @@
         "mem": "^4.0.0",
         "minimatch": "^3.0.2",
         "underscore.string": "^3.3.5"
+    },
+    "scripts": {
+        "postinstall": "yarn run -s build:modernizr",
+        "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib"
     }
 }

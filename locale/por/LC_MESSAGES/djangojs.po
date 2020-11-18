@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-21 19:11+0000\n"
+"POT-Creation-Date: 2020-11-11 19:57+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2020\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -703,7 +703,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js:14
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:106
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:285
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:287
 msgid "There was an error saving"
 msgstr ""
 
@@ -724,15 +724,15 @@ msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:421
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:426
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:455
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:460
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:460
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:465
 msgid "No new changes!"
 msgstr ""
 
@@ -988,7 +988,7 @@ msgid "Change Question Type To"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:289
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:291
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:42
 msgid "Delete"
 msgstr ""
@@ -1510,7 +1510,7 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:804
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:281
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:283
 msgid "Save"
 msgstr "Salvar"
 
@@ -3093,28 +3093,28 @@ msgstr ""
 msgid "Done"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:282
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:284
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:283
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:285
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:284
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:292
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:286
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:294
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:290
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:292
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:291
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:293
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:293
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:295
 msgid "There was an error deleting"
 msgstr ""
 
