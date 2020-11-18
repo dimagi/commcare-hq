@@ -44,7 +44,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if not password:
             raise ValidationError(_("Please enter a password."))
 
-        if 'captcha' in self.fields:
+        if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
             if not self.cleaned_data.get('captcha'):
                 raise ValidationError(_("Please enter valid CAPTCHA"))
 
