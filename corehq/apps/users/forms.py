@@ -10,7 +10,6 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
@@ -1275,18 +1274,14 @@ class CommCareUserFilterForm(forms.Form):
         return search_string
 
     def clean_domains(self):
-        try:
-            if self.data['domains']:
-                domains = self.data.getlist('domains')
-        except MultiValueDictKeyError:
+        if 'domains' in self.data:
+            domains = self.data.getlist('domains')
+        else:
             domains = self.data.getlist('domains[]', [self.domain])
 
-        try:
-            is_all_domain_download = self.data['is_all_domain_download']
-            if is_all_domain_download == 'true' or is_all_domain_download == 'on':
+        if 'is_all_domain_download' in self.data:
+            if self.data['is_all_domain_download'] == 'true' or self.data['is_all_domain_download'] == 'on':
                 domains = DomainPermissionsMirror.mirror_domains(self.domain)
-        except MultiValueDictKeyError:
-            pass
         if self.domain not in domains:  # always include the current domain
             domains += [self.domain]
         return domains

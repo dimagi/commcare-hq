@@ -64,13 +64,13 @@ def parse_users(domain, user_filters, task=None, total_count=None):
             user.devices, key=lambda d: d.last_used, reverse=True
         )])
 
-    def _make_user_dict(user, group_names, location_cache, domain):
+    def _make_user_dict(user, group_names, location_cache, current_domain):
         model_data, uncategorized_data = (
             fields_definition.get_model_and_uncategorized(user.metadata)
         )
-        role = user.get_role(domain)
+        role = user.get_role(current_domain)
         profile = None
-        if PROFILE_SLUG in user.metadata and domain_has_privilege(domain, privileges.APP_USER_PROFILES):
+        if PROFILE_SLUG in user.metadata and domain_has_privilege(current_domain, privileges.APP_USER_PROFILES):
             try:
                 profile = CustomDataFieldsProfile.objects.get(id=user.metadata[PROFILE_SLUG])
             except CustomDataFieldsProfile.DoesNotExist:
@@ -118,10 +118,10 @@ def parse_users(domain, user_filters, task=None, total_count=None):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    try:
-        domains_list = user_filters['domains']
-    except KeyError:
-        domains_list = [domain]
+    domains_list = [domain]
+    if 'domains' in user_filters:
+        domains_list = user_filters['domains']  # for instances of multi-domain download
+
     for current_domain in domains_list:
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
