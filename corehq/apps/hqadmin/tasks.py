@@ -22,6 +22,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.celery_utils import periodic_task_when_true
+from corehq.util.metrics import metrics_gauge
 from corehq.util.soft_assert import soft_assert
 
 from .utils import check_for_rewind
@@ -160,3 +161,17 @@ def _mass_email_attachment(name, rows):
 def cleanup_stale_es_on_couch_domains_task():
     from corehq.apps.hqadmin.couch_domain_utils import cleanup_stale_es_on_couch_domains
     cleanup_stale_es_on_couch_domains()
+
+
+@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"), queue='background_queue')
+def collect_couchdb_shard_count_metrics():
+    from corehq.apps.hqadmin.corrupt_couch import get_cluster_shard_details
+    shard_details = get_cluster_shard_details()
+    for shard in shard_details:
+        tags = {
+            "node": shard.node,
+            "database": shard.db_name,
+            "shard": shard.shard_name,
+        }
+        metrics_gauge("commcare.couchdb.shard_doc_count", shard.doc_count, tags=tags)
+        metrics_gauge("commcare.couchdb.shard_doc_deletion_count", shard.doc_del_count, tags=tags)

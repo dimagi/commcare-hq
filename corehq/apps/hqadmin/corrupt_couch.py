@@ -1,11 +1,14 @@
 """Utilities for assessing and repairing CouchDB corruption"""
+import itertools
 import logging
 from collections import defaultdict
 from itertools import chain, islice
 from json.decoder import JSONDecodeError
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin, urlparse, urlunparse, quote
 
 import attr
+import jsonobject
+import requests
 from couchdbkit import Database
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil.parser import parser as parse_date
@@ -32,6 +35,7 @@ from corehq.util.pagination import ResumableFunctionIterator
 
 log = logging.getLogger(__name__)
 COUCH_NODE_PORT = 15984
+COUCH_NODE_LOCAL_PORT = 15986
 DOC_TYPES_BY_NAME = {
     "forms": {
         "type": XFormInstance,
@@ -393,6 +397,11 @@ class CouchCluster:
 
 
 def _get_couch_node_databases(db, node_port=COUCH_NODE_PORT):
+    return [Database(urljoin(url, db.dbname)) for _, url in _get_couch_nodes(db, node_port)]
+
+
+def _get_couch_nodes(db, node_port=COUCH_NODE_PORT):
+    """Returns a list of tuples: (db_host, root_couch_url)"""
     def node_url(proxy_url, node):
         return urlunparse(proxy_url._replace(netloc=f'{auth}@{node}:{node_port}'))
 
@@ -400,6 +409,69 @@ def _get_couch_node_databases(db, node_port=COUCH_NODE_PORT):
     resp.raise_for_status()
     membership = resp.json()
     nodes = [node.split("@")[1] for node in membership["cluster_nodes"]]
-    proxy_url = urlparse(settings.COUCH_DATABASE)._replace(path=f"/{db.dbname}")
+    proxy_url = urlparse(settings.COUCH_DATABASE)._replace(path="")
     auth = proxy_url.netloc.split('@')[0]
-    return [Database(node_url(proxy_url, node)) for node in nodes]
+    return [(node, node_url(proxy_url, node)) for node in nodes]
+
+
+def get_cluster_shard_details():
+    urls = _get_couch_nodes(XFormInstance.get_db(), node_port=COUCH_NODE_LOCAL_PORT)
+    return list(itertools.chain.from_iterable(
+        _get_node_shard_details(node, url) for node, url in urls
+    ))
+
+
+def _get_node_shard_details(node_name, node_url):
+    shards = _get_node_shards(node_url)
+    return [_get_shard_details(node_name, node_url, shard) for shard in shards]
+
+
+def _get_node_shards(node_url):
+    return [
+        local_db for local_db in _do_couch_request(node_url, "_all_dbs")
+        if local_db.startswith("shards")
+    ]
+
+
+def _get_shard_details(node_name, node_url, shard_name):
+    data = _do_couch_request(node_url, quote(shard_name, safe=""))
+    data["node"] = node_name
+    data["shard_name"] = data["db_name"]
+    data["db_name"] = _get_db_name(shard_name)
+    return ShardDetails(data)
+
+
+def _get_db_name(shard_name):
+    return shard_name.split("/")[-1].split(".")[0]
+
+
+def _do_couch_request(node_url, path):
+    response = requests.get(url=urljoin(node_url, path))
+    response.raise_for_status()
+    return response.json()
+
+
+class ShardDetails(jsonobject.JsonObject):
+    node = jsonobject.StringProperty()
+    db_name = jsonobject.StringProperty()
+
+    # shards/c0000000-dfffffff/commcarehq.1541009837
+    shard_name = jsonobject.StringProperty()
+    engine = jsonobject.StringProperty()
+    doc_count = jsonobject.IntegerProperty()
+    doc_del_count = jsonobject.IntegerProperty()
+    purge_seq = jsonobject.IntegerProperty()
+    compact_running = jsonobject.BooleanProperty()
+    sizes = jsonobject.DictProperty()
+    disk_size = jsonobject.IntegerProperty()
+    data_size = jsonobject.IntegerProperty()
+    other = jsonobject.DictProperty()
+    instance_start_time = jsonobject.StringProperty()
+    disk_format_version = jsonobject.IntegerProperty()
+    committed_update_seq = jsonobject.IntegerProperty()
+    compacted_seq = jsonobject.IntegerProperty()
+    uuid = jsonobject.StringProperty()
+
+    @property
+    def shard_name_short(self):
+        return self.shard_name.split('/')[1]
