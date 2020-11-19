@@ -2085,6 +2085,7 @@ class CaseSearchProperty(DocumentSchema):
     """
     name = StringProperty()
     label = DictProperty()
+    enum = SchemaListProperty(MappingItem)
     appearance = StringProperty()
     input_ = StringProperty()
 
