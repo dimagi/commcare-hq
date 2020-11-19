@@ -24,6 +24,7 @@ from corehq.apps.builds.models import BuildSpec
 DOMAIN = 'test_domain'
 
 
+# TODO: add test that enums don't change the suite
 @patch_get_xform_resource_overrides()
 class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
