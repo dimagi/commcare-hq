@@ -95,7 +95,7 @@ class RemoteRequestFactory(object):
         instances |= get_instances_for_module(self.app, self.module)
 
         # sorted list to prevent intermittent test failures
-        return sorted(list(instances) + prompt_select_instances, key=lambda i: i.id)
+        return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
 
     def _build_session(self):
         return RemoteRequestSession(
