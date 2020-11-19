@@ -1186,10 +1186,6 @@ class CommCareUserFilterForm(forms.Form):
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Add project spaces containing the desired mobile workers'),
     )
-    is_all_domain_download = forms.BooleanField(
-        required=False,
-        label=_("Download users from all project spaces")
-    )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
@@ -1211,9 +1207,10 @@ class CommCareUserFilterForm(forms.Form):
 
         self.fields['domains'].choices = [(self.domain, self.domain)]
         if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
-            self.fields['domains'].choices = [(self.domain, self.domain)] \
-                + [(domain, domain) for domain in DomainPermissionsMirror.mirror_domains(self.domain)]
-
+            self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
+                                             [(self.domain, self.domain)] + \
+                                             [(domain, domain) for domain in
+                                              DomainPermissionsMirror.mirror_domains(self.domain)]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1232,7 +1229,6 @@ class CommCareUserFilterForm(forms.Form):
                 crispy.Field('location_id'),
                 crispy.Field('columns'),
                 crispy.Field('domains'),
-                crispy.Field('is_all_domain_download', data_bind='checked: is_all_domain_download'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -1279,10 +1275,9 @@ class CommCareUserFilterForm(forms.Form):
         else:
             domains = self.data.getlist('domains[]', [self.domain])
 
-        if 'is_all_domain_download' in self.data:
-            if self.data['is_all_domain_download'] == 'true' or self.data['is_all_domain_download'] == 'on':
-                domains = DomainPermissionsMirror.mirror_domains(self.domain)
-                domains += [self.domain]
+        if 'all_project_spaces' in domains:
+            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            domains += [self.domain]
         return domains
 
 

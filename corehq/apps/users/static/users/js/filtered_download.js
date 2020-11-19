@@ -16,7 +16,6 @@ hqDefine('users/js/filtered_download', [
             'search_string': $("#id_search_string").val(),
             'location_id': $("[name=location_id]").val(),
             'domains': $("#id_domains").val(),
-            'is_all_domain_download': $("#id_is_all_domain_download").is(':checked'),
         };
     }
 
