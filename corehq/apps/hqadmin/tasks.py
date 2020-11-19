@@ -163,7 +163,7 @@ def cleanup_stale_es_on_couch_domains_task():
     cleanup_stale_es_on_couch_domains()
 
 
-@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"), queue='background_queue')
+@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="15", hour="*"), queue='background_queue')
 def collect_couchdb_shard_count_metrics():
     from corehq.apps.hqadmin.corrupt_couch import get_cluster_shard_details
     shard_details = get_cluster_shard_details()
