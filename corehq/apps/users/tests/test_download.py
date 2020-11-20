@@ -108,7 +108,7 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertEqual(1862, spec['data: born'])
 
     def test_multiple_domain_download(self):
-        (headers, rows) = parse_users(self.domain_obj.name, {'domains': ['bookshelf', 'book']})
+        (headers, rows) = parse_mobile_users(self.domain_obj.name, {'domains': ['bookshelf', 'book']})
 
         rows = list(rows)
         self.assertEqual(3, len(rows))

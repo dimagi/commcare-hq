@@ -179,7 +179,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([
-              group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
             ], key=alphanumeric_sort_key)
             user_dict = make_mobile_user_dict(user, group_names, location_cache, current_domain, fields_definition)
             user_dicts.append(user_dict)
