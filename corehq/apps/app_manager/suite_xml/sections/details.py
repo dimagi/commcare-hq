@@ -307,6 +307,7 @@ class DetailContributor(SectionContributor):
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
             stack=Stack(),
+            auto_launch=module.search_config.auto_launch,   # TODO: add test
             **relevant_kwarg
         )
         frame = PushFrame()

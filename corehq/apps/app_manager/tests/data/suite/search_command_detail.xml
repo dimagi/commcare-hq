@@ -33,7 +33,7 @@
         </text>
       </template>
     </field>
-    <action>
+    <action auto_launch="false">
       <display>
         <text>
           <locale id="case_search.m0"/>
@@ -135,7 +135,7 @@
         </text>
       </template>
     </field>
-    <action>
+    <action auto_launch="false">
       <display>
         <text>
           <locale id="case_search.m1"/>
