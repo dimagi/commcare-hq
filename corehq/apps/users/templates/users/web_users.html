@@ -46,7 +46,7 @@
         </a>
 
         {% if not request.is_view_only %}
-        <a id="bulk_upload" class="btn btn-default" href="">
+        <a id="bulk_upload" class="btn btn-default" href="{% url "upload_web_users" domain %}">
           <i class="fa fa-cloud-upload"></i> {% trans "Upload Web Users" %}
         </a>
         {% endif %}
