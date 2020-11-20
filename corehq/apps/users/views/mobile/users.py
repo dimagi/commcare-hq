@@ -1,7 +1,6 @@
 import io
 import json
 import re
-from collections import defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -97,7 +96,7 @@ from corehq.apps.users.forms import (
     NewMobileWorkerForm,
     SetUserPasswordForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, BulkUploadResponseWrapper
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -1120,34 +1119,10 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     context.update({
         'on_complete_short': _('Bulk upload complete.'),
         'on_complete_long': _('Mobile Worker upload has finished'),
-
+        'user_type': _('mobile workers'),
     })
 
-    class _BulkUploadResponseWrapper(object):
-
-        def __init__(self, context):
-            results = context.get('result') or defaultdict(lambda: [])
-            self.response_rows = results['rows']
-            self.response_errors = results['errors']
-            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
-
-        def success_count(self):
-            return len(self.response_rows) - len(self.problem_rows)
-
-        def has_errors(self):
-            return bool(self.response_errors or self.problem_rows)
-
-        def errors(self):
-            errors = []
-            for row in self.problem_rows:
-                if row['flag'] == 'missing-data':
-                    errors.append(_('A row with no username was skipped'))
-                else:
-                    errors.append('{username}: {flag}'.format(**row))
-            errors.extend(self.response_errors)
-            return errors
-
-    context['result'] = _BulkUploadResponseWrapper(context)
+    context['result'] = BulkUploadResponseWrapper(context)
     return render(request, template, context)
 
 
@@ -1400,9 +1375,8 @@ def download_commcare_users(request, domain):
         res = bulk_download_usernames_async.delay(domain, download.download_id,
                                                   user_filters, owner_id=request.couch_user.get_id)
     else:
-        is_web_download = False
-        res = bulk_download_users_async.delay(domain, download.download_id, user_filters, is_web_download,
-                                              owner_id=request.couch_user.get_id)
+        res = bulk_download_users_async.delay(domain, download.download_id,
+                                              user_filters, owner_id=request.couch_user.get_id)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 

@@ -582,10 +582,9 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
     return ret
 
 
-def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+def create_or_update_web_users(upload_domain, user_specs, upload_user, update_progress=None):
 
     ret = {"errors": [], "rows": []}
-
     current = 0
 
     try:
@@ -597,22 +596,27 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
-            # username = normalize_username(str(username), domain) if username else None #TODO: confirm still fits need
+            username = normalize_username(str(username), domain) if username else None #TODO: confirm still fits need
             status_row = {
                 'username': username,
                 'row': row,
             }
+            roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+            domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
 
-            domain_info, domain_info_by_domain = get_domain_info(domain, upload_domain, user_specs, group_memoizer)
-
-            # TODO: intigrate get_web_user_import_validators for correct validators
-            # try:
-            #     for validator in domain_info.validators:
-            #         validator(row)
-            # except UserUploadError as e:
-            #     status_row['flag'] = str(e)
-            #     ret['rows'].append(status_row)
-            #     continue
+            validators = get_web_user_import_validators(
+                Domain.get_by_name(domain),
+                domain_user_specs,
+                list(roles_by_name),
+                upload_domain,
+            )
+            try:
+                for validator in validators:
+                    validator(row)
+            except UserUploadError as e:
+                status_row['flag'] = str(e)
+                ret['rows'].append(status_row)
+                continue
 
             email = row.get('email')
             first_name = row.get('first name')
@@ -629,7 +633,7 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
                 role_qualified_id = None
 
                 if role:
-                    role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
+                    role_qualified_id = roles_by_name[role].get_qualified_id()
 
                 if username:
                     if not upload_user.can_edit_web_users():
@@ -638,7 +642,6 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
                         ))
 
                     user = CouchUser.get_by_username(username)
-
                     if user:
                         if remove:
                             if not user or not user.is_member_of(domain):
@@ -655,26 +658,21 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
                                 )
 
                             if user.is_member_of(domain):
-                                # edit existing user in the domain
                                 user_current_role = user.get_role(domain=domain)
-                                role_updated = not (user_current_role
-                                                    and user_current_role.get_qualified_id() == role_qualified_id)
+                                role_updated = not (user_current_role and
+                                                    user_current_role.get_qualified_id() == role_qualified_id)
                                 if role_updated:
                                     user.set_role(domain, role_qualified_id)
                                 if first_name:
                                     user.first_name = first_name
                                 if last_name:
                                     user.last_name = last_name
-                                if user.location_id:
-                                    user.set_location(domain, user.location_id)
-                                else:
-                                    user.unset_location(domain)
                                 status_row['flag'] = 'updated'
                                 user.save()
 
                             # TODO: is this an edge case we need to cover for?
                             elif not user.is_member_of(domain) and is_account_confirmed:
-                                user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
+                                user.add_as_web_user(domain, role=role_qualified_id)
                                 status_row['flag'] = 'updated'
 
                             elif not user.is_member_of(domain) and not is_account_confirmed:
@@ -698,27 +696,13 @@ def create_or_update_web_users_and_groups(upload_domain, user_specs, upload_user
                             invite.send_activation_email()
                         status_row['flag'] = 'invited'
 
-                    # if role_updated:
-                    #     log_user_role_update(domain, user, upload_user)
+                    if role_updated:
+                        log_user_role_update(domain, user, upload_user)
 
             except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = str(e)
 
             ret["rows"].append(status_row)
     finally:
-        try:
-            for domain_info in domain_info_by_domain.values():
-                domain_info.group_memoizer.save_all()
-        except BulkSaveError as e:
-            _error_message = (
-                "Oops! We were not able to save some of your group changes. "
-                "Please make sure no one else is editing your groups "
-                "and try again."
-            )
-            logging.exception((
-                'BulkSaveError saving groups. '
-                'User saw error message "%s". Errors: %s'
-            ) % (_error_message, e.errors))
-            ret['errors'].append(_error_message)
-
+        pass # unclear what to do here yet
     return ret
