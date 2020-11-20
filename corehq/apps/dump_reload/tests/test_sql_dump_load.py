@@ -119,13 +119,11 @@ class BaseDumpLoadTest(TestCase):
 
         # Load
         loader = SqlDataLoader(object_filter=load_filter)
-        total_object_count, loaded_model_counts = loader.load_objects(dump_lines)
+        loaded_model_counts = loader.load_objects(dump_lines)
 
         normalized_expected_loaded_counts = _normalize_object_counter(expected_load_counts, for_loaded=True)
         self.assertDictEqual(dict(normalized_expected_loaded_counts), dict(loaded_model_counts))
-        expected_total_load_objects = sum(expected_load_counts.values())
-        self.assertEqual(expected_total_load_objects, sum(loaded_model_counts.values()))
-        self.assertEqual(expected_total_load_objects, total_object_count)
+        self.assertEqual(sum(expected_load_counts.values()), sum(loaded_model_counts.values()))
 
         return dump_lines
 
@@ -706,8 +704,7 @@ class DefaultDictWithKeyTests(SimpleTestCase):
 def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        prefix = '(sql) ' if for_loaded else ''
-        label = '{}{}.{}'.format(prefix, model_class._meta.app_label, model_class.__name__)
+        label = '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
         return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count

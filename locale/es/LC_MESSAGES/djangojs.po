@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-11 19:57+0000\n"
+"POT-Creation-Date: 2020-11-18 19:15+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -488,7 +488,6 @@ msgid "User Data"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
@@ -978,6 +977,12 @@ msgid "Collapse All"
 msgstr "Contraer Todo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#, fuzzy
+#| msgid "Save Questions"
+msgid "Bulk Update All Questions"
+msgstr "Guardar Preguntas"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
 msgid "Add Question"
 msgstr "Agregar Pregunta"
 
@@ -990,7 +995,7 @@ msgid "Question Details"
 msgstr "Detalles de Preguntas"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 msgid "Expression Editor"
 msgstr "Editor de Expresión"
 
@@ -1341,6 +1346,7 @@ msgid "Long"
 msgstr "Largo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:421
 msgid "Decimal"
 msgstr "Decimal"
 
@@ -1556,7 +1562,7 @@ msgstr "Agregue Expresión"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:804
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:786
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:283
@@ -1683,6 +1689,45 @@ msgid "Advanced"
 msgstr "Avanzado"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#, fuzzy
+#| msgid "Required"
+msgid "Make Required"
+msgstr "Obligatorio"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+msgid ""
+"You are about to make all existing questions on this form required. This "
+"action will overwrite the current configuration of this form and can only be "
+"undone by editing individual questions."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#, fuzzy
+#| msgid "Default Value"
+msgid "Load Default Values"
+msgstr "Valor Predeterminado"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+msgid ""
+"You are about to set matching case properties as Default Values for all "
+"existing questions. This action will overwrite existing Default Values for "
+"all questions with matching case properties and can only be undone by "
+"editing individual questions."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#, fuzzy
+#| msgid "Are you sure you want to delete this request?"
+msgid "Are you sure you want to perform this action?"
+msgstr "¿Está seguro que desea eliminar esta solicitud?"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#, fuzzy
+#| msgid "Content Type"
+msgid "Continue"
+msgstr "Tipo de Contenido"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 msgid "Expand Editor"
 msgstr "Expanda el Editor"
 
@@ -1796,6 +1841,7 @@ msgstr ""
 "Analizando Error. Por favor verifique que su formulario sea un XML válido."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:23
 msgid "OK"
 msgstr "SÍ"
@@ -2141,7 +2187,7 @@ msgstr "Nuevo Tipo de Contenido"
 msgid "Content Type"
 msgstr "Tipo de Contenido"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid ""
 "You have languages in your form that are not specified in the \"Languages\" "
 "page of the application builder. The following language will be deleted on "
@@ -2562,15 +2608,15 @@ msgstr "Iniciar Carga"
 msgid "Replace"
 msgstr "Reemplazar"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 msgid "No Reference"
 msgstr "Sin Referencia"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 msgid "Advanced: Show Path"
 msgstr "Avanzada: Muestre la Ruta"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 msgid "Hide Path"
 msgstr "Oculte la Ruta"
 
@@ -2709,24 +2755,35 @@ msgstr ""
 msgid "Number is too large"
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:392
+#, fuzzy
+#| msgid "Phone Number or Numeric ID"
+msgid "Phone number or Numeric ID"
+msgstr "Número de teléfono o ID Numérico"
+
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:412
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:570
-msgid "Type to filter answers"
-msgstr "Escriba para filtrar respuestas"
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:538
+#, fuzzy
+#| msgid "Please specify an email."
+msgid "Please choose an item"
+msgstr "Por favor especifique un correo electrónico."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:583
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:697
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:609
+msgid "Combobox"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:679
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:894
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:876
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:901
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:883
 msgid "Could not load map. Please try again later."
 msgstr ""
 
@@ -4330,5 +4387,5 @@ msgstr "¡Incorrecto! La respuesta es:"
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
 
-#~ msgid "Continue"
-#~ msgstr "Continuar"
+#~ msgid "Type to filter answers"
+#~ msgstr "Escriba para filtrar respuestas"

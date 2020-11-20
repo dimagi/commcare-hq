@@ -1400,12 +1400,13 @@ def download_commcare_users(request, domain):
     download = DownloadBase()
     if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
         track_workflow(request.couch_user.username, 'Domain filter used for mobile download')
+    is_web_download = False
     if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
-        res = bulk_download_usernames_async.delay(domain, download.download_id,
-                                                  user_filters, owner_id=request.couch_user.get_id)
+        res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,
+                                                  is_web_download, owner_id=request.couch_user.get_id)
     else:
-        res = bulk_download_users_async.delay(domain, download.download_id,
-                                              user_filters, owner_id=request.couch_user.get_id)
+        res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
+                                              is_web_download, owner_id=request.couch_user.get_id)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 
