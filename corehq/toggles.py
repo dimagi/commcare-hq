@@ -891,6 +891,16 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
                 "This may still cause issues if the other questions have not been calculated yet",
 )
 
+VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
+    'allow_bulk_form_actions',
+    "Allow bulk form actions in the Form Builder",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+    description="This shows Bulk Form Actions (mark all questions required, "
+                "set default values to matching case properties) in "
+                "the Form Builder's main dropdown menu.",
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
@@ -1346,6 +1356,14 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
     "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
     "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+ACTIVE_COUCH_DOMAINS = StaticToggle(
+    'active_couch_domains',
+    "Domains that are still on the Couch DB backend which we consider most "
+    "active / important to ensure that data in ES is never stale.",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
 )

@@ -67,6 +67,16 @@ def get_blocked_hubspot_email_domains():
     ) for _email in email_list]
 
 
+def get_blocked_hubspot_accounts():
+    return [
+        f'{account[1]} - ID # {account[0]}'
+        for account in BillingAccount.objects.filter(
+            block_hubspot_data_for_all_users=True,
+            is_active=True,
+        ).values_list('id', 'name')
+    ]
+
+
 def get_instance_string():
     instance = settings.ANALYTICS_CONFIG.get('HQ_INSTANCE', '')
     env = '' if instance == 'www' else instance + '_'

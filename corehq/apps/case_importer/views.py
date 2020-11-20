@@ -33,6 +33,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -219,6 +220,12 @@ def excel_fields(request, domain):
     # hide search column and matching case fields from the update list
     if search_column in excel_fields:
         excel_fields.remove(search_column)
+
+    # 'domain' case property cannot be created if domain mirror flag is enabled,
+    # as this enables a multi-domain case import.
+    # see: https://dimagi-dev.atlassian.net/browse/USH-81
+    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        excel_fields.remove('domain')
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])

@@ -37,8 +37,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-04 21:01+0000\n"
-"PO-Revision-Date: 2020-10-28 19:18+0000\n"
+"POT-Creation-Date: 2020-11-18 19:14+0000\n"
+"PO-Revision-Date: 2020-11-11 19:57+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -3605,7 +3605,7 @@ msgid ""
 "case list on the mobile device. Availabe in menu settings."
 msgstr ""
 
-#: corehq/apps/app_manager/add_ons.py:151 corehq/privileges.py:172
+#: corehq/apps/app_manager/add_ons.py:151 corehq/privileges.py:174
 msgid "Child Cases"
 msgstr ""
 
@@ -11105,14 +11105,14 @@ msgid "Search"
 msgstr "Procurar"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:351
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:391
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:395
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:38
 #: corehq/apps/domain/forms.py:2290 corehq/apps/domain/forms.py:2415
 #: corehq/apps/sms/templates/sms/chat_contacts.html:20
 msgid "Clear"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:416
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:420
 msgid "24-hour clock"
 msgstr ""
 
@@ -11249,7 +11249,7 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:464
+#: corehq/apps/cloudcare/views.py:469
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:243
 #: corehq/tabs/tabclasses.py:1362
 msgid "Web Apps Permissions"
@@ -18465,7 +18465,7 @@ msgid ""
 "this repeatedly please report an issue "
 msgstr ""
 
-#: corehq/apps/fixtures/views.py:313 corehq/privileges.py:138
+#: corehq/apps/fixtures/views.py:313 corehq/privileges.py:140
 #: corehq/reports.py:307
 msgid "Lookup Tables"
 msgstr ""
@@ -20101,19 +20101,6 @@ msgstr ""
 msgid "This is a snapshot of "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:253
-msgid "CommCare HQ does not work well with Internet Explorer."
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:257
-msgid ""
-"\n"
-"              We recommend\n"
-"              <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
-"              or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
-"            "
-msgstr ""
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:53
 msgid "CommCare HQ Mobile is Copyright"
 msgstr ""
@@ -20166,7 +20153,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/iframe_close_window.html:5
 #: corehq/apps/hqwebapp/templates/hqwebapp/iframe_close_window.html:14
-#: corehq/apps/hqwebapp/views.py:546
+#: corehq/apps/hqwebapp/views.py:548
 msgid "Thank you for logging in!"
 msgstr ""
 
@@ -20815,6 +20802,19 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/unsupported_browser.html:8
+msgid "Your browser is unsupported, please consider another option"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/unsupported_browser.html:12
+msgid ""
+"\n"
+"        We recommend\n"
+"        <a href=\"https://www.google.com/chrome\">Chrome</a>\n"
+"        or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
+"    "
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/prepaid_modal.html:13
 #, python-format
 msgid ""
@@ -20945,83 +20945,83 @@ msgctxt "twilio_locale"
 msgid "en"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:416 corehq/apps/hqwebapp/views.py:421
+#: corehq/apps/hqwebapp/views.py:417 corehq/apps/hqwebapp/views.py:422
 #, python-format
 msgid "Welcome back to %s!"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:474
+#: corehq/apps/hqwebapp/views.py:476
 msgid "Your session has expired"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:577
+#: corehq/apps/hqwebapp/views.py:580
 msgid ""
 "You do not have access to this file. It can only be uploaded to dropbox by "
 "the user who created it"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:608
+#: corehq/apps/hqwebapp/views.py:611
 #, python-brace-format
 msgid ""
 "Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email "
 "when it completes."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:689
+#: corehq/apps/hqwebapp/views.py:692
 msgid ""
 "Your CommCare HQ Issue Report has been sent. We are working quickly to "
 "resolve this problem."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:830
+#: corehq/apps/hqwebapp/views.py:833
 msgid "Apache License"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:834
+#: corehq/apps/hqwebapp/views.py:837
 msgid "BSD License"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:930
+#: corehq/apps/hqwebapp/views.py:933
 msgid "items per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:931
+#: corehq/apps/hqwebapp/views.py:934
 msgid "You have no items."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:932
+#: corehq/apps/hqwebapp/views.py:935
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html:19
 msgid "Loading..."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:933
+#: corehq/apps/hqwebapp/views.py:936
 msgid "Deleted Items:"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:934
+#: corehq/apps/hqwebapp/views.py:937
 msgid "New Items:"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1058
+#: corehq/apps/hqwebapp/views.py:1061
 #, python-format
 msgid "<strong>Problem Refreshing List:</strong> %s"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1076
+#: corehq/apps/hqwebapp/views.py:1079
 #, python-format
 msgid "<strong>Problem Deleting:</strong> %s"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1084
+#: corehq/apps/hqwebapp/views.py:1087
 msgid "The item's ID was not passed to the server."
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1197
+#: corehq/apps/hqwebapp/views.py:1200
 #, python-format
 msgid "We've redirected you to the %s matching your query"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1252 corehq/tabs/tabclasses.py:2167
+#: corehq/apps/hqwebapp/views.py:1255 corehq/tabs/tabclasses.py:2167
 msgid "Maintenance Alerts"
 msgstr ""
 
@@ -22384,7 +22384,7 @@ msgstr ""
 #: corehq/apps/users/forms.py:889
 #: corehq/apps/users/templates/users/edit_commcare_user.html:30
 #: corehq/apps/users/templates/users/roles_and_permissions.html:85
-#: corehq/privileges.py:155
+#: corehq/privileges.py:157
 msgid "Locations"
 msgstr "Localizações"
 
@@ -24437,8 +24437,8 @@ msgstr "Aberto / Encerrado"
 #: corehq/apps/userreports/reports/filters/choice_providers.py:160
 #: corehq/apps/userreports/reports/filters/choice_providers.py:324
 #: corehq/apps/userreports/reports/filters/choice_providers.py:439
-#: corehq/apps/userreports/tests/test_choice_provider.py:371
-#: corehq/apps/userreports/tests/test_choice_provider.py:372
+#: corehq/apps/userreports/tests/test_choice_provider.py:381
+#: corehq/apps/userreports/tests/test_choice_provider.py:382
 msgid "Show All"
 msgstr ""
 
@@ -30960,22 +30960,22 @@ msgstr ""
 msgid "Unauthorized User"
 msgstr ""
 
-#: corehq/apps/users/models.py:2665
+#: corehq/apps/users/models.py:2669
 #, python-format
 msgid "Request to join %s approved"
 msgstr ""
 
-#: corehq/apps/users/models.py:2681
+#: corehq/apps/users/models.py:2685
 #, python-format
 msgid "Request from %(name)s to join %(domain)s"
 msgstr ""
 
-#: corehq/apps/users/models.py:2742
+#: corehq/apps/users/models.py:2746
 #, python-format
 msgid "Invitation from %s to join CommCareHQ"
 msgstr ""
 
-#: corehq/apps/users/models.py:2746
+#: corehq/apps/users/models.py:2750
 msgid "Request to join CommCareHQ approved"
 msgstr ""
 
@@ -35201,7 +35201,7 @@ msgid "Incremental Exports"
 msgstr ""
 
 #: corehq/motech/models.py:206 corehq/motech/repeaters/views/repeaters.py:52
-#: corehq/privileges.py:174 corehq/tabs/tabclasses.py:1817
+#: corehq/privileges.py:176 corehq/tabs/tabclasses.py:1817
 msgid "Data Forwarding"
 msgstr ""
 
@@ -35823,144 +35823,148 @@ msgstr ""
 msgid "Please enter API password again."
 msgstr ""
 
-#: corehq/privileges.py:139
+#: corehq/privileges.py:141
 msgid "API Access"
 msgstr "Acesso ao API"
 
-#: corehq/privileges.py:140
+#: corehq/privileges.py:142
 msgid "Web-Based Apps (CloudCare)"
 msgstr "Aplicativos baseados na Web (CloudCare)"
 
-#: corehq/privileges.py:141
+#: corehq/privileges.py:143
 msgid "Active Data Management"
 msgstr "Gestão de Dados Activos"
 
-#: corehq/privileges.py:142
+#: corehq/privileges.py:144
 msgid "Custom Branding"
 msgstr "Branding Customizado"
 
-#: corehq/privileges.py:143
+#: corehq/privileges.py:145
 msgid "Advanced Role-Based Access"
 msgstr "Acesso Avançado"
 
-#: corehq/privileges.py:144
+#: corehq/privileges.py:146
 msgid "Organization-based data export and user management restrictions"
 msgstr ""
 
-#: corehq/privileges.py:145
+#: corehq/privileges.py:147
 msgid "Outgoing Messaging"
 msgstr "Mensagens enviadas"
 
-#: corehq/privileges.py:146
+#: corehq/privileges.py:148
 msgid "Incoming Messaging"
 msgstr "Mensagens recebidas"
 
-#: corehq/privileges.py:147
+#: corehq/privileges.py:149
 msgid "Reminders Framework"
 msgstr "Estructura dos Lembretes"
 
-#: corehq/privileges.py:148
+#: corehq/privileges.py:150
 msgid "Custom Android Gateway"
 msgstr "Portão Android Customizado"
 
-#: corehq/privileges.py:149
+#: corehq/privileges.py:151
 msgid "Bulk Case Management"
 msgstr "Gestão de Casos em massa"
 
-#: corehq/privileges.py:150
+#: corehq/privileges.py:152
 msgid "Bulk User Management"
 msgstr "Gestão de Usuários em massa"
 
-#: corehq/privileges.py:151
+#: corehq/privileges.py:153
 msgid "Add Mobile Workers Above Limit"
 msgstr "Adicionar Trabalhadores acima do limite"
 
-#: corehq/privileges.py:152
+#: corehq/privileges.py:154
 msgid "De-Identified Data"
 msgstr "Dados sem identificação"
 
-#: corehq/privileges.py:153
+#: corehq/privileges.py:155
 msgid "HIPAA Compliance Assurance"
 msgstr "Garantia de Cumprimento a HIPAA"
 
-#: corehq/privileges.py:154
+#: corehq/privileges.py:156
 msgid "Custom CommCare Logo Uploader"
 msgstr ""
 
-#: corehq/privileges.py:156
+#: corehq/privileges.py:158
 msgid "User Configurable Report Builder"
 msgstr ""
 
-#: corehq/privileges.py:157
+#: corehq/privileges.py:159
 msgid "Report Builder Trial"
 msgstr ""
 
-#: corehq/privileges.py:158
+#: corehq/privileges.py:160
 msgid "Report Builder, 5 report limit"
 msgstr ""
 
-#: corehq/privileges.py:159
+#: corehq/privileges.py:161
 msgid "Report Builder, 15 report limit"
 msgstr ""
 
-#: corehq/privileges.py:160
+#: corehq/privileges.py:162
 msgid "Report Builder, 30 report limit"
 msgstr ""
 
-#: corehq/privileges.py:161
+#: corehq/privileges.py:163
 msgid "Built-in Integration"
 msgstr ""
 
-#: corehq/privileges.py:162
+#: corehq/privileges.py:164
 msgid "External Integration Framework"
 msgstr ""
 
-#: corehq/privileges.py:163
+#: corehq/privileges.py:165
 msgid "Data Management"
 msgstr ""
 
-#: corehq/privileges.py:164
+#: corehq/privileges.py:166
 msgid "Domain Level Security Features"
 msgstr ""
 
-#: corehq/privileges.py:165
+#: corehq/privileges.py:167
 msgid "Build Profiles"
 msgstr ""
 
-#: corehq/privileges.py:166
+#: corehq/privileges.py:168
 msgid "Excel Dashboard"
 msgstr ""
 
-#: corehq/privileges.py:167
+#: corehq/privileges.py:169
 msgid "Daily saved export"
 msgstr ""
 
-#: corehq/privileges.py:168
+#: corehq/privileges.py:170
 msgid "Zapier Integration"
 msgstr ""
 
-#: corehq/privileges.py:169
+#: corehq/privileges.py:171
 msgid "Login As for App Preview"
 msgstr ""
 
-#: corehq/privileges.py:170
+#: corehq/privileges.py:172
 msgid "Practice mode for mobile workers"
 msgstr ""
 
-#: corehq/privileges.py:171
+#: corehq/privileges.py:173
 msgid "Case Sharing via Groups"
 msgstr ""
 
-#: corehq/privileges.py:173
+#: corehq/privileges.py:175
 msgid "Power BI / Tableau Integration"
 msgstr ""
 
-#: corehq/privileges.py:175
+#: corehq/privileges.py:177
 msgid "Project Features"
 msgstr ""
 
-#: corehq/privileges.py:176
+#: corehq/privileges.py:178
 msgid "App User Profiles"
+msgstr ""
+
+#: corehq/privileges.py:179
+msgid "Geocoder"
 msgstr ""
 
 #: corehq/reports.py:286

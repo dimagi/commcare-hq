@@ -1505,6 +1505,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
+        if 'user_data' in kwargs:
+            notify_exception(None, "Created user using user_data")
         metadata = metadata or {}
         metadata.update({'commcare_project': domain})
         couch_user.update_metadata(metadata)
@@ -1826,6 +1828,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
         # metadata can't be set until domain is present
+        if 'user_data' in kwargs:
+            notify_exception(None, "Created user using user_data")
         commcare_user.update_metadata(metadata or {})
 
         if location:
@@ -2749,6 +2753,19 @@ class Invitation(models.Model):
                                     cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL,
                                     messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
+
+    def get_role_name(self):
+        if self.role:
+            if self.role == 'admin':
+                return self.role
+            else:
+                role_id = self.role[len('user-role:'):]
+                try:
+                    return UserRole.get(role_id).name
+                except ResourceNotFound:
+                    return _('Unknown Role')
+        else:
+            return None
 
 
 class DomainRemovalRecord(DeleteRecord):
