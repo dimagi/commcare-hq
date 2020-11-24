@@ -253,8 +253,6 @@ def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_e
 def _clear_caches_for_dynamic_toggle(static_toggle):
     # note: this is rather coupled with python property internals
     DynamicallyPredictablyRandomToggle.randomness.fget.clear(static_toggle)
-    # also have to do this since the toggle itself is cached
-    all_toggles.clear()
 
 
 def _get_usage_info(toggle):
