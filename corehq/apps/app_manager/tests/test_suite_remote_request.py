@@ -152,6 +152,28 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])
 
+    def test_case_search_auto_launch(self, *args):
+        self.module.search_config.auto_launch = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <action auto_launch="true">
+            <display>
+              <text>
+                <locale id="case_search.m0"/>
+              </text>
+            </display>
+            <stack>
+              <push>
+                <mark/>
+                <command value="'search_command.m0'"/>
+              </push>
+            </stack>
+          </action>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
+
     def test_only_default_properties(self, *args):
         self.module.search_config = CaseSearch(
             default_properties=[
