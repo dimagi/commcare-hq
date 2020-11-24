@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     Itemset,
     Module,
 )
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -20,7 +21,6 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
-from corehq.apps.case_search.models import CASE_SEARCH_XPATH_QUERY_KEY
 
 DOMAIN = 'test_domain'
 
@@ -134,9 +134,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.search_config.search_filter = search_filter
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
-        ref_path = './remote-request[1]/session/query/data[@key="{}"]/@ref'.format(CASE_SEARCH_XPATH_QUERY_KEY)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "'{}'".format(search_filter),
+            "instance('{}')/{}/case[@case_type='{}'][{}]".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                search_filter
+            ),
             suite.xpath(ref_path)[0]
         )
 
