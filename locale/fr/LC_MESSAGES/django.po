@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-11 19:56+0000\n"
+"POT-Creation-Date: 2020-11-18 19:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3560,7 +3560,7 @@ msgid ""
 "case list on the mobile device. Availabe in menu settings."
 msgstr ""
 
-#: corehq/apps/app_manager/add_ons.py:151 corehq/privileges.py:172
+#: corehq/apps/app_manager/add_ons.py:151 corehq/privileges.py:174
 msgid "Child Cases"
 msgstr ""
 
@@ -11041,14 +11041,14 @@ msgid "Search"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:351
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:391
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:395
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:38
 #: corehq/apps/domain/forms.py:2290 corehq/apps/domain/forms.py:2415
 #: corehq/apps/sms/templates/sms/chat_contacts.html:20
 msgid "Clear"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:416
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:420
 msgid "24-hour clock"
 msgstr ""
 
@@ -11185,7 +11185,7 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:466
+#: corehq/apps/cloudcare/views.py:469
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:243
 #: corehq/tabs/tabclasses.py:1362
 msgid "Web Apps Permissions"
@@ -18391,7 +18391,7 @@ msgid ""
 "this repeatedly please report an issue "
 msgstr ""
 
-#: corehq/apps/fixtures/views.py:313 corehq/privileges.py:138
+#: corehq/apps/fixtures/views.py:313 corehq/privileges.py:140
 #: corehq/reports.py:307
 msgid "Lookup Tables"
 msgstr ""
@@ -22286,7 +22286,7 @@ msgstr ""
 #: corehq/apps/users/forms.py:889
 #: corehq/apps/users/templates/users/edit_commcare_user.html:30
 #: corehq/apps/users/templates/users/roles_and_permissions.html:85
-#: corehq/privileges.py:155
+#: corehq/privileges.py:157
 msgid "Locations"
 msgstr ""
 
@@ -24339,8 +24339,8 @@ msgstr ""
 #: corehq/apps/userreports/reports/filters/choice_providers.py:160
 #: corehq/apps/userreports/reports/filters/choice_providers.py:324
 #: corehq/apps/userreports/reports/filters/choice_providers.py:439
-#: corehq/apps/userreports/tests/test_choice_provider.py:371
-#: corehq/apps/userreports/tests/test_choice_provider.py:372
+#: corehq/apps/userreports/tests/test_choice_provider.py:381
+#: corehq/apps/userreports/tests/test_choice_provider.py:382
 msgid "Show All"
 msgstr ""
 
@@ -35076,7 +35076,7 @@ msgid "Incremental Exports"
 msgstr ""
 
 #: corehq/motech/models.py:206 corehq/motech/repeaters/views/repeaters.py:52
-#: corehq/privileges.py:174 corehq/tabs/tabclasses.py:1817
+#: corehq/privileges.py:176 corehq/tabs/tabclasses.py:1817
 msgid "Data Forwarding"
 msgstr ""
 
@@ -35698,144 +35698,148 @@ msgstr ""
 msgid "Please enter API password again."
 msgstr ""
 
-#: corehq/privileges.py:139
+#: corehq/privileges.py:141
 msgid "API Access"
 msgstr ""
 
-#: corehq/privileges.py:140
+#: corehq/privileges.py:142
 msgid "Web-Based Apps (CloudCare)"
 msgstr ""
 
-#: corehq/privileges.py:141
+#: corehq/privileges.py:143
 msgid "Active Data Management"
 msgstr ""
 
-#: corehq/privileges.py:142
+#: corehq/privileges.py:144
 msgid "Custom Branding"
 msgstr ""
 
-#: corehq/privileges.py:143
+#: corehq/privileges.py:145
 msgid "Advanced Role-Based Access"
 msgstr ""
 
-#: corehq/privileges.py:144
+#: corehq/privileges.py:146
 msgid "Organization-based data export and user management restrictions"
 msgstr ""
 
-#: corehq/privileges.py:145
+#: corehq/privileges.py:147
 msgid "Outgoing Messaging"
 msgstr ""
 
-#: corehq/privileges.py:146
+#: corehq/privileges.py:148
 msgid "Incoming Messaging"
 msgstr ""
 
-#: corehq/privileges.py:147
+#: corehq/privileges.py:149
 msgid "Reminders Framework"
 msgstr ""
 
-#: corehq/privileges.py:148
+#: corehq/privileges.py:150
 msgid "Custom Android Gateway"
 msgstr ""
 
-#: corehq/privileges.py:149
+#: corehq/privileges.py:151
 msgid "Bulk Case Management"
 msgstr ""
 
-#: corehq/privileges.py:150
+#: corehq/privileges.py:152
 msgid "Bulk User Management"
 msgstr ""
 
-#: corehq/privileges.py:151
+#: corehq/privileges.py:153
 msgid "Add Mobile Workers Above Limit"
 msgstr ""
 
-#: corehq/privileges.py:152
+#: corehq/privileges.py:154
 msgid "De-Identified Data"
 msgstr ""
 
-#: corehq/privileges.py:153
+#: corehq/privileges.py:155
 msgid "HIPAA Compliance Assurance"
 msgstr ""
 
-#: corehq/privileges.py:154
+#: corehq/privileges.py:156
 msgid "Custom CommCare Logo Uploader"
 msgstr ""
 
-#: corehq/privileges.py:156
+#: corehq/privileges.py:158
 msgid "User Configurable Report Builder"
 msgstr ""
 
-#: corehq/privileges.py:157
+#: corehq/privileges.py:159
 msgid "Report Builder Trial"
 msgstr ""
 
-#: corehq/privileges.py:158
+#: corehq/privileges.py:160
 msgid "Report Builder, 5 report limit"
 msgstr ""
 
-#: corehq/privileges.py:159
+#: corehq/privileges.py:161
 msgid "Report Builder, 15 report limit"
 msgstr ""
 
-#: corehq/privileges.py:160
+#: corehq/privileges.py:162
 msgid "Report Builder, 30 report limit"
 msgstr ""
 
-#: corehq/privileges.py:161
+#: corehq/privileges.py:163
 msgid "Built-in Integration"
 msgstr ""
 
-#: corehq/privileges.py:162
+#: corehq/privileges.py:164
 msgid "External Integration Framework"
 msgstr ""
 
-#: corehq/privileges.py:163
+#: corehq/privileges.py:165
 msgid "Data Management"
 msgstr ""
 
-#: corehq/privileges.py:164
+#: corehq/privileges.py:166
 msgid "Domain Level Security Features"
 msgstr ""
 
-#: corehq/privileges.py:165
+#: corehq/privileges.py:167
 msgid "Build Profiles"
 msgstr ""
 
-#: corehq/privileges.py:166
+#: corehq/privileges.py:168
 msgid "Excel Dashboard"
 msgstr ""
 
-#: corehq/privileges.py:167
+#: corehq/privileges.py:169
 msgid "Daily saved export"
 msgstr ""
 
-#: corehq/privileges.py:168
+#: corehq/privileges.py:170
 msgid "Zapier Integration"
 msgstr ""
 
-#: corehq/privileges.py:169
+#: corehq/privileges.py:171
 msgid "Login As for App Preview"
 msgstr ""
 
-#: corehq/privileges.py:170
+#: corehq/privileges.py:172
 msgid "Practice mode for mobile workers"
 msgstr ""
 
-#: corehq/privileges.py:171
+#: corehq/privileges.py:173
 msgid "Case Sharing via Groups"
 msgstr ""
 
-#: corehq/privileges.py:173
+#: corehq/privileges.py:175
 msgid "Power BI / Tableau Integration"
 msgstr ""
 
-#: corehq/privileges.py:175
+#: corehq/privileges.py:177
 msgid "Project Features"
 msgstr ""
 
-#: corehq/privileges.py:176
+#: corehq/privileges.py:178
 msgid "App User Profiles"
+msgstr ""
+
+#: corehq/privileges.py:179
+msgid "Geocoder"
 msgstr ""
 
 #: corehq/reports.py:286
