@@ -2,6 +2,7 @@ import re
 
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_XPATH_QUERY_KEY,
     SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
@@ -68,7 +69,7 @@ class CaseSearchCriteria(object):
             self.search_es = self.search_es.is_closed(False)
 
     def _add_xpath_query(self):
-        query = self.criteria.pop('_xpath_query', None)
+        query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
         if query:
             self.search_es = self.search_es.xpath_query(self.domain, query)
 

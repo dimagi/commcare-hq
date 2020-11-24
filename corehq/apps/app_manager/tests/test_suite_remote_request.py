@@ -20,6 +20,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.apps.case_search.models import CASE_SEARCH_XPATH_QUERY_KEY
 
 DOMAIN = 'test_domain'
 
@@ -128,12 +129,45 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
+    def test_case_search_filter(self, *args):
+        search_filter = "rating > 3"
+        self.module.search_config.search_filter = search_filter
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        ref_path = './remote-request[1]/session/query/data[@key="{}"]/@ref'.format(CASE_SEARCH_XPATH_QUERY_KEY)
+        self.assertEqual(
+            "'{}'".format(search_filter),
+            suite.xpath(ref_path)[0]
+        )
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])
+
+    def test_case_search_auto_launch(self, *args):
+        self.module.search_config.auto_launch = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <action auto_launch="true">
+            <display>
+              <text>
+                <locale id="case_search.m0"/>
+              </text>
+            </display>
+            <stack>
+              <push>
+                <mark/>
+                <command value="'search_command.m0'"/>
+              </push>
+            </stack>
+          </action>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
 
     def test_only_default_properties(self, *args):
         self.module.search_config = CaseSearch(
