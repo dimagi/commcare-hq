@@ -15,9 +15,8 @@ hqDefine("hqwebapp/js/rollout_modal", [
     kissmetricsAnalytics
 ) {
     var _trackSoftRollout = googleAnalytics.trackCategory("Soft Rollout");
-
     function snooze(slug) {
-        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/', secure: initialPageData.get('secure_cookies') });
         _trackSoftRollout.event("snooze", slug);
         kissmetricsAnalytics.track.event("Soft Rollout snooze " + slug);
     }
