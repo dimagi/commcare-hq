@@ -102,6 +102,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'User IMEIs (read only)': get_devices(user),
         'location_code': location_codes,
         'role': role.name if role else '',
+        'domain': domain,
         'user_profile': profile.name if profile else '',
         'registered_on (read only)': _format_date(user.created_on),
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
@@ -171,9 +172,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    domains_list = [domain]
-    if 'domains' in user_filters:
-        domains_list = user_filters['domains']  # for instances of multi-domain download
+    domains_list = user_filters['domains']
+    is_multi_domain_download = False
+    if domains_list != [domain]:
+        is_multi_domain_download = True
 
     for current_domain in domains_list:
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
@@ -210,6 +212,8 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
+    if is_multi_domain_download:
+        user_headers += ['domain']
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
