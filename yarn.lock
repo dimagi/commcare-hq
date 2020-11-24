@@ -3038,10 +3038,9 @@ jquery-tiny-pubsub@cowboy/jquery-tiny-pubsub#~0.7.0:
   version "0.0.0-ignored"
   resolved "https://codeload.github.com/cowboy/jquery-tiny-pubsub/tar.gz/d9b4a093221f43d1119aac088258c8d0ea2b183b"
 
-jquery-treetable@3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/jquery-treetable/-/jquery-treetable-3.2.0.tgz#01095e945cf2f8218bbe9a35aeb7bf1ad86f1f9c"
-  integrity sha1-AQlelFzy+CGLvpo1rre/GthvH5w=
+jquery-treetable@ludo/jquery-treetable#3.2.0:
+  version "0.0.0"
+  resolved "https://codeload.github.com/ludo/jquery-treetable/tar.gz/73690a9df26dbc1a49981f9335df2a9cd9808813"
 
 jquery-ui-built-themes@1.12.1:
   version "1.12.1"
