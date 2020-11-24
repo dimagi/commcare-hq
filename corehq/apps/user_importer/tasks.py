@@ -10,8 +10,9 @@ from corehq.apps.user_importer.models import UserUploadRecord
 
 
 @task(serializer='pickle')
-def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id):
-    from corehq.apps.user_importer.importer import create_or_update_users_and_groups, create_or_update_groups
+def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, is_web_download):
+    from corehq.apps.user_importer.importer import create_or_update_users_and_groups,\
+        create_or_update_groups, create_or_update_web_users
     task = import_users_and_groups
     DownloadBase.set_progress(task, 0, 100)
 
@@ -25,13 +26,21 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload
     def _update_progress(value, start=0):
         DownloadBase.set_progress(task, start + value, total)
 
-    user_results = create_or_update_users_and_groups(
-        domain,
-        user_specs,
-        upload_user=upload_user,
-        group_memoizer=group_memoizer,
-        update_progress=functools.partial(_update_progress, start=len(group_specs))
-    )
+    if is_web_download:
+        user_results = create_or_update_web_users(
+            domain,
+            user_specs,
+            upload_user=upload_user,
+            update_progress=functools.partial(_update_progress, start=len(group_specs))
+        )
+    else:
+        user_results = create_or_update_users_and_groups(
+            domain,
+            user_specs,
+            upload_user=upload_user,
+            group_memoizer=group_memoizer,
+            update_progress=functools.partial(_update_progress, start=len(group_specs))
+        )
     results = {
         'errors': group_results['errors'] + user_results['errors'],
         'rows': user_results['rows']

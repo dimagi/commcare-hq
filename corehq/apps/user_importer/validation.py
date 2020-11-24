@@ -49,6 +49,24 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
     ]
 
 
+# TODO: confirm validators and incorporate into validation check for web users
+def get_web_user_import_validators(domain_obj, all_specs, allowed_roles=None, upload_domain=None):
+    domain = domain_obj.name
+    return [
+        UsernameTypeValidator(domain),
+        #UsernameValidator(domain),
+        RequiredWebFieldsValidator(domain),
+        DuplicateValidator(domain, 'username', all_specs),
+        DuplicateValidator(domain, 'email', all_specs),  # is this true?
+        UsernameLengthValidator(domain),
+        CustomDataValidator(domain),
+        EmailValidator(domain),
+        RoleValidator(domain, allowed_roles),
+        ExistingUserValidator(domain, all_specs),
+        TargetDomainValidator(upload_domain)
+    ]
+
+
 class ImportValidator(metaclass=ABCMeta):
     error_message = None
 
@@ -111,6 +129,16 @@ class RequiredFieldsValidator(ImportValidator):
         user_id = spec.get('user_id')
         username = spec.get('username')
         if not user_id and not username:
+            return self.error_message
+
+
+class RequiredWebFieldsValidator(ImportValidator):
+    error_message = _("Upload of web users requires 'username' and 'role' for each user")
+
+    def validate_spec(self, spec):
+        username = spec.get('username')
+        role = spec.get('role')
+        if not username or not role:
             return self.error_message
 
 
