@@ -15,7 +15,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.toggle_ui.models import ToggleAudit
 from couchforms.analytics import get_last_form_submission_received
 from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle
+from toggle.shortcuts import parse_toggle, namespaced_item
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
@@ -336,7 +336,11 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
-    static_toggle.set(item=item, enabled=enabled, namespace=namespace)
+    if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
+        action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
+        ToggleAudit.objects.log_toggle_action(
+            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
+        )
 
     if enabled:
         _notify_on_change(static_toggle, [item], request.user.username)

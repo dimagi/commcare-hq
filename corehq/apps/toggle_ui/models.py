@@ -9,16 +9,26 @@ class ToggleAuditManager(models.Manager):
             added = current_items - previous_items
             removed = previous_items - current_items
             for action, namespaced_items in [(ToggleAudit.ACTION_ADD, added), (ToggleAudit.ACTION_REMOVE, removed)]:
-                for namespaced_item in namespaced_items:
-                    namespace, item = parse_item(namespaced_item)
-                    self.create(
-                        slug=slug, username=username, action=action,
-                        namespace=namespace, item=item
-                    )
+                self.log_toggle_action(slug, username, namespaced_items, action)
+
         if randomness is not None:
             self.create(
                 slug=slug, username=username, action=ToggleAudit.ACTION_UPDATE_RANDOMNESS,
                 randomness=randomness
+            )
+
+    def log_toggle_set(self, slug, username, namespaced_items):
+        self.log_toggle_action(slug, username, namespaced_items, ToggleAudit.ACTION_ADD)
+
+    def log_toggle_unset(self, slug, username, namespaced_items):
+        self.log_toggle_action(slug, username, namespaced_items, ToggleAudit.ACTION_REMOVE)
+
+    def log_toggle_action(self, slug, username, namespaced_items, action):
+        for namespaced_item in namespaced_items:
+            namespace, item = parse_item(namespaced_item)
+            self.create(
+                slug=slug, username=username, action=action,
+                namespace=namespace, item=item
             )
 
 
