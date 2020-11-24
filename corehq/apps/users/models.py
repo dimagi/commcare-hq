@@ -2,6 +2,7 @@ import hmac
 import json
 import logging
 import re
+from collections import defaultdict
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -3101,3 +3102,31 @@ class HQApiKey(models.Model):
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
         return None
+
+
+class BulkUploadResponseWrapper(object):
+
+    def __init__(self, context):
+        results = context.get('result') or defaultdict(lambda: [])
+        self.response_rows = results['rows']
+        self.response_errors = results['errors']
+        if context['user_type'] == 'web users':
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'invited')]
+        else:
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
+
+    def success_count(self):
+        return len(self.response_rows) - len(self.problem_rows)
+
+    def has_errors(self):
+        return bool(self.response_errors or self.problem_rows)
+
+    def errors(self):
+        errors = []
+        for row in self.problem_rows:
+            if row['flag'] == 'missing-data':  # TODO: is this true for web workers?
+                errors.append(_('A row with no username was skipped'))
+            else:
+                errors.append('{username}: {flag}'.format(**row))
+        errors.extend(self.response_errors)
+        return errors
