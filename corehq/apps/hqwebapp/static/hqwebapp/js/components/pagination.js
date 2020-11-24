@@ -32,9 +32,11 @@
 hqDefine('hqwebapp/js/components/pagination', [
     'knockout',
     'underscore',
+    'hqwebapp/js/initial_page_data',
 ], function (
     ko,
-    _
+    _,
+    initialPageData
 ) {
     return {
         viewModel: function (params) {
@@ -52,7 +54,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.perPage.subscribe(function (newValue) {
                     self.goToPage(1);
                     if (self.slug) {
-                        $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/' });
+                        $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/', secure: initialPageData.get('secure_cookies') });
                     }
                 });
             }
