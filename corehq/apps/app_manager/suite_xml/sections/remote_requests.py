@@ -26,7 +26,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.util.view_utils import absolute_reverse
 
@@ -121,10 +121,13 @@ class RemoteRequestFactory(object):
         else:
             short_detail_id = 'search_short'
 
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
+        if self.module.search_config.search_filter:
+            nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
+
         return [SessionDatum(
             id='case_id',
-            nodeset=(CaseTypeXpath(self.module.case_type)
-                     .case(instance_name=RESULTS_INSTANCE)),
+            nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
