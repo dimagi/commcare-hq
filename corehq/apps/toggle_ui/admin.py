@@ -9,4 +9,3 @@ class ToggleAdmin(admin.ModelAdmin):
     list_display = ('username', 'slug', 'action', 'namespace', 'item', 'randomness')
     list_filter = ('slug', 'namespace')
     ordering = ('created',)
-
