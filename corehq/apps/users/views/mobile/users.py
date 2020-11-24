@@ -1119,6 +1119,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     context.update({
         'on_complete_short': _('Bulk upload complete.'),
         'on_complete_long': _('Mobile Worker upload has finished'),
+        'user_type': _('mobile workers'),
 
     })
 

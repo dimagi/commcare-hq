@@ -47,7 +47,8 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
+    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain', 'remove', 'last_access_date (read only)',
+    'last_login (read only)', 'last_name', 'status', 'first_name',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'

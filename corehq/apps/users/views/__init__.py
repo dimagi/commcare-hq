@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 
 import langcodes
@@ -20,6 +21,7 @@ from django.http import (
     JsonResponse,
     HttpResponseBadRequest,
 )
+from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -28,7 +30,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from soil import DownloadBase
-from soil.util import expose_cached_download
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
@@ -1246,6 +1249,48 @@ class WebUserUploadStatusView(BaseManageWebUserView):
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_web_users
+def web_user_upload_job_poll(request, domain, download_id,
+                             template="users/mobile/partials/user_upload_status.html"):
+    try:
+        context = get_download_context(download_id)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
+    context.update({
+        'on_complete_short': _('Bulk upload complete.'),
+        'on_complete_long': _('Web Worker upload has finished'),
+        'user_type': _('web users'),
+    })
+
+    class _BulkUploadResponseWrapper(object):
+
+        def __init__(self, context):
+            results = context.get('result') or defaultdict(lambda: [])
+            self.response_rows = results['rows']
+            self.response_errors = results['errors']
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
+
+        def success_count(self):
+            return len(self.response_rows) - len(self.problem_rows)
+
+        def has_errors(self):
+            return bool(self.response_errors or self.problem_rows)
+
+        def errors(self):
+            errors = []
+            for row in self.problem_rows:
+                if row['flag'] == 'missing-data':
+                    errors.append(_('A row with no email was skipped'))
+                else:
+                    errors.append('{email}: {flag}'.format(**row))
+            errors.extend(self.response_errors)
+            return errors
+
+    context['result'] = _BulkUploadResponseWrapper(context)
+    return render(request, template, context)
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
