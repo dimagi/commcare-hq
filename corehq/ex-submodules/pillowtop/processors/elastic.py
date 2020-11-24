@@ -190,28 +190,24 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             break
         except ConnectionError as ex:
             current_tries += 1
-            pillow_logging.error("[{}] put_robust error {} attempt {}/{}".format(
-                name, ex, current_tries, retries))
-
             if current_tries == retries:
-                message = "[{}] Max retry error on {}/{}/{}:\n\n{}".format(
-                    name, alias, doc_type, doc_id, traceback.format_exc())
+                message = "[%s] Max retry error on %s/%s/%s"
+                args = (name, alias, doc_type, doc_id)
                 if propagate_failure:
-                    raise PillowtopIndexingError(message)
+                    raise PillowtopIndexingError(message % args)
                 else:
-                    pillow_logging.error(message)
+                    pillow_logging.exception(message, *args)
+            else:
+                pillow_logging.exception("[%s] put_robust error attempt %s/%s", name, current_tries, retries)
 
             time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-        except RequestError:
-            error_message = (
-                "Pillowtop put_robust error [{}]:\n\n{}\n\tpath: {}/{}/{}\n\t{}".format(
-                    name, traceback.format_exc(), alias, doc_type, doc_id, list(data))
-            )
-
+        except RequestError as ex:
+            message = "[%s] put_robust error: %s/%s/%s"
+            args = (name, alias, doc_type, doc_id)
             if propagate_failure:
-                raise PillowtopIndexingError(error_message)
+                raise PillowtopIndexingError(message % args)
             else:
-                pillow_logging.error(error_message)
+                pillow_logging.exception(message, *args)
             break
         except ConflictError:
             break  # ignore the error if a doc already exists when trying to create it in the index
