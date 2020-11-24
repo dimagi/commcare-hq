@@ -172,8 +172,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    domains_list = user_filters['domains']
+    domains_list = [domain]
     is_multi_domain_download = False
+    if 'domains' in user_filters:
+        domains_list = user_filters['domains']
     if domains_list != [domain]:
         is_multi_domain_download = True
 
