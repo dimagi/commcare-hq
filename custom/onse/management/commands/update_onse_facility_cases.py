@@ -13,9 +13,14 @@ class Command(BaseCommand):
             help=('The period of data to import. e.g. "2020Q1". '
                   'Defaults to last quarter.'),
         )
+        parser.add_argument(
+            '--dump-requests',
+            action='store_true',
+        )
 
     def handle(self, *args, **options):
         update_facility_cases_from_dhis2_data_elements.apply(kwargs={
-            'period': options.get('period'),
+            'period': options['period'],
             'print_notifications': True,
+            'dump_requests': options['dump_requests'],
         })
