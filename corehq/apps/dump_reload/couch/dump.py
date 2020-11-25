@@ -49,12 +49,6 @@ DOC_PROVIDERS_BY_DOC_TYPE = {
 }
 
 
-# doc types that shouldn't have attachments dumped
-ATTACHMENTS_BLACKLIST = [
-    'SyncLog'
-]
-
-
 class CouchDataDumper(DataDumper):
     slug = 'couch'
 
@@ -70,7 +64,6 @@ class CouchDataDumper(DataDumper):
         couch_db = doc_class.get_db()
         for doc in iter_docs(couch_db, doc_ids, chunksize=500):
             count += 1
-            doc = _get_doc_with_attachments(couch_db, doc)
             output_stream.write(json.dumps(doc))
             output_stream.write('\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
@@ -149,19 +142,8 @@ class DomainDumper(DataDumper):
         if not domain_obj:
             raise DomainDumpError("Domain not found: {}".format(self.domain))
 
-        domain_dict = _get_doc_with_attachments(Domain.get_db(), domain_obj.to_json())
-        domain_obj = Domain.wrap(domain_dict)
         json.dump(domain_obj.to_json(), output_stream)
         output_stream.write('\n')
 
         self.stdout.write('Dumping {} Domain\n'.format(1))
         return Counter({'Domain': 1})
-
-
-def _get_doc_with_attachments(couch_db, doc):
-    if doc.get('_attachments'):
-        if doc['doc_type'] in ATTACHMENTS_BLACKLIST:
-            del doc['_attachments']
-        else:
-            doc = couch_db.get(doc['_id'], attachments=True)
-    return doc
