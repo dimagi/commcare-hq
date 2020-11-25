@@ -35,6 +35,7 @@ def set_toggle(slug, item, enabled, namespace=None):
             static_toggle = static_toggles_by_slug[slug]
             if static_toggle.save_fn:
                 static_toggle.save_fn(item, enabled)
+        return True
 
 
 def namespaced_item(item, namespace):
