@@ -15,8 +15,6 @@ from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases impor
     create_form_change_meta,
 )
 
-COUCH_NODE_PORT = 15984
-
 
 def cleanup_stale_es_on_couch_domains(
     start_date=None, end_date=None, domains=None, stdout=None
