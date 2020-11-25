@@ -17,6 +17,7 @@ from dimagi.utils.couch.database import iter_docs
 
 DOC_PROVIDERS = {
     DocTypeIDProvider('Application'),
+    DocTypeIDProvider('LinkedApplication'),
     DocTypeIDProvider('CommtrackConfig'),
     ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
     DocTypeIDProvider('MobileAuthKeyRecord'),
