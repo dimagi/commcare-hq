@@ -253,7 +253,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     };
 
     Util.getSavedQuery = function () {
-        return savedQueries[stepsKey()] || {};
+        var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+        if (user.displayOptions.stickySearches) {
+            return savedQueries[stepsKey()] || {};
+        }
+        return {};
     };
 
     // String polyfills

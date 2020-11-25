@@ -299,6 +299,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             phoneMode: options.phoneMode,
             oneQuestionPerScreen: options.oneQuestionPerScreen,
             language: options.language,
+            stickySearches: options.stickySearches,
         });
 
         FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
