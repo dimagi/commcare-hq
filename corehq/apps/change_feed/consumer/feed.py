@@ -163,6 +163,7 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
+
         if not self.dedicated_migration_process:
             return [
                 topic_partitions[num::self.num_processes]
@@ -176,6 +177,7 @@ class KafkaChangeFeed(ChangeFeed):
                     topic_partitions[num::self.num_processes]
                     for num in range(self.num_processes - 1)
                 ][self.process_num - 1]
+
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     """
