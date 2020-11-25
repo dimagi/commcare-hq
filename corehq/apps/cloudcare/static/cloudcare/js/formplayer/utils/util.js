@@ -151,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps.push(step);
             //clear out pagination and search when we take a step
             this.page = null;
-            this.search = null;
+            //this.search = null;
         };
 
         this.setPage = function (page) {
@@ -179,14 +179,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps = null;
             this.page = null;
             this.sortIndex = null;
-            this.search = null;
+            //this.search = null;
             this.queryDict = null;
         };
 
         this.onSubmit = function () {
             this.page = null;
             this.sortIndex = null;
-            this.search = null;
+            //this.search = null;
             this.queryDict = null;
         };
 
@@ -200,7 +200,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 this.steps = this.steps.splice(0, index);
             }
             this.page = null;
-            this.search = null;
+            //this.search = null;
             this.queryDict = null;
             this.sortIndex = null;
         };
@@ -240,6 +240,23 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return new Util.CloudcareUrl(options);
     };
 
+    // Saved query handling
+    var savedQueries = {},
+        bell = "\u0007";
+    function stepsKey() {
+        var urlObject = Util.currentUrlToObject();
+        return urlObject.steps.join(bell);
+    };
+
+    Util.saveQuery = function (query) {
+        savedQueries[stepsKey()] = query;
+    };
+
+    Util.getSavedQuery = function () {
+        return savedQueries[stepsKey()] || {};
+    };
+
+    // String polyfills
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
