@@ -11,6 +11,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import Requests
 from corehq.motech.utils import get_endpoint_url
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
@@ -112,7 +113,7 @@ def set_case_updates(
     dhis2_server: ConnectionSettings,
     case_blocks: Iterable[CaseBlock],
     period: str,
-    dump_requests: Optional[bool] = False,
+    dump_requests: bool = False,
 ) -> Iterable[CaseBlock]:
     """
     Fetch data sets of data elements for last quarter from ``dhis2_server``
@@ -154,7 +155,7 @@ def fetch_data_set(
     data_set_id: str,
     org_unit_id: str,
     period: str,
-    dump_request: Optional[bool] = False,
+    dump_request: bool = False,
 ) -> Optional[List[dict]]:
     """
     Returns a list of `DHIS2 data values`_, or ``None`` if the the given
@@ -247,13 +248,13 @@ def save_cases(case_blocks):
         )
 
 
-def curlify(requests, endpoint: str, params: dict) -> str:
+def curlify(requests: Requests, endpoint: str, params: dict) -> str:
     """
     Return the curl command for a request to ``url`` with ``params``
     """
     insecure = '' if requests.verify else '--insecure'
-    user = '"$DHIS2_USERNAME:$DHIS2_PASSWORD"'
-    header = '"Accept: application/json"'
     url = get_endpoint_url(requests.base_url, endpoint)
-    encoded_params = urlencode(params)
-    return f'curl {insecure} -u {user} -H {header} {url}?{encoded_params}'
+    return (f'curl {insecure} '
+            '-u "$DHIS2_USERNAME:$DHIS2_PASSWORD" '
+            '-H "Accept: application/json" '
+            f'"{url}?{urlencode(params)}"')
