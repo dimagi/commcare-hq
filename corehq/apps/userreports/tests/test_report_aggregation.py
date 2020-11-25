@@ -2,8 +2,6 @@ from django.http import HttpRequest
 from django.test import TestCase
 from datetime import datetime, timedelta
 
-from freezegun import freeze_time
-
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -607,7 +605,6 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
 
 
-@freeze_time("2020-01-15")
 class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
     # Note that these constants are subtracted from today's date, so the month parts of the names
     # are approximations: the first one will usually fall one year and two months ago, but will

@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     Itemset,
     Module,
 )
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -127,6 +128,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
+
+    def test_case_search_filter(self, *args):
+        search_filter = "rating > 3"
+        self.module.search_config.search_filter = search_filter
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}'][{}]".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                search_filter
+            ),
+            suite.xpath(ref_path)[0]
+        )
 
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"

@@ -195,6 +195,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
+            'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
@@ -1066,6 +1067,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 ),
                 auto_launch=bool(search_properties.get('auto_launch')),
                 include_closed=bool(search_properties.get('include_closed')),
+                search_filter=search_properties.get('search_filter', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[

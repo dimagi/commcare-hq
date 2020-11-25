@@ -36,8 +36,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-11 19:56+0000\n"
-"PO-Revision-Date: 2020-10-28 19:18+0000\n"
+"POT-Creation-Date: 2020-11-18 19:14+0000\n"
+"PO-Revision-Date: 2020-11-11 19:57+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -3823,7 +3823,7 @@ msgid ""
 "case list on the mobile device. Availabe in menu settings."
 msgstr ""
 
-#: corehq/apps/app_manager/add_ons.py:151 corehq/privileges.py:172
+#: corehq/apps/app_manager/add_ons.py:151 corehq/privileges.py:174
 msgid "Child Cases"
 msgstr "Dossiers d'enfants"
 
@@ -11582,14 +11582,14 @@ msgid "Search"
 msgstr "Recherche"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:351
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:391
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:395
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:38
 #: corehq/apps/domain/forms.py:2290 corehq/apps/domain/forms.py:2415
 #: corehq/apps/sms/templates/sms/chat_contacts.html:20
 msgid "Clear"
 msgstr "Effacer"
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:416
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:420
 msgid "24-hour clock"
 msgstr ""
 
@@ -11726,7 +11726,7 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:466
+#: corehq/apps/cloudcare/views.py:469
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:243
 #: corehq/tabs/tabclasses.py:1362
 msgid "Web Apps Permissions"
@@ -19184,7 +19184,7 @@ msgstr ""
 "Désolé de vous informer que votre téléchargement a échoué. Veuillez "
 "réessayer. Si vous continuez à voir ce problème veuillez le signaler."
 
-#: corehq/apps/fixtures/views.py:313 corehq/privileges.py:138
+#: corehq/apps/fixtures/views.py:313 corehq/privileges.py:140
 #: corehq/reports.py:307
 msgid "Lookup Tables"
 msgstr "Tables de Recherche"
@@ -23272,7 +23272,7 @@ msgstr ""
 #: corehq/apps/users/forms.py:889
 #: corehq/apps/users/templates/users/edit_commcare_user.html:30
 #: corehq/apps/users/templates/users/roles_and_permissions.html:85
-#: corehq/privileges.py:155
+#: corehq/privileges.py:157
 msgid "Locations"
 msgstr "Sites"
 
@@ -25414,8 +25414,8 @@ msgstr ""
 #: corehq/apps/userreports/reports/filters/choice_providers.py:160
 #: corehq/apps/userreports/reports/filters/choice_providers.py:324
 #: corehq/apps/userreports/reports/filters/choice_providers.py:439
-#: corehq/apps/userreports/tests/test_choice_provider.py:371
-#: corehq/apps/userreports/tests/test_choice_provider.py:372
+#: corehq/apps/userreports/tests/test_choice_provider.py:381
+#: corehq/apps/userreports/tests/test_choice_provider.py:382
 msgid "Show All"
 msgstr "Afficher tous"
 
@@ -36588,7 +36588,7 @@ msgid "Incremental Exports"
 msgstr ""
 
 #: corehq/motech/models.py:206 corehq/motech/repeaters/views/repeaters.py:52
-#: corehq/privileges.py:174 corehq/tabs/tabclasses.py:1817
+#: corehq/privileges.py:176 corehq/tabs/tabclasses.py:1817
 msgid "Data Forwarding"
 msgstr "Transfert de données"
 
@@ -37216,146 +37216,150 @@ msgstr "Utilisé par"
 msgid "Please enter API password again."
 msgstr ""
 
-#: corehq/privileges.py:139
+#: corehq/privileges.py:141
 msgid "API Access"
 msgstr "L'accès aux APIs"
 
-#: corehq/privileges.py:140
+#: corehq/privileges.py:142
 msgid "Web-Based Apps (CloudCare)"
 msgstr "Application en version Web (CloudCare)"
 
-#: corehq/privileges.py:141
+#: corehq/privileges.py:143
 msgid "Active Data Management"
 msgstr "Active Data Management"
 
-#: corehq/privileges.py:142
+#: corehq/privileges.py:144
 msgid "Custom Branding"
 msgstr "Marquage personnalisé"
 
-#: corehq/privileges.py:143
+#: corehq/privileges.py:145
 msgid "Advanced Role-Based Access"
 msgstr "Accès Basé sur les Rôles"
 
-#: corehq/privileges.py:144
+#: corehq/privileges.py:146
 msgid "Organization-based data export and user management restrictions"
 msgstr ""
 "Exportation des données basées sur l'organisation et les restrictions de "
 "management de l'utilisateur."
 
-#: corehq/privileges.py:145
+#: corehq/privileges.py:147
 msgid "Outgoing Messaging"
 msgstr "Messagerie sortant"
 
-#: corehq/privileges.py:146
+#: corehq/privileges.py:148
 msgid "Incoming Messaging"
 msgstr "Messagerie entrant"
 
-#: corehq/privileges.py:147
+#: corehq/privileges.py:149
 msgid "Reminders Framework"
 msgstr "Cadre de rappels"
 
-#: corehq/privileges.py:148
+#: corehq/privileges.py:150
 msgid "Custom Android Gateway"
 msgstr "Porte Android Customisée"
 
-#: corehq/privileges.py:149
+#: corehq/privileges.py:151
 msgid "Bulk Case Management"
 msgstr "Gestion des dossiers en vrac"
 
-#: corehq/privileges.py:150
+#: corehq/privileges.py:152
 msgid "Bulk User Management"
 msgstr "Gestion en masse des utilisateurs"
 
-#: corehq/privileges.py:151
+#: corehq/privileges.py:153
 msgid "Add Mobile Workers Above Limit"
 msgstr "Ajouter utilisateur mobile au delà des limites"
 
-#: corehq/privileges.py:152
+#: corehq/privileges.py:154
 msgid "De-Identified Data"
 msgstr "Données Non-Identifiées"
 
-#: corehq/privileges.py:153
+#: corehq/privileges.py:155
 msgid "HIPAA Compliance Assurance"
 msgstr "Accordance avec HIPAA"
 
-#: corehq/privileges.py:154
+#: corehq/privileges.py:156
 msgid "Custom CommCare Logo Uploader"
 msgstr "Téléchargeur de CommCare Logo Personalissé "
 
-#: corehq/privileges.py:156
+#: corehq/privileges.py:158
 msgid "User Configurable Report Builder"
 msgstr "Constructeur de Rapport Configurable par l'Utilisateur "
 
-#: corehq/privileges.py:157
+#: corehq/privileges.py:159
 msgid "Report Builder Trial"
 msgstr "Essai de l'éditeur de rapports"
 
-#: corehq/privileges.py:158
+#: corehq/privileges.py:160
 msgid "Report Builder, 5 report limit"
 msgstr "Éditeur de Rapports, limte de 5 rapports"
 
-#: corehq/privileges.py:159
+#: corehq/privileges.py:161
 msgid "Report Builder, 15 report limit"
 msgstr "Éditeur de Rapports, limte de 15 rapports"
 
-#: corehq/privileges.py:160
+#: corehq/privileges.py:162
 msgid "Report Builder, 30 report limit"
 msgstr "Éditeur de Rapports, limte de 30 rapports"
 
-#: corehq/privileges.py:161
+#: corehq/privileges.py:163
 msgid "Built-in Integration"
 msgstr "Intégration intégrée"
 
-#: corehq/privileges.py:162
+#: corehq/privileges.py:164
 msgid "External Integration Framework"
 msgstr "Framework d'Intégration Externe"
 
-#: corehq/privileges.py:163
+#: corehq/privileges.py:165
 msgid "Data Management"
 msgstr "Gestion des données"
 
-#: corehq/privileges.py:164
+#: corehq/privileges.py:166
 msgid "Domain Level Security Features"
 msgstr "Fonctions de sécurité de niveau de domaine"
 
-#: corehq/privileges.py:165
+#: corehq/privileges.py:167
 msgid "Build Profiles"
 msgstr "Construire des profiles"
 
-#: corehq/privileges.py:166
+#: corehq/privileges.py:168
 msgid "Excel Dashboard"
 msgstr "Tableau de bord excel"
 
-#: corehq/privileges.py:167
+#: corehq/privileges.py:169
 msgid "Daily saved export"
 msgstr "Exports Sauvegardés Quotidiens"
 
-#: corehq/privileges.py:168
+#: corehq/privileges.py:170
 msgid "Zapier Integration"
 msgstr "Intégration Zapier"
 
-#: corehq/privileges.py:169
+#: corehq/privileges.py:171
 msgid "Login As for App Preview"
 msgstr "Connexion en tant que pour l'aperçu de l'application"
 
-#: corehq/privileges.py:170
+#: corehq/privileges.py:172
 msgid "Practice mode for mobile workers"
 msgstr ""
 
-#: corehq/privileges.py:171
+#: corehq/privileges.py:173
 msgid "Case Sharing via Groups"
 msgstr ""
 
-#: corehq/privileges.py:173
+#: corehq/privileges.py:175
 msgid "Power BI / Tableau Integration"
 msgstr ""
 
-#: corehq/privileges.py:175
+#: corehq/privileges.py:177
 msgid "Project Features"
 msgstr ""
 
-#: corehq/privileges.py:176
+#: corehq/privileges.py:178
 msgid "App User Profiles"
+msgstr ""
+
+#: corehq/privileges.py:179
+msgid "Geocoder"
 msgstr ""
 
 #: corehq/reports.py:286
@@ -41123,9 +41127,6 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py:137
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "CommCare HQ does not work well with Internet Explorer."
-#~ msgstr "CommCare HQ ne marche pas bien avec Internet Explorer."
 
 #~ msgid "ICDS Settings"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
