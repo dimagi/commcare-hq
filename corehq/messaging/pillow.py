@@ -73,9 +73,8 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
         return [], errors
 
 
-def get_case_messaging_sync_pillow(pillow_id='case_messaging_sync_pillow', topics=None,
-                         num_processes=1, process_num=0,
-                         processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+def get_case_messaging_sync_pillow(pillow_id='case_messaging_sync_pillow', topics=None, process_num=0,
+                         num_processes=1, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     """Pillow for synchronizing messaging data with case data.
 
         Processors:

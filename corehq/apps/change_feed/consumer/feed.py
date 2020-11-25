@@ -25,7 +25,7 @@ class KafkaChangeFeed(ChangeFeed):
     """
     sequence_format = 'json'
 
-    def __init__(self, topics, client_id, strict=False, num_processes=1, process_num=0):
+    def __init__(self, topics, client_id, strict=False, num_processes=1, dedicated_migration_process=False, process_num=0):
         """
         Create a change feed listener for a list of kafka topics, a client ID, and partition.
 
@@ -37,6 +37,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.strict = strict
         self.num_processes = num_processes
         self.process_num = process_num
+        self.dedicated_migration_process = dedicated_migration_process
         self._consumer = None
 
     def __str__(self):
@@ -162,12 +163,19 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
-
-        return [
-            topic_partitions[num::self.num_processes]
-            for num in range(self.num_processes)
-        ][self.process_num]
-
+        if not self.dedicated_migration_process:
+            return [
+                topic_partitions[num::self.num_processes]
+                for num in range(self.num_processes)
+            ][self.process_num]
+        else:
+            if self.process_num == 0:
+                return None
+            else:
+                return [
+                    topic_partitions[num::self.num_processes]
+                    for num in range(self.num_processes - 1)
+                ][self.process_num - 1]
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     """

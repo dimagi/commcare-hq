@@ -192,7 +192,6 @@ class ConfigurableReportTableManagerMixin(object):
             self.table_adapters_by_domain[config.domain].append(
                 self._get_indicator_adapter(config)
             )
-
         if self.run_migrations:
             self.rebuild_tables_if_necessary()
 
@@ -546,7 +545,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
-                         num_processes=1, process_num=0,
+                         num_processes=1, process_num=0, dedicated_migration_process=False,
                          processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
 
@@ -568,13 +567,14 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0),
         processor_chunk_size=processor_chunk_size,
     )
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
-                                num_processes=1, process_num=0,
+                                num_processes=1, process_num=0, dedicated_migration_process=False,
                                 processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
 
@@ -600,6 +600,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         num_processes=num_processes,
         process_num=process_num,
         retry_errors=True,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0),
         processor_chunk_size=processor_chunk_size,
     )
 

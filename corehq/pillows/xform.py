@@ -170,7 +170,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
                      include_ucrs=None, exclude_ucrs=None,
                      num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
-                     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
+                     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, dedicated_migration_process=False, **kwargs):
     """Generic XForm change processor
 
     Processors:
@@ -186,7 +186,8 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
     topics = topics or FORM_TOPICS
     change_feed = KafkaChangeFeed(
-        topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
+        topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
+        dedicated_migration_process=dedicated_migration_process
     )
 
     ucr_processor = ConfigurableReportPillowProcessor(
@@ -234,7 +235,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
         processor=processors,
-        processor_chunk_size=processor_chunk_size
+        processor_chunk_size=processor_chunk_size,
+        process_num=process_num,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0)
     )
 
 
