@@ -151,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps.push(step);
             //clear out pagination and search when we take a step
             this.page = null;
-            //this.search = null;
+            this.search = null;
         };
 
         this.setPage = function (page) {
@@ -161,7 +161,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.setSort = function (sortIndex) {
             this.sortIndex = sortIndex;
         };
-
 
         this.setSearch = function (search) {
             this.search = search;
@@ -179,14 +178,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps = null;
             this.page = null;
             this.sortIndex = null;
-            //this.search = null;
+            this.search = null;
             this.queryDict = null;
         };
 
         this.onSubmit = function () {
             this.page = null;
             this.sortIndex = null;
-            //this.search = null;
+            this.search = null;
             this.queryDict = null;
         };
 
@@ -200,7 +199,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 this.steps = this.steps.splice(0, index);
             }
             this.page = null;
-            //this.search = null;
+            this.search = null;
             this.queryDict = null;
             this.sortIndex = null;
         };
@@ -241,11 +240,26 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     };
 
     // Saved query handling
-    var savedQueries = {},
+    var savedSearches = {},     // text search for case lists
+        savedQueries = {},      // case claim
         bell = "\u0007";
     function stepsKey() {
         var urlObject = Util.currentUrlToObject();
+        if (!urlObject.steps) {
+            return "";
+        }
         return urlObject.steps.join(bell);
+    };
+
+    Util.saveSearch = function (query) {
+        savedSearches[stepsKey()] = query;
+    };
+
+    Util.getSavedSearch = function () {
+        var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+        if (user.displayOptions.stickySearches) {
+            return savedSearches[stepsKey()] || "";
+        }
     };
 
     Util.saveQuery = function (query) {

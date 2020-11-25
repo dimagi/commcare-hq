@@ -9,12 +9,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         template: _.template($("#query-view-item-template").html() || ""),
 
         templateContext: function () {
-            var imageUri = this.options.model.get('imageUri');
-            var audioUri = this.options.model.get('audioUri');
-            var appId = this.model.collection.appId;
+            var imageUri = this.options.model.get('imageUri'),
+                audioUri = this.options.model.get('audioUri'),
+                appId = this.model.collection.appId,
+                queryDict = hqImport("cloudcare/js/formplayer/utils/util").getSavedQuery();
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                initialValue: queryDict[this.options.model.get('id')] || '',
             };
         },
     });
@@ -50,6 +52,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             fields.each(function (index) {
                 this.value = '';
             });
+            hqImport("cloudcare/js/formplayer/utils/util").saveQuery({});
         },
 
         submitAction: function (e) {
