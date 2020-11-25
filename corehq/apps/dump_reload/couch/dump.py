@@ -1,56 +1,51 @@
-import itertools
 import json
 from collections import Counter
 
 from couchdbkit import ResourceNotFound
 
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import get_docs
-from dimagi.utils.couch.database import iter_docs
-
 from corehq.apps.dump_reload.couch.id_providers import (
     DocTypeIDProvider,
     DomainInListKeyGenerator,
     DomainKeyGenerator,
-    UserIDProvider,
+    WebUserIDProvider,
     ViewIDProvider,
 )
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.feature_previews import all_previews
+from dimagi.utils.couch.database import iter_docs
 
 DOC_PROVIDERS = {
-    DocTypeIDProvider(['Application']),
-    DocTypeIDProvider(['CommtrackConfig']),
+    DocTypeIDProvider('Application'),
+    DocTypeIDProvider('CommtrackConfig'),
     ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
-    DocTypeIDProvider(['MobileAuthKeyRecord']),
-    DocTypeIDProvider(['Product']),
-    DocTypeIDProvider(['Program']),
-    UserIDProvider(include_mobile_users=False),
-    DocTypeIDProvider(['CommCareUser']),
-    DocTypeIDProvider(['UserRole']),
-    DocTypeIDProvider(['Group']),
-    DocTypeIDProvider(['ReportConfiguration']),
-    DocTypeIDProvider(['ReportNotification']),
-    DocTypeIDProvider(['ReportConfig']),
-    DocTypeIDProvider(['DataSourceConfiguration']),
-    DocTypeIDProvider(['FormExportInstance']),
-    DocTypeIDProvider(['FormExportDataSchema']),
-    DocTypeIDProvider(['ExportInstance']),
-    DocTypeIDProvider(['ExportDataSchema']),
-    DocTypeIDProvider(['CaseExportInstance']),
-    DocTypeIDProvider(['CaseExportDataSchema']),
-    DocTypeIDProvider(['FixtureOwnership']),
-    DocTypeIDProvider(['FixtureDataType']),
-    DocTypeIDProvider(['FixtureDataItem']),
+    DocTypeIDProvider('MobileAuthKeyRecord'),
+    DocTypeIDProvider('Product'),
+    DocTypeIDProvider('Program'),
+    WebUserIDProvider(),
+    DocTypeIDProvider('CommCareUser'),
+    DocTypeIDProvider('UserRole'),
+    DocTypeIDProvider('Group'),
+    DocTypeIDProvider('ReportConfiguration'),
+    DocTypeIDProvider('ReportNotification'),
+    DocTypeIDProvider('ReportConfig'),
+    DocTypeIDProvider('DataSourceConfiguration'),
+    DocTypeIDProvider('FormExportInstance'),
+    DocTypeIDProvider('FormExportDataSchema'),
+    DocTypeIDProvider('ExportInstance'),
+    DocTypeIDProvider('ExportDataSchema'),
+    DocTypeIDProvider('CaseExportInstance'),
+    DocTypeIDProvider('CaseExportDataSchema'),
+    DocTypeIDProvider('FixtureOwnership'),
+    DocTypeIDProvider('FixtureDataType'),
+    DocTypeIDProvider('FixtureDataItem'),
     ViewIDProvider('Repeater', 'repeaters/repeaters', DomainInListKeyGenerator()),
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
 }
 
 DOC_PROVIDERS_BY_DOC_TYPE = {
-    doc_type: provider
+    provider.doc_type: provider
     for provider in DOC_PROVIDERS
-    for doc_type in provider.doc_types
 }
 
 
@@ -65,7 +60,7 @@ class CouchDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
-        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain):
+        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain, self.excludes):
             stats += self._dump_docs(doc_class, doc_ids, output_stream)
         return stats
 
@@ -82,11 +77,14 @@ class CouchDataDumper(DataDumper):
         return Counter({model_label: count})
 
 
-def get_doc_ids_to_dump(domain):
+def get_doc_ids_to_dump(domain, exclude_doc_types):
     """
     :return: A generator of (doc_class, list(doc_ids))
     """
     for id_provider in DOC_PROVIDERS:
+        if id_provider.doc_type in exclude_doc_types:
+            continue
+
         for doc_type, doc_ids in id_provider.get_doc_ids(domain):
             yield doc_type, doc_ids
 
