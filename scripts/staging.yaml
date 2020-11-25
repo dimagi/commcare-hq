@@ -61,13 +61,12 @@ branches:
   - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
   - gh/QA-secure-cookies # Graham Nov 12
 # - kev/dompurify-upgrade  # Kevin Nov 10
-  - jls/case-claim-result-filter+jls/autolaunch-action # Jenny Nov 16
-  - jls/case-claim-result-filter # Jenny Nov 16
   - jls/autolaunch-action # Jenny Nov 16
   - sr/es-alias # Sravan Nov 18
   - ap/fix-case-list-not-appearing # Amit Nov 19
   - smh/multiple-domain-download-mobile-workers # Steph Nov 19
   - nh/onse/period  # Norman Nov 20
   - jls/copy-linked-app # Jenny Nov 24
+  - jls/slimmer-initial-app # Jenny Nov 25
 
 submodules: {}
