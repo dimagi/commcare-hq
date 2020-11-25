@@ -68,5 +68,6 @@ branches:
   - nh/onse/period  # Norman Nov 20
   - jls/copy-linked-app # Jenny Nov 24
   - jls/slimmer-initial-app # Jenny Nov 25
+  - jls/remote-linked-apps-logos # Jenny Nov 25
 
 submodules: {}
