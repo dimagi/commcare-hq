@@ -1,10 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
+from time import sleep
 from typing import Iterable, List, Optional
 from urllib.parse import urlencode
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
@@ -176,6 +178,11 @@ def fetch_data_set(
     .. _DHIS2 data values: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
+    max_attempts = 3
+
+    def is_500_error(err):
+        return err.response and 500 <= err.response.status_code < 600
+
     requests = dhis2_server.get_requests()
     endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
     params = {
@@ -185,7 +192,19 @@ def fetch_data_set(
     }
     if dump_request:
         print(curlify(requests, endpoint, params))
-    response = requests.get(endpoint, params, raise_for_status=True)
+
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            response = requests.get(endpoint, params, raise_for_status=True)
+        except RequestException as err:
+            if is_500_error(err) and attempt <= max_attempts:
+                sleep(1)  # Give the server a bit of a break (if that helps?)
+            else:
+                raise
+        else:
+            break
     return response.json().get('dataValues', None)
 
 
