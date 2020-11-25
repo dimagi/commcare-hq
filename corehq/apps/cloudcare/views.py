@@ -217,9 +217,7 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
-            "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
             "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return set_cookie(
@@ -281,7 +279,6 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
