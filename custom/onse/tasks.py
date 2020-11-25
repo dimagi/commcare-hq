@@ -1,3 +1,4 @@
+import sys
 from datetime import date
 from time import sleep
 from typing import Iterable, List, Optional
@@ -62,14 +63,14 @@ def update_facility_cases_from_dhis2_data_elements(
     except Exception as err:
         message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
         if print_notifications:
-            print(message)
+            print(message, file=sys.stderr)
         else:
             dhis2_server.get_requests().notify_exception(message)
             raise
     else:
         message = 'Successfully imported ONSE ISS facility cases from DHIS2'
         if print_notifications:
-            print(message)
+            print(message, file=sys.stderr)
         else:
             # For most things we pass silently. But we can repurpose
             # `notify_error()` to tell admins that the import went through,
@@ -88,7 +89,7 @@ def get_dhis2_server(
                    f'found in domain {DOMAIN!r} for importing DHIS2 data '
                    f'elements.')
         if print_notifications:
-            print(message)
+            print(message, file=sys.stderr)
         else:
             _soft_assert(False, message)
         raise
