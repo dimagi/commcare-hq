@@ -36,11 +36,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         ui: {
+            clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
         },
 
         events: {
+            'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        clearAction: function (e) {
+            var fields = $(".query-field");
+            fields.each(function (index) {
+                this.value = '';
+            });
         },
 
         submitAction: function (e) {
