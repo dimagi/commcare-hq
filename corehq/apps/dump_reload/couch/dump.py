@@ -71,12 +71,12 @@ class CouchDataDumper(DataDumper):
         return Counter({model_label: count})
 
 
-def get_doc_ids_to_dump(domain, exclude_doc_types):
+def get_doc_ids_to_dump(domain, exclude_doc_types=None):
     """
     :return: A generator of (doc_class, list(doc_ids))
     """
     for id_provider in DOC_PROVIDERS:
-        if id_provider.doc_type in exclude_doc_types:
+        if exclude_doc_types and id_provider.doc_type in exclude_doc_types:
             continue
 
         for doc_type, doc_ids in id_provider.get_doc_ids(domain):
