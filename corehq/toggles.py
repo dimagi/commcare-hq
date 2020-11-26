@@ -1922,3 +1922,10 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     Allows the user to change the language of the form content while in the form itself in Web Apps
     """
 )
+
+APP_ANALYTICS = StaticToggle(
+    'app_analytics',
+    'Allow user to use app analytics in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
