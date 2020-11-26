@@ -180,9 +180,13 @@ def fetch_data_set(
 
     """
     max_attempts = 3
+    backoff_seconds = 5
 
     def is_500_error(err):
-        return err.response and 500 <= err.response.status_code < 600
+        return (
+            err.response is not None
+            and 500 <= err.response.status_code < 600
+        )
 
     requests = dhis2_server.get_requests()
     endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
@@ -200,8 +204,10 @@ def fetch_data_set(
         try:
             response = requests.get(endpoint, params, raise_for_status=True)
         except RequestException as err:
-            if is_500_error(err) and attempt <= max_attempts:
-                sleep(1)  # Give the server a bit of a break (if that helps?)
+            if dump_request:
+                print(f'# Attempt {attempt} failed')
+            if is_500_error(err) and attempt < max_attempts:
+                sleep(backoff_seconds * attempt)
             else:
                 raise
         else:
