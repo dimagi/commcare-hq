@@ -58,6 +58,16 @@ def update_facility_cases_from_dhis2_data_elements(
     dhis2_server = get_dhis2_server(print_notifications)
     if not period:
         period = get_last_quarter()
+    if dump_requests:
+        print("""#!/bin/sh
+
+if [ -z "$DHIS2_USERNAME" ] || [ -z "$DHIS2_PASSWORD" ]
+then
+    echo "Environment variables not set"
+    exit 1
+fi
+
+""")
     try:
         case_blocks = get_case_blocks()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
