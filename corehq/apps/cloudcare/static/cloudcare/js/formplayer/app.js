@@ -176,6 +176,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 showError(message, $("#cloudcare-notifications"));
             }
         };
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+            hqImport('analytix/js/kissmetrix').track.event('Viewed Form', {
+                domain: data.domain,
+                app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
+                name: data.title,
+            });
+        }
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
                 var $alert;
