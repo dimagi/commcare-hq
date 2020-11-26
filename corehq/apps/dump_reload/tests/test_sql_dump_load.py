@@ -113,11 +113,9 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
         # Dump
-        dump_output = output_stream.getvalue().split('\n')
-        dump_lines = [line.strip() for line in dump_output if line.strip()]
+        actual_model_counts, dump_lines = self._parse_dump_output(output_stream)
 
         expected_model_counts = _normalize_object_counter(expected_dump_counts)
-        actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
 
         # Load
@@ -129,6 +127,12 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual(sum(expected_load_counts.values()), sum(loaded_model_counts.values()))
 
         return dump_lines
+
+    def _parse_dump_output(self, output_stream):
+        dump_output = output_stream.getvalue().split('\n')
+        dump_lines = [line.strip() for line in dump_output if line.strip()]
+        actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
+        return actual_model_counts, dump_lines
 
     def _check_signals_handle_raw(self, models):
         """Ensure that any post_save signal handlers have been updated
