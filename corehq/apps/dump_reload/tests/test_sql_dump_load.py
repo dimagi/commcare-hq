@@ -91,7 +91,7 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None, dumper_fn=None):
         expected_load_counts = expected_load_counts or expected_dump_counts
         expected_dump_counts.update(self.default_objects_counts)
 
@@ -99,7 +99,10 @@ class BaseDumpLoadTest(TestCase):
         self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
-        SqlDataDumper(self.domain_name, []).dump(output_stream)
+        if dumper_fn:
+            dumper_fn(output_stream)
+        else:
+            SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         self.delete_sql_data()
 
