@@ -298,6 +298,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         caseListSearch: function (e) {
             e.preventDefault();
             var searchText = $('#searchText').val();
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+                hqImport('analytix/js/kissmetrix').track.event('Searched Case List', {
+                    domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                    app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
+                    name: searchText,
+                });
+            }
             FormplayerFrontend.trigger("menu:search", searchText);
         },
 
