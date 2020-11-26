@@ -116,6 +116,13 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
         };
+        if (menuResponse.breadcrumbs.length === 2 && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+            hqImport('analytix/js/kissmetrix').track.event('Viewed Case List', {
+                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
+                name: menuResponse.breadcrumbs[1],
+            });
+        }
         if (menuResponse.type === "commands") {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
