@@ -237,7 +237,7 @@ hqDefine('export/js/download_export', [
         self.downloadCookieName = ko.observable();
         self.storeDownloadCookie = function () {
             if (self.downloadCookieName() && self.downloadId()) {
-                $.cookie(self.downloadCookieName(), self.downloadId(), { path: '/' });
+                $.cookie(self.downloadCookieName(), self.downloadId(), { path: '/', secure: initialPageData.get('secure_cookies') });
             }
         };
         self.clearDownloadCookie = function () {
