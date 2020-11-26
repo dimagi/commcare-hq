@@ -1,18 +1,24 @@
+import sys
 from datetime import date
-from typing import Iterable, Optional, List
+from time import sleep
+from typing import Iterable, List, Optional
+from urllib.parse import urlencode
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from custom.onse.models import iter_mappings
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import Requests
+from corehq.motech.utils import get_endpoint_url
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
+from custom.onse.models import iter_mappings
 
 # The production DHIS2 server is on the other side of an
 # interoperability service that changes the URL schema from
@@ -32,32 +38,39 @@ _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
     queue='background_queue',
 )
 def update_facility_cases_from_dhis2_data_elements(
-    print_notifications: bool = False
+    period: Optional[str] = None,
+    print_notifications: bool = False,
+    dump_requests: bool = False,
 ):
     """
-    Update facility_supervision cases with indicators collected in DHIS2
-    over the last quarter.
+    Update facility_supervision cases with indicators collected in DHIS2.
 
+    :param period: The period of data to import. e.g. "2020Q1". Defaults
+        to last quarter.
     :param print_notifications: If True, notifications are printed,
         otherwise they are emailed.
+    :param dump_requests: If True, print requests to STDOUT.
 
     """
     dhis2_server = get_dhis2_server(print_notifications)
+    if not period:
+        period = get_last_quarter()
     try:
         case_blocks = get_case_blocks()
-        case_blocks = set_case_updates(dhis2_server, case_blocks)
+        case_blocks = set_case_updates(dhis2_server, case_blocks,
+                                       period, dump_requests)
         save_cases(case_blocks)
     except Exception as err:
         message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
         if print_notifications:
-            print(message)
+            print(message, file=sys.stderr)
         else:
             dhis2_server.get_requests().notify_exception(message)
             raise
     else:
         message = 'Successfully imported ONSE ISS facility cases from DHIS2'
         if print_notifications:
-            print(message)
+            print(message, file=sys.stderr)
         else:
             # For most things we pass silently. But we can repurpose
             # `notify_error()` to tell admins that the import went through,
@@ -76,7 +89,7 @@ def get_dhis2_server(
                    f'found in domain {DOMAIN!r} for importing DHIS2 data '
                    f'elements.')
         if print_notifications:
-            print(message)
+            print(message, file=sys.stderr)
         else:
             _soft_assert(False, message)
         raise
@@ -101,7 +114,9 @@ def get_case_blocks() -> Iterable[CaseBlock]:
 
 def set_case_updates(
     dhis2_server: ConnectionSettings,
-    case_blocks: Iterable[CaseBlock]
+    case_blocks: Iterable[CaseBlock],
+    period: str,
+    dump_requests: bool = False,
 ) -> Iterable[CaseBlock]:
     """
     Fetch data sets of data elements for last quarter from ``dhis2_server``
@@ -124,6 +139,8 @@ def set_case_updates(
                     # unit. This is the DHIS2 facility whose data we
                     # want to import.
                     org_unit_id=case_block.external_id,
+                    period=period,
+                    dump_request=dump_requests,
                 )
             if data_set_cache[mapping.data_set_id] is None:
                 # No data for this facility. `None` = "We don't know"
@@ -140,6 +157,8 @@ def fetch_data_set(
     dhis2_server: ConnectionSettings,
     data_set_id: str,
     org_unit_id: str,
+    period: str,
+    dump_request: bool = False,
 ) -> Optional[List[dict]]:
     """
     Returns a list of `DHIS2 data values`_, or ``None`` if the the given
@@ -151,14 +170,33 @@ def fetch_data_set(
     .. _DHIS2 data values: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
+    max_attempts = 3
+
+    def is_500_error(err):
+        return err.response and 500 <= err.response.status_code < 600
+
     requests = dhis2_server.get_requests()
     endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
     params = {
-        'period': get_last_quarter(),
+        'period': period,
         'dataSet': data_set_id,
         'orgUnit': org_unit_id,
     }
-    response = requests.get(endpoint, params, raise_for_status=True)
+    if dump_request:
+        print(curlify(requests, endpoint, params))
+
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            response = requests.get(endpoint, params, raise_for_status=True)
+        except RequestException as err:
+            if is_500_error(err) and attempt <= max_attempts:
+                sleep(1)  # Give the server a bit of a break (if that helps?)
+            else:
+                raise
+        else:
+            break
     return response.json().get('dataValues', None)
 
 
@@ -228,3 +266,15 @@ def save_cases(case_blocks):
             xmlns='http://commcarehq.org/dhis2-import',
             device_id=f"dhis2-import-{DOMAIN}-{today}",
         )
+
+
+def curlify(requests: Requests, endpoint: str, params: dict) -> str:
+    """
+    Return the curl command for a request to ``url`` with ``params``
+    """
+    insecure = '' if requests.verify else '--insecure'
+    url = get_endpoint_url(requests.base_url, endpoint)
+    return (f'curl {insecure} '
+            '-u "$DHIS2_USERNAME:$DHIS2_PASSWORD" '
+            '-H "Accept: application/json" '
+            f'"{url}?{urlencode(params)}"')
