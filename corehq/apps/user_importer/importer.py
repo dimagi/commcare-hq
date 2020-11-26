@@ -625,10 +625,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             status = row.get('status')
 
             try:
-                if status == 'Active User':
-                    is_account_confirmed = True
-                elif status == 'Invited':
-                    is_account_confirmed = False
                 remove = spec_value_to_boolean_or_none(row, 'remove')
                 role_qualified_id = None
 
@@ -672,12 +668,11 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                                 status_row['flag'] = 'updated'
                                 user.save()
 
-                            # TODO: is this an edge case we need to cover for?
-                            elif not user.is_member_of(domain) and is_account_confirmed:
+                            elif not user.is_member_of(domain) and status == 'Active User':
                                 user.add_as_web_user(domain, role=role_qualified_id)
                                 status_row['flag'] = 'updated'
 
-                            elif not user.is_member_of(domain) and not is_account_confirmed:
+                            elif not user.is_member_of(domain) and status == 'Invited':
                                 invite = Invitation.objects.filter(email=email, domain=domain).first()
                                 invite.invited_by = upload_user.user_id
                                 invite.invited_on = datetime.utcnow()
