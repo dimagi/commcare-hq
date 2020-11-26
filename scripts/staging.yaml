@@ -65,7 +65,7 @@ branches:
   - sr/es-alias # Sravan Nov 18
   - ap/fix-case-list-not-appearing # Amit Nov 19
   - smh/multiple-domain-download-mobile-workers # Steph Nov 19
-  - nh/onse/period  # Norman Nov 20
+  - nh/onse/by_case  # Norman Nov 20
   - jls/copy-linked-app # Jenny Nov 24
   - jls/slimmer-initial-app # Jenny Nov 25
 
