@@ -220,7 +220,6 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
