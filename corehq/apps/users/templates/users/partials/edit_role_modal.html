@@ -221,18 +221,18 @@
                 </div>
               </div>
             </div>
-            {% if request|toggle_enabled:"ROLE_WEBAPPS_PERMISSIONS" %}
+            {% if request|toggle_enabled:"APP_ACCESS_PERMISSIONS" %}
               <div class="form-group">
                 <label class="col-sm-4 control-label">
-                  {% trans "View All Web Apps" %}
+                  {% trans "Access All Applications" %}
                 </label>
                 <div class="col-sm-8 controls">
                   <div class="form-check">
                     <input type="checkbox"
-                           id="access-all-webapps-checkbox"
+                           id="access-all-apps-checkbox"
                            data-bind="checked: webAppsPermissions.all, disable: !$root.allowEdit" />
-                    <label for="access-all-webapps-checkbox">
-                      {% trans "Allow role to view all Web Apps." %}
+                    <label for="access-all-apps-checkbox">
+                      {% trans "Allow role to access all the Apps." %}
                     </label>
                   </div>
                 </div>
@@ -240,12 +240,12 @@
               <div class="form-group"
                    data-bind="visible: !webAppsPermissions.all()">
                 <label class="col-sm-4 control-label">
-                  {% trans "Web Apps Permissions" %}
+                  {% trans "App access Permissions" %}
                 </label>
                 <div class="col-sm-8 controls">
                   <div class="panel panel-default">
                     <div class="panel-heading">
-                      {% trans "Select which Web Apps the role can view:" %}
+                      {% trans "Select which Applications will the role have access to:" %}
                     </div>
                     <div class="panel-body"
                          data-bind="foreach: webAppsPermissions.specific, slideVisible: !webAppsPermissions.all()">
