@@ -1233,6 +1233,13 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
+SESSION_ENDPOINTS = StaticToggle(
+    'session_endpoints',
+    'Enable session endpoints for the Reminders App',
+    TAG_SOLUTIONS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
