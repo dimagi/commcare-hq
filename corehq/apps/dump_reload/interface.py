@@ -56,7 +56,7 @@ class DataLoader(metaclass=ABCMeta):
         raise NotImplementedError
 
     def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False):
-        loaded_object_count = Counter()
+        loaded_object_count = {}
         for file in os.listdir(extracted_dump_path):
             path = os.path.join(extracted_dump_path, file)
             if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
@@ -83,7 +83,7 @@ class DataLoader(metaclass=ABCMeta):
                 RuntimeWarning
             )
 
-        return loaded_object_count
+        return {meta_slug: loaded_object_count}
 
     def _slice(self, dump_file):
         if not self.skip:

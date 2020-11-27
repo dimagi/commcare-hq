@@ -63,10 +63,12 @@ class Command(BaseCommand):
 
         dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
-            loaded_meta[loader.slug] = self._load_data(
-                loader, extracted_dir, object_filter, skip.get(loader.slug), dump_meta)
+            loaded_meta.update(self._load_data(
+                loader, extracted_dir, object_filter, skip.get(loader.slug), dump_meta
+            ))
 
         self._print_stats(loaded_meta, dump_meta)
+        return json.dumps(loaded_meta)
 
     def _print_stats(self, loaded_meta, dump_meta):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
