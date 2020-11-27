@@ -630,7 +630,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
                 if role:
                     role_qualified_id = roles_by_name[role].get_qualified_id()
-
+                if email:
+                    email = email.lower()
                 if username:
                     if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(

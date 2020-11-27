@@ -21,13 +21,13 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation
+    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation, CouchUser
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 
-class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
+class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -859,3 +859,209 @@ class TestUserUploadRecord(TestCase):
 
         upload_record.refresh_from_db()
         self.assertEqual(rows['messages'], upload_record.result)
+
+
+class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        delete_all_users()
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
+        cls.uploading_user = WebUser.create(cls.domain_name, 'upload@user.com', 'password', None, None,
+                                            email='upload@user.com', is_superuser=True)
+        cls.user = WebUser.create(cls.domain_name, 'hello@world.com', 'password', None, None,
+                                  email='hello@world.com', is_superuser=True)
+        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
+        cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
+        cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'admin')
+        # cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'view-apps')
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.other_domain.delete()
+        cls.patcher.stop()
+        super().tearDownClass()
+
+    def tearDown(self):
+        Invitation.objects.all().delete()
+        delete_all_users()
+
+    @property
+    def user(self):
+        return CouchUser.get_by_username('hello@world.com')
+
+    @property
+    def invited_user(self):
+        return Invitation.objects.filter(email='invited@user.com').first()
+
+    def _get_spec(self, delete_keys=None, **kwargs):
+        spec = {
+            'username': 'hello@world.com',
+            'first_name': 'Sally',
+            'last_name' 'Sitwell'
+            'status': 'Active User',
+            'email': 'hello@world.com',
+            'role': self.role.name,
+        }
+        if delete_keys:
+            for key in delete_keys:
+                spec.pop(key)
+        spec.update(kwargs)
+        return spec
+
+    def _get_invited_spec(self, delete_keys=None, **kwargs):
+        spec = {
+            'username': 'invited@user.com',
+            'status': 'Invited User',
+            'email': 'invited@user.com',
+            'role': self.role.name,
+        }
+        if delete_keys:
+            for key in delete_keys:
+                spec.pop(key)
+        spec.update(kwargs)
+        return spec
+
+    def test_upload_with_missing_role(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(role='')],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        self.assertIsNone(self.invited_user)
+
+    # def test_numeric_user_name(self):
+    #     """
+    #     Test that bulk upload doesn't choke if the user's name is a number
+    #     """
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(first_name=1234, last_name='4567')],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     self.assertEqual(self.user.first_name, "1234")
+    #     self.assertEqual(self.user.last_name, "4567")
+
+    # def test_empty_user_name(self):
+    #     """
+    #     This test confirms that a name of None doesn't set the users name to
+    #     "None" or anything like that.
+    #     """
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(first_name=None, last_name=None)],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     self.assertEqual(self.user.first_name, "")
+    #     self.assertEqual(self.user.last_name, "")
+
+    # def test_upper_case_email(self):
+    #     email = 'hELlo@WoRld.Com'
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(email=email)],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     self.assertEqual(self.user.email, email.lower())
+
+    # TODO: fix -- not currently working
+    # def test_change_role(self):
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(role=self.role.name)],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     self.assertEqual(self.user.get_role(self.domain_name).name, 'edit-apps')
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(role=self.other_role.name)],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     self.assertEqual(self.user.get_role(self.domain_name).name, 'Admin')
+    #
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_invited_spec(role=self.other_role.name)],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     print(self.invited_user)
+    #     self.assertEqual(self.invited_user.role.name, self.other_role.name)
+
+    def test_blank_is_active(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(is_active='')],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        self.assertTrue(self.user.is_active)
+
+    # def test_remove_user(self):
+    #     username = 'a@a.com'
+    #     web_user = WebUser.create(self.domain.name, username, 'password', None, None)
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(web_user='a@a.com', remove='True')],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     web_user = WebUser.get_by_username(username)
+    #     self.assertFalse(web_user.is_member_of(self.domain.name))
+
+    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    def test_upload_invite(self, mock_send_activation_email):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec()],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)
+
+# TODO: uploads need to handle multiple domains
+    # def test_multi_domain(self):
+    #     dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
+    #     dm.save()
+    #     import_users_and_groups(
+    #         self.domain.name,
+    #         [self._get_spec(username=123, domain=self.other_domain.name)],
+    #         [],
+    #         self.uploading_user,
+    #         mock.MagicMock(),
+    #         True
+    #     )
+    #     self.assertIsNotNone(
+    #         CouchUser.get_by_username('123')
+    #     )
