@@ -27,6 +27,7 @@ from two_factor.views import (
     SetupView,
 )
 
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.toggles import MONITOR_2FA_CHANGES
 from dimagi.utils.web import json_response
 
@@ -289,7 +290,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.password_change_form,
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'hide_password_feedback': has_custom_clean_password(),
         }
 
     @method_decorator(sensitive_post_parameters())
