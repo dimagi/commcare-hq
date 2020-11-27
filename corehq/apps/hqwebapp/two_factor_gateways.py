@@ -12,6 +12,7 @@ from twilio.rest import Client
 from two_factor.models import PhoneDevice
 
 import settings
+from corehq.apps.users.models import CouchUser
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, \
     RateDefinition
@@ -138,8 +139,15 @@ def rate_limit_two_factor_setup(device):
     number = device.number
     username = device.user.username
     method = device.method if isinstance(device, PhoneDevice) else None
+    domain = None
 
     if ip_address and username and number and method:
+        user = CouchUser.get_by_username(username)
+        if user:
+            if len(user.domain_memberships) == 1:
+                domain = user.domain_memberships[0].domain
+            else:
+                domain = 'multiple'
 
         status, window = _check_for_exceeded_rate_limits(ip_address, number, username)
         if status == _status_accepted:
@@ -158,6 +166,7 @@ def rate_limit_two_factor_setup(device):
         'status': status,
         'method': method,
         'window': window or 'none',
+        'domain': domain or 'none',
     })
     return status != _status_accepted
 
