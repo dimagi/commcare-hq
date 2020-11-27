@@ -25,6 +25,8 @@ class Command(BaseCommand):
                             help="Use already extracted dump if it exists.")
         parser.add_argument('--force', action='store_true', default=False, dest='force',
                             help="Load data for domain that already exists.")
+        parser.add_argument('--dry-run', action='store_true', default=False, dest='dry_run',
+                            help="Skip saving data to the DB")
         parser.add_argument('--loader', dest='loaders', action='append', default=[],
                             help='loader slug to run (use multiple --loader to run multiple loaders).'
                                  'domain should always be the first loader to be invoked in case of '
@@ -40,6 +42,7 @@ class Command(BaseCommand):
 
     def handle(self, dump_file_path, **options):
         self.force = options.get('force')
+        self.dry_run = options.get('dry_run')
         self.use_extracted = options.get('use_extracted')
         skip = {slug: int(count) for slug, count in
                 (s.split(':') for s in options.get('skip'))}
@@ -91,7 +94,7 @@ class Command(BaseCommand):
     def _load_data(self, loader_class, extracted_dump_path, object_filter, skip, dump_meta):
         try:
             loader = loader_class(object_filter, skip, self.stdout, self.stderr)
-            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force)
+            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:

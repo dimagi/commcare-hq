@@ -47,7 +47,7 @@ class DataLoader(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
         """
         :param object_strings: iterable of JSON encoded object strings
         :param force: True if objects should be loaded into an existing domain
@@ -55,16 +55,16 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def load_from_path(self, extracted_dump_path, dump_meta, force=False):
+    def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False):
         loaded_object_count = Counter()
         for file in os.listdir(extracted_dump_path):
             path = os.path.join(extracted_dump_path, file)
             if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
-                counts = self.load_from_file(path, dump_meta, force)
+                counts = self.load_from_file(path, dump_meta, force, dry_run)
                 loaded_object_count.update(counts)
         return loaded_object_count
 
-    def load_from_file(self, file_path, dump_meta, force=False):
+    def load_from_file(self, file_path, dump_meta, force=False, dry_run=False):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
@@ -73,7 +73,7 @@ class DataLoader(metaclass=ABCMeta):
         expected_count = sum(dump_meta[meta_slug].values()) - (self.skip or 0)
         with gzip.open(file_path) as dump_file:
             object_strings = with_progress_bar(self._slice(dump_file), length=expected_count)
-            loaded_object_count = self.load_objects(object_strings, force)
+            loaded_object_count = self.load_objects(object_strings, force, dry_run)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
