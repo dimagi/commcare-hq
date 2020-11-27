@@ -226,7 +226,7 @@ class TestDumpLoadToggles(SimpleTestCase):
         output_stream = StringIO()
 
         with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]), \
-             patch("corehq.apps.dump_reload.couch.dump._user_ids_in_domain", return_value=users):
+             patch("corehq.apps.dump_reload.couch.dump.get_all_usernames_by_domain", return_value=users):
             dumper.dump(output_stream)
         output_stream.seek(0)
         lines = output_stream.readlines()
