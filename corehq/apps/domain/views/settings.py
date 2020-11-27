@@ -38,6 +38,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     LoginAndDomainMixin,
 )
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
     USE_PARENT_LOCATION_CHOICE,
@@ -51,7 +52,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
@@ -492,11 +493,12 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+
+        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
