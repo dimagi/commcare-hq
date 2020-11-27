@@ -292,7 +292,6 @@ class EditCommCareUserView(BaseEditUserView):
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
-            'hide_password_feedback': has_custom_clean_password(),
             'group_names': [g.name for g in self.groups],
         }
         if self.commtrack_form.errors:
