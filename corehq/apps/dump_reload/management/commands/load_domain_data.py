@@ -91,7 +91,7 @@ class Command(BaseCommand):
     def _load_data(self, loader_class, extracted_dump_path, object_filter, skip, dump_meta):
         try:
             loader = loader_class(object_filter, skip, self.stdout, self.stderr)
-            return loader.load_from_file(extracted_dump_path, dump_meta, force=self.force)
+            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:

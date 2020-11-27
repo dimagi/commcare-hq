@@ -4,6 +4,7 @@ import re
 import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
+from collections import Counter
 
 from corehq.util.log import with_progress_bar
 
@@ -54,13 +55,22 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def load_from_file(self, extracted_dump_path, dump_meta, force=False):
-        file_path = os.path.join(extracted_dump_path, '{}.gz'.format(self.slug))
+    def load_from_path(self, extracted_dump_path, dump_meta, force=False):
+        loaded_object_count = Counter()
+        for file in os.listdir(extracted_dump_path):
+            path = os.path.join(extracted_dump_path, file)
+            if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
+                counts = self.load_from_file(path, dump_meta, force)
+                loaded_object_count.update(counts)
+        return loaded_object_count
+
+    def load_from_file(self, file_path, dump_meta, force=False):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
         self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
-        expected_count = sum(dump_meta[self.slug].values()) - (self.skip or 0)
+        meta_slug, _ = os.path.splitext(os.path.basename(file_path))
+        expected_count = sum(dump_meta[meta_slug].values()) - (self.skip or 0)
         with gzip.open(file_path) as dump_file:
             object_strings = with_progress_bar(self._slice(dump_file), length=expected_count)
             loaded_object_count = self.load_objects(object_strings, force)
