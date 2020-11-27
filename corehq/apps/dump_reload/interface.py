@@ -4,7 +4,6 @@ import re
 import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
-from collections import Counter
 
 from corehq.util.log import with_progress_bar
 
