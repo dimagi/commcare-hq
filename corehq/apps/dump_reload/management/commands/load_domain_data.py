@@ -73,7 +73,7 @@ class Command(BaseCommand):
         for loader, models in sorted(loaded_meta.items()):
             self.stdout.write(loader)
             for model, count in sorted(models.items()):
-                expected = dump_meta[loader][model]
+                expected = dump_meta[loader].get(model, 0)
                 self.stdout.write(f"  {model:<50}: {count} / {expected}")
         self.stdout.write('{0}{0}'.format('-' * 46))
         loaded_object_count = sum(count for model in loaded_meta.values() for count in model.values())
