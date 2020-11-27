@@ -582,6 +582,13 @@ class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
     pass
 
 
+class Endpoint(IdNode):
+    ROOT_NAME = 'endpoint'
+
+    argument = NodeListField('argument', IdNode)
+    stack = NodeField('stack', Stack)
+
+
 class AbstractTemplate(XmlObject):
     form = StringField('@form', choices=['image', 'phone', 'address'])
     width = IntegerField('@width')
@@ -910,6 +917,7 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    endpoints = NodeListField('endpoint', Endpoint)
     remote_requests = NodeListField('remote-request', RemoteRequest)
 
     fixtures = NodeListField('fixture', Fixture)
