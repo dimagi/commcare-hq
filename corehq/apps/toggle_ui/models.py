@@ -17,12 +17,6 @@ class ToggleAuditManager(models.Manager):
                 randomness=randomness
             )
 
-    def log_toggle_set(self, slug, username, namespaced_items):
-        self.log_toggle_action(slug, username, namespaced_items, ToggleAudit.ACTION_ADD)
-
-    def log_toggle_unset(self, slug, username, namespaced_items):
-        self.log_toggle_action(slug, username, namespaced_items, ToggleAudit.ACTION_REMOVE)
-
     def log_toggle_action(self, slug, username, namespaced_items, action):
         for namespaced_item in namespaced_items:
             namespace, item = parse_item(namespaced_item)
