@@ -9,6 +9,7 @@ from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
 from mock import patch
+from nose.tools import nottest
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
@@ -49,12 +50,7 @@ class CouchDumpLoadTest(TestCase):
         self._delete_couch_data()
 
     def _delete_couch_data(self):
-        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain_name):
-            db = doc_class.get_db()
-            for docs in chunked(iter_docs(db, doc_ids), 100):
-                db.bulk_delete(docs)
-
-            self.assertEqual(0, len(get_docs(db, doc_ids)))
+        delete_doain_couch_data_for_dump_load_test(self.domain_name)
 
     def _dump_and_load(self, expected_objects, not_expected_objects=None, doc_to_doc_class=None):
         output_stream = StringIO()
@@ -195,6 +191,16 @@ class CouchDumpLoadTest(TestCase):
         )
 
         self._dump_and_load([web_user], [other_user])
+
+
+@nottest
+def delete_doain_couch_data_for_dump_load_test(domain_name):
+    for doc_class, doc_ids in get_doc_ids_to_dump(domain_name):
+        db = doc_class.get_db()
+        for docs in chunked(iter_docs(db, doc_ids), 100):
+            db.bulk_delete(docs)
+
+        assert 0 == len(get_docs(db, doc_ids)), f"Some docs not deleted: {doc_class}"
 
 
 class TestDumpLoadToggles(SimpleTestCase):

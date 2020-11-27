@@ -10,6 +10,7 @@ from django.core import serializers
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.test import SimpleTestCase, TestCase
+from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -77,15 +78,7 @@ class BaseDumpLoadTest(TestCase):
         post_delete.connect(zapier_subscription_post_delete, sender=ZapierSubscription)
 
     def delete_sql_data(self):
-        for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
-            for iterator in builder.querysets():
-                with transaction.atomic(using=iterator.db), \
-                        constraint_checks_deferred(iterator.db):
-                    collector = NestedObjects(using=iterator.db)
-                    collector.collect(iterator)
-                    collector.delete()
-
-        self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
+        delete_domain_sql_data_for_dump_load_test(self.domain_name)
 
     def tearDown(self):
         self.delete_sql_data()
@@ -150,6 +143,19 @@ class BaseDumpLoadTest(TestCase):
                     receiver, model
                 )
                 self.assertIn('raw', args, message)
+
+
+@nottest
+def delete_domain_sql_data_for_dump_load_test(domain_name):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain_name, []):
+        for iterator in builder.querysets():
+            with transaction.atomic(using=iterator.db), \
+                 constraint_checks_deferred(iterator.db):
+                collector = NestedObjects(using=iterator.db)
+                collector.collect(iterator)
+                collector.delete()
+
+    assert [] == list(get_objects_to_dump(domain_name, [])), "Not all SQL objects deleted"
 
 
 @use_sql_backend
