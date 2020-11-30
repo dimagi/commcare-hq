@@ -13,7 +13,6 @@
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
-  {% initial_page_data "hide_password_feedback" hide_password_feedback %}
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
   {% initial_page_data "path" request.path %}
   {% initial_page_data "is_delete_allowed" is_delete_allowed %}
@@ -63,7 +62,12 @@
     <div class="tab-pane" id="user-password">
       <div class="panel-body">
         {% if not request.is_view_only %}
-          {% include 'users/partials/reset_password.html' %}
+          <form id="reset-password-form" class="form-horizontal" action="{% url "change_password" domain couch_user.user_id %}" method="post">
+            {% csrf_token %}
+            <div id="reset-password-form-container">
+              {% crispy reset_password_form %}
+            </div>
+          </form>
           <div class="spacer"></div>
         {% endif %}
         {% if token %}
