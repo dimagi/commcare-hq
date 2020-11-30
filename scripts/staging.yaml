@@ -68,5 +68,6 @@ branches:
   - nh/onse/by_case  # Norman Nov 20
   - jls/copy-linked-app # Jenny Nov 24
   - jls/slimmer-initial-app # Jenny Nov 25
+  - mk/remove-draconian-full # MK Nov 30
 
 submodules: {}
