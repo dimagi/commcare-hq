@@ -180,7 +180,7 @@ def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None)
             stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
-def get_model_iterator_builders_to_dump(domain, excludes):
+def get_model_iterator_builders_to_dump(domain, excludes, limit_to_db=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
@@ -196,7 +196,9 @@ def get_model_iterator_builders_to_dump(domain, excludes):
             continue
 
         iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
-        for model_class, builder in get_all_model_iterators_builders_for_domain(model_class, domain, iterator_builders):
+        for model_class, builder in get_all_model_iterators_builders_for_domain(
+            model_class, domain, iterator_builders, limit_to_db=limit_to_db
+        ):
             yield model_class, builder
 
 
