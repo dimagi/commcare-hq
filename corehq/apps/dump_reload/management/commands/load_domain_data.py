@@ -1,7 +1,6 @@
 import json
 import os
 import zipfile
-from collections import Counter
 
 from django.core.management.base import BaseCommand, CommandError
 
