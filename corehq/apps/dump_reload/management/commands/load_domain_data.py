@@ -87,7 +87,7 @@ class Command(BaseCommand):
         self.stdout.write('{0}{0}'.format('-' * 46))
 
     def extract_dump_archive(self, dump_file_path):
-        target_dir = '_tmp_load_{}'.format(dump_file_path)
+        target_dir = get_tmp_extract_dir(dump_file_path)
         if not os.path.exists(target_dir):
             with zipfile.ZipFile(dump_file_path, 'r') as archive:
                 archive.extractall(target_dir)
@@ -114,3 +114,7 @@ def _get_dump_meta(extracted_dir):
     meta_path = os.path.join(extracted_dir, 'meta.json')
     with open(meta_path) as f:
         return json.loads(f.read())
+
+
+def get_tmp_extract_dir(dump_file_path):
+    return '_tmp_load_{}'.format(dump_file_path)
