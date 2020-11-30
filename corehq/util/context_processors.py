@@ -22,6 +22,7 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'env': get_environment_friendly_name(),
+        'secure_cookies': settings.SECURE_COOKIES,
     }
 
 
