@@ -39,6 +39,7 @@ class Command(BaseCommand):
                             help="Regular expression to use to selectively load data. Will be matched"
                                  " against a CouchDB 'doc_type' or Django model name: 'app_label.ModelName'."
                                  "Use 'print_domain_stats' command to get a list of available types.")
+        parser.add_argument('--json-output', action="store_true", help="Produce JSON output for use in tests")
 
     def handle(self, dump_file_path, **options):
         self.force = options.get('force')
@@ -67,8 +68,10 @@ class Command(BaseCommand):
                 loader, extracted_dir, object_filter, skip.get(loader.slug), dump_meta
             ))
 
-        self._print_stats(loaded_meta, dump_meta)
-        return json.dumps(loaded_meta)
+        if options.get("json_output"):
+            return json.dumps(loaded_meta)
+        else:
+            self._print_stats(loaded_meta, dump_meta)
 
     def _print_stats(self, loaded_meta, dump_meta):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
