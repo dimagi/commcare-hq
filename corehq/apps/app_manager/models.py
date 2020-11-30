@@ -1005,6 +1005,7 @@ class FormBase(DocumentSchema):
     custom_assertions = SchemaListProperty(CustomAssertion)
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
+    endpoint_id = StringProperty()  # For Reminders to open app at this form
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
 
@@ -2173,6 +2174,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    endpoint_id = StringProperty()  # For Reminders to open app at this module
     report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
