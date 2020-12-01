@@ -58,7 +58,6 @@ branches:
   - fr/user-data-jit            # Farid September 2
   - sr/case-reindex-staging # Sravan Oct 14
   - gh/improve-queueing-repeaters # Graham Oct 22
-  - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
 # - kev/dompurify-upgrade  # Kevin Nov 10
   - jls/autolaunch-action # Jenny Nov 16
   - sr/es-alias # Sravan Nov 18
