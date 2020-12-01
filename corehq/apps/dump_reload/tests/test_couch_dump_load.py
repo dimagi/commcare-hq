@@ -8,7 +8,7 @@ from io import StringIO
 from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
-from mock import Mock
+from mock import patch
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
@@ -110,7 +110,7 @@ class CouchDumpLoadTest(TestCase):
         }
         for provider in DOC_PROVIDERS:
             if isinstance(provider, DocTypeIDProvider):
-                doc_types.extend(provider.doc_types)
+                doc_types.append(provider.doc_type)
 
         def _make_doc(doc_type, domain):
             doc_class = get_document_class_by_doc_type(doc_type)
@@ -215,11 +215,12 @@ class TestDumpLoadToggles(SimpleTestCase):
 
     def test_dump_toggles(self):
         dumper = ToggleDumper(self.domain_name, [])
-        dumper._user_ids_in_domain = Mock(return_value={'user1', 'user2', 'user3'})
+        users = {'user1', 'user2', 'user3'}
 
         output_stream = StringIO()
 
-        with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]):
+        with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]), \
+             patch("corehq.apps.dump_reload.couch.dump._user_ids_in_domain", return_value=users):
             dumper.dump(output_stream)
         output_stream.seek(0)
         lines = output_stream.readlines()
