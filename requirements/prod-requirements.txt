@@ -118,7 +118,7 @@ prompt-toolkit==3.0.7     # via ipython
 psycogreen==1.0.2         # via -r requirements.in
 psycopg2==2.8.6           # via -r requirements.in
 ptyprocess==0.6.0         # via pexpect
-py-kissmetrics==1.0.1     # via -r requirements.in
+py-kissmetrics==1.1.0     # via -r requirements.in
 pyasn1==0.4.8             # via -r prod-requirements.in, ndg-httpsclient
 pycco==0.5.1              # via -r requirements.in
 pycparser==2.20           # via cffi

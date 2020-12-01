@@ -118,7 +118,7 @@ polib==1.1.0              # via -r requirements.in
 prometheus-client==0.7.1  # via -r requirements.in
 psycogreen==1.0.2         # via -r requirements.in
 psycopg2==2.8.6           # via -r requirements.in, sqlalchemy-postgres-copy
-py-kissmetrics==1.0.1     # via -r requirements.in
+py-kissmetrics==1.1.0     # via -r requirements.in
 pycco==0.5.1              # via -r requirements.in
 pycparser==2.20           # via cffi
 pycryptodome==3.9.8       # via -r requirements.in
