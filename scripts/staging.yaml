@@ -69,5 +69,6 @@ branches:
   - jls/slimmer-initial-app # Jenny Nov 25
   - mk/remove-draconian-full # MK Nov 30
   - gh/improve-gateway-fee # Graham Dec 1
+  - dependabot/pip/requirements/ddtrace-0.44.0 # Daniel Dec 1
 
 submodules: {}
