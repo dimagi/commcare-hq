@@ -56,6 +56,7 @@ from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
 )
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
@@ -292,7 +293,6 @@ class EditCommCareUserView(BaseEditUserView):
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'group_names': [g.name for g in self.groups],
         }
         if self.commtrack_form.errors:
@@ -679,7 +679,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
-            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'skip_standard_password_validations': has_custom_clean_password(),
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
