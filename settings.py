@@ -171,7 +171,10 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+ADD_CAPTCHA_FIELD_TO_FORMS = False
+CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',

@@ -2,8 +2,6 @@ import datetime
 import io
 import json
 import logging
-import re
-import sys
 import uuid
 
 from django import forms
@@ -45,7 +43,6 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -96,8 +93,11 @@ from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
     CallCenterOwnerOptionsView,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.auth import get_active_users_by_email
+from corehq.apps.domain.extension_points import (
+    custom_clean_password,
+    has_custom_clean_password,
+)
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -1124,55 +1124,26 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        strength = legacy_get_password_strength(txt)
-        message = _('Password is not strong enough. Requirements: 1 special character, '
-                    '1 number, 1 capital letter, minimum length of 8 characters.')
+    if has_custom_clean_password():
+        message = custom_clean_password(txt)
     else:
-        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-        message = _('Password is not strong enough. Try making your password more complex.')
-    if strength['score'] < 2:
+        message = _clean_password(txt)
+    if message:
         raise forms.ValidationError(message)
     return txt
 
 
-def legacy_get_password_strength(value):
-    # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
-    # initial score rigged to reach 2 when all requirements are met
-    score = -2
-    if SPECIAL.search(value):
-        score += 1
-    if NUMBER.search(value):
-        score += 1
-    if UPPERCASE.search(value):
-        score += 1
-    if len(value) >= 8:
-        score += 1
-    return {"score": score}
-
-
-def _get_uppercase_unicode_regexp():
-    # rather than add another dependency (regex library)
-    # http://stackoverflow.com/a/17065040/10840
-    uppers = ['[']
-    for i in range(sys.maxunicode):
-        c = chr(i)
-        if c.isupper():
-            uppers.append(c)
-    uppers.append(']')
-    upper_group = "".join(uppers)
-    return re.compile(upper_group, re.UNICODE)
-
-SPECIAL = re.compile(r"\W", re.UNICODE)
-NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
-UPPERCASE = _get_uppercase_unicode_regexp()
+def _clean_password(txt):
+    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if strength['score'] < 2:
+        return _('Password is not strong enough. Try making your password more complex.')
 
 
 class NoAutocompleteMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        if settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS:
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
@@ -1186,7 +1157,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "

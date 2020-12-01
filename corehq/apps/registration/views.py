@@ -35,6 +35,7 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
@@ -234,7 +235,7 @@ class UserRegistrationView(BasePageView):
         context = {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'hide_password_feedback': has_custom_clean_password(),
             'professional_features': [
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
