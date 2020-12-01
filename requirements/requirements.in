@@ -53,7 +53,7 @@ Faker==0.8.15
 gevent==1.4.0
 ghdiff==0.4
 gipc~=1.0.1  # for gevent+multiprocessing, used by Couch to SQL migration
-greenlet==0.4.15
+greenlet==0.4.17
 gunicorn
 hiredis==1.1.0
 httpagentparser~=1.7
