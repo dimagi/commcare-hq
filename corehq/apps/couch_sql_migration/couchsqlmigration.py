@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from functools import partial
 from threading import Lock
 
-from django.conf import settings
 from django.db.utils import IntegrityError
 
 import attr
@@ -1494,6 +1493,8 @@ class MissingFormLoader:
             data = json.loads(diff.old_value)
             assert data["form_state"] == MISSING_BLOB_PRESENT, data
             form_ids = [data["ledger"]["last_modified_form_id"]]
+        else:
+            raise ValueError(f"unknown diff kind: {diff.kind}")
         return form_ids, case_id
 
     def iter_blob_metas(self, form_ids):
