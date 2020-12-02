@@ -21,6 +21,11 @@ class SimpleFilter(DomainFilter):
         return [Q(**{self.filter_kwarg: domain_name})]
 
 
+class CustomOneTimeSimpleFilter(SimpleFilter):
+    def get_filters(self, domain_name):
+        return [Q(**{self.filter_kwarg: domain_name, 'type_code__in': [5, 6]})]
+
+
 class ManyFilters(DomainFilter):
     """
     Filter by multiple filter kwargs. Filters are ANDed
