@@ -122,15 +122,7 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = None
-        try:
-            role = user.get_role(domain)
-        except DomainMembershipError:
-            # User has access via domain mirroring
-            pass
-        if role:
-            apps = [_format_app(app) for app in apps
-                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
+        apps = [_format_app(app) for app in apps if app['_id']]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
