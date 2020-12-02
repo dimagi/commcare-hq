@@ -69,7 +69,7 @@ django-two-factor-auth==1.12.1  # via -r requirements.in
 django-user-agents==0.4.0  # via -r requirements.in
 django-websocket-redis==0.6.0  # via -r requirements.in
 django==2.2.16            # via -r requirements.in, django-angular, django-appconf, django-braces, django-bulk-update, django-debug-toolbar, django-formtools, django-logentry-admin, django-oauth-toolkit, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
-djangorestframework==3.11.1  # via -r requirements.in
+djangorestframework==3.12.2  # via -r requirements.in
 dnspython==1.15.0         # via -r requirements.in, email-validator
 docutils==0.15.2          # via -r dev-requirements.in, recommonmark, sphinx
 dropbox==9.3.0            # via -r requirements.in
