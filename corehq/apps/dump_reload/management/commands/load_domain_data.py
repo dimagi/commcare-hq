@@ -37,7 +37,12 @@ class Command(BaseCommand):
         in the zip file. The value of the properties must be a dict of
         document counts in the corresponding gzip file:
 
-            {"domain": {"Domain": 1}, "sql": {"blobs.BlobMeta": 11, "auth.User": 1}, "couch": {"users.CommCareUser": 5}, "toggles": {"Toggle": 5}}
+            {
+                "domain": {"Domain": 1}, 
+                "sql": {"blobs.BlobMeta": 11, "auth.User": 1}, 
+                "couch": {"users.CommCareUser": 5}, 
+                "toggles": {"Toggle": 5},
+            }
     """
     help = inspect.cleandoc("""
         Loads data from the give file into the database.
