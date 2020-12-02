@@ -38,9 +38,9 @@ class Command(BaseCommand):
         document counts in the corresponding gzip file:
 
             {
-                "domain": {"Domain": 1}, 
-                "sql": {"blobs.BlobMeta": 11, "auth.User": 1}, 
-                "couch": {"users.CommCareUser": 5}, 
+                "domain": {"Domain": 1},
+                "sql": {"blobs.BlobMeta": 11, "auth.User": 1},
+                "couch": {"users.CommCareUser": 5},
                 "toggles": {"Toggle": 5},
             }
     """
