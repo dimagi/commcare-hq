@@ -74,7 +74,7 @@ faker==0.8.15             # via -r requirements.in
 flower==0.9.2             # via -r prod-requirements.in
 gevent==1.4.0             # via -r requirements.in, django-websocket-redis, gipc
 ghdiff==0.4               # via -r requirements.in
-gipc==1.0.1               # via -r requirements.in
+gipc==1.1.0               # via -r requirements.in
 greenlet==0.4.17          # via -r requirements.in, django-websocket-redis, gevent
 gunicorn==20.0.4          # via -r requirements.in
 hiredis==1.1.0            # via -r requirements.in
