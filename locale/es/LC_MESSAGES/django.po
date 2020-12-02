@@ -14,9 +14,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-01 18:41+0000\n"
-"PO-Revision-Date: 2020-11-18 19:15+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
+"POT-Creation-Date: 2020-12-02 21:27+0000\n"
+"PO-Revision-Date: 2020-12-01 18:42+0000\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
 "Language: es\n"
@@ -2978,7 +2978,7 @@ msgstr "Razón"
 #: corehq/apps/reports/standard/monitoring.py:681
 #: corehq/apps/reports/standard/monitoring.py:1013
 #: corehq/apps/reports/standard/monitoring.py:1118
-#: corehq/apps/reports/standard/monitoring.py:1431
+#: corehq/apps/reports/standard/monitoring.py:1434
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:291
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html:153
 #: corehq/apps/users/views/mobile/custom_data_fields.py:15
@@ -3649,7 +3649,7 @@ msgstr "Ya Pagado"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html:97
 #: corehq/apps/domain/views/accounting.py:564
 #: corehq/apps/export/templates/export/partials/table.html:43
-#: corehq/apps/reports/standard/monitoring.py:1386
+#: corehq/apps/reports/standard/monitoring.py:1389
 #: corehq/apps/sms/models.py:936 custom/m4change/constants.py:61
 #: custom/m4change/templates/m4change/selectTemplate.html:33
 msgid "None"
@@ -4016,7 +4016,7 @@ msgstr "Módulo Desconocido"
 #: corehq/apps/app_manager/fixtures/mobile_ucr.py:535
 #: corehq/apps/reports/standard/monitoring.py:810
 #: corehq/apps/reports/standard/monitoring.py:969
-#: corehq/apps/reports/standard/monitoring.py:1831
+#: corehq/apps/reports/standard/monitoring.py:1834
 #: corehq/apps/userreports/sql/data_source.py:112
 #: custom/m4change/reports/aggregate_facility_web_hmis_report.py:40
 #: custom/m4change/reports/all_hmis_report.py:260
@@ -8926,16 +8926,12 @@ msgstr "Opciones de Búsqueda y Solicitud"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:212
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:213
-#, fuzzy
-#| msgid "Numeric Filter"
 msgid "Search Filter"
-msgstr "Filtro Numérico"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:225
-#, fuzzy
-#| msgid "Case Filters"
 msgid "Copy case list filter"
-msgstr "Filtros de Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:227
 msgid "Example: age > 5"
@@ -8943,10 +8939,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:233
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:234
-#, fuzzy
-#| msgid "Show Conditions"
 msgid "Search Condition"
-msgstr "Mostrar las Condiciones"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:248
 msgid "Don't claim cases already owned by the user"
@@ -8957,10 +8951,8 @@ msgid "Don't search cases owned by the following ids"
 msgstr "No buscar casos que son propiedad de los siguientes ids "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:259
-#, fuzzy
-#| msgid "Case Owners"
 msgid "Ignore Owners"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:270
 msgid ""
@@ -11069,10 +11061,8 @@ msgid "Match Excel Columns to Case Properties"
 msgstr "Coincidir Columnas de Excel con las Propiedades del Caso"
 
 #: corehq/apps/case_importer/do_import.py:52
-#, fuzzy
-#| msgid "Invalid Location"
 msgid "Invalid domain"
-msgstr "Ubicación inválida"
+msgstr ""
 
 #: corehq/apps/case_importer/do_import.py:53
 msgid "Following rows contain invalid value for domain column."
@@ -11619,7 +11609,7 @@ msgstr ""
 #: corehq/apps/data_dictionary/views.py:123
 #: corehq/apps/hqwebapp/doc_info.py:134
 #: corehq/apps/reports/filters/select.py:30
-#: corehq/apps/reports/standard/monitoring.py:1431
+#: corehq/apps/reports/standard/monitoring.py:1434
 msgid "Group"
 msgstr "Grupo"
 
@@ -25737,7 +25727,7 @@ msgid "The config format is invalid"
 msgstr "El formato de configuración es inválido"
 
 #: corehq/apps/reports/standard/__init__.py:31
-#: corehq/apps/reports/standard/monitoring.py:1378
+#: corehq/apps/reports/standard/monitoring.py:1381
 #: corehq/apps/reports/views.py:208
 msgid "Project Reports"
 msgstr "Reportes de Proyecto"
@@ -26035,7 +26025,7 @@ msgstr ""
 "filtros e intente de nuevo"
 
 #: corehq/apps/reports/standard/monitoring.py:176
-#: corehq/apps/reports/standard/monitoring.py:1448
+#: corehq/apps/reports/standard/monitoring.py:1451
 msgid "Case Activity"
 msgstr "Actividad del Caso"
 
@@ -26086,7 +26076,7 @@ msgstr ""
 "actualizados o cerrados en los últimos {} días. "
 
 #: corehq/apps/reports/standard/monitoring.py:227
-#: corehq/apps/reports/standard/monitoring.py:1449
+#: corehq/apps/reports/standard/monitoring.py:1452
 msgid "# Active Cases"
 msgstr "# Casos Activos"
 
@@ -26256,65 +26246,65 @@ msgstr ""
 msgid "Note: No submissions matched your filters."
 msgstr "Nota: Ningún ingreso coincidió con sus filtros."
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Mon"
 msgstr "Lun"
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Tue"
 msgstr "Mar"
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Wed"
 msgstr "Mié"
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Thu"
 msgstr "Jue"
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Fri"
 msgstr "Vie"
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Sat"
 msgstr "Sáb"
 
-#: corehq/apps/reports/standard/monitoring.py:1345
+#: corehq/apps/reports/standard/monitoring.py:1348
 msgid "Sun"
 msgstr "Dom"
 
-#: corehq/apps/reports/standard/monitoring.py:1360
+#: corehq/apps/reports/standard/monitoring.py:1363
 #, python-brace-format
 msgid "Time ({timezone})"
 msgstr "Hora ({timezone})"
 
-#: corehq/apps/reports/standard/monitoring.py:1376
+#: corehq/apps/reports/standard/monitoring.py:1379
 msgid "Worker Activity"
 msgstr "Actividad del Trabajador"
 
-#: corehq/apps/reports/standard/monitoring.py:1377
+#: corehq/apps/reports/standard/monitoring.py:1380
 msgid "Summary of form and case activity by user or group."
 msgstr "Resumen de actividad de formulario y caso por usuario o grupo."
 
-#: corehq/apps/reports/standard/monitoring.py:1432
+#: corehq/apps/reports/standard/monitoring.py:1435
 msgid "Form Data"
 msgstr "Datos del Formulario"
 
-#: corehq/apps/reports/standard/monitoring.py:1433
+#: corehq/apps/reports/standard/monitoring.py:1436
 msgid "# Forms Submitted"
 msgstr "# Formularios Ingresados"
 
-#: corehq/apps/reports/standard/monitoring.py:1434
+#: corehq/apps/reports/standard/monitoring.py:1437
 #, python-format
 msgid "Number of forms submitted in chosen date range. %s"
 msgstr "Número de formularios ingresados en el rango de fecha elegido. %s"
 
-#: corehq/apps/reports/standard/monitoring.py:1435
+#: corehq/apps/reports/standard/monitoring.py:1438
 msgid "Avg # Forms Submitted"
 msgstr "Promedio  # de Formularios Ingresados"
 
-#: corehq/apps/reports/standard/monitoring.py:1436
+#: corehq/apps/reports/standard/monitoring.py:1439
 #, python-format
 msgid ""
 "Average number of forms submitted in the three preceding date ranges of the "
@@ -26323,11 +26313,11 @@ msgstr ""
 "Número promedio de formularios ingresados en los tres rangos de fecha "
 "anteriores de la misma duración. %s"
 
-#: corehq/apps/reports/standard/monitoring.py:1437
+#: corehq/apps/reports/standard/monitoring.py:1440
 msgid "Last Form Submission"
 msgstr "Último Envío de Formulario"
 
-#: corehq/apps/reports/standard/monitoring.py:1438
+#: corehq/apps/reports/standard/monitoring.py:1441
 msgid ""
 "Date of last form submission in time period.  Total row displays proportion "
 "of users submitting forms in date range"
@@ -26336,38 +26326,38 @@ msgstr ""
 "total muestra la proporción de usuarios que ingresan formularios dentro del "
 "rango de las fechas."
 
-#: corehq/apps/reports/standard/monitoring.py:1439
+#: corehq/apps/reports/standard/monitoring.py:1442
 msgid "# Active Users"
 msgstr "# Usuarios Activos"
 
-#: corehq/apps/reports/standard/monitoring.py:1440
+#: corehq/apps/reports/standard/monitoring.py:1443
 msgid "Proportion of users in group who submitted forms in date range."
 msgstr ""
 "Proporción de usuarios en grupo quienes ingresaron formularios en el rango "
 "de fecha."
 
-#: corehq/apps/reports/standard/monitoring.py:1442
+#: corehq/apps/reports/standard/monitoring.py:1445
 #: corehq/apps/reports/views.py:962
 msgid "Case Data"
 msgstr "Datos de Caso"
 
-#: corehq/apps/reports/standard/monitoring.py:1443
+#: corehq/apps/reports/standard/monitoring.py:1446
 msgid "# Cases Created"
 msgstr "# Casos Creados"
 
-#: corehq/apps/reports/standard/monitoring.py:1444
+#: corehq/apps/reports/standard/monitoring.py:1447
 msgid "Number of cases created in the date range."
 msgstr "Número de casos creados en el rango de fecha."
 
-#: corehq/apps/reports/standard/monitoring.py:1445
+#: corehq/apps/reports/standard/monitoring.py:1448
 msgid "# Cases Closed"
 msgstr "# Casos Cerrados"
 
-#: corehq/apps/reports/standard/monitoring.py:1446
+#: corehq/apps/reports/standard/monitoring.py:1449
 msgid "Number of cases closed in the date range."
 msgstr "Número de casos cerrados en el rango de fecha."
 
-#: corehq/apps/reports/standard/monitoring.py:1450
+#: corehq/apps/reports/standard/monitoring.py:1453
 msgid ""
 "Number of cases owned by the user that were opened, modified or closed in "
 "date range.  This includes case sharing cases."
@@ -26375,21 +26365,21 @@ msgstr ""
 "Número de casos propiedad del usuario que fueron abiertos, modificados o "
 "cerrados en el rango de fecha. Esto incluye casos compartidos."
 
-#: corehq/apps/reports/standard/monitoring.py:1451
+#: corehq/apps/reports/standard/monitoring.py:1454
 msgid "# Total Cases (Owned & Shared)"
 msgstr ""
 
-#: corehq/apps/reports/standard/monitoring.py:1452
+#: corehq/apps/reports/standard/monitoring.py:1455
 msgid ""
 "Total number of cases owned by the user.  This includes cases created by the "
 "user and cases that were shared with this user."
 msgstr ""
 
-#: corehq/apps/reports/standard/monitoring.py:1454
+#: corehq/apps/reports/standard/monitoring.py:1457
 msgid "% Active Cases"
 msgstr "% Casos Activos"
 
-#: corehq/apps/reports/standard/monitoring.py:1455
+#: corehq/apps/reports/standard/monitoring.py:1458
 msgid ""
 "Percentage of cases owned by user that were active.  This includes case "
 "sharing cases."
@@ -32336,10 +32326,8 @@ msgid "(No Name)"
 msgstr "(No hay Nombre)"
 
 #: corehq/apps/users/forms.py:1210
-#, fuzzy
-#| msgid "Project Spaces"
 msgid "All Project Spaces"
-msgstr "Espacios de Proyectos"
+msgstr "Todos los Espacios de Proyectos"
 
 #: corehq/apps/users/forms.py:1226 corehq/tabs/tabclasses.py:1331
 msgid "Filter and Download Users"
@@ -33707,10 +33695,8 @@ msgid "Invite Web User"
 msgstr "Invitar Usuario Web"
 
 #: corehq/apps/users/templates/users/web_users.html:45
-#, fuzzy
-#| msgid "Download Users"
 msgid "Download Web Users"
-msgstr "Descargar Usuarios"
+msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html:54
 msgid "Pending Access Requests"
@@ -33814,22 +33800,16 @@ msgstr ""
 
 #: corehq/apps/users/views/__init__.py:556
 #: corehq/apps/users/views/__init__.py:575
-#, fuzzy
-#| msgid "Download Users Status"
 msgid "Download Web Users Status"
-msgstr "Descargar Estado de Usuarios"
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py:576
-#, fuzzy
-#| msgid "Preparing user download."
 msgid "Preparing web user download."
-msgstr "Preparando descarga de usuario."
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py:579
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Go back to Web Users"
-msgstr "Regresar a Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py:589
 msgid "Roles & Permissions"
@@ -41247,10 +41227,7 @@ msgid "Enter valid JSON"
 msgstr ""
 
 #~ msgid "Display condition"
-#~ msgstr "Condición de visualización"
-
-#~ msgid "Only claim cases that fulfill the following condition"
-#~ msgstr "Solo casos de solicitud que cumplen las siguientes condiciones"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "ICDS Settings"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
