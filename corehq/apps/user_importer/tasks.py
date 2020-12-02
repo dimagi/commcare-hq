@@ -10,7 +10,7 @@ from corehq.apps.user_importer.models import UserUploadRecord
 
 
 @task(serializer='pickle')
-def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, is_web_download):
+def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, is_web_upload):
     from corehq.apps.user_importer.importer import create_or_update_users_and_groups,\
         create_or_update_groups, create_or_update_web_users
     task = import_users_and_groups
@@ -26,7 +26,7 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload
     def _update_progress(value, start=0):
         DownloadBase.set_progress(task, start + value, total)
 
-    if is_web_download:
+    if is_web_upload:
         user_results = create_or_update_web_users(
             domain,
             user_specs,
