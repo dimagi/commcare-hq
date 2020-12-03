@@ -11,7 +11,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     mobile_auth,
 )
-from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
+from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import (
     bump_expiry,
     get_mobile_auth_payload,
@@ -30,7 +30,7 @@ class FetchKeyRecords(object):
         self.now = datetime.datetime.utcnow()
 
     def key_for_time(self, now):
-        return MobileAuthKeyRecord.key_for_time(
+        return SQLMobileAuthKeyRecord.key_for_time(
             domain=self.domain,
             user_id=self.user_id,
             now=now,
