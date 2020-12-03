@@ -91,21 +91,9 @@ def update_facility_cases_from_dhis2_data_elements(
                     case_blocks_chunk.append(case_block)
                 save_cases(case_blocks_chunk)
     except Exception as err:
-        message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
-        if print_notifications:
-            print(message, file=sys.stderr)
-        else:
-            dhis2_server.get_requests().notify_exception(message)
-            raise
+        handle_error(err, dhis2_server, print_notifications)
     else:
-        message = 'Successfully imported ONSE ISS facility cases from DHIS2'
-        if print_notifications:
-            print(message, file=sys.stderr)
-        else:
-            # For most things we pass silently. But we can repurpose
-            # `notify_error()` to tell admins that the import went through,
-            # because it only happens once a quarter.
-            dhis2_server.get_requests().notify_error(message)
+        handle_success(dhis2_server, print_notifications)
 
 
 def get_dhis2_server(
@@ -285,3 +273,30 @@ def save_cases(clays: List[CassiusMarcellus]):
         xmlns='http://commcarehq.org/dhis2-import',
         device_id=f"dhis2-import-{DOMAIN}-{today}",
     )
+
+
+def handle_error(
+    err: Exception,
+    dhis2_server: ConnectionSettings,
+    print_notifications: bool,
+):
+    message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
+    if print_notifications:
+        print(message, file=sys.stderr)
+    else:
+        dhis2_server.get_requests().notify_exception(message)
+        raise err
+
+
+def handle_success(
+    dhis2_server: ConnectionSettings,
+    print_notifications: bool,
+):
+    message = 'Successfully imported ONSE ISS facility cases from DHIS2'
+    if print_notifications:
+        print(message, file=sys.stderr)
+    else:
+        # For most things we pass silently. But we can repurpose
+        # `notify_error()` to tell admins that the import went through,
+        # because it only happens once a quarter.
+        dhis2_server.get_requests().notify_error(message)
