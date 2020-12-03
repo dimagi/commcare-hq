@@ -1,8 +1,8 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date
+from datetime import date, datetime
 from time import sleep
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, Tuple
 
 import attr
 from celery.schedules import crontab
@@ -18,7 +18,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
-from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
+from custom.onse.const import (
+    CASE_TYPE,
+    CONNECTION_SETTINGS_NAME,
+    DOMAIN,
+    LAST_IMPORTED_PROPERTY,
+)
 from custom.onse.models import iter_mappings
 
 # The production DHIS2 server is on the other side of an
@@ -76,8 +81,6 @@ def update_facility_cases_from_dhis2_data_elements(
 
     """
     dhis2_server = get_dhis2_server(print_notifications)
-    if not period:
-        period = get_last_quarter()
     try:
         clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
@@ -126,13 +129,16 @@ def get_clays() -> Iterable[CassiusMarcellus]:
 def set_case_updates(
     dhis2_server: ConnectionSettings,
     clay: CassiusMarcellus,
-    period: str,
+    requested_period: Optional[str],
 ) -> CassiusMarcellus:
     """
     Fetch data sets of data elements for last quarter from ``dhis2_server``
     and update the data elements corresponding case properties in
     ``case_block`` in place.
     """
+    last_imported = clay.case.get_case_property(LAST_IMPORTED_PROPERTY)
+    if last_imported:
+        last_imported = datetime.strptime(last_imported, '%Y-%m-%d').date()
     # Several of the data elements we want belong to the same data
     # sets. Only fetch a data set if we don't already have it.
     data_set_cache = {}
@@ -141,24 +147,69 @@ def set_case_updates(
             raise ValueError(
                 f'Mapping {mapping} does not include data set ID. '
                 'Use **fetch_onse_data_set_ids** command.')
-        if mapping.data_set_id not in data_set_cache:
-            data_set_cache[mapping.data_set_id] = fetch_data_set(
-                dhis2_server, mapping.data_set_id,
-                # facility case external_id is set to its DHIS2 org
-                # unit. This is the DHIS2 facility whose data we
-                # want to import.
-                org_unit_id=clay.case.external_id,
-                period=period,
-            )
-        if data_set_cache[mapping.data_set_id] is None:
-            # No data for this facility. `None` = "We don't know"
-            clay.updates[mapping.case_property] = None
-        else:
-            clay.updates[mapping.case_property] = get_data_element_total(
+        for period in get_periods(requested_period, last_imported):
+            data_set_cache.setdefault(period, {})
+            if mapping.data_set_id not in data_set_cache[period]:
+                data_set_cache[period][mapping.data_set_id] = fetch_data_set(
+                    dhis2_server,
+                    mapping.data_set_id,
+                    # facility case external_id is set to its DHIS2 org
+                    # unit. This is the DHIS2 facility whose data we
+                    # want to import.
+                    org_unit_id=clay.case.external_id,
+                    period=period,
+                )
+            data_values = data_set_cache[period][mapping.data_set_id]
+
+            if data_values is None:
+                continue  # No data for this facility. Try previous quarter
+            found, total = get_data_element_total(
                 mapping.data_element_id,
-                data_values=data_set_cache[mapping.data_set_id]
+                data_values,
             )
+            if found:
+                clay.updates[mapping.case_property] = total
+                break
+            # else: look for values in previous quarter
+    clay.updates[LAST_IMPORTED_PROPERTY] = date.today().isoformat()
     return clay
+
+
+def get_periods(
+    requested_period: Optional[str],
+    last_imported: Optional[date],
+) -> Iterable[str]:
+    if requested_period:
+        return [requested_period]
+    if last_imported:
+        return previous_quarters_up_to(last_imported)
+    return previous_quarters_up_to(five_years_ago())
+
+
+def previous_quarters_up_to(some_date: date) -> Iterable[str]:
+    """
+    Returns quarters in DHIS2 web API `period format`_ in reverse
+    chronological order.
+
+    .. _period format: https://docs.dhis2.org/master/en/developer/html/webapi_date_perid_format.html
+    """
+    current_date = date.today()
+    while current_date > some_date:
+        yield previous_quarter(current_date)
+        year = current_date.year
+        month = current_date.month - 3
+        if month <= 0:
+            year -= 1
+            month += 12
+        current_date = date(year, month, current_date.day)
+
+
+def five_years_ago():
+    """
+    Returns the date five years ago today.
+    """
+    today = date.today()
+    return date(today.year - 5, today.month, today.day)
 
 
 def fetch_data_set(
@@ -226,12 +277,12 @@ def previous_quarter(some_date: date) -> str:
 def get_data_element_total(
     data_element_id: str,
     data_values: List[dict],
-) -> int:
+) -> Tuple[bool, int]:
     """
     A DHIS2 data element may be broken down by category options, and
     ``data_values`` can contain multiple entries for the same data
-    element. This function returns the total for a given
-    ``data_element_id``.
+    element. This function returns whether ``data_element_id`` is found
+    in ``data_values``, and its total.
 
     The following doctest shows an example value for ``data_values`` as
     might be returned by DHIS2:
@@ -253,14 +304,16 @@ def get_data_element_total(
     ...     }
     ... ]
     >>> get_data_element_total('f7n9E0hX8qk', data_values)
-    28
+    (True, 28)
 
     """
+    found = False
     value = 0
     for data_value in data_values:
         if data_value['dataElement'] == data_element_id:
+            found = True
             value += int(data_value['value'])
-    return value
+    return found, value
 
 
 def save_cases(clays: List[CassiusMarcellus]):
