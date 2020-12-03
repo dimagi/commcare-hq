@@ -208,21 +208,19 @@ def fetch_data_set(
     return response.json().get('dataValues', None)
 
 
-def get_last_quarter(today: Optional[date] = None) -> str:
+def previous_quarter(some_date: date) -> str:
     """
-    Returns the last quarter in  DHIS2 web API `period format`_.
+    Returns the previous quarter in DHIS2 web API `period format`_.
     e.g. "2004Q1"
 
     .. _period format: https://docs.dhis2.org/master/en/developer/html/webapi_date_perid_format.html
     """
-    if today is None:
-        today = date.today()
-    year = today.year
-    last_quarter = (today.month - 1) // 3
-    if last_quarter == 0:
+    year = some_date.year
+    quarter = (some_date.month - 1) // 3
+    if quarter == 0:
         year -= 1
-        last_quarter = 4
-    return f"{year}Q{last_quarter}"
+        quarter = 4
+    return f"{year}Q{quarter}"
 
 
 def get_data_element_total(
