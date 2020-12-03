@@ -23,6 +23,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_POST
@@ -747,15 +748,14 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if self.trigger_form.is_valid():
-            try:
-                self.trigger_form.trigger_invoice()
-                messages.success(
-                    request, "Successfully triggered invoices for domain %s."
-                             % self.trigger_form.cleaned_data['domain'])
-                return HttpResponseRedirect(reverse(self.urlname))
-            except (CreditLineError, InvoiceError, ObjectDoesNotExist) as e:
-                messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
+        try:
+            self.trigger_form.trigger_invoice()
+            messages.success(
+                request, format_html("Successfully triggered invoices for domain {}.",
+                            self.trigger_form.cleaned_data['domain']))
+            return HttpResponseRedirect(reverse(self.urlname))
+        except (CreditLineError, InvoiceError, ObjectDoesNotExist) as e:
+            messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 
 
@@ -769,10 +769,15 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
+    def is_testing_enabled(self):
+        return ACCOUNTING_TESTING_TOOLS.enabled_for_request(self.request)
+
+    @property
+    @memoized
     def trigger_customer_invoice_form(self):
         if self.request.method == 'POST':
-            return TriggerCustomerInvoiceForm(self.request.POST)
-        return TriggerCustomerInvoiceForm()
+            return TriggerCustomerInvoiceForm(self.request.POST, show_testing_options=self.is_testing_enabled)
+        return TriggerCustomerInvoiceForm(show_testing_options=self.is_testing_enabled)
 
     @property
     def page_url(self):
@@ -787,16 +792,19 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if self.trigger_customer_invoice_form.is_valid():
-            try:
-                self.trigger_customer_invoice_form.trigger_customer_invoice()
-                messages.success(
-                    request,
-                    "Successfully triggered invoices for Customer Billing Account %s."
-                    % self.trigger_customer_invoice_form.cleaned_data['customer_account']
-                )
-            except (CreditLineError, InvoiceError) as e:
-                messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
+        try:
+            invoice = self.trigger_customer_invoice_form.trigger_customer_invoice()
+            invoice_url = format_html('<a href="{}">{}</a>',
+                    reverse(CustomerInvoiceSummaryView.urlname, args=(invoice.id,)), invoice.invoice_number)
+            messages.success(
+                request,
+                format_html("Successfully triggered invoice {} for Customer Billing Account {}",
+                        invoice_url,
+                        self.trigger_customer_invoice_form.cleaned_data['customer_account'])
+            )
+        except (CreditLineError, InvoiceError) as e:
+            messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
+
         return self.get(request, *args, **kwargs)
 
 

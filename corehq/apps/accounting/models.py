@@ -580,6 +580,12 @@ class BillingAccount(ValidateModelMixin, models.Model):
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
 
+    def get_active_domains(self, start_date, end_date):
+        active_domains = self.subscription_set.filter(Q(date_end__isnull=True) | Q(date_end__gt=start_date),
+                date_start__lte=end_date)
+        domain_names = list(active_domains.values_list('subscriber__domain', flat=True))
+        return domain_names
+
 
 class BillingContactInfo(models.Model):
     account = models.OneToOneField(BillingAccount, primary_key=True, null=False, on_delete=models.CASCADE)
@@ -2176,6 +2182,13 @@ class Invoice(InvoiceBase):
             subscription__subscriber__domain=domain, is_hidden=False
         ).count() > 0
 
+    @classmethod
+    def get_domain_invoices_between_dates(cls, domain, start_date, end_date):
+        return cls.objects.filter(
+            date_start__lte=end_date, date_end__gte=start_date,
+            subscription__subscriber__domain=domain
+        )
+
     def get_domain(self):
         return self.subscription.subscriber.domain
 
@@ -2298,6 +2311,14 @@ class CustomerInvoice(InvoiceBase):
             account__auto_pay_user__isnull=False
         )
         return invoices
+
+    @classmethod
+    def get_account_invoices_between_dates(cls, account, start_date, end_date):
+        return cls.objects.filter(
+            date_start__lte=start_date,
+            date_end__gte=end_date,
+            account=account
+        )
 
 
 class SubscriptionAdjustment(models.Model):
@@ -3791,6 +3812,27 @@ class DomainUserHistory(models.Model):
 
     class Meta:
         unique_together = ('domain', 'record_date')
+
+    @classmethod
+    def set_domain_user_count_during_period(cls, domain, num_users, start_date, end_date, overwrite=False):
+        existing_histories = cls.objects.filter(
+            domain=domain,
+            record_date__gte=start_date,
+            record_date__lte=end_date,
+        )
+
+        if existing_histories.exists():
+            if overwrite:
+                existing_histories.all().delete()
+            else:
+                return None
+
+        user_count = cls.objects.create(
+            domain=domain,
+            record_date=end_date,
+            num_users=num_users
+        )
+        return user_count
 
 
 class CommunicationHistoryBase(models.Model):

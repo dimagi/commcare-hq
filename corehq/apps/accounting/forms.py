@@ -13,6 +13,7 @@ from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dates import MONTHS
+from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -1922,8 +1923,8 @@ class AnnualPlanContactForm(forms.Form):
 
 
 class TriggerInvoiceForm(forms.Form):
-    month = forms.ChoiceField(label="Statement Period Month")
-    year = forms.ChoiceField(label="Statement Period Year")
+    month = forms.TypedChoiceField(label="Statement Period Month", coerce=int)
+    year = forms.TypedChoiceField(label="Statement Period Year", coerce=int)
     domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
     num_users = forms.IntegerField(
         label="Number of Users",
@@ -1933,9 +1934,10 @@ class TriggerInvoiceForm(forms.Form):
                   "this blank to use what is already in the system."
     )
 
-    def __init__(self, *args, **kwargs):
-        self.show_testing_options = kwargs.pop('show_testing_options')
-        super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
+    def __init__(self, data=None, show_testing_options=False, *args, **kwargs):
+        super(TriggerInvoiceForm, self).__init__(data, *args, **kwargs)
+
+        self.show_testing_options = show_testing_options
         today = datetime.date.today()
         one_month_ago = today - relativedelta(months=1)
 
@@ -1979,72 +1981,74 @@ class TriggerInvoiceForm(forms.Form):
 
     @transaction.atomic
     def trigger_invoice(self):
-        year = int(self.cleaned_data['year'])
-        month = int(self.cleaned_data['month'])
-        invoice_start, invoice_end = get_first_last_days(year, month)
-        domain_obj = Domain.get_by_name(self.cleaned_data['domain'])
+        if not self.is_valid():
+            return
 
-        self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
+        invoice_start, invoice_end = get_first_last_days(self.cleaned_data['year'],
+                self.cleaned_data['month'])
+        domain = self.cleaned_data['domain']
 
-        if self.show_testing_options and self.cleaned_data['num_users']:
-            num_users = int(self.cleaned_data['num_users'])
-            existing_histories = DomainUserHistory.objects.filter(
-                domain=domain_obj.name,
-                record_date__gte=invoice_start,
-                record_date__lte=invoice_end,
-            )
-            if existing_histories.exists():
-                existing_histories.all().delete()
-            DomainUserHistory.objects.create(
-                domain=domain_obj.name,
-                record_date=invoice_end,
-                num_users=num_users
+        self.clean_previous_invoices(invoice_start, invoice_end, domain)
+
+        if self.show_testing_options and self.cleaned_data['num_users'] is not None:
+            num_users = self.cleaned_data['num_users']
+            DomainUserHistory.set_domain_user_count_during_period(
+                domain, num_users, invoice_start, invoice_end, overwrite=True
             )
 
         invoice_factory = DomainInvoiceFactory(
-            invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
+            invoice_start, invoice_end, domain, recipients=[settings.ACCOUNTS_EMAIL]
         )
         invoice_factory.create_invoices()
 
     @staticmethod
     def clean_previous_invoices(invoice_start, invoice_end, domain_name):
-        prev_invoices = Invoice.objects.filter(
-            date_start__lte=invoice_end, date_end__gte=invoice_start,
-            subscription__subscriber__domain=domain_name
-        )
-        if prev_invoices.count() > 0:
+        prev_invoices = list(Invoice.get_domain_invoices_between_dates(domain_name, invoice_start, invoice_end))
+        if len(prev_invoices) > 0:
             from corehq.apps.accounting.views import InvoiceSummaryView
             raise InvoiceError(
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
                 "{invoice_list}".format(
-                    num_invoices=prev_invoices.count(),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
-                                edit_url=reverse(InvoiceSummaryView.urlname,
-                                                 args=(x.id,)),
-                                name=x.invoice_number
-                            ) for x in prev_invoices.all()]
+                            edit_url=reverse(InvoiceSummaryView.urlname, args=(x.id,)),
+                            name=x.invoice_number
+                        ) for x in prev_invoices]
                     ),
                 )
             )
 
     def clean(self):
-        today = datetime.date.today()
-        year = int(self.cleaned_data['year'])
-        month = int(self.cleaned_data['month'])
+        if ('year' in self.cleaned_data) and ('month' in self.cleaned_data):
+            today = datetime.date.today()
+            year = self.cleaned_data['year']
+            month = self.cleaned_data['month']
 
-        if (year, month) >= (today.year, today.month):
-            raise ValidationError('Statement period must be in the past')
+            if (year, month) >= (today.year, today.month):
+                raise ValidationError('Statement period must be in the past')
 
 
 class TriggerCustomerInvoiceForm(forms.Form):
-    month = forms.ChoiceField(label="Statement Period Month")
-    year = forms.ChoiceField(label="Statement Period Year")
+    month = forms.TypedChoiceField(label="Statement Period Month", coerce=int)
+    year = forms.TypedChoiceField(label="Statement Period Year", coerce=int)
     customer_account = forms.CharField(label="Billing Account", widget=forms.Select(choices=[]))
+    num_users = forms.IntegerField(
+        label="Number of Users",
+        required=False,
+        help_text="This is part of accounting tests and overwrites the "
+                  "DomainUserHistory recorded for this month. Please leave "
+                  "this blank to use what is already in the system."
+    )
+    overwrite_user_counts = forms.BooleanField(
+        label=ugettext_lazy("Overwrite existing user data?"), required=False,
+        help_text="If unchecked, will only generate user counts for domains that lack them."
+    )
 
-    def __init__(self, *args, **kwargs):
-        super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
+    def __init__(self, data=None, show_testing_options=False, *args, **kwargs):
+        super().__init__(data, *args, **kwargs)
+        self.show_testing_options = show_testing_options
+
         today = datetime.date.today()
         one_month_ago = today - relativedelta(months=1)
         self.fields['month'].initial = one_month_ago.month
@@ -2057,14 +2061,23 @@ class TriggerCustomerInvoiceForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
+
+        details = [
+            'Trigger Customer Invoice Details',
+            crispy.Field('month', css_class="input-large"),
+            crispy.Field('year', css_class="input-large"),
+            crispy.Field('customer_account', css_class="input-xxlarge accounting-async-select2",
+                placeholder="Search for Customer Billing Account")
+        ]
+        if self.show_testing_options:
+            details.append(crispy.Field('num_users', css_class='input_large'))
+            details.append(crispy.Field('overwrite_user_counts'))
+        else:
+            del self.fields['num_users']
+            del self.fields['overwrite_user_counts']
+
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                'Trigger Customer Invoice Details',
-                crispy.Field('month', css_class="input-large"),
-                crispy.Field('year', css_class="input-large"),
-                crispy.Field('customer_account', css_class="input-xxlarge accounting-async-select2",
-                             placeholder="Search for Customer Billing Account")
-            ),
+            crispy.Fieldset(*details),
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Customer Invoice",
@@ -2076,53 +2089,64 @@ class TriggerCustomerInvoiceForm(forms.Form):
 
     @transaction.atomic
     def trigger_customer_invoice(self):
+        if not self.is_valid():
+            return
+
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
+        account = self.get_billing_account(self.cleaned_data['customer_account'])
+
+        invoice_start, invoice_end = self.get_invoice_dates(account, year, month)
+        self.clean_previous_invoices(invoice_start, invoice_end, account)
+        domains = account.get_active_domains(invoice_start, invoice_end)
+
+        if self.show_testing_options and self.cleaned_data['num_users'] is not None:
+            num_users = int(self.cleaned_data['num_users'])
+            overwrite_user_counts = bool(self.cleaned_data['overwrite_user_counts'])
+
+            for domain in domains:
+                DomainUserHistory.set_domain_user_count_during_period(domain, num_users,
+                        invoice_start, invoice_end, overwrite=overwrite_user_counts)
+
+        invoice_factory = CustomerAccountInvoiceFactory(
+            date_start=invoice_start,
+            date_end=invoice_end,
+            account=account,
+            recipients=[settings.ACCOUNTS_EMAIL]
+        )
+        return invoice_factory.create_invoice()
+
+    @staticmethod
+    def get_billing_account(billing_account_name):
         try:
-            account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
-            invoice_start, invoice_end = self.get_invoice_dates(account, year, month)
-            self.clean_previous_invoices(invoice_start, invoice_end, account)
-            invoice_factory = CustomerAccountInvoiceFactory(
-                date_start=invoice_start,
-                date_end=invoice_end,
-                account=account,
-                recipients=[settings.ACCOUNTS_EMAIL]
-            )
-            invoice_factory.create_invoice()
+            return BillingAccount.objects.get(name=billing_account_name)
         except BillingAccount.DoesNotExist:
             raise InvoiceError(
-                "There is no Billing Account associated with %s" % self.cleaned_data['customer_account']
+                format_html("There is no Billing Account associated with {}", billing_account_name)
             )
 
     @staticmethod
     def clean_previous_invoices(invoice_start, invoice_end, account):
-        prev_invoices = CustomerInvoice.objects.filter(
-            date_start__lte=invoice_end,
-            date_end__gte=invoice_start,
-            account=account
-        )
+        prev_invoices = CustomerInvoice.get_account_invoices_between_dates(account,
+                invoice_start, invoice_end)
         if prev_invoices:
             from corehq.apps.accounting.views import CustomerInvoiceSummaryView
+            prev_invoice_data_pairs = (
+                (reverse(CustomerInvoiceSummaryView.urlname, args=(x.id,)), x.invoice_number)
+                for x in prev_invoices)
             raise InvoiceError(
-                "Invoices exist that were already generated with this same "
-                "criteria. You must manually suppress these invoices: "
-                "{invoice_list}".format(
-                    num_invoices=len(prev_invoices),
-                    invoice_list=', '.join(
-                        ['<a href="{edit_url}">{name}</a>'.format(
-                            edit_url=reverse(CustomerInvoiceSummaryView.urlname, args=(x.id,)),
-                            name=x.invoice_number
-                        ) for x in prev_invoices]
-                    ),
-                )
+                format_html("Invoices exist that were already generated with this same "
+                "criteria. You must manually suppress these invoices: {}",
+                format_html_join(', ', '<a href="{}">{}</a>', prev_invoice_data_pairs))
             )
 
     def clean(self):
-        today = datetime.date.today()
-        year = int(self.cleaned_data['year'])
-        month = int(self.cleaned_data['month'])
-        if (year, month) >= (today.year, today.month):
-            raise ValidationError('Statement period must be in the past')
+        if ('month' in self.cleaned_data) and ('year' in self.cleaned_data):
+            today = datetime.date.today()
+            year = int(self.cleaned_data['year'])
+            month = int(self.cleaned_data['month'])
+            if (year, month) >= (today.year, today.month):
+                raise ValidationError('Statement period must be in the past')
 
     def get_invoice_dates(self, account, year, month):
         if account.invoicing_plan == InvoicingPlan.YEARLY:
@@ -2132,7 +2156,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
             else:
                 raise InvoiceError(
                     "%s is set to be invoiced yearly, and you may not invoice in this month. "
-                    "You must select December in the year for which you are triggering an annual invoice."
+                    "You must select December in the year"
+                    " for which you are triggering an annual invoice."
                     % self.cleaned_data['customer_account']
                 )
         if account.invoicing_plan == InvoicingPlan.QUARTERLY:
