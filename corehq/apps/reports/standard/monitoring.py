@@ -1332,6 +1332,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
+        # Apply the fix made in https://github.com/gak/pygooglechart/pull/25/
+        #   since a new version is not yet released
+        ScatterChart.BASE_URL = 'https://chart.googleapis.com/chart'
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
