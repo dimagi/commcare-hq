@@ -116,18 +116,27 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
         };
-        if (menuResponse.breadcrumbs.length === 2 && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-            hqImport('analytix/js/kissmetrix').track.event('Viewed Case List', {
-                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
-                name: menuResponse.breadcrumbs[1],
-            });
-        }
         if (menuResponse.type === "commands") {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+                var Util = hqImport("cloudcare/js/formplayer/utils/util");
+                var urlObject = Util.currentUrlToObject();
+                var searhText = urlObject.search;
+                var event = "Viewed Case List";
+                var eventData = menuResponse.title;
+                if (searhText) {
+                    event = "Searched Case List";
+                    eventData = searhText;
+                }
+                hqImport('analytix/js/kissmetrix').track.event(event, {
+                    domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                    app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
+                    name: eventData,
+                });
+            }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
             } else {
