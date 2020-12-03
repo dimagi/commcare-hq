@@ -2,17 +2,20 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from time import sleep
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 
+import attr
 from celery.schedules import crontab
 from celery.task import periodic_task
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import CASE_TYPE, CONNECTION_SETTINGS_NAME, DOMAIN
@@ -29,6 +32,27 @@ DROP_API_PREFIX = True
 MAX_THREAD_WORKERS = 10
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
+
+
+@attr.s(auto_attribs=True)
+class CassiusMarcellus:  # TODO: Come up with a better name. Please!
+    """
+    Stores a case, and its updates.
+
+    Allows us to read current case property values and build a CaseBlock
+    """
+    case: Union[CommCareCase, CommCareCaseSQL]
+    updates: dict = attr.Factory(dict)
+
+    @property
+    def case_block(self):
+        return CaseBlock(
+            case_id=self.case.case_id,
+            external_id=self.case.external_id,
+            case_type=CASE_TYPE,
+            case_name=self.case.name,
+            update=self.updates,
+        )
 
 
 @periodic_task(
@@ -55,11 +79,11 @@ def update_facility_cases_from_dhis2_data_elements(
     if not period:
         period = get_last_quarter()
     try:
-        case_blocks = get_case_blocks()
+        clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
             futures = (executor.submit(set_case_updates,
-                                       dhis2_server, cb, period)
-                       for cb in case_blocks)
+                                       dhis2_server, clay, period)
+                       for clay in clays)
             for futures_chunk in chunked(futures, 100):
                 case_blocks_chunk = []
                 for future in as_completed(futures_chunk):
@@ -101,28 +125,21 @@ def get_dhis2_server(
         raise
 
 
-def get_case_blocks() -> Iterable[CaseBlock]:
+def get_clays() -> Iterable[CassiusMarcellus]:
     case_accessors = CaseAccessors(DOMAIN)
     for case_id in case_accessors.get_case_ids_in_domain(type=CASE_TYPE):
         case = case_accessors.get_case(case_id)
         if not case.external_id:
             # This case is not mapped to a facility in DHIS2.
             continue
-        case_block = CaseBlock(
-            case_id=case.case_id,
-            external_id=case.external_id,
-            case_type=CASE_TYPE,
-            case_name=case.name,
-            update={},
-        )
-        yield case_block
+        yield CassiusMarcellus(case)
 
 
 def set_case_updates(
     dhis2_server: ConnectionSettings,
-    case_block: CaseBlock,
+    clay: CassiusMarcellus,
     period: str,
-) -> CaseBlock:
+) -> CassiusMarcellus:
     """
     Fetch data sets of data elements for last quarter from ``dhis2_server``
     and update the data elements corresponding case properties in
@@ -142,18 +159,18 @@ def set_case_updates(
                 # facility case external_id is set to its DHIS2 org
                 # unit. This is the DHIS2 facility whose data we
                 # want to import.
-                org_unit_id=case_block.external_id,
+                org_unit_id=clay.case.external_id,
                 period=period,
             )
         if data_set_cache[mapping.data_set_id] is None:
             # No data for this facility. `None` = "We don't know"
-            case_block.update[mapping.case_property] = None
+            clay.updates[mapping.case_property] = None
         else:
-            case_block.update[mapping.case_property] = get_data_element_total(
+            clay.updates[mapping.case_property] = get_data_element_total(
                 mapping.data_element_id,
                 data_values=data_set_cache[mapping.data_set_id]
             )
-    return case_block
+    return clay
 
 
 def fetch_data_set(
@@ -260,10 +277,10 @@ def get_data_element_total(
     return value
 
 
-def save_cases(case_blocks: List[CaseBlock]):
+def save_cases(clays: List[CassiusMarcellus]):
     today = date.today().isoformat()
     submit_case_blocks(
-        [cb.as_text() for cb in case_blocks],
+        [clay.case_block.as_text() for clay in clays],
         DOMAIN,
         xmlns='http://commcarehq.org/dhis2-import',
         device_id=f"dhis2-import-{DOMAIN}-{today}",
