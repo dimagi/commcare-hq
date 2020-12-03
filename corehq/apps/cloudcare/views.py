@@ -129,8 +129,8 @@ class FormplayerMain(View):
             # User has access via domain mirroring
             pass
         if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
-        apps = [_format_app(app) for app in apps if app['_id']]
+            apps = [app for app in apps if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
+        apps = [_format_app(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
