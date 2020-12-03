@@ -12,6 +12,7 @@ from corehq.apps.dump_reload.couch.id_providers import (
 )
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
 from corehq.feature_previews import all_previews
 from dimagi.utils.couch.database import iter_docs
 
@@ -88,8 +89,8 @@ class ToggleDumper(DataDumper):
 
     def dump(self, output_stream):
         count = 0
-        user_ids = _user_ids_in_domain(self.domain)
-        for toggle in _get_toggles_to_migrate(self.domain, user_ids):
+        usernames = get_all_usernames_by_domain(self.domain)
+        for toggle in _get_toggles_to_migrate(self.domain, usernames):
             count += 1
             output_stream.write(json.dumps(toggle))
             output_stream.write('\n')
@@ -98,7 +99,7 @@ class ToggleDumper(DataDumper):
         return Counter({'Toggle': count})
 
 
-def _get_toggles_to_migrate(domain, user_ids):
+def _get_toggles_to_migrate(domain, usernames):
     from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
     from toggle.models import Toggle
     from toggle.shortcuts import namespaced_item
@@ -117,19 +118,11 @@ def _get_toggles_to_migrate(domain, user_ids):
         if domain_item in enabled_for:
             new_toggle.enabled_users.append(domain_item)
 
-        enabled_users = enabled_for & user_ids
+        enabled_users = enabled_for & usernames
         new_toggle.enabled_users.extend(list(enabled_users))
 
         if new_toggle.enabled_users:
             yield new_toggle.to_json()
-
-
-def _user_ids_in_domain(domain):
-    from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-    user_ids = set()
-    for doc_type in ('CommCareUser', 'WebUser'):
-        user_ids.update(set(get_doc_ids_in_domain_by_type(domain, doc_type)))
-    return user_ids
 
 
 class DomainDumper(DataDumper):
