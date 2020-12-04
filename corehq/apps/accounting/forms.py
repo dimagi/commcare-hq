@@ -1329,15 +1329,24 @@ class SoftwarePlanVersionForm(forms.Form):
         label="New Role Description",
         widget=forms.Textarea,
     )
+    upgrade_subscriptions = forms.BooleanField(
+        label="Automatically upgrade all subscriptions on the "
+              "previous version of this plan to this version immediately.",
+        required=False,
+    )
 
     new_product_rate = None
 
-    def __init__(self, plan, plan_version, *args, **kwargs):
+    def __init__(self, plan, plan_version, admin_web_user, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
+        self.admin_web_user = admin_web_user
         self.is_update = False
 
         super(SoftwarePlanVersionForm, self).__init__(*args, **kwargs)
+
+        if not self.plan.is_customer_software_plan:
+            del self.fields['upgrade_subscriptions']
 
         self.fields['privileges'].choices = list(self.available_privileges)
         self.fields['role_slug'].choices = [
@@ -1496,6 +1505,11 @@ class SoftwarePlanVersionForm(forms.Form):
             features_fieldset,
             products_fieldset
         ]
+        if self.plan.is_customer_software_plan:
+            layout_fields.append(crispy.Fieldset(
+                "Manage Existing Subscriptions",
+                'upgrade_subscriptions'
+            ))
         layout_fields.append(
             hqcrispy.FormActions(
                 StrictButton(
@@ -1754,6 +1768,19 @@ class SoftwarePlanVersionForm(forms.Form):
             request,
             'The version for %s Software Plan was successfully updated.' % new_version.plan.name
         )
+
+        if self.plan.is_customer_software_plan and self.cleaned_data['upgrade_subscriptions']:
+            upgrade_subscriptions_to_latest_plan_version(
+                self.plan_version,
+                self.admin_web_user,
+                datetime.date.today(),
+                upgrade_note="Immediately upgraded when creating a new version."
+            )
+            messages.success(
+                request,
+                "All subscriptions on the previous version of this plan were "
+                "also upgraded to this new version."
+            )
 
 
 class FeatureRateForm(forms.ModelForm):
