@@ -913,6 +913,7 @@ class ChangeSubscriptionForm(forms.Form):
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
+            note=self.cleaned_data['subscription_change_note'],
             internal_change=True,
         )
 
