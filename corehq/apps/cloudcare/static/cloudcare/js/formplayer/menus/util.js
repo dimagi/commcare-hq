@@ -124,12 +124,11 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
                 var Util = hqImport("cloudcare/js/formplayer/utils/util");
                 var urlObject = Util.currentUrlToObject();
-                var searhText = urlObject.search;
+                var searchText = urlObject.search;
                 var event = "Viewed Case List";
                 var eventData = menuResponse.title;
-                if (searhText) {
+                if (searchText) {
                     event = "Searched Case List";
-                    eventData = searhText;
                 }
                 hqImport('analytix/js/kissmetrix').track.event(event, {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
