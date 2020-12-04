@@ -34,7 +34,7 @@
     "config": {
         "engine_id": "default",
         "base_item_expression": {
-            "type": "abt_supervisor_v2019"
+            "type": "abt_supervisor_v2020"
         },
         "configured_filter": {
             "filters": [
@@ -448,9 +448,9 @@
             }
         ],
         "description": "",
-        "display_name": "Supervisory Indicators v2019",
+        "display_name": "Supervisory Indicators v2020",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "supervisory-v2019"
+        "table_id": "supervisory-v2020"
     }
 }

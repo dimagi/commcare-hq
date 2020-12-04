@@ -31,13 +31,13 @@
         "vectorlink-zimbabwe"
     ],
     "server_environment": ["production"],
-    "report_id": "supervisory_report_v2019",
-    "data_source_table": "supervisory-v2019",
+    "report_id": "supervisory_report_v2020",
+    "data_source_table": "supervisory-v2020",
     "config": {
         "doc_type": "ReportConfiguration",
         "domain": "airs",
         "description": "",
-        "title": "Supervisory Report 2019",
+        "title": "Supervisory Report 2020",
         "sort_expression": [
             {
                 "field": "form_name",

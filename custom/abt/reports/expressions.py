@@ -368,6 +368,12 @@ class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
     comment_from_root = True
 
 
+class AbtSupervisorV2020ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2020')
+    _flagspec_filename = 'flagspecs_v2020.yaml'
+    comment_from_root = True
+
+
 def abt_supervisor_expression(spec, context):
     return AbtSupervisorExpressionSpec.wrap(spec)
 
@@ -378,3 +384,7 @@ def abt_supervisor_v2_expression(spec, context):
 
 def abt_supervisor_v2019_expression(spec, context):
     return AbtSupervisorV2019ExpressionSpec.wrap(spec)
+
+
+def abt_supervisor_v2020_expression(spec, context):
+    return AbtSupervisorV2020ExpressionSpec.wrap(spec)
