@@ -686,8 +686,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class ViewSoftwarePlanVersionView(AccountingSectionView):
-    urlname = 'view_softwareplan_version'
+class SoftwarePlanVersionView(AccountingSectionView):
+    urlname = 'software_plan_version'
     page_title = 'Plan Version'
     template_name = 'accounting/plan_version.html'
 
