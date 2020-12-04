@@ -701,10 +701,19 @@ class SoftwarePlanVersionView(AccountingSectionView):
 
     @property
     def page_context(self):
-        return {
+        latest_version = self.plan_version.plan.get_version()
+        context = {
             'plan_versions': [self.plan_version],
             'plan_id': self.args[0],
+            'plan_name': self.plan_version.plan.name,
+            'is_latest_version': latest_version == self.plan_version,
+            'latest_version_url': reverse(
+                self.urlname,
+                args=(latest_version.plan.id, latest_version.id)
+            ),
+            'is_version_detail_page': True,
         }
+        return context
 
     @property
     def page_url(self):
