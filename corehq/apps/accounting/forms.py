@@ -1350,144 +1350,153 @@ class SoftwarePlanVersionForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
-        self.helper.layout = crispy.Layout(
-            'update_version',
-            crispy.Fieldset(
-                "Permissions",
+
+        permissions_fieldset = crispy.Fieldset(
+            "Permissions",
+            hqcrispy.B3MultiField(
+                "Role Type",
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'select-role-type-template', "
+                              " data: role"
+                              "}, "
+                ),
+            ),
+            crispy.Div(
                 hqcrispy.B3MultiField(
-                    "Role Type",
+                    'Role',
+                    InlineField(
+                        'role_slug',
+                        data_bind="value: role.existing.roleSlug",
+                        css_class="input-xxlarge",
+                        style="width: 100%;",
+                    ),
                     crispy.Div(
                         data_bind="template: {"
-                                  " name: 'select-role-type-template', "
-                                  " data: role"
+                                  " name: 'selected-role-privileges-template', "
+                                  " data: {"
+                                  "     privileges: role.existing.selectedPrivileges,"
+                                  "     hasNoPrivileges: role.existing.hasNoPrivileges"
+                                  " }"
+                                  "}, "
+                    ),
+                    data_bind="visible: role.isRoleTypeExisting",
+                ),
+            ),
+            crispy.Div(
+                hqcrispy.B3MultiField(
+                    "Privileges",
+                    InlineField('privileges', data_bind="selectedOptions: role.new.privileges"),
+                    crispy.Div(
+                        data_bind="template: {"
+                                  " name: 'privileges-match-role-template', "
+                                  " data: {"
+                                  "     role: role.new.matchingRole"
+                                  " },"
+                                  " if: role.new.hasMatchingRole"
                                   "}, "
                     ),
                 ),
+                crispy.Field('create_new_role', data_bind="value: role.new.allowCreate"),
                 crispy.Div(
-                    hqcrispy.B3MultiField(
-                        'Role',
-                        InlineField(
-                            'role_slug',
-                            data_bind="value: role.existing.roleSlug",
-                            css_class="input-xxlarge",
-                            style="width: 100%;",
-                        ),
-                        crispy.Div(
-                            data_bind="template: {"
-                                      " name: 'selected-role-privileges-template', "
-                                      " data: {"
-                                      "     privileges: role.existing.selectedPrivileges,"
-                                      "     hasNoPrivileges: role.existing.hasNoPrivileges"
-                                      " }"
-                                      "}, "
-                        ),
-                        data_bind="visible: role.isRoleTypeExisting",
-                    ),
+                    'new_role_slug',
+                    'new_role_name',
+                    'new_role_description',
+                    data_bind="visible: role.new.allowCreate",
+                    css_class="well",
                 ),
-                crispy.Div(
-                    hqcrispy.B3MultiField(
-                        "Privileges",
-                        InlineField('privileges', data_bind="selectedOptions: role.new.privileges"),
-                        crispy.Div(
-                            data_bind="template: {"
-                                      " name: 'privileges-match-role-template', "
-                                      " data: {"
-                                      "     role: role.new.matchingRole"
-                                      " },"
-                                      " if: role.new.hasMatchingRole"
-                                      "}, "
-                        ),
-                    ),
-                    crispy.Field('create_new_role', data_bind="value: role.new.allowCreate"),
-                    crispy.Div(
-                        'new_role_slug',
-                        'new_role_name',
-                        'new_role_description',
-                        data_bind="visible: role.new.allowCreate",
-                        css_class="well",
-                    ),
-                    data_bind="visible: role.isRoleTypeNew",
-                ),
+                data_bind="visible: role.isRoleTypeNew",
             ),
-            crispy.Fieldset(
-                "Features",
-                InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
-                hqcrispy.B3MultiField(
-                    "Add Feature",
-                    InlineField('select2_feature_id', css_class="input-xxlarge",
-                                data_bind="value: featureRates.select2.value"),
-                    StrictButton(
-                        "Select Feature",
-                        css_class="btn-primary",
-                        data_bind="event: {click: featureRates.apply}, "
-                                  "visible: featureRates.select2.isExisting",
-                        style="margin-left: 5px;"
-                    ),
-                ),
-                crispy.Div(
-                    css_class="alert alert-danger",
-                    data_bind="text: featureRates.error, visible: featureRates.showError"
-                ),
-                hqcrispy.B3MultiField(
-                    "Feature Type",
-                    InlineField(
-                        'new_feature_type',
-                        data_bind="value: featureRates.rateType",
-                    ),
-                    crispy.Div(
-                        StrictButton(
-                            "Create Feature",
-                            css_class="btn-primary",
-                            data_bind="event: {click: featureRates.createNew}",
+        )
 
-                        ),
-                        style="margin: 10px 0;"
-                    ),
-                    data_bind="visible: featureRates.select2.isNew",
-                ),
-                crispy.Div(
-                    data_bind="template: {"
-                              "name: 'feature-rate-form-template', foreach: featureRates.rates"
-                              "}",
+        features_fieldset = crispy.Fieldset(
+            "Features",
+            InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
+            hqcrispy.B3MultiField(
+                "Add Feature",
+                InlineField('select2_feature_id', css_class="input-xxlarge",
+                            data_bind="value: featureRates.select2.value"),
+                StrictButton(
+                    "Select Feature",
+                    css_class="btn-primary",
+                    data_bind="event: {click: featureRates.apply}, "
+                              "visible: featureRates.select2.isExisting",
+                    style="margin-left: 5px;"
                 ),
             ),
-            crispy.Fieldset(
-                "Products",
-                InlineField('product_rates', data_bind="value: productRates.ratesString"),
-                hqcrispy.B3MultiField(
-                    "Add Product",
-                    InlineField('product_rate_id', css_class="input-xxlarge",
-                                data_bind="value: productRates.select2.value"),
+            crispy.Div(
+                css_class="alert alert-danger",
+                data_bind="text: featureRates.error, visible: featureRates.showError"
+            ),
+            hqcrispy.B3MultiField(
+                "Feature Type",
+                InlineField(
+                    'new_feature_type',
+                    data_bind="value: featureRates.rateType",
+                ),
+                crispy.Div(
                     StrictButton(
-                        "Select Product",
+                        "Create Feature",
                         css_class="btn-primary",
-                        data_bind="event: {click: productRates.apply}, "
-                                  "visible: productRates.select2.isExisting",
-                        style="margin-left: 5px;"
+                        data_bind="event: {click: featureRates.createNew}",
+
                     ),
+                    style="margin: 10px 0;"
                 ),
-                crispy.Div(
-                    css_class="alert alert-danger",
-                    data_bind="text: productRates.error, visible: productRates.showError",
-                ),
-                hqcrispy.B3MultiField(
-                    "Product Type",
-                    crispy.Div(
-                        StrictButton(
-                            "Create Product",
-                            css_class="btn-primary",
-                            data_bind="event: {click: productRates.createNew}",
-                        ),
-                        style="margin: 10px 0;"
-                    ),
-                    data_bind="visible: productRates.select2.isNew",
-                ),
-                crispy.Div(
-                    data_bind="template: {"
-                              "name: 'product-rate-form-template', foreach: productRates.rates"
-                              "}",
+                data_bind="visible: featureRates.select2.isNew",
+            ),
+            crispy.Div(
+                data_bind="template: {"
+                          "name: 'feature-rate-form-template', foreach: featureRates.rates"
+                          "}",
+            ),
+        )
+
+        products_fieldset = crispy.Fieldset(
+            "Products",
+            InlineField('product_rates', data_bind="value: productRates.ratesString"),
+            hqcrispy.B3MultiField(
+                "Add Product",
+                InlineField('product_rate_id', css_class="input-xxlarge",
+                            data_bind="value: productRates.select2.value"),
+                StrictButton(
+                    "Select Product",
+                    css_class="btn-primary",
+                    data_bind="event: {click: productRates.apply}, "
+                              "visible: productRates.select2.isExisting",
+                    style="margin-left: 5px;"
                 ),
             ),
+            crispy.Div(
+                css_class="alert alert-danger",
+                data_bind="text: productRates.error, visible: productRates.showError",
+            ),
+            hqcrispy.B3MultiField(
+                "Product Type",
+                crispy.Div(
+                    StrictButton(
+                        "Create Product",
+                        css_class="btn-primary",
+                        data_bind="event: {click: productRates.createNew}",
+                    ),
+                    style="margin: 10px 0;"
+                ),
+                data_bind="visible: productRates.select2.isNew",
+            ),
+            crispy.Div(
+                data_bind="template: {"
+                          "name: 'product-rate-form-template', foreach: productRates.rates"
+                          "}",
+            ),
+        )
+
+        layout_fields = [
+            'update_version',
+            permissions_fieldset,
+            features_fieldset,
+            products_fieldset
+        ]
+        layout_fields.append(
             hqcrispy.FormActions(
                 StrictButton(
                     'Update Plan Version',
@@ -1496,6 +1505,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
             )
         )
+        self.helper.layout = crispy.Layout(*layout_fields)
 
     @property
     def available_privileges(self):
