@@ -3,6 +3,11 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% requirejs_main "accounting/js/base_subscriptions_main" %}
+
 {% block page_content %}
   {% include 'accounting/partials/version_summary_tab.html' %}
+  {% if is_customer_plan %}
+    {% include 'accounting/partials/customer_plan_version_tools.html' %}
+  {% endif %}
 {% endblock %}

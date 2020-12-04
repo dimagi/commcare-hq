@@ -97,6 +97,7 @@ from corehq.apps.accounting.forms import (
     TriggerInvoiceForm,
     TriggerDowngradeForm,
     TriggerAutopaymentsForm,
+    BulkUpgradeToLatestVersionForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -691,6 +692,20 @@ class SoftwarePlanVersionView(AccountingSectionView):
     page_title = 'Plan Version'
     template_name = 'accounting/plan_version.html'
 
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.upgrade_subscriptions_form.is_valid():
+            self.upgrade_subscriptions_form.upgrade_subscriptions()
+            messages.success(request, "All subscriptions on this version have "
+                                      "been upgraded to the latest version")
+            return HttpResponseRedirect(reverse(self.urlname, args=(
+                self.plan_version.plan.id, self.plan_version.plan.get_version().id
+            )))
+        return self.get(request, *args, **kwargs)
+
     @property
     @memoized
     def plan_version(self):
@@ -701,10 +716,12 @@ class SoftwarePlanVersionView(AccountingSectionView):
 
     @property
     def page_context(self):
+        is_customer_plan = self.plan_version.plan.is_customer_software_plan
         latest_version = self.plan_version.plan.get_version()
         context = {
             'plan_versions': [self.plan_version],
             'plan_id': self.args[0],
+            'is_customer_plan': is_customer_plan,
             'plan_name': self.plan_version.plan.name,
             'is_latest_version': latest_version == self.plan_version,
             'latest_version_url': reverse(
@@ -713,11 +730,31 @@ class SoftwarePlanVersionView(AccountingSectionView):
             ),
             'is_version_detail_page': True,
         }
+        if is_customer_plan:
+            context.update({
+                'active_subscriptions': Subscription.visible_objects.filter(
+                    is_active=True, plan_version=self.plan_version
+                ),
+                'upgrade_subscriptions_form': self.upgrade_subscriptions_form,
+            })
         return context
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=self.args)
+
+    @property
+    @memoized
+    def upgrade_subscriptions_form(self):
+        if self.request.method == 'POST':
+            return BulkUpgradeToLatestVersionForm(
+                self.plan_version, self.request.user.username,
+                self.request.POST
+            )
+        return BulkUpgradeToLatestVersionForm(
+            self.plan_version,
+            self.request.user.username
+        )
 
 
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):

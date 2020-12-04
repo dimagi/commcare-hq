@@ -76,6 +76,9 @@ from corehq.apps.accounting.utils import (
     has_subscription_already_ended,
     make_anchor_tag,
 )
+from corehq.apps.accounting.utils.software_plans import (
+    upgrade_subscriptions_to_latest_plan_version,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -915,6 +918,53 @@ class ChangeSubscriptionForm(forms.Form):
             funding_source=self.cleaned_data['funding_source'],
             note=self.cleaned_data['subscription_change_note'],
             internal_change=True,
+        )
+
+
+class BulkUpgradeToLatestVersionForm(forms.Form):
+    upgrade_note = forms.CharField(
+        label="Note",
+        required=True,
+        widget=forms.Textarea,
+    )
+    start_date = forms.DateField(
+        label="Date When New Version Takes Effect",
+        widget=forms.DateInput(),
+        required=False,
+        help_text="If left blank this change will take effect immediately.",
+    )
+
+    def __init__(self, old_plan_version, web_user, *args, **kwargs):
+        self.old_plan_version = old_plan_version
+        self.web_user = web_user
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Upgrade All Subscriptions To Latest Version",
+                crispy.Field('start_date', css_class="date-picker"),
+                'upgrade_note',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Upgrade All",
+                    type="submit",
+                    css_class="btn-primary disable-on-submit",
+                ),
+            ),
+        )
+
+    @transaction.atomic
+    def upgrade_subscriptions(self):
+        upgrade_subscriptions_to_latest_plan_version(
+            self.old_plan_version,
+            self.web_user,
+            self.cleaned_data['start_date'],
+            self.cleaned_data['upgrade_note'],
         )
 
 
