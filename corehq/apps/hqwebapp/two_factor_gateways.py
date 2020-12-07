@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils import translation
@@ -43,7 +45,7 @@ class Gateway(object):
 
         sid = backend.extra_fields['account_sid']
         token = backend.extra_fields['auth_token']
-        self.from_number = backend.load_balancing_numbers[0]
+        self.from_number = random.choice(backend.load_balancing_numbers)
         self.client = self._get_client(sid, token)
 
     def _get_client(self, sid, token):
