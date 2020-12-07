@@ -23,6 +23,18 @@ simultaneously because the underlying state storage (a SQLite database) is not
 multi-process safe. Therefore, this should only be run when no other migration
 command is currently running.
 
+### `stats` output columns
+
+- **Docs**: number of documents migrated.
+- **Diffs**: number of documents with unexpected differences between the Couch and
+  SQL version. It may be necessary to run `couch_sql_diff ... filter` after
+  various operations (e.g., `--patch`) to recalculate this column.
+- **Missing**: number of documents found in Couch but not SQL. This can be updated
+  with the `--missing-docs=...` option.
+- **Changes**: number of documents with patchable differences between the Couch and
+  SQL version. Diffs are put in this category if they are a result of a known
+  difference between the Couch and SQL form processors.
+
 ## Migrate a single domain with downtime
 
 This process can be used for small domains and/or domains where it does not
@@ -87,15 +99,6 @@ After the initial `MIGRATE --live` command is run the domain will remain in
 "live" migration state, regardless of whether the `--live` switch is used on
 subsequent `MIGRATE` commands, until `MIGRATE --finish` is run.
 
-Alternate sequence, instead of `MIGRATE --patch`. Allows inspection of stats
-between each command:
-
-```sh
-./manage.py migrate_domain_from_couch_to_sql <domain> MIGRATE --forms=missing
-./manage.py couch_sql_diff <domain> patch ...
-./manage.py couch_sql_diff <domain> cases --select=pending
-```
-
 When all not-freshly-submitted forms and cases have been migrated and diffs
 patched or otherwise resolved, these final commands must be run to finish and
 commit the migration. Form submissions will be disabled ("downtime" is instated)
@@ -117,6 +120,44 @@ Multiple live migrations can be started with a single command:
 Each live migration started this way can be inspected and patched as needed.
 The final `MIGRATE --finish` and `COMMIT` steps must be done individually for
 each domain.
+
+## Patching case diffs
+
+The `MIGRATE --patch` command will patch case _diffs_ and _changes_ to make the
+new SQL case look like the old Couch case as much as possible. Discrepancies are
+usually the result of bad data states in Couch (causing "diffs") as well as
+known differences between the Couch and SQL form processing logic (causing
+"changes"). Patching is done by submitting a "patch" form after the case has
+been migrated. Each patch form contains a "diff block" with precise details
+about what was patched. The diff block contains enough detail to reconstruct
+the case as it was before it was patched.
+
+Once a _diff_ or _change_ has been patched it will be removed from the "Diffs"
+or "Changes" counts tracked by the `stats` command. This is done even if the
+difference could not actually be patched. For example, `opened_by` cannot be
+patched because it is a calculated property based on the order in which forms
+were submitted. Once a case has been patched and there are no more unpatched
+differences its migration is considered to be complete with the patch form left
+as a persistent data trail.
+
+`MIGRATE --patch` is a convenience that performs the operations of a few other
+commands. Sometimes it is useful to run those commands individually to debug
+the process or inspect intermediate state.
+
+```sh
+./manage.py migrate_domain_from_couch_to_sql <domain> MIGRATE --forms=missing
+./manage.py couch_sql_diff <domain> patch ...
+./manage.py couch_sql_diff <domain> cases --select=pending
+```
+
+## Scanning for missing documents
+
+It can be useful to run `--missing-docs=rebuild` as a sanity check toward the
+end of very large/long migrations. This will update the missing document counts
+reported by the `stats` command. See the `--help` documentation for more
+details. Note: a scan for missing documents takes a very small fraction of the
+time needed to do a full migration (one million documents can be scanned in a
+few minutes).
 
 ## Migration sheduling template
 
