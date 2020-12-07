@@ -10,6 +10,7 @@ from django.core import serializers
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.test import SimpleTestCase, TestCase
+from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -77,21 +78,13 @@ class BaseDumpLoadTest(TestCase):
         post_delete.connect(zapier_subscription_post_delete, sender=ZapierSubscription)
 
     def delete_sql_data(self):
-        for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
-            for iterator in builder.querysets():
-                with transaction.atomic(using=iterator.db), \
-                        constraint_checks_deferred(iterator.db):
-                    collector = NestedObjects(using=iterator.db)
-                    collector.collect(iterator)
-                    collector.delete()
-
-        self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
+        delete_domain_sql_data_for_dump_load_test(self.domain_name)
 
     def tearDown(self):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None, dumper_fn=None):
         expected_load_counts = expected_load_counts or expected_dump_counts
         expected_dump_counts.update(self.default_objects_counts)
 
@@ -99,7 +92,10 @@ class BaseDumpLoadTest(TestCase):
         self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
-        SqlDataDumper(self.domain_name, []).dump(output_stream)
+        if dumper_fn:
+            dumper_fn(output_stream)
+        else:
+            SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         self.delete_sql_data()
 
@@ -110,24 +106,26 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
         # Dump
-        dump_output = output_stream.getvalue().split('\n')
-        dump_lines = [line.strip() for line in dump_output if line.strip()]
+        actual_model_counts, dump_lines = self._parse_dump_output(output_stream)
 
         expected_model_counts = _normalize_object_counter(expected_dump_counts)
-        actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
 
         # Load
         loader = SqlDataLoader(object_filter=load_filter)
-        total_object_count, loaded_model_counts = loader.load_objects(dump_lines)
+        loaded_model_counts = loader.load_objects(dump_lines)
 
         normalized_expected_loaded_counts = _normalize_object_counter(expected_load_counts, for_loaded=True)
         self.assertDictEqual(dict(normalized_expected_loaded_counts), dict(loaded_model_counts))
-        expected_total_load_objects = sum(expected_load_counts.values())
-        self.assertEqual(expected_total_load_objects, sum(loaded_model_counts.values()))
-        self.assertEqual(expected_total_load_objects, total_object_count)
+        self.assertEqual(sum(expected_load_counts.values()), sum(loaded_model_counts.values()))
 
         return dump_lines
+
+    def _parse_dump_output(self, output_stream):
+        dump_output = output_stream.getvalue().split('\n')
+        dump_lines = [line.strip() for line in dump_output if line.strip()]
+        actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
+        return actual_model_counts, dump_lines
 
     def _check_signals_handle_raw(self, models):
         """Ensure that any post_save signal handlers have been updated
@@ -145,6 +143,19 @@ class BaseDumpLoadTest(TestCase):
                     receiver, model
                 )
                 self.assertIn('raw', args, message)
+
+
+@nottest
+def delete_domain_sql_data_for_dump_load_test(domain_name):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain_name, []):
+        for iterator in builder.querysets():
+            with transaction.atomic(using=iterator.db), \
+                 constraint_checks_deferred(iterator.db):
+                collector = NestedObjects(using=iterator.db)
+                collector.collect(iterator)
+                collector.delete()
+
+    assert [] == list(get_objects_to_dump(domain_name, [])), "Not all SQL objects deleted"
 
 
 @use_sql_backend
@@ -255,12 +266,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
 
 class TestSQLDumpLoad(BaseDumpLoadTest):
-    def assertModelsEqual(self, pre_models, post_models):
-        for pre, post in zip(pre_models, post_models):
-            pre_json = serializers.serialize('python', [pre])[0]
-            post_json = serializers.serialize('python', [post])[0]
-            self.assertDictEqual(pre_json, post_json)
-
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
@@ -706,8 +711,7 @@ class DefaultDictWithKeyTests(SimpleTestCase):
 def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        prefix = '(sql) ' if for_loaded else ''
-        label = '{}{}.{}'.format(prefix, model_class._meta.app_label, model_class.__name__)
+        label = '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
         return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count

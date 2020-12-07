@@ -1,6 +1,7 @@
 import logging
 import random
 
+from django.conf import settings
 from django.core.cache import cache
 
 from memoized import memoized
@@ -94,7 +95,7 @@ class SessionAbTest(object):
         version = self.version()
         self._debug_message("storing cookie value '{}' in '{}'".format(
             version, self._cookie_id))
-        response.set_cookie(self._cookie_id, version)
+        response.set_cookie(self._cookie_id, version, secure=settings.SECURE_COOKIES)
 
     def _clear_response(self, response):
         self._debug_message("clearing cookies '{}'".format(self._cookie_id))

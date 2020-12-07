@@ -173,6 +173,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
+ADD_CAPTCHA_FIELD_TO_FORMS = False
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -1116,7 +1117,7 @@ if callable(COMPRESS_OFFLINE):
 
 # These default values can't be overridden.
 # Should you someday need to do so, use the lambda/if callable pattern above
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 

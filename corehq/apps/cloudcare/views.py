@@ -34,7 +34,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_for_commcare_user,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.accounting.utils import domain_is_on_trial, domain_has_privilege
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.app_manager.dbaccessors import (
@@ -169,7 +169,7 @@ class FormplayerMain(View):
             ).run()
             if login_as_users.total == 1:
                 def set_cookie(response):
-                    response.set_cookie(cookie_name, user.raw_username)
+                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
                     return response
 
                 user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
@@ -217,9 +217,8 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
-            "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
+            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -280,8 +279,8 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
+            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -299,6 +298,7 @@ class PreviewAppView(TemplateView):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
+            "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
         })
 
 

@@ -143,18 +143,6 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
     def rows_for_domain(self, domain_obj):
 
-        def _get_role_name(role):
-            if role:
-                if role == 'admin':
-                    return role
-                else:
-                    role_id = role[len('user-role:'):]
-                    try:
-                        return UserRole.get(role_id).name
-                    except ResourceNotFound:
-                        return _('Unknown Role')
-            else:
-                return 'N/A'
         rows = []
         for user in get_all_user_rows(domain_obj.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
@@ -178,7 +166,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
                 [
                     invite.email,
                     'N/A',
-                    _get_role_name(invite.role),
+                    invite.get_role_name(),
                     'N/A',
                     'N/A',
                     _('Invited')

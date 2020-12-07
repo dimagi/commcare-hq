@@ -29,6 +29,8 @@ from .views import (
     verify_phone_number,
     delete_domain_permission_mirror,
     create_domain_permission_mirror,
+    download_web_users,
+    DownloadWebUsersStatusView,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -92,6 +94,9 @@ urlpatterns = [
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
+    url(r'^web/download/$', download_web_users, name='download_web_users'),
+    url(r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        DownloadWebUsersStatusView.as_view(), name='download_web_users_status'),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
         name='delete_domain_permission_mirror'),

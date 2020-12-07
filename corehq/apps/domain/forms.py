@@ -536,7 +536,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
-        if not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+        if not domain_has_privilege(self.domain, privileges.GEOCODER):
             del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
@@ -1157,7 +1157,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
