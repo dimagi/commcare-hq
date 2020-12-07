@@ -74,25 +74,22 @@ class UserModelTest(TestCase):
 
     def test_metadata(self):
         metadata = self.user.metadata
-        self.assertEqual(metadata, {'commcare_project': 'my-domain'})
+        self.assertEqual(metadata, {})
         metadata.update({
             'cruise': 'control',
             'this': 'road',
         })
         self.user.update_metadata(metadata)
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
             'cruise': 'control',
             'this': 'road',
         })
         self.user.pop_metadata('cruise')
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
             'this': 'road',
         })
         self.user.update_metadata({'this': 'field'})
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
             'this': 'field',
         })
 
@@ -112,7 +109,6 @@ class UserModelTest(TestCase):
         # Custom user data profiles get their data added to metadata automatically for mobile users
         self.user.update_metadata({PROFILE_SLUG: profile.id})
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
             PROFILE_SLUG: profile.id,
             'start': 'sometimes',
         })
@@ -120,7 +116,6 @@ class UserModelTest(TestCase):
         # Remove profile should remove it and related fields
         self.user.pop_metadata(PROFILE_SLUG)
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
         })
 
         # Can't add profile that conflicts with existing data
@@ -149,12 +144,9 @@ class UserModelTest(TestCase):
 
         # Custom user data profiles don't get populated for web users
         web_user = WebUser.create(None, "imogen", "*****", None, None)
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
-        })
+        self.assertEqual(web_user.metadata, {})
         web_user.update_metadata({PROFILE_SLUG: profile.id})
         self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
             PROFILE_SLUG: profile.id,
         })
 
