@@ -64,7 +64,7 @@ branches:
   - ap/fix-case-list-not-appearing # Amit Nov 19
   - nh/onse/by_case  # Norman Nov 20
   - jls/copy-linked-app # Jenny Nov 24
-  - jls/slimmer-initial-app # Jenny Nov 25
+# - jls/slimmer-initial-app # Jenny Nov 25
   - mk/remove-draconian-full # MK Nov 30
   - gh/improve-gateway-fee # Graham Dec 1
   - dependabot/pip/requirements/sentry-sdk-0.19.4 # Daniel Dec 2
