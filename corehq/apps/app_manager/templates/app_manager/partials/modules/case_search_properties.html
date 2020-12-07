@@ -208,7 +208,7 @@ visits this case list." %}">
               </div>
             </div>
           {% endif %}
-          <div class="form-group">
+          <div class="form-group" data-bind="visible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
               <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
