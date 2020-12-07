@@ -1172,7 +1172,7 @@ class NoAutocompleteMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        if settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS:
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
