@@ -9,7 +9,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
@@ -56,6 +55,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import UserES
@@ -894,7 +894,7 @@ class UserInvitationView(object):
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'hide_password_feedback': has_custom_clean_password(),
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}
