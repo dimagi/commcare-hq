@@ -1,14 +1,14 @@
 import datetime
 
-from corehq.toggles import ACTIVE_COUCH_DOMAINS
-from corehq.util.metrics import metrics_gauge
 from couchforms.models import XFormInstance
 
-from corehq.apps.es import FormES
-from corehq.elastic import ES_EXPORT_INSTANCE
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.toggles import ACTIVE_COUCH_DOMAINS
+from corehq.util.metrics import metrics_gauge
+from corehq.apps.es import FormES
+from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.couch import bulk_get_revs
 from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
@@ -25,12 +25,15 @@ def cleanup_stale_es_on_couch_domains(
     domains still using the couch db backend until we can get them migrated.
     """
     end = end_date or datetime.datetime.utcnow()
-    start = start_date or (end - datetime.timedelta(days=5))
+    start = start_date or (end - datetime.timedelta(days=2))
 
     couch_domains = domains or ACTIVE_COUCH_DOMAINS.get_enabled_domains()
 
     for domain in couch_domains:
         form_ids, has_discrepancies = _get_all_form_ids(domain, start, end)
+        if stdout:
+            stdout.write(f"Found {len(form_ids)} in {domain} for between "
+                         f"{start.isoformat()} and {end.isoformat()}.")
         if has_discrepancies:
             metrics_gauge(
                 'commcare.es.couch_domain.couch_discrepancy_detected',
@@ -40,7 +43,7 @@ def cleanup_stale_es_on_couch_domains(
                 }
             )
             if stdout:
-                stdout.write(f"\nFound discrepancies in form counts for domain {domain}")
+                stdout.write(f"\tFound discrepancies in form counts for domain {domain}")
         forms_not_in_es = _get_forms_not_in_es(form_ids)
         if forms_not_in_es:
             metrics_gauge(
@@ -51,7 +54,7 @@ def cleanup_stale_es_on_couch_domains(
                 }
             )
             if stdout:
-                stdout.write(f"\nFound {len(forms_not_in_es)} forms not in es "
+                stdout.write(f"\tFound {len(forms_not_in_es)} forms not in es "
                              f"for {domain}")
             changes = _get_changes(domain, forms_not_in_es)
             form_es_processor = get_xform_pillow().processors[0]
@@ -60,9 +63,9 @@ def cleanup_stale_es_on_couch_domains(
 
 
 def _get_couch_form_ids(domain, start, end):
-    "Get form IDs from the 'by_domain_doc_type_date/view' couch view"
+    """Get form IDs from the 'by_domain_doc_type_date/view' couch view"""
     form_ids = set()
-    for doc_type in ['XFormInstance']:
+    for doc_type in ['XFormArchived', 'XFormInstance']:
         startkey = [domain, doc_type, json_format_datetime(start)]
         endkey = [domain, doc_type, json_format_datetime(end)]
         results = XFormInstance.get_db().view(
@@ -82,7 +85,7 @@ def _get_all_form_ids(domain, start, end):
     all_form_ids = None
     previous_form_ids = None
     form_id_differences = []
-    for i in range(10):
+    for i in range(20):
         form_ids = _get_couch_form_ids(domain, start, end)
         if not all_form_ids:
             all_form_ids = form_ids

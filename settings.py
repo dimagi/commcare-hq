@@ -1015,7 +1015,6 @@ DEFAULT_ODATA_FEED_LIMIT = 25
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
-    # "icds-cas.gov.in": 'icds/login.html',
     # "default": 'login_and_password/login.html',
 }
 
@@ -1118,7 +1117,7 @@ if callable(COMPRESS_OFFLINE):
 
 # These default values can't be overridden.
 # Should you someday need to do so, use the lambda/if callable pattern above
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 
@@ -1455,8 +1454,7 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
 
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
 CUSTOM_DB_ROUTING = {
-    "aaa": "aaa-data",
-    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
+    "aaa": "aaa-data"
 }
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
@@ -1853,6 +1851,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2020.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
@@ -1867,6 +1866,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2020.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),

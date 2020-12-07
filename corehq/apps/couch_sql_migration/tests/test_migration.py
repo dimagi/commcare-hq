@@ -1511,6 +1511,32 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(case.xform_ids, ["test-form"])
         self.assertEqual(case.modified_on, datetime(2015, 8, 14, 0, 0))
 
+    def test_case_with_malformed_date_modified_us(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"12-31-2014"')
+        assert bad_xml.count("12-31-2014") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "12-31-2014"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2014, 12, 31, 0, 0))
+
+    def test_case_with_malformed_date_modified_us_with_time(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"10/13/14 00:00:00"')
+        assert bad_xml.count("10/13/14 00:00:00") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "10/13/14 00:00:00"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2014, 10, 13, 0, 0))
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):

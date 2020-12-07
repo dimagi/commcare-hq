@@ -41,7 +41,7 @@ from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.models import DomainMembershipError, UserRole
+from corehq.apps.users.models import DomainMembershipError, UserRole, DomainPermissionsMirror
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
@@ -1178,6 +1178,12 @@ class CommCareUserFilterForm(forms.Form):
         choices=COLUMNS_CHOICES,
         widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=True),
     )
+    domains = forms.MultipleChoiceField(
+        required=False,
+        label=_('Project Spaces'),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
+        help_text=_('Add project spaces containing the desired mobile workers'),
+    )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
@@ -1197,6 +1203,12 @@ class CommCareUserFilterForm(forms.Form):
             self.fields['role_id'].choices = [('', _('All Roles'))] + [
                 (role._id, role.name or _('(No Name)')) for role in roles]
 
+        self.fields['domains'].choices = [(self.domain, self.domain)]
+        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+            self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
+                                             [(self.domain, self.domain)] + \
+                                             [(domain, domain) for domain in
+                                              DomainPermissionsMirror.mirror_domains(self.domain)]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1214,6 +1226,7 @@ class CommCareUserFilterForm(forms.Form):
                 crispy.Field('search_string'),
                 crispy.Field('location_id'),
                 crispy.Field('columns'),
+                crispy.Field('domains'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -1253,6 +1266,17 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+    def clean_domains(self):
+        if 'domains' in self.data:
+            domains = self.data.getlist('domains')
+        else:
+            domains = self.data.getlist('domains[]', [self.domain])
+
+        if 'all_project_spaces' in domains:
+            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            domains += [self.domain]
+        return domains
 
 
 class CreateDomainPermissionsMirrorForm(forms.Form):

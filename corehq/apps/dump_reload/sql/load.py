@@ -23,7 +23,14 @@ CHUNK_SIZE = 200
 class SqlDataLoader(DataLoader):
     slug = 'sql'
 
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
+        if dry_run:
+            dry_run_stats = Counter()
+            for line in object_strings:
+                obj = self.line_to_object(line)
+                if obj is not None:
+                    dry_run_stats[obj['model']] += 1
+            return dry_run_stats
 
         def enqueue_object(dbalias_to_workerqueue, obj):
             db_alias = get_db_alias(obj)
