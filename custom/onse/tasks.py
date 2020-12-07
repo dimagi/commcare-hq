@@ -2,7 +2,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
-from typing import Iterable, List, Optional, Union, Tuple
+from typing import Iterable, List, Optional, Tuple, Union
+from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
@@ -229,13 +230,7 @@ def fetch_data_set(
 
     """
     max_attempts = 3
-    backoff_seconds = 5
-
-    def is_500_error(err):
-        return (
-            err.response is not None
-            and 500 <= err.response.status_code < 600
-        )
+    backoff_seconds = 3 * 60
 
     requests = dhis2_server.get_requests()
     endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
@@ -249,8 +244,8 @@ def fetch_data_set(
         attempt += 1
         try:
             response = requests.get(endpoint, params, raise_for_status=True)
-        except RequestException as err:
-            if is_500_error(err) and attempt < max_attempts:
+        except (RequestException, HTTPError):
+            if attempt < max_attempts:
                 sleep(backoff_seconds * attempt)
             else:
                 raise
