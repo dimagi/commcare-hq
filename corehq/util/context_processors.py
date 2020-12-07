@@ -6,8 +6,7 @@ from django.urls import resolve, reverse
 from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
-from corehq import privileges, toggles
-from corehq.apps.analytics import ab_tests
+from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
@@ -23,6 +22,7 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'env': get_environment_friendly_name(),
+        'secure_cookies': settings.SECURE_COOKIES,
     }
 
 
@@ -37,10 +37,9 @@ def is_commtrack(project, request):
 
 
 def get_per_domain_context(project, request=None):
-    from corehq import toggles
     custom_logo_url = None
-    if (project and project.has_custom_logo and
-            domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
+    if (project and project.has_custom_logo
+            and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
     def allow_report_issue(user, domain):
@@ -128,10 +127,16 @@ def js_api_keys(request):
 def js_toggles(request):
     if not getattr(request, 'couch_user', None):
         return {}
-    if not getattr(request, 'project', None):
+
+    domain = None
+    if getattr(request, 'project', None):
+        domain = request.project.name
+    elif getattr(request, 'domain', None):
+        domain = request.domain
+
+    if not domain:
         return {}
-    from corehq import toggles, feature_previews
-    domain = request.project.name
+
     return {
         'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)

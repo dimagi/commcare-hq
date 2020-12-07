@@ -12,9 +12,10 @@ from django.views.decorators.http import require_POST
 
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.toggle_ui.models import ToggleAudit
 from couchforms.analytics import get_last_form_submission_received
 from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle
+from toggle.shortcuts import parse_toggle, namespaced_item
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
@@ -171,8 +172,6 @@ class ToggleEditView(BasePageView):
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
-        randomness = request.POST.get('randomness', None)
-        randomness = decimal.Decimal(randomness) if randomness else None
 
         item_list = request.POST.get('item_list', [])
         if item_list:
@@ -183,10 +182,17 @@ class ToggleEditView(BasePageView):
         currently_enabled = set(item_list)
         toggle.enabled_users = item_list
 
-        if self.is_random_editable and randomness is not None:
+        randomness = None
+        if self.is_random_editable:
+            randomness = request.POST.get('randomness', None)
+            randomness = decimal.Decimal(randomness) if randomness else None
             self._save_randomness(toggle, randomness)
 
         toggle.save()
+
+        ToggleAudit.objects.log_toggle_changes(
+            self.toggle_slug, self.request.user.username, currently_enabled, previously_enabled, randomness
+        )
         _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
         _call_save_fn_and_clear_cache(self.static_toggle, previously_enabled, currently_enabled)
 
@@ -247,8 +253,6 @@ def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_e
 def _clear_caches_for_dynamic_toggle(static_toggle):
     # note: this is rather coupled with python property internals
     DynamicallyPredictablyRandomToggle.randomness.fget.clear(static_toggle)
-    # also have to do this since the toggle itself is cached
-    all_toggles.clear()
 
 
 def _get_usage_info(toggle):
@@ -332,7 +336,11 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
-    static_toggle.set(item=item, enabled=enabled, namespace=namespace)
+    if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
+        action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
+        ToggleAudit.objects.log_toggle_action(
+            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
+        )
 
     if enabled:
         _notify_on_change(static_toggle, [item], request.user.username)
