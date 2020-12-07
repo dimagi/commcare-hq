@@ -172,6 +172,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+ADD_CAPTCHA_FIELD_TO_FORMS = False
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
