@@ -6,17 +6,17 @@
 # Translators:
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
-# Dimagi Dev <devops@dimagi.com>, 2020
 # Séfora Vazirna <seforan@gmail.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-02 21:27+0000\n"
+"POT-Creation-Date: 2020-12-07 18:06+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Séfora Vazirna <seforan@gmail.com>, 2020\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2020\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -2857,7 +2857,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:65
 msgid "Find Case"
-msgstr ""
+msgstr "Encontrar Caso"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:66
 msgid "IDs can be found in a <a href=\"<%= url %>\">case data export</a>"
@@ -2873,7 +2873,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:76
 msgid "Find Form Submission"
-msgstr ""
+msgstr "Encontrar Submissão do Formulário"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:77
 msgid "IDs can be found in a <a href=\"<%= url %>\">form data export</a>"
@@ -3773,25 +3773,19 @@ msgstr ""
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
-msgid ""
-"Password Requirements: 1 special character, 1 number, 1 capital letter, "
-"minimum length of 8 characters."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Available Groups"
 msgstr "Grupos Disponíveis"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Groups with this User"
 msgstr "Grupos com este Usuário"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:111
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:107
 msgid "Group membership has changed."
 msgstr ""
 
@@ -3803,19 +3797,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:315
+#: corehq/apps/users/static/users/js/mobile_workers.js:306
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:317
+#: corehq/apps/users/static/users/js/mobile_workers.js:308
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:378
+#: corehq/apps/users/static/users/js/mobile_workers.js:369
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:399
+#: corehq/apps/users/static/users/js/mobile_workers.js:390
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
