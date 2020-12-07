@@ -1,9 +1,11 @@
 import json
+import logging
 import multiprocessing as mp
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import partial
+from queue import Full
 from typing import Tuple
 
 from django.apps import apps
@@ -16,6 +18,9 @@ from corehq.apps.dump_reload.exceptions import DataLoadException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.routers import HINT_PARTITION_VALUE
+
+
+logger = logging.getLogger("load_sql")
 
 CHUNK_SIZE = 200
 
@@ -34,8 +39,9 @@ class SqlDataLoader(DataLoader):
 
         def enqueue_object(dbalias_to_workerqueue, obj):
             db_alias = get_db_alias(obj)
-            __, queue = dbalias_to_workerqueue[db_alias]
-            queue.put(obj)
+            worker, queue = dbalias_to_workerqueue[db_alias]
+            # add a timeout here otherwise this blocks forever if the worker dies / errors
+            queue.put(obj, timeout=5)
 
         def collect_results(dbalias_to_workerqueue) -> Tuple[list, list]:
             load_stats = []
@@ -51,7 +57,11 @@ class SqlDataLoader(DataLoader):
 
         def terminate_workers(dbalias_to_workerqueue):
             for __, queue in dbalias_to_workerqueue.values():
-                queue.put(None)
+                try:
+                    queue.put(None, block=False)
+                except Full:
+                    # If the queue is full it's likely the worker is already terminated
+                    pass
 
         num_aliases = len(settings.DATABASES)
         manager = mp.Manager()
@@ -159,6 +169,7 @@ def load_data_for_db(db_alias):
                 try:
                     obj.save(using=db_alias)
                 except DatabaseError as err:
+                    logger.exception("Error saving data")
                     m = Model._meta
                     raise type(err)(
                         f'Could not load {m.app_label}.{m.object_name}'
