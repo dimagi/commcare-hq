@@ -6,6 +6,7 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
+from crispy_forms.utils import render_crispy_form
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 from django.conf import settings
@@ -1282,7 +1283,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 @location_safe
-def change_password(request, domain, login_id, template="users/partials/reset_password.html"):
+def change_password(request, domain, login_id):
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
@@ -1298,11 +1299,7 @@ def change_password(request, domain, login_id, template="users/partials/reset_pa
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
-    context = _users_context(request, domain)
-    context.update({
-        'reset_password_form': form,
-    })
-    json_dump['formHTML'] = render_to_string(template, context)
+    json_dump['formHTML'] = render_crispy_form(form)
     return HttpResponse(json.dumps(json_dump))
 
 
