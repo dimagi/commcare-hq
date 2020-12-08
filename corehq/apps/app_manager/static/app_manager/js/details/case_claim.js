@@ -111,7 +111,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.autoLaunch = ko.observable(autoLaunch);
-        self.relevant = ko.observable();
+        self.relevant = ko.observable('');
         self.default_relevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
