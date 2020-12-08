@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.custom_data_fields.models import (
@@ -19,6 +20,7 @@ from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
+from corehq.util.model_log import ModelAction
 from corehq.util.test_utils import softer_assert
 
 
@@ -71,6 +73,14 @@ class UserModelTest(TestCase):
         CommCareUser.bulk_save([self.user])
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
+
+    def test_delete(self):
+        user = CommCareUser.create(self.domain, 'user1', 'password', created_by=self.user, created_via=__name__)
+        user.delete(deleted_by=self.user, deleted_via=__name__)
+        self.assertTrue(LogEntry.objects
+                        .filter(user_id=self.user.get_django_user().pk,
+                                action_flag=ModelAction.DELETE.value)
+                        .exists())
 
     def test_metadata(self):
         metadata = self.user.metadata
