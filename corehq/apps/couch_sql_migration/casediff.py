@@ -27,6 +27,7 @@ from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .diffrule import ANY
+from .patches import migration_patches
 from .rebuildcase import rebuild_and_diff_cases
 from .retrydb import (
     couch_form_exists,
@@ -468,7 +469,6 @@ def find_form_ids_updating_case(case_id):
 
 @contextmanager
 def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
-    from .couchsqlmigration import migration_patches
     global _diff_state
     _diff_state = WorkerState(domain, no_action_case_forms, cutoff_date)
     try:
