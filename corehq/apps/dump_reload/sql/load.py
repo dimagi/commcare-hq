@@ -176,9 +176,12 @@ def load_data_for_db(db_alias):
                 except DatabaseError as err:
                     logger.exception("Error saving data")
                     m = Model._meta
+                    key = f"pk={obj.object.pk}"
+                    if hasattr(obj.object, "natural_key"):
+                        key = f"key={obj.object.natural_key()}"
                     raise type(err)(
                         f'Could not load {m.app_label}.{m.object_name}'
-                        f'(pk={obj.object.pk}) in DB {db_alias!r}'
+                        f'({key}) in DB {db_alias!r}'
                     ) from err
     print(f'Loading DB {db_alias!r} complete')
     yield LoadStat(db_alias, model_counter)
