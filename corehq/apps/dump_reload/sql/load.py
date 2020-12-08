@@ -201,7 +201,8 @@ def constraint_checks_deferred(db_alias):
         try:
             yield
         finally:
-            cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
+            if not cursor.db.needs_rollback:
+                cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
 
 
 def get_db_alias(obj: dict) -> str:
