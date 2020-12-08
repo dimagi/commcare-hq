@@ -59,7 +59,7 @@ class SqlDataLoader(DataLoader):
         def terminate_workers(dbalias_to_workerqueue):
             for __, queue in dbalias_to_workerqueue.values():
                 try:
-                    queue.put(None, block=False)
+                    queue.put(None, timeout=1)
                 except Full:
                     # If the queue is full it's likely the worker is already terminated
                     pass
