@@ -89,7 +89,7 @@ flaky==3.6.0              # via -r test-requirements.in
 freezegun==0.3.15         # via -r test-requirements.in
 gevent==1.4.0             # via -r requirements.in, django-websocket-redis, gipc, git-build-branch
 ghdiff==0.4               # via -r requirements.in
-gipc==1.0.1               # via -r requirements.in
+gipc==1.1.0               # via -r requirements.in
 git-build-branch==0.1.9   # via -r dev-requirements.in
 gnureadline==6.3.8        # via -r dev-requirements.in
 graphviz==0.14.2          # via -r dev-requirements.in
