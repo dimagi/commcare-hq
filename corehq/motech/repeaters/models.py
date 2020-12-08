@@ -250,7 +250,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def get_attempt_info(self, repeat_record):
         return None
 
-    def register(self, payload, next_check=None):
+    def register(self, payload):
         if not self.allowed_to_forward(payload):
             return
 
@@ -260,12 +260,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
             repeater_type=self.doc_type,
             domain=self.domain,
             registered_on=now,
-            next_check=next_check or now,
+            next_check=now,
             payload_id=payload.get_id
         )
         repeat_record.save()
-        if next_check is None:
-            repeat_record.attempt_forward_now()
+        repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
