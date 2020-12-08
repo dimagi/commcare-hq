@@ -179,7 +179,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
             hqImport('analytix/js/kissmetrix').track.event('Viewed Form', {
                 domain: data.domain,
-                app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
                 name: data.title,
             });
         }
