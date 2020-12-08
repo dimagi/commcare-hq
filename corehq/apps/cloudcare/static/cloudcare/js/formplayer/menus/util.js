@@ -132,7 +132,6 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 }
                 hqImport('analytix/js/kissmetrix').track.event(event, {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                    app_id: FormplayerFrontend.getChannel().request('getCurrentAppId'),
                     name: eventData,
                 });
             }
