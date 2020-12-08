@@ -23,6 +23,7 @@ from corehq.sql_db.routers import HINT_PARTITION_VALUE
 logger = logging.getLogger("load_sql")
 
 CHUNK_SIZE = 200
+ENQUEUE_TIMEOUT = 10
 
 
 class SqlDataLoader(DataLoader):
@@ -41,7 +42,7 @@ class SqlDataLoader(DataLoader):
             db_alias = get_db_alias(obj)
             worker, queue = dbalias_to_workerqueue[db_alias]
             # add a timeout here otherwise this blocks forever if the worker dies / errors
-            queue.put(obj, timeout=5)
+            queue.put(obj, timeout=ENQUEUE_TIMEOUT)
 
         def collect_results(dbalias_to_workerqueue) -> Tuple[list, list]:
             load_stats = []

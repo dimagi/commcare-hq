@@ -5,10 +5,12 @@ from collections import Counter
 from datetime import datetime
 from io import StringIO
 
+import mock
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
+from django.db.transaction import TransactionManagementError
 from django.test import SimpleTestCase, TestCase
 from nose.tools import nottest
 
@@ -667,6 +669,39 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             user_id='user_id',
         )
         self._dump_and_load(Counter({ZapierSubscription: 1}))
+
+
+@mock.patch("corehq.apps.dump_reload.sql.load.ENQUEUE_TIMEOUT", 1)
+class TestSqlLoadWithError(BaseDumpLoadTest):
+    def setUp(self):
+        self.products = [
+            SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1'),
+            SQLProduct.objects.create(domain=self.domain_name, product_id='test2', name='test2'),
+            SQLProduct.objects.create(domain=self.domain_name, product_id='test3', name='test3'),
+        ]
+
+    def test_load_error_queue_full(self):
+        """Blocks when sending 'test3'"""
+        self._load_with_errors(chunk_size=1)
+
+    def test_load_error_queue_full_on_terminate(self):
+        """Blocks when sending ``None`` into the queue to 'terminate' it."""
+        self._load_with_errors(chunk_size=2)
+
+    def _load_with_errors(self, chunk_size):
+        output_stream = StringIO()
+        SqlDataDumper(self.domain_name, []).dump(output_stream)
+        self.delete_sql_data()
+        # resave the product to force an error
+        self.products[0].save()
+        actual_model_counts, dump_lines = self._parse_dump_output(output_stream)
+        self.assertEqual(actual_model_counts['products.sqlproduct'], 3)
+
+        loader = SqlDataLoader()
+        with self.assertRaises(TransactionManagementError),\
+             mock.patch("corehq.apps.dump_reload.sql.load.CHUNK_SIZE", chunk_size):
+            # patch the chunk size so that the queue blocks
+            loader.load_objects(dump_lines)
 
 
 class DefaultDictWithKeyTests(SimpleTestCase):
