@@ -129,7 +129,11 @@ def get_module_template(user, module):
 def get_module_view_context(request, app, module, lang=None):
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
-        'show_auto_launch': app.cloudcare_enabled and has_privilege(request, privileges.CLOUDCARE),
+        'show_auto_launch': (
+            app.cloudcare_enabled
+            and has_privilege(request, privileges.CLOUDCARE)
+            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+        ),
     }
     module_brief = {
         'id': module.id,

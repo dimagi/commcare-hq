@@ -747,6 +747,14 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
+CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+    'case_claim_autolaunch',
+    'Allow case claim to be automatically launched in web apps',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
