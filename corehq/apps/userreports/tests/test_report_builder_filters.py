@@ -28,6 +28,18 @@ class PreFilterFormatTest(SimpleTestCase):
             'pre_value': 'a_value',
         }))
 
+    def test_value_less_than_filter_format(self):
+        self.assertEqual(const.PRE_FILTER_VALUE_LESS_THAN, get_pre_filter_format({
+            'pre_operator': '<',
+            'pre_value': '',
+        }))
+
+    def test_value_greater_than_filter_format(self):
+        self.assertEqual(const.PRE_FILTER_VALUE_GREATER_THAN, get_pre_filter_format({
+            'pre_operator': '>',
+            'pre_value': '',
+        }))
+
     def test_value_filter_format(self):
         self.assertEqual(const.FORMAT_VALUE, get_pre_filter_format({
             'pre_operator': '=',
