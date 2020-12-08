@@ -4,6 +4,7 @@ from collections import OrderedDict
 from functools import partial
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -192,6 +193,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
+            'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
@@ -662,7 +664,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes')
+    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
     return response
 
 
@@ -1062,6 +1064,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
                 ),
                 include_closed=bool(search_properties.get('include_closed')),
+                search_filter=search_properties.get('search_filter', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
@@ -1169,7 +1172,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes')
+        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1208,7 +1211,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes')
+        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]

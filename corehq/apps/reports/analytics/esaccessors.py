@@ -533,7 +533,7 @@ def get_form_counts_for_domains(domains):
 
 def get_case_and_action_counts_for_domains(domains):
     actions_agg = aggregations.NestedAggregation('actions', 'actions')
-    aggregation = aggregations.TermsAggregation('domain', 'domain').aggregation(actions_agg)
+    aggregation = aggregations.TermsAggregation('domain', 'domain.exact').aggregation(actions_agg)
     results = CaseES() \
         .filter(filters.term('domain', domains)) \
         .aggregation(aggregation) \

@@ -1,7 +1,7 @@
 import gzip
+import json
 import os
 import zipfile
-from collections import Counter
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument('domain_name')
         parser.add_argument(
             '-e', '--exclude', dest='exclude', action='append', default=[],
-            help='An app_label or app_label.ModelName to exclude '
+            help='An app_label, app_label.ModelName or CouchDB doc_type to exclude '
                  '(use multiple --exclude to exclude multiple apps/models).'
         )
         parser.add_argument(
@@ -34,24 +34,22 @@ class Command(BaseCommand):
         excludes = options.get('exclude')
         console = options.get('console')
         show_traceback = options.get('traceback')
+        requested_dumpers = options.get('dumpers')
 
-        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = 'data-dump-{}-{}.zip'.format(domain_name, utcnow)
+        self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+        zipname = 'data-dump-{}-{}.zip'.format(domain_name, self.utcnow)
 
         self.stdout.ending = None
-        stats = Counter()
+        meta = {}  # {dumper_slug: {model_name: count}}
         # domain dumper should be first since it validates domain exists
-        dumpers = [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]
+        for dumper in [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]:
+            if requested_dumpers and dumper.slug not in requested_dumpers:
+                continue
 
-        requested_dumpers = options.get('dumpers')
-        if requested_dumpers:
-            dumpers = [dumper for dumper in dumpers if dumper.slug in requested_dumpers]
-
-        for dumper in dumpers:
-            filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)
+            filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
             stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
-                stats += dumper(domain_name, excludes).dump(stream)
+                meta[dumper.slug] = dumper(domain_name, excludes).dump(stream)
             except Exception as e:
                 if show_traceback:
                     raise
@@ -66,15 +64,25 @@ class Command(BaseCommand):
 
                 os.remove(filename)
 
+        if not console:
+            with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
+                z.writestr('meta.json', json.dumps(meta))
+
+        self._print_stats(meta)
+        self.stdout.write('\nData dumped to file: {}'.format(zipname))
+
+    def _print_stats(self, meta):
         self.stdout.ending = '\n'
         self.stdout.write('{0} Dump Stats {0}'.format('-' * 32))
-        for model in sorted(stats):
-            self.stdout.write("{:<50}: {}".format(model, stats[model]))
+        for dumper, models in sorted(meta.items()):
+            self.stdout.write(dumper)
+            for model, count in sorted(models.items()):
+                self.stdout.write("  {:<50}: {}".format(model, count))
         self.stdout.write('{0}{0}'.format('-' * 38))
-        self.stdout.write('Dumped {} objects'.format(sum(stats.values())))
+        self.stdout.write('Dumped {} objects'.format(sum(
+            count for model in meta.values() for count in model.values()
+        )))
         self.stdout.write('{0}{0}'.format('-' * 38))
-
-        self.stdout.write('\nData dumped to file: {}'.format(zipname))
 
 
 def _get_dump_stream_filename(slug, domain, utcnow):

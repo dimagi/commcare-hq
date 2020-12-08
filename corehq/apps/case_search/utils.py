@@ -2,6 +2,7 @@ import re
 
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_XPATH_QUERY_KEY,
     SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
@@ -54,6 +55,7 @@ class CaseSearchCriteria(object):
 
     def _assemble_optional_search_params(self):
         self._add_include_closed()
+        self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_case_property_queries()
@@ -65,6 +67,11 @@ class CaseSearchCriteria(object):
             include_closed = False
         if include_closed != 'True':
             self.search_es = self.search_es.is_closed(False)
+
+    def _add_xpath_query(self):
+        query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
+        if query:
+            self.search_es = self.search_es.xpath_query(self.domain, query)
 
     def _add_owner_id(self):
         owner_id = self.criteria.pop('owner_id', False)

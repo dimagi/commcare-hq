@@ -23,46 +23,45 @@ def drop_suffix(doc_type):
 class CouchDataLoader(DataLoader):
     slug = 'couch'
 
-    def __init__(self, object_filter=None, stdout=None, stderr=None):
-        super().__init__(object_filter, stdout, stderr)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._dbs = {}
-        self.success_counter = Counter()
+        self._success_counter = Counter()
+
+    def load_objects(self, object_strings, force=False, dry_run=False):
+        for obj_string in object_strings:
+            doc = json.loads(obj_string)
+            doc_type = drop_suffix(doc['doc_type'])
+            if self._doc_type_matches_filter(doc_type):
+                if dry_run:
+                    self._success_counter[doc_type] += 1
+                else:
+                    db = self._get_db_for_doc_type(doc_type)
+                    db.save(doc)
+
+        for db in self._dbs.values():
+            db.commit()
+
+        return self._success_counter
+
+    def _doc_type_matches_filter(self, doc_type):
+        return not self.object_filter or self.object_filter.findall(doc_type)
 
     def _get_db_for_doc_type(self, doc_type):
         if doc_type not in self._dbs:
             couch_db = get_db_by_doc_type(doc_type)
             if couch_db is None:
                 raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
-            callback = LoaderCallback(self.success_counter, self.stdout)
+            callback = LoaderCallback(self._success_counter, self.stdout)
             db = IterDB(couch_db, new_edits=False, callback=callback)
             db.__enter__()
             self._dbs[doc_type] = db
         return self._dbs[doc_type]
 
-    def load_objects(self, object_strings, force=False):
-        total_object_count = 0
-        for obj_string in object_strings:
-            total_object_count += 1
-            doc = json.loads(obj_string)
-            doc_type = drop_suffix(doc['doc_type'])
-            if self.filter_doc(doc_type):
-                db = self._get_db_for_doc_type(doc_type)
-                db.save(doc)
-
-        for db in self._dbs.values():
-            db.commit()
-
-        return total_object_count, self.success_counter
-
-    def filter_doc(self, doc_type):
-        if not self.object_filter:
-            return True
-        return self.object_filter.findall(doc_type)
-
 
 class LoaderCallback(IterDBCallback):
-    def __init__(self, success_counter, stdout=None):
-        self.success_counter = success_counter
+    def __init__(self, _success_counter, stdout=None):
+        self._success_counter = _success_counter
         self.stdout = stdout
 
     def post_commit(self, operation, committed_docs, success_ids, errors):
@@ -74,23 +73,27 @@ class LoaderCallback(IterDBCallback):
             doc_id = doc['_id']
             doc_type = drop_suffix(doc['doc_type'])
             doc_class = get_document_class_by_doc_type(doc_type)
-            doc_label = '(couch) {}.{}'.format(doc_class._meta.app_label, doc_type)
+            doc_label = '{}.{}'.format(doc_class._meta.app_label, doc_type)
             if doc_id in success_ids:
                 success_doc_types.append(doc_label)
 
-        self.success_counter.update(success_doc_types)
+        self._success_counter.update(success_doc_types)
 
         if self.stdout:
-            self.stdout.write('Loaded {} couch docs'.format(sum(self.success_counter.values())))
+            self.stdout.write('Loaded {} couch docs'.format(sum(self._success_counter.values())))
 
 
 class ToggleLoader(DataLoader):
     slug = 'toggles'
 
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
         from toggle.models import Toggle
         count = 0
         for toggle_json in object_strings:
+            if dry_run:
+                count += 1
+                continue
+
             toggle_dict = json.loads(toggle_json)
             slug = toggle_dict['slug']
             try:
@@ -107,13 +110,13 @@ class ToggleLoader(DataLoader):
             count += 1
 
         self.stdout.write('Loaded {} Toggles'.format(count))
-        return count, Counter({'Toggle': count})
+        return Counter({'Toggle': count})
 
 
 class DomainLoader(DataLoader):
     slug = 'domain'
 
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
         from corehq.apps.domain.models import Domain
         objects = list(object_strings)
         assert len(objects) == 1, "Only 1 domain allowed per dump"
@@ -132,7 +135,8 @@ class DomainLoader(DataLoader):
                 else:
                     raise DataExistsException("Domain: {}".format(domain_name))
 
-        Domain.get_db().bulk_save([domain_dict], new_edits=False)
+        if not dry_run:
+            Domain.get_db().bulk_save([domain_dict], new_edits=False)
         self.stdout.write('Loaded Domain')
 
-        return 1, Counter({'Domain': 1})
+        return Counter({'Domain': 1})

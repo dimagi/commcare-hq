@@ -23,17 +23,19 @@ CHUNK_SIZE = 200
 class SqlDataLoader(DataLoader):
     slug = 'sql'
 
-    def load_objects(self, object_strings, force=False):
-        object_count = 0
+    def load_objects(self, object_strings, force=False, dry_run=False):
+        if dry_run:
+            dry_run_stats = Counter()
+            for line in object_strings:
+                obj = self.line_to_object(line)
+                if obj is not None:
+                    dry_run_stats[obj['model']] += 1
+            return dry_run_stats
 
         def enqueue_object(dbalias_to_workerqueue, obj):
-            nonlocal object_count
             db_alias = get_db_alias(obj)
             __, queue = dbalias_to_workerqueue[db_alias]
             queue.put(obj)
-            object_count += 1
-            if not object_count % 1000:
-                self.stdout.write(f'Loaded {object_count} SQL objects')
 
         def collect_results(dbalias_to_workerqueue) -> Tuple[list, list]:
             load_stats = []
@@ -77,10 +79,10 @@ class SqlDataLoader(DataLoader):
         _reset_sequences(load_stats)
         loaded_model_counts = Counter()
         for db_stats in load_stats:
-            model_labels = (f'(sql) {get_model_label(model)}'
+            model_labels = (f'{get_model_label(model)}'
                             for model in db_stats.model_counter.elements())
             loaded_model_counts.update(model_labels)
-        return object_count, loaded_model_counts
+        return loaded_model_counts
 
     def line_to_object(self, line):
         line = line.strip()

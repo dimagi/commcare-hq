@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from functools import partial
 from threading import Lock
 
-from django.conf import settings
 from django.db.utils import IntegrityError
 
 import attr
@@ -806,8 +805,17 @@ def patch_case_date_modified_fixer():
             if isinstance(datemod, str) and MALFORMED_DATE.match(datemod):
                 # fix modified date so subsequent validation (immediately
                 # after this function call) does not fail
-                assert datemod[8] == "0", datemod
-                case_block["@date_modified"] = datemod[:8] + datemod[9:]
+                if len(datemod) == 10:
+                    # format: MM-DD-YYYY -> YYYY-MM-DD
+                    case_block["@date_modified"] = datemod[6:] + "-" + datemod[:5]
+                elif len(datemod) == 11:
+                    # format: YYYY-MM-0DD -> YYYY-MM-DD
+                    assert datemod[8] == "0", datemod
+                    case_block["@date_modified"] = datemod[:8] + datemod[9:]
+                elif len(datemod) == 17:
+                    # MM/DD/YY HH:MM:SS -> YYYY-MM-DD HH:MM:SS
+                    old = datemod.replace("/", "-")
+                    case_block["@date_modified"] = f"20{old[6:8]}-{old[:5]} {old[9:]}"
         return has_case
     import casexml.apps.case.xform as module
     from casexml.apps.case.xform import has_case_id
@@ -1494,6 +1502,8 @@ class MissingFormLoader:
             data = json.loads(diff.old_value)
             assert data["form_state"] == MISSING_BLOB_PRESENT, data
             form_ids = [data["ledger"]["last_modified_form_id"]]
+        else:
+            raise ValueError(f"unknown diff kind: {diff.kind}")
         return form_ids, case_id
 
     def iter_blob_metas(self, form_ids):

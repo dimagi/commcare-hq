@@ -88,7 +88,7 @@ class BaseAutocompleteTest(TestCase):
 
     def verify(self, autocomplete_enabled, view_path, *fields):
         flag = not autocomplete_enabled
-        setting_path = 'django.conf.settings.ENABLE_DRACONIAN_SECURITY_FEATURES'
+        setting_path = 'django.conf.settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS'
         # HACK use patch to work around bug in override_settings
         # https://github.com/django-compressor/django-appconf/issues/30
         with patch(setting_path, flag):
