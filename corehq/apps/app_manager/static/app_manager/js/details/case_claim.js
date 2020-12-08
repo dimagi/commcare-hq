@@ -134,7 +134,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
                 var label = searchProperties[i].label[lang];
-                var appearance = searchProperties[i].appearance;
+                var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
