@@ -772,6 +772,7 @@ NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 
 def migration_patches():
     with patch_case_property_validators(), \
             patch_XFormInstance_get_xml(), \
+            patch_DateTimeProperty_wrap(), \
             patch_case_date_modified_fixer(), \
             patch_kafka():
         yield
@@ -825,6 +826,26 @@ def patch_case_date_modified_fixer():
         yield
     finally:
         module.has_case_id = has_case_id
+
+
+@contextmanager
+def patch_DateTimeProperty_wrap():
+    def wrap(self, value):
+        if isinstance(value, str):
+            match = weird_utc_date.match(value)
+            if match:
+                value = f"{match.group(1)}Z"
+        return real_wrap(self, value)
+
+    import re
+    from dimagi.ext.jsonobject import DateTimeProperty
+    weird_utc_date = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)\+00:00Z$")
+    real_wrap = DateTimeProperty._wrap
+    DateTimeProperty._wrap = wrap
+    try:
+        yield
+    finally:
+        DateTimeProperty._wrap = real_wrap
 
 
 @contextmanager

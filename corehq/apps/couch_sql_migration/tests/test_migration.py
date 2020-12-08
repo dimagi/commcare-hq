@@ -18,6 +18,7 @@ from django.test import TestCase, override_settings
 import attr
 import mock
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil.parser import parse as parse_date
 from gevent.pool import Pool
 from nose.tools import nottest
 from testil import tempdir
@@ -1497,6 +1498,17 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_case_with_very_long_name(self):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
+
+    def test_form_with_malformed_received_on(self):
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        doc = form.to_json()
+        doc["received_on"] = "2013-05-23T08:33:54+00:00Z"
+        XFormInstance.get_db().save_doc(doc)
+        self.do_migration()
+        self.assertEqual(
+            self._get_form("test-form").received_on,
+            parse_date("2013-05-23T08:33:54"),
+        )
 
     def test_case_with_malformed_date_modified(self):
         bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
