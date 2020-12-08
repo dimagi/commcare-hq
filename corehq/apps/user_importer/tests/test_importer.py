@@ -760,7 +760,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
-    def test_weak_password(self):
+    @patch('corehq.apps.domain.forms.has_custom_clean_password', return_value=False)
+    def test_weak_password(self, _):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
 
