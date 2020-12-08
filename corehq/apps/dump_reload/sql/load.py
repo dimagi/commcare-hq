@@ -168,7 +168,10 @@ def load_data_for_db(db_alias):
                     continue
                 model_counter.update([Model])
                 try:
-                    obj.save(using=db_alias)
+                    # Force insert here to prevent Django from attempting to do an update.
+                    # We want to ensure that if there is already data in the DB that we don't
+                    # save over it and rather error out.
+                    obj.save(using=db_alias, force_insert=True)
                 except DatabaseError as err:
                     logger.exception("Error saving data")
                     m = Model._meta
