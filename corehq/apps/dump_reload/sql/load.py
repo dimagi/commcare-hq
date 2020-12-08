@@ -80,7 +80,8 @@ class SqlDataLoader(DataLoader):
                         enqueue_object(dbalias_to_workerqueue, obj)
                     except Exception as err:
                         __, errors = collect_results(dbalias_to_workerqueue)
-                        errors.append(err)
+                        if not isinstance(err, Full):
+                            errors.append(err)
                         break
             else:
                 load_stats, errors = collect_results(dbalias_to_workerqueue)
