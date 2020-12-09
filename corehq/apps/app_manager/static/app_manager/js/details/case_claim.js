@@ -9,9 +9,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-        searchButtonDisplayCondition, searchFilter, blacklistedOwnerIdsExpression, saveButton,
-        searchFilterObservable) {
+    var searchViewModel = function (searchProperties, autoLaunch, includeClosed, defaultProperties, lang,
+        searchButtonDisplayCondition, searchFilter, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -111,7 +110,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.relevant = ko.observable();
+        self.autoLaunch = ko.observable(autoLaunch);
+        self.relevant = ko.observable('');
         self.default_relevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
@@ -134,7 +134,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
                 var label = searchProperties[i].label[lang];
-                var appearance = searchProperties[i].appearance;
+                var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
@@ -226,6 +226,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
+                auto_launch: self.autoLaunch(),
                 relevant: self._getRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_filter: self.searchFilter(),
@@ -235,6 +236,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             };
         };
 
+        self.autoLaunch.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
