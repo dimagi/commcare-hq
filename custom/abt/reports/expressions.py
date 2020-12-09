@@ -10,10 +10,16 @@ from corehq.util.quickcache import quickcache
 
 class AbtExpressionSpec(JsonObject):
     domain = None
+    _flagspec_filename = None
 
     @cached_property
     def _flag_specs(self):
-        raise NotImplementedError()
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), self._flagspec_filename)
+        with open(path, encoding='utf-8') as f:
+            return yaml.safe_load(f)
 
     @classmethod
     def _get_val(cls, item, path):
@@ -342,58 +348,43 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor')
     comment_from_root = False
 
-    @cached_property
-    def _flag_specs(self):
-        """
-        Return a dict where keys are form xmlns and values are lists of FlagSpecs
-        """
+    @property
+    def _flagspec_filename(self):
         if self.domain == 'vectorlink-uganda':
-            file_name = 'flagspecs_uganda.yaml'
+            return 'flagspecs_uganda.yaml'
         else:
-            file_name = 'flagspecs.yaml'
-        path = os.path.join(os.path.dirname(__file__), file_name)
-        with open(path, encoding='utf-8') as f:
-            return yaml.safe_load(f)
+            return 'flagspecs.yaml'
 
 
 class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2')
+    _flagspec_filename = 'flagspecs_v2.yaml'
     comment_from_root = True
-
-    @cached_property
-    def _flag_specs(self):
-        """
-        Return a dict where keys are form xmlns and values are lists of FlagSpecs
-        """
-        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2.yaml')
-        with open(path, encoding='utf-8') as f:
-            return yaml.safe_load(f)
 
 
 class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2019')
+    _flagspec_filename = 'flagspecs_v2019.yaml'
     comment_from_root = True
 
-    @cached_property
-    def _flag_specs(self):
-        """
-        Return a dict where keys are form xmlns and values are lists of FlagSpecs
-        """
-        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2019.yaml')
-        with open(path, encoding='utf-8') as f:
-            return yaml.safe_load(f)
+
+class AbtSupervisorV2020ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2020')
+    _flagspec_filename = 'flagspecs_v2020.yaml'
+    comment_from_root = True
 
 
 def abt_supervisor_expression(spec, context):
-    wrapped = AbtSupervisorExpressionSpec.wrap(spec)
-    return wrapped
+    return AbtSupervisorExpressionSpec.wrap(spec)
 
 
 def abt_supervisor_v2_expression(spec, context):
-    wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
-    return wrapped
+    return AbtSupervisorV2ExpressionSpec.wrap(spec)
 
 
 def abt_supervisor_v2019_expression(spec, context):
-    wrapped = AbtSupervisorV2019ExpressionSpec.wrap(spec)
-    return wrapped
+    return AbtSupervisorV2019ExpressionSpec.wrap(spec)
+
+
+def abt_supervisor_v2020_expression(spec, context):
+    return AbtSupervisorV2020ExpressionSpec.wrap(spec)

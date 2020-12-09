@@ -58,15 +58,17 @@ branches:
   - fr/user-data-jit            # Farid September 2
   - sr/case-reindex-staging # Sravan Oct 14
   - gh/improve-queueing-repeaters # Graham Oct 22
-  - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
-  - gh/QA-secure-cookies # Graham Nov 12
 # - kev/dompurify-upgrade  # Kevin Nov 10
   - jls/autolaunch-action # Jenny Nov 16
   - sr/es-alias # Sravan Nov 18
-  - ap/fix-case-list-not-appearing # Amit Nov 19
-  - smh/multiple-domain-download-mobile-workers # Steph Nov 19
-  - nh/onse/period  # Norman Nov 20
+  - nh/onse/by_case  # Norman Nov 20
   - jls/copy-linked-app # Jenny Nov 24
-  - jls/slimmer-initial-app # Jenny Nov 25
+  - mk/remove-draconian-full # MK Nov 30
+  - gh/improve-gateway-fee # Graham Dec 1
+  - dependabot/pip/requirements/sentry-sdk-0.19.4 # Daniel Dec 2
+  - sr/autosubmi # Cal Dec 4
+  - sb_fix_app_icon_web_apps # Shubham B Dec 7
+  - ap/fix-date-dropdown-in-help-text # Amit Dec 8
+  #- jls/slimmer-initial-app # Jenny Nov 25
 
 submodules: {}

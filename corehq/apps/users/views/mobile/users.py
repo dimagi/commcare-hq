@@ -49,12 +49,14 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
@@ -291,7 +293,6 @@ class EditCommCareUserView(BaseEditUserView):
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'group_names': [g.name for g in self.groups],
         }
         if self.commtrack_form.errors:
@@ -678,7 +679,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
-            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'skip_standard_password_validations': has_custom_clean_password(),
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
@@ -1380,9 +1381,11 @@ def count_users(request, domain):
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
-
+    user_count = 0
+    for domain in user_filters['domains']:
+        user_count += get_commcare_users_by_filters(domain, user_filters, count_only=True)
     return json_response({
-        'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
+        'count': user_count
     })
 
 
@@ -1395,6 +1398,8 @@ def download_commcare_users(request, domain):
         return HttpResponseRedirect(
             reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
+    if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
+        track_workflow(request.couch_user.username, 'Domain filter used for mobile download')
     is_web_download = False
     if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
         res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,

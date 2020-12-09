@@ -47,6 +47,7 @@
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
   {% compress js %}
+    <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
     <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
   {% endcompress %}
 
@@ -75,6 +76,8 @@
   {% include 'formplayer/dependencies.html' %}
 {% endblock %}
 
+{% initial_page_data 'toggles_dict' toggles_dict %}
+{% initial_page_data 'previews_dict' previews_dict %}
 <div class="initial-page-data" class="hide">
   {% block initial_page_data %}
     {# do not override this block, use initial_page_data template tag to populate #}
