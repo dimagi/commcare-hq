@@ -25,6 +25,7 @@ button.No=NO
 case.date.opened=Date Opened
 case.id=ID
 case.name=Name
+case.search.title=Case Claim
 case.status=Currently Open
 case_lists.m2=Sub Case One Cases
 case_lists.m3=Cases
