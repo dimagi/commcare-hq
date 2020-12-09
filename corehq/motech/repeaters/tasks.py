@@ -87,8 +87,6 @@ def check_repeaters():
     start = datetime.utcnow()
     twentythree_hours_sec = 23 * 60 * 60
     twentythree_hours_later = start + timedelta(hours=23)
-
-    # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
         timeout=twentythree_hours_sec,
@@ -103,14 +101,17 @@ def check_repeaters():
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in iterate_repeat_records(start, chunk_size=5000):
+            soft_migrate_repeat_records(start)
+            for repeater_stub in RepeaterStub.objects.all_ready():
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
-                    "I've been iterating repeat records for 23 hours. I quit!"
+                    "I've been iterating repeaters for 23 hours. I quit!"
                 ):
                     break
-                metrics_counter("commcare.repeaters.check.attempt_forward")
-                record.attempt_forward_now(is_retry=True)
+                if domain_can_forward(repeater_stub.domain):
+                    metrics_counter("commcare.repeaters.check.attempt_forward")
+                    # TODO: Function call should indicate that we are retrying
+                    process_repeater_stub.delay(repeater_stub)
             else:
                 iterating_time = datetime.utcnow() - start
                 _soft_assert(
@@ -119,6 +120,41 @@ def check_repeaters():
                 )
     finally:
         check_repeater_lock.release()
+
+
+def soft_migrate_repeat_records(start):
+    """
+    Soft-migrate repeat records to be sent.
+
+    .. note::
+       The ``migrate_records`` management command will migrate the
+       remaining cancelled and succeeded repeat records ... or they can
+       be ignored ... or deleted.
+
+    .. note::
+       The repeat records report will only show newer repeat records,
+       unless the ``migrate_records`` management command has migrated
+       older records.
+
+    """
+    # After the first run, this should be quick. After seven days
+    # (MAX_RETRY_WAIT) only cancelled and succeeded Couch repeat records
+    # will not have been migrated.
+
+    repeater_stub_cache = {}
+
+    def get_repeater_stub(domain, repeater_id):
+        if (domain, repeater_id) not in repeater_stub_cache:
+            stub = RepeaterStub.objects.get(
+                domain=domain,
+                repeater_id=repeater_id,
+            )
+            repeater_stub_cache[(domain, repeater_id)] = stub
+        return repeater_stub_cache[(domain, repeater_id)]
+
+    for record in iterate_repeat_records(start):
+        repeater_stub = get_repeater_stub(record.domain, record.repeater_id)
+        migrate_repeat_record.delay(repeater_stub, record)
 
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -192,6 +228,7 @@ def process_repeater_stub(repeater_stub: RepeaterStub):
         fail_hard=False, block=False, timeout=5 * 60 * 60,
     ):
         for repeat_record in repeater_stub.repeat_records_ready[:RECORDS_AT_A_TIME]:
+            metrics_counter("commcare.repeaters.check.attempt_forward")
             try:
                 payload = get_payload(repeater_stub.repeater, repeat_record)
             except Exception:
