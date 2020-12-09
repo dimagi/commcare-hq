@@ -15,7 +15,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "formplayer-request",
         attributes: function () {
             var displayText = this.options.model.attributes.displayText;
-            return {"tabindex": "0",
+            return {"role": "link",
+                    "tabindex": "0",
                     "aria-label": displayText.concat(" (Aria Label)")};
         },
         events: {
@@ -241,7 +242,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     label = data[i];
                 }
             }
-            return {"tabindex": "0",
+            return {"role": "link",
+                    "tabindex": "0",
                     "aria-label": label};
         },
 
