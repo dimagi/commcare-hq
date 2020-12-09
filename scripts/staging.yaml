@@ -58,7 +58,6 @@ branches:
   - fr/user-data-jit            # Farid September 2
   - sr/case-reindex-staging # Sravan Oct 14
   - gh/improve-queueing-repeaters # Graham Oct 22
-# - kev/dompurify-upgrade  # Kevin Nov 10
   - jls/autolaunch-action # Jenny Nov 16
   - sr/es-alias # Sravan Nov 18
   - nh/onse/by_case  # Norman Nov 20
@@ -70,5 +69,6 @@ branches:
   - sb_fix_app_icon_web_apps # Shubham B Dec 7
   - ap/fix-date-dropdown-in-help-text # Amit Dec 8
   #- jls/slimmer-initial-app # Jenny Nov 25
+  - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
 
 submodules: {}
