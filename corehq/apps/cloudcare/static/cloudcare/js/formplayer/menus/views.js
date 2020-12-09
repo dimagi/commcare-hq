@@ -13,10 +13,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         className: "formplayer-request",
+        attributes: function () {
+            var displayText = this.options.model.attributes.displayText;
+            return {"tabindex": "0",
+                    "aria-label": displayText.concat(" (Aria Label)")};
+        },
         events: {
             "click": "rowClick",
             "click .js-module-audio-play": "audioPlay",
             "click .js-module-audio-pause": "audioPause",
+            "keydown": "rowKeyAction",
         },
 
         initialize: function (options) {
@@ -66,6 +72,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
+        },
+        rowKeyAction: function(e) {
+            if (e.keyCode == 13) {
+                this.rowClick(e);
+            }
         },
         templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -213,13 +224,36 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click": "rowClick",
+            "keydown": "rowKeyAction",
         },
 
         className: "formplayer-request",
 
+        attributes: function () {
+            // For the ARIA label, we use the first datum that is not
+            // an image or a graph.
+            var label = "";
+            var data = this.options.model.get('data');
+            var styles = this.options.styles;
+            for (let i = 0; i < data.length && i < styles.length; i++) {
+                if (styles[i].displayFormat != 'Image' &&
+                    styles[i].displayFormat != 'Graph') {
+                    label = data[i];
+                }
+            }
+            return {"tabindex": "0",
+                    "aria-label": label};
+        },
+
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
+        },
+
+        rowKeyAction: function(e) {
+            if (e.keyCode == 13) {
+                this.rowClick(e);
+            }
         },
 
         templateContext: function () {
