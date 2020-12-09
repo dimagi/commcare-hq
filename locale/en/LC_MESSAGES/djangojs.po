@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-07 18:06+0000\n"
+"POT-Creation-Date: 2020-12-09 17:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -327,63 +327,63 @@ msgstr ""
 msgid "There are errors in your configuration."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1178
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1179
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1181
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1182
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1184
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1185
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1187
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1188
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1190
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1191
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1193
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1194
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1196
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1197
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1199
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1200
 msgid "Address"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1202
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1203
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1208
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1209
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1211
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1212
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1219
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1220
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1225
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1226
 msgid "Conditional ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1229
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1230
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -619,23 +619,23 @@ msgstr ""
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:105
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:106
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:112
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:161
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -2668,11 +2668,11 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:339
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:340
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:341
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:342
 msgid "This answer is outside the allowed range."
 msgstr ""
 
