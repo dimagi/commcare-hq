@@ -87,8 +87,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
-        self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback,
-                                       presendCallback) {
+        self.serverRequest = function (requestParams, successCallback, blocking, failureCallback,
+                                       errorResponseCallback, presendCallback) {
             if (self.blockingStatus === Const.BLOCK_ALL) {
                 return;
             }
@@ -104,8 +104,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
         };
 
-        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback,
-                                        presendCallback) {
+        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback,
+                                        errorResponseCallback, presendCallback) {
             var self = this;
 
             requestParams.form_context = self.formContext;
