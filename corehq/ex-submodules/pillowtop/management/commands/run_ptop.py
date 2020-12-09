@@ -120,8 +120,8 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number, processor_chunk_size=processor_chunk_size,
-            dedicated_migration_process=dedicated_migration_process)
+            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number,
+            processor_chunk_size=processor_chunk_size, dedicated_migration_process=dedicated_migration_process)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:

@@ -424,8 +424,9 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, name, checkpoint, change_feed, processor, is_dedicated_migration_process=False, process_num=0,
-                 change_processed_event_handler=None, processor_chunk_size=0):
+    def __init__(self, name, checkpoint, change_feed, processor, process_num=0,
+                 change_processed_event_handler=None, processor_chunk_size=0,
+                 is_dedicated_migration_process=False):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
