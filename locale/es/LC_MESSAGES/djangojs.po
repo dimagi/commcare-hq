@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-02 21:27+0000\n"
+"POT-Creation-Date: 2020-12-07 18:06+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3960,27 +3960,19 @@ msgstr "Cambio de contraseña exitoso"
 msgid "Password was not changed "
 msgstr "No se cambió de contraseña"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
-msgid ""
-"Password Requirements: 1 special character, 1 number, 1 capital letter, "
-"minimum length of 8 characters."
-msgstr ""
-"Requisitos para la Contraseña: 1 caracter especial, 1 número, 1  letra "
-"mayúscula, y largo mínimo de 8 caracteres."
-
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Available Groups"
 msgstr "Grupos Disponibles"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Groups with this User"
 msgstr "Grupos con este Usuario"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Search Group..."
 msgstr "Buscar Grupo..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:111
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:107
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
@@ -3992,19 +3984,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:315
+#: corehq/apps/users/static/users/js/mobile_workers.js:306
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:317
+#: corehq/apps/users/static/users/js/mobile_workers.js:308
 msgid "Please enter a valid email address."
 msgstr "Por favor ingrese una dirección de correo válida."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:378
+#: corehq/apps/users/static/users/js/mobile_workers.js:369
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:399
+#: corehq/apps/users/static/users/js/mobile_workers.js:390
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
@@ -4372,3 +4364,10 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js:94
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid ""
+#~ "Password Requirements: 1 special character, 1 number, 1 capital letter, "
+#~ "minimum length of 8 characters."
+#~ msgstr ""
+#~ "Requisitos para la Contraseña: 1 caracter especial, 1 número, 1  letra "
+#~ "mayúscula, y largo mínimo de 8 caracteres."

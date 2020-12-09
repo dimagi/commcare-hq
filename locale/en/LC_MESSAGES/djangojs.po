@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-02 21:27+0000\n"
+"POT-Creation-Date: 2020-12-07 18:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3766,25 +3766,19 @@ msgstr ""
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
-msgid ""
-"Password Requirements: 1 special character, 1 number, 1 capital letter, "
-"minimum length of 8 characters."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:111
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:107
 msgid "Group membership has changed."
 msgstr ""
 
@@ -3796,19 +3790,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:315
+#: corehq/apps/users/static/users/js/mobile_workers.js:306
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:317
+#: corehq/apps/users/static/users/js/mobile_workers.js:308
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:378
+#: corehq/apps/users/static/users/js/mobile_workers.js:369
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:399
+#: corehq/apps/users/static/users/js/mobile_workers.js:390
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
