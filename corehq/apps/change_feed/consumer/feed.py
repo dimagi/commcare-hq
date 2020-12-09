@@ -25,7 +25,8 @@ class KafkaChangeFeed(ChangeFeed):
     """
     sequence_format = 'json'
 
-    def __init__(self, topics, client_id, strict=False, num_processes=1, dedicated_migration_process=False, process_num=0):
+    def __init__(self, topics, client_id, strict=False, num_processes=1,
+                 process_num=0,dedicated_migration_process=False,):
         """
         Create a change feed listener for a list of kafka topics, a client ID, and partition.
 
