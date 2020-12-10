@@ -72,7 +72,7 @@ from corehq.apps.locations.models import (
 )
 from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import new_key_record
-from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket, DeviceLogRequest
+from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
@@ -93,7 +93,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist, TransifexOrganization, TransifexProject
+from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes

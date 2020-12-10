@@ -1,6 +1,5 @@
 import itertools
 import logging
-from collections import Counter
 from datetime import date
 
 from django.apps import apps
@@ -8,9 +7,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import connection, transaction
 from django.db.models import Q
-
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from dimagi.utils.chunked import chunked
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
@@ -25,7 +21,9 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
 from settings import HQ_ACCOUNT_ROOT
 
 logger = logging.getLogger(__name__)
