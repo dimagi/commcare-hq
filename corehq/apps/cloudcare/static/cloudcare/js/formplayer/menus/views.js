@@ -231,21 +231,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "formplayer-request",
 
         attributes: function () {
-            // For the ARIA label, we use the first datum that is not
-            // an image or a graph.
-            var label = "";
-            var data = this.options.model.get('data');
-            var styles = this.options.styles;
-            for (let i = 0; i < data.length && i < styles.length; i++) {
-                if (styles[i].displayFormat != 'Image' &&
-                    styles[i].displayFormat != 'Graph') {
-                    label = data[i];
-                }
-            }
-
+            var label_id = "case-view-item-".concat(this.options.model.attributes.id);
             return {"role": "link",
                     "tabindex": "0",
-                    "aria-label": label};
+                    "aria-labelledby": label_id};
         },
 
         rowClick: function (e) {
@@ -267,6 +256,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
+                labelId: "case-view-item-".concat(this.options.model.attributes.id),
             };
         },
     });
