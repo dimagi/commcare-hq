@@ -7,7 +7,7 @@ from importlib import import_module
 from itertools import chain
 
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.db.models import F
 from django.db.transaction import atomic
