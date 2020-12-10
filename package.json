@@ -18,7 +18,7 @@
         "angular-datatables": "0.5.6",
         "angular-leaflet-directive": "tombatossals/angular-leaflet-directive#master",
         "angular-message-format": "1.7.9",
-        "angular-messages": "1.7.9",
+        "angular-messages": "1.8.2",
         "angular-nvd3": "1.0.9",
         "angular-perfect-scrollbar": "0.2.0",
         "angular-resource": "1.7.9",

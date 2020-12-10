@@ -241,10 +241,10 @@ angular-message-format@1.7.9:
   resolved "https://registry.yarnpkg.com/angular-message-format/-/angular-message-format-1.7.9.tgz#324deb179d4adcb1a9684dc55bd5bc55c1e34c56"
   integrity sha512-8ya9OrKh7QO78zZr3PIJERfB9d18KpFUwEcyxTUaKVSgI9K0h4VyL2N1sSp4b3eMYZ/4/XYgOHYPXx12mNS+kw==
 
-angular-messages@1.7.9:
-  version "1.7.9"
-  resolved "https://registry.yarnpkg.com/angular-messages/-/angular-messages-1.7.9.tgz#6403b7f56df4b17b62d88762ac5e6b1702347fd2"
-  integrity sha512-OdJihuO6AW+m1/r9OdW5riCwacn3dL1agQvgu6Cww3a7OARXXN0vxOpsZCNk4yg4CuD7Et3tiz4DymhvZkydvw==
+angular-messages@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular-messages/-/angular-messages-1.8.2.tgz#47f0cf913030bc2231423ab9388acc14dd931837"
+  integrity sha512-M1qNh/30cLJi4yJJ+3YB8saPonRcavz5Dquqz0T/aUySKJhIkUoeCkmF+BcLH4SJ5PBp04yy4CZUUeNRVi7jZA==
 
 angular-mocks@1.7.9:
   version "1.7.9"
