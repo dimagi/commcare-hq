@@ -8,6 +8,7 @@ from urllib.error import HTTPError
 import attr
 from celery.schedules import crontab
 from celery.task import periodic_task
+from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
@@ -191,23 +192,17 @@ def previous_quarters_up_to(some_date: date) -> Iterable[str]:
 
     .. _period format: https://docs.dhis2.org/master/en/developer/html/webapi_date_perid_format.html
     """
-    current_date = date.today()
+    current_date = datetime.utcnow().date()
     while current_date > some_date:
         yield previous_quarter(current_date)
-        year = current_date.year
-        month = current_date.month - 3
-        if month <= 0:
-            year -= 1
-            month += 12
-        current_date = date(year, month, current_date.day)
+        current_date -= relativedelta(months=3)
 
 
 def five_years_ago():
     """
     Returns the date five years ago today.
     """
-    today = date.today()
-    return date(today.year - 5, today.month, today.day)
+    return datetime.utcnow().date() - relativedelta(years=5)
 
 
 def fetch_data_set(
