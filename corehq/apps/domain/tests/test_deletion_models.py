@@ -68,7 +68,7 @@ def test_deletion_sql_models():
         if model._meta.app_label in IGNORE_APPS:
             return True
 
-        if  get_model_label(model) in IGNORE_MODELS:
+        if get_model_label(model) in IGNORE_MODELS:
             return True
 
         if model._meta.proxy:
@@ -78,7 +78,5 @@ def test_deletion_sql_models():
         model for model in apps.get_models() if not _ignore_model(model)
     }
 
-    for m in sorted([f"{m._meta.app_label}.{m.__name__}" for m in installed_models-covered_models]):
-        print(m)
     uncovered_models = installed_models - covered_models
     eq(uncovered_models, set(), "Not all Django models are covered by domain deletion.")
