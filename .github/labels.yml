@@ -67,6 +67,9 @@ labels:
 - name: 'dependencies'
   color: navy
   description: 'Pull requests that update a dependency file'
+- name: 'dependencies/javascript'
+  color: grey
+  description: 'Change in javascript dependency.'
 - name: 'awaiting QA'
   color: light_orange
   description: 'QA in progress. Do not merge'
