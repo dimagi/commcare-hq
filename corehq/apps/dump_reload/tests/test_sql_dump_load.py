@@ -627,7 +627,10 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         TransifexProject.objects.create(
             organization=org, slug='testp', name='demop', domain=self.domain_name
         )
-        self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
+        TransifexProject.objects.create(
+            organization=org, slug='testp1', name='demop1', domain=self.domain_name
+        )
+        self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 2}))
 
     def test_filtered_dump_load(self):
         from corehq.apps.locations.tests.test_location_types import make_loc_type

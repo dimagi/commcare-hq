@@ -135,7 +135,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
+    UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
 ]]
