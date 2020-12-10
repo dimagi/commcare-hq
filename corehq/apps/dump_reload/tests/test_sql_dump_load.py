@@ -8,7 +8,7 @@ from io import StringIO
 import mock
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
 from django.db.transaction import TransactionManagementError
 from django.test import SimpleTestCase, TestCase
@@ -698,7 +698,7 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
         self.assertEqual(actual_model_counts['products.sqlproduct'], 3)
 
         loader = SqlDataLoader()
-        with self.assertRaises(TransactionManagementError),\
+        with self.assertRaises(IntegrityError),\
              mock.patch("corehq.apps.dump_reload.sql.load.CHUNK_SIZE", chunk_size):
             # patch the chunk size so that the queue blocks
             loader.load_objects(dump_lines)
