@@ -88,11 +88,8 @@ def update_facility_cases_from_dhis2_data_elements(
             futures = (executor.submit(set_case_updates,
                                        dhis2_server, clay, period)
                        for clay in clays)
-            for futures_chunk in chunked(futures, 100):
-                case_blocks_chunk = []
-                for future in as_completed(futures_chunk):
-                    case_block = future.result()  # reraises exceptions in workers
-                    case_blocks_chunk.append(case_block)
+            for futures_chunk in chunked(as_completed(futures), 100):
+                case_blocks_chunk = [f.result() for f in futures_chunk]
                 save_cases(case_blocks_chunk)
     except Exception as err:
         handle_error(err, dhis2_server, print_notifications)
