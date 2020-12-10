@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             var sessionLabelId = "SessionLabel-".concat(this.model.get('sessionId'));
             return {"role": "link",
                     "tabindex": "0",
-                    "aria-labelledBy": sessionLabelId};
+                    "aria-labelledby": sessionLabelId};
         },
 
         template: _.template($("#session-view-item-template").html() || ""),
