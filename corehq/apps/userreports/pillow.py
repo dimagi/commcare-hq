@@ -192,6 +192,7 @@ class ConfigurableReportTableManagerMixin(object):
             self.table_adapters_by_domain[config.domain].append(
                 self._get_indicator_adapter(config)
             )
+
         if self.run_migrations:
             self.rebuild_tables_if_necessary()
 

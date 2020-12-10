@@ -50,7 +50,7 @@ def transform_case_for_elasticsearch(doc_dict):
 
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_processes=1,
-                                    process_num=0, **kwargs):
+                                     process_num=0, **kwargs):
     """Return a pillow that processes cases to Elasticsearch.
 
     Processors:
