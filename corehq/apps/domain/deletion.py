@@ -103,6 +103,17 @@ class PartitionedModelDeletion(ModelDeletion):
             model.objects.using(db_name).filter(**{self.domain_filter_kwarg: domain_name}).delete()
 
 
+class DjangoUserRelatedModelDeletion(ModelDeletion):
+    def execute(self, domain_name):
+        if not self.is_app_installed():
+            return
+        model = self.get_model_class()
+        filter_kwarg = f"{self.domain_filter_kwarg}__contains"
+        total, counts = model.objects.filter(**{filter_kwarg: f"@{domain_name}.commcarehq.org"}).delete()
+        logger.info("Deleted %s %s", total, self.model_name)
+        logger.info(counts)
+
+
 def _delete_domain_backend_mappings(domain_name):
     model = apps.get_model('sms', 'SQLMobileBackendMapping')
     model.objects.filter(is_global=False, domain=domain_name).delete()
@@ -213,6 +224,17 @@ def _delete_filtered_models(app_name, models, domain_filters):
             if total:
                 logger.info("Deleted %s", counts)
 
+
+def _delete_demo_user_restores(domain_name):
+    from corehq.apps.ota.models import DemoUserRestore
+    from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
+    for user in get_practice_mode_mobile_workers(domain_name):
+        if user.demo_restore_id:
+            try:
+                DemoUserRestore.objects.get(id=user.demo_restore_id).delete()
+            except DemoUserRestore.DoesNotExist:
+                pass
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -227,6 +249,10 @@ DOMAIN_DELETE_OPERATIONS = [
         DELETE FROM commtrack_stockstate
         WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)
     """),
+    DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
+    DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
+    DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
+    DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
     ModelDeletion('locations', 'SQLLocation', 'domain', ['LocationRelation']),
@@ -318,6 +344,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),
     ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
     ModelDeletion('phone', 'SyncLogSQL', 'domain'),
+    CustomDeletion('ota', _delete_demo_user_restores, ['DemoUserRestore']),
     ModelDeletion('phonelog', 'ForceCloseEntry', 'domain'),
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),

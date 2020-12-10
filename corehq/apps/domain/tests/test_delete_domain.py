@@ -4,10 +4,9 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
 
+from dateutil.relativedelta import relativedelta
 from django.core.management import call_command
 from django.test import TestCase, override_settings
-
-from dateutil.relativedelta import relativedelta
 from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
@@ -17,8 +16,6 @@ from casexml.apps.stock.models import (
     StockReport,
     StockTransaction,
 )
-from couchforms.models import UnfinishedSubmissionStub
-
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -50,8 +47,8 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -76,8 +73,8 @@ from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import new_key_record
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
     SMS,
@@ -101,6 +98,7 @@ from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import NotFound, get_blob_db, CODES
+from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -113,6 +111,10 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.util.test_utils import trap_extra_setup
+from couchforms.models import UnfinishedSubmissionStub
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestDeleteDomain(TestCase):
@@ -173,6 +175,14 @@ class TestDeleteDomain(TestCase):
             backend=backend
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        with trap_extra_setup(ConnectionError):
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()

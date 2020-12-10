@@ -1,5 +1,4 @@
 import itertools
-from datetime import date
 
 from django.apps import apps
 from testil import eq
@@ -23,6 +22,7 @@ IGNORE_APPS = {
     'icds_reports',
     'notifications',
     'oauth2_provider',
+    'phonelog',  # these are deleted after 60 days regardless
     'pillow_retry',
     'pillowtop',
     'project_limits',
@@ -55,18 +55,6 @@ IGNORE_MODELS = {
     'util.TransientBounceEmail',
 }
 
-"""
-    'otp_static.StaticDevice',
-    'otp_static.StaticToken',
-    'otp_totp.TOTPDevice',
-    'two_factor.PhoneDevice',
-    'users.HQApiKey',
-    
-    'ota.DemoUserRestore',
-    'phonelog.DeviceReportEntry',
-    'phonelog.UserEntry',
-"""
-
 
 def test_deletion_sql_models():
     covered_models = set(itertools.chain.from_iterable(
@@ -92,4 +80,5 @@ def test_deletion_sql_models():
 
     for m in sorted([f"{m._meta.app_label}.{m.__name__}" for m in installed_models-covered_models]):
         print(m)
-    eq(installed_models, covered_models)
+    uncovered_models = installed_models - covered_models
+    eq(uncovered_models, set(), "Not all Django models are covered by domain deletion.")
