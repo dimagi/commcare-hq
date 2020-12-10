@@ -8,7 +8,7 @@ updates:
   open-pull-requests-limit: 5
   labels:
   - product/invisible
-- package-ecosystem: yarn
+- package-ecosystem: npm
   directory: "/"
   schedule:
     interval: daily
