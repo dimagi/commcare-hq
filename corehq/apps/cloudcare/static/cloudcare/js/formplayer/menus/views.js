@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var displayText = this.options.model.attributes.displayText;
             return {"role": "link",
                     "tabindex": "0",
-                    "aria-label": displayText.concat(" (Aria Label)")};
+                    "aria-label": displayText};
         },
         events: {
             "click": "rowClick",
@@ -242,6 +242,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     label = data[i];
                 }
             }
+
             return {"role": "link",
                     "tabindex": "0",
                     "aria-label": label};
