@@ -5,6 +5,7 @@ from decimal import Decimal
 from io import BytesIO
 
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from mock import patch
@@ -71,7 +72,7 @@ from corehq.apps.locations.models import (
 )
 from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import new_key_record
-from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
+from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket, DeviceLogRequest
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
@@ -92,7 +93,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
+from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist, TransifexOrganization, TransifexProject
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
@@ -115,6 +116,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
 from couchforms.models import UnfinishedSubmissionStub
 from pillowtop.es_utils import initialize_index_and_mapping
+from settings import HQ_ACCOUNT_ROOT
 
 
 class TestDeleteDomain(TestCase):
@@ -859,6 +861,7 @@ class TestDeleteDomain(TestCase):
         self._assert_queryset_count([
             DomainRequest.objects.filter(domain=domain_name),
             Invitation.objects.filter(domain=domain_name),
+            User.objects.filter(username__contains=f'{domain_name}.{HQ_ACCOUNT_ROOT}')
         ], count)
 
     def test_users_delete(self):
@@ -866,6 +869,7 @@ class TestDeleteDomain(TestCase):
             DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
             Invitation.objects.create(domain=domain_name, email='user@test.com',
                                       invited_by='friend@test.com', invited_on=datetime.utcnow())
+            User.objects.create(username=f'mobileuser@{domain_name}.{HQ_ACCOUNT_ROOT}')
             self._assert_users_counts(domain_name, 1)
 
         self.domain.delete()

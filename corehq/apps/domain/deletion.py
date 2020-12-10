@@ -26,6 +26,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.util.log import with_progress_bar
+from settings import HQ_ACCOUNT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +185,6 @@ def _delete_all_forms(domain_name):
     logger.info('Deleting forms complete.')
 
 
-
 def _delete_data_files(domain_name):
     get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
         parent_id=domain_name,
@@ -210,7 +210,7 @@ def _delete_sms_content_events_schedules(domain_name):
 
 def _delete_django_users(domain_name):
     total, counts = User.objects.filter(
-        username__contains=f"@{domain_name}.commcarehq.org"
+        username__contains=f"@{domain_name}.{HQ_ACCOUNT_ROOT}"
     ).delete()
     logger.info("Deleted %s Django users", total)
     logger.info(counts)
