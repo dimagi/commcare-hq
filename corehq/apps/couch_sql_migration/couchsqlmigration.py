@@ -535,6 +535,7 @@ class CouchSqlDomainMigrator:
                 and isinstance(old_value, dict)
                 and "ledger" in old_value
                 and old_value.get("form_state") != MISSING_BLOB_PRESENT
+                and old_value["ledger"]["last_modified_form_id"] is not None
             ):
                 yield old_value["ledger"]["last_modified_form_id"]
 
