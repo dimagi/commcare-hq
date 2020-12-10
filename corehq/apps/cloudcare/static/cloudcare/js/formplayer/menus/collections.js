@@ -20,6 +20,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
         entityProperties: [
             'actions',
+            'autolaunch',
             'styles',
             'headers',
             'currentPage',
