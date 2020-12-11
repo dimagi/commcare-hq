@@ -189,7 +189,7 @@ class StaticToggle(object):
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
-        set_toggle(self.slug, item, enabled, namespace)
+        return set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
         """
@@ -743,6 +743,14 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'Enable synchronous mobile searching and case claiming',
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+    'case_claim_autolaunch',
+    'Allow case claim to be automatically launched in web apps',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
 )
 

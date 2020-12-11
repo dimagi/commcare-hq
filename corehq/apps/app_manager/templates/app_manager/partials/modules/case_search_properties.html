@@ -192,7 +192,23 @@
       </div>
       <div class="panel-body">
         <div class="form-horizontal">
-          <div class="form-group">
+          {% if show_auto_launch %}
+            <div class="form-group">
+              <label class="control-label {% css_label_class %}" for="search-auto-launch">
+                {% trans "Web Apps Autolaunch" %}
+              <span class="hq-help-template" data-title="{% trans "Web Apps Autolaunch" %}"
+                    data-content="{% trans_html_attr "In Web Apps, automatically launch case claim whenever user
+visits this case list." %}">
+              </span>
+              </label>
+              <div class="checkbox {% css_field_class %}">
+                <label>
+                  <input type="checkbox" id="search-auto-launch" data-bind="checked: autoLaunch">
+                </label>
+              </div>
+            </div>
+          {% endif %}
+          <div class="form-group" data-bind="visible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
               <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
@@ -230,9 +246,9 @@
           </div>
           <div class="form-group">
             <label for="claim-relevant-condition" class="control-label {% css_label_class %}">
-              {% trans "Search Condition" %}
-              <span class="hq-help-template" data-title="{% trans "Search Condition" %}"
-                    data-content="{% trans_html_attr "If this expression evaluates to false, the search will not be performed." %}">
+              {% trans "Claim Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Claim Condition" %}"
+                    data-content="{% trans_html_attr "If this expression evaluates to false, no case will be claimed." %}">
               </span>
             </label>
             <div class="{% css_field_class %}">

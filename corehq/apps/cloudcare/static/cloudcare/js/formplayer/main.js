@@ -1,6 +1,7 @@
 hqDefine("cloudcare/js/formplayer/main", function () {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+            toggles = hqImport("hqwebapp/js/toggles");
         window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
         var options = {
             apps: initialPageData('apps'),
@@ -12,8 +13,8 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             debuggerEnabled: initialPageData('debugger_enabled'),
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
-            useLiveQuery: initialPageData('use_live_query'),
-            changeFormLanguage: initialPageData('change_form_language'),
+            useLiveQuery: toggles.toggleEnabled('FORMPLAYER_USE_LIVEQUERY'),
+            changeFormLanguage: toggles.toggleEnabled('CHANGE_FORM_LANGUAGE'),
         };
         hqImport("cloudcare/js/formplayer/app").start(options);
 

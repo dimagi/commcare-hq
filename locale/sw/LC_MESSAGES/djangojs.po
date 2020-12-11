@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-18 19:15+0000\n"
+"POT-Creation-Date: 2020-12-09 17:47+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
@@ -327,63 +327,63 @@ msgstr ""
 msgid "There are errors in your configuration."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1176
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1179
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1179
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1182
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1182
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1185
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1185
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1188
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1188
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1191
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1191
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1194
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1194
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1197
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1197
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1200
 msgid "Address"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1200
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1203
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1206
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1209
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1209
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1212
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1217
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1220
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1223
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1226
 msgid "Conditional ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1227
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1230
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -619,23 +619,23 @@ msgstr ""
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:104
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:106
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:111
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:160
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:161
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -2668,11 +2668,11 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:339
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:340
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:341
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:342
 msgid "This answer is outside the allowed range."
 msgstr ""
 
@@ -2735,11 +2735,11 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:29
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:30
 msgid "Show Full Menu"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:36
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:37
 msgid "Hide Full Menu"
 msgstr ""
 
@@ -3104,11 +3104,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:66
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:68
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:95
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:97
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3179,13 +3179,13 @@ msgstr ""
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:54
+#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:53
 msgid ""
 "We could not turn on the new feature. You will have the opportunity to turn "
 "it on the next time you visit this page."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:85
+#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:84
 msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
@@ -3488,7 +3488,7 @@ msgstr ""
 msgid "That do not have phone numbers"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/hq_report.js:71
+#: corehq/apps/reports/static/reports/js/hq_report.js:73
 msgid ""
 "Your requested Excel report will be sent to the email address defined in "
 "your account settings."
@@ -3766,49 +3766,43 @@ msgstr ""
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
-msgid ""
-"Password Requirements: 1 special character, 1 number, 1 capital letter, "
-"minimum length of 8 characters."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:111
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:107
 msgid "Group membership has changed."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:28
+#: corehq/apps/users/static/users/js/filtered_download.js:29
 msgid "Download <%= count %> user"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:28
+#: corehq/apps/users/static/users/js/filtered_download.js:29
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:315
+#: corehq/apps/users/static/users/js/mobile_workers.js:306
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:317
+#: corehq/apps/users/static/users/js/mobile_workers.js:308
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:378
+#: corehq/apps/users/static/users/js/mobile_workers.js:369
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:399
+#: corehq/apps/users/static/users/js/mobile_workers.js:390
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 

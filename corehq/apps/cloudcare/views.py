@@ -170,7 +170,7 @@ class FormplayerMain(View):
             ).run()
             if login_as_users.total == 1:
                 def set_cookie(response):
-                    response.set_cookie(cookie_name, user.raw_username)
+                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
                     return response
 
                 user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
@@ -218,9 +218,7 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
-            "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
             "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
         return set_cookie(
@@ -282,7 +280,6 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
         }
