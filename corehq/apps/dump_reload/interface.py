@@ -35,10 +35,9 @@ class DataDumper(metaclass=ABCMeta):
 
 
 class DataLoader(metaclass=ABCMeta):
-    def __init__(self, object_filter=None, skip=None, stdout=None, stderr=None):
+    def __init__(self, object_filter=None, stdout=None, stderr=None):
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
-        self.skip = skip
         self.object_filter = re.compile(object_filter, re.IGNORECASE) if object_filter else None
 
     @abstractproperty
@@ -69,9 +68,9 @@ class DataLoader(metaclass=ABCMeta):
 
         self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
         meta_slug, _ = os.path.splitext(os.path.basename(file_path))
-        expected_count = sum(dump_meta[meta_slug].values()) - (self.skip or 0)
+        expected_count = sum(dump_meta[meta_slug].values())
         with gzip.open(file_path) as dump_file:
-            object_strings = with_progress_bar(self._slice(dump_file), length=expected_count)
+            object_strings = with_progress_bar(dump_file, length=expected_count)
             loaded_object_count = self.load_objects(object_strings, force, dry_run)
 
         # Warn if the file we loaded contains 0 objects.
@@ -83,13 +82,3 @@ class DataLoader(metaclass=ABCMeta):
             )
 
         return {meta_slug: loaded_object_count}
-
-    def _slice(self, dump_file):
-        if not self.skip:
-            yield from dump_file
-            return
-
-        self.stdout.write(f"Skipping the first {self.skip} items in the file.")
-        for count, item in enumerate(dump_file):
-            if count >= self.skip:
-                yield item
