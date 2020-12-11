@@ -344,22 +344,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
     var paginateOptions = function (currentPage, totalPages) {
-        let maxPages = 5;
+        var maxPages = 5;
         // ensure current page isn't out of range
         if (currentPage < 1) {
             currentPage = 1;
         } else if (currentPage > totalPages) {
             currentPage = totalPages;
         }
-        let startPage, endPage;
+        var startPage, endPage;
         if (totalPages <= maxPages) {
             // total pages less than max so show all pages
             startPage = 1;
             endPage = totalPages;
         } else {
             // total pages more than max so calculate start and end pages
-            let maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
-            let maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
+            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
+            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
             if (currentPage <= maxPagesBeforeCurrentPage) {
                 // current page near the start
                 startPage = 1;
