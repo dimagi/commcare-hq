@@ -99,7 +99,6 @@ from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import NotFound, get_blob_db, CODES
-from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -112,10 +111,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.test_utils import trap_extra_setup
 from couchforms.models import UnfinishedSubmissionStub
-from pillowtop.es_utils import initialize_index_and_mapping
 from settings import HQ_ACCOUNT_ROOT
 
 
@@ -177,14 +173,6 @@ class TestDeleteDomain(TestCase):
             backend=backend
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        with trap_extra_setup(ConnectionError):
-            cls.es = get_es_new()
-            initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()

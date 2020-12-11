@@ -14,8 +14,10 @@ from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
+from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
+from corehq.elastic import ESError
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -226,7 +228,13 @@ def _delete_filtered_models(app_name, models, domain_filters):
 def _delete_demo_user_restores(domain_name):
     from corehq.apps.ota.models import DemoUserRestore
     from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
-    for user in get_practice_mode_mobile_workers(domain_name):
+    try:
+        users = get_practice_mode_mobile_workers(domain_name)
+    except ESError:
+        # Fallback in case of ES Error
+        users = get_all_commcare_users_by_domain(domain_name)
+
+    for user in users:
         if user.demo_restore_id:
             try:
                 DemoUserRestore.objects.get(id=user.demo_restore_id).delete()
@@ -236,7 +244,6 @@ def _delete_demo_user_restores(domain_name):
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
-
 DOMAIN_DELETE_OPERATIONS = [
     RawDeletion('stock', ['stocktransaction'], """
         DELETE FROM stock_stocktransaction
