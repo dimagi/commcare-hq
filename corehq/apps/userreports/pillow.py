@@ -510,7 +510,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
-            processor_chunk_size=0):
+            is_dedicated_migration_process=False, processor_chunk_size=0):
         change_feed = KafkaChangeFeed(
             topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
