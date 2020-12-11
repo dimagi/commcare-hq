@@ -318,7 +318,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            let paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
+            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             return {
                 startPage: paginateItems["startPage"],
                 title: this.options.title,
