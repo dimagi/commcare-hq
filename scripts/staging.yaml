@@ -65,8 +65,7 @@ branches:
   - gh/improve-gateway-fee # Graham Dec 1
   - dependabot/pip/requirements/sentry-sdk-0.19.4 # Daniel Dec 2
   - sr/autosubmi # Cal Dec 4
-  - sb_fix_app_icon_web_apps # Shubham B Dec 7
-  #- jls/slimmer-initial-app # Jenny Nov 25
+  - jls/slimmer-initial-app # Jenny Nov 25
   - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
   - jls/autolaunch-action-round-2  # Jenny Dec 9
 
