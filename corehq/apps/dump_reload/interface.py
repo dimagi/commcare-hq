@@ -35,10 +35,9 @@ class DataDumper(metaclass=ABCMeta):
 
 
 class DataLoader(metaclass=ABCMeta):
-    def __init__(self, object_filter=None, skip=None, stdout=None, stderr=None):
+    def __init__(self, object_filter=None, stdout=None, stderr=None):
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
-        self.skip = skip
         self.object_filter = re.compile(object_filter, re.IGNORECASE) if object_filter else None
 
     @abstractproperty
@@ -46,7 +45,7 @@ class DataLoader(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
         """
         :param object_strings: iterable of JSON encoded object strings
         :param force: True if objects should be loaded into an existing domain
@@ -54,16 +53,25 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def load_from_file(self, extracted_dump_path, dump_meta, force=False):
-        file_path = os.path.join(extracted_dump_path, '{}.gz'.format(self.slug))
+    def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False):
+        loaded_object_count = {}
+        for file in os.listdir(extracted_dump_path):
+            path = os.path.join(extracted_dump_path, file)
+            if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
+                counts = self.load_from_file(path, dump_meta, force, dry_run)
+                loaded_object_count.update(counts)
+        return loaded_object_count
+
+    def load_from_file(self, file_path, dump_meta, force=False, dry_run=False):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
         self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
-        expected_count = sum(dump_meta[self.slug].values()) - (self.skip or 0)
+        meta_slug, _ = os.path.splitext(os.path.basename(file_path))
+        expected_count = sum(dump_meta[meta_slug].values())
         with gzip.open(file_path) as dump_file:
-            object_strings = with_progress_bar(self._slice(dump_file), length=expected_count)
-            loaded_object_count = self.load_objects(object_strings, force)
+            object_strings = with_progress_bar(dump_file, length=expected_count)
+            loaded_object_count = self.load_objects(object_strings, force, dry_run)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
@@ -73,14 +81,4 @@ class DataLoader(metaclass=ABCMeta):
                 RuntimeWarning
             )
 
-        return loaded_object_count
-
-    def _slice(self, dump_file):
-        if not self.skip:
-            yield from dump_file
-            return
-
-        self.stdout.write(f"Skipping the first {self.skip} items in the file.")
-        for count, item in enumerate(dump_file):
-            if count >= self.skip:
-                yield item
+        return {meta_slug: loaded_object_count}

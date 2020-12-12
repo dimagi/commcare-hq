@@ -37,12 +37,23 @@ class ManyFilters(DomainFilter):
 
 
 class UsernameFilter(DomainFilter):
+    def __init__(self, user_ids=None):
+        self.user_ids = user_ids
+
     def get_filters(self, domain_name):
         """
         :return: A generator of filters each filtering for at most 500 users.
         """
         from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
-        usernames = get_all_usernames_by_domain(domain_name)
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
+        if self.user_ids:
+            usernames = [
+                username
+                for user_id, username in get_all_user_id_username_pairs_by_domain(domain_name, include_web_users=False)
+                if user_id in self.user_ids
+            ]
+        else:
+            usernames = get_all_usernames_by_domain(domain_name)
         for chunk in chunked(usernames, 500):
             filter = Q()
             for username in chunk:
@@ -50,20 +61,28 @@ class UsernameFilter(DomainFilter):
             yield filter
 
 
-class UserIDFilter(DomainFilter):
-    def __init__(self, user_id_field, include_web_users=True):
-        self.user_id_field = user_id_field
-        self.include_web_users = include_web_users
+class IDFilter(DomainFilter):
+    def __init__(self, field, ids):
+        self.field = field
+        self.ids = ids
+
+    def get_ids(self, domain_name):
+        return self.ids
 
     def get_filters(self, domain_name):
-        """
-        :return: A generator of filters each filtering for at most 1000 users.
-        """
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
-        user_ids = get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
-        for chunk in chunked(user_ids, 1000):
-            query_kwarg = '{}__in'.format(self.user_id_field)
+        for chunk in chunked(self.get_ids(domain_name), 1000):
+            query_kwarg = '{}__in'.format(self.field)
             yield Q(**{query_kwarg: chunk})
+
+
+class UserIDFilter(IDFilter):
+    def __init__(self, user_id_field, include_web_users=True):
+        super().__init__(user_id_field, None)
+        self.include_web_users = include_web_users
+
+    def get_ids(self, domain_name):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+        return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
 
 
 class UnfilteredModelIteratorBuilder(object):

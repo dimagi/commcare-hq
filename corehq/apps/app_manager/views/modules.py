@@ -4,6 +4,7 @@ from collections import OrderedDict
 from functools import partial
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -18,13 +19,14 @@ from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.http import require_GET
+from django_prbac.utils import has_privilege
 
 from lxml import etree
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
-from corehq import toggles
+from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -128,6 +130,11 @@ def get_module_template(user, module):
 def get_module_view_context(request, app, module, lang=None):
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
+        'show_auto_launch': (
+            app.cloudcare_enabled
+            and has_privilege(request, privileges.CLOUDCARE)
+            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+        ),
     }
     module_brief = {
         'id': module.id,
@@ -190,6 +197,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
+            'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
             'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
@@ -663,7 +671,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes')
+    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
     return response
 
 
@@ -1062,6 +1070,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     if search_properties.get('relevant') is not None
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
                 ),
+                auto_launch=bool(search_properties.get('auto_launch')),
                 include_closed=bool(search_properties.get('include_closed')),
                 search_filter=search_properties.get('search_filter', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
@@ -1171,7 +1180,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes')
+        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1210,7 +1219,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes')
+        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]

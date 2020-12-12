@@ -33,7 +33,7 @@ coverage==4.5.1           # via -r test-requirements.in
 csiphash==0.0.5           # via -r requirements.in
 cssselect2==0.3.0         # via cairosvg, weasyprint
 datadog==0.39.0           # via -r requirements.in
-ddtrace==0.14.1           # via -r requirements.in
+ddtrace==0.44.0           # via -r requirements.in
 decorator==4.0.11         # via -r requirements.in, datadog, ipython, jsonpath-rw, traitlets
 defusedxml==0.5.0         # via -r requirements.in, cairosvg
 deprecated==1.2.10        # via pygithub
@@ -46,7 +46,7 @@ django-bulk-update==2.2.0  # via -r requirements.in
 django-celery-results==1.0.4  # via -r requirements.in
 django-compressor==2.1    # via -r requirements.in
 django-countries==4.6     # via -r requirements.in
-django-crispy-forms==1.9.2  # via -r requirements.in
+django-crispy-forms==1.10.0  # via -r requirements.in
 django-cte==1.1.4         # via -r requirements.in
 django-debug-toolbar==3.1  # via -r dev-requirements.in
 django-extensions==3.0.9  # via -r dev-requirements.in
@@ -76,7 +76,7 @@ dropbox==9.3.0            # via -r requirements.in
 elasticsearch2==2.5.1     # via -r requirements.in
 elasticsearch7==7.9.1     # via -r requirements.in
 elasticsearch==1.9.0      # via -r requirements.in
-email_validator==1.1.1    # via -r requirements.in
+email_validator==1.1.2    # via -r requirements.in
 et-xmlfile==1.0.1         # via openpyxl
 ethiopian-date-converter==0.1.5  # via -r requirements.in
 eulxml==1.1.3             # via -r requirements.in
@@ -89,11 +89,11 @@ flaky==3.6.0              # via -r test-requirements.in
 freezegun==0.3.15         # via -r test-requirements.in
 gevent==1.4.0             # via -r requirements.in, django-websocket-redis, gipc, git-build-branch
 ghdiff==0.4               # via -r requirements.in
-gipc==1.0.1               # via -r requirements.in
+gipc==1.1.0               # via -r requirements.in
 git-build-branch==0.1.9   # via -r dev-requirements.in
 gnureadline==6.3.8        # via -r dev-requirements.in
 graphviz==0.14.2          # via -r dev-requirements.in
-greenlet==0.4.15          # via -r requirements.in, django-websocket-redis, gevent
+greenlet==0.4.17          # via -r requirements.in, django-websocket-redis, gevent
 gunicorn==20.0.4          # via -r requirements.in
 hiredis==1.1.0            # via -r requirements.in
 html5lib==1.1             # via weasyprint
@@ -101,6 +101,7 @@ httpagentparser==1.9.0    # via -r requirements.in
 idna==2.10                # via email-validator, requests
 imagesize==1.2.0          # via sphinx
 importlib-metadata==2.0.0  # via flake8
+intervaltree==3.1.0       # via ddtrace
 ipdb==0.11                # via -r dev-requirements.in
 ipython-genutils==0.2.0   # via traitlets
 ipython==7.16.1           # via -r dev-requirements.in, ipdb
@@ -126,7 +127,6 @@ markupsafe==1.1.1         # via jinja2, mako
 mccabe==0.6.1             # via flake8
 mock==2.0.0               # via -r requirements.in
 modernize==0.7            # via -r dev-requirements.in
-msgpack-python==0.5.6     # via ddtrace
 nose-exclude==0.5.0       # via -r test-requirements.in
 nose==1.3.7               # via -r test-requirements.in, django-nose, nose-exclude, sniffer
 oauthlib==3.1.0           # via django-oauth-toolkit, requests-oauthlib
@@ -144,11 +144,12 @@ ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements.in
 prometheus-client==0.7.1  # via -r requirements.in
 prompt-toolkit==3.0.7     # via ipython
+protobuf==3.13.0          # via ddtrace
 psutil==5.7.3             # via -r dev-requirements.in
 psycogreen==1.0.2         # via -r requirements.in
 psycopg2==2.8.6           # via -r requirements.in, sqlalchemy-postgres-copy
 ptyprocess==0.6.0         # via pexpect
-py-kissmetrics==1.0.1     # via -r requirements.in
+py-kissmetrics==1.1.0     # via -r requirements.in
 pycco==0.5.1              # via -r requirements.in
 pycodestyle==2.6.0        # via flake8
 pycparser==2.20           # via cffi
@@ -185,15 +186,16 @@ requests==2.24.0          # via -r requirements.in, cloudant, datadog, django-oa
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.3.3         # via boto3
 schema==0.7.2             # via -r requirements.in
-sentry-sdk==0.14.4        # via -r requirements.in
+sentry-sdk==0.19.4        # via -r requirements.in
 sh==1.9                   # via -r requirements.in, git-build-branch
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, django-prbac
-six==1.15.0               # via -r requirements.in, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, traitlets, transifex-client, twilio, unittest2
+six==1.15.0               # via -r requirements.in, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, protobuf, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, tenacity, traitlets, transifex-client, twilio, unittest2
 smartypants==2.0.1        # via pycco
 sniffer==0.4.1            # via -r dev-requirements.in
 snowballstemmer==2.0.0    # via sphinx
 socketpool==0.5.3         # via -r requirements.in
+sortedcontainers==2.3.0   # via intervaltree
 soupsieve==2.0.1          # via beautifulsoup4
 sphinx-rtd-theme==0.4.3   # via -r dev-requirements.in
 sphinx==2.2.2             # via -r dev-requirements.in, recommonmark, sphinx-rtd-theme
@@ -210,6 +212,7 @@ sqlalchemy==1.3.19        # via -r requirements.in, alembic, sqlagg, sqlalchemy-
 sqlparse==0.3.1           # via django, django-debug-toolbar
 stripe==2.54.0            # via -r requirements.in
 suds-jurko==0.6           # via -r requirements.in
+tenacity==6.2.0           # via ddtrace
 testil==1.1               # via -r test-requirements.in
 text-unidecode==1.2       # via -r requirements.in, faker
 tinycss2==1.0.2           # via cairosvg, cssselect2, weasyprint
@@ -231,11 +234,11 @@ webencodings==0.5.1       # via cssselect2, html5lib, tinycss2
 werkzeug==1.0.1           # via -r requirements.in
 wheel==0.29.0             # via -r dev-requirements.in
 wmctrl==0.3               # via pdbpp
-wrapt==1.12.1             # via ddtrace, deprecated
+wrapt==1.12.1             # via deprecated
 xlrd==1.0.0               # via -r requirements.in
 xlwt==1.3.0               # via -r requirements.in
 zipp==3.2.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==20.2.3               # via pip-tools
-setuptools==50.3.0        # via cairocffi, cssselect2, django-websocket-redis, gunicorn, ipdb, ipython, python-levenshtein, python-termstyle, sphinx, tinycss2, weasyprint
+setuptools==50.3.0        # via cairocffi, cssselect2, django-websocket-redis, gunicorn, ipdb, ipython, protobuf, python-levenshtein, python-termstyle, sphinx, tinycss2, weasyprint

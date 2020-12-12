@@ -128,6 +128,13 @@ def arbitrary_domain():
 
 
 @unit_testing_only
+def arbitrary_domain_and_subscriber():
+    domain = arbitrary_domain()
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
+    return domain, subscriber
+
+
+@unit_testing_only
 def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
     commcare_user = CommCareUser.create(domain, username, 'test123', None, None)

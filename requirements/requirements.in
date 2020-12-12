@@ -10,7 +10,7 @@ CommcareTranslationChecker==0.9.7
 concurrent-log-handler==0.9.12
 csiphash==0.0.5
 datadog==0.39.0
-ddtrace==0.14.1
+ddtrace==0.44.0
 decorator==4.0.11  # required by django-digest
 defusedxml==0.5.0
 diff-match-patch==20120106
@@ -21,7 +21,7 @@ django-bulk-update~=2.0
 django-celery-results~=1.0.0
 django-compressor==2.1
 django-countries==4.6
-django-crispy-forms==1.9.2
+django-crispy-forms==1.10.0
 django-cte==1.1.4
 django-formtools==2.1
 django-logentry-admin==1.0.6
@@ -46,14 +46,14 @@ dropbox==9.3.0
 elasticsearch==1.9.0
 elasticsearch2>=2.0.0,<3.0.0
 elasticsearch7>=7.9.1,<8.0.0
-email_validator==1.1.1
+email_validator==1.1.2
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
 Faker==0.8.15
 gevent==1.4.0
 ghdiff==0.4
-gipc~=1.0.1  # for gevent+multiprocessing, used by Couch to SQL migration
-greenlet==0.4.15
+gipc~=1.1.0  # for gevent+multiprocessing, used by Couch to SQL migration
+greenlet==0.4.17
 gunicorn
 hiredis==1.1.0
 httpagentparser~=1.7
@@ -78,7 +78,7 @@ polib==1.1.0
 prometheus-client==0.7.1
 psycogreen~=1.0
 psycopg2>=2.8.4  # Python 3.8 support
-py-KISSmetrics==1.0.1
+py-KISSmetrics==1.1.0
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
 PyGithub==1.53
@@ -98,7 +98,7 @@ reportlab==3.5.53
 requests_oauthlib
 requests~=2.20
 schema
-sentry-sdk==0.14.4
+sentry-sdk==0.19.4
 sh==1.09
 simpleeval~=0.9
 simplejson~=3.11

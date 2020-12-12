@@ -290,6 +290,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
     should_update = step_calculator(length, granularity)
     i = 0
     try:
+        draw(i)
         for i, x in enumerate(iterable, start=1):
             yield x
             if should_update(i):

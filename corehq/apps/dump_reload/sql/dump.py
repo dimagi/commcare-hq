@@ -135,7 +135,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
+    UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
 ]]
@@ -163,9 +163,14 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
     :param excluded_models: List of model_class classes to exclude
     :return: generator yielding models objects
     """
+    builders = get_model_iterator_builders_to_dump(domain, excludes)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout)
+
+
+def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None):
     if stats_counter is None:
         stats_counter = Counter()
-    for model_class, builder in get_model_iterator_builders_to_dump(domain, excludes):
+    for model_class, builder in builders:
         model_label = get_model_label(model_class)
         for iterator in builder.iterators():
             for obj in iterator:
@@ -175,7 +180,7 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
             stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
-def get_model_iterator_builders_to_dump(domain, excludes):
+def get_model_iterator_builders_to_dump(domain, excludes, limit_to_db=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
@@ -190,11 +195,14 @@ def get_model_iterator_builders_to_dump(domain, excludes):
         if model_class in excluded_models:
             continue
 
-        for model_class, builder in get_all_model_iterators_builders_for_domain(model_class, domain):
+        iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
+        for model_class, builder in get_all_model_iterators_builders_for_domain(
+            model_class, domain, iterator_builders, limit_to_db=limit_to_db
+        ):
             yield model_class, builder
 
 
-def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db=None):
+def get_all_model_iterators_builders_for_domain(model_class, domain, builders, limit_to_db=None):
     if settings.USE_PARTITIONED_DATABASE and hasattr(model_class, 'partition_attr'):
         using = plproxy_config.form_processing_dbs
     else:
@@ -208,8 +216,7 @@ def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db
 
     for db_alias in using:
         if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
-            iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
-            for builder in iterator_builders:
+            for builder in builders:
                 yield model_class, builder.build(domain, model_class, db_alias)
 
 
