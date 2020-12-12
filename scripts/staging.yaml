@@ -69,5 +69,6 @@ branches:
   - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
   - jls/autolaunch-action-round-2  # Jenny Dec 9
   - jls/store-2fa-request-domain # Jenny Dec 11
+  - jls/raise-case-search-max-results # Jenny Dec 12
 
 submodules: {}
