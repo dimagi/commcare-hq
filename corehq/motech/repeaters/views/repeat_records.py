@@ -1,4 +1,4 @@
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, urlencode
 
 from django.http import Http404, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
@@ -369,30 +369,18 @@ def _get_flag(request):
     return flag if flag else ''
 
 
-def _change_record_state(base_string, string_to_add):
-    if not base_string:
+def _change_record_state(query_string, state):
+    if not query_string:
         return ''
-    elif not string_to_add:
-        return base_string
+    if not state:
+        return query_string
 
-    string_to_look_for = 'record_state='
-    pos_start = 0
-    pos_end = 0
-    for r in range(len(base_string)):
-        if base_string[r:r+13] == string_to_look_for:
-            pos_start = r + 13
-            break
-
-    string_to_look_for = '&payload_id='
-    the_rest_of_string = base_string[pos_start:]
-    for r in range(len(the_rest_of_string)):
-        if the_rest_of_string[r:r+12] == string_to_look_for:
-            pos_end = r
-            break
-
-    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:]
-
-    return string_to_return
+    query_string_list = []
+    for name, value in parse_qsl(query_string, keep_blank_values=True):
+        if name == 'record_state':
+            value = state
+        query_string_list.append((name, value))
+    return urlencode(query_string_list)
 
 
 def _url_parameters_to_dict(url_params):
