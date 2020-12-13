@@ -220,27 +220,12 @@ def delete_old_rule_submission_logs():
 
 @task(serializer='pickle')
 def task_operate_on_payloads(record_ids, domain, action=''):
-    task = task_operate_on_payloads
-
-    if not record_ids:
-        return {'messages': {'errors': [_('No Payloads are supplied')]}}
-
-    if not action:
-        return {'messages': {'errors': [_('No action specified')]}}
-
-    response = operate_on_payloads(record_ids, domain, action, task)
-
-    return response
+    return operate_on_payloads(record_ids, domain, action,
+                               task=task_operate_on_payloads)
 
 
 @task(serializer='pickle')
 def task_generate_ids_and_operate_on_payloads(query_string_dict, domain, action=''):
-    if not query_string_dict:
-        return {'messages': {'errors': [_('No data is supplied')]}}
-
-    if not action:
-        return {'messages': {'errors': [_('No action specified')]}}
-
     repeat_record_ids = _get_repeat_record_ids(query_string_dict, domain)
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)

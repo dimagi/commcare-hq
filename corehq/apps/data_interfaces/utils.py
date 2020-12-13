@@ -117,6 +117,11 @@ def property_references_parent(case_property):
 
 
 def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel=False):
+    if not repeat_record_ids:
+        return {'messages': {'errors': [_('No payloads specified')]}}
+    if not action:
+        return {'messages': {'errors': [_('No action specified')]}}
+
     response = {
         'errors': [],
         'success': [],
