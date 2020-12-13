@@ -3,21 +3,29 @@ from unittest.mock import Mock, patch
 from unittest.case import TestCase
 
 
+query_strings = [
+    None,
+    '',
+    'repeater=&record_state=&payload_id=payload_3',
+    'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
+    'repeater=&record_state=&payload_id=',
+    'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
+    'repeater=&record_state=STATUS&payload_id=payload_2',
+    'repeater=repeater_2&record_state=STATUS&payload_id=',
+]
+
+
 class TestUtilities(TestCase):
-    _BASE_STRINGS = [
-        None,
-        '',
-        'repeater=&record_state=&payload_id=payload_3',
-        'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-        'repeater=&record_state=&payload_id=',
-        'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-        'repeater=&record_state=STATUS&payload_id=payload_2',
-        'repeater=repeater_2&record_state=STATUS&payload_id=',
-    ]
 
     def test__get_records(self):
         mock_request = Mock()
-        mock_request.POST.get.side_effect = [None, '', 'id_1 id_2 ', 'id_1 id_2', ' id_1 id_2 ']
+        mock_request.POST.get.side_effect = [
+            None,
+            '',
+            'id_1 id_2 ',
+            'id_1 id_2',
+            ' id_1 id_2 ',
+        ]
         expected_records_ids = [
             [],
             [],
@@ -26,27 +34,27 @@ class TestUtilities(TestCase):
             ['id_1', 'id_2'],
         ]
 
-        for r in range(5):
+        for expected_result in expected_records_ids:
             records_ids = repeat_records._get_record_ids_from_request(mock_request)
-            self.assertEqual(records_ids, expected_records_ids[r])
+            self.assertEqual(records_ids, expected_result)
 
     def test__get_query(self):
         mock_request = Mock()
         mock_request.POST.get.side_effect = [None, 'a=1&b=2']
         expected_queries = ['', 'a=1&b=2']
 
-        for r in range(2):
+        for expected_result in expected_queries:
             records_ids = repeat_records._get_query(mock_request)
-            self.assertEqual(records_ids, expected_queries[r])
+            self.assertEqual(records_ids, expected_result)
 
     def test__get_flag(self):
         mock_request = Mock()
         mock_request.POST.get.side_effect = [None, 'flag']
         expected_flags = ['', 'flag']
 
-        for r in range(2):
+        for expected_result in expected_flags:
             records_ids = repeat_records._get_flag(mock_request)
-            self.assertEqual(records_ids, expected_flags[r])
+            self.assertEqual(records_ids, expected_result)
 
     def test__change_record_state(self):
         strings_to_add = [
@@ -70,9 +78,11 @@ class TestUtilities(TestCase):
             'repeater=repeater_2&record_state=STATUS_4&payload_id=',
         ]
 
-        for r in range(8):
-            returned_string = repeat_records._change_record_state(self._BASE_STRINGS[r], strings_to_add[r])
-            self.assertEqual(returned_string, desired_strings[r])
+        for qs, str_to_add, expected_result in zip(query_strings,
+                                                   strings_to_add,
+                                                   desired_strings):
+            result = repeat_records._change_record_state(qs, str_to_add)
+            self.assertEqual(result, expected_result)
 
     def test__url_parameters_to_dict(self):
         desired_dicts = [
@@ -86,9 +96,9 @@ class TestUtilities(TestCase):
             {'repeater': 'repeater_2', 'record_state': 'STATUS', 'payload_id': ''},
         ]
 
-        for r in range(8):
-            returned_dict = repeat_records._url_parameters_to_dict(self._BASE_STRINGS[r])
-            self.assertEqual(returned_dict, desired_dicts[r])
+        for qs, expected_result in zip(query_strings, desired_dicts):
+            result = repeat_records._url_parameters_to_dict(qs)
+            self.assertEqual(result, expected_result)
 
     @patch('corehq.motech.repeaters.views.repeat_records.task_generate_ids_and_operate_on_payloads')
     @patch('corehq.motech.repeaters.views.repeat_records.expose_cached_download')
@@ -147,11 +157,12 @@ class TestUtilities(TestCase):
                                          mock__url_parameters_to_dict, mock_expose_cache_download,
                                          mock_task_operate_on_payloads):
         mock_request = Mock()
-        mock_request.POST.get.side_effect = ['', None, 'a=1&b=2']
+        record_id_values = ['', None, 'a=1&b=2']
+        mock_request.POST.get.side_effect = record_id_values
         domain = 'domain_1'
         action = 'action_1'
 
-        for r in range(3):
+        for __ in record_id_values:
             repeat_records._schedule_task_without_flag(mock_request, domain, action)
             mock__get_records.assert_called_with(mock_request)
             mock_records_ids = mock__get_records(mock_request)
