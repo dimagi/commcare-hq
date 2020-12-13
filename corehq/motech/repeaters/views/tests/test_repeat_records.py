@@ -1,3 +1,5 @@
+from nose.tools import assert_equal
+
 from corehq.motech.repeaters.views import repeat_records
 from unittest.mock import Mock, patch
 from unittest.case import TestCase
@@ -49,12 +51,12 @@ class TestUtilities(TestCase):
 
     def test__get_flag(self):
         mock_request = Mock()
-        mock_request.POST.get.side_effect = [None, 'flag']
-        expected_flags = ['', 'flag']
-
-        for expected_result in expected_flags:
-            records_ids = repeat_records._get_flag(mock_request)
-            self.assertEqual(records_ids, expected_result)
+        flag_values = [None, '', 'flag']
+        expected_results = ['', '', 'flag']
+        for value, expected_result in zip(flag_values, expected_results):
+            mock_request.POST.get.return_value = value
+            result = repeat_records._get_flag(mock_request)
+            assert_equal(result, expected_result)
 
     def test__change_record_state(self):
         strings_to_add = [

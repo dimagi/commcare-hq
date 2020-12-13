@@ -1,6 +1,6 @@
 from urllib.parse import parse_qsl, urlencode
 
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -314,8 +314,7 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        flag = _get_flag(request)
-        if flag:
+        if _get_flag(request):
             _schedule_task_with_flag(request, domain, 'resend')
         else:
             _schedule_task_without_flag(request, domain, 'resend')
@@ -326,8 +325,7 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    flag = _get_flag(request)
-    if flag == 'cancel_all':
+    if _get_flag(request) == 'cancel_all':
         _schedule_task_with_flag(request, domain, 'cancel')
     else:
         _schedule_task_without_flag(request, domain, 'cancel')
@@ -339,8 +337,7 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    flag = _get_flag(request)
-    if flag == 'requeue_all':
+    if _get_flag(request) == 'requeue_all':
         _schedule_task_with_flag(request, domain, 'requeue')
     else:
         _schedule_task_without_flag(request, domain, 'requeue')
@@ -361,12 +358,8 @@ def _get_query(request):
     return query if query else ''
 
 
-def _get_flag(request):
-    if not request:
-        return ''
-
-    flag = request.POST.get('flag', None)
-    return flag if flag else ''
+def _get_flag(request: HttpRequest) -> str:
+    return request.POST.get('flag') or ''
 
 
 def _change_record_state(query_string, state):
