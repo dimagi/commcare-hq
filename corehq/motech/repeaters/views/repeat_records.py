@@ -390,12 +390,12 @@ def _url_parameters_to_dict(url_params):
 
 def _schedule_task_with_flag(request, domain, action):
     query = _get_query(request)
-    data = None
+    query_string_dict = None
     if query:
         form_query_string = six.moves.urllib.parse.unquote(query)
-        data = _url_parameters_to_dict(form_query_string)
+        query_string_dict = _url_parameters_to_dict(form_query_string)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_generate_ids_and_operate_on_payloads.delay(data, domain, action)
+    task = task_generate_ids_and_operate_on_payloads.delay(query_string_dict, domain, action)
     task_ref.set_task(task)
 
 

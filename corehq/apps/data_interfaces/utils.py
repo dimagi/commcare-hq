@@ -162,21 +162,21 @@ def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False
     return {"messages": response}
 
 
-def generate_ids_and_operate_on_payloads(data, domain, action, task=None, from_excel=False):
+def generate_ids_and_operate_on_payloads(query_string_dict, domain, action, task=None, from_excel=False):
 
-    payload_ids = _get_ids(data, domain)
+    payload_ids = _get_ids(query_string_dict, domain)
 
     response = operate_on_payloads(payload_ids, domain, action, task, from_excel)
 
     return {"messages": response}
 
 
-def _get_ids(data, domain):
-    if not data:
+def _get_ids(query_string_dict, domain):
+    if not query_string_dict:
         return []
 
-    if data.get('payload_id', None):
-        results = get_repeat_records_by_payload_id(domain, data['payload_id'])
+    if query_string_dict.get('payload_id', None):
+        results = get_repeat_records_by_payload_id(domain, query_string_dict['payload_id'])
     else:
         from corehq.motech.repeaters.models import RepeatRecord
         kwargs = {
@@ -184,7 +184,7 @@ def _get_ids(data, domain):
             'reduce': False,
             'descending': True,
         }
-        kwargs.update(_get_startkey_endkey_all_records(domain, data['repeater']))
+        kwargs.update(_get_startkey_endkey_all_records(domain, query_string_dict['repeater']))
         results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
     ids = [x['id'] for x in results]
 

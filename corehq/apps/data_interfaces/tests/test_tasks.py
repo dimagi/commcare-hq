@@ -48,7 +48,7 @@ class TestTasks(TestCase):
     def test_task_generate_ids_and_operate_on_payloads_no_action(self, mock_generate_ids):
         with patch('corehq.apps.data_interfaces.tasks._') as _:
             response = task_generate_ids_and_operate_on_payloads(
-                data=['payload_id'],
+                query_string_dict=['payload_id'],
                 domain='test_domain',
                 action=''
             )
@@ -61,7 +61,7 @@ class TestTasks(TestCase):
     def test_task_generate_ids_and_operate_on_payloads_no_data(self, mock_generate_ids):
         with patch('corehq.apps.data_interfaces.tasks._') as _:
             response = task_generate_ids_and_operate_on_payloads(
-                data=[],
+                query_string_dict=[],
                 domain='test_domain',
                 action=''
             )
@@ -73,12 +73,11 @@ class TestTasks(TestCase):
     @patch('corehq.apps.data_interfaces.tasks.generate_ids_and_operate_on_payloads')
     @patch('corehq.apps.data_interfaces.tasks.task_generate_ids_and_operate_on_payloads')
     def test_task_generate_ids_and_operate_on_payloads_valid(self, mock_task, mock_generate_ids):
-        payload = {
-            'data': ['payload_id'],
-            'domain': 'test_domain',
-            'action': 'test_action',
-        }
-        response = task_generate_ids_and_operate_on_payloads(**payload)
+        task_generate_ids_and_operate_on_payloads(
+            query_string_dict=['payload_id'],
+            domain='test_domain',
+            action='test_action',
+        )
 
         self.assertEqual(mock_generate_ids.call_count, 1)
         mock_generate_ids.assert_called_with(['payload_id'], 'test_domain', 'test_action', mock_task)

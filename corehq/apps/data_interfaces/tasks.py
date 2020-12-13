@@ -231,15 +231,15 @@ def task_operate_on_payloads(payload_ids, domain, action=''):
 
 
 @task(serializer='pickle')
-def task_generate_ids_and_operate_on_payloads(data, domain, action=''):
+def task_generate_ids_and_operate_on_payloads(query_string_dict, domain, action=''):
     task = task_generate_ids_and_operate_on_payloads
 
-    if not data:
+    if not query_string_dict:
         return {'messages': {'errors': [_('No data is supplied')]}}
 
     if not action:
         return {'messages': {'errors': [_('No action specified')]}}
 
-    response = generate_ids_and_operate_on_payloads(data, domain, action, task)
+    response = generate_ids_and_operate_on_payloads(query_string_dict, domain, action, task)
 
     return response
