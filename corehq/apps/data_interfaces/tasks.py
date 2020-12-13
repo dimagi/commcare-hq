@@ -32,8 +32,8 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.motech.repeaters.dbaccessors import (
-    _get_startkey_endkey_all_records,
     get_repeat_records_by_payload_id,
+    iter_repeat_records_by_repeater,
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
@@ -238,14 +238,7 @@ def _get_repeat_record_ids(query_string_dict, domain):
     if query_string_dict.get('payload_id', None):
         results = get_repeat_records_by_payload_id(domain, query_string_dict['payload_id'])
     else:
-        from corehq.motech.repeaters.models import RepeatRecord
-        kwargs = {
-            'include_docs': True,
-            'reduce': False,
-            'descending': True,
-        }
-        kwargs.update(_get_startkey_endkey_all_records(domain, query_string_dict['repeater']))
-        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
+        results = iter_repeat_records_by_repeater(domain, query_string_dict['repeater'])
     ids = [x['id'] for x in results]
 
     return ids

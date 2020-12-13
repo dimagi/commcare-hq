@@ -21,8 +21,8 @@ class TestUtils(TestCase):
         self.assertEqual(response, [])
 
     @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.tasks._get_startkey_endkey_all_records')
-    def test__get_ids_payload_id_in_data(self, mock__get_startkey_endkey_all_records,
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    def test__get_ids_payload_id_in_data(self, mock_iter_repeat_records_by_repeater,
                                          mock_get_repeat_records_by_payload_id):
         data = {
             'payload_id': Mock()
@@ -31,26 +31,22 @@ class TestUtils(TestCase):
 
         self.assertEqual(mock_get_repeat_records_by_payload_id.call_count, 1)
         mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', data['payload_id'])
-        self.assertEqual(mock__get_startkey_endkey_all_records.call_count, 0)
+        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 0)
 
     @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.tasks._get_startkey_endkey_all_records')
-    @patch('corehq.motech.repeaters.models.RepeatRecord')
-    def test__get_ids_payload_id_not_in_data(self, mock_RepeatRecord, mock__get_startkey_endkey_all_records,
-                                             mock_get_repeat_records_by_payload_id):
-        data = {
-            'repeater': Mock()
-        }
-        mock_RepeatRecord.get_db.return_value.view.return_value.all.return_value = [
-            {'id': 'id_1'},
-            {'id': 'id_2'}
-        ]
-        response = _get_repeat_record_ids(data, 'test_domain')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    def test__get_ids_payload_id_not_in_data(
+        self,
+        mock_iter_repeat_records_by_repeater,
+        mock_get_repeat_records_by_payload_id,
+    ):
+        REPEATER_ID = 'c0ffee'
+        query_string_dict = {'repeater': REPEATER_ID}
+        _get_repeat_record_ids(query_string_dict, 'test_domain')
 
         mock_get_repeat_records_by_payload_id.assert_not_called()
-        mock__get_startkey_endkey_all_records.assert_called_with('test_domain', data['repeater'])
-        self.assertEqual(mock__get_startkey_endkey_all_records.call_count, 1)
-        self.assertEqual(response, ['id_1', 'id_2'])
+        mock_iter_repeat_records_by_repeater.assert_called_with('test_domain', REPEATER_ID)
+        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 1)
 
     @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_record_does_not_exist(self, mock_RepeatRecord):
