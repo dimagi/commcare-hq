@@ -256,19 +256,19 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
         total = get_repeat_record_count(self.domain, self.repeater_id)
         total_pending = get_pending_repeat_record_count(self.domain, self.repeater_id)
-        total_requeue = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+        total_cancelled = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
 
         form_query_string = self.request.GET.urlencode()
-        form_query_string_requeue = _change_record_state(form_query_string, 'CANCELLED')
+        form_query_string_cancelled = _change_record_state(form_query_string, 'CANCELLED')
         form_query_string_pending = _change_record_state(form_query_string, 'PENDING')
 
         context.update(
             total=total,
             total_pending=total_pending,
-            total_requeue=total_requeue,
+            total_cancelled=total_cancelled,
             form_query_string=form_query_string,
             form_query_string_pending=form_query_string_pending,
-            form_query_string_requeue=form_query_string_requeue,
+            form_query_string_cancelled=form_query_string_cancelled,
         )
         return context
 
