@@ -2,7 +2,6 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
-from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id, _get_startkey_endkey_all_records
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -161,35 +160,6 @@ def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel
         _("Successfully {action} {count} form(s)".format(action=action, count=success_count))
 
     return {"messages": response}
-
-
-def generate_ids_and_operate_on_payloads(query_string_dict, domain, action, task=None, from_excel=False):
-
-    repeat_record_ids = _get_repeat_record_ids(query_string_dict, domain)
-
-    response = operate_on_payloads(repeat_record_ids, domain, action, task, from_excel)
-
-    return {"messages": response}
-
-
-def _get_repeat_record_ids(query_string_dict, domain):
-    if not query_string_dict:
-        return []
-
-    if query_string_dict.get('payload_id', None):
-        results = get_repeat_records_by_payload_id(domain, query_string_dict['payload_id'])
-    else:
-        from corehq.motech.repeaters.models import RepeatRecord
-        kwargs = {
-            'include_docs': True,
-            'reduce': False,
-            'descending': True,
-        }
-        kwargs.update(_get_startkey_endkey_all_records(domain, query_string_dict['repeater']))
-        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
-    ids = [x['id'] for x in results]
-
-    return ids
 
 
 def _validate_record(r, domain):

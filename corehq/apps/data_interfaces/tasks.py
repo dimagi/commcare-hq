@@ -23,7 +23,6 @@ from corehq.apps.data_interfaces.utils import (
     add_cases_to_case_group,
     archive_or_restore_forms,
     operate_on_payloads,
-    generate_ids_and_operate_on_payloads,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -32,6 +31,10 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.motech.repeaters.dbaccessors import (
+    _get_startkey_endkey_all_records,
+    get_repeat_records_by_payload_id,
+)
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.decorators import serial_task
@@ -232,14 +235,32 @@ def task_operate_on_payloads(record_ids, domain, action=''):
 
 @task(serializer='pickle')
 def task_generate_ids_and_operate_on_payloads(query_string_dict, domain, action=''):
-    task = task_generate_ids_and_operate_on_payloads
-
     if not query_string_dict:
         return {'messages': {'errors': [_('No data is supplied')]}}
 
     if not action:
         return {'messages': {'errors': [_('No action specified')]}}
 
-    response = generate_ids_and_operate_on_payloads(query_string_dict, domain, action, task)
+    repeat_record_ids = _get_repeat_record_ids(query_string_dict, domain)
+    return operate_on_payloads(repeat_record_ids, domain, action,
+                               task=task_generate_ids_and_operate_on_payloads)
 
-    return response
+
+def _get_repeat_record_ids(query_string_dict, domain):
+    if not query_string_dict:
+        return []
+
+    if query_string_dict.get('payload_id', None):
+        results = get_repeat_records_by_payload_id(domain, query_string_dict['payload_id'])
+    else:
+        from corehq.motech.repeaters.models import RepeatRecord
+        kwargs = {
+            'include_docs': True,
+            'reduce': False,
+            'descending': True,
+        }
+        kwargs.update(_get_startkey_endkey_all_records(domain, query_string_dict['repeater']))
+        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
+    ids = [x['id'] for x in results]
+
+    return ids
