@@ -29,14 +29,14 @@ def get_cancelled_repeat_record_count(domain, repeater_id):
     return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
 
 
-def get_repeat_record_count(domain, repeater_id=None, state=None, last_checked_after=None):
+def get_repeat_record_count(domain, repeater_id=None, state=None):
     from .models import RepeatRecord
     kwargs = dict(
         include_docs=False,
         reduce=True,
         descending=True,
     )
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, last_checked_after))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
     result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
 
