@@ -34,8 +34,8 @@
                 {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_cancellable|urlencode }}">
-                {% blocktrans %}Select {{ total_cancel }} cancellable payloads{% endblocktrans %}
+              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_pending|urlencode }}">
+                {% blocktrans %}Select {{ total_pending }} pending payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
               <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_requeue|urlencode }}">
