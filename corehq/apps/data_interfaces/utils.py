@@ -117,7 +117,7 @@ def property_references_parent(case_property):
     )
 
 
-def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False):
+def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
@@ -126,32 +126,33 @@ def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False
     success_count = 0
 
     if task:
-        DownloadBase.set_progress(task, 0, len(payload_ids))
+        DownloadBase.set_progress(task, 0, len(repeat_record_ids))
 
-    for payload_id in payload_ids:
-        valid_record = _validate_record(payload_id, domain)
+    for record_id in repeat_record_ids:
+        valid_record = _validate_record(record_id, domain)
 
         if valid_record:
             try:
                 message = ''
                 if action == 'resend':
                     valid_record.fire(force_send=True)
-                    message = _("Successfully resend payload (id={})").format(payload_id)
+                    message = _("Successfully resent repeat record (id={})").format(record_id)
                 elif action == 'cancel':
                     valid_record.cancel()
                     valid_record.save()
-                    message = _("Successfully cancelled payload (id={})").format(payload_id)
+                    message = _("Successfully cancelled repeat record (id={})").format(record_id)
                 elif action == 'requeue':
                     valid_record.requeue()
                     valid_record.save()
-                    message = _("Successfully requeue payload (id={})").format(payload_id)
+                    message = _("Successfully requeued repeat record (id={})").format(record_id)
                 response['success'].append(message)
                 success_count = success_count + 1
             except Exception as e:
-                response['errors'].append(_("Could not perform action for payload (id={}): {}").format(payload_id, e))
+                message = _("Could not perform action for repeat record (id={}): {}").format(record_id, e)
+                response['errors'].append(message)
 
             if task:
-                DownloadBase.set_progress(task, success_count, len(payload_ids))
+                DownloadBase.set_progress(task, success_count, len(repeat_record_ids))
 
     if from_excel:
         return response
@@ -164,14 +165,14 @@ def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False
 
 def generate_ids_and_operate_on_payloads(query_string_dict, domain, action, task=None, from_excel=False):
 
-    payload_ids = _get_ids(query_string_dict, domain)
+    repeat_record_ids = _get_repeat_record_ids(query_string_dict, domain)
 
-    response = operate_on_payloads(payload_ids, domain, action, task, from_excel)
+    response = operate_on_payloads(repeat_record_ids, domain, action, task, from_excel)
 
     return {"messages": response}
 
 
-def _get_ids(query_string_dict, domain):
+def _get_repeat_record_ids(query_string_dict, domain):
     if not query_string_dict:
         return []
 

@@ -216,16 +216,16 @@ def delete_old_rule_submission_logs():
 
 
 @task(serializer='pickle')
-def task_operate_on_payloads(payload_ids, domain, action=''):
+def task_operate_on_payloads(record_ids, domain, action=''):
     task = task_operate_on_payloads
 
-    if not payload_ids:
+    if not record_ids:
         return {'messages': {'errors': [_('No Payloads are supplied')]}}
 
     if not action:
         return {'messages': {'errors': [_('No action specified')]}}
 
-    response = operate_on_payloads(payload_ids, domain, action, task)
+    response = operate_on_payloads(record_ids, domain, action, task)
 
     return response
 

@@ -1,16 +1,20 @@
 from unittest.case import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.data_interfaces.utils import _get_ids, _validate_record, generate_ids_and_operate_on_payloads, \
-    operate_on_payloads
+from corehq.apps.data_interfaces.utils import (
+    _get_repeat_record_ids,
+    _validate_record,
+    generate_ids_and_operate_on_payloads,
+    operate_on_payloads,
+)
 
 
 class TestUtils(TestCase):
 
     def test__get_ids_no_data(self):
-        response = _get_ids('', 'test_domain')
+        response = _get_repeat_record_ids('', 'test_domain')
 
         self.assertEqual(response, [])
 
@@ -21,7 +25,7 @@ class TestUtils(TestCase):
         data = {
             'payload_id': Mock()
         }
-        response = _get_ids(data, 'test_domain')
+        _get_repeat_record_ids(data, 'test_domain')
 
         self.assertEqual(mock_get_repeat_records_by_payload_id.call_count, 1)
         mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', data['payload_id'])
@@ -39,7 +43,7 @@ class TestUtils(TestCase):
             {'id': 'id_1'},
             {'id': 'id_2'}
         ]
-        response = _get_ids(data, 'test_domain')
+        response = _get_repeat_record_ids(data, 'test_domain')
 
         mock_get_repeat_records_by_payload_id.assert_not_called()
         mock__get_startkey_endkey_all_records.assert_called_with('test_domain', data['repeater'])
@@ -81,7 +85,7 @@ class TestTasks(TestCase):
         self.mock_payload_one, self.mock_payload_two = Mock(id='id_1'), Mock(id='id_2')
         self.mock_payload_ids = [self.mock_payload_one.id, self.mock_payload_two.id]
 
-    @patch('corehq.apps.data_interfaces.utils._get_ids')
+    @patch('corehq.apps.data_interfaces.utils._get_repeat_record_ids')
     @patch('corehq.apps.data_interfaces.utils.operate_on_payloads')
     def test_generate_ids_and_operate_on_payloads_success(self, mock_operate_on_payloads, mock__get_ids):
         mock_payload = Mock()
