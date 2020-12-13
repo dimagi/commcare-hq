@@ -27,7 +27,7 @@ class TestUtilities(TestCase):
         ]
 
         for r in range(5):
-            records_ids = repeat_records._get_records(mock_request)
+            records_ids = repeat_records._get_record_ids_from_request(mock_request)
             self.assertEqual(records_ids, expected_records_ids[r])
 
     def test__get_query(self):
@@ -142,7 +142,7 @@ class TestUtilities(TestCase):
     @patch('corehq.motech.repeaters.views.repeat_records.expose_cached_download')
     @patch('corehq.motech.repeaters.views.repeat_records._url_parameters_to_dict')
     @patch('corehq.motech.repeaters.views.repeat_records.six.moves.urllib.parse.unquote')
-    @patch('corehq.motech.repeaters.views.repeat_records._get_records')
+    @patch('corehq.motech.repeaters.views.repeat_records._get_record_ids_from_request')
     def test__schedule_task_without_flag(self, mock__get_records, mock_unquote,
                                          mock__url_parameters_to_dict, mock_expose_cache_download,
                                          mock_task_operate_on_payloads):

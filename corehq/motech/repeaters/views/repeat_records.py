@@ -346,7 +346,7 @@ def requeue_repeat_record(request, domain):
     return HttpResponse('OK')
 
 
-def _get_records(request):
+def _get_record_ids_from_request(request):
     record_ids = request.POST.get('record_id') or ''
     return record_ids.strip().split()
 
@@ -423,7 +423,7 @@ def _schedule_task_with_flag(request, domain, action):
 
 
 def _schedule_task_without_flag(request, domain, action):
-    records = _get_records(request)
+    record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operate_on_payloads.delay(records, domain, action)
+    task = task_operate_on_payloads.delay(record_ids, domain, action)
     task_ref.set_task(task)
