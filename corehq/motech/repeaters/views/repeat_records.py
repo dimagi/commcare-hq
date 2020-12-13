@@ -10,9 +10,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 import pytz
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -350,14 +347,6 @@ def _get_record_ids_from_request(request):
     return record_ids.strip().split()
 
 
-def _get_query(request):
-    if not request:
-        return ''
-
-    query = request.POST.get('record_id', None)
-    return query if query else ''
-
-
 def _get_flag(request: HttpRequest) -> str:
     return request.POST.get('flag') or ''
 
@@ -376,19 +365,9 @@ def _change_record_state(query_string, state):
     return urlencode(query_string_list)
 
 
-def _url_parameters_to_dict(url_params):
-    name_value_pairs = parse_qsl(url_params, keep_blank_values=True)
-    return dict(name_value_pairs)
-
-
 def _schedule_task_with_flag(request, domain, action):
-    query = _get_query(request)
-    query_string_dict = None
-    if query:
-        form_query_string = six.moves.urllib.parse.unquote(query)
-        query_string_dict = _url_parameters_to_dict(form_query_string)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_generate_ids_and_operate_on_payloads.delay(query_string_dict, domain, action)
+    task = task_generate_ids_and_operate_on_payloads.delay(request.POST, domain, action)
     task_ref.set_task(task)
 
 

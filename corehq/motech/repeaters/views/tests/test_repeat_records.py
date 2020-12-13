@@ -1,9 +1,9 @@
+from django.http import QueryDict
 from nose.tools import assert_equal
 
 from corehq.motech.repeaters.views import repeat_records
 from unittest.mock import Mock, patch
 from unittest.case import TestCase
-
 
 query_strings = [
     None,
@@ -38,15 +38,6 @@ class TestUtilities(TestCase):
 
         for expected_result in expected_records_ids:
             records_ids = repeat_records._get_record_ids_from_request(mock_request)
-            self.assertEqual(records_ids, expected_result)
-
-    def test__get_query(self):
-        mock_request = Mock()
-        mock_request.POST.get.side_effect = [None, 'a=1&b=2']
-        expected_queries = ['', 'a=1&b=2']
-
-        for expected_result in expected_queries:
-            records_ids = repeat_records._get_query(mock_request)
             self.assertEqual(records_ids, expected_result)
 
     def test__get_flag(self):
@@ -86,77 +77,42 @@ class TestUtilities(TestCase):
             result = repeat_records._change_record_state(qs, str_to_add)
             self.assertEqual(result, expected_result)
 
-    def test__url_parameters_to_dict(self):
-        desired_dicts = [
-            {},
-            {},
-            {'repeater': '', 'record_state': '', 'payload_id': 'payload_3'},
-            {'repeater': 'repeater_3', 'record_state': 'STATUS_2', 'payload_id': 'payload_2'},
-            {'repeater': '', 'record_state': '', 'payload_id': ''},
-            {'repeater': 'repeater_1', 'record_state': 'STATUS_2', 'payload_id': 'payload_1'},
-            {'repeater': '', 'record_state': 'STATUS', 'payload_id': 'payload_2'},
-            {'repeater': 'repeater_2', 'record_state': 'STATUS', 'payload_id': ''},
-        ]
-
-        for qs, expected_result in zip(query_strings, desired_dicts):
-            result = repeat_records._url_parameters_to_dict(qs)
-            self.assertEqual(result, expected_result)
-
     @patch('corehq.motech.repeaters.views.repeat_records.task_generate_ids_and_operate_on_payloads')
     @patch('corehq.motech.repeaters.views.repeat_records.expose_cached_download')
-    @patch('corehq.motech.repeaters.views.repeat_records._url_parameters_to_dict')
-    @patch('corehq.motech.repeaters.views.repeat_records.six.moves.urllib.parse.unquote')
-    @patch('corehq.motech.repeaters.views.repeat_records._get_query')
-    def test__schedule_task_with_flag_no_query(self, mock__get_query, mock_unquote,
-                                               mock__url_parameters_to_dict, mock_expose_cache_download,
+    def test__schedule_task_with_flag_no_query(self,
+                                               mock_expose_cache_download,
                                                mock_task_generate_ids_and_operate_on_payloads):
         mock_request = Mock()
-        mock_request.POST.get.return_value = ''
-        mock__get_query.return_value = ''
+        query_dict = QueryDict('a=1&b=2')
+        mock_request.POST = query_dict
         mock_domain = 'domain_1'
         mock_action = 'action_1'
-        mock_data = None
 
         repeat_records._schedule_task_with_flag(mock_request, mock_domain, mock_action)
-        mock__get_query.assert_called_with(mock_request)
-        mock_unquote.assert_not_called()
-        mock__url_parameters_to_dict.assert_not_called()
-
-        self._mock_schedule_task(mock_data, mock_domain, mock_action,
-                                 mock_expose_cache_download, mock_task_generate_ids_and_operate_on_payloads)
+        self._mock_schedule_task(query_dict, mock_domain, mock_action,
+                                 mock_expose_cache_download,
+                                 mock_task_generate_ids_and_operate_on_payloads)
 
     @patch('corehq.motech.repeaters.views.repeat_records.task_generate_ids_and_operate_on_payloads')
     @patch('corehq.motech.repeaters.views.repeat_records.expose_cached_download')
-    @patch('corehq.motech.repeaters.views.repeat_records._url_parameters_to_dict')
-    @patch('corehq.motech.repeaters.views.repeat_records.six.moves.urllib.parse.unquote')
-    @patch('corehq.motech.repeaters.views.repeat_records._get_query')
-    def test__schedule_task_with_flag_with_query(self, mock__get_query, mock_unquote,
-                                                 mock__url_parameters_to_dict, mock_expose_cache_download,
+    def test__schedule_task_with_flag_with_query(self,
+                                                 mock_expose_cache_download,
                                                  mock_task_generate_ids_and_operate_on_payloads):
         mock_request = Mock()
-        mock_request.POST.get.return_value = 'a=1&b=2'
-        mock__get_query.return_value = 'a=1&b=2'
+        query_dict = QueryDict('a=1&b=2')
+        mock_request.POST = query_dict
         domain = 'domain_1'
         action = 'action_1'
 
         repeat_records._schedule_task_with_flag(mock_request, domain, action)
-        mock__get_query.assert_called_with(mock_request)
-        mock_query = mock__get_query(mock_request)
-        mock_unquote.assert_called_with(mock_query)
-        mock_form_query_string = mock_unquote(mock_query)
-        mock__url_parameters_to_dict.assert_called_with(mock_form_query_string)
-        mock_data = mock__url_parameters_to_dict(mock_form_query_string)
-
-        self._mock_schedule_task(mock_data, domain, action,
-                                 mock_expose_cache_download, mock_task_generate_ids_and_operate_on_payloads)
+        self._mock_schedule_task(query_dict, domain, action,
+                                 mock_expose_cache_download,
+                                 mock_task_generate_ids_and_operate_on_payloads)
 
     @patch('corehq.motech.repeaters.views.repeat_records.task_operate_on_payloads')
     @patch('corehq.motech.repeaters.views.repeat_records.expose_cached_download')
-    @patch('corehq.motech.repeaters.views.repeat_records._url_parameters_to_dict')
-    @patch('corehq.motech.repeaters.views.repeat_records.six.moves.urllib.parse.unquote')
     @patch('corehq.motech.repeaters.views.repeat_records._get_record_ids_from_request')
-    def test__schedule_task_without_flag(self, mock__get_records, mock_unquote,
-                                         mock__url_parameters_to_dict, mock_expose_cache_download,
+    def test__schedule_task_without_flag(self, mock__get_records, mock_expose_cache_download,
                                          mock_task_operate_on_payloads):
         mock_request = Mock()
         record_id_values = ['', None, 'a=1&b=2']
@@ -168,9 +124,6 @@ class TestUtilities(TestCase):
             repeat_records._schedule_task_without_flag(mock_request, domain, action)
             mock__get_records.assert_called_with(mock_request)
             mock_records_ids = mock__get_records(mock_request)
-            mock_unquote.assert_not_called()
-            mock__url_parameters_to_dict.assert_not_called()
-
             self._mock_schedule_task(mock_records_ids, domain, action,
                                      mock_expose_cache_download, mock_task_operate_on_payloads)
 
