@@ -374,25 +374,22 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return None
 
     def register(self, payload):
+        """
+        Registers a SQLRepeatRecord.
+        """
         if not self.allowed_to_forward(payload):
             return
 
-        now = datetime.utcnow()
-        repeat_record = RepeatRecord(
-            repeater_id=self.get_id,
-            repeater_type=self.doc_type,
+        self.repeater_stub.repeat_records.create(
             domain=self.domain,
-            registered_on=now,
-            next_check=now,
-            payload_id=payload.get_id
+            payload_id=payload.get_id,
+            registered_at=timezone.now(),
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
             'doc_type': self.doc_type
         })
-        repeat_record.save()
-        repeat_record.attempt_forward_now()
-        return repeat_record
+        attempt_forward_now(self.repeater_stub)
 
     def allowed_to_forward(self, payload):
         """
