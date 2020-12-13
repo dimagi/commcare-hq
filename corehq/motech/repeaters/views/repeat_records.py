@@ -1,3 +1,5 @@
+from urllib.parse import parse_qsl
+
 from django.http import Http404, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -394,21 +396,8 @@ def _change_record_state(base_string, string_to_add):
 
 
 def _url_parameters_to_dict(url_params):
-    dict_to_return = {}
-    if not url_params:
-        return dict_to_return
-
-    while url_params != '':
-        pos_one = url_params.find('=')
-        pos_two = url_params.find('&')
-        if pos_two == -1:
-            pos_two = len(url_params)
-        key = url_params[:pos_one]
-        value = url_params[pos_one+1:pos_two]
-        dict_to_return[key] = value
-        url_params = url_params[pos_two+1:] if pos_two != len(url_params) else ''
-
-    return dict_to_return
+    name_value_pairs = parse_qsl(url_params, keep_blank_values=True)
+    return dict(name_value_pairs)
 
 
 def _schedule_task_with_flag(request, domain, action):
