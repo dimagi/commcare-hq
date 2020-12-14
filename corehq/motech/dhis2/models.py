@@ -2,7 +2,7 @@ import bz2
 from base64 import b64decode, b64encode
 from datetime import date, timedelta
 from itertools import chain
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -28,6 +28,7 @@ from corehq.util.quickcache import quickcache
 
 from .const import (
     SEND_FREQUENCIES,
+    SEND_FREQUENCY_CHOICES,
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
@@ -97,8 +98,58 @@ class DataSetMap(Document):
             return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
 
+class SQLDataSetMap(models.Model):
+    domain = models.CharField(max_length=126, db_index=True)
+    couch_id = models.CharField(max_length=36, null=True, blank=True,
+                                db_index=True)
+    connection_settings = models.ForeignKey(ConnectionSettings,
+                                            on_delete=models.PROTECT,
+                                            null=True, blank=True)
+    ucr_id = models.CharField(max_length=36)
+    description = models.TextField()
+    frequency = models.CharField(max_length=16,
+                                 choices=SEND_FREQUENCY_CHOICES,
+                                 default=SEND_FREQUENCY_MONTHLY)
+
+    # Day of the month for monthly/quarterly frequency. Day of the week
+    # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
+    day_to_send = models.PositiveIntegerField()
+
+    data_set_id = models.CharField(max_length=11, null=True, blank=True)
+
+    org_unit_id = models.CharField(max_length=11, null=True, blank=True)
+    org_unit_column = models.CharField(max_length=64, null=True, blank=True)
+
+    # cf. https://docs.dhis2.org/master/en/developer/html/webapi_date_perid_format.html
+    period = models.CharField(max_length=32, null=True, blank=True)
+    period_column = models.CharField(max_length=64, null=True, blank=True)
+
+    attribute_option_combo_id = models.CharField(max_length=11,
+                                                 null=True, blank=True)
+    complete_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.description
+
+
+class SQLDataValueMap(models.Model):
+    dataset_map = models.ForeignKey(
+        SQLDataSetMap, on_delete=models.CASCADE,
+        related_name='datavalue_maps',
+    )
+    column = models.CharField(max_length=64)
+    data_element_id = models.CharField(max_length=11)
+    category_option_combo_id = models.CharField(max_length=11)
+    comment = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.column
+
+
 @quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
-def get_info_for_columns(dataset_map: DataSetMap) -> Dict[str, dict]:
+def get_info_for_columns(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+) -> Dict[str, dict]:
     info_for_columns = {
         dvm.column: {
             **dvm,
@@ -120,7 +171,10 @@ def get_info_for_columns(dataset_map: DataSetMap) -> Dict[str, dict]:
     return info_for_columns
 
 
-def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
+def get_datavalues(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+    ucr_row: dict,
+) -> List[dict]:
     """
     Returns rows of "dataElement", "categoryOptionCombo", "value", and
     optionally "period", "orgUnit" and "comment" for ``dataset_map``
@@ -164,7 +218,10 @@ def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
     return datavalues
 
 
-def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
+def get_dataset(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+    send_date: date
+) -> dict:
     report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
     date_filter = get_date_filter(report_config)
     date_range = get_date_range(dataset_map.frequency, send_date)
@@ -222,7 +279,10 @@ def as_iso_quarter(startdate: date) -> str:
     return f'{startdate.year}Q{quarter}'
 
 
-def should_send_on_date(dataset_map: DataSetMap, send_date: date) -> bool:
+def should_send_on_date(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+    send_date: date,
+) -> bool:
     if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
         return dataset_map.day_to_send == send_date.isoweekday()
     if dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
