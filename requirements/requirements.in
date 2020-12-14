@@ -40,7 +40,7 @@ django-two-factor-auth~=1.12
 django-user-agents==0.4.0
 django-websocket-redis==0.6.0
 django~=2.2.16
-djangorestframework~=3.11.0
+djangorestframework~=3.12.2
 dnspython==1.15.0
 dropbox==9.3.0
 elasticsearch==1.9.0
