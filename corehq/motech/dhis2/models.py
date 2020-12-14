@@ -2,7 +2,7 @@ import bz2
 from base64 import b64decode, b64encode
 from datetime import date, timedelta
 from itertools import chain
-from typing import List
+from typing import Dict, List
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -98,13 +98,26 @@ class DataSetMap(Document):
 
 
 @quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
-def get_datavalue_map_dict(dataset_map: DataSetMap) -> dict:
-    dict_ = {dvm.column: dict(dvm, is_org_unit=False, is_period=False) for dvm in dataset_map.datavalue_maps}
+def get_info_for_columns(dataset_map: DataSetMap) -> Dict[str, dict]:
+    info_for_columns = {
+        dvm.column: {
+            **dvm,
+            'is_org_unit': False,
+            'is_period': False,
+        }
+        for dvm in dataset_map.datavalue_maps
+    }
     if dataset_map.org_unit_column:
-        dict_[dataset_map.org_unit_column] = {'is_org_unit': True, 'is_period': False}
+        info_for_columns[dataset_map.org_unit_column] = {
+            'is_org_unit': True,
+            'is_period': False,
+        }
     if dataset_map.period_column:
-        dict_[dataset_map.period_column] = {'is_org_unit': False, 'is_period': True}
-    return dict_
+        info_for_columns[dataset_map.period_column] = {
+            'is_org_unit': False,
+            'is_period': True,
+        }
+    return info_for_columns
 
 
 def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
@@ -121,25 +134,25 @@ def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
         }
 
     """
-    dv_map = get_datavalue_map_dict(dataset_map)
+    info_for_columns = get_info_for_columns(dataset_map)
     datavalues = []
     org_unit = None
     period = None
     # First pass is to collate data element IDs and values
     for key, value in ucr_row.items():
-        if key in dv_map:
-            if dv_map[key]['is_org_unit']:
+        if key in info_for_columns:
+            if info_for_columns[key]['is_org_unit']:
                 org_unit = value
-            elif dv_map[key]['is_period']:
+            elif info_for_columns[key]['is_period']:
                 period = value
             else:
                 datavalue = {
-                    'dataElement': dv_map[key]['data_element_id'],
-                    'categoryOptionCombo': dv_map[key]['category_option_combo_id'],
+                    'dataElement': info_for_columns[key]['data_element_id'],
+                    'categoryOptionCombo': info_for_columns[key]['category_option_combo_id'],
                     'value': value,
                 }
-                if dv_map[key].get('comment'):
-                    datavalue['comment'] = dv_map[key]['comment']
+                if info_for_columns[key].get('comment'):
+                    datavalue['comment'] = info_for_columns[key]['comment']
                 datavalues.append(datavalue)
     # Second pass is to set period and org unit
     if period or org_unit:

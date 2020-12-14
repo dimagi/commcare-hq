@@ -1,6 +1,9 @@
 from datetime import date
 
+from django.test import TestCase
 from nose.tools import assert_equal
+
+from corehq.motech.models import ConnectionSettings
 
 from ..const import (
     SEND_FREQUENCY_MONTHLY,
@@ -9,6 +12,7 @@ from ..const import (
 )
 from ..models import (
     DataSetMap,
+    get_info_for_columns,
     get_previous_month,
     get_previous_quarter,
     get_previous_week,
@@ -101,3 +105,82 @@ def test_get_quarter_start_month():
     for month, expected_month in zip(months, start_months):
         start_month = get_quarter_start_month(month)
         assert_equal(start_month, expected_month)
+
+
+class GetInfoForColumnsTests(TestCase):
+    domain = 'test-domain'
+    expected_value = {
+        'foo_bar': {
+            'category_option_combo_id': 'bar456789ab',
+            'column': 'foo_bar',
+            'comment': None,
+            'data_element_id': 'foo456789ab',
+            'doc_type': 'DataValueMap',
+            'is_org_unit': False,
+            'is_period': False,
+        },
+        'foo_baz': {
+            'category_option_combo_id': 'baz456789ab',
+            'column': 'foo_baz',
+            'comment': None,
+            'data_element_id': 'foo456789ab',
+            'doc_type': 'DataValueMap',
+            'is_org_unit': False,
+            'is_period': False,
+        },
+        'foo_qux': {
+            'category_option_combo_id': 'qux456789ab',
+            'column': 'foo_qux',
+            'comment': None,
+            'data_element_id': 'foo456789ab',
+            'doc_type': 'DataValueMap',
+            'is_org_unit': False,
+            'is_period': False,
+        },
+        'org_unit_id': {
+            'is_org_unit': True,
+            'is_period': False,
+        }
+    }
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.connection_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='test connection',
+            url='https://dhis2.example.com/'
+        )
+        cls.dataset_map = DataSetMap.wrap({
+            'domain': cls.domain,
+            'connection_settings_id': cls.connection_settings.id,
+            'ucr_id': 'c0ffee',
+            'description': 'test dataset map',
+            'frequency': SEND_FREQUENCY_MONTHLY,
+            'day_to_send': 5,
+            'org_unit_column': 'org_unit_id',
+            'datavalue_maps': [{
+                'column': 'foo_bar',
+                'data_element_id': 'foo456789ab',
+                'category_option_combo_id': 'bar456789ab',
+            }, {
+                'column': 'foo_baz',
+                'data_element_id': 'foo456789ab',
+                'category_option_combo_id': 'baz456789ab',
+            }, {
+                'column': 'foo_qux',
+                'data_element_id': 'foo456789ab',
+                'category_option_combo_id': 'qux456789ab',
+            }]
+        })
+        cls.dataset_map.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.dataset_map.delete()
+        cls.connection_settings.delete()
+        super().tearDownClass()
+
+    def test_couch(self):
+        info_for_columns = get_info_for_columns(self.dataset_map)
+        self.assertEqual(info_for_columns, self.expected_value)
