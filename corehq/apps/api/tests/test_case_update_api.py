@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -20,6 +20,7 @@ class TestUpdateCases(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None)
         cls.case_accessor = CaseAccessors(cls.domain)
+        cls.form_accessor = FormAccessors(cls.domain)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
@@ -57,6 +58,11 @@ class TestUpdateCases(TestCase):
             'dob': '1948-11-02',
             'sport': 'chess',
         })
+
+        xform = self.form_accessor.get_form(res['@form_id'])
+        self.assertEqual(xform.metadata.xmlns, 'http://commcarehq.org/case_api')
+        self.assertEqual(xform.metadata.userID, self.web_user.user_id)
+        self.assertEqual(xform.metadata.deviceID, 'user agent string')
 
     def _make_case(self):
         xform, cases = submit_case_blocks([CaseBlock(
