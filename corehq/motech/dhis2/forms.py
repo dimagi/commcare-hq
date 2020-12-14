@@ -18,36 +18,47 @@ from corehq.motech.forms import get_conns_field
 class DatasetMapForm(forms.Form):
     description = forms.CharField()
     frequency = forms.ChoiceField(choices=SEND_FREQUENCY_CHOICES)
-    connection_settings_id = forms.ChoiceField()
-    ucr_id = forms.ChoiceField()
-    day_to_send = forms.IntegerField(help_text=_(
-        'Day of the month if Frequency is monthly or quarterly. Day of '
-        'the week if Frequency is weekly, where Monday is 1 and Sunday is '
-        '7.'
-    ))
-    data_set_id = forms.CharField(help_text=_(
-        'Set this if this UCR adds values to an existing DHIS2 DataSet.'
-    ))
-    org_unit_column = forms.CharField(help_text=_(
-        'UCR column where OrganisationUnit ID can be found'
+    # connection_settings_id = forms.ChoiceField()
+    # ucr_id = forms.ChoiceField()
+    day_to_send = forms.IntegerField(
+        required=False,
+        help_text=_('Day of the month if Frequency is monthly or quarterly. '
+                    'Day of the week if Frequency is weekly, where Monday is '
+                    '1 and Sunday is 7.')
+    )
+    data_set_id = forms.CharField(
+        required=False,
+        help_text=_('Set this if this UCR adds values to an existing DHIS2 '
+                    'DataSet.')
+    )
+    org_unit_column = forms.CharField(
+        required=False,
+        help_text=_('UCR column where OrganisationUnit ID can be found')
+    )
+    org_unit_id = forms.CharField(
+        required=False,
+        help_text=_('Set this if all values are for the same organisation '
+                    'unit.')
+    )
+    period_column = forms.CharField(
+        required=False,
+        help_text=_('UCR column where the period can be found')
+    )
+    period = forms.CharField(
+        required=False,
+        help_text=_('Set this if all values are for the same period. Weekly '
+                    'uses format "YYYYW##". Monthly uses format "YYYYMM". '
+                    'Quarterly uses format "YYYYQ#".')
+    )
 
-    ))
-    org_unit_id = forms.CharField(help_text=_(
-        'Set this if all values are for the same OrganisationUnit.'
-    ))
-    period_column = forms.CharField(help_text=_(
-        'UCR column where the period can be found'
-
-    ))
-    period = forms.CharField(help_text=_(
-        'Set this if all values are for the same period. Monthly uses format '
-        '"YYYYMM". Quarterly uses format "YYYYQ#".'
-    ))
-
-    attribute_option_combo_id = forms.CharField(help_text=_(
-        'Optional. DHIS2 defaults this to categoryOptionCombo'
-    ))
-    complete_date = forms.CharField(help_text=_('Optional'))
+    attribute_option_combo_id = forms.CharField(
+        required=False,
+        help_text=_('Optional. DHIS2 defaults this to categoryOptionCombo')
+    )
+    complete_date = forms.CharField(
+        required=False,
+        help_text=_('Optional')
+    )
 
     # TODO: datavalue_maps is a paginated list
     # datavalue_maps = SchemaListProperty(DataValueMap)
@@ -56,6 +67,7 @@ class DatasetMapForm(forms.Form):
         from corehq.motech.dhis2.views import DataSetMapListView
 
         self.domain = kwargs.pop('domain')
+        self.instance = kwargs.pop('instance', None)  # TODO: Set values from instance ... or use a model form
         super().__init__(*args, **kwargs)
 
         self.fields['connection_settings_id'] = get_conns_field(self.domain)
@@ -103,13 +115,13 @@ class DatasetMapForm(forms.Form):
         return crispy.Div(
             crispy.Div(
                 twbscrispy.StrictButton(
-                    _('Test Connection'),
+                    _('Refresh DHIS2 metadata'),
                     type='button',
-                    css_id='test-connection-button',
+                    css_id='refresh-metadata-button',
                     css_class='btn btn-default disabled',
                 ),
                 crispy.Div(
-                    css_id='test-connection-result',
+                    css_id='refresh-metadata-result',
                     css_class='text-success hide',
                 ),
                 css_class=hqcrispy.CSS_ACTION_CLASS,
