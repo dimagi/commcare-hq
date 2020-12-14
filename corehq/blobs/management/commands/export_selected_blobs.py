@@ -69,14 +69,18 @@ class Command(BaseCommand):
         export_meta_files = []
         if not target_path.exists():
             with zipfile.ZipFile(path, 'r') as archive:
-                meta = json.loads(archive.read("meta.json"))
+                archive.extract('meta.json', target_dir)
                 for dump_file in archive.namelist():
-                    if _filter(dump_file):
-                        export_meta_files.append(target_path.joinpath(dump_file))
+                    if 'blob_meta' in dump_file:
                         archive.extract(dump_file, target_dir)
         elif not self.use_extracted:
             raise CommandError(
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
+
+        meta = json.loads(target_path.joinpath('meta.json').read_text())
+        for file in target_path.iterdir():
+            if _filter(file.name):
+                export_meta_files.append(file)
 
         results = []
         filenames = []
