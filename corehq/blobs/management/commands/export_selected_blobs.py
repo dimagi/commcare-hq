@@ -45,16 +45,21 @@ class Command(BaseCommand):
                             help='Pass a file with a list of blob names already exported')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
                             help="Use already extracted dump if it exists.")
+        parser.add_argument('--output-path', help='Directory to write data files to.')
         parser.add_argument('--json-output', action="store_true", help="Produce JSON output for use in tests")
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, path, **options):
-        self.use_extracted = options.get('use_extracted')
+        use_extracted = options.get('use_extracted')
+        output_path = options.get('output_path', '')
 
         already_exported = get_lines_from_file(options['already_exported'])
         if already_exported:
             print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
+
+        if output_path and (not os.path.exists(output_path) or os.path.isfile(output_path)):
+            raise CommandError("Output path must exist and be a folder.")
 
         filter_pattern = options.get('meta-file-filter')
         filter_rx = None
@@ -73,7 +78,7 @@ class Command(BaseCommand):
                 for dump_file in archive.namelist():
                     if 'blob_meta' in dump_file:
                         archive.extract(dump_file, target_dir)
-        elif not self.use_extracted:
+        elif not use_extracted:
             raise CommandError(
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
 
@@ -86,7 +91,7 @@ class Command(BaseCommand):
         filenames = []
         with futures.ThreadPoolExecutor(max_workers=len(export_meta_files)) as executor:
             for path in export_meta_files:
-                results.append(executor.submit(_export_blobs, path, meta))
+                results.append(executor.submit(_export_blobs, output_path, path, meta))
 
             for result in futures.as_completed(results):
                 filenames.append(result.result())
@@ -97,8 +102,8 @@ class Command(BaseCommand):
             return json.dumps({"paths": filenames})
 
 
-def _export_blobs(path, meta):
-    export_filename = _get_export_filename(path)
+def _export_blobs(output_path, path, meta):
+    export_filename = os.path.join(output_path, _get_export_filename(path))
     migrator = BlobDbBackendExporter(export_filename, None)
     with migrator:
         expected_count = meta[path.stem]["blobs.BlobMeta"]
