@@ -48,7 +48,8 @@ class Command(BaseCommand):
     @change_log_level('botocore', logging.WARNING)
     def handle(self, path, **options):
         already_exported = get_lines_from_file(options['already_exported'])
-        print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
+        if already_exported:
+            print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
 
         filter_pattern = options.get('meta-file-filter')
         filter_rx = None
@@ -83,8 +84,6 @@ class Command(BaseCommand):
                 prefix = f"Exporting from {path.name}"
                 for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix):
                     migrator.process_object(obj)
-                    if migrator.total_blobs % 1000 == 0:
-                        print("Processed {} objects".format(migrator.total_blobs))
 
         print("Exported {} objects to {}".format(migrator.total_blobs, export_filename))
         if options.get("json_output"):
