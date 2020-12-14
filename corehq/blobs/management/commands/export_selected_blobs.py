@@ -27,9 +27,8 @@ class Command(BaseCommand):
     help = inspect.cleandoc("""
     Usage ./manage.py export_selected_blobs [options] path_to_export_zip
 
-    'path_to_blob_meta' may be a gzip file or a plain text file containing a single JSON
-    representation of the BlobMeta class per line. Use `dump_domain_data` to generate
-    the file.
+    'path_to_export_zip' must be a ZIP file generated using `dump_domain_data` and must
+    include a `meta.json` file with the object counts.
 
     To top-up an older blob dump, first extract a list of names from the archive:
         $ tar --list -f blob_export.tar.gz > blob_export.list
