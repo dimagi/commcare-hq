@@ -42,8 +42,8 @@ FORMAT_NUMERIC = 'Numeric'
 PRE_FILTER_VALUE_IS_EMPTY = 'Is Empty'
 PRE_FILTER_VALUE_EXISTS = 'Exists'
 PRE_FILTER_VALUE_NOT_EQUAL = 'Value Not Equal'
-PRE_FILTER_VALUE_LESS_THAN = 'Value Less Than',
-PRE_FILTER_VALUE_GREATER_THAN = 'Value Greater Than',
+PRE_FILTER_VALUE_LESS_THAN = 'Value Less Than'
+PRE_FILTER_VALUE_GREATER_THAN = 'Value Greater Than'
 
 
 # This dict maps filter types from the report builder frontend to UCR filter types
