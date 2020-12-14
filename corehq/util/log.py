@@ -264,6 +264,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
     granularity = min(50, length or 50)
     start = datetime.now()
 
+    info_prefix = '' if oneline else f'{prefix} '
+
     def draw(position, done=False):
         overall_position = offset + position
         overall_percent = overall_position / length if length > 0 else 1
@@ -286,7 +288,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         stream.flush()
 
     if oneline != "concise":
-        print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
+        print("{}Started at {:%Y-%m-%d %H:%M:%S}".format(info_prefix, start), file=stream)
     should_update = step_calculator(length, granularity)
     i = 0
     try:
@@ -299,8 +301,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         draw(i, done=True)
     if oneline != "concise":
         end = datetime.now()
-        print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
-        print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)
+        print("{}Finished at {:%Y-%m-%d %H:%M:%S}".format(info_prefix, end), file=stream)
+        print("{}Elapsed time: {}".format(info_prefix, display_seconds((end - start).total_seconds())), file=stream)
 
 
 def step_calculator(length, granularity):
