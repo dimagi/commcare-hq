@@ -9,6 +9,7 @@ class DynamicRateDefinitionAdmin(admin.ModelAdmin):
     list_filter = ('key',)
     ordering = ('key',)
 
+
 @admin.register(RateLimitedTwoFactorLog)
 class RateLimitedTwoFactorLogAdmin(admin.ModelAdmin):
     list_display = ('date', 'username', 'method', 'window', 'status')
