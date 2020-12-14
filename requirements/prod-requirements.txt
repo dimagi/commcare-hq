@@ -124,7 +124,7 @@ pyasn1==0.4.8             # via -r prod-requirements.in, ndg-httpsclient
 pycco==0.5.1              # via -r requirements.in
 pycparser==2.20           # via cffi
 pycryptodome==3.9.9       # via -r requirements.in
-pygithub==1.53            # via -r requirements.in
+pygithub==1.54            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, ipython, pycco
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio

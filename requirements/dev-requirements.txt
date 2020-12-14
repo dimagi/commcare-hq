@@ -155,7 +155,7 @@ pycodestyle==2.6.0        # via flake8
 pycparser==2.20           # via cffi
 pycryptodome==3.9.9       # via -r requirements.in
 pyflakes==2.2.0           # via flake8
-pygithub==1.53            # via -r requirements.in
+pygithub==1.54            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, ipython, pdbpp, pycco, sphinx
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio
