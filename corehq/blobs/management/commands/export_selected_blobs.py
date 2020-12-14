@@ -43,11 +43,15 @@ class Command(BaseCommand):
                             help='Only export blobs for metadata in files with filenames matching the filter regex.')
         parser.add_argument('--already_exported', dest='already_exported',
                             help='Pass a file with a list of blob names already exported')
+        parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
+                            help="Use already extracted dump if it exists.")
         parser.add_argument('--json-output', action="store_true", help="Produce JSON output for use in tests")
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, path, **options):
+        self.use_extracted = options.get('use_extracted')
+
         already_exported = get_lines_from_file(options['already_exported'])
         if already_exported:
             print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
@@ -61,17 +65,18 @@ class Command(BaseCommand):
             return 'blob_meta' in filename and (not filter_rx or filter_rx.match(filename))
 
         target_dir = get_tmp_extract_dir(path, specifier='blob_meta')
-        atexit.register(lambda: shutil.rmtree(target_dir))
-
         target_path = Path(target_dir)
         export_meta_files = []
-        with zipfile.ZipFile(path, 'r') as archive:
-            meta = json.loads(archive.read("meta.json"))
-            for dump_file in archive.namelist():
-                if _filter(dump_file):
-                    export_meta_files.append(target_path.joinpath(dump_file))
-                    if not target_path.joinpath(dump_file).exists():
+        if not target_path.exists():
+            with zipfile.ZipFile(path, 'r') as archive:
+                meta = json.loads(archive.read("meta.json"))
+                for dump_file in archive.namelist():
+                    if _filter(dump_file):
+                        export_meta_files.append(target_path.joinpath(dump_file))
                         archive.extract(dump_file, target_dir)
+        elif not self.use_extracted:
+            raise CommandError(
+                "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
 
         results = []
         filenames = []
