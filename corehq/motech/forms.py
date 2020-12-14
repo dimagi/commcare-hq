@@ -2,7 +2,7 @@ import re
 
 from django import forms
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -177,6 +177,6 @@ def get_conns_field(domain: str) -> forms.ChoiceField:
         choices=[(c.id, c.name) for c in conns],
         required=True,
         help_text=f'<a href="{url}">'
-                  + _('Add/Edit Connection Settings')
+                  + ugettext('Add/Edit Connection Settings')
                   + '</a>'
     )

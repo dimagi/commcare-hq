@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -128,7 +128,7 @@ def get_ucr_field(domain: str) -> forms.ChoiceField:
         choices=[(r._id, r.title) for r in ucrs],
         required=True,
         help_text=f'<a href="{url}">'
-                  + _('Add/Edit User Configurable Reports')
+                  + ugettext('Add/Edit User Configurable Reports')
                   + '</a>'
     )
 
