@@ -68,7 +68,7 @@ labels:
   color: navy
   description: 'Pull requests that update a dependency file'
 - name: 'dependencies/javascript'
-  color: grey
+  color: navy
   description: 'Change in javascript dependency.'
 - name: 'awaiting QA'
   color: light_orange
