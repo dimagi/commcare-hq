@@ -9,6 +9,7 @@ import re
 import shutil
 import zipfile
 from collections import namedtuple
+from concurrent import futures
 from pathlib import Path
 
 import atexit
@@ -72,22 +73,33 @@ class Command(BaseCommand):
                     if not target_path.joinpath(dump_file).exists():
                         archive.extract(dump_file, target_dir)
 
-        export_filename = _get_export_filename(path, already_exported)
-        if os.path.exists(export_filename):
-            raise CommandError(f"Export file '{export_filename}' exists. "
-                               f"Remove the file and re-run the command.")
-
-        migrator = BlobDbBackendExporter(export_filename, already_exported)
-        with migrator:
+        results = []
+        filenames = []
+        with futures.ThreadPoolExecutor(max_workers=len(export_meta_files)) as executor:
             for path in export_meta_files:
-                expected_count = meta[path.stem]["blobs.BlobMeta"]
-                prefix = f"Exporting from {path.name}"
-                for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix):
-                    migrator.process_object(obj)
+                results.append(executor.submit(_export_blobs, path, meta))
 
-        print("Exported {} objects to {}".format(migrator.total_blobs, export_filename))
+            for result in futures.as_completed(results):
+                filenames.append(result.result())
+
+            executor.shutdown()
+
         if options.get("json_output"):
-            return json.dumps({"path": export_filename})
+            return json.dumps({"paths": filenames})
+
+
+def _export_blobs(path, meta):
+    export_filename = _get_export_filename(path)
+    migrator = BlobDbBackendExporter(export_filename, None)
+    with migrator:
+        expected_count = meta[path.stem]["blobs.BlobMeta"]
+        prefix = f"Exporting from {path.name}"
+        for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix):
+            migrator.process_object(obj)
+
+    print("Exported {} objects to {}".format(migrator.total_blobs, export_filename))
+
+    return export_filename
 
 
 def _key_iterator(path):
@@ -109,8 +121,7 @@ def _key_iterator(path):
         yield from _get_keys(f)
 
 
-def _get_export_filename(meta_path, already_exported):
+def _get_export_filename(meta_path):
     meta_filename = os.path.splitext(os.path.basename(meta_path))[0]
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')
-    part = '-part' if already_exported else ''
-    return f'{meta_filename}-blobs-{timestamp}-{part}.tar.gz'
+    return f'{meta_filename}-blobs-{timestamp}.tar.gz'
