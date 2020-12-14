@@ -2076,3 +2076,7 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+# Disable Datadog trace startup logs by default
+# https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
+os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
