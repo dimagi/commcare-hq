@@ -6,7 +6,7 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_SEARCH_HQ_INDEX_NAME
 
 CASE_SEARCH_INDEX = prefix_for_tests("case_search_2018-05-29")
 CASE_SEARCH_ALIAS = prefix_for_tests("case_search")
-CASE_SEARCH_MAX_RESULTS = 100
+CASE_SEARCH_MAX_RESULTS = 500
 CASE_SEARCH_MAPPING = mapping_from_json('case_search_mapping.json')
 
 
