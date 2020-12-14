@@ -12,6 +12,7 @@ from ..models import (
     get_previous_month,
     get_previous_quarter,
     get_quarter_start_month,
+    should_send_on_date,
 )
 
 
@@ -50,7 +51,7 @@ def test_should_send_on_date():
     ]
     for kwargs, day, expected_result in kwargs_day_result:
         dataset_map = DataSetMap(**kwargs)
-        result = dataset_map.should_send_on_date(day)
+        result = should_send_on_date(dataset_map, day)
         assert_equal(result, expected_result)
 
 
