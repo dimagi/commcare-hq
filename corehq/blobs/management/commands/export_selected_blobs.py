@@ -5,10 +5,16 @@ import json
 import logging
 import os
 import pathlib
+import re
+import shutil
+import zipfile
 from collections import namedtuple
+from pathlib import Path
 
+import atexit
 from django.core.management import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.management.commands.load_domain_data import get_tmp_extract_dir
 from corehq.blobs.export import BlobDbBackendExporter
 from corehq.blobs.management.commands.run_blob_export import get_lines_from_file
 from corehq.util.decorators import change_log_level
@@ -18,7 +24,7 @@ BlobMetaKey = namedtuple('BlobMetaKey', 'key')
 
 class Command(BaseCommand):
     help = inspect.cleandoc("""
-    Usage ./manage.py export_selected_blobs [options] path_to_blob_meta
+    Usage ./manage.py export_selected_blobs [options] path_to_export_zip
 
     'path_to_blob_meta' may be a gzip file or a plain text file containing a single JSON
     representation of the BlobMeta class per line. Use `dump_domain_data` to generate
@@ -32,6 +38,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('path', help='Path to a file with a list of blob meta JSON to export')
+        parser.add_argument('--meta-file-filter', nargs='?',
+                            help='Only export blobs for metadata in files with filenames matching the filter regex.')
         parser.add_argument('--already_exported', dest='already_exported',
                             help='Pass a file with a list of blob names already exported')
         parser.add_argument('--json-output', action="store_true", help="Produce JSON output for use in tests")
@@ -42,6 +50,26 @@ class Command(BaseCommand):
         already_exported = get_lines_from_file(options['already_exported'])
         print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
 
+        filter_pattern = options.get('meta-file-filter')
+        filter_rx = None
+        if filter_pattern:
+            filter_rx = re.compile(filter_pattern)
+
+        def _filter(filename):
+            return 'blob_meta' in filename and (not filter_rx or filter_rx.match(filename))
+
+        target_dir = get_tmp_extract_dir(path, specifier='blob_meta')
+        atexit.register(lambda: shutil.rmtree(target_dir))
+
+        target_path = Path(target_dir)
+        export_meta_files = []
+        with zipfile.ZipFile(path, 'r') as archive:
+            for dump_file in archive.namelist():
+                if _filter(dump_file):
+                    export_meta_files.append(target_path.joinpath(dump_file))
+                    if not target_path.joinpath(dump_file).exists():
+                        archive.extract(dump_file, target_dir)
+
         export_filename = _get_export_filename(path, already_exported)
         if os.path.exists(export_filename):
             raise CommandError(f"Export file '{export_filename}' exists. "
@@ -49,10 +77,12 @@ class Command(BaseCommand):
 
         migrator = BlobDbBackendExporter(export_filename, already_exported)
         with migrator:
-            for obj in _key_iterator(path):
-                migrator.process_object(obj)
-                if migrator.total_blobs % 1000 == 0:
-                    print("Processed {} objects".format(migrator.total_blobs))
+            for path in export_meta_files:
+                print(f"Exporting blobs using meta from {path.name}")
+                for obj in _key_iterator(path):
+                    migrator.process_object(obj)
+                    if migrator.total_blobs % 1000 == 0:
+                        print("Processed {} objects".format(migrator.total_blobs))
 
         print("Exported {} objects to {}".format(migrator.total_blobs, export_filename))
         if options.get("json_output"):
@@ -66,7 +96,7 @@ def _key_iterator(path):
                 obj = json.loads(line)
                 yield BlobMetaKey(obj['fields']['key'])
 
-    if '.gz' in pathlib.Path(path).suffixes:
+    if '.gz' in path.suffixes:
         try:
             with gzip.open(path, 'r') as f:
                 yield from _get_keys(f)
@@ -74,7 +104,7 @@ def _key_iterator(path):
         except gzip.BadGzipFile:
             pass
 
-    with open(path, 'r') as f:
+    with path.open(mode='r') as f:
         yield from _get_keys(f)
 
 
