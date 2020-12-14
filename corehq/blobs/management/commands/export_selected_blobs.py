@@ -99,7 +99,7 @@ def _export_blobs(path, meta):
     with migrator:
         expected_count = meta[path.stem]["blobs.BlobMeta"]
         prefix = f"Exporting from {path.name}"
-        for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix):
+        for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix, oneline='concise'):
             migrator.process_object(obj)
 
     print("Exported {} objects to {}".format(migrator.total_blobs, export_filename))
