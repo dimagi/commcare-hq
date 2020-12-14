@@ -167,18 +167,7 @@ def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
 def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
     report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
     date_filter = get_date_filter(report_config)
-
-    if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
-        date_range = get_previous_week(send_date)
-        period = as_iso_week(date_range)
-    elif dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
-        date_range = get_previous_month(send_date)
-        period = date_range.startdate.strftime('%Y%m')
-    elif dataset_map.frequency == SEND_FREQUENCY_QUARTERLY:
-        date_range = get_previous_quarter(send_date)
-        period = as_iso_quarter(date_range)
-    else:
-        raise ValueError(f'Unknown frequency {dataset_map.frequency!r}')
+    date_range = get_date_range(dataset_map.frequency, send_date)
     ucr_data = get_ucr_data(report_config, date_filter, date_range)
 
     datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)  # one UCR row may have many DataValues
@@ -192,7 +181,8 @@ def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
     if dataset_map.period:
         dataset['period'] = dataset_map.period
     elif not dataset_map.period_column:
-        dataset['period'] = period
+        dataset['period'] = get_period(dataset_map.frequency,
+                                       date_range.startdate)
     if dataset_map.attribute_option_combo_id:
         dataset['attributeOptionCombo'] = dataset_map.attribute_option_combo_id
     if dataset_map.complete_date:
@@ -200,14 +190,36 @@ def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
     return dataset
 
 
-def as_iso_week(date_span: DateSpan) -> str:
-    week_num = int(date_span.startdate.strftime('%W')) + 1
-    return f'{date_span.startdate.year}W{week_num}'
+def get_date_range(frequency: str, send_date: date) -> DateSpan:
+    if frequency == SEND_FREQUENCY_WEEKLY:
+        return get_previous_week(send_date)
+    elif frequency == SEND_FREQUENCY_MONTHLY:
+        return get_previous_month(send_date)
+    elif frequency == SEND_FREQUENCY_QUARTERLY:
+        return get_previous_quarter(send_date)
+    else:
+        raise ValueError(f'Unknown frequency {frequency!r}')
 
 
-def as_iso_quarter(date_span: DateSpan) -> str:
-    quarter = (date_span.startdate.month // 3) + 1
-    return f'{date_span.startdate.year}Q{quarter}'
+def get_period(frequency: str, startdate: date) -> str:
+    if frequency == SEND_FREQUENCY_WEEKLY:
+        return as_iso_week(startdate)
+    elif frequency == SEND_FREQUENCY_MONTHLY:
+        return startdate.strftime('%Y%m')
+    elif frequency == SEND_FREQUENCY_QUARTERLY:
+        return as_iso_quarter(startdate)
+    else:
+        raise ValueError(f'Unknown frequency {frequency!r}')
+
+
+def as_iso_week(startdate: date) -> str:
+    week_num = int(startdate.strftime('%W')) + 1
+    return f'{startdate.year}W{week_num}'
+
+
+def as_iso_quarter(startdate: date) -> str:
+    quarter = (startdate.month // 3) + 1
+    return f'{startdate.year}Q{quarter}'
 
 
 def should_send_on_date(dataset_map: DataSetMap, send_date: date) -> bool:
@@ -238,8 +250,7 @@ def get_date_filter(report_config):
              rows for multiple periods, or set a period for the report
              if it is always for the same period.
     """
-    date_filter = next((f for f in report_config.filters if f['type'] == 'date'), None)
-    return date_filter
+    return next((f for f in report_config.filters if f['type'] == 'date'), None)
 
 
 def get_previous_week(send_date: date) -> DateSpan:

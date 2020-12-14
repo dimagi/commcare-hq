@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.test import TestCase
+
 from nose.tools import assert_equal
 
 from corehq.motech.models import ConnectionSettings
@@ -12,7 +13,9 @@ from ..const import (
 )
 from ..models import (
     DataSetMap,
+    get_date_range,
     get_info_for_columns,
+    get_period,
     get_previous_month,
     get_previous_quarter,
     get_previous_week,
@@ -105,6 +108,32 @@ def test_get_quarter_start_month():
     for month, expected_month in zip(months, start_months):
         start_month = get_quarter_start_month(month)
         assert_equal(start_month, expected_month)
+
+
+def test_get_period():
+    freq_date_period = [
+        (SEND_FREQUENCY_WEEKLY, date(2020, 1, 1), '2020W1'),  # Mon
+        (SEND_FREQUENCY_WEEKLY, date(2020, 12, 31), '2020W53'),  # NYE
+        (SEND_FREQUENCY_MONTHLY, date(2020, 1, 1), '202001'),  # Jan
+        (SEND_FREQUENCY_QUARTERLY, date(2020, 1, 1), '2020Q1'),  # Jan
+        (SEND_FREQUENCY_QUARTERLY, date(2020, 10, 1), '2020Q4'),  # Oct
+    ]
+    for frequency, startdate, expected_period in freq_date_period:
+        period = get_period(frequency, startdate)
+        assert_equal(period, expected_period)
+
+
+def test_get_date_range():
+    freq_date_startdate = [
+        (SEND_FREQUENCY_WEEKLY, date(2021, 1, 1), date(2020, 12, 21)),
+        (SEND_FREQUENCY_WEEKLY, date(2020, 12, 31), date(2020, 12, 21)),
+        (SEND_FREQUENCY_QUARTERLY, date(2020, 1, 31), date(2019, 10, 1)),
+        (SEND_FREQUENCY_QUARTERLY, date(2020, 3, 31), date(2019, 10, 1)),
+        (SEND_FREQUENCY_QUARTERLY, date(2020, 10, 1), date(2020, 7, 1)),
+    ]
+    for frequency, send_date, expected_startdate in freq_date_startdate:
+        date_range = get_date_range(frequency, send_date)
+        assert_equal(date_range.startdate, expected_startdate)
 
 
 class GetInfoForColumnsTests(TestCase):
