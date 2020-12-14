@@ -18,6 +18,7 @@ from corehq.apps.dump_reload.management.commands.load_domain_data import get_tmp
 from corehq.blobs.export import BlobDbBackendExporter
 from corehq.blobs.management.commands.run_blob_export import get_lines_from_file
 from corehq.util.decorators import change_log_level
+from corehq.util.log import with_progress_bar
 
 BlobMetaKey = namedtuple('BlobMetaKey', 'key')
 
@@ -64,6 +65,7 @@ class Command(BaseCommand):
         target_path = Path(target_dir)
         export_meta_files = []
         with zipfile.ZipFile(path, 'r') as archive:
+            meta = json.loads(archive.read("meta.json"))
             for dump_file in archive.namelist():
                 if _filter(dump_file):
                     export_meta_files.append(target_path.joinpath(dump_file))
@@ -78,8 +80,9 @@ class Command(BaseCommand):
         migrator = BlobDbBackendExporter(export_filename, already_exported)
         with migrator:
             for path in export_meta_files:
-                print(f"Exporting blobs using meta from {path.name}")
-                for obj in _key_iterator(path):
+                expected_count = meta[path.stem]["blobs.BlobMeta"]
+                prefix = f"Exporting from {path.name}"
+                for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix):
                     migrator.process_object(obj)
                     if migrator.total_blobs % 1000 == 0:
                         print("Processed {} objects".format(migrator.total_blobs))
