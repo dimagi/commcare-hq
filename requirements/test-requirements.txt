@@ -122,7 +122,7 @@ psycopg2==2.8.6           # via -r requirements.in, sqlalchemy-postgres-copy
 py-kissmetrics==1.1.0     # via -r requirements.in
 pycco==0.5.1              # via -r requirements.in
 pycparser==2.20           # via cffi
-pycryptodome==3.9.8       # via -r requirements.in
+pycryptodome==3.9.9       # via -r requirements.in
 pygithub==1.53            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, pycco
 pygooglechart==0.4.0      # via -r requirements.in
