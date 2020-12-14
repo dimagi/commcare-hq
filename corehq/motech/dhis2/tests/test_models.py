@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.management import call_command
 from django.test import TestCase
 
 from nose.tools import assert_equal
@@ -14,6 +15,7 @@ from ..const import (
 from ..models import (
     DataSetMap,
     get_date_range,
+    SQLDataSetMap,
     get_info_for_columns,
     get_period,
     get_previous_month,
@@ -136,9 +138,21 @@ def test_get_date_range():
         assert_equal(date_range.startdate, expected_startdate)
 
 
+def _remove_doc_types(dict_):
+    """
+    Removes "doc_type" keys from values in `dict_`
+    """
+    result = {}
+    for key, value in dict_.items():
+        value = value.copy()
+        value.pop('doc_type', None)
+        result[key] = value
+    return result
+
+
 class GetInfoForColumnsTests(TestCase):
     domain = 'test-domain'
-    expected_value = {
+    expected_couch_value = {
         'foo_bar': {
             'category_option_combo_id': 'bar456789ab',
             'column': 'foo_bar',
@@ -171,18 +185,17 @@ class GetInfoForColumnsTests(TestCase):
             'is_period': False,
         }
     }
+    expected_sql_value = _remove_doc_types(expected_couch_value)
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.connection_settings = ConnectionSettings.objects.create(
-            domain=cls.domain,
+    def setUp(self):
+        self.connection_settings = ConnectionSettings.objects.create(
+            domain=self.domain,
             name='test connection',
             url='https://dhis2.example.com/'
         )
-        cls.dataset_map = DataSetMap.wrap({
-            'domain': cls.domain,
-            'connection_settings_id': cls.connection_settings.id,
+        self.dataset_map = DataSetMap.wrap({
+            'domain': self.domain,
+            'connection_settings_id': self.connection_settings.id,
             'ucr_id': 'c0ffee',
             'description': 'test dataset map',
             'frequency': SEND_FREQUENCY_MONTHLY,
@@ -202,14 +215,22 @@ class GetInfoForColumnsTests(TestCase):
                 'category_option_combo_id': 'qux456789ab',
             }]
         })
-        cls.dataset_map.save()
+        self.dataset_map.save()
+        call_command('populate_sqldatasetmap')
+        self.sqldataset_map = SQLDataSetMap.objects.get(
+            domain=self.domain,
+            couch_id=self.dataset_map._id,
+        )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.dataset_map.delete()
-        cls.connection_settings.delete()
-        super().tearDownClass()
+    def tearDown(self):
+        self.sqldataset_map.delete()
+        self.dataset_map.delete()
+        self.connection_settings.delete()
 
     def test_couch(self):
         info_for_columns = get_info_for_columns(self.dataset_map)
-        self.assertEqual(info_for_columns, self.expected_value)
+        self.assertEqual(info_for_columns, self.expected_couch_value)
+
+    def test_sql(self):
+        info_for_columns = get_info_for_columns(self.sqldataset_map)
+        self.assertEqual(info_for_columns, self.expected_sql_value)
