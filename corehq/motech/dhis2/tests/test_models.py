@@ -11,6 +11,7 @@ from ..models import (
     DataSetMap,
     get_previous_month,
     get_previous_quarter,
+    get_previous_week,
     get_quarter_start_month,
     should_send_on_date,
 )
@@ -53,6 +54,19 @@ def test_should_send_on_date():
         dataset_map = DataSetMap(**kwargs)
         result = should_send_on_date(dataset_map, day)
         assert_equal(result, expected_result)
+
+
+def test_get_previous_week():
+    day_start_end = [
+        (date(2020, 9, 4), date(2020, 8, 24), date(2020, 8, 30)),  # Friday
+        (date(2020, 9, 5), date(2020, 8, 24), date(2020, 8, 30)),  # Saturday
+        (date(2020, 9, 6), date(2020, 8, 24), date(2020, 8, 30)),  # Sunday
+        (date(2020, 9, 7), date(2020, 8, 31), date(2020, 9, 6)),  # Monday
+    ]
+    for day, expected_start, expected_end in day_start_end:
+        date_span = get_previous_week(day)
+        assert_equal(date_span.startdate, expected_start)
+        assert_equal(date_span.enddate, expected_end)
 
 
 def test_get_previous_month():

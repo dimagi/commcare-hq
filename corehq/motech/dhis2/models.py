@@ -155,12 +155,17 @@ def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
     report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
     date_filter = get_date_filter(report_config)
 
-    if dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
+    if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
+        date_range = get_previous_week(send_date)
+        period = as_iso_week(date_range)
+    elif dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
         date_range = get_previous_month(send_date)
         period = date_range.startdate.strftime('%Y%m')
     elif dataset_map.frequency == SEND_FREQUENCY_QUARTERLY:
         date_range = get_previous_quarter(send_date)
-        period = date_range.startdate.strftime('%Y') + 'Q' + str((date_range.startdate.month // 3) + 1)
+        period = as_iso_quarter(date_range)
+    else:
+        raise ValueError(f'Unknown frequency {dataset_map.frequency!r}')
     ucr_data = get_ucr_data(report_config, date_filter, date_range)
 
     datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)  # one UCR row may have many DataValues
@@ -180,6 +185,16 @@ def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
     if dataset_map.complete_date:
         dataset['completeDate'] = dataset_map.complete_date
     return dataset
+
+
+def as_iso_week(date_span: DateSpan) -> str:
+    week_num = int(date_span.startdate.strftime('%W')) + 1
+    return f'{date_span.startdate.year}W{week_num}'
+
+
+def as_iso_quarter(date_span: DateSpan) -> str:
+    quarter = (date_span.startdate.month // 3) + 1
+    return f'{date_span.startdate.year}Q{quarter}'
 
 
 def should_send_on_date(dataset_map: DataSetMap, send_date: date) -> bool:
@@ -212,6 +227,20 @@ def get_date_filter(report_config):
     """
     date_filter = next((f for f in report_config.filters if f['type'] == 'date'), None)
     return date_filter
+
+
+def get_previous_week(send_date: date) -> DateSpan:
+    """
+    Returns a DateSpan from last week Monday to last week Sunday
+
+    ISO 8601 has Monday as Day 1 and Sunday as Day 7
+    """
+    # monday.weekday() == 0, so subtracting send_date.weekday() from
+    # send_date will always give you the Monday at the start of the week
+    monday = send_date - timedelta(days=send_date.weekday())
+    startdate = monday - timedelta(days=7)
+    enddate = monday - timedelta(days=1)
+    return DateSpan(startdate, enddate)
 
 
 def get_previous_month(send_date):
