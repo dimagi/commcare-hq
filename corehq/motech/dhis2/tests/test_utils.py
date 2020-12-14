@@ -2,7 +2,11 @@ from datetime import date
 
 from nose.tools import assert_equal
 
-from corehq.motech.dhis2.utils import get_previous_month, get_previous_quarter
+from corehq.motech.dhis2.utils import (
+    get_previous_month,
+    get_previous_quarter,
+    get_quarter_start_month,
+)
 
 
 def test_get_previous_month():
@@ -29,3 +33,11 @@ def test_get_previous_quarter():
         date_span = get_previous_quarter(day)
         assert_equal(date_span.startdate, expected_start)
         assert_equal(date_span.enddate, expected_end)
+
+
+def test_get_quarter_start_month():
+    months = range(1, 13)
+    start_months = (1, 1, 1, 4, 4, 4, 7, 7, 7, 10, 10, 10)
+    for month, expected_month in zip(months, start_months):
+        start_month = get_quarter_start_month(month)
+        assert_equal(start_month, expected_month)
