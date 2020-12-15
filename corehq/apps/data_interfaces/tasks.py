@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List, Optional
 
 from django.conf import settings
 from django.core.cache import cache
@@ -223,19 +224,25 @@ def task_operate_on_payloads(record_ids, domain, action=''):
 
 @task(serializer='pickle')
 def task_generate_ids_and_operate_on_payloads(query_string_dict, domain, action=''):
-    repeat_record_ids = _get_repeat_record_ids(query_string_dict, domain)
+    payload_id = query_string_dict.get('payload_id') or None
+    repeater_id = query_string_dict.get('repeater') or None
+
+    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
 
 
-def _get_repeat_record_ids(query_string_dict, domain):
-    if not query_string_dict:
+def _get_repeat_record_ids(
+    payload_id: Optional[str],
+    repeater_id: Optional[str],
+    domain: str,
+) -> List[str]:
+    if not payload_id and not repeater_id:
         return []
-
-    if query_string_dict.get('payload_id', None):
-        results = get_repeat_records_by_payload_id(domain, query_string_dict['payload_id'])
+    if payload_id:
+        results = get_repeat_records_by_payload_id(domain, payload_id)
     else:
-        results = iter_repeat_records_by_repeater(domain, query_string_dict['repeater'])
+        results = iter_repeat_records_by_repeater(domain, repeater_id)
     ids = [x['id'] for x in results]
 
     return ids

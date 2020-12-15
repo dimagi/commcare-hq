@@ -16,21 +16,18 @@ from corehq.apps.data_interfaces.utils import (
 class TestUtils(TestCase):
 
     def test__get_ids_no_data(self):
-        response = _get_repeat_record_ids('', 'test_domain')
-
+        response = _get_repeat_record_ids(None, None, 'test_domain')
         self.assertEqual(response, [])
 
     @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
     @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
     def test__get_ids_payload_id_in_data(self, mock_iter_repeat_records_by_repeater,
                                          mock_get_repeat_records_by_payload_id):
-        data = {
-            'payload_id': Mock()
-        }
-        _get_repeat_record_ids(data, 'test_domain')
+        payload_id = Mock()
+        _get_repeat_record_ids(payload_id, None, 'test_domain')
 
         self.assertEqual(mock_get_repeat_records_by_payload_id.call_count, 1)
-        mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', data['payload_id'])
+        mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', payload_id)
         self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 0)
 
     @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
@@ -41,8 +38,7 @@ class TestUtils(TestCase):
         mock_get_repeat_records_by_payload_id,
     ):
         REPEATER_ID = 'c0ffee'
-        query_string_dict = {'repeater': REPEATER_ID}
-        _get_repeat_record_ids(query_string_dict, 'test_domain')
+        _get_repeat_record_ids(None, REPEATER_ID, 'test_domain')
 
         mock_get_repeat_records_by_payload_id.assert_not_called()
         mock_iter_repeat_records_by_repeater.assert_called_with('test_domain', REPEATER_ID)
@@ -86,12 +82,12 @@ class TestTasks(TestCase):
     @patch('corehq.apps.data_interfaces.tasks._get_repeat_record_ids')
     @patch('corehq.apps.data_interfaces.tasks.operate_on_payloads')
     def test_generate_ids_and_operate_on_payloads_success(self, mock_operate_on_payloads, mock__get_ids):
-        mock_payload = Mock()
-        task_generate_ids_and_operate_on_payloads(mock_payload, 'test_domain', 'test_action')
+        query_string_dict = {'payload_id': 'c0ffee', 'repeater': 'deadbeef'}
+        task_generate_ids_and_operate_on_payloads(query_string_dict, 'test_domain', 'test_action')
 
         mock__get_ids.assert_called_once()
-        mock__get_ids.assert_called_with(mock_payload, 'test_domain')
-        mock_record_ids = mock__get_ids(mock_payload, 'test_domain')
+        mock__get_ids.assert_called_with('c0ffee', 'deadbeef', 'test_domain')
+        mock_record_ids = mock__get_ids('c0ffee', 'deadbeef', 'test_domain')
         mock_operate_on_payloads.assert_called_once()
         mock_operate_on_payloads.assert_called_with(mock_record_ids, 'test_domain', 'test_action',
                                                     task=task_generate_ids_and_operate_on_payloads)
