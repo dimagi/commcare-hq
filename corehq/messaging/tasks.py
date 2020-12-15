@@ -7,7 +7,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
-from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
@@ -71,7 +71,7 @@ def _sync_case_for_messaging(domain, case_id):
 def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         clear_messaging_for_case(domain, case_id)
-    elif use_phone_entries():
+    elif settings.USE_PHONE_ENTRIES:
         sms_tasks._sync_case_phone_number(case)
 
 

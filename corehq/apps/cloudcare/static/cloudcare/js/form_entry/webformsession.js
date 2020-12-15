@@ -115,6 +115,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             requestParams['session_id'] = self.session_id;
             requestParams['debuggerEnabled'] = self.debuggerEnabled;
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
+            requestParams['tz_from_browser'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
             return $.ajax({
                 type: 'POST',

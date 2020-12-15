@@ -1154,6 +1154,7 @@ class AddGatewayViewMixin(object):
     def post(self, request, *args, **kwargs):
         if self.backend_form.is_valid():
             self.backend.name = self.backend_form.cleaned_data.get('name')
+            self.backend.display_name = self.backend_form.cleaned_data.get('display_name')
             self.backend.description = self.backend_form.cleaned_data.get('description')
             self.backend.reply_to_phone_number = self.backend_form.cleaned_data.get('reply_to_phone_number')
 
@@ -1277,6 +1278,7 @@ class EditDomainGatewayView(AddDomainGatewayView):
         authorized_domains = self.backend.get_authorized_domain_list()
         initial = {
             'name': self.backend.name,
+            'display_name': self.backend.display_name,
             'description': self.backend.description,
             'give_other_domains_access': len(authorized_domains) > 0,
             'authorized_domains': ','.join(authorized_domains),
@@ -1503,6 +1505,7 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
         form_class = self.backend_class.get_form_class()
         initial = {
             'name': self.backend.name,
+            'display_name': self.backend.display_name,
             'description': self.backend.description,
             'reply_to_phone_number': self.backend.reply_to_phone_number,
         }

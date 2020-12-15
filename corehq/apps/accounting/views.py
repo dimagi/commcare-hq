@@ -22,6 +22,7 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_POST
@@ -35,6 +36,7 @@ from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_unpaid_invoice_over_threshold,
@@ -94,6 +96,8 @@ from corehq.apps.accounting.forms import (
     TriggerCustomerInvoiceForm,
     TriggerInvoiceForm,
     TriggerDowngradeForm,
+    TriggerAutopaymentsForm,
+    BulkUpgradeToLatestVersionForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -138,6 +142,7 @@ from corehq.apps.domain.views.accounting import (
     DomainAccountingSettings,
     InvoiceStripePaymentView,
     WireInvoiceView,
+    DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
@@ -634,7 +639,9 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
     def software_plan_version_form(self):
         plan_version = self.plan.get_version()
         if self.request.method == 'POST' and 'update_version' in self.request.POST:
-            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST)
+            return SoftwarePlanVersionForm(
+                self.plan, plan_version, self.request.couch_user, self.request.POST
+            )
         initial = {
             'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
                                          for r in plan_version.feature_rates.all()] if plan_version else []),
@@ -644,7 +651,9 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
             ),
             'role_slug': plan_version.role.slug if plan_version else None,
         }
-        return SoftwarePlanVersionForm(self.plan, plan_version, initial=initial)
+        return SoftwarePlanVersionForm(
+            self.plan, plan_version, self.request.couch_user, initial=initial
+        )
 
     @property
     def page_context(self):
@@ -682,10 +691,24 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class ViewSoftwarePlanVersionView(AccountingSectionView):
-    urlname = 'view_softwareplan_version'
+class SoftwarePlanVersionView(AccountingSectionView):
+    urlname = 'software_plan_version'
     page_title = 'Plan Version'
     template_name = 'accounting/plan_version.html'
+
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.upgrade_subscriptions_form.is_valid():
+            self.upgrade_subscriptions_form.upgrade_subscriptions()
+            messages.success(request, "All subscriptions on this version have "
+                                      "been upgraded to the latest version")
+            return HttpResponseRedirect(reverse(self.urlname, args=(
+                self.plan_version.plan.id, self.plan_version.plan.get_version().id
+            )))
+        return self.get(request, *args, **kwargs)
 
     @property
     @memoized
@@ -697,14 +720,45 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
 
     @property
     def page_context(self):
-        return {
+        is_customer_plan = self.plan_version.plan.is_customer_software_plan
+        latest_version = self.plan_version.plan.get_version()
+        context = {
             'plan_versions': [self.plan_version],
             'plan_id': self.args[0],
+            'is_customer_plan': is_customer_plan,
+            'plan_name': self.plan_version.plan.name,
+            'is_latest_version': latest_version == self.plan_version,
+            'latest_version_url': reverse(
+                self.urlname,
+                args=(latest_version.plan.id, latest_version.id)
+            ),
+            'is_version_detail_page': True,
         }
+        if is_customer_plan:
+            context.update({
+                'active_subscriptions': Subscription.visible_objects.filter(
+                    is_active=True, plan_version=self.plan_version
+                ),
+                'upgrade_subscriptions_form': self.upgrade_subscriptions_form,
+            })
+        return context
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=self.args)
+
+    @property
+    @memoized
+    def upgrade_subscriptions_form(self):
+        if self.request.method == 'POST':
+            return BulkUpgradeToLatestVersionForm(
+                self.plan_version, self.request.user.username,
+                self.request.POST
+            )
+        return BulkUpgradeToLatestVersionForm(
+            self.plan_version,
+            self.request.user.username
+        )
 
 
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
@@ -1491,10 +1545,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
         return self.paginate_crud_response
 
 
-class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
-    urlname = 'accounting_test_downgrade'
-    page_title = "Trigger Downgrade"
-    template_name = 'accounting/trigger_downgrade.html'
+class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
+    template_name = 'accounting/trigger_accounting_tests.html'
     async_handlers = [
         Select2InvoiceTriggerHandler,
     ]
@@ -1502,9 +1554,8 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def trigger_form(self):
-        if self.request.method == 'POST':
-            return TriggerDowngradeForm(self.request.POST)
-        return TriggerDowngradeForm()
+        raise NotImplementedError("please implement self.trigger_form")
+
 
     @property
     def page_url(self):
@@ -1515,6 +1566,18 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
         return {
             'trigger_form': self.trigger_form,
         }
+
+
+class TriggerDowngradeView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_downgrade'
+    page_title = "Trigger Downgrade"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerDowngradeForm(self.request.POST)
+        return TriggerDowngradeForm()
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
@@ -1537,5 +1600,35 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
                     f'Successfully triggered the downgrade process '
                     f'for project "{domain}".'
                 )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_autopay'
+    page_title = "Trigger Autopayments"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerAutopaymentsForm(self.request.POST)
+        return TriggerAutopaymentsForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            domain = self.trigger_form.cleaned_data['domain']
+            AutoPayInvoicePaymentHandler().pay_autopayable_invoices(domain=domain)
+            statements_url = reverse(DomainBillingStatementsView.urlname, args=[domain])
+            messages.success(
+                request,
+                mark_safe(
+                    f'Successfully triggered autopayments for "{domain}",'
+                    f' please check <a href="{statements_url}">billing statements</a>'
+                    f' to confirm.'
+                )
+            )
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)

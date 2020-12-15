@@ -20,7 +20,10 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
-from corehq.apps.accounting.views import TriggerDowngradeView
+from corehq.apps.accounting.views import (
+    TriggerDowngradeView,
+    TriggerAutopaymentsView,
+)
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
@@ -2010,10 +2013,16 @@ class AccountingTab(UITab):
             }
         ]
         if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
-            other_actions.append({
-                'title': _(TriggerDowngradeView.page_title),
-                'url': reverse(TriggerDowngradeView.urlname),
-            })
+            other_actions.extend([
+                {
+                    'title': _(TriggerDowngradeView.page_title),
+                    'url': reverse(TriggerDowngradeView.urlname),
+                },
+                {
+                    'title': _(TriggerAutopaymentsView.page_title),
+                    'url': reverse(TriggerAutopaymentsView.urlname),
+                },
+            ])
         items.append(('Other Actions', other_actions))
         return items
 

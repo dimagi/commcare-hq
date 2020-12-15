@@ -192,7 +192,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
             dialer_utils.addToSystemLog("[Check Media] button pressed");
             
             function onDetectRTCLoaded() {
-                                
+
                 if (DetectRTC.hasSpeakers) {
                     document.getElementById("imgSpeakers").src = dialer_utils.staticAsset("greenLED.png");
                     dialer_utils.addToSystemLog("Speakers are present");

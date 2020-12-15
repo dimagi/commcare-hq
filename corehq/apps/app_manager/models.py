@@ -2103,7 +2103,9 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    auto_launch = BooleanProperty(default=False)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    search_filter = StringProperty()
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)

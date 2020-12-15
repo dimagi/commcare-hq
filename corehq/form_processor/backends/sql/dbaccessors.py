@@ -1345,14 +1345,14 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             assert isinstance(entry_ids, list)
 
         return list(LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s, %s, %s, %s, %s)',
             [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s)',
             [[case_id]]
         ))
 
@@ -1431,7 +1431,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s)',
             [case_ids]
         )
         ret = {case_id: {} for case_id in case_ids}

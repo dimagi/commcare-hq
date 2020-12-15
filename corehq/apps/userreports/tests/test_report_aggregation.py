@@ -2,8 +2,6 @@ from django.http import HttpRequest
 from django.test import TestCase
 from datetime import datetime, timedelta
 
-from freezegun import freeze_time
-
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -309,6 +307,31 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
             ]]
         )
 
+    def test_aggregation_no_group_by(self):
+        report_config = self._create_report(
+            aggregation_columns=[],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'aggregation': 'max'
+                }
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                'foo',
+                [
+                    ['report_column_display_number'],
+                    [4],
+                ]
+            ]]
+        )
+
     def test_sort_expression(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -582,7 +605,6 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
 
 
-@freeze_time("2020-01-15")
 class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
     # Note that these constants are subtracted from today's date, so the month parts of the names
     # are approximations: the first one will usually fall one year and two months ago, but will

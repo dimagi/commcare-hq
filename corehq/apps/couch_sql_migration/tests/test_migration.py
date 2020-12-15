@@ -18,6 +18,7 @@ from django.test import TestCase, override_settings
 import attr
 import mock
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil.parser import parse as parse_date
 from gevent.pool import Pool
 from nose.tools import nottest
 from testil import tempdir
@@ -93,6 +94,7 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     RESET,
     STATS,
 )
+from ..patches import patch_XFormInstance_get_xml
 from ..statedb import init_state_db, open_state_db
 from ..util import UnhandledError
 
@@ -1498,6 +1500,17 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
 
+    def test_form_with_malformed_received_on(self):
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        doc = form.to_json()
+        doc["received_on"] = "2013-05-23T08:33:54+00:00Z"
+        XFormInstance.get_db().save_doc(doc)
+        self.do_migration()
+        self.assertEqual(
+            self._get_form("test-form").received_on,
+            parse_date("2013-05-23T08:33:54"),
+        )
+
     def test_case_with_malformed_date_modified(self):
         bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
         assert bad_xml.count("2015-08-014") == 1, bad_xml
@@ -1510,6 +1523,32 @@ class MigrationTestCase(BaseMigrationTestCase):
         case = self._get_case("test-case")
         self.assertEqual(case.xform_ids, ["test-form"])
         self.assertEqual(case.modified_on, datetime(2015, 8, 14, 0, 0))
+
+    def test_case_with_malformed_date_modified_us(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"12-31-2014"')
+        assert bad_xml.count("12-31-2014") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "12-31-2014"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2014, 12, 31, 0, 0))
+
+    def test_case_with_malformed_date_modified_us_with_time(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"10/13/14 00:00:00"')
+        assert bad_xml.count("10/13/14 00:00:00") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "10/13/14 00:00:00"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2014, 10, 13, 0, 0))
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -1664,7 +1703,7 @@ class TestHelperFunctions(TestCase):
             user_id=couch_form.user_id,
         )
         self.addCleanup(delete_blob)
-        with mod.patch_XFormInstance_get_xml():
+        with patch_XFormInstance_get_xml():
             mod._migrate_form_attachments(sql_form, couch_form)
         self.assertEqual(sql_form.form_data, couch_form.form_data)
         xml = sql_form.get_xml()

@@ -217,7 +217,7 @@ class GrapevineResource(Resource):
         authorization = Authorization()
         allowed_methods = ['post']
         serializer = UrlencodedDeserializer()
-        throttle = CacheThrottle(throttle_at=600, timeframe=60, expiration=86400)
+        throttle = CacheThrottle(throttle_at=600, timeframe=10, expiration=86400)
         authentication = SimpleApiAuthentication()
 
     def detail_uri_kwargs(self, bundle_or_obj):

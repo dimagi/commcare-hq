@@ -1,6 +1,5 @@
 import math
 import time
-import traceback
 
 from django.conf import settings
 
@@ -173,50 +172,59 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
     alias = index_info.alias
     data = data if data is not None else {}
     current_tries = 0
-    es_interface = ElasticsearchInterface(es_getter())
-    retries = 1 if settings.UNIT_TESTING else MAX_RETRIES
-    propagate_failure = settings.UNIT_TESTING
+    es_interface = _get_es_interface(es_getter)
+    retries = _retries()
+    propagate_failure = _propagate_failure()
     while current_tries < retries:
         try:
-            doc_exists = es_interface.doc_exists(alias, doc_id, doc_type)
             if delete:
-                if doc_exists:
-                    es_interface.delete_doc(alias, doc_type, doc_id)
-            elif doc_exists:
+                es_interface.delete_doc(alias, doc_type, doc_id)
+            else:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
                     es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
                 else:
-                    es_interface.update_doc(alias, doc_type, doc_id, doc=data, params=params)
-            else:
-                es_interface.create_doc(alias, doc_type, doc_id, doc=data)
+                    # use the same index API to create or update doc
+                    es_interface.index_doc(alias, doc_type, doc_id, doc=data, params=params)
             break
-        except ConnectionError as ex:
+        except ConnectionError:
             current_tries += 1
-            pillow_logging.error("[{}] put_robust error {} attempt {}/{}".format(
-                name, ex, current_tries, retries))
-
             if current_tries == retries:
-                message = "[{}] Max retry error on {}/{}/{}:\n\n{}".format(
-                    name, alias, doc_type, doc_id, traceback.format_exc())
+                message = "[%s] Max retry error on %s/%s/%s"
+                args = (name, alias, doc_type, doc_id)
                 if propagate_failure:
-                    raise PillowtopIndexingError(message)
+                    raise PillowtopIndexingError(message % args)
                 else:
-                    pillow_logging.error(message)
-
-            time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-        except RequestError:
-            error_message = (
-                "Pillowtop put_robust error [{}]:\n\n{}\n\tpath: {}/{}/{}\n\t{}".format(
-                    name, traceback.format_exc(), alias, doc_type, doc_id, list(data))
-            )
-
-            if propagate_failure:
-                raise PillowtopIndexingError(error_message)
+                    pillow_logging.exception(message, *args)
             else:
-                pillow_logging.error(error_message)
+                pillow_logging.exception("[%s] put_robust error attempt %s/%s", name, current_tries, retries)
+
+            _sleep_between_retries(current_tries)
+        except RequestError:
+            message = "[%s] put_robust error: %s/%s/%s"
+            args = (name, alias, doc_type, doc_id)
+            if propagate_failure:
+                raise PillowtopIndexingError(message % args)
+            else:
+                pillow_logging.exception(message, *args)
             break
         except ConflictError:
             break  # ignore the error if a doc already exists when trying to create it in the index
         except NotFoundError:
             break
+
+
+def _propagate_failure():
+    return settings.UNIT_TESTING
+
+
+def _retries():
+    return 1 if settings.UNIT_TESTING else MAX_RETRIES
+
+
+def _sleep_between_retries(current_tries):
+    time.sleep(math.pow(RETRY_INTERVAL, current_tries))
+
+
+def _get_es_interface(es_getter):
+    return ElasticsearchInterface(es_getter())

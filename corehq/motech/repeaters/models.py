@@ -411,13 +411,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
         """
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
-            self.generator.handle_exception(result, repeat_record)
         elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
-            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
             attempt = repeat_record.handle_failure(result)
-            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
 
     @property
@@ -904,11 +901,11 @@ class RepeatRecord(Document):
         if already_processed() or not is_ready():
             return
 
-        # Set the next check to happen an arbitrarily long time from now so
-        # if something goes horribly wrong with the delayed task it will not
-        # be lost forever. A check at this time is expected to occur rarely,
-        # if ever, because `process_repeat_record` will usually succeed or
-        # reset the next check to sometime sooner.
+        # Set the next check to happen an arbitrarily long time from now.
+        # This way if there's a delay in calling `process_repeat_record` (which
+        # also sets or clears next_check) we won't queue this up in duplicate.
+        # If `process_repeat_record` is totally borked, this future date is a
+        # fallback.
         self.next_check = datetime.utcnow() + timedelta(hours=48)
         try:
             self.save()

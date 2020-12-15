@@ -3,7 +3,7 @@ from django.core import mail
 import mock
 from django_prbac.models import Role
 from stripe import Charge
-from stripe.resource import StripeObject
+from stripe.stripe_object import StripeObject
 
 from dimagi.utils.dates import add_months_to_date
 

@@ -1,10 +1,7 @@
-import time
 import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
-from importlib import import_module
-from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -32,7 +29,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     TimeProperty,
 )
-from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     get_safe_write_kwargs,
     iter_bulk_delete,

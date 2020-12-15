@@ -321,6 +321,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.afterRender = function () {
             $(document).on("click", ".help-text-trigger", function (event) {
+                event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
                 container.find(".modal").modal('show');
             });
