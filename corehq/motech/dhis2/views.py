@@ -98,7 +98,7 @@ class DataSetMapView(BaseProjectSettingsView):
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'dataset_map_list_view'
     page_title = ugettext_lazy("DHIS2 DataSet Maps")
-    template_name = 'dhis2/dataset_map_list.html'  # TODO: ...
+    template_name = 'dhis2/dataset_map_list.html'
 
     limit_text = _('DataSet Maps per page')
     empty_notification = _('There are no DataSet Maps')
@@ -122,7 +122,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         for dataset_map in self.base_query.all()[start:end]:
             yield {
                 "itemData": self._get_item_data(dataset_map),
-                "template": "dataset-map-template",  # TODO: ...
+                "template": "dataset-map-template",
             }
 
     @property
@@ -159,7 +159,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         dataset_map.delete()
         return {
             'itemData': self._get_item_data(dataset_map),
-            'template': 'dataset-map-deleted-template',  # TODO: ...
+            'template': 'dataset-map-deleted-template',
         }
 
     def post(self, *args, **kwargs):
