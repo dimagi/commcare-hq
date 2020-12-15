@@ -8,23 +8,24 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.generic.edit import BaseCreateView, BaseUpdateView
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.motech.dhis2.dbaccessors import get_dataset_maps
-from corehq.motech.dhis2.dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
-from corehq.motech.dhis2.forms import (
-    Dhis2ConfigForm,
-    Dhis2EntityConfigForm,
-)
-from corehq.motech.dhis2.models import DataSetMap, DataValueMap, SQLDataSetMap
-from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
-from corehq.motech.dhis2.tasks import send_dataset
 from corehq.motech.models import ConnectionSettings
+
+from .const import SEND_FREQUENCY_CHOICES
+from .dbaccessors import get_dataset_maps
+from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
+from .forms import Dhis2ConfigForm, Dhis2EntityConfigForm
+from .models import DataSetMap, DataValueMap, SQLDataSetMap, get_report_config
+from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
+from .tasks import send_dataset
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -87,6 +88,127 @@ class DataSetMapView(BaseProjectSettingsView):
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
             'is_json_ui': int(self.request.GET.get('json', 0)),
         }
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
+    urlname = 'dataset_map_list_view'
+    page_title = ugettext_lazy("DHIS2 DataSet Maps")
+    template_name = 'dhis2/dataset_map_list.html'  # TODO: ...
+
+    limit_text = _('DataSet Maps per page')
+    empty_notification = _('There are no DataSet Maps')
+    loading_message = _('Loading DataSet Maps')
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def base_query(self):
+        return SQLDataSetMap.objects.filter(domain=self.domain)
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for dataset_map in self.base_query.all():
+            yield {
+                "itemData": self._get_item_data(dataset_map),
+                "template": "dataset-map-template",  # TODO: ...
+            }
+
+    @property
+    def column_names(self):
+        return [
+            _('Description'),
+            _('Connection Settings'),
+            _('Frequency'),
+            _('UCR'),
+
+            _('Action')
+        ]
+
+    def _get_item_data(self, dataset_map):
+        frequency_names = dict(SEND_FREQUENCY_CHOICES)
+        return {
+            'id': dataset_map.id,
+            'description': dataset_map.description,
+            'connectionSettings': str(dataset_map.connection_settings),
+            'frequency': frequency_names[dataset_map.frequency],
+            'ucr': get_report_config(dataset_map.domain, dataset_map.ucr_id).title,  # TODO: ...
+
+            'editUrl': reverse(
+                DataSetMapUpdateView.urlname,
+                kwargs={'domain': self.domain, 'pk': dataset_map.id}
+            ),
+        }
+
+    def get_deleted_item_data(self, item_id):
+        dataset_map = SQLDataSetMap.objects.get(domain=self.domain, pk=item_id)
+        dataset_map.delete()
+        return {
+            'itemData': self._get_item_data(dataset_map),
+            'template': 'dataset-map-deleted-template',  # TODO: ...
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
+    urlname = 'dataset_map_create_view'
+    page_title = _('DataSet Map')
+    template_name = 'dhis2/dataset_map_create.html'  # TODO: ...
+    model = SQLDataSetMap
+    # form_class = DataSetMapForm  # TODO: ...
+
+    def get_queryset(self):
+        return super().get_queryset().filter(domain=self.domain)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            DataSetMapListView.urlname,
+            kwargs={'domain': self.domain},
+        )
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class DataSetMapUpdateView(BaseProjectSettingsView, BaseUpdateView):
+    urlname = 'dataset_map_update_view'
+    page_title = _('DataSet Map')
+    template_name = 'dhis2/dataset_map_update.html'  # TODO: ...
+    model = SQLDataSetMap
+    # form_class = DataSetMapForm  # TODO: ...
+
+    def get_queryset(self):
+        return super().get_queryset().filter(domain=self.domain)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            DataSetMapListView.urlname,
+            kwargs={'domain': self.domain},
+        )
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
 
 
 @require_POST
