@@ -5,17 +5,6 @@ from corehq.motech.repeaters.views import repeat_records
 from unittest.mock import Mock
 from unittest.case import TestCase
 
-query_strings = [
-    None,
-    '',
-    'repeater=&record_state=&payload_id=payload_3',
-    'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-    'repeater=&record_state=&payload_id=',
-    'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-    'repeater=&record_state=STATUS&payload_id=payload_2',
-    'repeater=repeater_2&record_state=STATUS&payload_id=',
-]
-
 
 class TestUtilities(TestCase):
 
@@ -50,6 +39,16 @@ class TestUtilities(TestCase):
             assert_equal(result, expected_result)
 
     def test__change_record_state(self):
+        query_strings = [
+            None,
+            '',
+            'repeater=&record_state=&payload_id=payload_3',
+            'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
+            'repeater=&record_state=&payload_id=',
+            'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
+            'repeater=&record_state=STATUS&payload_id=payload_2',
+            'repeater=repeater_2&record_state=STATUS&payload_id=',
+        ]
         strings_to_add = [
             'NO_STATUS',
             'NO_STATUS',
@@ -74,5 +73,7 @@ class TestUtilities(TestCase):
         for qs, str_to_add, expected_result in zip(query_strings,
                                                    strings_to_add,
                                                    desired_strings):
-            result = repeat_records._change_record_state(qs, str_to_add)
+            query_dict = QueryDict(qs)
+            result = repeat_records._change_record_state(
+                query_dict, str_to_add).urlencode()
             self.assertEqual(result, expected_result)

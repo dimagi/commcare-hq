@@ -1,6 +1,10 @@
-from urllib.parse import parse_qsl, urlencode
-
-from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    JsonResponse,
+    QueryDict,
+)
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -256,8 +260,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         total_cancelled = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
 
         form_query_string = self.request.GET.urlencode()
-        form_query_string_cancelled = _change_record_state(form_query_string, 'CANCELLED')
-        form_query_string_pending = _change_record_state(form_query_string, 'PENDING')
+        form_query_string_cancelled = _change_record_state(
+            self.request.GET, 'CANCELLED').urlencode()
+        form_query_string_pending = _change_record_state(
+            self.request.GET, 'PENDING').urlencode()
 
         context.update(
             total=total,
@@ -351,16 +357,14 @@ def _get_flag(request: HttpRequest) -> str:
     return request.POST.get('flag') or ''
 
 
-def _change_record_state(query_string, state):
-    if not query_string:
-        return ''
+def _change_record_state(query_dict: QueryDict, state: str) -> QueryDict:
     if not state:
-        return query_string
-
-    query = dict(parse_qsl(query_string, keep_blank_values=True))
-    if 'record_state' in query:
-        query['record_state'] = state
-    return urlencode(query)
+        return query_dict
+    if 'record_state' in query_dict:
+        query_dict = query_dict.copy()  # Don't cause side effects. Also,
+        # request.GET is immutable and will raise AttributeError.
+        query_dict['record_state'] = state
+    return query_dict
 
 
 def _schedule_task_with_flag(request, domain, action):
