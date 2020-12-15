@@ -16,10 +16,12 @@ describe('Render a case list', function () {
         var server;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
+            sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
         });
 
         afterEach(function () {
             server.restore();
+            Backbone.history.getFragment.restore();
         });
 
         var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
