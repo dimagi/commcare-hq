@@ -94,6 +94,7 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     RESET,
     STATS,
 )
+from ..patches import patch_XFormInstance_get_xml
 from ..statedb import init_state_db, open_state_db
 from ..util import UnhandledError
 
@@ -1702,7 +1703,7 @@ class TestHelperFunctions(TestCase):
             user_id=couch_form.user_id,
         )
         self.addCleanup(delete_blob)
-        with mod.patch_XFormInstance_get_xml():
+        with patch_XFormInstance_get_xml():
             mod._migrate_form_attachments(sql_form, couch_form)
         self.assertEqual(sql_form.form_data, couch_form.form_data)
         xml = sql_form.get_xml()
