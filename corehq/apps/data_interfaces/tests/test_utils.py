@@ -91,9 +91,9 @@ class TestTasks(TestCase):
 
         mock__get_ids.assert_called_once()
         mock__get_ids.assert_called_with(mock_payload, 'test_domain')
-        self.mock_payload_ids = mock__get_ids(mock_payload, 'test_domain')
+        mock_record_ids = mock__get_ids(mock_payload, 'test_domain')
         mock_operate_on_payloads.assert_called_once()
-        mock_operate_on_payloads.assert_called_with(self.mock_payload_ids, 'test_domain', 'test_action',
+        mock_operate_on_payloads.assert_called_with(mock_record_ids, 'test_domain', 'test_action',
                                                     task=task_generate_ids_and_operate_on_payloads)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
@@ -249,8 +249,6 @@ class TestTasks(TestCase):
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
     @patch('corehq.apps.data_interfaces.utils._validate_record')
     def test_operate_on_payloads_no_task_from_excel_true_requeue(self, mock__validate_record, mock_DownloadBase):
-        mock_payload_one, self.mock_payload_two = Mock(id='id_1'), Mock(id='id_2')
-        self.mock_payload_ids = [mock_payload_one.id, self.mock_payload_two.id]
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         with patch('corehq.apps.data_interfaces.utils._') as _:
