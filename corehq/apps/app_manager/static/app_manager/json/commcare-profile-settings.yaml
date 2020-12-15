@@ -388,4 +388,4 @@
   value_names: ["Yes", "No"]
   default: "no"
   since: "2.51"
-  force: false
+  force: true
