@@ -42,7 +42,7 @@ class TestDiffCases(SimpleTestCase):
             patch(
                 "corehq.form_processor.backends.couch.dbaccessors"
                 ".FormAccessorCouch.form_exists",
-                lambda *a: False,
+                fake_couch_form_exists,
             ),
             patch.object(mod, "hard_rebuild", lambda couch_case: couch_case),
             patch.object(mod, 'rebuild_and_diff_cases', self.rebuild_and_diff_cases),
@@ -184,6 +184,21 @@ class TestDiffCases(SimpleTestCase):
             ),
         ])
 
+    def test_null_last_modified_form_id(self):
+        self.add_case("a")
+        stock = self.add_ledger("a", balance=1)
+        stock.values["balance"] = 2
+        stock.last_modified_form_id = None
+        del self.sql_ledgers["a"]
+        mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
+        self.assert_diffs([
+            Diff(
+                "a/stock/a", "stock state", "missing", ["*"],
+                old={'form_state': 'unknown', 'ledger': stock.to_json()},
+                new={'form_state': 'unknown'},
+            ),
+        ])
+
     def assert_diffs(self, expected=None, changes=None):
         actual = [
             Diff(diff.doc_id, diff.kind, *diff.json_diff)
@@ -266,3 +281,9 @@ class Diff:
     path = attr.ib(factory=list)
     old = attr.ib(default=None)
     new = attr.ib(default=None)
+
+
+def fake_couch_form_exists(form_id):
+    if not isinstance(form_id, str):
+        raise TypeError
+    return False
