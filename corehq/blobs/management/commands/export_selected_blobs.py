@@ -108,8 +108,6 @@ def _export_blobs(output_path, path, meta):
         for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix, oneline=False):
             migrator.process_object(obj)
 
-    print("Exported {} objects to {}".format(migrator.total_blobs, export_filename))
-
     return export_filename
 
 
