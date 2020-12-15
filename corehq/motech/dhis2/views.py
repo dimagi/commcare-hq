@@ -95,7 +95,7 @@ class DataSetMapView(BaseProjectSettingsView):
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'dataset_map_list_view'
     page_title = ugettext_lazy("DHIS2 DataSet Maps")
-    template_name = 'dhis2/dataset_map_list.html'  # TODO: ...
+    template_name = 'dhis2/dataset_map_list.html'
 
     limit_text = _('DataSet Maps per page')
     empty_notification = _('There are no DataSet Maps')
@@ -118,7 +118,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         for dataset_map in self.base_query.all():
             yield {
                 "itemData": self._get_item_data(dataset_map),
-                "template": "dataset-map-template",  # TODO: ...
+                "template": "dataset-map-template",
             }
 
     @property
@@ -152,7 +152,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         dataset_map.delete()
         return {
             'itemData': self._get_item_data(dataset_map),
-            'template': 'dataset-map-deleted-template',  # TODO: ...
+            'template': 'dataset-map-deleted-template',
         }
 
     def post(self, *args, **kwargs):
@@ -185,7 +185,7 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class DataSetMapUpdateView(BaseProjectSettingsView, BaseUpdateView):
+class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView):
     urlname = 'dataset_map_update_view'
     page_title = _('DataSet Map')
     template_name = 'dhis2/dataset_map_update.html'  # TODO: ...
