@@ -2,12 +2,13 @@ import bz2
 from base64 import b64decode, b64encode
 from datetime import date, timedelta
 from itertools import chain
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from dateutil.relativedelta import relativedelta
+from memoized import memoized_property
 
 from dimagi.ext.couchdbkit import (
     Document,
@@ -23,7 +24,7 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.util.couch import get_document_or_not_found
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 
 from .const import (
@@ -131,6 +132,14 @@ class SQLDataSetMap(models.Model):
     def __str__(self):
         return self.description
 
+    @memoized_property
+    def ucr(self) -> Optional[ReportConfiguration]:
+        try:
+            return get_document_or_not_found(ReportConfiguration,
+                                             self.domain, self.ucr_id)
+        except DocumentNotFound as err:
+            raise ValueError('UCR not found for {self!r}') from err
+
 
 class SQLDataValueMap(models.Model):
     dataset_map = models.ForeignKey(
@@ -222,10 +231,9 @@ def get_dataset(
     dataset_map: Union[DataSetMap, SQLDataSetMap],
     send_date: date
 ) -> dict:
-    report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
-    date_filter = get_date_filter(report_config)
+    date_filter = get_date_filter(dataset_map.ucr)
     date_range = get_date_range(dataset_map.frequency, send_date)
-    ucr_data = get_ucr_data(report_config, date_filter, date_range)
+    ucr_data = get_ucr_data(dataset_map.ucr, date_filter, date_range)
 
     datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)  # one UCR row may have many DataValues
     dataset = {
@@ -292,11 +300,6 @@ def should_send_on_date(
             dataset_map.day_to_send == send_date.day
             and send_date.month in [1, 4, 7, 10]
         )
-
-
-def get_report_config(domain_name, ucr_id):
-    report_config = get_document_or_not_found(ReportConfiguration, domain_name, ucr_id)
-    return report_config
 
 
 def get_date_filter(report_config):

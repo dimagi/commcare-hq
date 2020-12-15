@@ -23,7 +23,7 @@ from .const import SEND_FREQUENCY_CHOICES
 from .dbaccessors import get_dataset_maps
 from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
 from .forms import Dhis2ConfigForm, Dhis2EntityConfigForm
-from .models import DataSetMap, DataValueMap, SQLDataSetMap, get_report_config
+from .models import DataSetMap, DataValueMap, SQLDataSetMap
 from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
 
@@ -139,7 +139,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
             'description': dataset_map.description,
             'connectionSettings': str(dataset_map.connection_settings),
             'frequency': frequency_names[dataset_map.frequency],
-            'ucr': get_report_config(dataset_map.domain, dataset_map.ucr_id).title,  # TODO: ...
+            'ucr': dataset_map.ucr.title,
 
             'editUrl': reverse(
                 DataSetMapUpdateView.urlname,
