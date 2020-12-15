@@ -49,7 +49,7 @@ class Command(BaseCommand):
     @change_log_level('botocore', logging.WARNING)
     def handle(self, path, **options):
         use_extracted = options.get('use_extracted')
-        output_path = options.get('output_path', '')
+        output_path = options.get('output_path') or ''
 
         already_exported = get_lines_from_file(options['already_exported'])
         if already_exported:
