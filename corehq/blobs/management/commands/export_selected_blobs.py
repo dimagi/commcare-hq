@@ -4,15 +4,12 @@ import inspect
 import json
 import logging
 import os
-import pathlib
 import re
-import shutil
 import zipfile
 from collections import namedtuple
 from concurrent import futures
 from pathlib import Path
 
-import atexit
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.management.commands.load_domain_data import get_tmp_extract_dir
