@@ -357,12 +357,10 @@ def _change_record_state(query_string, state):
     if not state:
         return query_string
 
-    query_string_list = []
-    for name, value in parse_qsl(query_string, keep_blank_values=True):
-        if name == 'record_state':
-            value = state
-        query_string_list.append((name, value))
-    return urlencode(query_string_list)
+    query = dict(parse_qsl(query_string, keep_blank_values=True))
+    if 'record_state' in query:
+        query['record_state'] = state
+    return urlencode(query)
 
 
 def _schedule_task_with_flag(request, domain, action):
