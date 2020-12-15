@@ -37,21 +37,16 @@ class ManyFilters(DomainFilter):
 
 
 class UsernameFilter(DomainFilter):
-    def __init__(self, user_ids=None):
-        self.user_ids = user_ids
+    def __init__(self, usernames=None):
+        self.usernames = usernames
 
     def get_filters(self, domain_name):
         """
         :return: A generator of filters each filtering for at most 500 users.
         """
         from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
-        if self.user_ids:
-            usernames = [
-                username
-                for user_id, username in get_all_user_id_username_pairs_by_domain(domain_name, include_web_users=False)
-                if user_id in self.user_ids
-            ]
+        if self.usernames:
+            usernames = self.usernames
         else:
             usernames = get_all_usernames_by_domain(domain_name)
         for chunk in chunked(usernames, 500):
