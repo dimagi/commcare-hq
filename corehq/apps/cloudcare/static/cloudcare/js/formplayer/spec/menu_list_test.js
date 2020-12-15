@@ -8,7 +8,7 @@ describe('Render a case list', function () {
             "toggles_dict",
             {
                 APP_ANALYTICS: true,
-            },
+            }
         );
     });
 
