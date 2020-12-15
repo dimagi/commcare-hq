@@ -365,7 +365,10 @@ def _change_record_state(query_string, state):
 
 def _schedule_task_with_flag(request, domain, action):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_generate_ids_and_operate_on_payloads.delay(request.POST, domain, action)
+    payload_id = request.POST.get('payload_id') or None
+    repeater_id = request.POST.get('repeater') or None
+    task = task_generate_ids_and_operate_on_payloads.delay(
+        payload_id, repeater_id, domain, action)
     task_ref.set_task(task)
 
 

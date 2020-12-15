@@ -82,8 +82,10 @@ class TestTasks(TestCase):
     @patch('corehq.apps.data_interfaces.tasks._get_repeat_record_ids')
     @patch('corehq.apps.data_interfaces.tasks.operate_on_payloads')
     def test_generate_ids_and_operate_on_payloads_success(self, mock_operate_on_payloads, mock__get_ids):
-        query_string_dict = {'payload_id': 'c0ffee', 'repeater': 'deadbeef'}
-        task_generate_ids_and_operate_on_payloads(query_string_dict, 'test_domain', 'test_action')
+        payload_id = 'c0ffee'
+        repeater_id = 'deadbeef'
+        task_generate_ids_and_operate_on_payloads(
+            payload_id, repeater_id, 'test_domain', 'test_action')
 
         mock__get_ids.assert_called_once()
         mock__get_ids.assert_called_with('c0ffee', 'deadbeef', 'test_domain')

@@ -223,10 +223,12 @@ def task_operate_on_payloads(record_ids, domain, action=''):
 
 
 @task(serializer='pickle')
-def task_generate_ids_and_operate_on_payloads(query_string_dict, domain, action=''):
-    payload_id = query_string_dict.get('payload_id') or None
-    repeater_id = query_string_dict.get('repeater') or None
-
+def task_generate_ids_and_operate_on_payloads(
+    payload_id: Optional[str],
+    repeater_id: Optional[str],
+    domain: str,
+    action: str = '',
+) -> dict:
     repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
