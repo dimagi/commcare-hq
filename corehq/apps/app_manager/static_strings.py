@@ -251,4 +251,6 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('XXX-High Density'),
     ugettext_noop('Yes'),
     ugettext_noop('disabled'),
+    ugettext_noop('Enable Text To Speech'),
+    ugettext_noop('Enables Text To Speech feature for mobile.'),
 ]
