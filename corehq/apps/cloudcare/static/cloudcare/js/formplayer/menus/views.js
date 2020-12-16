@@ -320,13 +320,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             return {
-                startPage: paginateItems["startPage"],
+                startPage: paginateItems.startPage,
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                pageCount: paginateItems["endPage"],
+                endPage: paginateItems.endPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
@@ -589,6 +589,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
+        paginateOptions: paginateOptions,
     };
 })
 ;

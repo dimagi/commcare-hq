@@ -62,7 +62,7 @@
     </div>
     <% } %>
 
-    <% if (pageCount) { %>
+    <% if (endPage) { %>
     <div>
       <nav class="module-caselist-pagination-container">
         <ul class="pagination">
@@ -81,10 +81,10 @@
             </a>
           </li>
           <% } %>
-          <% for (i = startPage-1; i < pageCount; i++) { %>
+          <% for (i = startPage-1; i < endPage; i++) { %>
           <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
           <% } %>
-          <% if (currentPage < pageCount - 1) { %>
+          <% if (currentPage < endPage - 1) { %>
           <li class="page-item" id="next-page">
             <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
               <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
