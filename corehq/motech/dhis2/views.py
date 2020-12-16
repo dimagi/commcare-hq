@@ -185,12 +185,17 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView):
+class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
+                           CRUDPaginatedViewMixin):
     urlname = 'dataset_map_update_view'
     page_title = _('DataSet Map')
-    template_name = 'dhis2/dataset_map_update.html'  # TODO: ...
+    template_name = 'dhis2/dataset_map_update.html'
     model = SQLDataSetMap
-    # form_class = DataSetMapForm  # TODO: ...
+    form_class = DataSetMapForm
+
+    limit_text = _('DataValue Maps per page')
+    empty_notification = _('This DataSet Map has no DataValue Maps')
+    loading_message = _('Loading DataValue Maps')
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)
@@ -209,6 +214,51 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
+
+    def post(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
+        return self.paginate_crud_response
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def base_query(self):
+        return self.object.datavalue_maps
+
+    @property
+    def page_context(self):
+        return {
+            'dataset_map_id': self.kwargs['pk'],
+            **self.pagination_context,
+        }
+
+    @property
+    def paginated_list(self):
+        for datavalue_map in self.base_query.all():
+            yield {
+                "itemData": self._get_item_data(datavalue_map),
+                "template": "datavalue-map-template",
+            }
+
+    @property
+    def column_names(self):
+        return [
+            _('Column'),
+            _('DataElementID'),
+            _('CategoryOptionComboID'),
+            _('Comment'),
+        ]
+
+    def _get_item_data(self, datavalue_map):
+        return {
+            'id': datavalue_map.id,
+            'column': datavalue_map.column,
+            'dataElementId': datavalue_map.data_element_id,
+            'categoryOptionComboId': datavalue_map.category_option_combo_id,
+            'comment': datavalue_map.comment,
+        }
 
 
 @require_POST
