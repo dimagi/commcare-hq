@@ -85,15 +85,12 @@ class EntriesHelper(object):
         return datums_meta
 
     @staticmethod
-    def get_filter_xpath(module, delegation=False):
+    def get_filter_xpath(module):
         filter = module.case_details.short.filter
         if filter:
             xpath = '[%s]' % interpolate_xpath(filter)
         else:
             xpath = ''
-        if delegation:
-            xpath += "[index/parent/@case_type = '%s']" % module.case_type
-            xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
     @staticmethod
