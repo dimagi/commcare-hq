@@ -47,7 +47,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-label": this.model.get('username')
+                "aria-label": this.model.get('username'),
             };
         },
         onClickUser: function () {

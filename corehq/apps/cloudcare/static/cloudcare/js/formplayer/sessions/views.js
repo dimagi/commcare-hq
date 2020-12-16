@@ -18,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-labelledby": sessionLabelId
+                "aria-labelledby": sessionLabelId,
             };
         },
 

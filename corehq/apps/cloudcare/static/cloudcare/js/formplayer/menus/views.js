@@ -18,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-label": displayText
+                "aria-label": displayText,
             };
         },
         events: {
@@ -237,7 +237,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-labelledby": labelId
+                "aria-labelledby": labelId,
             };
         },
 
