@@ -1,17 +1,23 @@
 from django.contrib import messages
-from django.http.response import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from soil import DownloadBase
 
-from corehq.apps.domain.decorators import require_superuser_or_contractor
+from corehq.apps.domain.decorators import (
+    api_auth,
+    require_superuser_or_contractor,
+)
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqcase.tasks import (
     delete_exploded_case_task,
     explode_case_task,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.utils import should_use_sql_backend
 
 
@@ -62,3 +68,31 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         res = delete_exploded_case_task.delay(self.domain, explosion_id)
         download.set_task(res)
         return redirect('hq_soil_download', self.domain, download.download_id)
+
+
+# TODO switch to @require_can_edit_data
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth
+@require_superuser_or_contractor
+def create_case(request, domain):
+    return JsonResponse({})
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth
+@require_superuser_or_contractor
+def update_case(request, domain, case_id):
+    return JsonResponse({})
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth
+@require_superuser_or_contractor
+def bulk_update_cases(request, domain):
+    return JsonResponse({})

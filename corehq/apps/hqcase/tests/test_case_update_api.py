@@ -1,26 +1,35 @@
 import uuid
 
 from django.test import TestCase
+from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 class TestUpdateCases(TestCase):
-    domain = 'test_update_cases'
+    domain = 'test-update-cases'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None)
+        cls.web_user.is_superuser = True  # in pre-release, this is superuser-only
+        cls.web_user.save()
         cls.case_accessor = CaseAccessors(cls.domain)
         cls.form_accessor = FormAccessors(cls.domain)
+
+    def setUp(self):
+        self.client.login(username='netflix', password='password')
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
@@ -30,12 +39,22 @@ class TestUpdateCases(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def post(self, resource_url, body):
-        # TODO
-        pass
+    def _post(self, resource_url, body):
+        return self.client.post(
+            resource_url, body, content_type="application/json;charset=utf-8"
+        )
+
+    def _create_case(self, body):
+        return self._post(reverse('create_case', args=(self.domain,)), body)
+
+    def _update_case(self, case_id, body):
+        return self._post(reverse('update_case', args=(self.domain, case_id,)), body)
+
+    def _bulk_update_cases(self, body):
+        return self._post(reverse('bulk_update_cases', args=(self.domain,)), body)
 
     def test_create_case(self):
-        res = self.post('create_case', {
+        res = self._create_case({
             # notable exclusions: case_id, date_opened, date_modified
             '@case_type': 'player',
             '@case_name': 'Elizabeth Harmon',
@@ -45,7 +64,7 @@ class TestUpdateCases(TestCase):
                 'sport': 'chess',
                 'dob': '1948-11-02',
             },
-        })
+        }).json()
         self.assertEqual(res.keys(), ['@case_id', '@form_id'])
         case = self.case_accessor.get_case(res['@case_id'])
         self.assertEqual(case.domain, self.domain)
@@ -83,7 +102,7 @@ class TestUpdateCases(TestCase):
     def test_update_case(self):
         case = self._make_case()
 
-        res = self.post(f'update_case/{case.case_id}', {
+        res = self._update_case(case.case_id, {
             # notable exclusions: case_id, date_opened, date_modified, case_type
             '@case_name': 'Beth Harmon',
             '@owner_id': 'us_chess_federation',
@@ -91,7 +110,7 @@ class TestUpdateCases(TestCase):
                 'rank': '2100',
                 'champion': 'true',
             },
-        })
+        }).json()
         self.assertEqual(res.keys(), ['@case_id', '@form_id'])
 
         case = self.case_accessor.get_case(case.case_id)
@@ -106,7 +125,7 @@ class TestUpdateCases(TestCase):
 
     def test_create_child_case(self):
         parent_case = self._make_case()
-        res = self.post('create_case', {
+        res = self._create_case({
             '@case_type': 'match',
             '@case_name': 'Harmon/Luchenko',
             '@owner_id': 'harmon',
@@ -121,7 +140,7 @@ class TestUpdateCases(TestCase):
                     '@relationship': 'child',
                 },
             },
-        })
+        }).json()
         self.assertEqual(res.keys(), ['@case_id', '@form_id'])
 
         case = self.case_accessor.get_case(res['@case_id'])
@@ -139,7 +158,7 @@ class TestUpdateCases(TestCase):
 
     def test_bulk_action(self):
         existing_case = self._make_case()
-        res = self.post('bulk_update', [
+        res = self._bulk_update_cases([
             {
                 # update existing case
                 '@case_id': existing_case.case_id,
@@ -161,7 +180,7 @@ class TestUpdateCases(TestCase):
                     'dob': '1947-03-09',
                 },
             },
-        ])
+        ]).json()
         #  only returns a single form ID - chunking should happen in the client
         self.assertEqual(res.keys(), ['@case_ids', '@form_id'])
 
