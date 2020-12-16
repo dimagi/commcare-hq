@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-09 17:47+0000\n"
+"POT-Creation-Date: 2020-12-16 20:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2691,6 +2691,24 @@ msgstr ""
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:470
+msgid ""
+"We’re unable to submit this form right now due to high system usage. \n"
+"\n"
+"Please keep this window open and try again in a minute, or come back to this "
+"form in Incomplete Forms later."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:474
+msgid "Form submission failed with error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:478
+msgid ""
+"There are errors in this form's answers. These must be corrected before the "
+"form can be submitted."
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:34
 msgid "Form successfully submitted!"
 msgstr ""
@@ -2699,30 +2717,30 @@ msgstr ""
 msgid "An unexpected error occurred!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:206
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:212
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:330
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:336
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:339
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:464
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:470
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:41
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:492
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:498
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:644
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:650
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
