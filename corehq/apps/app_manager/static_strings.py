@@ -252,5 +252,5 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Yes'),
     ugettext_noop('disabled'),
     ugettext_noop('Enable Text To Speech'),
-    ugettext_noop('Enables Text To Speech feature for mobile.'),
+    ugettext_noop('Adds a text to speech button for all questions to read out the question text aloud.'),
 ]
