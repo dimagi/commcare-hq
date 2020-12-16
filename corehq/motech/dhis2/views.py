@@ -22,7 +22,7 @@ from corehq.motech.models import ConnectionSettings
 from .const import SEND_FREQUENCY_CHOICES
 from .dbaccessors import get_dataset_maps
 from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
-from .forms import Dhis2ConfigForm, Dhis2EntityConfigForm
+from .forms import DataSetMapForm, Dhis2ConfigForm, Dhis2EntityConfigForm
 from .models import DataSetMap, DataValueMap, SQLDataSetMap
 from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
@@ -164,9 +164,9 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
 class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
     urlname = 'dataset_map_create_view'
     page_title = _('DataSet Map')
-    template_name = 'dhis2/dataset_map_create.html'  # TODO: ...
+    template_name = 'dhis2/dataset_map_create.html'
     model = SQLDataSetMap
-    # form_class = DataSetMapForm  # TODO: ...
+    form_class = DataSetMapForm
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)
