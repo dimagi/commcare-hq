@@ -15,9 +15,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "formplayer-request",
         attributes: function () {
             var displayText = this.options.model.attributes.displayText;
-            return {"role": "link",
-                    "tabindex": "0",
-                    "aria-label": displayText};
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-label": displayText
+            };
         },
         events: {
             "click": "rowClick",
@@ -74,8 +76,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
-        rowKeyAction: function(e) {
-            if (e.keyCode == 13) {
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
                 this.rowClick(e);
             }
         },
@@ -231,10 +233,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "formplayer-request",
 
         attributes: function () {
-            var label_id = "case-view-item-".concat(this.options.model.attributes.id);
-            return {"role": "link",
-                    "tabindex": "0",
-                    "aria-labelledby": label_id};
+            var labelId = "case-view-item-".concat(this.options.model.attributes.id);
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-labelledby": labelId
+            };
         },
 
         rowClick: function (e) {
@@ -242,8 +246,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
         },
 
-        rowKeyAction: function(e) {
-            if (e.keyCode == 13) {
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
                 this.rowClick(e);
             }
         },

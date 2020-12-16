@@ -17,8 +17,8 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             FormplayerFrontend.trigger("app:select", this.model.get('_id'));
         },
 
-        rowKeyAction: function(e) {
-            if (e.keyCode == 13) {
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
                 // Select application on Enter keydown event.
                 this.rowClick(e);
             }
@@ -61,22 +61,22 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             FormplayerFrontend.trigger("settings:list");
         },
         incompleteSessionsKeyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.incompleteSessionsClick(e);
             }
         },
         syncKeyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.syncClick(e);
             }
         },
         restoreAsKeyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.onClickRestoreAs(e);
             }
         },
         settingsKeyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.onClickSettings(e);
             }
         },
@@ -144,7 +144,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             FormplayerFrontend.trigger("app:select", this.appId);
         },
         keyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.startApp(e);
             }
         },
@@ -183,10 +183,10 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             FormplayerFrontend.trigger("app:select", this.appId);
         },
         keyAction: function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
                 this.startApp();
             }
-        }
+        },
     });
 
     return {

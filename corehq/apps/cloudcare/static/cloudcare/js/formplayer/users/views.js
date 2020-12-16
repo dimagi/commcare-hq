@@ -44,9 +44,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'keydown': 'onKeyActionUser',
         },
         attributes: function () {
-            return {"role": "link",
-                    "tabindex": "0",
-                    "aria-label": this.model.get('username')};
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-label": this.model.get('username')
+            };
         },
         onClickUser: function () {
             Util.confirmationModal({
@@ -66,8 +68,8 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 }.bind(this),
             });
         },
-        onKeyActionUser: function(e) {
-            if (e.keyCode == 13) {
+        onKeyActionUser: function (e) {
+            if (e.keyCode === 13) {
                 this.onClickUser();
             }
         },
