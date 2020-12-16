@@ -151,7 +151,7 @@ rjsmin==1.0.12            # via django-compressor
 s3transfer==0.3.3         # via boto3
 schema==0.7.2             # via -r requirements.in
 sentry-sdk==0.19.4        # via -r requirements.in
-sh==1.09                  # via -r requirements.in
+sh==1.14.1                # via -r requirements.in
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, django-prbac
 six==1.15.0               # via -r requirements.in, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, pip-tools, protobuf, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, tenacity, twilio, unittest2
