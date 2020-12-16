@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
@@ -14,7 +15,7 @@ from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.models import ConnectionSettings
 
 from .const import SEND_FREQUENCY_CHOICES, SEND_FREQUENCY_MONTHLY
-from .models import SQLDataSetMap
+from .models import SQLDataSetMap, SQLDataValueMap
 
 
 class DataSetMapForm(forms.ModelForm):
@@ -202,6 +203,57 @@ def get_ucr_field(domain):
             f'target="_new">More info</a>. '
             f'Go to <a href="{url}">Configurable Reports</a> to define a UCR.')
     )
+
+
+class DataValueMapForm(forms.ModelForm):
+    column = forms.CharField(
+        label=_('Column'),
+        required=True,
+    )
+    data_element_id = forms.CharField(
+        label=_('Data element ID'),
+        required=True,
+    )
+    category_option_combo_id = forms.CharField(
+        label=_('Category option combo ID'),
+        required=True,
+    )
+    comment = forms.CharField(
+        label=_('Comment'),
+        required=False,
+    )
+
+    class Meta:
+        model = SQLDataValueMap
+        fields = [
+            'column',
+            'data_element_id',
+            'category_option_combo_id',
+            'comment',
+        ]
+
+    def __init__(self, dataset_map, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dataset_map = dataset_map
+
+        self.helper = FormHelper()
+        self.helper.form_style = 'inline'
+        self.helper.form_show_labels = False
+        self.helper.layout = crispy.Layout(
+            twbscrispy.InlineField('column'),
+            twbscrispy.InlineField('data_element_id'),
+            twbscrispy.InlineField('category_option_combo_id'),
+            twbscrispy.InlineField('comment'),
+            twbscrispy.StrictButton(
+                mark_safe(f'<i class="fa fa-plus"></i> {_("Create DataValue Map")}'),
+                css_class='btn-primary',
+                type='submit'
+            )
+        )
+
+    def save(self, commit=True):
+        self.instance.dataset_map = self.dataset_map
+        return super().save(commit)
 
 
 class Dhis2ConfigForm(forms.Form):
