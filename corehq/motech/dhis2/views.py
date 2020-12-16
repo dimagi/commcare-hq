@@ -25,7 +25,12 @@ from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from .const import SEND_FREQUENCY_CHOICES
 from .dbaccessors import get_dataset_maps
 from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
-from .forms import DataSetMapForm, Dhis2ConfigForm, Dhis2EntityConfigForm
+from .forms import (
+    DataSetMapForm,
+    DataValueMapForm,
+    Dhis2ConfigForm,
+    Dhis2EntityConfigForm,
+)
 from .models import DataSetMap, DataValueMap, SQLDataSetMap
 from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
@@ -269,6 +274,13 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
     def refresh_item(self, item_id):
         pass
 
+    def get_create_item_data(self, create_form):
+        datavalue_map = create_form.save()
+        return {
+            'itemData': self._get_item_data(datavalue_map),
+            'template': 'new-datavalue-map-template',
+        }
+
     @property
     def column_names(self):
         return [
@@ -286,6 +298,11 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             'categoryOptionComboId': datavalue_map.category_option_combo_id,
             'comment': datavalue_map.comment,
         }
+
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return DataValueMapForm(self.object, self.request.POST)
+        return DataValueMapForm(self.object)
 
 
 @require_POST
