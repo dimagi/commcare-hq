@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -20,9 +21,9 @@ from corehq.motech.dhis2.forms import (
     Dhis2ConfigForm,
     Dhis2EntityConfigForm,
 )
-from corehq.motech.dhis2.models import DataSetMap, DataValueMap
+from corehq.motech.dhis2.models import DataSetMap, DataValueMap, SQLDataSetMap
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
-from corehq.motech.dhis2.tasks import send_datasets
+from corehq.motech.dhis2.tasks import send_dataset
 from corehq.motech.models import ConnectionSettings
 
 
@@ -90,9 +91,11 @@ class DataSetMapView(BaseProjectSettingsView):
 
 @require_POST
 @require_permission(Permissions.edit_motech)
-def send_dhis2_data(request, domain):
-    send_datasets.delay(domain, send_now=True)
-    return JsonResponse({'success': _('Data is being sent to DHIS2.')}, status=202)
+def send_dataset_now(request, domain, pk):
+    dataset_map = SQLDataSetMap.objects.get(domain=domain, pk=pk)
+    send_date = datetime.utcnow().date()
+    result = send_dataset(dataset_map, send_date)
+    return JsonResponse(result, status=result['status_code'] or 500)
 
 
 @login_and_domain_required
