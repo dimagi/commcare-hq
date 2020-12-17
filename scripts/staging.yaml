@@ -68,5 +68,6 @@ branches:
   - jls/slimmer-initial-app # Jenny Nov 25
   - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
   - jls/store-2fa-request-domain # Jenny Dec 11
+  - adil-uddin:feature/USH-426-app-analytics-for-case-claim # Jenny Dec 17
 
 submodules: {}
