@@ -1937,3 +1937,12 @@ APP_ANALYTICS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+DEFAULT_EXPORT_SETTINGS = StaticToggle(
+    'default_export_settings',
+    'Allow enterprise admin to set default export settings',
+    TAG_PRODUCT,
+    description="""
+    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
+    """
+)
