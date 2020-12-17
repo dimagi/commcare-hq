@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-02 21:27+0000\n"
+"POT-Creation-Date: 2020-12-16 20:11+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -331,63 +331,63 @@ msgstr ""
 msgid "There are errors in your configuration."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1178
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1179
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1181
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1182
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1184
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1185
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1187
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1188
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1190
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1191
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1193
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1194
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1196
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1197
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1199
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1200
 msgid "Address"
 msgstr "संपूर्ण पता "
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1202
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1203
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1208
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1209
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1211
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1212
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1219
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1220
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1225
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1226
 msgid "Conditional ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1229
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1230
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -623,23 +623,23 @@ msgstr ""
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:105
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:106
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:112
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:161
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -2672,11 +2672,11 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:339
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:340
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:341
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:342
 msgid "This answer is outside the allowed range."
 msgstr ""
 
@@ -2694,6 +2694,24 @@ msgstr ""
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:470
+msgid ""
+"We’re unable to submit this form right now due to high system usage. \n"
+"\n"
+"Please keep this window open and try again in a minute, or come back to this "
+"form in Incomplete Forms later."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:474
+msgid "Form submission failed with error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:478
+msgid ""
+"There are errors in this form's answers. These must be corrected before the "
+"form can be submitted."
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:34
 msgid "Form successfully submitted!"
 msgstr ""
@@ -2702,30 +2720,30 @@ msgstr ""
 msgid "An unexpected error occurred!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:206
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:212
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:330
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:336
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:339
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:464
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:470
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:41
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:492
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:498
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:644
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:650
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -3770,25 +3788,19 @@ msgstr ""
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
-msgid ""
-"Password Requirements: 1 special character, 1 number, 1 capital letter, "
-"minimum length of 8 characters."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:99
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:100
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:111
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:107
 msgid "Group membership has changed."
 msgstr ""
 
@@ -3800,19 +3812,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:315
+#: corehq/apps/users/static/users/js/mobile_workers.js:306
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:317
+#: corehq/apps/users/static/users/js/mobile_workers.js:308
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:378
+#: corehq/apps/users/static/users/js/mobile_workers.js:369
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:399
+#: corehq/apps/users/static/users/js/mobile_workers.js:390
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 

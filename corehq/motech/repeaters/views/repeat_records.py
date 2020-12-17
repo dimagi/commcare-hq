@@ -1,4 +1,10 @@
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    JsonResponse,
+    QueryDict,
+)
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -8,9 +14,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 import pytz
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -253,20 +256,22 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         context = super(DomainForwardingRepeatRecords, self).report_context
 
         total = get_repeat_record_count(self.domain, self.repeater_id)
-        total_cancel = get_pending_repeat_record_count(self.domain, self.repeater_id)
-        total_requeue = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+        total_pending = get_pending_repeat_record_count(self.domain, self.repeater_id)
+        total_cancelled = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
 
         form_query_string = self.request.GET.urlencode()
-        form_query_string_requeue = _change_record_state(form_query_string, 'CANCELLED')
-        form_query_string_cancellable = _change_record_state(form_query_string, 'PENDING')
+        form_query_string_cancelled = _change_record_state(
+            self.request.GET, 'CANCELLED').urlencode()
+        form_query_string_pending = _change_record_state(
+            self.request.GET, 'PENDING').urlencode()
 
         context.update(
             total=total,
-            total_cancel=total_cancel,
-            total_requeue=total_requeue,
+            total_pending=total_pending,
+            total_cancelled=total_cancelled,
             form_query_string=form_query_string,
-            form_query_string_cancellable=form_query_string_cancellable,
-            form_query_string_requeue=form_query_string_requeue,
+            form_query_string_pending=form_query_string_pending,
+            form_query_string_cancelled=form_query_string_cancelled,
         )
         return context
 
@@ -312,8 +317,7 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        flag = _get_flag(request)
-        if flag:
+        if _get_flag(request):
             _schedule_task_with_flag(request, domain, 'resend')
         else:
             _schedule_task_without_flag(request, domain, 'resend')
@@ -324,8 +328,7 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    flag = _get_flag(request)
-    if flag == 'cancel_all':
+    if _get_flag(request) == 'cancel_all':
         _schedule_task_with_flag(request, domain, 'cancel')
     else:
         _schedule_task_without_flag(request, domain, 'cancel')
@@ -337,8 +340,7 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    flag = _get_flag(request)
-    if flag == 'requeue_all':
+    if _get_flag(request) == 'requeue_all':
         _schedule_task_with_flag(request, domain, 'requeue')
     else:
         _schedule_task_without_flag(request, domain, 'requeue')
@@ -346,84 +348,36 @@ def requeue_repeat_record(request, domain):
     return HttpResponse('OK')
 
 
-def _get_records(request):
+def _get_record_ids_from_request(request):
     record_ids = request.POST.get('record_id') or ''
     return record_ids.strip().split()
 
 
-def _get_query(request):
-    if not request:
-        return ''
-
-    query = request.POST.get('record_id', None)
-    return query if query else ''
+def _get_flag(request: HttpRequest) -> str:
+    return request.POST.get('flag') or ''
 
 
-def _get_flag(request):
-    if not request:
-        return ''
-
-    flag = request.POST.get('flag', None)
-    return flag if flag else ''
-
-
-def _change_record_state(base_string, string_to_add):
-    if not base_string:
-        return ''
-    elif not string_to_add:
-        return base_string
-
-    string_to_look_for = 'record_state='
-    pos_start = 0
-    pos_end = 0
-    for r in range(len(base_string)):
-        if base_string[r:r+13] == string_to_look_for:
-            pos_start = r + 13
-            break
-
-    string_to_look_for = '&payload_id='
-    the_rest_of_string = base_string[pos_start:]
-    for r in range(len(the_rest_of_string)):
-        if the_rest_of_string[r:r+12] == string_to_look_for:
-            pos_end = r
-            break
-
-    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:]
-
-    return string_to_return
-
-
-def _url_parameters_to_dict(url_params):
-    dict_to_return = {}
-    if not url_params:
-        return dict_to_return
-
-    while url_params != '':
-        pos_one = url_params.find('=')
-        pos_two = url_params.find('&')
-        if pos_two == -1:
-            pos_two = len(url_params)
-        key = url_params[:pos_one]
-        value = url_params[pos_one+1:pos_two]
-        dict_to_return[key] = value
-        url_params = url_params[pos_two+1:] if pos_two != len(url_params) else ''
-
-    return dict_to_return
+def _change_record_state(query_dict: QueryDict, state: str) -> QueryDict:
+    if not state:
+        return query_dict
+    if 'record_state' in query_dict:
+        query_dict = query_dict.copy()  # Don't cause side effects. Also,
+        # request.GET is immutable and will raise AttributeError.
+        query_dict['record_state'] = state
+    return query_dict
 
 
 def _schedule_task_with_flag(request, domain, action):
-    query = _get_query(request)
-    data = None
-    if query:
-        form_query_string = six.moves.urllib.parse.unquote(query)
-        data = _url_parameters_to_dict(form_query_string)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_generate_ids_and_operate_on_payloads.delay(data, domain, action)
+    payload_id = request.POST.get('payload_id') or None
+    repeater_id = request.POST.get('repeater') or None
+    task = task_generate_ids_and_operate_on_payloads.delay(
+        payload_id, repeater_id, domain, action)
     task_ref.set_task(task)
 
 
 def _schedule_task_without_flag(request, domain, action):
-    records = _get_records(request)
+    record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operate_on_payloads.delay(records, domain, action)
+    task = task_operate_on_payloads.delay(record_ids, domain, action)
     task_ref.set_task(task)

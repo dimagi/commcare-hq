@@ -4,16 +4,17 @@
           relevant="instance('groups')/groups/group and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
       <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
     </post>
-    <command id="search_command.m0">
+    <command id="search_command.{module_id}">
       <display>
         <text>
-          <locale id="case_search.m0"/>
+          <locale id="case_search.{module_id}"/>
         </text>
       </display>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="groups" src="jr://fixture/user-groups"/>
+    <instance id="item-list:moons" src="jr://fixture/item-list:moons"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <instance id="locations" src="jr://fixture/locations"/>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
@@ -28,14 +29,14 @@
         <prompt key="name">
           <display>
             <text>
-              <locale id="search_property.m0.name"/>
+              <locale id="search_property.{module_id}.name"/>
             </text>
           </display>
         </prompt>
         <prompt key="dob">
           <display>
             <text>
-              <locale id="search_property.m0.dob"/>
+              <locale id="search_property.{module_id}.dob"/>
             </text>
           </display>
         </prompt>
@@ -43,8 +44,8 @@
       <datum id="case_id"
              nodeset="instance('results')/results/case[@case_type='case']"
              value="./@case_id"
-             detail-confirm="m0_case_long"
-             detail-select="m0_search_short"/>
+             detail-confirm="{module_id}_case_long"
+             detail-select="{module_id}_search_short"/>
     </session>
     <stack>
       <push>

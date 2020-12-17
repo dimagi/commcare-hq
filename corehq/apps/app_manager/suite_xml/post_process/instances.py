@@ -133,8 +133,8 @@ def preset_instances(app, instance_name):
         return Instance(**kwargs)
 
 
-@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 @memoized
+@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 def generic_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 

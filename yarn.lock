@@ -501,10 +501,10 @@ aws4@^1.8.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.10.0.tgz#a17b3a8ea811060e74d47d306122400ad4497ae2"
   integrity sha512-3YDiu347mtVtjpyV3u5kVqQLP242c06zwDOgpeRnybmXlYYsLbtTrUBUm8i8srONt+FWobl5aibnU1030PeeuA==
 
-backbone.marionette@4.1.2:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-4.1.2.tgz#55de74363219f6d5c343dab5bff6aeb20fc44419"
-  integrity sha512-T8wWxZZnuYjylONTnWZsGsgXtdx2ZrE38pZWJI9LmPqzYK5j0T8uduapFO7OEpsW5rtdbBgwof30xhzAkbb5eQ==
+backbone.marionette@4.1.3:
+  version "4.1.3"
+  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-4.1.3.tgz#4b8646a880acc82941d65e4794b01fa24ba106c6"
+  integrity sha512-8alY/p90UCMzOetMzVUl7+Y7riQktbKa44FKoehlToBUOzfTJqeDIJ62QxddE/H0zIvG9Iw2mMqRvqxvYRwOog==
   dependencies:
     backbone.radio "^2.0.0"
 
@@ -2652,9 +2652,9 @@ inherits@2, inherits@^2.0.1, inherits@^2.0.3, inherits@^2.0.4, inherits@~2.0.1, 
   integrity sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
 
 ini@^1.3.4, ini@^1.3.5, ini@~1.3.0:
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.5.tgz#eee25f56db1c9ec6085e0c22778083f596abf927"
-  integrity sha512-RZY5huIKCMRWDUqZlEi72f/lmXKMvuszcMBduliQ3nnWbx9X/ZBQO7DijMEYS9EhHBb2qacRUMtC7svLwe0lcw==
+  version "1.3.8"
+  resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
+  integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
 init-package-json@^1.10.3:
   version "1.10.3"

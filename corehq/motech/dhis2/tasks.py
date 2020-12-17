@@ -7,6 +7,7 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+from corehq.motech.dhis2.models import get_dataset, should_send_on_date
 
 
 @task(serializer='pickle', queue='background_queue')
@@ -36,9 +37,9 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     if not dataset_maps:
         return  # Nothing to do
     for dataset_map in dataset_maps:
-        if send_now or dataset_map.should_send_on_date(send_date):
+        if send_now or should_send_on_date(dataset_map, send_date):
             conn = dataset_map.connection_settings
-            dataset = dataset_map.get_dataset(send_date)
+            dataset = get_dataset(dataset_map, send_date)
             with conn.get_requests() as requests:
                 requests.post('/api/dataValueSets', json=dataset)
 

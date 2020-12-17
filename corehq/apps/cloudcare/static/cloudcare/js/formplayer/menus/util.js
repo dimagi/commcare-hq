@@ -121,6 +121,20 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
         } else if (menuResponse.type === "query") {
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+                var Util = hqImport("cloudcare/js/formplayer/utils/util");
+                var urlObject = Util.currentUrlToObject();
+                var searchText = urlObject.search;
+                var event = "Viewed Case List";
+                var eventData = menuResponse.title;
+                if (searchText) {
+                    event = "Searched Case List";
+                }
+                hqImport('analytix/js/kissmetrix').track.event(event, {
+                    domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                    name: eventData,
+                });
+            }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
             } else {
