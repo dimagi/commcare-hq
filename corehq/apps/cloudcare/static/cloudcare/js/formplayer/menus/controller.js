@@ -138,7 +138,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         $('#select-case').off('click').click(function () {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-                hqImport('analytix/js/kissmetrix').track.event('Case claim', {
+                hqImport('analytix/js/kissmetrix').track.event('Case Claim', {
                     domain: FormplayerFrontend.getChannel().request('currentUser').domain,
                     name: model.models[0].attributes.details[0], // extracting case list name from model object
                 });
