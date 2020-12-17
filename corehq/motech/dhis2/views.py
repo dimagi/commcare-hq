@@ -262,6 +262,15 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             "template": "datavalue-map-template",
         }
 
+    def get_deleted_item_data(self, item_id):
+        datavalue_map = SQLDataValueMap.objects.get(pk=item_id,
+                                                    dataset_map=self.object)
+        datavalue_map.delete()
+        return {
+            'itemData': self._get_item_data(datavalue_map),
+            'template': 'deleted-datavalue-map-template',
+        }
+
     @property
     def column_names(self):
         return [
