@@ -14,13 +14,10 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.motech.models import ConnectionSettings
 
 from .const import SEND_FREQUENCY_CHOICES
-from .dbaccessors import get_dataset_maps
 from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
 from .forms import (
     DataSetMapForm,
@@ -29,71 +26,9 @@ from .forms import (
     Dhis2ConfigForm,
     Dhis2EntityConfigForm,
 )
-from .models import DataSetMap, DataValueMap, SQLDataSetMap, SQLDataValueMap
+from .models import SQLDataSetMap, SQLDataValueMap
 from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
-
-
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class DataSetMapView(BaseProjectSettingsView):
-    urlname = 'dataset_map_view'
-    page_title = ugettext_lazy("DHIS2 DataSet Maps")
-    template_name = 'dhis2/dataset_map.html'
-
-    def post(self, request, *args, **kwargs):
-
-        def update_dataset_map(instance, new_dataset_map):
-            new_dataset_map.pop('domain', None)  # Make sure a user cannot change the value of "domain"
-            for key, value in new_dataset_map.items():
-                if key == 'datavalue_maps':
-                    value = [DataValueMap(**v) for v in value]
-                instance[key] = value
-
-        try:
-            new_dataset_maps = json.loads(request.POST['dataset_maps'])
-            current_dataset_maps = get_dataset_maps(request.domain)
-            i = -1
-            for i, dataset_map in enumerate(current_dataset_maps):
-                if i < len(new_dataset_maps):
-                    # Update current dataset maps
-                    update_dataset_map(dataset_map, new_dataset_maps[i])
-                    dataset_map.save()
-                else:
-                    # Delete removed dataset maps
-                    dataset_map.delete()
-            if i + 1 < len(new_dataset_maps):
-                # Insert new dataset maps
-                for j in range(i + 1, len(new_dataset_maps)):
-                    dataset_map = DataSetMap(domain=request.domain)
-                    update_dataset_map(dataset_map, new_dataset_maps[j])
-                    dataset_map.save()
-            get_dataset_maps.clear(request.domain)
-            return JsonResponse({'success': _('DHIS2 DataSet Maps saved')})
-        except Exception as err:
-            return JsonResponse({'error': str(err)}, status=500)
-
-    @property
-    def page_context(self):
-
-        def to_json(dataset_map):
-            dataset_map = dataset_map.to_json()
-            del(dataset_map['_id'])
-            del(dataset_map['_rev'])
-            del(dataset_map['doc_type'])
-            del(dataset_map['domain'])
-            for datavalue_map in dataset_map['datavalue_maps']:
-                del(datavalue_map['doc_type'])
-            return dataset_map
-
-        dataset_maps = [to_json(d) for d in get_dataset_maps(self.request.domain)]
-        return {
-            'dataset_maps': dataset_maps,
-            'connection_settings': ConnectionSettings.objects.filter(domain=self.domain).all(),
-            'ucrs': get_report_configs_for_domain(self.domain),
-            'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
-            'is_json_ui': int(self.request.GET.get('json', 0)),
-        }
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
