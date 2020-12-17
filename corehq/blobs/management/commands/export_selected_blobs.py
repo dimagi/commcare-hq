@@ -93,8 +93,6 @@ class Command(BaseCommand):
             for result in futures.as_completed(results):
                 filenames.append(result.result())
 
-            executor.shutdown()
-
         if options.get("json_output"):
             return json.dumps({"paths": filenames})
 
