@@ -59,6 +59,25 @@ class Command(BaseCommand):
             raise CommandError("Output path must exist and be a folder.")
 
         filter_pattern = options.get('meta-file-filter')
+        export_meta_files, meta = self._get_file_list_and_meta(filter_pattern, path, use_extracted)
+
+        filenames = self._run_threaded_export(export_meta_files, meta, output_path)
+
+        if options.get("json_output"):
+            return json.dumps({"paths": filenames})
+
+    def _run_threaded_export(self, export_meta_files, meta, output_path):
+        results = []
+        filenames = []
+        with futures.ThreadPoolExecutor(max_workers=len(export_meta_files)) as executor:
+            for path in export_meta_files:
+                results.append(executor.submit(_export_blobs, output_path, path, meta))
+
+            for result in futures.as_completed(results):
+                filenames.append(result.result())
+        return filenames
+
+    def _get_file_list_and_meta(self, filter_pattern, path, use_extracted):
         filter_rx = None
         if filter_pattern:
             filter_rx = re.compile(filter_pattern)
@@ -84,17 +103,7 @@ class Command(BaseCommand):
             if _filter(file.name):
                 export_meta_files.append(file)
 
-        results = []
-        filenames = []
-        with futures.ThreadPoolExecutor(max_workers=len(export_meta_files)) as executor:
-            for path in export_meta_files:
-                results.append(executor.submit(_export_blobs, output_path, path, meta))
-
-            for result in futures.as_completed(results):
-                filenames.append(result.result())
-
-        if options.get("json_output"):
-            return json.dumps({"paths": filenames})
+        return export_meta_files, meta
 
 
 def _export_blobs(output_path, path, meta):
