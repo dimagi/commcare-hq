@@ -128,7 +128,6 @@ class TestUpdateCases(TestCase):
             'sport': 'chess',
         })
 
-    @skip("not yet implemented")
     def test_create_child_case(self):
         parent_case = self._make_case()
         res = self._create_case({
@@ -141,7 +140,7 @@ class TestUpdateCases(TestCase):
             },
             'indices': {
                 'parent': {
-                    '@case_id': parent_case.case_id,
+                    'case_id': parent_case.case_id,
                     '@case_type': 'player',
                     '@relationship': 'child',
                 },
@@ -152,15 +151,13 @@ class TestUpdateCases(TestCase):
         case = self.case_accessor.get_case(res['@case_id'])
         self.assertEqual(case.name, 'Harmon/Luchenko')
         self.assertEqual(case.owner_id, 'harmon')
-        self.assertEqual(case.dynamic_case_properties(), {
-            'external_id': '23',
-            'winner': 'Harmon',
-        })
+        self.assertEqual(case.external_id, '23')
+        self.assertEqual(case.dynamic_case_properties(), {'winner': 'Harmon'})
         self.assertEqual(case.indices[0].identifier, 'parent')
         self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
         self.assertEqual(case.indices[0].referenced_type, 'player')
-        self.assertEqual(case.indices[0].relationship_id, 'child')
-        self.assertEqual(case.indices[0].case.case_id, parent_case.case_id)
+        self.assertEqual(case.indices[0].relationship, 'child')
+        self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
 
     @skip("not yet implemented")
     def test_bulk_action(self):
