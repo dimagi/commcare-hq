@@ -36,6 +36,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
         self.module.case_type = 'case'
+
         # chosen xpath just used to reference more instances - not considered valid to use in apps
         self.module.case_details.short.columns.append(
             DetailColumn.wrap(dict(
@@ -44,6 +45,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 format="calculate",
                 field="whatever",
                 calc_xpath="instance('reports')/report[1]/name",
+            ))
+        )
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "moon"},
+                model="case",
+                format="calculate",
+                field="whatever",
+                calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
             ))
         )
         self.module.case_details.long.columns.append(
@@ -84,7 +94,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
+        self.assertXmlPartialEqual(
+            self.get_xml('remote_request').decode('utf-8').format(module_id="m0"),
+            suite,
+            "./remote-request[1]"
+        )
 
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
@@ -105,7 +119,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = copy_app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
+        self.assertXmlPartialEqual(
+            self.get_xml('remote_request').decode('utf-8').format(module_id="m0"),
+            suite,
+            "./remote-request[1]"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('remote_request').decode('utf-8').format(module_id="m1"),
+            suite,
+            "./remote-request[2]"
+        )
 
     def test_case_search_action(self, *args):
         """
