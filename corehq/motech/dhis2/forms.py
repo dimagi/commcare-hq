@@ -205,7 +205,7 @@ def get_ucr_field(domain):
     )
 
 
-class DataValueMapForm(forms.ModelForm):
+class DataValueMapBaseForm(forms.ModelForm):
     column = forms.CharField(
         label=_('Column'),
         required=True,
@@ -235,25 +235,78 @@ class DataValueMapForm(forms.ModelForm):
     def __init__(self, dataset_map, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dataset_map = dataset_map
+        self.helper = self.get_form_helper()
 
-        self.helper = FormHelper()
-        self.helper.form_style = 'inline'
-        self.helper.form_show_labels = False
-        self.helper.layout = crispy.Layout(
+    def get_form_helper(self):
+        raise NotImplementedError
+
+    def save(self, commit=True):
+        self.instance.dataset_map = self.dataset_map
+        return super().save(commit)
+
+
+class DataValueMapCreateForm(DataValueMapBaseForm):
+
+    def get_form_helper(self):
+        helper = FormHelper()
+        helper.form_style = 'inline'
+        helper.form_show_labels = False
+        helper.layout = crispy.Layout(
             twbscrispy.InlineField('column'),
             twbscrispy.InlineField('data_element_id'),
             twbscrispy.InlineField('category_option_combo_id'),
             twbscrispy.InlineField('comment'),
             twbscrispy.StrictButton(
-                mark_safe(f'<i class="fa fa-plus"></i> {_("Create DataValue Map")}'),
+                mark_safe(f'<i class="fa fa-plus"></i> {_("Add")}'),
                 css_class='btn-primary',
-                type='submit'
+                type='submit',
             )
         )
+        return helper
 
-    def save(self, commit=True):
-        self.instance.dataset_map = self.dataset_map
-        return super().save(commit)
+
+class DataValueMapUpdateForm(DataValueMapBaseForm):
+
+    id = forms.CharField(widget=forms.HiddenInput())
+
+    class Meta:
+        model = SQLDataValueMap
+        fields = [
+            'id',
+            'column',
+            'data_element_id',
+            'category_option_combo_id',
+            'comment',
+        ]
+
+    def get_form_helper(self):
+        helper = FormHelper()
+        helper.form_style = 'default'
+        helper.form_show_labels = True
+        helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('id'),
+                crispy.Field('column'),
+                crispy.Field('data_element_id'),
+                crispy.Field('category_option_combo_id'),
+                crispy.Field('comment'),
+                css_class='modal-body',
+            ),
+            twbscrispy.FormActions(
+                twbscrispy.StrictButton(
+                    "Update DataValue Map",
+                    css_class='btn btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<button type="button" '
+                            '        class="btn btn-default" '
+                            '        data-dismiss="modal">'
+                            'Cancel'
+                            '</button>'),
+                css_class='modal-footer',
+            )
+        )
+        return helper
 
 
 class Dhis2ConfigForm(forms.Form):

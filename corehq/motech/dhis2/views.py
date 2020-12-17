@@ -22,8 +22,14 @@ from corehq.motech.models import ConnectionSettings
 from .const import SEND_FREQUENCY_CHOICES
 from .dbaccessors import get_dataset_maps
 from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
-from .forms import DataSetMapForm, Dhis2ConfigForm, Dhis2EntityConfigForm
-from .models import DataSetMap, DataValueMap, SQLDataSetMap
+from .forms import (
+    DataSetMapForm,
+    DataValueMapCreateForm,
+    DataValueMapUpdateForm,
+    Dhis2ConfigForm,
+    Dhis2EntityConfigForm,
+)
+from .models import DataSetMap, DataValueMap, SQLDataSetMap, SQLDataValueMap
 from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
 
@@ -249,6 +255,13 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             'template': 'new-datavalue-map-template',
         }
 
+    def get_updated_item_data(self, update_form):
+        datavalue_map = update_form.save()
+        return {
+            "itemData": self._get_item_data(datavalue_map),
+            "template": "datavalue-map-template",
+        }
+
     @property
     def column_names(self):
         return [
@@ -256,6 +269,8 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             _('DataElementID'),
             _('CategoryOptionComboID'),
             _('Comment'),
+
+            _('Action'),
         ]
 
     def _get_item_data(self, datavalue_map):
@@ -265,12 +280,27 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             'dataElementId': datavalue_map.data_element_id,
             'categoryOptionComboId': datavalue_map.category_option_combo_id,
             'comment': datavalue_map.comment,
+
+            'updateForm': self.get_update_form_response(
+                self.get_update_form(datavalue_map)
+            ),
         }
 
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
-            return DataValueMapForm(self.object, self.request.POST)
-        return DataValueMapForm(self.object)
+            return DataValueMapCreateForm(self.object, self.request.POST)
+        return DataValueMapCreateForm(self.object)
+
+    def get_update_form(self, instance=None):
+        if instance is None:
+            instance = SQLDataValueMap.objects.get(
+                id=self.request.POST.get("id"),
+                dataset_map=self.object,
+            )
+        if self.request.method == 'POST' and self.action == 'update':
+            return DataValueMapUpdateForm(self.object, self.request.POST,
+                                          instance=instance)
+        return DataValueMapUpdateForm(self.object, instance=instance)
 
 
 @require_POST
