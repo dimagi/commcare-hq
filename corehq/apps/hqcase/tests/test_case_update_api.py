@@ -100,7 +100,6 @@ class TestCaseAPI(TestCase):
         ).as_text()], domain=self.domain)
         return cases[0]
 
-    @skip("not yet implemented")
     def test_update_case(self):
         case = self._make_case()
 

@@ -18,8 +18,7 @@ class JsonIndex(jsonobject.JsonObject):
                                              choices=('child', 'extension'))
 
 
-class JsonCaseCreation(jsonobject.JsonObject):
-    case_type = jsonobject.StringProperty(name='@case_type', required=True)
+class BaseJsonCaseChange(jsonobject.JsonObject):
     case_name = jsonobject.StringProperty(name='@case_name', required=True)
     user_id = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty(name='@owner_id', required=True)
@@ -33,13 +32,15 @@ class JsonCaseCreation(jsonobject.JsonObject):
         string_conversions = ()
 
     def get_caseblock(self):
+        case_id = str(uuid.uuid4()) if self._is_case_creation else self.case_id
+        case_type = self.case_type if self._is_case_creation else CaseBlock.undefined
         return CaseBlock(
-            case_id=str(uuid.uuid4()),
+            case_id=case_id,
             user_id=self.user_id,
-            case_type=self.case_type,
+            case_type=case_type,
             case_name=self.case_name,
             owner_id=self.owner_id,
-            create=True,
+            create=self._is_case_creation,
             update=dict(self.properties),
             external_id=self.properties.get('external_id', CaseBlock.undefined),
             index={
@@ -47,3 +48,13 @@ class JsonCaseCreation(jsonobject.JsonObject):
                 for name, index in self.indices.items()
             },
         ).as_text()
+
+
+class JsonCaseCreation(BaseJsonCaseChange):
+    case_type = jsonobject.StringProperty(name='@case_type', required=True)
+    _is_case_creation = True
+
+
+class JsonCaseUpdate(BaseJsonCaseChange):
+    case_id = jsonobject.StringProperty(required=True)
+    _is_case_creation = False

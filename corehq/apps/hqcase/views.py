@@ -21,7 +21,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.utils import should_use_sql_backend
 
-from .api import JsonCaseCreation
+from .api import JsonCaseCreation, JsonCaseUpdate
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -85,11 +85,13 @@ def case_api(request, domain, case_id=None):
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+
+    update_class = JsonCaseCreation if case_id is None else JsonCaseUpdate
+    additonal_args = {'user_id': request.couch_user.user_id}
+    if case_id is not None:
+        additonal_args['case_id'] = case_id
     try:
-        update = JsonCaseCreation.wrap({
-            **data,
-            'user_id': request.couch_user.user_id,
-        })
+        update = update_class.wrap({**data, **additonal_args})
     except BadValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
