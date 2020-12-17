@@ -1,4 +1,5 @@
 import uuid
+from unittest import skip
 
 from django.test import TestCase
 from django.urls import reverse
@@ -102,6 +103,7 @@ class TestUpdateCases(TestCase):
         ).as_text()], domain=self.domain)
         return cases[0]
 
+    @skip("not yet implemented")
     def test_update_case(self):
         case = self._make_case()
 
@@ -126,6 +128,7 @@ class TestUpdateCases(TestCase):
             'sport': 'chess',
         })
 
+    @skip("not yet implemented")
     def test_create_child_case(self):
         parent_case = self._make_case()
         res = self._create_case({
@@ -159,6 +162,7 @@ class TestUpdateCases(TestCase):
         self.assertEqual(case.indices[0].relationship_id, 'child')
         self.assertEqual(case.indices[0].case.case_id, parent_case.case_id)
 
+    @skip("not yet implemented")
     def test_bulk_action(self):
         existing_case = self._make_case()
         res = self._bulk_update_cases([
@@ -193,9 +197,38 @@ class TestUpdateCases(TestCase):
         new_case = self.case_accessor.get_case(res['@case_ids'][1])
         self.assertEqual(new_case.name, 'Jolene')
 
+    @skip("not yet implemented")
     def test_create_parent_and_child_together(self):
         # TODO? Since this API doesn't let you provide your own case IDs, you
         # can't reference uncreated cases in indices unless we invent some
         # syntax specifically for that. Thinking about leaving out of scope for
         # v1, at least (it wouldn't be a breaking change to add in later).
         pass
+
+    def test_non_json_data(self):
+        res = self._create_case("this isn't json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json(), {'error': "Payload must be valid JSON"})
+
+    def test_missing_required_field(self):
+        res = self._create_case({
+            # @case_name is not provided!
+            '@case_type': 'player',
+            '@owner_id': 'methuen_home',
+            'properties': {'dob': '1948-11-02'},
+        })
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json(), {'error': "Property @case_name is required."})
+
+    def test_invalid_properties(self):
+        res = self._create_case({
+            '@case_name': 'Beth Harmon',
+            '@case_type': 'player',
+            '@owner_id': 'methuen_home',
+            'properties': {
+                'dob': '1948-11-02',
+                'age': 72,  # Can't pass integers
+            },
+        })
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json(), {'error': "Case properties must be strings"})

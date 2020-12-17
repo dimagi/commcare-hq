@@ -1,15 +1,14 @@
 import uuid
 
 import jsonobject
+from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
 
 
 def is_simple_dict(d):
-    if not isinstance(d, dict) or not all(
-            isinstance(v, str) for v in d.values()
-    ):
-        raise jsonobject.BadValueError()
+    if not isinstance(d, dict) or not all(isinstance(v, str) for v in d.values()):
+        raise BadValueError("Case properties must be strings")
 
 
 class JsonCaseCreation(jsonobject.JsonObject):

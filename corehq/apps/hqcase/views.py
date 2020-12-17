@@ -8,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
+from jsonobject.exceptions import BadValueError
+
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import (
@@ -79,11 +81,18 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @api_auth
 @require_superuser_or_contractor
 def create_case(request, domain):
-    data = json.loads(request.body.decode('utf-8'))
-    update = JsonCaseCreation.wrap({
-        **data,
-        'user_id': request.couch_user.user_id,
-    })
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+    try:
+        update = JsonCaseCreation.wrap({
+            **data,
+            'user_id': request.couch_user.user_id,
+        })
+    except BadValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
     xform, cases = submit_case_blocks(
         case_blocks=[update.get_caseblock()],
         domain=domain,
