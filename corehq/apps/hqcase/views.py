@@ -10,6 +10,7 @@ from django.views.generic import TemplateView
 
 from jsonobject.exceptions import BadValueError
 
+from couchforms.models import XFormError
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import (
@@ -103,6 +104,11 @@ def case_api(request, domain, case_id=None):
         xmlns='http://commcarehq.org/case_api',
         device_id=request.META.get('HTTP_USER_AGENT'),
     )
+    if isinstance(xform, XFormError):
+        return JsonResponse({
+            'error': xform.problem,
+            '@form_id': xform.form_id,
+        }, status=400)
     return JsonResponse({
         '@form_id': xform.form_id,
         '@case_id': cases[0].case_id,

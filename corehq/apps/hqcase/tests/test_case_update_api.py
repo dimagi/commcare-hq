@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
+from couchforms.models import XFormError
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -225,3 +226,24 @@ class TestCaseAPI(TestCase):
         })
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json(), {'error': "Case properties must be strings"})
+
+    def test_bad_index_reference(self):
+        res = self._create_case({
+            '@case_type': 'match',
+            '@case_name': 'Harmon/Luchenko',
+            '@owner_id': 'harmon',
+            'properties': {
+                'external_id': '23',
+            },
+            'indices': {
+                'parent': {
+                    'case_id': 'bad404bad',  # This doesn't exist
+                    '@case_type': 'player',
+                    '@relationship': 'child',
+                },
+            },
+        })
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("InvalidCaseIndex", res.json()['error'])
+        form = self.form_accessor.get_form(res.json()['@form_id'])
+        self.assertIsInstance(form, XFormError)
