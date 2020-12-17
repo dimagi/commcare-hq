@@ -80,7 +80,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @require_POST
 @api_auth
 @require_superuser_or_contractor
-def create_case(request, domain):
+def case_api(request, domain, case_id=None):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
@@ -105,21 +105,3 @@ def create_case(request, domain):
         '@form_id': xform.form_id,
         '@case_id': cases[0].case_id,
     })
-
-
-@waf_allow('XSS_BODY')
-@csrf_exempt
-@require_POST
-@api_auth
-@require_superuser_or_contractor
-def update_case(request, domain, case_id):
-    return JsonResponse({})
-
-
-@waf_allow('XSS_BODY')
-@csrf_exempt
-@require_POST
-@api_auth
-@require_superuser_or_contractor
-def bulk_update_cases(request, domain):
-    return JsonResponse({})

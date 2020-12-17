@@ -16,7 +16,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
-class TestUpdateCases(TestCase):
+class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
 
     @classmethod
@@ -49,13 +49,10 @@ class TestUpdateCases(TestCase):
         )
 
     def _create_case(self, body):
-        return self._post(reverse('create_case', args=(self.domain,)), body)
+        return self._post(reverse('case_api', args=(self.domain,)), body)
 
     def _update_case(self, case_id, body):
-        return self._post(reverse('update_case', args=(self.domain, case_id,)), body)
-
-    def _bulk_update_cases(self, body):
-        return self._post(reverse('bulk_update_cases', args=(self.domain,)), body)
+        return self._post(reverse('case_api', args=(self.domain, case_id,)), body)
 
     def test_create_case(self):
         res = self._create_case({
