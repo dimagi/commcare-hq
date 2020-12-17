@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
+from typing import List, Optional
 
 from django.conf import settings
 from django.core.cache import cache
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from celery.schedules import crontab
@@ -12,19 +12,6 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_error
 
-from corehq.apps.data_interfaces.models import (
-    AUTO_UPDATE_XMLNS,
-    AutomaticUpdateRule,
-    CaseRuleActionResult,
-    CaseRuleSubmission,
-    DomainCaseRuleRun,
-)
-from corehq.apps.data_interfaces.utils import (
-    add_cases_to_case_group,
-    archive_or_restore_forms,
-    operate_on_payloads,
-    generate_ids_and_operate_on_payloads,
-)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -32,13 +19,27 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.motech.repeaters.dbaccessors import (
+    get_repeat_records_by_payload_id,
+    iter_repeat_records_by_repeater,
+)
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.decorators import serial_task
-from corehq.util.log import send_HTML_email
 
-from .dispatcher import EditDataInterfaceDispatcher
-from .interfaces import BulkFormManagementInterface, FormManagementMode
+from .interfaces import FormManagementMode
+from .models import (
+    AUTO_UPDATE_XMLNS,
+    AutomaticUpdateRule,
+    CaseRuleActionResult,
+    CaseRuleSubmission,
+    DomainCaseRuleRun,
+)
+from .utils import (
+    add_cases_to_case_group,
+    archive_or_restore_forms,
+    operate_on_payloads,
+)
 
 logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
@@ -216,30 +217,34 @@ def delete_old_rule_submission_logs():
 
 
 @task(serializer='pickle')
-def task_operate_on_payloads(payload_ids, domain, action=''):
-    task = task_operate_on_payloads
-
-    if not payload_ids:
-        return {'messages': {'errors': [_('No Payloads are supplied')]}}
-
-    if not action:
-        return {'messages': {'errors': [_('No action specified')]}}
-
-    response = operate_on_payloads(payload_ids, domain, action, task)
-
-    return response
+def task_operate_on_payloads(record_ids, domain, action=''):
+    return operate_on_payloads(record_ids, domain, action,
+                               task=task_operate_on_payloads)
 
 
 @task(serializer='pickle')
-def task_generate_ids_and_operate_on_payloads(data, domain, action=''):
-    task = task_generate_ids_and_operate_on_payloads
+def task_generate_ids_and_operate_on_payloads(
+    payload_id: Optional[str],
+    repeater_id: Optional[str],
+    domain: str,
+    action: str = '',
+) -> dict:
+    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
+    return operate_on_payloads(repeat_record_ids, domain, action,
+                               task=task_generate_ids_and_operate_on_payloads)
 
-    if not data:
-        return {'messages': {'errors': [_('No data is supplied')]}}
 
-    if not action:
-        return {'messages': {'errors': [_('No action specified')]}}
+def _get_repeat_record_ids(
+    payload_id: Optional[str],
+    repeater_id: Optional[str],
+    domain: str,
+) -> List[str]:
+    if not payload_id and not repeater_id:
+        return []
+    if payload_id:
+        results = get_repeat_records_by_payload_id(domain, payload_id)
+    else:
+        results = iter_repeat_records_by_repeater(domain, repeater_id)
+    ids = [x['id'] for x in results]
 
-    response = generate_ids_and_operate_on_payloads(data, domain, action, task)
-
-    return response
+    return ids
