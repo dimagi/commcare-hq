@@ -41,7 +41,10 @@ class TestUpdateCases(TestCase):
 
     def _post(self, resource_url, body):
         return self.client.post(
-            resource_url, body, content_type="application/json;charset=utf-8"
+            resource_url,
+            body,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
         )
 
     def _create_case(self, body):
@@ -65,7 +68,7 @@ class TestUpdateCases(TestCase):
                 'dob': '1948-11-02',
             },
         }).json()
-        self.assertEqual(res.keys(), ['@case_id', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['@case_id', '@form_id'])
         case = self.case_accessor.get_case(res['@case_id'])
         self.assertEqual(case.domain, self.domain)
         self.assertEqual(case.type, 'player')
@@ -79,7 +82,7 @@ class TestUpdateCases(TestCase):
         })
 
         xform = self.form_accessor.get_form(res['@form_id'])
-        self.assertEqual(xform.metadata.xmlns, 'http://commcarehq.org/case_api')
+        self.assertEqual(xform.xmlns, 'http://commcarehq.org/case_api')
         self.assertEqual(xform.metadata.userID, self.web_user.user_id)
         self.assertEqual(xform.metadata.deviceID, 'user agent string')
 
@@ -111,7 +114,7 @@ class TestUpdateCases(TestCase):
                 'champion': 'true',
             },
         }).json()
-        self.assertEqual(res.keys(), ['@case_id', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['@case_id', '@form_id'])
 
         case = self.case_accessor.get_case(case.case_id)
         self.assertEqual(case.name, 'Beth Harmon')
@@ -141,7 +144,7 @@ class TestUpdateCases(TestCase):
                 },
             },
         }).json()
-        self.assertEqual(res.keys(), ['@case_id', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['@case_id', '@form_id'])
 
         case = self.case_accessor.get_case(res['@case_id'])
         self.assertEqual(case.name, 'Harmon/Luchenko')
@@ -182,7 +185,7 @@ class TestUpdateCases(TestCase):
             },
         ]).json()
         #  only returns a single form ID - chunking should happen in the client
-        self.assertEqual(res.keys(), ['@case_ids', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['@case_ids', '@form_id'])
 
         updated_case = self.case_accessor.get_case(existing_case.case_id)
         self.assertEqual(updated_case.name, 'Beth Harmon')
