@@ -1,5 +1,4 @@
 import json
-import uuid
 
 from django.contrib import messages
 from django.http import Http404, JsonResponse
@@ -9,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
-from casexml.apps.case.mock import CaseBlock
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import (
@@ -21,6 +19,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.utils import should_use_sql_backend
 
+from .api import JsonCaseCreation
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -81,19 +80,12 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @require_superuser_or_contractor
 def create_case(request, domain):
     data = json.loads(request.body.decode('utf-8'))
-    case_block = CaseBlock(
-        case_id=str(uuid.uuid4()),
-        user_id=request.couch_user.username,
-        case_type=data['@case_type'],
-        case_name=data['@case_name'],
-        owner_id=data['@owner_id'],
-        create=True,
-        update=data['properties'],
-        external_id=data['properties'].get('external_id', CaseBlock.undefined),
-    )
-    # TODO handle extra data?
+    update = JsonCaseCreation.wrap({
+        **data,
+        'user_id': request.couch_user.user_id,
+    })
     xform, cases = submit_case_blocks(
-        case_blocks=[case_block.as_text()],
+        case_blocks=[update.get_caseblock()],
         domain=domain,
         username=request.couch_user.username,
         user_id=request.couch_user.user_id,

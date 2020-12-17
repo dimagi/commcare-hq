@@ -74,7 +74,7 @@ class TestUpdateCases(TestCase):
         self.assertEqual(case.type, 'player')
         self.assertEqual(case.name, 'Elizabeth Harmon')
         self.assertEqual(case.owner_id, 'methuen_home')
-        self.assertEqual(case.opened_by, 'netflix')
+        self.assertEqual(case.opened_by, self.web_user.user_id)
         self.assertEqual(case.external_id, '1')
         self.assertEqual(case.dynamic_case_properties(), {
             'dob': '1948-11-02',
