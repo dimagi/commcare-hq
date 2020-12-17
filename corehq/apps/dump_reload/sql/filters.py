@@ -66,7 +66,7 @@ class IDFilter(DomainFilter):
     def __init__(self, field, ids, chunksize=1000):
         self.field = field
         self.ids = ids
-        self.chunksize= chunksize
+        self.chunksize = chunksize
 
     def count(self, domain_name):
         return len(self.get_ids(domain_name))
