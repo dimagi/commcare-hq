@@ -33,6 +33,22 @@
         </text>
       </template>
     </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_calculated_property_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('item-list:moons')/moons_list/moons[favorite='yes']/name"/>
+            </variable>
+          </xpath>
+        </text>
+      </template>
+    </field>
     <action auto_launch="false">
       <display>
         <text>
@@ -111,6 +127,22 @@
           <xpath function="$calculated_property">
             <variable name="calculated_property">
               <xpath function="instance('reports')/report[1]/name"/>
+            </variable>
+          </xpath>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_short.case_calculated_property_3.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('item-list:moons')/moons_list/moons[favorite='yes']/name"/>
             </variable>
           </xpath>
         </text>
