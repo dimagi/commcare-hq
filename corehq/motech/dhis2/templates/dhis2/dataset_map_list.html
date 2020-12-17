@@ -5,6 +5,8 @@
 {% requirejs_main "dhis2/js/dataset_map" %}
 
 {% block pagination_header %}
+  {% registerurl "send_dataset_now" domain "---" %}
+
   <h2>{% trans "DHIS2 DataSet Maps" %}</h2>
 {% endblock %}
 
@@ -17,6 +19,12 @@
         </button>
       </a>
     </div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6">
+    <div id="send-now-result"
+         class="text-success hide"></div>
   </div>
 {% endblock %}
 
@@ -31,6 +39,12 @@
     <td data-bind="text: frequency"></td>
     <td data-bind="text: ucr"></td>
     <td>
+      <button type="button"
+              data-bind="attr: {'onclick': 'sendNow(' + id + ')'}"
+              class="btn btn-default">
+        {% trans "Send Now" %}
+      </button>
+
       <button type="button"
               class="btn btn-danger"
               data-bind="attr: {'data-target': '#delete-dataset-map-' + id}"
