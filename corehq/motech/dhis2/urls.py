@@ -14,5 +14,5 @@ urlpatterns = [
         name=DataSetMapCreateView.urlname),
     url(r'^map/(?P<pk>\w+)/$', DataSetMapUpdateView.as_view(),
         name=DataSetMapUpdateView.urlname),
-    url(r'^send/(?P<pk>\w+)/$', send_dataset_now, name='send_dataset_now'),
+    url(r'^send/(?P<pk>[\w-]+)/$', send_dataset_now, name='send_dataset_now'),
 ]
