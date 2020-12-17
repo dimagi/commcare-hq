@@ -29,6 +29,34 @@
     <td data-bind="text: categoryOptionComboId"></td>
     <td data-bind="text: comment"></td>
 
+    <td>
+        <button type="button"
+                data-toggle="modal"
+                data-bind="attr: {'data-target': '#update-datavalue-map-' + id}"
+                class="btn btn-primary">
+            Edit
+        </button>
+
+        <div class="modal fade"
+             data-bind="attr: {'id': 'update-datavalue-map-' + id}">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                  <button type="button"
+                          class="close"
+                          data-dismiss="modal"
+                          aria-hidden="true">&times;</button>
+                  <h3>
+                    Update DataValue Map <strong data-bind="text: column"></strong>:
+                  </h3>
+              </div>
+              <div class="modal-body">
+                <div data-bind="html: updateForm"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </td>
   </script>
 
   <script type="text/html" id="new-datavalue-map-template">
