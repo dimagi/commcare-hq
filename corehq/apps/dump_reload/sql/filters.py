@@ -63,9 +63,10 @@ class UsernameFilter(DomainFilter):
 
 
 class IDFilter(DomainFilter):
-    def __init__(self, field, ids):
+    def __init__(self, field, ids, chunksize=1000):
         self.field = field
         self.ids = ids
+        self.chunksize= chunksize
 
     def count(self, domain_name):
         return len(self.get_ids(domain_name))
@@ -74,7 +75,7 @@ class IDFilter(DomainFilter):
         return self.ids
 
     def get_filters(self, domain_name):
-        for chunk in chunked(self.get_ids(domain_name), 1000):
+        for chunk in chunked(self.get_ids(domain_name), self.chunksize):
             query_kwarg = '{}__in'.format(self.field)
             yield Q(**{query_kwarg: chunk})
 
