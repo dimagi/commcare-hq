@@ -72,6 +72,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
             relevant="{} and {}".format("instance('groups')/groups/group", CLAIM_DEFAULT_RELEVANT_CONDITION),
+            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
                 DefaultCaseSearchProperty(
                     property='ɨŧsȺŧɍȺᵽ',
