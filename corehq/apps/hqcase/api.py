@@ -19,7 +19,7 @@ class JsonIndex(jsonobject.JsonObject):
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
-    case_name = jsonobject.StringProperty(name='@case_name', required=True)
+    case_name = jsonobject.StringProperty(required=True)
     user_id = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty(name='@owner_id', required=True)
     properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})

@@ -64,7 +64,7 @@ class TestCaseAPI(TestCase):
         res = self._create_case({
             # notable exclusions: case_id, date_opened, date_modified
             '@case_type': 'player',
-            '@case_name': 'Elizabeth Harmon',
+            'case_name': 'Elizabeth Harmon',
             '@owner_id': 'methuen_home',
             'properties': {
                 'external_id': '1',
@@ -111,7 +111,7 @@ class TestCaseAPI(TestCase):
 
         res = self._update_case(case.case_id, {
             # notable exclusions: case_id, date_opened, date_modified, case_type
-            '@case_name': 'Beth Harmon',
+            'case_name': 'Beth Harmon',
             '@owner_id': 'us_chess_federation',
             'properties': {
                 'rank': '2100',
@@ -134,7 +134,7 @@ class TestCaseAPI(TestCase):
         parent_case = self._make_case()
         res = self._create_case({
             '@case_type': 'match',
-            '@case_name': 'Harmon/Luchenko',
+            'case_name': 'Harmon/Luchenko',
             '@owner_id': 'harmon',
             'properties': {
                 'external_id': '23',
@@ -168,7 +168,7 @@ class TestCaseAPI(TestCase):
             {
                 # update existing case
                 '@case_id': existing_case.case_id,
-                '@case_name': 'Beth Harmon',
+                'case_name': 'Beth Harmon',
                 '@owner_id': 'us_chess_federation',
                 'properties': {
                     'rank': '2100',
@@ -178,7 +178,7 @@ class TestCaseAPI(TestCase):
             {
                 # No case_id means this is a new case
                 '@case_type': 'player',
-                '@case_name': 'Jolene',
+                'case_name': 'Jolene',
                 '@owner_id': 'methuen_home',
                 'properties': {
                     'external_id': '2',
@@ -211,17 +211,17 @@ class TestCaseAPI(TestCase):
 
     def test_missing_required_field(self):
         res = self._create_case({
-            # @case_name is not provided!
+            # case_name is not provided!
             '@case_type': 'player',
             '@owner_id': 'methuen_home',
             'properties': {'dob': '1948-11-02'},
         })
         self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {'error': "Property @case_name is required."})
+        self.assertEqual(res.json(), {'error': "Property case_name is required."})
 
     def test_invalid_properties(self):
         res = self._create_case({
-            '@case_name': 'Beth Harmon',
+            'case_name': 'Beth Harmon',
             '@case_type': 'player',
             '@owner_id': 'methuen_home',
             'properties': {
@@ -235,7 +235,7 @@ class TestCaseAPI(TestCase):
     def test_bad_index_reference(self):
         res = self._create_case({
             '@case_type': 'match',
-            '@case_name': 'Harmon/Luchenko',
+            'case_name': 'Harmon/Luchenko',
             '@owner_id': 'harmon',
             'properties': {
                 'external_id': '23',
