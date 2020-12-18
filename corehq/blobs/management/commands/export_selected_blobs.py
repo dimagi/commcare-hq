@@ -106,6 +106,7 @@ class Command(BaseCommand):
         meta = json.loads(target_path.joinpath('meta.json').read_text())
         for file in target_path.iterdir():
             if _filter(file.name):
+                print(f"Selected blob meta file: {file.name}")
                 export_meta_files.append(file)
 
         return export_meta_files, meta
