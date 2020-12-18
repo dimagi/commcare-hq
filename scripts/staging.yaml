@@ -68,5 +68,6 @@ branches:
   - jls/store-2fa-request-domain # Jenny Dec 11
   - jls/configure-search-all-cases-text # Jenny Dec 17
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - gh/add-enterprise-app # Graham Dec 18
 
 submodules: {}
