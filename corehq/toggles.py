@@ -1936,4 +1936,5 @@ APP_ANALYTICS = StaticToggle(
     'Allow user to use app analytics in web apps',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
 )
