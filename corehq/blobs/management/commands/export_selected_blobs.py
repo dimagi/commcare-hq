@@ -58,8 +58,10 @@ class Command(BaseCommand):
         if output_path and (not os.path.exists(output_path) or os.path.isfile(output_path)):
             raise CommandError("Output path must exist and be a folder.")
 
-        filter_pattern = options.get('meta-file-filter')
+        filter_pattern = options.get('meta_file_filter')
         export_meta_files, meta = self._get_file_list_and_meta(filter_pattern, path, use_extracted)
+        if not export_meta_files:
+            raise CommandError("No files selected, please check your filter regex or ZIP file contents.")
 
         filenames = self._run_threaded_export(export_meta_files, meta, output_path, already_exported)
 
