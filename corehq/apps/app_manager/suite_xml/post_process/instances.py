@@ -183,6 +183,9 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
     instances = set()
     unknown_instance_ids = set()
     for xpath in xpaths:
+        if not xpath:
+            continue
+
         instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
             try:
