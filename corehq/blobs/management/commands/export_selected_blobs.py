@@ -61,17 +61,17 @@ class Command(BaseCommand):
         filter_pattern = options.get('meta-file-filter')
         export_meta_files, meta = self._get_file_list_and_meta(filter_pattern, path, use_extracted)
 
-        filenames = self._run_threaded_export(export_meta_files, meta, output_path)
+        filenames = self._run_threaded_export(export_meta_files, meta, output_path, already_exported)
 
         if options.get("json_output"):
             return json.dumps({"paths": filenames})
 
-    def _run_threaded_export(self, export_meta_files, meta, output_path):
+    def _run_threaded_export(self, export_meta_files, meta, output_path, already_exported):
         results = []
         filenames = []
         with futures.ThreadPoolExecutor(max_workers=len(export_meta_files)) as executor:
             for path in export_meta_files:
-                results.append(executor.submit(_export_blobs, output_path, path, meta))
+                results.append(executor.submit(_export_blobs, output_path, path, meta, already_exported))
 
             for result in futures.as_completed(results):
                 try:
@@ -111,10 +111,10 @@ class Command(BaseCommand):
         return export_meta_files, meta
 
 
-def _export_blobs(output_path, path, meta):
+def _export_blobs(output_path, path, meta, already_exported):
     export_filename = os.path.join(output_path, _get_export_filename(path))
     try:
-        migrator = BlobDbBackendExporter(export_filename, None)
+        migrator = BlobDbBackendExporter(export_filename, already_exported)
         with migrator:
             expected_count = meta[path.stem]["blobs.BlobMeta"]
             prefix = f"Exporting from {path.name}"
