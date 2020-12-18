@@ -327,6 +327,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
+                pageCount: paginateItems.pageCount,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
@@ -374,9 +375,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 endPage = currentPage + maxPagesAfterCurrentPage;
             }
         }
+        console.log(startPage, endPage, totalPages, 'result')
         return {
             startPage: startPage,
             endPage: endPage,
+            pageCount: totalPages,
         };
     };
 
