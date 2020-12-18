@@ -375,7 +375,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 endPage = currentPage + maxPagesAfterCurrentPage;
             }
         }
-        console.log(startPage, endPage, totalPages, 'result')
         return {
             startPage: startPage,
             endPage: endPage,
