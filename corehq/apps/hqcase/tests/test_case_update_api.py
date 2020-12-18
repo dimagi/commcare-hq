@@ -7,6 +7,7 @@ from django.urls import reverse
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormError
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
@@ -15,8 +16,10 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import privilege_enabled
 
 
+@privilege_enabled(privileges.API_ACCESS)
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
 

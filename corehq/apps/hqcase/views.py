@@ -13,6 +13,8 @@ from jsonobject.exceptions import BadValueError
 from couchforms.models import XFormError
 from soil import DownloadBase
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
@@ -80,6 +82,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @csrf_exempt
 @api_auth
 @require_superuser_or_contractor
+@requires_privilege_with_fallback(privileges.API_ACCESS)
 def case_api(request, domain, case_id=None):
     if request.method == 'POST' and not case_id:
         return _create_or_update_case(request, domain)
