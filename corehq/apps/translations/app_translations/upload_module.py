@@ -30,6 +30,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = None
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
+        self.search_command_label = None
         self.tab_headers = None
 
     def update(self, rows):
@@ -89,6 +90,9 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if self.case_list_menu_item_label:
             self._update_translation(self.case_list_menu_item_label, self.module.case_list.label)
 
+        if self.search_command_label:
+            self._update_translation(self.search_command_label, self.module.search_config.command_label)
+
         return self.msgs
 
     def _update_report_module_rows(self, rows):
@@ -143,11 +147,12 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         which will be processed separately from the case proeprty rows.
 
         Populates class attributes condensed_rows, case_list_form_label, case_list_menu_item_label,
-        and tab_headers.
+        search_command_label, and tab_headers.
         '''
         self.condensed_rows = []
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
+        self.search_command_label = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
         index_of_last_graph_in_condensed = -1
@@ -197,6 +202,10 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             # It's the case list menu item label. Don't add it to condensed rows
             elif row['case_property'] == 'case_list_menu_item_label':
                 self.case_list_menu_item_label = row
+
+            # It's the case search label. Don't add it to condensed rows
+            elif row['case_property'] == 'case_search_label':
+                self.case_search_label = row
 
             # If it's a tab header, don't add it to condensed rows
             elif re.search(r'^Tab \d+$', row['case_property']):
