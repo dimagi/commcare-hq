@@ -20,6 +20,7 @@ from corehq.apps.translations.app_translations.download import (
     get_module_case_list_form_rows,
     get_module_case_list_menu_item_rows,
     get_module_detail_rows,
+    get_module_search_command_rows,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     get_sheet_name_to_unique_id_map,
@@ -343,6 +344,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         ("menu1", (
             ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
             ("case_list_menu_item_label", "list", "List Stethoscopes", "French List of Stethoscopes"),
+            ("search_command_label", "list", "Find a Mother", "Mère!"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -392,6 +394,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ("menu1", "", "", "", "My & awesome module", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
           ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", "", ""),
           ("menu1", "case_list_menu_item_label", "list", "",
+          ("menu1", "search_command_label", "list", "", "Find a Mother", "", "", "", ""),
            "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
@@ -1202,6 +1205,11 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_module_case_list_menu_item_rows(self):
         self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.modules[0]),
                          [('case_list_menu_item_label', 'list', 'Steth List')])
+
+    def test_module_search_command_rows(self):
+        app = AppFactory.case_list_form_app_factory().app
+        self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0]),
+                         [('search_command_label', 'list', 'Find a Mother')])
 
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [

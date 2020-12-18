@@ -195,7 +195,10 @@ class AppFactory(object):
 
         case_module.case_list_form.form_id = register_form.get_unique_id()
         case_module.case_list_form.label = {
-            'en': 'New Case'
+            'en': 'New Case',
+        }
+        case_module.search_config.command_label = {
+            'en': 'Find a Mother',
         }
         return factory
 
