@@ -53,12 +53,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     payload[model[index].get('id')] = this.value;
                 }
             });
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-                hqImport('analytix/js/kissmetrix').track.event('Case Search', {
-                    domain: FormplayerFrontend.getChannel().request('currentUser').domain,
-                    name: model[0].collection.title,
-                });
-            }
             FormplayerFrontend.trigger("menu:query", payload);
         },
     });
