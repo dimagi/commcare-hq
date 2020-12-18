@@ -63,10 +63,8 @@ branches:
   - mk/remove-draconian-full # MK Nov 30
   - gh/improve-gateway-fee # Graham Dec 1
   - sr/autosubmi # Cal Dec 4
-  - jls/slimmer-initial-app # Jenny Nov 25
   - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
   - jls/store-2fa-request-domain # Jenny Dec 11
-  - jls/configure-search-all-cases-text # Jenny Dec 17
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - gh/add-enterprise-app # Graham Dec 18
 
