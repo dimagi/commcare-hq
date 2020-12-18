@@ -65,6 +65,7 @@ branches:
   - sr/autosubmi # Cal Dec 4
   - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
   - jls/store-2fa-request-domain # Jenny Dec 11
+  - jls/slimmer-initial-app # Jenny Nov 25
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - gh/add-enterprise-app # Graham Dec 18
 
