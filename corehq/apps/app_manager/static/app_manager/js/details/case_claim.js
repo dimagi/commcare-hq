@@ -9,7 +9,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, autoLaunch, includeClosed, defaultProperties, lang,
+    var searchViewModel = function (searchProperties, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel,
         searchButtonDisplayCondition, searchFilter, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
@@ -109,6 +109,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
+        self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.autoLaunch = ko.observable(autoLaunch);
         self.relevant = ko.observable('');
@@ -229,6 +230,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 auto_launch: self.autoLaunch(),
                 relevant: self._getRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
+                search_command_label: self.searchCommandLabel(),
                 search_filter: self.searchFilter(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
@@ -249,6 +251,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             saveButton.fire('change');
         });
         self.defaultProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchCommandLabel.subscribe(function () {
             saveButton.fire('change');
         });
         self.searchButtonDisplayCondition.subscribe(function () {
