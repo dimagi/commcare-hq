@@ -134,10 +134,6 @@ class ConnectionSettingsForm(forms.ModelForm):
                     css_id='test-connection-button',
                     css_class='btn btn-default disabled',
                 ),
-                crispy.Div(
-                    css_id='test-connection-result',
-                    css_class='text-success hide',
-                ),
                 css_class=hqcrispy.CSS_ACTION_CLASS,
             ),
             css_class='form-group'
