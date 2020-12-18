@@ -74,7 +74,12 @@ class Command(BaseCommand):
                 results.append(executor.submit(_export_blobs, output_path, path, meta))
 
             for result in futures.as_completed(results):
-                filenames.append(result.result())
+                try:
+                    filename = result.result()
+                except Exception:
+                    logging.exception("Error exporting blobs")
+                else:
+                    filenames.append(filename)
         return filenames
 
     def _get_file_list_and_meta(self, filter_pattern, path, use_extracted):
@@ -108,14 +113,17 @@ class Command(BaseCommand):
 
 def _export_blobs(output_path, path, meta):
     export_filename = os.path.join(output_path, _get_export_filename(path))
-    migrator = BlobDbBackendExporter(export_filename, None)
-    with migrator:
-        expected_count = meta[path.stem]["blobs.BlobMeta"]
-        prefix = f"Exporting from {path.name}"
-        for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix, oneline=False):
-            migrator.process_object(obj)
+    try:
+        migrator = BlobDbBackendExporter(export_filename, None)
+        with migrator:
+            expected_count = meta[path.stem]["blobs.BlobMeta"]
+            prefix = f"Exporting from {path.name}"
+            for obj in with_progress_bar(_key_iterator(path), length=expected_count, prefix=prefix, oneline=False):
+                migrator.process_object(obj)
+        return export_filename
+    except Exception:
+        logging.exception("Error running export for blobs from '%s'", path.name)
 
-    return export_filename
 
 
 def _key_iterator(path):
