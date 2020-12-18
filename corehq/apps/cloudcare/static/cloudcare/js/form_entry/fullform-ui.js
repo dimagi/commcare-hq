@@ -3,6 +3,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
+    var groupNum = 0;
 
     //Overriden by downstream contexts, check before changing
     window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
@@ -369,6 +370,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         Container.call(self, json);
 
         self.parent = parent;
+        self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent instanceof Repeat;
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
@@ -378,9 +380,27 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
-        self.toggleChildren = function () {
+        self.toggleChildren = function (data, event) {
             if (self.collapsible) {
-                self.showChildren(!self.showChildren());
+                if (self.showChildren()) {
+                    self.showChildren(false);
+                    // event.currentTarget.ariaExpanded = "false";
+                } else {
+                    self.showChildren(true);
+                    // event.currentTarget.ariaExpanded = "true";
+                }
+            }
+        };
+
+        self.captionId = function () {
+            console.log('Called captionId');
+            return `group_${self.groupId}_caption`;
+        };
+
+        self.keyPressAction = function (data, event) {
+            // Toggle children on Enter or Space.
+            if (event.keyCode === 13 || event.keyCode === 32) {
+                this.toggleChildren(data, event);
             }
         };
 
