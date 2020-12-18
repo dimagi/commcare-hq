@@ -78,10 +78,17 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 # TODO switch to @require_can_edit_data
 @waf_allow('XSS_BODY')
 @csrf_exempt
-@require_POST
 @api_auth
 @require_superuser_or_contractor
 def case_api(request, domain, case_id=None):
+    if request.method == 'POST' and not case_id:
+        return _create_or_update_case(request, domain)
+    if request.method == 'PUT' and case_id:
+        return _create_or_update_case(request, domain, case_id)
+    return JsonResponse({'error': "Request method not allowed"}, status=405)
+
+
+def _create_or_update_case(request, domain, case_id=None):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):

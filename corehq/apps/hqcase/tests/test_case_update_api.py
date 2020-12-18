@@ -41,19 +41,21 @@ class TestCaseAPI(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def _post(self, resource_url, body):
+    def _create_case(self, body):
         return self.client.post(
-            resource_url,
+            reverse('case_api', args=(self.domain,)),
             body,
             content_type="application/json;charset=utf-8",
             HTTP_USER_AGENT="user agent string",
         )
 
-    def _create_case(self, body):
-        return self._post(reverse('case_api', args=(self.domain,)), body)
-
     def _update_case(self, case_id, body):
-        return self._post(reverse('case_api', args=(self.domain, case_id,)), body)
+        return self.client.put(
+            reverse('case_api', args=(self.domain, case_id,)),
+            body,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
 
     def test_create_case(self):
         res = self._create_case({
