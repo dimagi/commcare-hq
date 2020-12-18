@@ -1,4 +1,5 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
@@ -6,5 +7,9 @@
 
 {% block page_content %}
   {% registerurl "test_connection_settings" domain %}
+
+  <h2>{% trans "Add Connection Settings" %}</h2>
+  <div class="spacer"></div>
+
   {% crispy form %}
 {% endblock %}

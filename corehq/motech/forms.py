@@ -95,20 +95,18 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.domain = domain
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Remote API Connection'),
-                crispy.Field('name'),
-                crispy.Field('notify_addresses_str'),
-                crispy.Field('url'),
-                crispy.Field('auth_type'),
-                crispy.Field('api_auth_settings'),
-                crispy.Field('username'),
-                crispy.Field('plaintext_password'),
-                crispy.Field('client_id'),
-                crispy.Field('plaintext_client_secret'),
-                twbscrispy.PrependedText('skip_cert_verify', ''),
-                self.test_connection_button,
-            ),
+            crispy.Field('name'),
+            crispy.Field('notify_addresses_str'),
+            crispy.Field('url'),
+            crispy.Field('auth_type'),
+            crispy.Field('api_auth_settings'),
+            crispy.Field('username'),
+            crispy.Field('plaintext_password'),
+            crispy.Field('client_id'),
+            crispy.Field('plaintext_client_secret'),
+            twbscrispy.PrependedText('skip_cert_verify', ''),
+            self.test_connection_button,
+
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
