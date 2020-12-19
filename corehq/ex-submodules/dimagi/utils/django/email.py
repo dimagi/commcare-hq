@@ -42,7 +42,9 @@ def mark_local_bounced_email(bounced_addresses, message_id):
         except MessagingSubEvent.DoesNotExist:
             pass
         else:
-            metrics_counter('commcare.messaging.email.bounced', tags={'domain': subevent.parent.domain})
+            metrics_counter('commcare.messaging.email.bounced', len(bounced_addresses), tags={
+                'domain': subevent.parent.domain,
+            })
             subevent.error(
                 MessagingEvent.ERROR_EMAIL_BOUNCED,
                 additional_error_text=", ".join(bounced_addresses)
