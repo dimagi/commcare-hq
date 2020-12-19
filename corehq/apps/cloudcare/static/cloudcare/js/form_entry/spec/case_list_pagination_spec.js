@@ -1,6 +1,6 @@
 describe('#paginateOptions', function () {
     var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
-    it('Should determine if two answers are equal', function () {
+    it('Should return paginateOptions', function () {
         var result = paginateItems.paginateOptions(0, 15);
         /**
          *   result: {stratPage:'', endPage:'', pageCount:''}
@@ -13,7 +13,7 @@ describe('#paginateOptions', function () {
         assert.equal(result.endPage, 5);
         assert.equal(result.pageCount, 15);
 
-        //Assdrting not equal
+        //Asserting not equal
         assert.notEqual(result.startPage, 5);
         assert.notEqual(result.endPage, 10);
         assert.notEqual(result.pageCount, 20);
