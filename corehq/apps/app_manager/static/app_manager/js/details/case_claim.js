@@ -10,7 +10,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
     var searchViewModel = function (searchProperties, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel,
-        searchButtonDisplayCondition, searchFilter, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
+        searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -112,13 +112,23 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.autoLaunch = ko.observable(autoLaunch);
-        self.extraRelevant = ko.observable('');
-        self.defaultRelevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
         self.searchFilter = ko.observable(searchFilter);
         self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
+
+        // Note that this fragile parsing logic needs to match the self.relevant calculation below
+        // and cannot be changed without migrating existing CaseSearch documents
+        var defaultRelevant = false,
+            extraRelevant = searchRelevant,
+            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (";
+        if (searchRelevant && searchRelevant.startsWith(prefix)) {
+            defaultRelevant = true;
+            extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
+        }
+        self.extraRelevant = ko.observable(extraRelevant);
+        self.defaultRelevant = ko.observable(defaultRelevant);
 
         // Allow search filter to be copied from another part of the page
         self.setSearchFilterVisible = ko.computed(function () {
@@ -215,9 +225,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
         self.relevant = ko.computed(function () {
             if (self.defaultRelevant()) {
-                if (!self.extraRelevant() || self.extraRelevant().trim() === "") {
+                if (self.extraRelevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
+                    // Note this needs to match the initialization logic for defaultRelevant and extraRelevant above
                     return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.extraRelevant().trim() + ")";
                 }
             }
