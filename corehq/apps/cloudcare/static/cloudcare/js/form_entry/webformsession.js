@@ -87,8 +87,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
-        self.serverRequest = function (requestParams, successCallback, blocking, failureCallback,
-                                       errorResponseCallback, presendCallback) {
+        self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             if (self.blockingStatus === Const.BLOCK_ALL) {
                 return;
             }
@@ -104,8 +103,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
         };
 
-        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback,
-                                        errorResponseCallback, presendCallback) {
+        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             var self = this;
 
             requestParams.form_context = self.formContext;
@@ -118,10 +116,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             requestParams['debuggerEnabled'] = self.debuggerEnabled;
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
             requestParams['tz_from_browser'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-            if (presendCallback) {
-                presendCallback(requestParams);
-            }
 
             return $.ajax({
                 type: 'POST',
@@ -450,15 +444,18 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             form.isSubmitting(true);
             var submitAttempts = 0,
                 timer = setInterval(function () {
+                    var answers;
                     if (form.blockSubmit() && submitAttempts < 10) {
                         submitAttempts++;
                         return;
                     }
                     clearInterval(timer);
 
+                    answers = accumulateAnswers(form);
                     self.serverRequest(
                         {
                             'action': Const.SUBMIT,
+                            'answers': answers,
                             'prevalidated': prevalidated,
                         },
                         function (resp) {
@@ -489,11 +486,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                         function () {
                             form.isSubmitting(false);
                             return true;
-                        },
-                        function (requestParams) {
-                            var answers;
-                            answers = accumulateAnswers(form);
-                            requestParams['answers'] = answers;
                         }
                     );
                 }, 250);
