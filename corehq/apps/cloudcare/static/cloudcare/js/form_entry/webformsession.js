@@ -466,18 +466,17 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                                 $.each(resp.errors, function (ix, error) {
                                     self.serverError(UI.getForIx(form, ix), error);
                                 });
-                                // todo: mark all these messages for translation
                                 if (resp.status === 'too-many-requests') {
-                                    alert("We’re unable to submit this form right now due to high system usage. \n\n" +
+                                    alert(gettext("We’re unable to submit this form right now due to high system usage. \n\n" +
                                         "Please keep this window open and try again in a minute, " +
-                                        "or come back to this form in Incomplete Forms later.");
+                                        "or come back to this form in Incomplete Forms later."));
                                 } else if (resp.notification) {
-                                    alert("Form submission failed with error: \n\n" +
+                                    alert(gettext("Form submission failed with error") + ": \n\n" +
                                         resp.notification.message + ". \n\n " +
                                         "This must be corrected before the form can be submitted.");
                                 } else {
-                                    alert("There are errors in this form's answers. " +
-                                        "These must be corrected before the form can be submitted.");
+                                    alert(gettext("There are errors in this form's answers. " +
+                                        "These must be corrected before the form can be submitted."));
                                 }
                             }
                         },

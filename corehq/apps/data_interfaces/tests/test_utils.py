@@ -1,50 +1,48 @@
 from unittest.case import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.data_interfaces.utils import _get_ids, _validate_record, generate_ids_and_operate_on_payloads, \
-    operate_on_payloads
+from corehq.apps.data_interfaces.tasks import (
+    _get_repeat_record_ids,
+    task_generate_ids_and_operate_on_payloads,
+)
+from corehq.apps.data_interfaces.utils import (
+    _validate_record,
+    operate_on_payloads,
+)
 
 
 class TestUtils(TestCase):
 
     def test__get_ids_no_data(self):
-        response = _get_ids('', 'test_domain')
-
+        response = _get_repeat_record_ids(None, None, 'test_domain')
         self.assertEqual(response, [])
 
-    @patch('corehq.apps.data_interfaces.utils.get_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.utils._get_startkey_endkey_all_records')
-    def test__get_ids_payload_id_in_data(self, mock__get_startkey_endkey_all_records,
+    @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    def test__get_ids_payload_id_in_data(self, mock_iter_repeat_records_by_repeater,
                                          mock_get_repeat_records_by_payload_id):
-        data = {
-            'payload_id': Mock()
-        }
-        response = _get_ids(data, 'test_domain')
+        payload_id = Mock()
+        _get_repeat_record_ids(payload_id, None, 'test_domain')
 
         self.assertEqual(mock_get_repeat_records_by_payload_id.call_count, 1)
-        mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', data['payload_id'])
-        self.assertEqual(mock__get_startkey_endkey_all_records.call_count, 0)
+        mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', payload_id)
+        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 0)
 
-    @patch('corehq.apps.data_interfaces.utils.get_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.utils._get_startkey_endkey_all_records')
-    @patch('corehq.motech.repeaters.models.RepeatRecord')
-    def test__get_ids_payload_id_not_in_data(self, mock_RepeatRecord, mock__get_startkey_endkey_all_records,
-                                             mock_get_repeat_records_by_payload_id):
-        data = {
-            'repeater': Mock()
-        }
-        mock_RepeatRecord.get_db.return_value.view.return_value.all.return_value = [
-            {'id': 'id_1'},
-            {'id': 'id_2'}
-        ]
-        response = _get_ids(data, 'test_domain')
+    @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    def test__get_ids_payload_id_not_in_data(
+        self,
+        mock_iter_repeat_records_by_repeater,
+        mock_get_repeat_records_by_payload_id,
+    ):
+        REPEATER_ID = 'c0ffee'
+        _get_repeat_record_ids(None, REPEATER_ID, 'test_domain')
 
         mock_get_repeat_records_by_payload_id.assert_not_called()
-        mock__get_startkey_endkey_all_records.assert_called_with('test_domain', data['repeater'])
-        self.assertEqual(mock__get_startkey_endkey_all_records.call_count, 1)
-        self.assertEqual(response, ['id_1', 'id_2'])
+        mock_iter_repeat_records_by_repeater.assert_called_with('test_domain', REPEATER_ID)
+        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 1)
 
     @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_record_does_not_exist(self, mock_RepeatRecord):
@@ -81,19 +79,20 @@ class TestTasks(TestCase):
         self.mock_payload_one, self.mock_payload_two = Mock(id='id_1'), Mock(id='id_2')
         self.mock_payload_ids = [self.mock_payload_one.id, self.mock_payload_two.id]
 
-    @patch('corehq.apps.data_interfaces.utils._get_ids')
-    @patch('corehq.apps.data_interfaces.utils.operate_on_payloads')
+    @patch('corehq.apps.data_interfaces.tasks._get_repeat_record_ids')
+    @patch('corehq.apps.data_interfaces.tasks.operate_on_payloads')
     def test_generate_ids_and_operate_on_payloads_success(self, mock_operate_on_payloads, mock__get_ids):
-        mock_payload = Mock()
-        mock_operate_on_payloads.return_value = 'success'
-        response = generate_ids_and_operate_on_payloads(mock_payload, 'test_domain', 'test_action')
+        payload_id = 'c0ffee'
+        repeater_id = 'deadbeef'
+        task_generate_ids_and_operate_on_payloads(
+            payload_id, repeater_id, 'test_domain', 'test_action')
 
         mock__get_ids.assert_called_once()
-        mock__get_ids.assert_called_with(mock_payload, 'test_domain')
-        self.mock_payload_ids = mock__get_ids(mock_payload, 'test_domain')
+        mock__get_ids.assert_called_with('c0ffee', 'deadbeef', 'test_domain')
+        mock_record_ids = mock__get_ids('c0ffee', 'deadbeef', 'test_domain')
         mock_operate_on_payloads.assert_called_once()
-        mock_operate_on_payloads.assert_called_with(self.mock_payload_ids, 'test_domain', 'test_action', None, False)
-        self.assertEqual(response, {'messages': 'success'})
+        mock_operate_on_payloads.assert_called_with(mock_record_ids, 'test_domain', 'test_action',
+                                                    task=task_generate_ids_and_operate_on_payloads)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
     @patch('corehq.apps.data_interfaces.utils._validate_record')
@@ -248,8 +247,6 @@ class TestTasks(TestCase):
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
     @patch('corehq.apps.data_interfaces.utils._validate_record')
     def test_operate_on_payloads_no_task_from_excel_true_requeue(self, mock__validate_record, mock_DownloadBase):
-        mock_payload_one, self.mock_payload_two = Mock(id='id_1'), Mock(id='id_2')
-        self.mock_payload_ids = [mock_payload_one.id, self.mock_payload_two.id]
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         with patch('corehq.apps.data_interfaces.utils._') as _:

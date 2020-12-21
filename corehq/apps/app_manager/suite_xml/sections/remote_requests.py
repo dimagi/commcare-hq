@@ -78,17 +78,17 @@ class RemoteRequestFactory(object):
         )
 
     def _build_instances(self):
-        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
-        claim_relevant_xpaths = [self.module.search_config.relevant]
         prompt_select_instances = [
             Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
             for prop in self.module.search_config.properties
             if prop.itemset.instance_id
         ]
 
+        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
+        config_xpaths = [self.module.search_config.relevant, self.module.search_config.search_filter]
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.app,
-            query_xpaths + claim_relevant_xpaths
+            query_xpaths + config_xpaths
         )
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
