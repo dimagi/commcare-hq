@@ -245,7 +245,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             saveButton.fire('change');
         });
         self._relevant.subscribe(function () {
-            console.log("changed _relevant");
             saveButton.fire('change');
         });
         self.searchProperties.subscribe(function () {
