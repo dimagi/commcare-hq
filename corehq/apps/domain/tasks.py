@@ -59,32 +59,6 @@ def incomplete_domains_to_email():
     return email_domains
 
 
-@periodic_task_when_true(
-    settings.IS_DIMAGI_ENVIRONMENT,
-    run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
-    queue='background_queue'
-)
-def fm_reminder_email():
-    """
-    Reminds FMs to update their domains with up to date information
-    """
-    email_domains = incomplete_domains_to_email()
-
-    for domain in email_domains:
-        email_content = render_to_string(
-            'domain/email/fm_outreach.html', domain)
-        email_content_plaintext = render_to_string(
-            'domain/email/fm_outreach.txt', domain)
-        send_HTML_email(
-            "Please update your project settings for " + domain['domain_name'],
-            domain['email_to'],
-            email_content,
-            email_from=settings.MASTER_LIST_EMAIL,
-            text_content=email_content_plaintext,
-            cc=[settings.MASTER_LIST_EMAIL],
-        )
-
-
 def incomplete_self_started_domains():
     """
     Returns domains that have submitted 200 forms, but haven't filled out any
