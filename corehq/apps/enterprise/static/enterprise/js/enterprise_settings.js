@@ -1,4 +1,4 @@
-hqDefine("accounting/js/enterprise_settings", [
+hqDefine("enterprise/js/enterprise_settings", [
     'jquery',
     'knockout',
     'underscore',
