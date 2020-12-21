@@ -112,7 +112,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.autoLaunch = ko.observable(autoLaunch);
-        self.relevant = ko.observable('');
+        self.extraRelevant = ko.observable('');
         self.defaultRelevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
@@ -213,22 +213,22 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             );
         };
-        self._relevant = ko.computed(function () {
+        self.relevant = ko.computed(function () {
             if (self.defaultRelevant()) {
-                if (!self.relevant() || self.relevant().trim() === "") {
+                if (!self.extraRelevant() || self.extraRelevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
-                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.extraRelevant().trim() + ")";
                 }
             }
-            return self.relevant().trim();
+            return self.extraRelevant().trim();
         });
 
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
                 auto_launch: self.autoLaunch(),
-                relevant: self._relevant(),
+                relevant: self.relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
                 search_filter: self.searchFilter(),
@@ -244,7 +244,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
-        self._relevant.subscribe(function () {
+        self.relevant.subscribe(function () {
             saveButton.fire('change');
         });
         self.searchProperties.subscribe(function () {
