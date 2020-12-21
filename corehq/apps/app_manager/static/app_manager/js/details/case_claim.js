@@ -213,7 +213,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             );
         };
-        self._getRelevant = function () {
+        self._relevant = ko.computed(function () {
             if (self.default_relevant()) {
                 if (!self.relevant() || self.relevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
@@ -222,13 +222,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             }
             return self.relevant().trim();
-        };
+        });
 
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
                 auto_launch: self.autoLaunch(),
-                relevant: self._getRelevant(),
+                relevant: self._relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
                 search_filter: self.searchFilter(),
@@ -244,7 +244,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
-        self.default_relevant.subscribe(function () {
+        self._relevant.subscribe(function () {
             saveButton.fire('change');
         });
         self.searchProperties.subscribe(function () {
