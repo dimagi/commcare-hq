@@ -113,7 +113,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.autoLaunch = ko.observable(autoLaunch);
         self.relevant = ko.observable('');
-        self.default_relevant = ko.observable(true);
+        self.defaultRelevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
@@ -214,7 +214,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         };
         self._relevant = ko.computed(function () {
-            if (self.default_relevant()) {
+            if (self.defaultRelevant()) {
                 if (!self.relevant() || self.relevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
