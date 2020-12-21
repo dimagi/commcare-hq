@@ -22,6 +22,9 @@ def handle_email_messaging_subevent(message, subevent_id):
         if recipient_addresses:
             additional_error_text = f"{additional_error_text} - {', '.join(recipient_addresses)}"
 
+        metrics_counter('commcare.messaging.email.bounced', len(bounced_recipients), tags={
+            'domain': subevent.parent.domain,
+        })
         subevent.error(MessagingEvent.ERROR_EMAIL_BOUNCED,
                        additional_error_text=additional_error_text)
     elif event_type == 'Send':
