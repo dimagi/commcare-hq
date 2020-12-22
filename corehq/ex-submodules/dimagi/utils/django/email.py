@@ -28,7 +28,7 @@ LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR
 def mark_local_bounced_email(bounced_addresses, message_id):
     from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
     from corehq.apps.users.models import Invitation, InvitationStatus
-    if Invitation.EMAIL_ID_PREFIX in message_id:
+    if isinstance(message_id, str) and Invitation.EMAIL_ID_PREFIX in message_id:
         try:
             invite = Invitation.objects.get(uuid=message_id.split(Invitation.EMAIL_ID_PREFIX)[1])
         except Invitation.DoesNotExist:
