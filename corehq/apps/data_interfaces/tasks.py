@@ -91,14 +91,15 @@ def run_case_update_rules(now=None):
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
+    hour_to_run = datetime.utcnow().hour
     for domain in domains:
         if not any_migrations_in_progress(domain) and not DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK.enabled(domain):
             domain_obj = Domain.get_by_name(domain)
             if domain_obj.auto_case_update_hour is None:
-                hour_to_run = settings.RULE_UPDATE_HOUR
+                domain_hour = settings.RULE_UPDATE_HOUR
             else:
-                hour_to_run = domain_obj.auto_case_update_hour
-            if hour_to_run == datetime.utcnow().hour:
+                domain_hour = domain_obj.auto_case_update_hour
+            if hour_to_run == domain_hour:
                 run_case_update_rules_for_domain.delay(domain, now)
 
 
