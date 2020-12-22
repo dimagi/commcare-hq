@@ -384,10 +384,8 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             if (self.collapsible) {
                 if (self.showChildren()) {
                     self.showChildren(false);
-                    // event.currentTarget.ariaExpanded = "false";
                 } else {
                     self.showChildren(true);
-                    // event.currentTarget.ariaExpanded = "true";
                 }
             }
         };

@@ -15,13 +15,16 @@
           'panel-heading': collapsible,
            clickable: collapsible
         },
-        attr: {
-          'aria-expanded': showChildren() ? 'true' : 'false',
-          'aria-labelledby': captionId()
-        },
+        attr: collapsible ? {
+                role: 'button',
+                'aria-expanded': showChildren() ? 'true' : 'false',
+                'aria-labelledby': captionId()
+              } : {
+                'aria-labelledby': captionId()
+              },
         click: toggleChildren,
         event: {keypress: keyPressAction}"
-              tabindex="0" role="button">
+              tabindex="0">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
