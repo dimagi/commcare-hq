@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-09 17:46+0000\n"
+"POT-Creation-Date: 2020-12-16 20:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3798,7 +3798,7 @@ msgstr ""
 #: corehq/apps/app_manager/forms.py:63
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html:41
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html:28
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:95
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:98
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:44
 msgid "Copy"
 msgstr ""
@@ -5371,11 +5371,11 @@ msgstr ""
 msgid "Duplicate custom instance in {}: {}"
 msgstr ""
 
-#: corehq/apps/app_manager/suite_xml/sections/entries.py:609
+#: corehq/apps/app_manager/suite_xml/sections/entries.py:606
 msgid "Could not find target module used by form '{}'"
 msgstr ""
 
-#: corehq/apps/app_manager/suite_xml/sections/entries.py:613
+#: corehq/apps/app_manager/suite_xml/sections/entries.py:610
 #, python-format
 msgid ""
 "Form '%(form_name)s' in module '%(module_name)s' references a module with an "
@@ -8400,7 +8400,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:249
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:250
-msgid "Search Condition"
+msgid "Claim Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:264
@@ -8565,7 +8565,7 @@ msgid "Series"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/graph_configuration_modal.html:27
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:31
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:34
 msgid "Configuration"
 msgstr ""
 
@@ -13575,15 +13575,15 @@ msgstr ""
 msgid "You don't have permission to set restriction for this application"
 msgstr ""
 
-#: corehq/apps/domain/models.py:938
+#: corehq/apps/domain/models.py:934
 msgid "Transfer domain request is no longer active"
 msgstr ""
 
-#: corehq/apps/domain/models.py:970 corehq/apps/domain/models.py:987
+#: corehq/apps/domain/models.py:966 corehq/apps/domain/models.py:983
 msgid "Transfer of ownership for CommCare project space."
 msgstr ""
 
-#: corehq/apps/domain/models.py:1013
+#: corehq/apps/domain/models.py:1009
 #, python-brace-format
 msgid "There has been a transfer of ownership of {domain}"
 msgstr ""
@@ -29799,41 +29799,45 @@ msgstr ""
 msgid "View Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:20
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:16
+msgid "View Data Source"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:23
 msgid "Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:32
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:35
 msgid "Usage"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:34
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:37
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:8
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:19
 msgid "Link Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:47
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:50
 msgid "This report is not referred to by any apps in this domain."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:50
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:53
 msgid ""
 "This is a static report, which might be referred to by apps in other domains."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:55
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:58
 msgid ""
 "\n"
 "            The following apps depend on this report:\n"
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:78
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:81
 msgid "Link this report to project"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html:86
+#: corehq/apps/userreports/templates/userreports/edit_report_config.html:89
 #: corehq/apps/userreports/templates/userreports/partials/link_reports.html:30
 msgid "Already Linked"
 msgstr ""
@@ -35405,49 +35409,49 @@ msgid ""
 "Atom feed."
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:463 corehq/tabs/tabclasses.py:1797
+#: corehq/motech/repeaters/models.py:460 corehq/tabs/tabclasses.py:1797
 msgid "Forward Forms"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:516 corehq/tabs/tabclasses.py:1801
+#: corehq/motech/repeaters/models.py:513 corehq/tabs/tabclasses.py:1801
 msgid "Forward Cases"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:555
+#: corehq/motech/repeaters/models.py:552
 msgid "Forward Cases on Creation Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:567
+#: corehq/motech/repeaters/models.py:564
 msgid "Forward Cases on Update Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:578
+#: corehq/motech/repeaters/models.py:575
 msgid "Forward Cases To Another Commcare Project"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:604 corehq/tabs/tabclasses.py:1799
+#: corehq/motech/repeaters/models.py:601 corehq/tabs/tabclasses.py:1799
 msgid "Forward Form Stubs"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:624
+#: corehq/motech/repeaters/models.py:621
 msgid "Forward App Schema Changes"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:633
+#: corehq/motech/repeaters/models.py:630
 msgid "Forward Users"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:643
+#: corehq/motech/repeaters/models.py:640
 msgid "Forward Locations"
 msgstr ""
 
-#: corehq/motech/repeaters/repeater_generators.py:224
-#: corehq/motech/repeaters/repeater_generators.py:235
+#: corehq/motech/repeaters/repeater_generators.py:205
+#: corehq/motech/repeaters/repeater_generators.py:216
 msgid "XML"
 msgstr ""
 
-#: corehq/motech/repeaters/repeater_generators.py:252
-#: corehq/motech/repeaters/repeater_generators.py:420
+#: corehq/motech/repeaters/repeater_generators.py:233
+#: corehq/motech/repeaters/repeater_generators.py:401
 msgid "JSON"
 msgstr ""
 

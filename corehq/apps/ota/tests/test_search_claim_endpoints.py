@@ -13,6 +13,7 @@ from casexml.apps.case.util import post_case_blocks
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.models import (
     CLAIM_CASE_TYPE,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -30,7 +31,6 @@ from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needi
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
-    CASE_SEARCH_MAX_RESULTS,
 )
 from corehq.util.elastic import ensure_index_deleted
 
