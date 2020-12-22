@@ -72,5 +72,6 @@ branches:
   - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
   - jls/case-claim-ui-relevant-fix # Jenny Dec 21
   - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
+  - jls/custom-rule-run-time # Jenny Dec 22
 
 submodules: {}
