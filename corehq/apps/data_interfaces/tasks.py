@@ -91,7 +91,7 @@ def run_case_update_rules(now=None):
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
-    hour_to_run = datetime.utcnow().hour
+    hour_to_run = now.hour if now else datetime.utcnow().hour
     for domain in domains:
         if not any_migrations_in_progress(domain) and not DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK.enabled(domain):
             domain_obj = Domain.get_by_name(domain)
