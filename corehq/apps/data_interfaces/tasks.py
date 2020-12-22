@@ -80,7 +80,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 
 
 @periodic_task(serializer='pickle',
-    run_every=crontab(hour=0, minute=0),
+    run_every=crontab(hour='*', minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
@@ -93,7 +93,13 @@ def run_case_update_rules(now=None):
                .order_by('domain'))
     for domain in domains:
         if not any_migrations_in_progress(domain) and not DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK.enabled(domain):
-            run_case_update_rules_for_domain.delay(domain, now)
+            domain_obj = Domain.get_by_name(domain)
+            if domain_obj.auto_case_update_hour is None:
+                hour_to_run = settings.RULE_UPDATE_HOUR
+            else:
+                hour_to_run = domain_obj.auto_case_update_hour
+            if hour_to_run == datetime.utcnow().hour:
+                run_case_update_rules_for_domain.delay(domain, now)
 
 
 def run_rules_for_case(case, rules, now):
