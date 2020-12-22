@@ -751,6 +751,7 @@ CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
     'Allow case claim to be automatically launched in web apps',
     TAG_INTERNAL,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
