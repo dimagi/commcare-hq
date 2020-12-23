@@ -73,5 +73,6 @@ branches:
   - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
   - jls/custom-rule-run-time # Jenny Dec 22
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
+  - gh/delivered-billable-exception # Graham Dec 23
 
 submodules: {}
