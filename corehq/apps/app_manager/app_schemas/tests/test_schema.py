@@ -299,6 +299,13 @@ class SchemaTest(SimpleTestCase):
                 },
             })
 
+    def test_casedb_schema_maps_owner_id_to_attribute_with_name(self):
+        form = self.add_form("owner_case_type", {"owner_id": "new_owner"})
+        schema = get_casedb_schema(form)
+        structure = schema['subsets'][0]['structure']
+        self.assertIn('@owner_id', structure)
+        self.assertEqual(structure['@owner_id']['name'], 'owner_id')
+
     # -- helpers --
 
     def assert_has_kv_pairs(self, test_dict, expected_dict):

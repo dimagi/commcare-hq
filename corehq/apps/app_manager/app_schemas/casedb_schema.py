@@ -88,4 +88,7 @@ def generate_property_metadata(prop, descriptions):
         "description": descriptions.get(prop, '')
     }
 
+    if prop == '@owner_id':
+        metadata['name'] = 'owner_id'
+
     return metadata
