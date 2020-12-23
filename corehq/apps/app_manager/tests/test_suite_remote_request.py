@@ -328,3 +328,21 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite,
             "./remote-request[1]/instance[@id='states']",
         )
+
+    def test_prompt_default_value(self, *args):
+        """Setting the default to "default_value"
+        """
+        self.module.search_config.properties[0].default_value = 'foo'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt default_value="foo" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
