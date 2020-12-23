@@ -26,7 +26,7 @@ class Command(BaseCommand):
         print("-------")
         print(f"Total un-billed sms: {total_bad}")
 
-    def handle(self, domains, **options):
+    def handle(self, **options):
         october_first = datetime.datetime(2020, 10, 1)
         november_first = datetime.datetime(2020, 11, 1)
         december_first = datetime.datetime(2020, 12, 1)
