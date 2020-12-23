@@ -510,6 +510,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var self = this;
             self.session_id = self.session_id || resp.session_id;
             self.form = Utils.initialRender(resp, self.resourceMap, $form);
+            if (resp.shouldAutoSubmit) {
+                self.submitForm(self.form);
+            }
         };
 
         // Initialize
