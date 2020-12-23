@@ -66,7 +66,7 @@ branches:
   - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
   - jls/store-2fa-request-domain # Jenny Dec 11
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
-  - gh/add-enterprise-app # Graham Dec 18
+#   - gh/add-enterprise-app # Graham Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
   - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
