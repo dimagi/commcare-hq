@@ -911,6 +911,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             'name': prop['name'],
             'label': label,
         }
+        if prop['default_value']:
+            ret['default_value'] = prop['default_value']
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
