@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from django.test import SimpleTestCase
 
@@ -12,7 +11,6 @@ from corehq.apps.app_manager.app_schemas.session_schema import (
 )
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.util.test_utils import flag_enabled
 
 
 @patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',

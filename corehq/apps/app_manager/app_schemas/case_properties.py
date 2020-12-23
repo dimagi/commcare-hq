@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict, deque, namedtuple
-from itertools import chain
 
 from memoized import memoized
 

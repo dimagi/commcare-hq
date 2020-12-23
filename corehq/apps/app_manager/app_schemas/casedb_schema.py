@@ -1,4 +1,3 @@
-from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
     get_usercase_properties,
