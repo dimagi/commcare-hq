@@ -65,9 +65,9 @@ class TestCaseAPI(TestCase):
             # notable exclusions: case_id, date_opened, date_modified
             '@case_type': 'player',
             'case_name': 'Elizabeth Harmon',
+            'external_id': '1',
             '@owner_id': 'methuen_home',
             'properties': {
-                'external_id': '1',
                 'sport': 'chess',
                 'dob': '1948-11-02',
             },
@@ -77,9 +77,9 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.domain, self.domain)
         self.assertEqual(case.type, 'player')
         self.assertEqual(case.name, 'Elizabeth Harmon')
+        self.assertEqual(case.external_id, '1')
         self.assertEqual(case.owner_id, 'methuen_home')
         self.assertEqual(case.opened_by, self.web_user.user_id)
-        self.assertEqual(case.external_id, '1')
         self.assertEqual(case.dynamic_case_properties(), {
             'dob': '1948-11-02',
             'sport': 'chess',
@@ -95,10 +95,10 @@ class TestCaseAPI(TestCase):
             case_id=str(uuid.uuid4()),
             case_type='player',
             case_name='Elizabeth Harmon',
+            external_id='1',
             owner_id='methuen_home',
             create=True,
             update={
-                'external_id': '1',
                 'sport': 'chess',
                 'rank': '1600',
                 'dob': '1948-11-02',
@@ -135,9 +135,9 @@ class TestCaseAPI(TestCase):
         res = self._create_case({
             '@case_type': 'match',
             'case_name': 'Harmon/Luchenko',
+            'external_id': '23',
             '@owner_id': 'harmon',
             'properties': {
-                'external_id': '23',
                 'winner': 'Harmon',
             },
             'indices': {
@@ -152,8 +152,8 @@ class TestCaseAPI(TestCase):
 
         case = self.case_accessor.get_case(res['@case_id'])
         self.assertEqual(case.name, 'Harmon/Luchenko')
-        self.assertEqual(case.owner_id, 'harmon')
         self.assertEqual(case.external_id, '23')
+        self.assertEqual(case.owner_id, 'harmon')
         self.assertEqual(case.dynamic_case_properties(), {'winner': 'Harmon'})
         self.assertEqual(case.indices[0].identifier, 'parent')
         self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
@@ -179,9 +179,9 @@ class TestCaseAPI(TestCase):
                 # No case_id means this is a new case
                 '@case_type': 'player',
                 'case_name': 'Jolene',
+                'external_id': '2',
                 '@owner_id': 'methuen_home',
                 'properties': {
-                    'external_id': '2',
                     'sport': 'squash',
                     'dob': '1947-03-09',
                 },
@@ -236,9 +236,10 @@ class TestCaseAPI(TestCase):
         res = self._create_case({
             '@case_type': 'match',
             'case_name': 'Harmon/Luchenko',
+            'external_id': '23',
             '@owner_id': 'harmon',
             'properties': {
-                'external_id': '23',
+                'dob': '1948-11-02',
             },
             'indices': {
                 'parent': {

@@ -20,6 +20,7 @@ class JsonIndex(jsonobject.JsonObject):
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
     case_name = jsonobject.StringProperty(required=True)
+    external_id = jsonobject.StringProperty()
     user_id = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty(name='@owner_id', required=True)
     properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})
@@ -39,10 +40,10 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             user_id=self.user_id,
             case_type=case_type,
             case_name=self.case_name,
+            external_id=self.external_id or CaseBlock.undefined,
             owner_id=self.owner_id,
             create=self._is_case_creation,
             update=dict(self.properties),
-            external_id=self.properties.get('external_id', CaseBlock.undefined),
             index={
                 name: IndexAttrs(index.case_type, index.case_id, index.relationship)
                 for name, index in self.indices.items()
