@@ -70,7 +70,6 @@ branches:
   - gh/add-enterprise-app # Graham Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
-  - jls/case-claim-ui-relevant-fix # Jenny Dec 21
   - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
   - jls/custom-rule-run-time # Jenny Dec 22
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
