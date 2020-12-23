@@ -222,6 +222,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);
         self.atFirstIndex = ko.observable(true);
+        self.shouldAutoSubmit = json.shouldAutoSubmit;
 
         var _updateIndexCallback = function (ix, isAtFirstIndex, isAtLastIndex) {
             self.currentIndex(ix.toString());
@@ -298,7 +299,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.showSubmitButton = ko.computed(function () {
-            return !self.showInFormNavigation();
+            return !self.showInFormNavigation() && !self.shouldAutoSubmit;
         });
 
         self.submitForm = function () {
