@@ -21,7 +21,7 @@ class Command(BaseCommand):
         total_bad = 0
         for sms in query.all():
             if not SmsBillable.objects.filter(log_id=sms.couch_id).exists():
-                print(sms.couch_id)
+                # print(sms.couch_id)
                 total_bad += 1
         print("-------")
         print(f"Total un-billed sms: {total_bad}")
