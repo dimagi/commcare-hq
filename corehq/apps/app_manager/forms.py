@@ -8,6 +8,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -47,7 +48,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if toggles.LINKED_DOMAINS.enabled(self.from_domain):
+        if toggles.LINKED_DOMAINS.enabled(self.from_domain) and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -55,7 +56,7 @@ class CopyApplicationForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Copy Application'),
+                _('Copy Application for Editing') if is_linked_app(app) else _('Copy Application'),
                 *fields
             ),
             crispy.Hidden('app', app.get_id),
