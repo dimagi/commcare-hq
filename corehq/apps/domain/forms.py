@@ -897,6 +897,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Check this box to trigger a hand-off email to the partner when this form is submitted."
         ),
     )
+    use_custom_auto_case_update_hour = forms.ChoiceField(
+        label=ugettext_lazy("Choose specific time for custom auto case update rules to run"),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    auto_case_update_hour = forms.IntegerField(
+        label=ugettext_lazy("Hour of the day, in UTC, for rules to run (0-23)"),
+        required=False,
+        min_value=0,
+        max_value=23,
+    )
     use_custom_auto_case_update_limit = forms.ChoiceField(
         label=ugettext_lazy("Set custom auto case update rule limits"),
         required=True,
@@ -997,6 +1011,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
                 crispy.Field(
+                    'use_custom_auto_case_update_hour',
+                    data_bind='value: use_custom_auto_case_update_hour',
+                ),
+                crispy.Div(
+                    crispy.Field('auto_case_update_hour'),
+                    data_bind="visible: use_custom_auto_case_update_hour() === 'Y'",
+                ),
+                crispy.Field(
                     'use_custom_odata_feed_limit',
                     data_bind="value: use_custom_odata_feed_limit",
                 ),
@@ -1023,6 +1045,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     @property
     def current_values(self):
         return {
+            'use_custom_auto_case_update_hour': self['use_custom_auto_case_update_hour'].value(),
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
             'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
@@ -1039,6 +1062,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_auto_case_update_hour(self):
+        if self.cleaned_data.get('use_custom_auto_case_update_hour') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('auto_case_update_hour')
+        if not value:
+            raise forms.ValidationError(_("This field is required"))
+
+        return value
 
     def clean_auto_case_update_limit(self):
         if self.cleaned_data.get('use_custom_auto_case_update_limit') != 'Y':
@@ -1090,6 +1123,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']
+        domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
         domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']

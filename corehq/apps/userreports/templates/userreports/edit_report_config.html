@@ -13,6 +13,9 @@
           <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View Report' %}</a>
         </div>
         <div class="btn-group">
+          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-default">{% trans 'View Data Source' %}</a>
+        </div>
+        <div class="btn-group">
           <a href="{% url 'configurable_report_json' domain report.get_id %}"
              class="btn btn-default track-usage-link"
              data-category="UCR"

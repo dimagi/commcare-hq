@@ -62,14 +62,15 @@ def patch_diffs(doc_diffs, log_cases=False):
 
 def patch_case(case_id, diffs):
     case_diffs = [d.json_diff for d in diffs if d.kind != "stock state"]
-    try:
-        couch_case = get_couch_case(case_id)
-    except CaseNotFound:
-        raise CannotPatch(case_diffs)
-    assert couch_case.domain == get_domain(), (couch_case, get_domain())
-    case = PatchCase(couch_case, case_diffs)
-    form = PatchForm(case)
-    process_patch(form)
+    if case_diffs:
+        try:
+            couch_case = get_couch_case(case_id)
+        except CaseNotFound:
+            raise CannotPatch(case_diffs)
+        assert couch_case.domain == get_domain(), (couch_case, get_domain())
+        case = PatchCase(couch_case, case_diffs)
+        form = PatchForm(case)
+        process_patch(form)
     patch_ledgers([d for d in diffs if d.kind == "stock state"])
 
 
