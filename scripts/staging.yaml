@@ -73,5 +73,6 @@ branches:
   - jls/custom-rule-run-time # Jenny Dec 22
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - gh/delivered-billable-exception # Graham Dec 23
+  - jls/search-first-eof-nav # Jenny Dec 23
 
 submodules: {}
