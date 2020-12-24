@@ -465,6 +465,9 @@ def store_billable(self, msg):
                 multipart_count=int(math.ceil(len(msg.text) / msg_length)),
             )
         except RetryBillableTaskException as e:
+            # WARNING: Please do not remove messages from this queue
+            # unless you have a backup plan for how to process them
+            # before the end of the month billing cycle. If not, LEAVE AS IS.
             self.retry(exc=e)
 
 
