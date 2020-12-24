@@ -17,13 +17,10 @@ class Command(BaseCommand):
         if date_stop:
             query = query.filter(date__lt=date_stop)
         print(f"Found {query.count()} messages")
-        print("These messages all do not have billables:")
-        total_bad = 0
-        for sms in query.all():
-            if not SmsBillable.objects.filter(log_id=sms.couch_id).exists():
-                # print(sms.couch_id)
-                total_bad += 1
-        print("-------")
+        available_ids = list(query.values_list('couch_id', flat=True))
+        total_billed = SmsBillable.objects.filter(log_id__in=available_ids).count()
+        total_bad = len(available_ids) - total_billed
+        print(f"Total billed sms: {total_billed}")
         print(f"Total un-billed sms: {total_bad}")
 
     def handle(self, **options):
@@ -39,4 +36,3 @@ class Command(BaseCommand):
 
         print("\n\nData for DECEMBER")
         self._get_stats(december_first)
-
