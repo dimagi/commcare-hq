@@ -299,6 +299,7 @@ class HQAuthenticationTokenForm(AuthenticationTokenForm):
             user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
             couch_user = CouchUser.get_by_username(self.user.username)
             if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+                #
                 raise ValidationError(LOCKOUT_MESSAGE)
             else:
                 raise
