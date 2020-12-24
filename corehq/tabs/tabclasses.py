@@ -1840,7 +1840,8 @@ def _get_integration_section(domain):
             },
             {
                 'title': _('Data Forwarding Records'),
-                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+                'url': reverse('domain_report_dispatcher',
+                               args=[domain, _get_repeat_record_report(domain)])
             },
             {
                 'title': _(MotechLogListView.page_title),
@@ -2223,3 +2224,15 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+
+
+def _get_repeat_record_report(domain):
+    from corehq.motech.repeaters.models import are_repeat_records_migrated
+    from corehq.motech.repeaters.views import (
+        DomainForwardingRepeatRecords,
+        SQLRepeatRecordReport,
+    )
+
+    if are_repeat_records_migrated(domain):
+        return SQLRepeatRecordReport.slug
+    return DomainForwardingRepeatRecords.slug

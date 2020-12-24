@@ -2,6 +2,7 @@
 from .repeat_records import (
     DomainForwardingRepeatRecords,
     RepeatRecordView,
+    SQLRepeatRecordReport,
     cancel_repeat_record,
     requeue_repeat_record,
 )

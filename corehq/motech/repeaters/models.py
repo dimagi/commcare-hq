@@ -771,6 +771,17 @@ class RepeatRecordAttempt(DocumentSchema):
     def message(self):
         return self.success_response if self.succeeded else self.failure_reason
 
+    @property
+    def state(self):
+        state = RECORD_PENDING_STATE
+        if self.succeeded:
+            state = RECORD_SUCCESS_STATE
+        elif self.cancelled:
+            state = RECORD_CANCELLED_STATE
+        elif self.failure_reason:
+            state = RECORD_FAILURE_STATE
+        return state
+
 
 class RepeatRecord(Document):
     """
@@ -1120,7 +1131,31 @@ class SQLRepeatRecord(models.Model):
 
     @property
     def num_attempts(self):
-        return self.sqlrepeatrecordattempt_set.count()
+        # Uses `len(queryset)` instead of `queryset.count()` to use
+        # prefetched attempts, if available.
+        return len(self.attempts)
+
+    def get_numbered_attempts(self):
+        for i, attempt in enumerate(self.attempts):
+            yield i + 1, attempt
+
+    @property
+    def record_id(self):
+        # Used by Repeater.get_url() ... by SQLRepeatRecordReport._make_row()
+        return self.pk
+
+    @property
+    def failure_reason(self):
+        if has_failed(self):
+            return self.last_message
+        else:
+            return ''
+
+    @property
+    def last_message(self):
+        # Uses `list(queryset)[-1]` instead of `queryset.last()` to use
+        # prefetched attempts, if available.
+        return list(self.attempts)[-1].message
 
 
 class SQLRepeatRecordAttempt(models.Model):
@@ -1239,6 +1274,14 @@ def send_request(
                                    RECORD_CANCELLED_STATE)  # Don't retry
 
 
+def is_queued(record):
+    return record.state in (RECORD_PENDING_STATE, RECORD_FAILURE_STATE)
+
+
+def has_failed(record):
+    return record.state in (RECORD_FAILURE_STATE, RECORD_CANCELLED_STATE)
+
+
 def format_response(response) -> Optional[str]:
     if not is_response(response):
         return None
@@ -1254,6 +1297,17 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+@quickcache(['domain'], timeout=5 * 60)
+def are_repeat_records_migrated(domain) -> bool:
+    """
+    Returns True if ``domain`` has SQLRepeatRecords.
+
+    .. note:: Succeeded and cancelled RepeatRecords may not have been
+              migrated to SQLRepeatRecords.
+    """
+    return SQLRepeatRecord.objects.filter(domain=domain).exists()
 
 
 def domain_can_forward(domain):
