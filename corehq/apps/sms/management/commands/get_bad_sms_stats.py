@@ -12,15 +12,16 @@ class Command(BaseCommand):
     def _get_stats(self, date_start, date_stop=None):
         query = SMS.objects.filter(
             date__gte=date_start,
-            backend_api='TWILIO'
-        )
+            backend_api='TWILIO',
+            domain__isnull=False
+        ).exclude(domain__in=['ccqa'])
         if date_stop:
             query = query.filter(date__lt=date_stop)
         print(f"Found {query.count()} messages")
         available_ids = list(query.values_list('couch_id', flat=True))
         total_billed = SmsBillable.objects.filter(log_id__in=available_ids).count()
         total_bad = len(available_ids) - total_billed
-        print(f"Total billed sms: {total_billed}")
+        print("-------")
         print(f"Total un-billed sms: {total_bad}")
 
     def handle(self, **options):
