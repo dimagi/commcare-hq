@@ -23,3 +23,8 @@ RECORD_STATES = [
     (RECORD_FAILURE_STATE, _('Failed')),
     (RECORD_CANCELLED_STATE, _('Cancelled')),
 ]
+# State for Couch records that have been migrated to SQL. If the
+# migration is rolled back, the `migrated` property is set to False, and
+# `RepeatRecord.state` will return PENDING or FAILED as it did before
+# migration.
+RECORD_MIGRATED_STATE = 'MIGRATED'

@@ -205,6 +205,36 @@ def process_repeater_stub(repeater_stub: RepeaterStub):
 
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def migrate_repeat_record(
+    repeater_stub: RepeaterStub,
+    couch_record: RepeatRecord,
+):
+    assert repeater_stub.domain == couch_record.domain
+    sql_record = repeater_stub.repeat_records.create(
+        domain=couch_record.domain,
+        couch_id=couch_record.record_id,
+        payload_id=couch_record.payload_id,
+        state=couch_record.state,
+        registered_at=couch_record.registered_on,
+    )
+    for attempt in couch_record.attempts:
+        sql_record.sqlrepeatrecordattempt_set.create(
+            state=attempt.state,
+            message=attempt.message,
+            created_at=attempt.datetime,
+        )
+
+    couch_record.migrated = True
+    couch_record.next_check = None
+    try:
+        couch_record.save()
+    except:  # noqa: E722
+        logging.exception('Failed to migrate repeat record: '
+                          f'{couch_record.record_id}')
+        sql_record.delete()
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def revert_migrated(couch_record):
     """
     Unset the RepeatRecord "migrated" state, and set ``next_check`` for

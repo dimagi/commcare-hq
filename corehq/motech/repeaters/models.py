@@ -129,6 +129,7 @@ from .const import (
     MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_MIGRATED_STATE,
     RECORD_PENDING_STATE,
     RECORD_STATES,
     RECORD_SUCCESS_STATE,
@@ -878,6 +879,7 @@ class RepeatRecord(Document):
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+    migrated = BooleanProperty(default=False)
 
     @property
     def record_id(self):
@@ -922,6 +924,8 @@ class RepeatRecord(Document):
             state = RECORD_SUCCESS_STATE
         elif self.cancelled:
             state = RECORD_CANCELLED_STATE
+        elif self.migrated:
+            state = RECORD_MIGRATED_STATE
         elif self.failure_reason:
             state = RECORD_FAILURE_STATE
         return state
