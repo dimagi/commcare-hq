@@ -167,6 +167,25 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
+class RepeaterManager(models.Manager):
+
+    def all_ready(self):
+        """
+        Return all SQLRepeaterStubs ready to be forwarded.
+        """
+        return (
+            self.get_queryset()
+            # Is not paused
+            .filter(is_paused=False)
+            # `next_attempt_at` is not set in the future
+            .filter(models.Q(next_attempt_at__isnull=True)
+                    | models.Q(next_attempt_at__lte=timezone.now()))
+            # Has repeat records ready to be sent
+            .filter(repeat_records__state__in=(RECORD_PENDING_STATE,
+                                               RECORD_FAILURE_STATE))
+        )
+
+
 class SQLRepeaterStub(models.Model):
     """
     This model is used to join SQLRepeatRecords. It does not reproduce
@@ -180,6 +199,8 @@ class SQLRepeaterStub(models.Model):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+
+    objects = RepeaterManager()
 
     class Meta:
         indexes = [
