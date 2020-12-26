@@ -176,6 +176,12 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
 
 class RepeaterStubManager(models.Manager):
 
+    def get_or_none(self, *args, **kwargs):
+        try:
+            return self.get(*args, **kwargs)
+        except self.model.DoesNotExist:
+            return None
+
     def all_ready(self):
         """
         Return all RepeaterStubs ready to be forwarded.
@@ -474,14 +480,24 @@ class Repeater(QuickCachedDocumentMixin, Document):
             self['base_doc'] += DELETED_SUFFIX
         self.paused = False
         self.save()
+        # Deleting RepeaterStub will cascade-delete SQLRepeatRecords
+        # and SQLRepeatRecordAttempts too. (RequestLog will still keep a
+        # record of all send attempts.)
+        self.repeater_stub.delete()
+        # NOTE: Undeleting a Repeater needs to include creating a
+        #       RepeaterStub for it.
 
     def pause(self):
         self.paused = True
         self.save()
+        self.repeater_stub.is_paused = True
+        self.repeater_stub.save()
 
     def resume(self):
         self.paused = False
         self.save()
+        self.repeater_stub.is_paused = False
+        self.repeater_stub.save()
 
     def get_url(self, repeat_record):
         # to be overridden
