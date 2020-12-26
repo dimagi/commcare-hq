@@ -9,21 +9,8 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.models import RequestLog
-from corehq.motech.repeaters.const import (
-    CHECK_REPEATERS_INTERVAL,
-    CHECK_REPEATERS_KEY,
-    MAX_RETRY_WAIT,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
-)
-from corehq.motech.repeaters.dbaccessors import (
-    get_overdue_repeat_record_count,
-    iterate_repeat_records,
-)
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
@@ -33,6 +20,18 @@ from corehq.util.metrics import (
 )
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
+
+from .const import (
+    CHECK_REPEATERS_INTERVAL,
+    CHECK_REPEATERS_KEY,
+    MAX_RETRY_WAIT,
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+)
+from .dbaccessors import (
+    get_overdue_repeat_record_count,
+    iterate_repeat_records,
+)
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),

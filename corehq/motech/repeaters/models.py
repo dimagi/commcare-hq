@@ -63,7 +63,6 @@ class.
 "Data Forwarding Records".
 
 """
-import re
 import warnings
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
