@@ -738,6 +738,14 @@ ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
 )
 
 
+WEBAPPS_STICKY_SEARCH = StaticToggle(
+    'webapps_sticky_search',
+    'In Web Apps, save user\'s most recent search parameters.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',

@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             gridPolyfillPath: initialPageData('grid_polyfill_path'),
             debuggerEnabled: initialPageData('debugger_enabled'),
             singleAppMode: initialPageData('single_app_mode'),
+            stickySearches: toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH'),
             environment: initialPageData('environment'),
             useLiveQuery: toggles.toggleEnabled('FORMPLAYER_USE_LIVEQUERY'),
             changeFormLanguage: toggles.toggleEnabled('CHANGE_FORM_LANGUAGE'),
