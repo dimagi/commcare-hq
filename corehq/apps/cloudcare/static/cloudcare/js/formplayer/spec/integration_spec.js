@@ -48,6 +48,7 @@ describe('FormplayerFrontend Integration', function () {
             newOptions.phoneMode = true;
             newOptions.oneQuestionPerScreen = true;
             newOptions.language = 'sindarin';
+            newOptions.stickySearches = true;
 
             FormplayerFrontend.start(newOptions);
 
@@ -64,6 +65,7 @@ describe('FormplayerFrontend Integration', function () {
                 landingPageAppMode: undefined,
                 oneQuestionPerScreen: true,
                 language: 'sindarin',
+                stickySearches: true,
             });
         });
     });

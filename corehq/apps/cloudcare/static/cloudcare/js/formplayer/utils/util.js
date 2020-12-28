@@ -162,7 +162,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = sortIndex;
         };
 
-
         this.setSearch = function (search) {
             this.search = search;
             //clear out pagination on search
@@ -240,6 +239,42 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return new Util.CloudcareUrl(options);
     };
 
+    // Saved query handling
+    var savedSearches = {},     // text search for case lists
+        savedQueries = {},      // case claim
+        bell = "\u0007";
+    function stepsKey() {
+        var urlObject = Util.currentUrlToObject();
+        if (!urlObject.steps) {
+            return "";
+        }
+        return urlObject.steps.join(bell);
+    }
+
+    Util.saveSearch = function (query) {
+        savedSearches[stepsKey()] = query;
+    };
+
+    Util.getSavedSearch = function () {
+        var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+        if (user.displayOptions.stickySearches) {
+            return savedSearches[stepsKey()] || "";
+        }
+    };
+
+    Util.saveQuery = function (query) {
+        savedQueries[stepsKey()] = query;
+    };
+
+    Util.getSavedQuery = function () {
+        var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+        if (user.displayOptions.stickySearches) {
+            return savedQueries[stepsKey()] || {};
+        }
+        return {};
+    };
+
+    // String polyfills
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;

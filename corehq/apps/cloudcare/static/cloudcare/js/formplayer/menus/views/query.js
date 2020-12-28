@@ -9,12 +9,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         template: _.template($("#query-view-item-template").html() || ""),
 
         templateContext: function () {
-            var imageUri = this.options.model.get('imageUri');
-            var audioUri = this.options.model.get('audioUri');
-            var appId = this.model.collection.appId;
+            var imageUri = this.options.model.get('imageUri'),
+                audioUri = this.options.model.get('audioUri'),
+                appId = this.model.collection.appId,
+                queryDict = hqImport("cloudcare/js/formplayer/utils/util").getSavedQuery();
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                initialValue: queryDict[this.options.model.get('id')] || '',
             };
         },
     });
@@ -36,11 +38,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         ui: {
+            clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
         },
 
         events: {
+            'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        clearAction: function () {
+            var fields = $(".query-field");
+            fields.each(function () {
+                this.value = '';
+            });
+            hqImport("cloudcare/js/formplayer/utils/util").saveQuery({});
         },
 
         submitAction: function (e) {
