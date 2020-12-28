@@ -611,8 +611,8 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
     # sometimes fall one year and three months ago. The only place this matters in tests is
     # test_aggregate_date, which groups by month, so it matters which rows are in the same month.
     ONE_YEAR_TWO_MONTHS = 365 + 28 * 2 + 5
-    ONE_YEAR_THREE_MONTHS = 365 + 28 * 3 + 4
-    ONE_YEAR_THREE_MONTHS_OTHER = 365 + 28 * 3 + 5
+    ONE_YEAR_THREE_MONTHS = 365 + 28 * 3 + 7
+    ONE_YEAR_THREE_MONTHS_OTHER = 365 + 28 * 3 + 8
     MORE_THAN_TWO_YEARS = 365 * 2 + 75
 
     @classmethod
