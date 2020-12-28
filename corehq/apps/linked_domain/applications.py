@@ -5,13 +5,16 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_versions_by_app_id,
     wrap_app,
 )
+from corehq.apps.app_manager.exceptions import AppLinkError
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.linked_domain.remote_accessors import (
     get_app_by_version,
     get_brief_apps,
     get_latest_released_versions_by_app_id,
     get_released_app,
 )
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 
 
 def get_master_app_briefs(domain_link, family_id):
@@ -65,4 +68,11 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
     linked_app.family_id = master_id
     linked_app.doc_type = 'LinkedApplication'
     linked_app.save()
+
+    if linked_app.master_is_remote:
+        try:
+            pull_missing_multimedia_for_app(linked_app)
+        except RemoteRequestError:
+            raise AppLinkError('Error fetching multimedia from remote server. Please try again later.')
+
     return linked_app

@@ -6,7 +6,7 @@ from django.core.mail.message import EmailMultiAlternatives
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.util.metrics.const import MPM_LIVESUM
 
 NO_HTML_EMAIL_MESSAGE = """
@@ -28,7 +28,7 @@ LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR
 def mark_local_bounced_email(bounced_addresses, message_id):
     from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
     from corehq.apps.users.models import Invitation, InvitationStatus
-    if Invitation.EMAIL_ID_PREFIX in message_id:
+    if isinstance(message_id, str) and Invitation.EMAIL_ID_PREFIX in message_id:
         try:
             invite = Invitation.objects.get(uuid=message_id.split(Invitation.EMAIL_ID_PREFIX)[1])
         except Invitation.DoesNotExist:
@@ -42,6 +42,9 @@ def mark_local_bounced_email(bounced_addresses, message_id):
         except MessagingSubEvent.DoesNotExist:
             pass
         else:
+            metrics_counter('commcare.messaging.email.preemptively_bounced', len(bounced_addresses), tags={
+                'domain': subevent.parent.domain,
+            })
             subevent.error(
                 MessagingEvent.ERROR_EMAIL_BOUNCED,
                 additional_error_text=", ".join(bounced_addresses)

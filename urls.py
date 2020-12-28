@@ -5,8 +5,8 @@ from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
 from corehq.extensions import extension_points
-from corehq.apps.accounting.urls import \
-    domain_specific as accounting_domain_specific
+from corehq.apps.enterprise.urls import \
+    domain_specific as enterprise_domain_specific
 from corehq.apps.api.urls import user_urlpatterns as user_api_urlpatterns
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
@@ -54,7 +54,7 @@ domain_specific = [
     url(r'^api/', include('corehq.apps.api.urls')),
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
-    url(r'^enterprise/', include(accounting_domain_specific)),
+    url(r'^enterprise/', include(enterprise_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),
     url(r'^groups/', include('corehq.apps.groups.urls')),

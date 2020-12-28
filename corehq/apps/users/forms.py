@@ -30,6 +30,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -40,7 +41,7 @@ from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.models import DomainMembershipError, UserRole
+from corehq.apps.users.models import DomainMembershipError, UserRole, DomainPermissionsMirror
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
@@ -675,10 +676,10 @@ class NewMobileWorkerForm(forms.Form):
                                 <i class="fa fa-warning"></i> {suggested}
                             </p>
                             <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
-                                <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
-                                    <i class="fa fa-check"></i> {strong}
-                                <!-- /ko -->
-                                <!-- ko ifnot: $root.useDraconianSecurity() -->
+                                <!-- ko ifnot: $root.skipStandardValidations() -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
+                                        <i class="fa fa-check"></i> {strong}
+                                    <!-- /ko -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
                                         {almost}
                                     <!-- /ko -->
@@ -687,10 +688,8 @@ class NewMobileWorkerForm(forms.Form):
                                     <!-- /ko -->
                                 <!-- /ko -->
 
-                                <!-- ko if: $root.useDraconianSecurity() -->
-                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {rules}
-                                    <!-- /ko -->
+                                <!-- ko if: $root.skipStandardValidations() -->
+                                    <i class="fa fa-info-circle"></i> {custom_warning}
                                 <!-- /ko -->
                                 <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
                                     <i class="fa fa-warning"></i> {disabled}
@@ -702,8 +701,7 @@ class NewMobileWorkerForm(forms.Form):
                             strong=_("Good Job! Your password is strong!"),
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
-                            rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
-                                "minimum length of 8 characters."),
+                            custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
                             disabled=_("Setting a password is disabled. "
                                        "The user will set their own password on confirming their account email."),
                         )),
@@ -715,7 +713,7 @@ class NewMobileWorkerForm(forms.Form):
                             'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
                             'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
                         }
-                    '''
+                    ''' if not has_custom_clean_password() else ''
                 ),
             )
         )
@@ -1180,6 +1178,12 @@ class CommCareUserFilterForm(forms.Form):
         choices=COLUMNS_CHOICES,
         widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=True),
     )
+    domains = forms.MultipleChoiceField(
+        required=False,
+        label=_('Project Spaces'),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
+        help_text=_('Add project spaces containing the desired mobile workers'),
+    )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
@@ -1199,6 +1203,12 @@ class CommCareUserFilterForm(forms.Form):
             self.fields['role_id'].choices = [('', _('All Roles'))] + [
                 (role._id, role.name or _('(No Name)')) for role in roles]
 
+        self.fields['domains'].choices = [(self.domain, self.domain)]
+        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+            self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
+                                             [(self.domain, self.domain)] + \
+                                             [(domain, domain) for domain in
+                                              DomainPermissionsMirror.mirror_domains(self.domain)]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1216,6 +1226,7 @@ class CommCareUserFilterForm(forms.Form):
                 crispy.Field('search_string'),
                 crispy.Field('location_id'),
                 crispy.Field('columns'),
+                crispy.Field('domains'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -1255,6 +1266,17 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+    def clean_domains(self):
+        if 'domains' in self.data:
+            domains = self.data.getlist('domains')
+        else:
+            domains = self.data.getlist('domains[]', [self.domain])
+
+        if 'all_project_spaces' in domains:
+            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            domains += [self.domain]
+        return domains
 
 
 class CreateDomainPermissionsMirrorForm(forms.Form):

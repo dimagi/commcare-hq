@@ -129,8 +129,9 @@ class FormplayerMain(View):
             # User has access via domain mirroring
             pass
         if role:
-            apps = [_format_app(app) for app in apps
+            apps = [app for app in apps
                     if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
+        apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -169,7 +170,7 @@ class FormplayerMain(View):
             ).run()
             if login_as_users.total == 1:
                 def set_cookie(response):
-                    response.set_cookie(cookie_name, user.raw_username)
+                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
                     return response
 
                 user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
@@ -272,7 +273,7 @@ class FormplayerPreviewSingleApp(View):
             "domain": domain,
             "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
-            "apps": [_format_app(app)],
+            "apps": [_format_app_doc(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
@@ -293,7 +294,7 @@ class PreviewAppView(TemplateView):
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
-            'app': app,
+            'app': _format_app_doc(app.to_json()),
             'formplayer_url': settings.FORMPLAYER_URL,
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
@@ -367,9 +368,11 @@ class LoginAsUsers(View):
         return formatted_user
 
 
-def _format_app(app):
-    app['imageUri'] = app.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
-    return app
+def _format_app_doc(doc):
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    context = {key: doc.get(key) for key in keys}
+    context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
+    return context
 
 
 @login_and_domain_required

@@ -74,6 +74,8 @@ data_dictionary
 data_interfaces
    Functionality for taking a few specific actions on project data, such as reassigning cases in bulk.
    Most of this app relies heavily on standard reporting functionality.
+enterprise
+    Enterprise related functionality lives here, with a few exceptions in enterprise permissions functionality in users and linked project spaces.
 fixtures
    The term "fixtures" comes from the `XML data model <https://github.com/dimagi/commcare-core/wiki/fixtures>`_ used to send custom structured data to the mobile devices (separate from case data). During the sync request with the mobile device, various different fixtures may be sent to the device including lookup tables, locations and mobile reports. This Django app only deals with the "lookup table" fixtures. It provides the UI for creating and editing them and the code to serialize them to XML.
 groups

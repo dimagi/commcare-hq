@@ -53,7 +53,8 @@ def create_historical_checkpoints():
     HistoricalPillowCheckpoint.objects.filter(date_updated__lt=thirty_days_ago).delete()
 
 
-@periodic_task_when_true(settings.IS_DIMAGI_ENVIRONMENT, run_every=crontab(minute=0), queue='background_queue')
+@periodic_task_when_true(settings.IS_DIMAGI_ENVIRONMENT, run_every=crontab(minute=0),
+                         queue='background_queue')
 def check_non_dimagi_superusers():
     non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
         (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
@@ -156,7 +157,8 @@ def _mass_email_attachment(name, rows):
     return attachment
 
 
-@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"), queue='background_queue')
+@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"),
+                         queue='background_queue')
 def cleanup_stale_es_on_couch_domains_task():
     from corehq.apps.hqadmin.couch_domain_utils import cleanup_stale_es_on_couch_domains
     cleanup_stale_es_on_couch_domains()

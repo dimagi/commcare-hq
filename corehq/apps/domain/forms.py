@@ -2,8 +2,6 @@ import datetime
 import io
 import json
 import logging
-import re
-import sys
 import uuid
 
 from django import forms
@@ -45,7 +43,6 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -96,8 +93,11 @@ from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
     CallCenterOwnerOptionsView,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.auth import get_active_users_by_email
+from corehq.apps.domain.extension_points import (
+    custom_clean_password,
+    has_custom_clean_password,
+)
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -897,6 +897,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Check this box to trigger a hand-off email to the partner when this form is submitted."
         ),
     )
+    use_custom_auto_case_update_hour = forms.ChoiceField(
+        label=ugettext_lazy("Choose specific time for custom auto case update rules to run"),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    auto_case_update_hour = forms.IntegerField(
+        label=ugettext_lazy("Hour of the day, in UTC, for rules to run (0-23)"),
+        required=False,
+        min_value=0,
+        max_value=23,
+    )
     use_custom_auto_case_update_limit = forms.ChoiceField(
         label=ugettext_lazy("Set custom auto case update rule limits"),
         required=True,
@@ -997,6 +1011,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
                 crispy.Field(
+                    'use_custom_auto_case_update_hour',
+                    data_bind='value: use_custom_auto_case_update_hour',
+                ),
+                crispy.Div(
+                    crispy.Field('auto_case_update_hour'),
+                    data_bind="visible: use_custom_auto_case_update_hour() === 'Y'",
+                ),
+                crispy.Field(
                     'use_custom_odata_feed_limit',
                     data_bind="value: use_custom_odata_feed_limit",
                 ),
@@ -1023,6 +1045,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     @property
     def current_values(self):
         return {
+            'use_custom_auto_case_update_hour': self['use_custom_auto_case_update_hour'].value(),
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
             'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
@@ -1039,6 +1062,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_auto_case_update_hour(self):
+        if self.cleaned_data.get('use_custom_auto_case_update_hour') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('auto_case_update_hour')
+        if not value:
+            raise forms.ValidationError(_("This field is required"))
+
+        return value
 
     def clean_auto_case_update_limit(self):
         if self.cleaned_data.get('use_custom_auto_case_update_limit') != 'Y':
@@ -1090,6 +1123,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']
+        domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
         domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
@@ -1124,55 +1158,26 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        strength = legacy_get_password_strength(txt)
-        message = _('Password is not strong enough. Requirements: 1 special character, '
-                    '1 number, 1 capital letter, minimum length of 8 characters.')
+    if has_custom_clean_password():
+        message = custom_clean_password(txt)
     else:
-        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-        message = _('Password is not strong enough. Try making your password more complex.')
-    if strength['score'] < 2:
+        message = _clean_password(txt)
+    if message:
         raise forms.ValidationError(message)
     return txt
 
 
-def legacy_get_password_strength(value):
-    # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
-    # initial score rigged to reach 2 when all requirements are met
-    score = -2
-    if SPECIAL.search(value):
-        score += 1
-    if NUMBER.search(value):
-        score += 1
-    if UPPERCASE.search(value):
-        score += 1
-    if len(value) >= 8:
-        score += 1
-    return {"score": score}
-
-
-def _get_uppercase_unicode_regexp():
-    # rather than add another dependency (regex library)
-    # http://stackoverflow.com/a/17065040/10840
-    uppers = ['[']
-    for i in range(sys.maxunicode):
-        c = chr(i)
-        if c.isupper():
-            uppers.append(c)
-    uppers.append(']')
-    upper_group = "".join(uppers)
-    return re.compile(upper_group, re.UNICODE)
-
-SPECIAL = re.compile(r"\W", re.UNICODE)
-NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
-UPPERCASE = _get_uppercase_unicode_regexp()
+def _clean_password(txt):
+    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if strength['score'] < 2:
+        return _('Password is not strong enough. Try making your password more complex.')
 
 
 class NoAutocompleteMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        if settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS:
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
@@ -1186,7 +1191,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "

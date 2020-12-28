@@ -380,3 +380,12 @@
   default: "normal"
   since: "2.48"
   force: false
+
+- name: "Enable Text To Speech"
+  description: "Adds a text to speech button for all questions to read out the question text aloud."
+  id: "cc-enable-tts"
+  values: ["yes", "no"]
+  value_names: ["Yes", "No"]
+  default: "no"
+  since: "2.51"
+  force: true
