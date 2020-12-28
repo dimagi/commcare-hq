@@ -16,9 +16,11 @@
       <td class="col-sm-4">
         <input class="form-control" type="text" data-bind="value: property.label"/>
       </td>
-      <td class="col-sm-3">
-        <input class="form-control" type="text" data-bind="value: property.defaultValue"/>
-      </td>
+      {% if js_options.default_value_expression_enabled %}
+        <td class="col-sm-3">
+          <input class="form-control" type="text" data-bind="value: property.defaultValue"/>
+        </td>
+      {% endif %}
       {% if js_options.search_prompt_appearance_enabled %}
         <td class="col-sm-2">
           <select class="form-control" data-bind="value: property.appearance">
@@ -129,7 +131,9 @@
           <tr>
             <th class="col-sm-3">{% trans "Case Property" %}</th>
             <th class="col-sm-4">{% trans "Display Text" %}</th>
-            <th class="col-sm-3">{% trans "Default Value Expression" %}</th>
+            {% if js_options.default_value_expression_enabled %}
+              <th class="col-sm-3">{% trans "Default Value Expression" %}</th>
+            {% endif %}
             {% if js_options.search_prompt_appearance_enabled %}
               <th class="col-sm-2">{% trans "Format" %}</th>
             {% endif %}

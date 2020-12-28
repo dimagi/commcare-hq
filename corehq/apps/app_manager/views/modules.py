@@ -208,6 +208,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+            'default_value_expression_enabled': app.enable_default_value_expression,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
