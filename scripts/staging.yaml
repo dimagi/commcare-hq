@@ -65,13 +65,11 @@ branches:
   - sr/autosubmi # Cal Dec 4
   - jls/store-2fa-request-domain # Jenny Dec 11
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
-#   - gh/add-enterprise-app # Graham Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
   - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
   - jls/custom-rule-run-time # Jenny Dec 22
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
-  - gh/delivered-billable-exception # Graham Dec 23
   - jls/search-first-eof-nav # Jenny Dec 23
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
 
