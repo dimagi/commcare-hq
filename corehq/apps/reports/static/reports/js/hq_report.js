@@ -4,12 +4,14 @@ hqDefine("reports/js/hq_report", [
     'underscore',
     'hqwebapp/js/alert_user',
     'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
     alertUser,
-    kissmetrics
+    kissmetrics,
+    initialPageData
 ) {
     var hqReport = function (options) {
         'use strict';
@@ -103,6 +105,7 @@ hqDefine("reports/js/hq_report", [
                 $.cookie(defaultRowsCookieName, value, {
                     path: savedPath,
                     expires: 2,
+                    secure: initialPageData.get('secure_cookies'),
                 });
             });
         };
@@ -113,10 +116,12 @@ hqDefine("reports/js/hq_report", [
                 $.cookie(self.cookieDatespanStart, self.datespan.startdate, {
                     path: self.urlRoot,
                     expires: 1,
+                    secure: initialPageData.get('secure_cookies'),
                 });
                 $.cookie(self.cookieDatespanEnd, self.datespan.enddate, {
                     path: self.urlRoot,
                     expires: 1,
+                    secure: initialPageData.get('secure_cookies'),
                 });
             }
         };

@@ -5,7 +5,7 @@ import uuid
 from datetime import date
 
 from django.conf import settings
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
@@ -30,10 +30,8 @@ from corehq.apps.accounting.utils.subscription import (
 )
 from couchexport.export import export_from_tables
 from couchexport.models import Format
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
@@ -77,10 +75,8 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import CommCareUser, FakeUser, WebUser
 from corehq.const import (
-    ONE_DAY,
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
     USER_DATE_FORMAT,
@@ -710,7 +706,11 @@ def update_exchange_rates():
 # Email this out on the first day and first hour of each month
 @periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
 def send_credits_on_hq_report():
-    if settings.SAAS_REPORTING_EMAIL and settings.IS_SAAS_ENVIRONMENT:
+    if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
+        'production',
+        'india',
+        'swiss'
+    ]:
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         credits_report = CreditsAutomatedReport()
         credits_report.send_report(settings.SAAS_REPORTING_EMAIL)
@@ -832,34 +832,6 @@ def send_prepaid_credits_export():
         'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
     )
-
-
-@task(serializer='pickle', queue="email_queue")
-def email_enterprise_report(domain, slug, couch_user):
-    account = BillingAccount.get_account_by_domain(domain)
-    report = EnterpriseReport.create(slug, account.id, couch_user)
-
-    # Generate file
-    csv_file = io.StringIO()
-    writer = csv.writer(csv_file)
-    writer.writerow(report.headers)
-    writer.writerows(report.rows)
-
-    # Store file in redis
-    hash_id = uuid.uuid4().hex
-    redis = get_redis_client()
-    redis.set(hash_id, csv_file.getvalue())
-    redis.expire(hash_id, ONE_DAY)
-    csv_file.close()
-
-    # Send email
-    url = absolute_reverse("enterprise_dashboard_download", args=[domain, report.slug, str(hash_id)])
-    link = "<a href='{}'>{}</a>".format(url, url)
-    subject = _("Enterprise Dashboard: {}").format(report.title)
-    body = "The enterprise report you requested for the account {} is ready.<br>" \
-           "You can download the data at the following link: {}<br><br>" \
-           "Please remember that this link will only be active for 24 hours.".format(account.name, link)
-    send_html_email_async(subject, couch_user.username, body)
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)

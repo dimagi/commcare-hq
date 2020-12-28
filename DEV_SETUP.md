@@ -116,6 +116,7 @@ Once all the dependencies are in order, please do the following:
     $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
+    $ git-hooks/install.sh
     $ setvirtualenvproject  # optional - sets this directory as the project root
 
 Next, install the appropriate requirements (only one is necessary).

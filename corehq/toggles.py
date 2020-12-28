@@ -189,7 +189,7 @@ class StaticToggle(object):
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
-        set_toggle(self.slug, item, enabled, namespace)
+        return set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
         """
@@ -747,6 +747,14 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
+CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+    'case_claim_autolaunch',
+    'Allow case claim to be automatically launched in web apps',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
@@ -889,6 +897,16 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
     [NAMESPACE_DOMAIN],
     description="This allows referencing other questions in the form in a setvalue. "
                 "This may still cause issues if the other questions have not been calculated yet",
+)
+
+VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
+    'allow_bulk_form_actions',
+    "Allow bulk form actions in the Form Builder",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+    description="This shows Bulk Form Actions (mark all questions required, "
+                "set default values to matching case properties) in "
+                "the Form Builder's main dropdown menu.",
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -1339,12 +1357,21 @@ VIEW_APP_CHANGES = StaticToggle(
     'Improved app changes view',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Viewing+App+Changes+between+versions",
 )
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
     "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
     "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+ACTIVE_COUCH_DOMAINS = StaticToggle(
+    'active_couch_domains',
+    "Domains that are still on the Couch DB backend which we consider most "
+    "active / important to ensure that data in ES is never stale.",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
 )
@@ -1901,5 +1928,22 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Allows the user to change the language of the form content while in the form itself in Web Apps
+    """
+)
+
+APP_ANALYTICS = StaticToggle(
+    'app_analytics',
+    'Allow user to use app analytics in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
+)
+
+DEFAULT_EXPORT_SETTINGS = StaticToggle(
+    'default_export_settings',
+    'Allow enterprise admin to set default export settings',
+    TAG_PRODUCT,
+    description="""
+    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
 )

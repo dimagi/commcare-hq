@@ -70,7 +70,7 @@
           <br>
           <div class="row">
             <div class="col-sm-4 col-sm-offset-1">
-              <button class='btn btn-danger' data-toggle="modal" data-target="#overwrite-confirmation-model" type="button">
+              <button class='btn btn-danger' data-toggle="modal" data-target="#{{ detail_type }}-overwrite-confirmation-model" type="button">
                 <i class="fa fa-copy"></i>
                 {% if detail_type == 'short' %}
                   {% trans "Overwrite Case List" %}
@@ -78,7 +78,7 @@
                   {% trans "Overwrite Case Detail" %}
                 {% endif %}
               </button>
-              <div class="modal fade" id="overwrite-confirmation-model">
+              <div class="modal fade" id="{{ detail_type }}-overwrite-confirmation-model">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">

@@ -6,9 +6,9 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
+from crispy_forms.utils import render_crispy_form
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
@@ -19,13 +19,14 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from soil import DownloadBase
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
@@ -54,6 +55,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import UserES
@@ -107,6 +109,9 @@ from corehq.apps.users.models import (
     Invitation,
     UserRole,
     WebUser,
+)
+from corehq.apps.users.tasks import (
+    bulk_download_users_async,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_INVITATION
@@ -358,7 +363,8 @@ class EditWebUserView(BaseEditUserView):
             data = self.request.POST
         else:
             data = None
-        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user)
+        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user,
+                                  request=self.request)
 
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
@@ -524,12 +530,59 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'bulk_download_url': bulk_download_url,
         }
+
+
+@require_can_edit_or_view_web_users
+def download_web_users(request, domain):
+    track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
+    user_filters = {}
+    download = DownloadBase()
+    is_web_download = True
+    res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
+                                          is_web_download, owner_id=request.couch_user.get_id)
+    download.set_task(res)
+    return redirect(DownloadWebUsersStatusView.urlname, domain, download.download_id)
+
+
+class DownloadWebUsersStatusView(BaseUserSettingsView):
+    urlname = 'download_web_users_status'
+    page_title = ugettext_noop('Download Web Users Status')
+
+    @method_decorator(require_can_edit_or_view_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ListWebUsersView.page_title,
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+        }]
+
+    def get(self, request, *args, **kwargs):
+        context = super(DownloadWebUsersStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Download Web Users Status"),
+            'progress_text': _("Preparing web user download."),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Go back to Web Users"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class ListRolesView(BaseRoleAccessView):
@@ -841,7 +894,7 @@ class UserInvitationView(object):
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'hide_password_feedback': has_custom_clean_password(),
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}
@@ -1230,7 +1283,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 @location_safe
-def change_password(request, domain, login_id, template="users/partials/reset_password.html"):
+def change_password(request, domain, login_id):
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
@@ -1246,11 +1299,7 @@ def change_password(request, domain, login_id, template="users/partials/reset_pa
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
-    context = _users_context(request, domain)
-    context.update({
-        'reset_password_form': form,
-    })
-    json_dump['formHTML'] = render_to_string(template, context)
+    json_dump['formHTML'] = render_crispy_form(form)
     return HttpResponse(json.dumps(json_dump))
 
 

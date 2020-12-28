@@ -1,27 +1,27 @@
-alembic==0.8.6
+alembic==1.4.3
 architect==0.5.6
 attrs~=18.1
 boto3~=1.15
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
-git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
+celery @ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
 CommcareTranslationChecker==0.9.7
 concurrent-log-handler==0.9.12
 csiphash==0.0.5
-datadog==0.15.0
-ddtrace==0.14.1
+datadog==0.39.0
+ddtrace==0.44.0
 decorator==4.0.11  # required by django-digest
 defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.3
 django-angular~=2.2.0
-django-braces==1.13.0
+django-braces==1.14.0
 django-bulk-update~=2.0
 django-celery-results~=1.0.0
 django-compressor==2.1
 django-countries==4.6
-django-crispy-forms==1.7.0
+django-crispy-forms==1.10.0
 django-cte==1.1.4
 django-formtools==2.1
 django-logentry-admin==1.0.6
@@ -31,31 +31,31 @@ django-partial-index~=0.6.0
 django-phonenumber-field==2.3.1  # remove after upgrade >=3.0.1 is deemed safe
 django-prbac>=0.0.8
 django-redis-sessions==0.6.1
-django-redis==4.11.0
-django-simple-captcha==0.5.12
+django-redis==4.12.1
+django-simple-captcha==0.5.13
 django-statici18n==1.9.0
-django-tastypie==0.14.2
+django-tastypie==0.14.3
 django-transfer==0.4
 django-two-factor-auth~=1.12
-django-user-agents==0.3.2
+django-user-agents==0.4.0
 django-websocket-redis==0.6.0
 django~=2.2.16
-djangorestframework~=3.11.0
+djangorestframework~=3.12.2
 dnspython==1.15.0
 dropbox==9.3.0
 elasticsearch==1.9.0
 elasticsearch2>=2.0.0,<3.0.0
 elasticsearch7>=7.9.1,<8.0.0
-email_validator==1.0.3
+email_validator==1.1.2
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
 Faker==0.8.15
 gevent==1.4.0
 ghdiff==0.4
-gipc~=1.0.1  # for gevent+multiprocessing, used by Couch to SQL migration
-greenlet==0.4.15
+gipc~=1.1.0  # for gevent+multiprocessing, used by Couch to SQL migration
+greenlet==0.4.17
 gunicorn
-hiredis==0.2.0
+hiredis==1.1.0
 httpagentparser~=1.7
 iso8601==0.1.13
 Jinja2~=2.10
@@ -73,15 +73,15 @@ markdown==2.2.1
 mock==2.0.0
 openpyxl~=2.6
 phonenumberslite~=8.12
-Pillow>=6.2.2,<7.0.0
+Pillow>=7.1.0
 polib==1.1.0
 prometheus-client==0.7.1
 psycogreen~=1.0
 psycopg2>=2.8.4  # Python 3.8 support
-py-KISSmetrics==1.0.1
+py-KISSmetrics==1.1.0
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
-PyGithub==1.35
+PyGithub==1.54
 Pygments~=2.0
 pygooglechart==0.4.0
 python-dateutil~=2.6
@@ -93,27 +93,27 @@ PyYAML~=5.1
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache~=0.5
-redis==3.3.0
+redis==3.5.3
 reportlab==3.5.53
 requests_oauthlib
 requests~=2.20
 schema
-sentry-sdk==0.14.4
-sh==1.09
+sentry-sdk==0.19.4
+sh==1.14.1
 simpleeval~=0.9
 simplejson~=3.11
 six~=1.11
 socketpool==0.5.3
-sqlagg==0.16.2
+sqlagg==0.17.2
 SQLAlchemy~=1.3.0
-stripe==1.67.0
+stripe==2.54.0
 suds-jurko==0.6
 text-unidecode>=1.2
 tinys3==0.1.12
 tropo-webapi-python==0.1.3
 turn-python==0.0.1
 twilio==6.5.1
-WeasyPrint==0.42.3
-werkzeug==0.15.3
+WeasyPrint==51
+werkzeug==1.0.1
 xlrd==1.0.0
 xlwt==1.3.0

@@ -26,7 +26,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.util.view_utils import absolute_reverse
 
@@ -78,17 +78,17 @@ class RemoteRequestFactory(object):
         )
 
     def _build_instances(self):
-        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
-        claim_relevant_xpaths = [self.module.search_config.relevant]
         prompt_select_instances = [
             Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
             for prop in self.module.search_config.properties
             if prop.itemset.instance_id
         ]
 
+        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
+        config_xpaths = [self.module.search_config.relevant, self.module.search_config.search_filter]
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.app,
-            query_xpaths + claim_relevant_xpaths
+            query_xpaths + config_xpaths
         )
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
@@ -121,10 +121,13 @@ class RemoteRequestFactory(object):
         else:
             short_detail_id = 'search_short'
 
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
+        if self.module.search_config.search_filter:
+            nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
+
         return [SessionDatum(
             id='case_id',
-            nodeset=(CaseTypeXpath(self.module.case_type)
-                     .case(instance_name=RESULTS_INSTANCE)),
+            nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),

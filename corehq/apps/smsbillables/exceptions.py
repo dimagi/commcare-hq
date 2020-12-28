@@ -8,7 +8,3 @@ class SMSRateCalculatorError(Exception):
 
 class RetryBillableTaskException(Exception):
     pass
-
-
-class DeliveredBillableException(Exception):
-    pass

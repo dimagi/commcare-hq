@@ -9,8 +9,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-        searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
+    var searchViewModel = function (searchProperties, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel,
+        searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -109,19 +109,43 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
+        self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.relevant = ko.observable();
-        self.default_relevant = ko.observable(true);
+        self.autoLaunch = ko.observable(autoLaunch);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
+        self.searchFilter = ko.observable(searchFilter);
         self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
+
+        // Note that this fragile parsing logic needs to match the self.relevant calculation below
+        // and cannot be changed without migrating existing CaseSearch documents
+        var defaultRelevant = false,
+            extraRelevant = searchRelevant,
+            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (";
+        if (searchRelevant && searchRelevant.startsWith(prefix)) {
+            defaultRelevant = true;
+            extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
+        }
+        self.extraRelevant = ko.observable(extraRelevant);
+        self.defaultRelevant = ko.observable(defaultRelevant);
+
+        // Allow search filter to be copied from another part of the page
+        self.setSearchFilterVisible = ko.computed(function () {
+            return searchFilterObservable && searchFilterObservable();
+        });
+        self.setSearchFilterEnabled = ko.computed(function () {
+            return self.setSearchFilterVisible() && searchFilterObservable() !== self.searchFilter();
+        });
+        self.setSearchFilter = function () {
+            self.searchFilter(searchFilterObservable());
+        };
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
                 var label = searchProperties[i].label[lang];
-                var appearance = searchProperties[i].appearance;
+                var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
@@ -199,32 +223,39 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             );
         };
-        self._getRelevant = function () {
-            if (self.default_relevant()) {
-                if (!self.relevant() || self.relevant().trim() === "") {
+        self.relevant = ko.computed(function () {
+            if (self.defaultRelevant()) {
+                if (self.extraRelevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
-                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                    // Note this needs to match the initialization logic for defaultRelevant and extraRelevant above
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.extraRelevant().trim() + ")";
                 }
             }
-            return self.relevant().trim();
-        };
+            return self.extraRelevant().trim();
+        });
 
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
-                relevant: self._getRelevant(),
+                auto_launch: self.autoLaunch(),
+                relevant: self.relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
+                search_command_label: self.searchCommandLabel(),
+                search_filter: self.searchFilter(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
         };
 
+        self.autoLaunch.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
-        self.default_relevant.subscribe(function () {
+        self.relevant.subscribe(function () {
             saveButton.fire('change');
         });
         self.searchProperties.subscribe(function () {
@@ -233,7 +264,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.defaultProperties.subscribe(function () {
             saveButton.fire('change');
         });
+        self.searchCommandLabel.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.searchButtonDisplayCondition.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchFilter.subscribe(function () {
             saveButton.fire('change');
         });
         self.blacklistedOwnerIdsExpression.subscribe(function () {

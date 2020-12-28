@@ -28,7 +28,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("Email Address"), max_length=75,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=_("Type the letters in the box"))
 
     def clean_username(self):
@@ -43,6 +43,10 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         password = self.cleaned_data.get('password')
         if not password:
             raise ValidationError(_("Please enter a password."))
+
+        if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
+            if not self.cleaned_data.get('captcha'):
+                raise ValidationError(_("Please enter valid CAPTCHA"))
 
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()

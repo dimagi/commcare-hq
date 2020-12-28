@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     Itemset,
     Module,
 )
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -20,6 +21,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test_domain'
 
@@ -34,6 +36,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
         self.module.case_type = 'case'
+
         # chosen xpath just used to reference more instances - not considered valid to use in apps
         self.module.case_details.short.columns.append(
             DetailColumn.wrap(dict(
@@ -42,6 +45,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 format="calculate",
                 field="whatever",
                 calc_xpath="instance('reports')/report[1]/name",
+            ))
+        )
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "moon"},
+                model="case",
+                format="calculate",
+                field="whatever",
+                calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
             ))
         )
         self.module.case_details.long.columns.append(
@@ -60,6 +72,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
             relevant="{} and {}".format("instance('groups')/groups/group", CLAIM_DEFAULT_RELEVANT_CONDITION),
+            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
                 DefaultCaseSearchProperty(
                     property='ɨŧsȺŧɍȺᵽ',
@@ -82,7 +95,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
+        self.assertXmlPartialEqual(
+            self.get_xml('remote_request').decode('utf-8').format(module_id="m0"),
+            suite,
+            "./remote-request[1]"
+        )
 
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
@@ -103,7 +120,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = copy_app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
+        self.assertXmlPartialEqual(
+            self.get_xml('remote_request').decode('utf-8').format(module_id="m0"),
+            suite,
+            "./remote-request[1]"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('remote_request').decode('utf-8').format(module_id="m1"),
+            suite,
+            "./remote-request[2]"
+        )
 
     def test_case_search_action(self, *args):
         """
@@ -128,12 +154,73 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
+    def test_case_search_filter(self, *args):
+        search_filter = "rating > 3"
+        self.module.search_config.search_filter = search_filter
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}'][{}]".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                search_filter
+            ),
+            suite.xpath(ref_path)[0]
+        )
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])
+
+    def test_case_search_auto_launch_off(self, *args):
+        self.module.search_config.auto_launch = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <action auto_launch="false">
+            <display>
+              <text>
+                <locale id="case_search.m0"/>
+              </text>
+            </display>
+            <stack>
+              <push>
+                <mark/>
+                <command value="'search_command.m0'"/>
+              </push>
+            </stack>
+          </action>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
+
+    @flag_enabled('CASE_CLAIM_AUTOLAUNCH')
+    def test_case_search_auto_launch(self, *args):
+        self.module.search_config.auto_launch = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <action auto_launch="true">
+            <display>
+              <text>
+                <locale id="case_search.m0"/>
+              </text>
+            </display>
+            <stack>
+              <push>
+                <mark/>
+                <command value="'search_command.m0'"/>
+              </push>
+            </stack>
+          </action>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
 
     def test_only_default_properties(self, *args):
         self.module.search_config = CaseSearch(

@@ -1,4 +1,6 @@
+{% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 <legend>
   {% trans "Case Search and Claim" %}
@@ -190,61 +192,120 @@
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
       <div class="panel-body">
-        <div class="form-group">
-          <label for="search-display-condition" class="control-label">
-            {% trans "Display condition" %}
-          </label>
-          <input type="text"
-                 class="form-control"
-                 id="search-display-condition"
-                 spellcheck="false"
-                 data-bind="value: searchButtonDisplayCondition"
-          >
-          <p class="help-block">
-            {% blocktrans %}
-              If this XPath expression evaluates to false, the case search button will not be
-              displayed. If no expression is given, the button will always be displayed.
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <label for="claim-relevant-condition" >
-            {% trans "Only claim cases that fulfill the following condition" %}
-          </label>
-          <input type="text"
-                 data-bind="value: relevant"
-                 class="form-control"
-                 id="claim-relevant-condition"
-                 spellcheck="false"
-          />
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: default_relevant">
+        <div class="form-horizontal">
+          <div class="form-group">
+            <label for="search_command_label" class="{% css_label_class %} control-label">
+              {% trans "Label for Case Search" %}
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
+            </div>
+          </div>
+          {% if show_auto_launch %}
+            <div class="form-group">
+              <label class="control-label {% css_label_class %}" for="search-auto-launch">
+                {% trans "Web Apps Autolaunch" %}
+              <span class="hq-help-template" data-title="{% trans "Web Apps Autolaunch" %}"
+                    data-content="{% trans_html_attr "In Web Apps, automatically launch case claim whenever user visits this case list." %}">
+              </span>
+              </label>
+              <div class="checkbox {% css_field_class %}">
+                <label>
+                  <input type="checkbox" id="search-auto-launch" data-bind="checked: autoLaunch">
+                </label>
+              </div>
+            </div>
+          {% endif %}
+          <div class="form-group" data-bind="visible: !autoLaunch()">
+            <label for="search-display-condition" class="control-label {% css_label_class %}">
+              {% trans "Display Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
+                    data-content="{% trans_html_attr "If this XPath expression evaluates to false, the case search button will not be displayed. If no expression is given, the button will always be displayed." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <textarea class="form-control vertical-resize"
+                       id="search-display-condition"
+                       spellcheck="false"
+                       data-bind="value: searchButtonDisplayCondition"
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="search-filter" class="control-label {% css_label_class %}">
+              {% trans "Search Filter" %}
+              <span class="hq-help-template" data-title="{% trans "Search Filter" %}"
+                    data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              <textarea data-bind="value: searchFilter"
+                        class="form-control vertical-resize"
+                        id="search-filter"
+                        spellcheck="false"
+              ></textarea>
+              <p class="help-block">
+                <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
+                  <i class="fa fa-mail-reply"></i>
+                  {% trans "Copy case list filter" %}
+                </button>
+                {% trans "Example: age > 5" %}
+              </p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="claim-relevant-condition" class="control-label {% css_label_class %}">
+              {% trans "Claim Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Claim Condition" %}"
+                    data-content="{% trans_html_attr "If this expression evaluates to false, no case will be claimed." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <textarea data-bind="value: extraRelevant"
+                        class="form-control vertical-resize"
+                        id="claim-relevant-condition"
+                        spellcheck="false"
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}" for="search-default-relevant">
               {% trans "Don't claim cases already owned by the user" %}
             </label>
+            <div class="checkbox {% css_field_class %}">
+              <label>
+                <input type="checkbox" id="search-default-relevant" data-bind="checked: defaultRelevant">
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="blacklisted-user-ids" >
-            {% trans "Don't search cases owned by the following ids" %}
-          </label>
-          <input type="text"
-                 data-bind="value: blacklistedOwnerIdsExpression"
-                 class="form-control"
-                 id="blacklisted-user-ids"
-                 spellcheck="false"
-          />
-          <p class="help-block">
-            {% blocktrans %}
-              An XPath expression that will evaluate to a space separated list of ids. For example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: includeClosed"> {% trans "Include closed cases in search results" %}
+          <div class="form-group">
+            <label for="blacklisted-user-ids" class="control-label {% css_label_class %}">
+              {% trans "Don't search cases owned by the following ids" %}
+              <span class="hq-help-template" data-title="{% trans "Ignore Owners" %}"
+                    data-content="{% trans_html_attr "An XPath expression that will evaluate to a space separated list of ids." %}">
+              </span>
             </label>
+            <div class="{% css_field_class %}">
+              <textarea data-bind="value: blacklistedOwnerIdsExpression"
+                        class="form-control vertical-resize"
+                        id="blacklisted-user-ids"
+                        spellcheck="false"
+              ></textarea>
+              <p class="help-block">
+                {% blocktrans %}
+                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
+                {% endblocktrans %}
+              </p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}" for="search-include-closed">
+              {% trans "Include closed cases in search results" %}
+            </label>
+            <div class="checkbox {% css_field_class %}">
+              <label>
+                <input type="checkbox" id="search-include-closed" data-bind="checked: includeClosed" />
+              </label>
+            </div>
           </div>
         </div>
       </div>

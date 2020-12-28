@@ -100,3 +100,52 @@ and run ``make requirements``.
 To upgrade all requirements to their latest allowed version you can run
 ``make upgrade-requirements``—this usually results in a large number of upgrades
 and is not something we can merge easily, but it is sometimes a useful exploratory first step.
+
+PR labels
+---------
+
+Product labels
+~~~~~~~~~~~~~~
+All PRs must be tagged with one of the following PR labels. For PRs from external
+contributors the onus is on the reviewer to add the labels.
+
+- product/all-users-all-environments
+- product/prod-india-all-users
+- product/custom
+- product/feature-flag
+- product/invisible
+- product/admin
+
+Label descriptions can be seen on the GitHub `labels`_ page or in the
+`.github/labels.yml`_ configuration file.
+
+.. _labels: https://github.com/dimagi/commcare-hq/labels
+.. _.github/labels.yml: .github/labels.yml
+
+Reindex / migration
+~~~~~~~~~~~~~~~~~~~
+Any PR that will require a database migration or some kind of data reindexing to be done
+must be labeled with the `reindex/migration` label. This label will get automatically applied
+if the PR changes `certain files`_ but it can also be added manually.
+
+Any PR with this label will fail the `required-labels` check. This is intentional to prevent
+premature merging of the PR.
+
+.. _certain files: .github/labels.yml#L12-L13
+
+Risk
+~~~~
+PRs that touch certain files will be automatically flagged with a "Risk" label,
+either medium or high. This includes heavily-used workflows where a bug would have a high impact
+and also areas that are technically complex, difficult to roll back, etc.
+These PRs will receive extra scrutiny and should have especially solid test coverage and/or
+manual testing. Alternatively, the PR description may explain why the PR is not genuinely high risk.
+
+QA / Work in progress
+~~~~~~~~~~~~~~~~~~~~~~
+PRs that are not ready to be merged can be labeled with one of the following labels:
+
+- awaiting QA
+- Open for review: do not merge
+
+As long as either of these labels are present on the PR it will have a pending status.

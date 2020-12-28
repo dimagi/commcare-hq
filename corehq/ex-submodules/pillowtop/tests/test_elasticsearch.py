@@ -5,13 +5,14 @@ import uuid
 
 from django.conf import settings
 from django.test import SimpleTestCase
-from corehq.util.es.elasticsearch import ConnectionError
+
+from corehq.util.es.elasticsearch import ConnectionError, RequestError
 
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup, capture_log_output
 from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
@@ -70,7 +71,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
         self.assertEqual(0, get_doc_count(self.es, self.es_alias))
-        self.es_interface.create_doc(self.es_alias, 'case', doc_id, doc)
+        self.es_interface.index_doc(self.es_alias, 'case', doc_id, doc)
         self.assertEqual(0, get_doc_count(self.es, self.es_alias, refresh_first=False))
         self.es.indices.refresh(self.index)
         self.assertEqual(1, get_doc_count(self.es, self.es_alias, refresh_first=False))
@@ -91,8 +92,9 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        ElasticsearchInterface(get_es_new()).create_doc(
-            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'}, False)
+        ElasticsearchInterface(get_es_new()).index_doc(
+            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'},
+            verify_alias=False)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -249,6 +251,23 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         self._send_to_es_and_check(doc, delete=True)
 
+    def test_missing_delete(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        self._send_to_es_and_check(doc, delete=True)
+
+    def test_missing_merge(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        send_to_elasticsearch(
+            TEST_INDEX_INFO,
+            doc_type=TEST_INDEX_INFO.type,
+            doc_id=doc['_id'],
+            es_getter=get_es_new,
+            name='test',
+            data=doc,
+            es_merge_update=True,
+        )
+        self.assertEqual(0, get_doc_count(self.es, self.index))
+
     def test_connection_failure(self):
         def _bad_es_getter():
             from corehq.util.es.elasticsearch import Elasticsearch
@@ -264,6 +283,38 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         with self.assertRaises(PillowtopIndexingError):
             self._send_to_es_and_check(doc, esgetter=_bad_es_getter)
+
+    def test_connection_failure_no_error(self):
+        logs = self._send_to_es_mock_errors(ConnectionError("test", "test", "test"), 2)
+        self.assertIn("put_robust error", logs)
+        self.assertIn("Max retry error", logs)
+
+    def test_request_error(self):
+        logs = self._send_to_es_mock_errors(RequestError("test", "test", "test"), 1)
+        self.assertIn("put_robust error", logs)
+
+    def _send_to_es_mock_errors(self, exception, retries):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+
+        with mock.patch("pillowtop.processors.elastic._propagate_failure", return_value=False), \
+             mock.patch("pillowtop.processors.elastic._retries", return_value=retries), \
+             mock.patch("pillowtop.processors.elastic._sleep_between_retries"), \
+             mock.patch("pillowtop.processors.elastic._get_es_interface") as _get_es_interface, \
+             capture_log_output("pillowtop") as log:
+            es_interface = mock.Mock()
+            es_interface.index_doc.side_effect = exception
+            _get_es_interface.return_value = es_interface
+            send_to_elasticsearch(
+                TEST_INDEX_INFO,
+                doc_type=TEST_INDEX_INFO.type,
+                doc_id=doc['_id'],
+                es_getter=None,
+                name='test',
+                data=doc,
+                es_merge_update=False,
+                delete=False
+            )
+        return log.get_output()
 
     def test_not_found(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}

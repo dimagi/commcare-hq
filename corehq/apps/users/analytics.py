@@ -1,7 +1,8 @@
-from corehq.apps.es import UserES
+from corehq.apps.es import UserES, users, queries
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.toggles import RESTRICT_LOGIN_AS
 from corehq.util.couch import stale_ok
 
 
@@ -70,9 +71,12 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     """
     default_search_fields = ["base_username", "last_name", "first_name"]
 
-    return (UserES()
-            .domain(domain)
-            .search_string_query(search_string, default_search_fields)
-            .start(offset)
-            .size(limit)
-            .sort('username.exact'))
+    user_es = UserES().domain(domain)
+
+    if RESTRICT_LOGIN_AS.enabled(domain):
+        user_es = user_es.OR(users.metadata('login_as_user', search_string),
+                             queries.search_string_query(search_string, default_search_fields))
+    else:
+        user_es = user_es.search_string_query(search_string, default_search_fields)
+
+    return user_es.start(offset).size(limit).sort('username.exact')
