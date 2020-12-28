@@ -47,9 +47,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.submitButton': 'submitAction',
         },
 
-        clearAction: function (e) {
+        clearAction: function () {
             var fields = $(".query-field");
-            fields.each(function (index) {
+            fields.each(function () {
                 this.value = '';
             });
             hqImport("cloudcare/js/formplayer/utils/util").saveQuery({});

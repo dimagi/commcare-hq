@@ -249,7 +249,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             return "";
         }
         return urlObject.steps.join(bell);
-    };
+    }
 
     Util.saveSearch = function (query) {
         savedSearches[stepsKey()] = query;
