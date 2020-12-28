@@ -72,13 +72,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
-        var searchProperty = function (name, label, appearance, default_value, itemSet) {
+        var searchProperty = function (name, label, appearance, defaultValue, itemSet) {
             var self = {};
             self.uniqueId = generateSemiRandomId();
             self.name = ko.observable(name);
             self.label = ko.observable(label);
             self.appearance = ko.observable(appearance);
-            self.default_value = ko.observable(default_value);
+            self.defaultValue = ko.observable(defaultValue);
 
             self.itemSet = itemSet;
 
@@ -91,7 +91,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.appearance.subscribe(function () {
                 saveButton.fire('change');
             });
-            self.default_value.subscribe(function () {
+            self.defaultValue.subscribe(function () {
                 saveButton.fire('change');
             });
             return self;
@@ -142,7 +142,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
-                var default_value = searchProperties[i].default_value;
+                var defaultValue = searchProperties[i].default_value;
                 var propItemSet = itemSet(
                     searchProperties[i].itemset.instance_id,
                     searchProperties[i].itemset.instance_uri,
@@ -156,9 +156,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     searchProperties[i].name,
                     label,
                     appearance,
-                    default_value,
+                    defaultValue,
                     propItemSet
-                ))
+                ));
             }
         } else {
             self.searchProperties.push(searchProperty('', '', '','', itemSet()));
@@ -182,7 +182,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         appearance: p.appearance(),
-                        default_value: p.default_value(),
+                        default_value: p.defaultValue(),
                         fixture: ko.toJSON(p.itemSet),
                     };
                 }
