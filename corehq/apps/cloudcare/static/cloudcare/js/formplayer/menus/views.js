@@ -278,6 +278,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         ui: {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
+            clearButton: '#case-list-clear-button',
             paginators: '.page-link',
             columnHeader: '.header-clickable',
         },
@@ -285,6 +286,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         events: {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
+            'click @ui.clearButton': 'caseListClear',
             'click @ui.paginators': 'paginateAction',
             'click @ui.columnHeader': 'columnSortAction',
             'keypress': 'keyAction',
@@ -293,6 +295,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         caseListAction: function (e) {
             var index = $(e.currentTarget).data().index;
             FormplayerFrontend.trigger("menu:select", "action " + index);
+        },
+
+        caseListClear: function (e) {
+            e.preventDefault();
+            $('#searchText').val('');
+            $('#searchText').focus();
         },
 
         caseListSearch: function (e) {

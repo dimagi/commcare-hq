@@ -89,6 +89,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             next: '.js-user-next',
             prev: '.js-user-previous',
             search: '.js-user-search',
+            clear: '.js-user-clear',
             query: '.js-user-query',
             page: '.js-page',
         },
@@ -97,6 +98,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
+            'click @ui.clear': 'onClearUserSearch',
         },
         templateContext: function () {
             return {
@@ -157,6 +159,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 'query': this.ui.query.val(),
                 'page': 1,  // Reset page to one when doing a query
             });
+        },
+        onClearUserSearch: function (e) {
+            e.preventDefault();
+            this.ui.query.val('');
+            this.ui.query.focus();
         },
     });
 
