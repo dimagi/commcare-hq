@@ -267,7 +267,10 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                 len(sync_ids),
                 'cases',
                 RESTORE_CASE_LOAD_BUCKETS,
-                tags={'domain': accessor.domain}
+                tags={
+                    'domain': accessor.domain,
+                    'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
+                }
             )
             compile_response(
                 timing_context,
