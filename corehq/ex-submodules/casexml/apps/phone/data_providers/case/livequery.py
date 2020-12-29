@@ -262,6 +262,13 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
+            metrics_histogram(
+                'commcare.restore.case_load',
+                len(sync_ids),
+                'cases',
+                RESTORE_CASE_LOAD_BUCKETS,
+                tags={'domain': accessor.domain}
+            )
             compile_response(
                 timing_context,
                 restore_state,
@@ -307,13 +314,6 @@ def batch_cases(accessor, case_ids):
         return list(islice(iterable, n))
 
     track_load = case_load_counter("livequery_restore", accessor.domain)
-    metrics_histogram(
-        'commcare.restore.case_load',
-        len(case_ids),
-        'cases',
-        RESTORE_CASE_LOAD_BUCKETS,
-        tags={'domain': accessor.domain}
-    )
     ids = iter(case_ids)
     while True:
         next_ids = take(1000, ids)
