@@ -311,7 +311,7 @@ def batch_cases(accessor, case_ids):
         'commcare.restore.case_load',
         len(case_ids),
         'cases',
-        [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        RESTORE_CASE_LOAD_BUCKETS,
         tags={'domain': accessor.domain}
     )
     ids = iter(case_ids)
@@ -362,3 +362,6 @@ def compile_response(timing_context, restore_state, response, batches, update_pr
 
         done += len(cases)
         update_progress(done)
+
+
+RESTORE_CASE_LOAD_BUCKETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
