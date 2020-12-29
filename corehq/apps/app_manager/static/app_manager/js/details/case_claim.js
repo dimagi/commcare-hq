@@ -1,5 +1,5 @@
 /* global Uint8Array */
-hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], function ( assertProperties ) {
+hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], function (assertProperties) {
 
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
@@ -165,7 +165,7 @@ hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], 
                     label: label,
                     appearance: appearance,
                     defaultValue: defaultValue,
-                    itemSet: propItemSet
+                    itemSet: propItemSet,
                 }));
             }
         } else {
@@ -174,7 +174,7 @@ hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], 
                 label: '',
                 appearance: '',
                 defaultValue: '',
-                itemSet: itemSet()
+                itemSet: itemSet(),
             }));
         }
 
@@ -184,7 +184,7 @@ hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], 
                 label: '',
                 appearance: '',
                 defaultValue: '',
-                itemSet: itemSet()
+                itemSet: itemSet(),
             }));
         };
         self.removeProperty = function (property) {
