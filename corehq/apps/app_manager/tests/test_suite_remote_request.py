@@ -332,11 +332,43 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_default_value(self, *args):
         """Setting the default to "default_value"
         """
+        # Shouldn't be included for versions before 2.51
+        self.module.search_config.properties[0].default_value = 'foo'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+        self.app.build_spec = BuildSpec(version='2.51.0', build_number=1)
         self.module.search_config.properties[0].default_value = 'foo'
         suite = self.app.create_suite()
         expected = """
         <partial>
           <prompt default_value="foo" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.51.0', build_number=1)
+        self.module.search_config.properties[0].default_value = "3"
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt default_value="3" key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
