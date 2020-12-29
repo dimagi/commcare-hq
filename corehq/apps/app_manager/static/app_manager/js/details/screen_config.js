@@ -219,10 +219,44 @@ hqDefine('app_manager/js/details/screen_config', function () {
             is_parent: true,
         });
         self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
-        self.active = ko.observable(init.active);
+        self.allCaseModules = ko.observable(init.allCaseModules);
         self.parentModules = ko.observable(init.parentModules);
         self.lang = ko.observable(init.lang);
         self.langs = ko.observable(init.langs);
+
+        self.selectOptions = [
+            {id: 'none', text: gettext('None')},
+            {id: 'parent', text: gettext('Parent')},
+            {id: 'other', text: gettext('Other')},
+        ];
+        if (init.active){
+            if (init.relationship == 'parent') {
+                var selectedMode = 'parent';
+            }
+            else {
+                var selectedMode = 'other';
+            }
+        }
+        else {
+            var selectedMode = 'none';
+        }
+        self.selectMode = ko.observable(selectedMode);
+        self.active = ko.computed(function() {
+            if (self.selectMode() == 'none') {
+                return false;
+            }
+            else {
+                return true;
+            }
+        });
+        self.relationship = ko.computed(function() {
+            if (self.selectMode() == 'parent' || self.selectMode() == 'none') {
+                return 'parent';
+            }
+            else {
+                return null;
+            }
+        });
 
         function getTranslation(name, langs) {
             var firstLang = _(langs).find(function (lang) {
@@ -230,11 +264,19 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
             return name[firstLang];
         }
+        self.dropdownModules = ko.computed(function () {
+            if (self.selectMode() == 'parent') {
+                return self.parentModules();
+            }
+            else {
+                return self.allCaseModules();
+            }
+        });
         self.hasError = ko.computed(function () {
-            return !_.contains(_.pluck(self.parentModules(), 'unique_id'), self.moduleId());
+            return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
         });
         self.moduleOptions = ko.computed(function () {
-            var options = _(self.parentModules()).map(function (module) {
+            var options = _(self.dropdownModules()).map(function (module) {
                 var STAR = '\u2605',
                     SPACE = '\u3000';
                 var marker = (module.is_parent ? STAR : SPACE);
@@ -921,7 +963,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         if (self.config.hasOwnProperty('parentSelect')) {
                             parentSelect = {
                                 module_id: self.config.parentSelect.moduleId(),
-                                relationship: 'parent',
+                                relationship: self.config.parentSelect.relationship(),
                                 active: self.config.parentSelect.active(),
                             };
                         }
@@ -1032,7 +1074,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.parentSelect = module.parentSelect({
                         active: spec.parentSelect.active,
                         moduleId: spec.parentSelect.module_id,
+                        relationship: spec.parentSelect.relationship,
                         parentModules: spec.parentModules,
+                        allCaseModules: spec.allCaseModules,
                         lang: self.lang,
                         langs: self.langs,
                     });
