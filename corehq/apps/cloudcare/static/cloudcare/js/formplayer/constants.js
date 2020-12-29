@@ -1,6 +1,6 @@
 hqDefine("cloudcare/js/formplayer/constants", function () {
     return {
-        ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language'],
+        ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language', 'stickySearches'],
 
         // These should match corehq/apps/cloudcare/const.py
         WEB_APPS_ENVIRONMENT: 'web-apps',

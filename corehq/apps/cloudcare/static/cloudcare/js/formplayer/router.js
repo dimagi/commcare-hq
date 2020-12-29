@@ -51,6 +51,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
+                urlObject.setSearch(Util.getSavedSearch() || urlObject.search);
+                Util.setUrlToObject(urlObject);
                 menusController.selectMenu(urlObject);
             }
         },
@@ -170,6 +172,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     FormplayerFrontend.on("menu:search", function (search) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setSearch(search);
+        Util.saveSearch(search);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
@@ -177,6 +180,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     FormplayerFrontend.on("menu:query", function (queryDict) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setQuery(queryDict);
+        Util.saveQuery(queryDict);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });

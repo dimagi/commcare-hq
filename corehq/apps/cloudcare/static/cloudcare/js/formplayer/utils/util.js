@@ -151,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps.push(step);
             //clear out pagination and search when we take a step
             this.page = null;
-            this.search = null;
+            this.clearSearch();
         };
 
         this.setPage = function (page) {
@@ -162,13 +162,19 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = sortIndex;
         };
 
-
         this.setSearch = function (search) {
             this.search = search;
             //clear out pagination on search
             this.page = null;
             this.sortIndex = null;
         };
+
+        this.clearSearch = function () {
+            var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+            if (!user.displayOptions.stickySearches) {
+                this.search = null;
+            }
+        }
 
         this.setQuery = function (queryDict) {
             this.queryDict = queryDict;
@@ -179,14 +185,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps = null;
             this.page = null;
             this.sortIndex = null;
-            this.search = null;
+            this.clearSearch();
             this.queryDict = null;
         };
 
         this.onSubmit = function () {
             this.page = null;
             this.sortIndex = null;
-            this.search = null;
+            this.clearSearch();
             this.queryDict = null;
         };
 
@@ -200,7 +206,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 this.steps = this.steps.splice(0, index);
             }
             this.page = null;
-            this.search = null;
+            this.clearSearch();
             this.queryDict = null;
             this.sortIndex = null;
         };
@@ -240,6 +246,42 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return new Util.CloudcareUrl(options);
     };
 
+    // Saved query handling
+    var savedSearches = {},     // text search for case lists
+        savedQueries = {},      // case claim
+        bell = "\u0007";
+    function stepsKey() {
+        var urlObject = Util.currentUrlToObject();
+        if (!urlObject.steps) {
+            return "";
+        }
+        return urlObject.steps.join(bell);
+    }
+
+    Util.saveSearch = function (query) {
+        savedSearches[stepsKey()] = query;
+    };
+
+    Util.getSavedSearch = function () {
+        var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+        if (user.displayOptions.stickySearches) {
+            return savedSearches[stepsKey()] || "";
+        }
+    };
+
+    Util.saveQuery = function (query) {
+        savedQueries[stepsKey()] = query;
+    };
+
+    Util.getSavedQuery = function () {
+        var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
+        if (user.displayOptions.stickySearches) {
+            return savedQueries[stepsKey()] || {};
+        }
+        return {};
+    };
+
+    // String polyfills
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
