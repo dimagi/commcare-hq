@@ -88,6 +88,7 @@ python-dateutil~=2.6
 python-imap==1.0.0
 python-Levenshtein
 python-magic~=0.4.13
+python3-saml==1.9.0
 pytz>=2017.2
 PyYAML~=5.1
 pyzxcvbn==0.8.0
