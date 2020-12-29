@@ -314,9 +314,9 @@ class AddAttemptsTests(RepeaterFixtureMixin, TestCase):
         self.assertEqual(self.repeat_record.attempts[0].message,
                          format_response(resp))
 
-    def test_add_failure_attempt_fail(self):
-        message = '409: Conflict\n'
-        self.repeat_record.add_failure_attempt(message=message)
+    def test_add_server_failure_attempt_fail(self):
+        message = '504: Gateway Timeout'
+        self.repeat_record.add_server_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
         self.assertGreater(self.repeater_stub.last_attempt_at, self.just_now)
         self.assertEqual(self.repeater_stub.next_attempt_at,
@@ -327,10 +327,10 @@ class AddAttemptsTests(RepeaterFixtureMixin, TestCase):
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertIsNone(self.repeat_record.attempts[0].traceback)
 
-    def test_add_failure_attempt_cancel(self):
-        message = '409: Conflict\n'
+    def test_add_server_failure_attempt_cancel(self):
+        message = '504: Gateway Timeout'
         for __ in range(MAX_ATTEMPTS + 1):
-            self.repeat_record.add_failure_attempt(message=message)
+            self.repeat_record.add_server_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
         self.assertGreater(self.repeater_stub.last_attempt_at, self.just_now)
         self.assertEqual(self.repeater_stub.next_attempt_at,
@@ -342,6 +342,18 @@ class AddAttemptsTests(RepeaterFixtureMixin, TestCase):
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
         self.assertIsNone(attempts[-1].traceback)
+
+    def test_add_client_failure_attempt_fail(self):
+        message = '409: Conflict'
+        self.repeat_record.add_client_failure_attempt(message=message)
+        self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
+        self.assertIsNone(self.repeater_stub.last_attempt_at)
+        self.assertIsNone(self.repeater_stub.next_attempt_at)
+        self.assertEqual(self.repeat_record.num_attempts, 1)
+        self.assertEqual(self.repeat_record.attempts[0].state,
+                         RECORD_FAILURE_STATE)
+        self.assertEqual(self.repeat_record.attempts[0].message, message)
+        self.assertIsNone(self.repeat_record.attempts[0].traceback)
 
     def test_add_payload_exception_attempt(self):
         message = 'ValueError: Schema validation failed'

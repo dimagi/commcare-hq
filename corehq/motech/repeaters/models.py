@@ -1070,10 +1070,32 @@ class SQLRepeatRecord(models.Model):
         self.state = RECORD_SUCCESS_STATE
         self.save()
 
-    def add_failure_attempt(self, message):
+    def add_client_failure_attempt(self, message):
+        """
+        Retry when ``self.repeater`` is next processed. The remote
+        service is assumed to be in a good state, so do not back off, so
+        that this repeat record does not hold up the rest.
+        """
+        self.repeater_stub.reset_next_attempt()
+        self._add_failure_attempt(message)
+
+    def add_server_failure_attempt(self, message):
+        """
+        Server and connection failures are retried later with
+        exponential backoff.
+
+        .. note::
+           ONLY CALL THIS IF RETRYING MUCH LATER STANDS A CHANCE OF
+           SUCCEEDING. Exponential backoff will continue for several
+           days and will hold up all other payloads.
+
+        """
+        self.repeater_stub.set_next_attempt()
+        self._add_failure_attempt(message)
+
+    def _add_failure_attempt(self, message):
         if self.num_attempts < MAX_ATTEMPTS:
             state = RECORD_FAILURE_STATE
-            self.repeater_stub.set_next_attempt()
         else:
             state = RECORD_CANCELLED_STATE
         self.sqlrepeatrecordattempt_set.create(
@@ -1182,14 +1204,21 @@ def send_request(
             or resp is True
         )
 
+    def later_might_be_better(resp):
+        return is_response(resp) and resp.status_code in (
+            502,  # Bad Gateway
+            503,  # Service Unavailable
+            504,  # Gateway Timeout
+        )
+
     try:
         response = repeater.send_request(repeat_record, payload)
     except (Timeout, ConnectionError) as err:
         log_repeater_timeout_in_datadog(repeat_record.domain)
         message = str(RequestConnectionError(err))
-        repeat_record.add_failure_attempt(message)
+        repeat_record.add_server_failure_attempt(message)
     except Exception as err:
-        repeat_record.add_failure_attempt(str(err))
+        repeat_record.add_client_failure_attempt(str(err))
     else:
         if is_success(response):
             if is_response(response):
@@ -1203,7 +1232,10 @@ def send_request(
             repeat_record.add_success_attempt(response)
         else:
             message = format_response(response)
-            repeat_record.add_failure_attempt(message)
+            if later_might_be_better(response):
+                repeat_record.add_server_failure_attempt(message)
+            else:
+                repeat_record.add_client_failure_attempt(message)
     return repeat_record.state in (RECORD_SUCCESS_STATE,
                                    RECORD_CANCELLED_STATE)  # Don't retry
 
