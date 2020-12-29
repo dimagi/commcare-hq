@@ -32,13 +32,16 @@
           <% } else { %>
         <li>
           <% } %>
+          <a class="js-page" data-page="1">
+            <span><i class="fa fa-fast-backward"></i></span>
+          </a>
           <a class="js-user-previous">
-            <span>&laquo;</span>
+            <span><i class="fa fa-caret-left"></i></span>
           </a>
         </li>
 
         <!-- Render page buttons -->
-        <% for (var i = pagesToShow.start; i < pagesToShow.end; i++) { %>
+        <% for (var i = pagesToShow.startPage-1; i < pagesToShow.endPage; i++) { %>
         <% if (i + 1 === page) { %>
         <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
         <% } else { %>
@@ -53,7 +56,10 @@
         <li>
           <% } %>
           <a class="js-user-next">
-            <span>&raquo;</span>
+            <span><i class="fa fa-caret-right"></i></span>
+          </a>
+          <a class="js-page" data-page="<%= pagesToShow.pageCount %>">
+            <span><i class="fa fa-fast-forward"></i></span>
           </a>
         </li>
       </ul>
