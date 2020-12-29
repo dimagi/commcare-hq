@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import ugettext_lazy
 
 
 class ExportFileType(object):
@@ -6,9 +7,9 @@ class ExportFileType(object):
     EXCEL_2007_PLUS = "EXCEL_2007_PLUS"
     EXCEL_PRE_2007 = "EXCEL_PRE_2007"
     CHOICES = (
-        (CSV, "CSV (zip file)"),
-        (EXCEL_2007_PLUS, "Excel 2007+"),
-        (EXCEL_PRE_2007, "Excel (older versions)"),
+        (CSV, ugettext_lazy("CSV (zip file)")),
+        (EXCEL_2007_PLUS, ugettext_lazy("Excel 2007+")),
+        (EXCEL_PRE_2007, ugettext_lazy("Excel (older versions)")),
     )
 
 
