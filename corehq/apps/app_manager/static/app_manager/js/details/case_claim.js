@@ -1,5 +1,5 @@
 /* global Uint8Array */
-hqDefine("app_manager/js/details/case_claim", function () {
+hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], function ( assertProperties ) {
 
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
@@ -72,15 +72,23 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
-        var searchProperty = function (name, label, appearance, defaultValue, itemSet) {
+        var searchProperty = function (options) {
+            assertProperties.assertRequired(options, [
+                'name',
+                'label',
+                'appearance',
+                'defaultValue',
+                'itemSet',
+            ]);
+
             var self = {};
             self.uniqueId = generateSemiRandomId();
-            self.name = ko.observable(name);
-            self.label = ko.observable(label);
-            self.appearance = ko.observable(appearance);
-            self.defaultValue = ko.observable(defaultValue);
+            self.name = ko.observable(options.name);
+            self.label = ko.observable(options.label);
+            self.appearance = ko.observable(options.appearance);
+            self.defaultValue = ko.observable(options.defaultValue);
 
-            self.itemSet = itemSet;
+            self.itemSet = options.itemSet;
 
             self.name.subscribe(function () {
                 saveButton.fire('change');
@@ -152,20 +160,32 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     searchProperties[i].itemset.sort,
                     searchProperties[i].itemset.filter
                 );
-                self.searchProperties.push(searchProperty(
-                    searchProperties[i].name,
-                    label,
-                    appearance,
-                    defaultValue,
-                    propItemSet
-                ));
+                self.searchProperties.push(searchProperty({
+                    name: searchProperties[i].name,
+                    label: label,
+                    appearance: appearance,
+                    defaultValue: defaultValue,
+                    itemSet: propItemSet
+                }));
             }
         } else {
-            self.searchProperties.push(searchProperty('', '', '','', itemSet()));
+            self.searchProperties.push(searchProperty({
+                name: '',
+                label: '',
+                appearance: '',
+                defaultValue: '',
+                itemSet: itemSet()
+            }));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(searchProperty('', '', '','', itemSet()));
+            self.searchProperties.push(searchProperty({
+                name: '',
+                label: '',
+                appearance: '',
+                defaultValue: '',
+                itemSet: itemSet()
+            }));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
