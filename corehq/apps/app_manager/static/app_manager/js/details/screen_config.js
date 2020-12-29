@@ -264,17 +264,19 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
             return name[firstLang];
         }
-        self.hasError = ko.computed(function () {
-            return !_.contains(_.pluck(self.parentModules(), 'unique_id'), self.moduleId());
-        });
-        self.moduleOptions = ko.computed(function () {
+        self.dropdownModules = ko.computed(function () {
             if (self.selectMode() == 'parent') {
-                var dropdownModules = self.parentModules();
+                return self.parentModules();
             }
             else {
-                var dropdownModules = self.allCaseModules();
+                return self.allCaseModules();
             }
-            var options = _(dropdownModules).map(function (module) {
+        });
+        self.hasError = ko.computed(function () {
+            return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
+        });
+        self.moduleOptions = ko.computed(function () {
+            var options = _(self.dropdownModules()).map(function (module) {
                 var STAR = '\u2605',
                     SPACE = '\u3000';
                 var marker = (module.is_parent ? STAR : SPACE);
