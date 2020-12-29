@@ -68,6 +68,7 @@ branches:
   - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - jls/web-apps-sticky-search # Jenny Dec 28
+  - sr/parent-select # Jenny Dec 29
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
 
 submodules: {}
