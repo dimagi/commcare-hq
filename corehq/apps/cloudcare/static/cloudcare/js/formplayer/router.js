@@ -51,7 +51,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
-                urlObject.setSearch(Util.getSavedSearch());
+                urlObject.setSearch(Util.getSavedSearch() || urlObject.search);
                 Util.setUrlToObject(urlObject);
                 menusController.selectMenu(urlObject);
             }
