@@ -229,33 +229,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
             {id: 'parent', text: gettext('Parent')},
             {id: 'other', text: gettext('Other')},
         ];
-        if (init.active){
-            if (init.relationship == 'parent') {
-                var selectedMode = 'parent';
-            }
-            else {
-                var selectedMode = 'other';
-            }
-        }
-        else {
-            var selectedMode = 'none';
-        }
-        self.selectMode = ko.observable(selectedMode);
+        var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
+        self.selectMode = ko.observable(selectMode);
         self.active = ko.computed(function() {
-            if (self.selectMode() == 'none') {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return (self.selectMode() !== 'none')
         });
         self.relationship = ko.computed(function() {
-            if (self.selectMode() == 'parent' || self.selectMode() == 'none') {
-                return 'parent';
-            }
-            else {
-                return null;
-            }
+            return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
         });
 
         function getTranslation(name, langs) {
@@ -265,12 +245,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             return name[firstLang];
         }
         self.dropdownModules = ko.computed(function () {
-            if (self.selectMode() == 'parent') {
-                return self.parentModules();
-            }
-            else {
-                return self.allCaseModules();
-            }
+            return (self.selectMode() === 'parent') ? self.parentModules() : self.allCaseModules();
         });
         self.hasError = ko.computed(function () {
             return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
