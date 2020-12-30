@@ -5,10 +5,10 @@ import uuid
 from django.test import TestCase
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 
-from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
     deleted_domain_exists,
     domain_exists,
@@ -70,17 +70,16 @@ class DBAccessorsTest(TestCase):
         self.assertEqual(doc_id, user_role.get_id)
 
     def test_get_docs_in_domain_by_class(self):
-        commtrack_config = CommtrackConfig(domain=self.domain)
         group = Group(domain=self.domain)
-        xform = XFormInstance(domain=self.domain)
-        commtrack_config.save()
+        case_group = CommCareCaseGroup(name='a group', domain=self.domain)
         group.save()
-        xform.save()
-        self.addCleanup(commtrack_config.delete)
+        case_group.save()
         self.addCleanup(group.delete)
-        self.addCleanup(xform.delete)
-        [commtrack_config_2] = get_docs_in_domain_by_class(self.domain, CommtrackConfig)
-        self.assertEqual(commtrack_config_2.to_json(), commtrack_config.to_json())
+        self.addCleanup(case_group.delete)
+        [group2] = get_docs_in_domain_by_class(self.domain, Group)
+        self.assertEqual(group2.to_json(), group.to_json())
+        [case_group2] = get_docs_in_domain_by_class(self.domain, CommCareCaseGroup)
+        self.assertEqual(case_group.to_json(), case_group2.to_json())
 
     def test_get_doc_ids_in_domain_by_type_initial_empty(self):
         self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type', self.db)))
