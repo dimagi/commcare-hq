@@ -231,10 +231,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
         ];
         var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
         self.selectMode = ko.observable(selectMode);
-        self.active = ko.computed(function() {
-            return (self.selectMode() !== 'none')
+        self.active = ko.computed(function () {
+            return (self.selectMode() !== 'none');
         });
-        self.relationship = ko.computed(function() {
+        self.relationship = ko.computed(function () {
             return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
         });
 
