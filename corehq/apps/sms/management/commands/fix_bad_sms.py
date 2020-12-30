@@ -45,4 +45,4 @@ class Command(BaseCommand):
         # self._get_stats(november_first, december_first)
         #
         print("\n\nData for DECEMBER")
-        self._get_stats(december_first)
+        self._fix_sms(december_first)
