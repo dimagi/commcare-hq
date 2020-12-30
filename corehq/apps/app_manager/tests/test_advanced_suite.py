@@ -276,7 +276,11 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_form.xmlns = 'http://id_m1-f0'
         child_form.requires = 'case'
 
-        self.assertXmlPartialEqual(self.get_xml('advanced_module_parent_null_relationship'), app.create_suite(), "./entry[1]")
+        self.assertXmlPartialEqual(
+            self.get_xml('advanced_module_parent_null_relationship'),
+            app.create_suite(),
+            "./entry[1]"
+        )
 
     def test_tiered_select_with_advanced_module_as_parent_with_filters(self, *args):
         factory = AppFactory(build_version='2.25.0')
