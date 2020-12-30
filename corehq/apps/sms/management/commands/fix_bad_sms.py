@@ -24,9 +24,14 @@ class Command(BaseCommand):
         total_bad = len(available_ids) - total_billed
         billed_ids = set(billed_query.values_list('log_id', flat=True))
         bad_sms = available_ids.difference(billed_ids)
+        for sms_id in bad_sms:
+            sms = SMS.objects.get(couch_id=sms_id)
+            sms.processed = False
+            sms.save()
+            sms.requeue()
+            print(sms_id)
         print("-------")
-        print(f"Total un-billed sms: {total_bad}")
-        print(f"Total un-billed sms (new logic): {len(bad_sms)}")
+        print(f"Total fixed sms: {len(bad_sms)}")
 
     def handle(self, **options):
         october_first = datetime.datetime(2020, 10, 1)
