@@ -25,7 +25,9 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y google-chrome-unstable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst ttf-freefont \
     --no-install-recommends \
-  && rm -rf /var/lib/apt/lists/* /src/*.deb
+  && rm -rf /var/lib/apt/lists/* /src/*.deb \
+# install xmlsec required by python3-saml
+  && apt-get install -y libxml2-dev libxmlsec1-dev
 
 COPY requirements/test-requirements.txt package.json /vendor/
 
