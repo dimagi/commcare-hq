@@ -38,11 +38,11 @@ class Command(BaseCommand):
         november_first = datetime.datetime(2020, 11, 1)
         december_first = datetime.datetime(2020, 12, 1)
 
-        print("\n\nData for OCTOBER")
-        self._fix_sms(october_first, november_first)
+        # print("\n\nData for OCTOBER")
+        # self._fix_sms(october_first, november_first)
 
         # print("\n\nData for NOVEMBER")
         # self._get_stats(november_first, december_first)
         #
-        # print("\n\nData for DECEMBER")
-        # self._get_stats(december_first)
+        print("\n\nData for DECEMBER")
+        self._get_stats(december_first)
