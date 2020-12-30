@@ -1128,8 +1128,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         spec.includeClosed,
                         spec.defaultProperties,
                         spec.lang,
+                        spec.searchCommandLabel,
                         spec.searchButtonDisplayCondition,
                         spec.searchFilter,
+                        spec.searchRelevant,
                         spec.blacklistedOwnerIdsExpression,
                         self.shortScreen.saveButton,
                         self.filter.filterText

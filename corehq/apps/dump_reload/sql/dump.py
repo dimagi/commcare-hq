@@ -250,7 +250,13 @@ def get_excluded_apps_and_models(excludes):
             try:
                 app_config = apps.get_app_config(exclude)
             except LookupError:
-                raise DomainDumpError('Unknown app in excludes: %s' % exclude)
+                from corehq.util.couch import get_document_class_by_doc_type
+                from corehq.util.exceptions import DocumentClassNotFound
+                # ignore this if it's a couch doc type
+                try:
+                    get_document_class_by_doc_type(exclude)
+                except DocumentClassNotFound:
+                    raise DomainDumpError('Unknown app in excludes: %s' % exclude)
             excluded_apps.add(app_config)
     return excluded_apps, excluded_models
 

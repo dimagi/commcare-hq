@@ -1930,3 +1930,21 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     Allows the user to change the language of the form content while in the form itself in Web Apps
     """
 )
+
+APP_ANALYTICS = StaticToggle(
+    'app_analytics',
+    'Allow user to use app analytics in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
+)
+
+DEFAULT_EXPORT_SETTINGS = StaticToggle(
+    'default_export_settings',
+    'Allow enterprise admin to set default export settings',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
+    """
+)

@@ -112,6 +112,22 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=No
         yield RepeatRecord.wrap(doc['doc'])
 
 
+def iter_repeat_records_by_repeater(domain, repeater_id, chunk_size=1000):
+    from corehq.motech.repeaters.models import RepeatRecord
+    kwargs = {
+        'include_docs': True,
+        'reduce': False,
+        'descending': True,
+    }
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id))
+    for doc in paginate_view(
+            RepeatRecord.get_db(),
+            'repeaters/repeat_records',
+            chunk_size,
+            **kwargs):
+        yield RepeatRecord.wrap(doc['doc'])
+
+
 def get_repeat_records_by_payload_id(domain, payload_id):
     from .models import RepeatRecord
     results = RepeatRecord.get_db().view(

@@ -41,10 +41,12 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     contextVariables: state,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
+                    searchRelevant: options.search_relevant || "",
                     autoLaunch: options.auto_launch,
                     includeClosed: options.include_closed,
                     defaultProperties: options.default_properties || [],
                     searchButtonDisplayCondition: options.search_button_display_condition,
+                    searchCommandLabel: options.search_command_label,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                 });
