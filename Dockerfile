@@ -27,7 +27,7 @@ RUN apt-get update \
     --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* /src/*.deb \
 # install xmlsec required by python3-saml
-  && apt-get install -y libxml2-dev libxmlsec1-dev
+  && apt-get install -y libxmlsec1-dev
 
 COPY requirements/test-requirements.txt package.json /vendor/
 
