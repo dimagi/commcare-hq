@@ -257,8 +257,7 @@ def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
         'parent_case_modules': _get_modules_with_parent_case_type(
             app, module, case_property_builder, module.case_type),
-        'all_case_modules': _get_all_case_modules(
-            app, module, case_property_builder, module.case_type),
+        'all_case_modules': _get_all_case_modules(app, module),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             add_ons.show("submenus", request, app, module=module) and not module.is_training_module
@@ -375,19 +374,13 @@ def _get_modules_with_parent_case_type(app, module, case_property_builder, case_
     } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
 
-def _get_all_case_modules(app, module, case_property_builder, case_type_):
-    # return all modules except the given module
-    parent_types = case_property_builder.get_parent_types(case_type_)
-    modules = app.modules
-    parent_module_ids = [
-        mod.unique_id for mod in modules
-        if mod.case_type in parent_types]
-
+def _get_all_case_modules(app, module):
+    # return all modules of the same case_type as the module's except the given module
     return [{
         'unique_id': mod.unique_id,
         'name': mod.name,
-        'is_parent': mod.unique_id in parent_module_ids,
-    } for mod in app.modules if mod.unique_id != module.unique_id]
+        'is_parent': False,
+    } for mod in app.modules if mod.case_type == module.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
