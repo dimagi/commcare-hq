@@ -352,7 +352,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt default_value="foo" key="name">
+          <prompt default="foo" key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
@@ -368,7 +368,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt default_value="3" key="name">
+          <prompt default="3" key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
