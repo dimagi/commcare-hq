@@ -354,16 +354,20 @@ class ImporterTest(TestCase):
             [parent_case.case_id, 'name-1', 'case_id-1'],
             [parent_case.case_id, 'name-2', 'case_id-2'],
         )
+
+        # Should successfully match on `rows` cases
+        res = do_import(file, config, self.domain)
+        self.assertEqual(rows, res['created_count'])
+        # Should create child cases
+        self.assertEqual(len(self.accessor.get_reverse_indexed_cases([parent_case.case_id])), 3)
+        self.assertEqual(self.accessor.get_extension_case_ids([parent_case.case_id]), [])
+
         file_missing = make_worksheet_wrapper(
             ['parent_id', 'name', 'case_id'],
             ['parent_id-0', 'name-0', 'case_id-0'],
             ['parent_id-1', 'name-1', 'case_id-1'],
             ['parent_id-2', 'name-2', 'case_id-2'],
         )
-
-        # Should successfully match on `rows` cases
-        res = do_import(file, config, self.domain)
-        self.assertEqual(rows, res['created_count'])
 
         # Should be unable to find parent case on `rows` cases
         res = do_import(file_missing, config, self.domain)
