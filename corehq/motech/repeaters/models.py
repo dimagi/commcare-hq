@@ -380,6 +380,15 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if not self.allowed_to_forward(payload):
             return
 
+        if SQLRepeatRecord.objects.filter(
+            domain=self.domain,
+            repeater_stub=self.repeater_stub,
+            payload_id=payload.get_id,
+            state__in=(RECORD_PENDING_STATE, RECORD_FAILURE_STATE),
+        ).exists():
+            # Payload is already waiting to be sent
+            return
+
         self.repeater_stub.repeat_records.create(
             domain=self.domain,
             payload_id=payload.get_id,
