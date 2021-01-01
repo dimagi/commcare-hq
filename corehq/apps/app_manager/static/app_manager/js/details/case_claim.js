@@ -1,6 +1,5 @@
 /* global Uint8Array */
-hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], function (assertProperties) {
-
+hqDefine("app_manager/js/details/case_claim", function () {
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
         // https://stackoverflow.com/a/2117523
@@ -73,7 +72,7 @@ hqDefine("app_manager/js/details/case_claim",['hqwebapp/js/assert_properties'], 
         };
 
         var searchProperty = function (options) {
-            assertProperties.assertRequired(options, [
+            hqImport('hqwebapp/js/assert_properties').assertRequired(options, [
                 'name',
                 'label',
                 'appearance',
