@@ -619,8 +619,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 continue
 
             email = row.get('email')
-            first_name = row.get('first name')
-            last_name = row.get('last name')
             role = row.get('role', None)
             status = row.get('status')
 
@@ -662,10 +660,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                                                     and user_current_role.get_qualified_id() == role_qualified_id)
                                 if role_updated:
                                     user.set_role(domain, role_qualified_id)
-                                if first_name:
-                                    user.first_name = first_name
-                                if last_name:
-                                    user.last_name = last_name
                                 status_row['flag'] = 'updated'
                                 user.save()
 
