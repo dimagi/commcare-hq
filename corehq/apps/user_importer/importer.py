@@ -319,6 +319,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
         validators = get_user_import_validators(
             domain_obj,
             domain_user_specs,
+            False,
             allowed_group_names,
             list(roles_by_name),
             list(profiles_by_name),
@@ -604,9 +605,10 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
             domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
 
-            validators = get_web_user_import_validators(
+            validators = get_user_import_validators(
                 Domain.get_by_name(domain),
                 domain_user_specs,
+                True,
                 list(roles_by_name),
                 upload_domain,
             )

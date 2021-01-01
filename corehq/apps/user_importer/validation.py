@@ -21,40 +21,44 @@ from corehq.util.workbook_json.excel import (
 )
 
 
-def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None,
+def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowed_groups=None, allowed_roles=None,
                                allowed_profiles=None, upload_domain=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
-    return [
+
+    validators = [
         UsernameTypeValidator(domain),
-        UsernameValidator(domain),
-        BooleanColumnValidator(domain, 'is_active'),
-        BooleanColumnValidator(domain, 'is_account_confirmed'),
-        BooleanColumnValidator(domain, 'send_confirmation_email'),
-        RequiredFieldsValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
-        DuplicateValidator(domain, 'user_id', all_specs),
-        DuplicateValidator(domain, 'password', all_specs, is_password) if validate_passwords else noop,
         UsernameLengthValidator(domain),
-        NewUserPasswordValidator(domain),
-        PasswordValidator(domain) if validate_passwords else noop,
         CustomDataValidator(domain),
         EmailValidator(domain),
-        GroupValidator(domain, allowed_groups),
         RoleValidator(domain, allowed_roles),
-        ProfileValidator(domain, allowed_profiles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain)
     ]
+    if is_web_user_import:
+        return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs)]
+    else:
+        return validators + [
+            UsernameValidator(domain),
+            BooleanColumnValidator(domain, 'is_active'),
+            BooleanColumnValidator(domain, 'is_account_confirmed'),
+            BooleanColumnValidator(domain, 'send_confirmation_email'),
+            RequiredFieldsValidator(domain),
+            DuplicateValidator(domain, 'user_id', all_specs),
+            DuplicateValidator(domain, 'password', all_specs, is_password) if validate_passwords else noop,
+            NewUserPasswordValidator(domain),
+            PasswordValidator(domain) if validate_passwords else noop,
+            GroupValidator(domain, allowed_groups),
+            ProfileValidator(domain, allowed_profiles),
+        ]
 
 
-# TODO: confirm validators and incorporate into validation check for web users
 def get_web_user_import_validators(domain_obj, all_specs, allowed_roles=None, upload_domain=None):
     domain = domain_obj.name
     return [
         UsernameTypeValidator(domain),
-        #UsernameValidator(domain),
         RequiredWebFieldsValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         DuplicateValidator(domain, 'email', all_specs),  # is this true?
