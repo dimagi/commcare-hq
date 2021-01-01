@@ -1,11 +1,14 @@
+import doctest
 import uuid
 from datetime import datetime, timedelta
 
 from django.test import TestCase
 
+import corehq.motech.repeaters.dbaccessors
 from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
@@ -19,8 +22,14 @@ from corehq.motech.repeaters.dbaccessors import (
     get_success_repeat_record_count,
     iter_repeat_records_by_domain,
     iterate_repeat_records,
+    prefetch_attempts,
 )
-from corehq.motech.repeaters.models import CaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    FormRepeater,
+    RepeaterStub,
+    RepeatRecord,
+)
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -216,3 +225,51 @@ class TestOtherDBAccessors(TestCase):
 
     def test_get_domains_that_have_repeat_records(self):
         self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])
+
+
+class TestPrefetchAttempts(TestCase):
+    domain = 'ogham'
+    payload_ids = ['beith', 'luis', 'fearn', 'sail', 'nion',
+                   'uath', 'dair', 'tinne', 'coll', 'ceirt']
+
+    def setUp(self):
+        self.repeater = FormRepeater(
+            domain=self.domain,
+            url="https://service.example.com/api/",
+        )
+        self.repeater.save()
+        self.repeater_stub = RepeaterStub.objects.create(
+            domain=self.domain,
+            repeater_id=self.repeater.get_id,
+        )
+        for payload_id in self.payload_ids:
+            record = self.repeater_stub.repeat_records.create(
+                domain=self.domain,
+                payload_id=payload_id,
+                registered_at=datetime.utcnow(),
+            )
+            record.sqlrepeatrecordattempt_set.create(
+                state=RECORD_SUCCESS_STATE,
+            )
+
+    def tearDown(self):
+        self.repeater_stub.delete()
+        self.repeater.delete()
+
+    def test_paginated_prefetched(self):
+        queryset = self.repeater_stub.repeat_records.all()
+        with self.assertNumQueries(7):
+            # 7 queries:
+            # * 1 query for the count
+            # * 3 pages, each with 2 queries:
+            #   + SQLRepeatRecords
+            #   + Prefetch SQLRepeatRecordAttempts
+            records = prefetch_attempts(queryset, queryset.count(),
+                                        chunk_size=4)
+            payload_ids = [r.payload_id for r in records]
+        self.assertEqual(payload_ids, self.payload_ids)
+
+
+def test_doctests():
+    results = doctest.testmod(corehq.motech.repeaters.dbaccessors)
+    assert results.failed == 0
