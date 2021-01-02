@@ -36,31 +36,31 @@ case as its payload.
 The same applies to forms that are received, or users or locations that
 are saved.
 
-The ``register()`` method creates a ``RepeatRecord`` instance, and
-associates it with the payload using the payload's ID. The
-``RepeatRecord.next_check`` property is set to ``datetime.utcnow()``.
+The ``register()`` method creates a ``SQLRepeatRecord`` instance, and
+associates it with the payload using the payload's ID.
 
 Next we jump to *tasks.py*. The ``check_repeaters()`` function will run
 every ``CHECK_REPEATERS_INTERVAL`` (currently set to 5 minutes). Each
-``RepeatRecord`` due to be processed will be added to the
-``CELERY_REPEAT_RECORD_QUEUE``.
+``RepeaterStub`` that is not waiting out a retry interval, and has
+``SQLRepeatRecord`` instances waiting to be sent/resent, will be
+processed.
 
-When it is pulled off the queue and processed, if its repeater is paused
-it will be postponed. If its repeater is deleted it will be deleted. And
-if it is waiting to be sent, or resent, its ``fire()`` method will be
-called, which will call its repeater's ``fire_for_record()`` method.
-
-The repeater will transform the payload into the right format for the
-repeater's subclass type and configuration, and then send the
-transformed data to the repeater's destination URL.
+Its ``SQLRepeatRecord`` instances are iterated in the order they were
+registered. The repeat record's payload will be transformed into the
+right format for the repeater's subclass type and configuration, and
+then sent to the repeater's destination URL.
 
 The response from the destination will be handled according to whether
 the request succeeded, failed, or raised an exception. It will create a
-``RepeatRecordAttempt``, and may include other actions depending on the
-class.
+``SQLRepeatRecordAttempt``. If the remote service caused the request to
+fail (because, for example, it was offline), the ``RepeaterStub`` is
+given an incremental backoff from ``MIN_RETRY_WAIT`` (60 minutes) to
+``MAX_RETRY_WAIT`` (7 days). Failed repeat records are tried again up to
+``MAX_ATTEMPTS`` (6) times, after which they are cancelled.
 
-``RepeatRecordAttempt`` instances are listed under "Project Settings" >
-"Data Forwarding Records".
+``SQLRepeatRecordAttempt`` instances are listed by the
+``SQLRepeatRecordReport``, at "Project Settings" > "Data Forwarding
+Records".
 
 """
 import traceback
