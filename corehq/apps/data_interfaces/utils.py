@@ -129,8 +129,6 @@ def operate_on_payloads(
 ):
     if not repeat_record_ids:
         return {'messages': {'errors': [_('No payloads specified')]}}
-    if not action:  # TODO: Drop. All calls include action
-        return {'messages': {'errors': [_('No action specified')]}}
 
     response = {
         'errors': [],
