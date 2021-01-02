@@ -90,6 +90,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -108,6 +109,7 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
@@ -947,6 +949,13 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def domain_can_forward(domain):
+    return domain and (
+        domain_has_privilege(domain, ZAPIER_INTEGRATION)
+        or domain_has_privilege(domain, DATA_FORWARDING)
+    )
 
 
 # import signals

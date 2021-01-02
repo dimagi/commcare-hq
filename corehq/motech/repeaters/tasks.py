@@ -9,9 +9,7 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.motech.models import RequestLog
-from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
@@ -32,6 +30,7 @@ from .dbaccessors import (
     get_overdue_repeat_record_count,
     iterate_repeat_records,
 )
+from .models import domain_can_forward
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -108,11 +107,7 @@ def process_repeat_record(repeat_record):
     # A RepeatRecord should ideally never get into this state, as the
     # domain_has_privilege check is also triggered in the create_repeat_records
     # in signals.py. But if it gets here, forcefully cancel the RepeatRecord.
-    # todo reconcile ZAPIER_INTEGRATION and DATA_FORWARDING
-    #  they each do two separate things and are priced differently,
-    #  but use the same infrastructure
-    if not (domain_has_privilege(repeat_record.domain, ZAPIER_INTEGRATION)
-            or domain_has_privilege(repeat_record.domain, DATA_FORWARDING)):
+    if not domain_can_forward(repeat_record.domain):
         repeat_record.cancel()
         repeat_record.save()
 
