@@ -1073,6 +1073,16 @@ class SQLRepeatRecord(models.Model):
         ]
         ordering = ['registered_at']
 
+    def requeue(self):
+        # Changing "success" to "pending" and "cancelled" to "failed"
+        # preserves the value of `self.failure_reason`.
+        if self.state == RECORD_SUCCESS_STATE:
+            self.state = RECORD_PENDING_STATE
+            self.save()
+        elif self.state == RECORD_CANCELLED_STATE:
+            self.state = RECORD_FAILURE_STATE
+            self.save()
+
     def add_success_attempt(self, response):
         """
         ``response`` can be a Requests response instance, or True if the
