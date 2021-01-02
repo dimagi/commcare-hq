@@ -1140,6 +1140,17 @@ class SQLRepeatRecord(models.Model):
         ]
         ordering = ['registered_at']
 
+    def fire(self, force_send=False):
+        """
+        Similar to ``RepeatRecord.fire()`` in that it triggers this
+        record to be sent, but it preserves the order of pending/failed
+        records by triggering the repeater instead of only this record.
+        """
+        if force_send:
+            self.requeue()
+        if is_queued(self):
+            attempt_forward_now(self.repeater_stub)
+
     def requeue(self):
         # Changing "success" to "pending" and "cancelled" to "failed"
         # preserves the value of `self.failure_reason`.
