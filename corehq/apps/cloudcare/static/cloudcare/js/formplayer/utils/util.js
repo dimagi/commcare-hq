@@ -170,10 +170,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
 
         this.setQueryData = function (queryDict) {
-            var queryData = {inputs: {}, execute: {}};
-            queryData.inputs[sessionStorage.queryKey] = queryDict;
-            queryData.execute[sessionStorage.queryKey] = true;
-            this.queryData = queryData;
+            if (!this.queryData) {
+                this.queryData = {inputs: {}, execute: {}};
+            }
+            this.queryData.inputs[sessionStorage.queryKey] = queryDict;
+            this.queryData.execute[sessionStorage.queryKey] = true;
         };
 
         this.clearExceptApp = function () {
