@@ -162,7 +162,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = sortIndex;
         };
 
-
         this.setSearch = function (search) {
             this.search = search;
             //clear out pagination on search
@@ -170,7 +169,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function (queryData) {
+        this.setQueryData = function (queryDict) {
+            var queryData = {inputs: {}, execute: {}};
+            queryData.inputs[sessionStorage.queryKey] = queryDict;
+            queryData.execute[sessionStorage.queryKey] = true;
             this.queryData = queryData;
         };
 
