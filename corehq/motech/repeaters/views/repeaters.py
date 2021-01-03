@@ -32,9 +32,8 @@ from ..forms import (
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
 )
-from ..models import Repeater, RepeatRecord
+from ..models import Repeater, RepeatRecord, get_all_repeater_types
 from ..repeater_generators import RegisterGenerator
-from ..utils import get_all_repeater_types
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo', 'class_name friendly_name has_config instances')
 

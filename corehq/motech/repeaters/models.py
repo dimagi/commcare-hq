@@ -64,10 +64,12 @@ class.
 
 """
 import warnings
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.functional import cached_property
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -87,6 +89,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
@@ -139,7 +142,6 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from .utils import get_all_repeater_types
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -644,6 +646,13 @@ class LocationRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
+
+
+def get_all_repeater_types():
+    return OrderedDict([
+        (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
+        for cls in settings.REPEATER_CLASSES
+    ])
 
 
 class RepeatRecordAttempt(DocumentSchema):
