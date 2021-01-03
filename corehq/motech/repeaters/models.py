@@ -70,7 +70,6 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from django.utils.functional import cached_property
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -282,10 +281,16 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self._id} {self.name!r}>"
 
-    @cached_property
+    @property
     def connection_settings(self):
         if not self.connection_settings_id:
             return self.create_connection_settings()
+        return self._get_connection_settings()
+
+    # Cache across instances to avoid N+1 query problem when calling
+    # Repeater.get_url() for each row in repeat record report
+    @quickcache(['self.connection_settings_id'])
+    def _get_connection_settings(self):
         return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @property
