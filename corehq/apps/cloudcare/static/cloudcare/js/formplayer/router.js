@@ -175,11 +175,12 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
-        var urlObject = Util.currentUrlToObject();
-        var fullQueryDict = {}
-        fullQueryDict[urlObject.steps.join(",")] = queryDict;
-        urlObject.setQuery({data: fullQueryDict});
-        urlObject.setDoQuery(true);
+        var urlObject = Util.currentUrlToObject(),
+            queryKey = urlObject.steps.join(","),
+            queryData = {inputs: {}, execute: {}};
+        queryData.inputs[queryKey] = queryDict;
+        queryData.execute[queryKey] = true;
+        urlObject.setQueryData(queryData);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
