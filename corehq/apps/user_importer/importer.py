@@ -27,7 +27,6 @@ from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
-    get_web_user_import_validators,
     is_password,
 )
 from corehq.apps.users.account_confirmation import (
@@ -609,8 +608,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 Domain.get_by_name(domain),
                 domain_user_specs,
                 True,
-                list(roles_by_name),
-                upload_domain,
+                allowed_roles=list(roles_by_name),
+                upload_domain=upload_domain,
             )
             try:
                 for validator in validators:

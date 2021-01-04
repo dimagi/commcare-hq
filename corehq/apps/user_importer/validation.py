@@ -55,22 +55,6 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
         ]
 
 
-def get_web_user_import_validators(domain_obj, all_specs, allowed_roles=None, upload_domain=None):
-    domain = domain_obj.name
-    return [
-        UsernameTypeValidator(domain),
-        RequiredWebFieldsValidator(domain),
-        DuplicateValidator(domain, 'username', all_specs),
-        DuplicateValidator(domain, 'email', all_specs),  # is this true?
-        UsernameLengthValidator(domain),
-        CustomDataValidator(domain),
-        EmailValidator(domain),
-        RoleValidator(domain, allowed_roles),
-        ExistingUserValidator(domain, all_specs),
-        TargetDomainValidator(upload_domain)
-    ]
-
-
 class ImportValidator(metaclass=ABCMeta):
     error_message = None
 
