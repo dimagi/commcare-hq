@@ -66,6 +66,7 @@ def _get_advanced_saml2_settings():
             "wantNameId": True,
             "wantNameIdEncrypted": True,
             "wantAssertionsEncrypted": True,
+            "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
             "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",
         },
