@@ -4,7 +4,7 @@ from django.http import Http404
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 
 from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils import get_saml2_config
+from corehq.apps.sso.configuration import get_saml2_config
 
 
 def identity_provider_required(view_func):

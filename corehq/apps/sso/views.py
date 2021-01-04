@@ -12,7 +12,7 @@ from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
-from corehq.apps.sso.utils import get_saml2_config
+from corehq.apps.sso.configuration import get_saml2_config
 
 
 @identity_provider_required
