@@ -147,15 +147,30 @@ class AuthenticatedEmailDomain(models.Model):
     This specifies the email domains that are tied to an Identity Provider and
     a list of users that would be exempt from SSO.
     """
-    email_domain = models.CharField(max_length=253, db_index=True, unique=True)
+    email_domain = models.CharField(max_length=256, db_index=True, unique=True)
     identity_provider = models.ForeignKey(IdentityProvider, on_delete=models.PROTECT)
-    sso_exempt_users = ArrayField(models.EmailField(), default=list, blank=True)
 
     class Meta(object):
         app_label = 'sso'
 
     def __str__(self):
         return f"{self.email_domain} authenticated by [{self.identity_provider.name}]"
+
+
+class UserExemptFromSingleSignOn(models.Model):
+    """
+    This specifies what users are exempt SSO for a given
+    AuthenticatedEmailDomain. Other users will be required to use SSO once
+    an AuthenticatedEmailDomain is specified for their email domain.
+    """
+    username = models.CharField(max_length=128, db_index=True)
+    email_domain = models.ForeignKey(AuthenticatedEmailDomain, on_delete=models.CASCADE)
+
+    class Meta(object):
+        app_label = 'sso'
+
+    def __str__(self):
+        return f"{self.username} is exempt from SSO with {self.email_domain}"
 
 
 class TrustedIdentityProvider(models.Model):
