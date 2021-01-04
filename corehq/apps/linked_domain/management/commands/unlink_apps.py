@@ -45,7 +45,7 @@ class Command(BaseCommand):
             return
 
         print('Unlinking apps')
-        linked_app.convert_to_application()
+        linked_app = linked_app.convert_to_application()
         linked_app.save()
         self.hide_domain_link_history(linked_domain, linked_app_id, master_domain)
         print('Operation completed')

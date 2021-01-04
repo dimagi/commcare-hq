@@ -203,6 +203,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
+            'search_relevant':
+                module.search_config.relevant if module_offers_search(module) else "",
             'search_command_label':
                 # use default if module_offers_search is false because module.search_config doesn't exist yet
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
