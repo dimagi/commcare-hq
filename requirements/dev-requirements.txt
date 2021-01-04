@@ -21,7 +21,7 @@ cairocffi==1.1.0          # via cairosvg, weasyprint
 cairosvg==2.4.2           # via weasyprint
 https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl  # via -r requirements.in, django-celery-results
 certifi==2020.6.20        # via elasticsearch7, requests, sentry-sdk
-cffi==1.14.3              # via cairocffi, csiphash, weasyprint
+cffi==1.14.3              # via cairocffi, cryptography, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
 click==7.1.2              # via git-build-branch, pip-tools
 cloudant==2.14.0          # via jsonobject-couchdbkit
@@ -31,6 +31,7 @@ commonmark==0.9.1         # via recommonmark
 concurrent-log-handler==0.9.12  # via -r requirements.in
 contextlib2==0.6.0.post1  # via git-build-branch, schema
 coverage==4.5.1           # via -r test-requirements.in
+cryptography==3.3.1       # via pyopenssl
 csiphash==0.0.5           # via -r requirements.in
 cssselect2==0.3.0         # via cairosvg, weasyprint
 datadog==0.39.0           # via -r requirements.in
@@ -160,6 +161,7 @@ pygithub==1.54            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, ipython, pdbpp, pycco, sphinx
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio
+pyopenssl==20.0.1         # via -r requirements.in
 pyparsing==2.4.7          # via packaging
 pyphen==0.9.5             # via weasyprint
 pyrepl==0.9.0             # via fancycompleter
@@ -191,7 +193,7 @@ sentry-sdk==0.19.4        # via -r requirements.in
 sh==1.14.1                # via -r requirements.in, git-build-branch
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, django-prbac
-six==1.15.0               # via -r requirements.in, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, protobuf, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, tenacity, traitlets, transifex-client, twilio, unittest2
+six==1.15.0               # via -r requirements.in, cryptography, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, protobuf, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, tenacity, traitlets, transifex-client, twilio, unittest2
 smartypants==2.0.1        # via pycco
 sniffer==0.4.1            # via -r dev-requirements.in
 snowballstemmer==2.0.0    # via sphinx

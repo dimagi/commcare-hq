@@ -16,12 +16,13 @@ cairocffi==1.1.0          # via cairosvg, weasyprint
 cairosvg==2.4.2           # via weasyprint
 https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl  # via -r requirements.in, django-celery-results
 certifi==2020.6.20        # via elasticsearch7, requests, sentry-sdk
-cffi==1.14.3              # via cairocffi, csiphash, weasyprint
+cffi==1.14.3              # via cairocffi, cryptography, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.14.0          # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7  # via -r requirements.in
 concurrent-log-handler==0.9.12  # via -r requirements.in
 contextlib2==0.6.0.post1  # via schema
+cryptography==3.3.1       # via pyopenssl
 csiphash==0.0.5           # via -r requirements.in
 cssselect2==0.3.0         # via cairosvg, weasyprint
 datadog==0.39.0           # via -r requirements.in
@@ -115,6 +116,7 @@ pygithub==1.54            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, pycco
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio
+pyopenssl==20.0.1         # via -r requirements.in
 pyphen==0.9.5             # via weasyprint
 pysocks==1.7.1            # via twilio
 pystache==0.5.4           # via pycco
@@ -141,7 +143,7 @@ sentry-sdk==0.19.4        # via -r requirements.in
 sh==1.14.1                # via -r requirements.in
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, django-prbac
-six==1.15.0               # via -r requirements.in, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, protobuf, python-dateutil, pyzxcvbn, qrcode, quickcache, tenacity, twilio
+six==1.15.0               # via -r requirements.in, cryptography, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, protobuf, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, tenacity, twilio
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3         # via -r requirements.in
 sortedcontainers==2.3.0   # via intervaltree
