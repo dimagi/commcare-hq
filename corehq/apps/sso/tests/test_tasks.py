@@ -1,30 +1,30 @@
 import datetime
+from django.test import TestCase
 
 from corehq.apps.sso.models import (
-    IdentityProvider,
     ServiceProviderCertificate,
 )
 from corehq.apps.sso.tasks import (
     renew_service_provider_x509_certificates,
     create_rollover_service_provider_x509_certificates,
 )
-from corehq.apps.sso.tests.base_tests import BaseSSOTest
+from corehq.apps.sso.tests import generator
 
 
 def _get_days_before_expiration(days_before):
     return (ServiceProviderCertificate.DEFAULT_EXPIRATION / (24 * 60 * 60)) - days_before
 
 
-class TestSSOTasks(BaseSSOTest):
+class TestSSOTasks(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.account = generator.get_billing_account_for_idp()
 
     def setUp(self):
         super().setUp()
-        self.idp = IdentityProvider(
-            name=f"Azure AD for {self.account.name}",
-            slug=f"{self.domain.name}-idp",
-            owner=self.account
-        )
-        self.idp.save()
+        self.idp = generator.create_idp(self.account)
 
     def test_create_rollover_service_provider_x509_certificates(self):
         self.idp.create_service_provider_certificate()
@@ -89,3 +89,8 @@ class TestSSOTasks(BaseSSOTest):
     def tearDown(self):
         self.idp.delete()
         super().tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.account.delete()
+        super().tearDownClass()
