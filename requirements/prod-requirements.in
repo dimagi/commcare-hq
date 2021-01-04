@@ -10,9 +10,6 @@ ipython==7.16.1
 ndg-httpsclient
 pyasn1
 
-# SSO
-python3-saml==1.9.0
-
 # ssl issue
 # https://urllib3.readthedocs.io/en/latest/user-guide.html#certificate-verification-in-python-2
 pyOpenSSL
