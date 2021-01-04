@@ -30,9 +30,7 @@ class Command(BaseCommand):
         for n in with_progress_bar(range(num_root_items)):
             owner = random.choice(owner_ids)
             # use a random locale for every 3 cases, otherwise use english
-            # remove hu_HU because: https://github.com/joke2k/faker/pull/756
-            locale = (random.choice(list(faker.config.AVAILABLE_LOCALES - set(['hu_HU'])))
-                      if n % 3 == 0 else 'en_US')
+            locale = random.choice(faker.config.AVAILABLE_LOCALES) if n % 3 == 0 else 'en_US'
             structures.extend(self._create_case_structure(locale, owner))
             if len(structures) >= 50:
                 num_cases += len(CaseFactory(domain).create_or_update_cases(structures, user_id=owner))
