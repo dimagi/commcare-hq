@@ -39,6 +39,7 @@ from corehq.apps.users.models import (
     UserRole,
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
+from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 required_headers = set(['username'])
@@ -601,7 +602,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 'username': username,
                 'row': row,
             }
-            roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+            roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
+                                                                                    allow_admin_role=True)}
             domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
 
             validators = get_user_import_validators(
@@ -628,7 +630,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 role_qualified_id = None
 
                 if role:
-                    role_qualified_id = roles_by_name[role].get_qualified_id()
+                    role_qualified_id = roles_by_name[role]
                 if email:
                     email = email.lower()
                 if username:
