@@ -62,7 +62,7 @@ class IdentityProvider(models.Model):
     name = models.CharField(max_length=128)
     slug = models.CharField(max_length=256, db_index=True, unique=True)
     idp_type = models.CharField(
-        max_length=10,
+        max_length=50,
         default=IdentityProviderType.AZURE_AD,
         choices=IdentityProviderType.CHOICES,
     )
