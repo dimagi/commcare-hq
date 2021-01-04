@@ -17,6 +17,18 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
             };
         },
+
+        ui: {
+            valueDropdown: 'select.query-field',
+        },
+
+        onRender: function () {
+            this.ui.valueDropdown.select2({
+                allowClear: true,
+                placeholder: " ",   // required for allowClear to work
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+            });
+        },
     });
 
     var QueryListView = Marionette.CollectionView.extend({
