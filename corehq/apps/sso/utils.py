@@ -1,3 +1,5 @@
+import datetime
+
 from django.urls import reverse
 import settings
 from dimagi.utils.web import get_url_base
@@ -54,6 +56,7 @@ def get_saml2_config(identity_provider):
 
 
 def _get_advanced_saml2_settings():
+    metadata_valid_until = datetime.datetime.utcnow() + datetime.timedelta(days=3)
     return {
         "security": {
             "nameIdEncrypted": True,
@@ -69,6 +72,7 @@ def _get_advanced_saml2_settings():
             "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
             "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",
+            "metadataValidUntil": metadata_valid_until.isoformat(),
         },
         "contactPerson": {
             "technical": {
