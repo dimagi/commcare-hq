@@ -83,6 +83,15 @@ def get_special_fields(domain=None):
             description=_("Use to specify the parent's case type. "
                           "Usually used with parent_id or parent_external_id")),
         FieldSpec(
+            field='host_case_id',
+            description=_("This field will assign the case a new host_case given by "
+                          "the host_case's Case ID. "
+                          "You must use along with host_case_type.")),
+        FieldSpec(
+            field='host_case_type',
+            description=_("Use to specify the host_case's case type. "
+                          "Used with host_case_id")),
+        FieldSpec(
             field='parent_ref',
             description=_("This is a deprecated feature needed for a handful of clients. "
                           "Please do not use unless you know what you are doing"),

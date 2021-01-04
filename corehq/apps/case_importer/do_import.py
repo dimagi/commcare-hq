@@ -278,19 +278,35 @@ class _CaseImportRow(object):
         self.parent_external_id = fields_to_update.pop('parent_external_id', None)
         self.parent_type = fields_to_update.pop('parent_type', self.config.case_type)
         self.parent_ref = fields_to_update.pop('parent_ref', 'parent')
+        self.host_id = fields_to_update.pop('host_case_id', None)
+        self.host_type = fields_to_update.pop('host_case_type', None)
         self.to_close = fields_to_update.pop('close', False)
         self.uploaded_owner_name = fields_to_update.pop('owner_name', None)
         self.uploaded_owner_id = fields_to_update.pop('owner_id', None)
         self.date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
+        self.validate_host_id_column()
 
     def check_valid_external_id(self):
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
             raise exceptions.BlankExternalId()
 
+    def validate_host_id_column(self):
+        # host_id column is used to create extension cases. Run below validations
+        #   when user tries to create extension cases
+
+        if not self.host_id:
+            return
+
+        # Can't use host_id with any of (parent_id, parent_external_id, owner_id) columns
+        # Must specify host_type
+        owner_is_set = self.uploaded_owner_id or self.uploaded_owner_name
+        if (self.parent_id or self.parent_external_id or owner_is_set) or (not self.host_type):
+            raise exceptions.InvalidHostId()
+
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids
-                   for lookup_id in [self.search_id, self.parent_id, self.parent_external_id])
+                   for lookup_id in [self.search_id, self.parent_id, self.parent_external_id, self.host_id])
 
     @cached_property
     def existing_case(self):
@@ -319,6 +335,12 @@ class _CaseImportRow(object):
             # if they didn't supply an owner, default to current user
             return owner_id or self.user_id
 
+    def _get_case_index(self):
+        if self.parent_id or self.parent_external_id:
+            return self._get_parent_index()
+        elif self.host_id:
+            return self._get_host_index()
+
     def _get_parent_index(self):
         for column, search_field, search_id in [
                 ('parent_id', 'case_id', self.parent_id),
@@ -332,6 +354,15 @@ class _CaseImportRow(object):
                     return {self.parent_ref: (parent_case.type, parent_case.case_id)}
                 raise exceptions.InvalidParentId(column)
 
+    def _get_host_index(self):
+        if self.host_id:
+            host_case, error = lookup_case('case_id', self.host_id, self.domain, self.host_type)
+            _log_case_lookup(self.domain)
+            if host_case:
+                # todo; decide what should be the index identifier
+                return {self.config.case_type: (host_case.type, host_case.case_id, "extension")}
+            raise exceptions.InvalidHost('host_id')
+
     def _get_date_opened(self):
         if self.date_opened and BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
             return self.date_opened
@@ -344,7 +375,7 @@ class _CaseImportRow(object):
     def _get_caseblock_kwargs(self):
         return {
             'update': self.fields_to_update,
-            'index': self._get_parent_index(),
+            'index': self._get_case_index(),
             'date_opened': self._get_date_opened() or CaseBlock.undefined,
             'external_id': self._get_external_id() or CaseBlock.undefined,
         }

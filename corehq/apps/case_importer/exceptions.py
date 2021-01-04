@@ -76,6 +76,22 @@ class InvalidParentId(CaseRowError):
     )
 
 
+class InvalidHost(CaseRowError):
+    title = ugettext_noop('Invalid Parent ID')
+    message = ugettext_lazy(
+        "An invalid or unknown host case was specified for the "
+        "uploaded case."
+    )
+
+
+class InvalidHostId(CaseRowError):
+    title = ugettext_noop('Invalid Host ID')
+    message = ugettext_lazy(
+        "When using host_id column, parent_id/parent_external_id/owner_id "
+        "columns should be empty and host_type column must be specified "
+    )
+
+
 class InvalidDate(CaseRowError):
     title = ugettext_noop('Invalid Date')
     message = ugettext_lazy(

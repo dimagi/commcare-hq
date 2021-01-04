@@ -376,6 +376,28 @@ class ImporterTest(TestCase):
                          len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
 
+    @run_with_all_backends
+    def testHostCase(self):
+        # Todo test validation
+        headers = ['host_case_id', 'name', 'case_id', 'host_case_type']
+        config = self._config(headers, create_new_cases=True, search_column='case_id')
+        rows = 3
+        [host_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+
+        file = make_worksheet_wrapper(
+            headers,
+            [host_case.case_id, 'name-0', 'case_id-0', host_case.type],
+            [host_case.case_id, 'name-1', 'case_id-1', host_case.type],
+            [host_case.case_id, 'name-2', 'case_id-2', host_case.type],
+        )
+
+        # Should successfully match on `rows` cases
+        res = do_import(file, config, self.domain)
+        self.assertEqual(rows, res['created_count'])
+        # Should create extension cases
+        self.assertEqual(len(self.accessor.get_extension_case_ids([host_case.case_id])), 3)
+
     # This test will only run on SQL backend because of a bug in couch backend
     # that overrides current domain with the 'domain' column value from excel
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
