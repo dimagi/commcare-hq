@@ -25,7 +25,7 @@ class ServiceProviderCertificate(object):
         To increase the security with SAML transactions, we will provide the IdP
         with our public key for an x509 certificate unique to our interactions with
         a particular IdP. This certificate will be regenerated automatically by
-        a periodic task every 60 days.
+        a periodic task every year.
         """
         # create a key pair
         k = crypto.PKey()
