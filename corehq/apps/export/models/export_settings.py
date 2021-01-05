@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+
 
 class ExportFileType(object):
     CSV = "CSV"
@@ -11,6 +13,19 @@ class ExportFileType(object):
         (EXCEL_2007_PLUS, ugettext_lazy("Excel 2007+")),
         (EXCEL_PRE_2007, ugettext_lazy("Excel (older versions)")),
     )
+
+    @classmethod
+    def map_to_couch_type(cls, filetype):
+        from couchexport.models import Format
+
+        if filetype == ExportFileType.EXCEL_2007_PLUS:
+            return Format.XLS_2007
+        elif filetype == ExportFileType.EXCEL_PRE_2007:
+            return Format.XLS
+        elif filetype == ExportFileType.CSV:
+            return Format.CSV
+        else:
+            raise ValueError(f"{filetype} is not supported for export")
 
 
 class DefaultExportSettings(models.Model):

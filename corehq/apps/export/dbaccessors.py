@@ -181,6 +181,19 @@ def _properly_wrap_export_instance(doc):
     return class_.wrap(doc)
 
 
+def get_default_export_settings_for_domain(domain):
+    from .models import DefaultExportSettings
+    from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+    settings = None
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    # currently only available for enterprise customers
+    supported_editions = [SoftwarePlanEdition.ENTERPRISE]
+    if current_subscription.plan_version.plan.edition in supported_editions:
+        settings = DefaultExportSettings.objects.get_or_create(account=current_subscription.account)[0]
+
+    return settings
+
+
 @unit_testing_only
 def delete_all_export_data_schemas():
     from .models import ExportDataSchema

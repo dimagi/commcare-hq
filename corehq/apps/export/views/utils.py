@@ -25,6 +25,7 @@ from corehq.apps.export.const import (
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
 )
+from corehq.apps.export.dbaccessors import get_default_export_settings_for_domain
 from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportDataSchema,
@@ -215,8 +216,12 @@ class ODataFeedMixin(object):
 
     def create_new_export_instance(self, schema):
         instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+        settings = get_default_export_settings_for_domain(schema.domain)
         instance.is_odata_config = True
         instance.transform_dates = False
+        if hasattr(instance, 'include_errors'):
+            instance.include_errors = settings.odata_include_duplicates
+        instance.split_multiselects = settings.odata_expand_checkbox
         return instance
 
     @property
