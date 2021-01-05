@@ -461,14 +461,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
+        attributes: function() {
+            return {
+                "role": "link",
+                "tabindex": "0",
+            };
+        },
         events: {
             "click": "crumbClick",
+            "keydown": "crumbKeyAction",
         },
 
         crumbClick: function (e) {
             e.preventDefault();
             var crumbId = this.options.model.get('id');
             FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
+        },
+        crumbKeyAction: function(e) {
+            if (e.keyCode === 13) {
+                this.crumbClick(e);
+            }
         },
     });
 
@@ -479,9 +491,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
+            'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
             FormplayerFrontend.trigger('navigateHome');
+        },
+        onKeyActionHome: function (e) {
+            if (e.keyCode === 13) {
+                this.onClickHome();
+            }
         },
 
     });
