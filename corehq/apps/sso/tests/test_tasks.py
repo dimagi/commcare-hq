@@ -1,9 +1,7 @@
 import datetime
 from django.test import TestCase
 
-from corehq.apps.sso.models import (
-    ServiceProviderCertificate,
-)
+from corehq.apps.sso.certificates import DEFAULT_EXPIRATION
 from corehq.apps.sso.tasks import (
     renew_service_provider_x509_certificates,
     create_rollover_service_provider_x509_certificates,
@@ -12,7 +10,7 @@ from corehq.apps.sso.tests import generator
 
 
 def _get_days_before_expiration(days_before):
-    return (ServiceProviderCertificate.DEFAULT_EXPIRATION / (24 * 60 * 60)) - days_before
+    return (DEFAULT_EXPIRATION / (24 * 60 * 60)) - days_before
 
 
 class TestSSOTasks(TestCase):
