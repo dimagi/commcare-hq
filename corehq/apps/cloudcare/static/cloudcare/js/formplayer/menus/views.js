@@ -461,7 +461,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
-        attributes: function() {
+        attributes: function () {
             return {
                 "role": "link",
                 "tabindex": "0",
@@ -477,7 +477,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var crumbId = this.options.model.get('id');
             FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
         },
-        crumbKeyAction: function(e) {
+        crumbKeyAction: function (e) {
             if (e.keyCode === 13) {
                 this.crumbClick(e);
             }
