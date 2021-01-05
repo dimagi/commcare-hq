@@ -28,6 +28,7 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y google-chrome-unstable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst ttf-freefont \
     --no-install-recommends \
+  # this line deletes all package sources, so don't apt-get install anything after this:
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 
 COPY requirements/test-requirements.txt package.json /vendor/
