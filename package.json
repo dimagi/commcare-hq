@@ -71,7 +71,7 @@
         "leaflet": "0.7.7",
         "less": "3.10.3",
         "marionette.approuter": "^1.0.2",
-        "markdown-it": "7.0.1",
+        "markdown-it": "12.0.4",
         "modernizr": "^3.11.3",
         "moment": "2.27.0",
         "multiselect": "0.9.12",
