@@ -319,7 +319,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.columnHeader': 'columnSortAction',
             'keypress': 'keyAction',
-            'keypress @ui.paginators': 'paginateKeyAction',
         },
 
         caseListAction: function (e) {
@@ -342,13 +341,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
-        },
-
-        paginateKeyAction: function (e) {
-            if (event.which === 13 || event.keyCode === 13) {
-                e.stopImmediatePropagation();
-                this.paginateAction(e);
-            }
         },
 
         columnSortAction: function (e) {
