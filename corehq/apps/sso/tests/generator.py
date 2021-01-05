@@ -1,3 +1,4 @@
+from corehq.apps.sso import certificates
 from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.tests import generator as accounting_gen
 
@@ -8,7 +9,7 @@ from corehq.apps.sso.models import (
 
 
 @unit_testing_only
-def create_idp(account=None):
+def create_idp(account=None, include_certs=False):
     if not account:
         account = get_billing_account_for_idp()
     idp_slug = data_gen.arbitrary_unique_name()[:20]
@@ -18,6 +19,16 @@ def create_idp(account=None):
         owner=account
     )
     idp.save()
+    if include_certs:
+        idp.create_service_provider_certificate()
+        idp.entity_id = "https://testidp.com/saml2/entity_id"
+        idp.login_url = "https://testidp.com/saml2/login"
+        idp.logout_url = "https://testidp.com/saml2/logout"
+        key_pair = certificates.create_key_pair()
+        cert = certificates.create_self_signed_cert(key_pair)
+        idp.idp_cert_public = certificates.get_public_key(cert)
+        idp.date_idp_cert_expiration = certificates.get_expiration_date(cert)
+        idp.save()
     return idp
 
 
