@@ -49,23 +49,60 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         ui: {
             submitButton: '#query-submit-button',
+            valueDropdown: 'select.query-field',
         },
 
         events: {
+            'change @ui.valueDropdown': 'changeDropdown',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        getAnswers: function () {
+            var $fields = $(".query-field"),
+                answers = {},
+                model = this.parentModel;
+            $fields.each(function (index) {
+                if (this.value !== '') {
+                    answers[model[index].get('id')] = this.value;
+                }
+            });
+            return answers;
+        },
+
+        changeDropdown: function (e) {
+            e.preventDefault();
+            var $fields = $(".query-field");
+
+            // If there aren't at least two dropdowns, there are no dependencies
+            if ($fields.filter("select").length < 2) {
+                return;
+            }
+
+            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            var urlObject = Util.currentUrlToObject();
+            urlObject.setQuery(this.getAnswers());
+            urlObject.setDoQuery(false);
+            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                for (var i = 0; i < response.models.length; i++) {
+                    var choices = response.models[i].get('itemsetChoices');
+                    if (choices) {
+                        var $field = $($fields.get(i)),
+                            value = $field.val();
+                        $field.html('');
+                        _.each(choices, function (choice, index) {
+                            $field.append(new Option(choice, index));
+                        });
+                        $field.val(value);
+                        $field.trigger('change.select2');
+                    }
+                }
+            });
         },
 
         submitAction: function (e) {
             e.preventDefault();
-            var payload = {};
-            var fields = $(".query-field");
-            var model = this.parentModel;
-            fields.each(function (index) {
-                if (this.value !== '') {
-                    payload[model[index].get('id')] = this.value;
-                }
-            });
-            FormplayerFrontend.trigger("menu:query", payload);
+            FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
     });
 
