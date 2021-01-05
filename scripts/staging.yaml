@@ -70,6 +70,6 @@ branches:
   #- jls/web-apps-sticky-search # Jenny Dec 28
   - sr/parent-select # Jenny Dec 29
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
-  #- bmb/sso-architecture  # Biyeun Dec 30
+  - bmb/sso-architecture  # Biyeun Dec 30
   - smh/query-screen-prompt-defaults # Steph Jan 5
 submodules: {}
