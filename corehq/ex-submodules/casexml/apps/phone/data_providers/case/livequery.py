@@ -367,4 +367,4 @@ def compile_response(timing_context, restore_state, response, batches, update_pr
         update_progress(done)
 
 
-RESTORE_CASE_LOAD_BUCKETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+RESTORE_CASE_LOAD_BUCKETS = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000]
