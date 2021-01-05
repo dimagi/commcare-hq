@@ -65,7 +65,7 @@ branches:
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
-  - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
+  # - solleks:cdg/accessible_links # Charlie/Jenny Dec 21
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   #- jls/web-apps-sticky-search # Jenny Dec 28
   - sr/parent-select # Jenny Dec 29
