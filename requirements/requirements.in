@@ -84,8 +84,6 @@ pycryptodome>=3.6.6  # security update
 PyGithub==1.54
 Pygments~=2.0
 pygooglechart==0.4.0
-pyOpenSSL==20.0.1
-python3-saml==1.9.0
 python-dateutil~=2.6
 python-imap==1.0.0
 python-Levenshtein
