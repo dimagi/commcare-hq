@@ -391,7 +391,6 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         };
 
         self.captionId = function () {
-            console.log('Called captionId');
             return `group_${self.groupId}_caption`;
         };
 
