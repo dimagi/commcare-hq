@@ -190,9 +190,6 @@ class SQLRepeaterStub(models.Model):
     """
     This model is used to join SQLRepeatRecords. It does not reproduce
     the behaviour of Repeater classes or instances.
-
-    It is created when its first SQLRepeatRecord is registered. See
-    ``Repeater.register()``.
     """
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36)
