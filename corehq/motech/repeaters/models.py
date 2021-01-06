@@ -215,16 +215,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     base_doc = 'Repeater'
 
     domain = StringProperty()
-    connection_settings_id = IntegerProperty(required=False, default=None)
-    # TODO: Delete the following properties once all Repeaters have been
-    #       migrated to ConnectionSettings. (2020-05-16)
-    url = StringProperty()
-    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
-    username = StringProperty()
-    password = StringProperty()  # See also plaintext_password()
-    skip_cert_verify = BooleanProperty(default=False)  # See also verify()
-    notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
-
+    connection_settings_id = IntegerProperty(required=True)
     format = StringProperty()
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
@@ -246,8 +237,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @cached_property
     def connection_settings(self):
-        if not self.connection_settings_id:
-            return self.create_connection_settings()
         return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @property
@@ -364,7 +353,9 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def wrap(cls, data):
-        data.pop('name', None)
+        for legacy_property in ('name', 'auth_type', 'username', 'password',
+                                'url', 'skip_cert_verify', 'notify_addresses_str'):
+            data.pop(legacy_property, None)
         if cls.__name__ == Repeater.__name__:
             cls_ = cls.get_class_from_doc_type(data['doc_type'])
             if cls_:
@@ -412,19 +403,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         # to be overridden
         return self.generator.get_headers()
 
-    @property
-    def plaintext_password(self):
-        if self.password is None:
-            return ''
-        if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
-            ciphertext = self.password.split('$', 2)[2]
-            return b64_aes_decrypt(ciphertext)
-        return self.password
-
-    @property
-    def verify(self):
-        return not self.skip_cert_verify
-
     def send_request(self, repeat_record, payload):
         url = self.get_url(repeat_record)
         return simple_post(
@@ -471,25 +449,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         extend FormRepeater, use the same form.)
         """
         return self.__class__.__name__
-
-    def create_connection_settings(self):
-        if self.connection_settings_id:
-            return  # Nothing to do
-        conn = ConnectionSettings(
-            domain=self.domain,
-            name=self.url,
-            url=self.url,
-            auth_type=self.auth_type,
-            username=self.username,
-            skip_cert_verify=self.skip_cert_verify,
-            notify_addresses_str=self.notify_addresses_str,
-        )
-        # Allow ConnectionSettings to encrypt old Repeater passwords:
-        conn.plaintext_password = self.plaintext_password
-        conn.save()
-        self.connection_settings_id = conn.id
-        self.save()
-        return conn
 
 
 class FormRepeater(Repeater):
