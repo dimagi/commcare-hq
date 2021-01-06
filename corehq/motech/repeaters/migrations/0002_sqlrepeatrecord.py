@@ -13,23 +13,18 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='SQLRepeaterStub',
+            name='RepeaterLink',
             fields=[
                 ('id', models.AutoField(auto_created=True,
                                         primary_key=True,
                                         serialize=False,
                                         verbose_name='ID')),
                 ('domain', models.CharField(max_length=126)),
-                ('couch_id', models.CharField(max_length=36)),
+                ('repeater_id', models.CharField(max_length=36)),
                 ('is_paused', models.BooleanField(default=False)),
-                ('next_attempt_at', models.DateTimeField(blank=True,
-                                                         null=True)),
-                ('last_attempt_at', models.DateTimeField(blank=True,
-                                                         null=True)),
+                ('next_attempt_at', models.DateTimeField(blank=True, null=True)),
+                ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
             ],
-            options={
-                'db_table': 'repeaters_repeaterstub',
-            },
         ),
         migrations.CreateModel(
             name='SQLRepeatRecord',
@@ -39,8 +34,7 @@ class Migration(migrations.Migration):
                                         serialize=False,
                                         verbose_name='ID')),
                 ('domain', models.CharField(max_length=126)),
-                ('couch_id', models.CharField(blank=True, max_length=36,
-                                              null=True)),
+                ('couch_id', models.CharField(blank=True, max_length=36, null=True)),
                 ('payload_id', models.CharField(max_length=36)),
                 ('state', models.TextField(
                     choices=[
@@ -52,10 +46,10 @@ class Migration(migrations.Migration):
                     default='PENDING',
                 )),
                 ('registered_at', models.DateTimeField()),
-                ('repeater', models.ForeignKey(
+                ('repeater_link', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='repeat_records',
-                    to='repeaters.SQLRepeaterStub',
+                    to='repeaters.RepeaterLink',
                 )),
             ],
             options={
@@ -91,14 +85,14 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddIndex(
-            model_name='sqlrepeaterstub',
+            model_name='repeaterlink',
             index=models.Index(fields=['domain'],
-                               name='repeaters_r_domain_23d304_idx'),
+                               name='repeaters_r_domain_e5f4c3_idx'),
         ),
         migrations.AddIndex(
-            model_name='sqlrepeaterstub',
-            index=models.Index(fields=['couch_id'],
-                               name='repeaters_r_couch_i_a2d469_idx'),
+            model_name='repeaterlink',
+            index=models.Index(fields=['repeater_id'],
+                               name='repeaters_r_repeate_cbc8be_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',

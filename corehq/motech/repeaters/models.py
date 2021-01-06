@@ -167,11 +167,11 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
-class RepeaterManager(models.Manager):
+class RepeaterLinkManager(models.Manager):
 
     def all_ready(self):
         """
-        Return all SQLRepeaterStubs ready to be forwarded.
+        Return all RepeaterLinks ready to be forwarded.
         """
         return (
             self.get_queryset()
@@ -186,24 +186,22 @@ class RepeaterManager(models.Manager):
         )
 
 
-class SQLRepeaterStub(models.Model):
+class RepeaterLink(models.Model):
     """
-    This model is used to join SQLRepeatRecords. It does not reproduce
-    the behaviour of Repeater classes or instances.
+    This model links the SQLRepeatRecords of a Repeater.
     """
     domain = models.CharField(max_length=126)
-    couch_id = models.CharField(max_length=36)
+    repeater_id = models.CharField(max_length=36)
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
 
-    objects = RepeaterManager()
+    objects = RepeaterLinkManager()
 
     class Meta:
-        db_table = 'repeaters_repeaterstub'
         indexes = [
             models.Index(fields=['domain']),
-            models.Index(fields=['couch_id']),
+            models.Index(fields=['repeater_id']),
         ]
 
 
@@ -980,9 +978,9 @@ class SQLRepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
     payload_id = models.CharField(max_length=36)
-    repeater = models.ForeignKey(SQLRepeaterStub,
-                                 on_delete=models.CASCADE,
-                                 related_name='repeat_records')
+    repeater_link = models.ForeignKey(RepeaterLink,
+                                      on_delete=models.CASCADE,
+                                      related_name='repeat_records')
     state = models.TextField(choices=RECORD_STATES,
                              default=RECORD_PENDING_STATE)
     registered_at = models.DateTimeField()
