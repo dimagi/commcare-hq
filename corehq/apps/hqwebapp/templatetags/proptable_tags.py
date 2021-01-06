@@ -222,6 +222,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
 def get_tables_as_columns(*args, **kwargs):
     sections = get_tables_as_rows(*args, **kwargs)
     for section in sections:
+        print(section)
         section['columns'] = list(zip_longest(*section['rows']))
         del section['rows']
 

@@ -12,7 +12,7 @@
 
       <div class="form-case-changes well
             {% with table_count=tables|length column_count=table.columns|length %}
-            {% if not table.name and table_count == 1 and column_count == 1 %} 
+            {% if not table.name and table_count == 1 and column_count == 1 %}
                 well-loner
             {% endif %}
             {% endwith %}">
@@ -22,7 +22,7 @@
             {% for cell in column %}
               {% if cell.name or cell.value %}
                 <dt title="{{ cell.expr }}">
-                  {{ cell.name }}
+                  {{ cell.expr }}
                 </dt>
                 <dd>
                   {{ cell.value }}
