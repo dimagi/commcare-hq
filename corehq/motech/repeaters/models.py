@@ -203,6 +203,7 @@ class SQLRepeaterStub(models.Model):
     objects = RepeaterManager()
 
     class Meta:
+        db_table = 'repeaters_repeaterstub'
         indexes = [
             models.Index(fields=['domain', 'couch_id']),
         ]
@@ -989,6 +990,7 @@ class SQLRepeatRecord(models.Model):
     registered_at = models.DateTimeField()
 
     class Meta:
+        db_table = 'repeaters_repeatrecord'
         indexes = [
             models.Index(fields=['domain']),
             models.Index(fields=['couch_id']),
@@ -1007,6 +1009,7 @@ class SQLRepeatRecordAttempt(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
+        db_table = 'repeaters_repeatrecordattempt'
         ordering = ['created_at']
 
 
