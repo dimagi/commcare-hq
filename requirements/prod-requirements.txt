@@ -130,7 +130,7 @@ pygithub==1.54            # via -r requirements.in
 pygments==2.7.1           # via -r requirements.in, ipython, pycco
 pygooglechart==0.4.0      # via -r requirements.in
 pyjwt==1.7.1              # via pygithub, twilio
-pyopenssl==20.0.1         # via -r prod-requirements.in, ndg-httpsclient
+pyopenssl==20.0.1         # via -r prod-requirements.in, -r sso-requirements.in, ndg-httpsclient
 pyphen==0.9.5             # via weasyprint
 pysocks==1.7.1            # via twilio
 pystache==0.5.4           # via pycco
@@ -140,7 +140,7 @@ python-imap==1.0.0        # via -r requirements.in
 python-levenshtein==0.12.0  # via -r requirements.in
 python-magic==0.4.18      # via -r requirements.in
 python-mimeparse==1.6.0   # via django-tastypie
-python3-saml==1.9.0       # via -r prod-requirements.in
+python3-saml==1.9.0       # via -r sso-requirements.in
 pytz==2020.1              # via -r requirements.in, babel, celery, django, flower, twilio
 pyyaml==5.3.1             # via -r requirements.in
 pyzxcvbn==0.8.0           # via -r requirements.in
