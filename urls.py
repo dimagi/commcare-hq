@@ -158,6 +158,11 @@ urlpatterns = [
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
 ] + LOCAL_APP_URLS
 
+if settings.ENABLE_SINGLE_SIGN_ON:
+    urlpatterns += [
+        url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
+    ]
+
 if settings.ENABLE_PRELOGIN_SITE:
     # handle redirects from old prelogin
     urlpatterns += [
