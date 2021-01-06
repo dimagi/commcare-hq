@@ -37,6 +37,7 @@ COPY requirements/test-requirements.txt package.json /vendor/
 RUN git config --global url."https://".insteadOf git:// \
  && pip install --upgrade pip \
  && pip install -r /vendor/test-requirements.txt --user --upgrade \
+ && pip install -r /vendor/sso-requirements.txt --user --upgrade \
  && rm -rf /root/.cache/pip
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options

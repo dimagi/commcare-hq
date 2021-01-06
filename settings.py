@@ -18,6 +18,14 @@ DEBUG = True
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+
+# For Single Sign On (SSO) Implementations
+ENABLE_SINGLE_SIGN_ON = False
+SAML2_DEBUG = False
+SSO_APPS = (
+    'corehq.apps.sso',
+)
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -387,7 +395,10 @@ HQ_APPS = (
 )
 
 # any built-in management commands we want to override should go in hqscripts
-INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + SSO_APPS
+
+if ENABLE_SINGLE_SIGN_ON:
+    INSTALLED_APPS += SSO_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
