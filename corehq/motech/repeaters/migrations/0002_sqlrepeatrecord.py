@@ -27,6 +27,9 @@ class Migration(migrations.Migration):
                 ('last_attempt_at', models.DateTimeField(blank=True,
                                                          null=True)),
             ],
+            options={
+                'db_table': 'repeaters_repeaterstub',
+            },
         ),
         migrations.CreateModel(
             name='SQLRepeatRecord',
@@ -56,6 +59,7 @@ class Migration(migrations.Migration):
                 )),
             ],
             options={
+                'db_table': 'repeaters_repeatrecord',
                 'ordering': ['registered_at'],
             },
         ),
@@ -70,7 +74,7 @@ class Migration(migrations.Migration):
                     ('PENDING', 'Pending'),
                     ('SUCCESS', 'Succeeded'),
                     ('FAIL', 'Failed'),
-                    ('CANCELLED', 'Cancelled')
+                    ('CANCELLED', 'Cancelled'),
                 ])),
                 ('message', models.TextField(blank=True, null=True)),
                 ('traceback', models.TextField(blank=True, null=True)),
@@ -82,32 +86,38 @@ class Migration(migrations.Migration):
                 )),
             ],
             options={
+                'db_table': 'repeaters_repeatrecordattempt',
                 'ordering': ['created_at'],
             },
         ),
         migrations.AddIndex(
             model_name='sqlrepeaterstub',
-            index=models.Index(fields=['domain', 'couch_id'],
-                               name='repeaters_s_domain_454f6d_idx'),
+            index=models.Index(fields=['domain'],
+                               name='repeaters_r_domain_23d304_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='sqlrepeaterstub',
+            index=models.Index(fields=['couch_id'],
+                               name='repeaters_r_couch_i_a2d469_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
             index=models.Index(fields=['domain'],
-                               name='repeaters_s_domain_b82273_idx'),
+                               name='repeaters_r_domain_3ae9ab_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
             index=models.Index(fields=['couch_id'],
-                               name='repeaters_s_couch_i_75ba4d_idx'),
+                               name='repeaters_r_couch_i_ea5782_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
             index=models.Index(fields=['payload_id'],
-                               name='repeaters_s_payload_e42bfa_idx'),
+                               name='repeaters_r_payload_f64556_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
             index=models.Index(fields=['registered_at'],
-                               name='repeaters_s_registe_a21901_idx'),
+                               name='repeaters_r_registe_b48c68_idx'),
         ),
     ]
