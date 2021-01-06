@@ -378,7 +378,6 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def testExtensionCase(self):
-        # Todo test validation
         headers = ['parent_id', 'name', 'case_id', 'parent_relationship_type', 'parent_identifier']
         config = self._config(headers, create_new_cases=True, search_column='case_id')
         [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))

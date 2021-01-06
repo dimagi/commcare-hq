@@ -76,14 +76,6 @@ class InvalidParentId(CaseRowError):
     )
 
 
-class InvalidHost(CaseRowError):
-    title = ugettext_noop('Invalid Parent ID')
-    message = ugettext_lazy(
-        "An invalid or unknown host case was specified for the "
-        "uploaded case."
-    )
-
-
 class InvalidDate(CaseRowError):
     title = ugettext_noop('Invalid Date')
     message = ugettext_lazy(
