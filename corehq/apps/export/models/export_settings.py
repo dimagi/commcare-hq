@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from couchexport.models import Format
 
 
 class ExportFileType(object):
@@ -15,9 +15,7 @@ class ExportFileType(object):
     )
 
     @classmethod
-    def map_to_couch_type(cls, filetype):
-        from couchexport.models import Format
-
+    def get_file_format(cls, filetype):
         if filetype == ExportFileType.EXCEL_2007_PLUS:
             return Format.XLS_2007
         elif filetype == ExportFileType.EXCEL_PRE_2007:

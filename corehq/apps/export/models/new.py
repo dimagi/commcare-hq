@@ -87,10 +87,13 @@ from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
     get_form_inferred_schema,
     get_latest_case_export_schema,
-    get_latest_form_export_schema, get_default_export_settings_for_domain,
+    get_latest_form_export_schema,
 )
 from corehq.apps.export.models.export_settings import ExportFileType
-from corehq.apps.export.utils import is_occurrence_deleted
+from corehq.apps.export.utils import (
+    get_or_create_default_export_settings_for_domain,
+    is_occurrence_deleted,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -1120,12 +1123,12 @@ class CaseExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        settings = get_default_export_settings_for_domain(schema.domain)
+        settings = get_or_create_default_export_settings_for_domain(schema.domain)
         if settings is not None:
             return cls(
                 domain=schema.domain,
                 case_type=schema.case_type,
-                export_format=ExportFileType.map_to_couch_type(settings.cases_filetype),
+                export_format=ExportFileType.get_file_format(settings.cases_filetype),
                 transform_dates=settings.cases_auto_convert,
             )
         else:
@@ -1198,13 +1201,13 @@ class FormExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        settings = get_default_export_settings_for_domain(schema.domain)
+        settings = get_or_create_default_export_settings_for_domain(schema.domain)
         if settings is not None:
             return cls(
                 domain=schema.domain,
                 xmlns=schema.xmlns,
                 app_id=schema.app_id,
-                export_format=ExportFileType.map_to_couch_type(settings.forms_filetype),
+                export_format=ExportFileType.get_file_format(settings.forms_filetype),
                 transform_dates=settings.forms_auto_convert,
                 format_data_in_excel=settings.forms_auto_format_cells,
                 include_errors=settings.forms_include_duplicates,
