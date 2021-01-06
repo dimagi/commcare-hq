@@ -4,11 +4,11 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-cffi==1.14.4              # via cryptography
-cryptography==3.3.1       # via pyopenssl
-defusedxml==0.6.0         # via python3-saml
+cffi==1.14.3              # via -r sso-requirements.in, cryptography
+cryptography==3.2         # via -r sso-requirements.in, pyopenssl
+defusedxml==0.5.0         # via -r sso-requirements.in, python3-saml
 isodate==0.6.0            # via python3-saml
-lxml==4.6.2               # via xmlsec
+lxml==4.3.5               # via -r sso-requirements.in, xmlsec
 pycparser==2.20           # via cffi
 pyopenssl==20.0.1         # via -r sso-requirements.in
 python3-saml==1.9.0       # via -r sso-requirements.in
