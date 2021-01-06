@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='RepeaterLink',
+            name='RepeaterStub',
             fields=[
                 ('id', models.AutoField(auto_created=True,
                                         primary_key=True,
@@ -46,10 +46,10 @@ class Migration(migrations.Migration):
                     default='PENDING',
                 )),
                 ('registered_at', models.DateTimeField()),
-                ('repeater_link', models.ForeignKey(
+                ('repeater_stub', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='repeat_records',
-                    to='repeaters.RepeaterLink',
+                    to='repeaters.RepeaterStub',
                 )),
             ],
             options={
@@ -85,12 +85,12 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddIndex(
-            model_name='repeaterlink',
+            model_name='repeaterstub',
             index=models.Index(fields=['domain'],
                                name='repeaters_r_domain_e5f4c3_idx'),
         ),
         migrations.AddIndex(
-            model_name='repeaterlink',
+            model_name='repeaterstub',
             index=models.Index(fields=['repeater_id'],
                                name='repeaters_r_repeate_cbc8be_idx'),
         ),

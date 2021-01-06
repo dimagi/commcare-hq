@@ -17,7 +17,7 @@ from ..const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
-from ..models import FormRepeater, RepeaterLink, get_all_repeater_types
+from ..models import FormRepeater, RepeaterStub, get_all_repeater_types
 from ..repeater_generators import FormRepeaterXMLPayloadGenerator
 
 
@@ -67,23 +67,23 @@ class TestSQLRepeatRecordOrdering(TestCase):
             url='https://spam.example.com/api/',
         )
         self.repeater.save()
-        self.repeater_link = RepeaterLink.objects.create(
+        self.repeater_stub = RepeaterStub.objects.create(
             domain='eden',
             repeater_id=self.repeater.get_id,
         )
-        self.repeater_link.repeat_records.create(
-            domain=self.repeater_link.domain,
+        self.repeater_stub.repeat_records.create(
+            domain=self.repeater_stub.domain,
             payload_id='eve',
             registered_at='1970-02-01',
         )
 
     def tearDown(self):
-        self.repeater_link.delete()
+        self.repeater_stub.delete()
         self.repeater.delete()
 
     def test_earlier_record_created_later(self):
-        self.repeater_link.repeat_records.create(
-            domain=self.repeater_link.domain,
+        self.repeater_stub.repeat_records.create(
+            domain=self.repeater_stub.domain,
             payload_id='lilith',
             # If Unix time starts on 1970-01-01, then I guess 1970-01-06
             # is Unix Rosh Hashanah, the sixth day of Creation, the day
@@ -91,22 +91,22 @@ class TestSQLRepeatRecordOrdering(TestCase):
             # [1] https://en.wikipedia.org/wiki/Lilith
             registered_at='1970-01-06',
         )
-        repeat_records = self.repeater_link.repeat_records.all()
+        repeat_records = self.repeater_stub.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'lilith')
         self.assertEqual(repeat_records[1].payload_id, 'eve')
 
     def test_later_record_created_later(self):
-        self.repeater_link.repeat_records.create(
-            domain=self.repeater_link.domain,
+        self.repeater_stub.repeat_records.create(
+            domain=self.repeater_stub.domain,
             payload_id='cain',
             registered_at='1995-01-06',
         )
-        repeat_records = self.repeater_link.repeat_records.all()
+        repeat_records = self.repeater_stub.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'eve')
         self.assertEqual(repeat_records[1].payload_id, 'cain')
 
 
-class RepeaterLinkManagerTests(TestCase):
+class RepeaterStubManagerTests(TestCase):
 
     def setUp(self):
         self.repeater = FormRepeater(
@@ -114,67 +114,67 @@ class RepeaterLinkManagerTests(TestCase):
             url="https://spam.example.com/api/",
         )
         self.repeater.save()
-        self.repeater_link = RepeaterLink.objects.create(
+        self.repeater_stub = RepeaterStub.objects.create(
             domain="greasy-spoon",
             repeater_id=self.repeater.get_id,
         )
 
     def tearDown(self):
-        self.repeater_link.delete()
+        self.repeater_stub.delete()
         self.repeater.delete()
 
     def test_all_ready_no_repeat_records(self):
-        repeater_links = RepeaterLink.objects.all_ready()
-        self.assertEqual(len(repeater_links), 0)
+        repeater_stubs = RepeaterStub.objects.all_ready()
+        self.assertEqual(len(repeater_stubs), 0)
 
     def test_all_ready_pending_repeat_record(self):
-        with make_repeat_record(self.repeater_link, RECORD_PENDING_STATE):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 1)
-            self.assertEqual(repeater_links[0].id, self.repeater_link.id)
+        with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 1)
+            self.assertEqual(repeater_stubs[0].id, self.repeater_stub.id)
 
     def test_all_ready_failed_repeat_record(self):
-        with make_repeat_record(self.repeater_link, RECORD_FAILURE_STATE):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 1)
-            self.assertEqual(repeater_links[0].id, self.repeater_link.id)
+        with make_repeat_record(self.repeater_stub, RECORD_FAILURE_STATE):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 1)
+            self.assertEqual(repeater_stubs[0].id, self.repeater_stub.id)
 
     def test_all_ready_succeeded_repeat_record(self):
-        with make_repeat_record(self.repeater_link, RECORD_SUCCESS_STATE):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 0)
+        with make_repeat_record(self.repeater_stub, RECORD_SUCCESS_STATE):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 0)
 
     def test_all_ready_cancelled_repeat_record(self):
-        with make_repeat_record(self.repeater_link, RECORD_CANCELLED_STATE):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 0)
+        with make_repeat_record(self.repeater_stub, RECORD_CANCELLED_STATE):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 0)
 
     def test_all_ready_paused(self):
-        with make_repeat_record(self.repeater_link, RECORD_PENDING_STATE), \
-                pause(self.repeater_link):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 0)
+        with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE), \
+                pause(self.repeater_stub):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
-        with make_repeat_record(self.repeater_link, RECORD_PENDING_STATE), \
-                set_next_attempt_at(self.repeater_link, in_five_mins):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 0)
+        with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE), \
+                set_next_attempt_at(self.repeater_stub, in_five_mins):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
-        with make_repeat_record(self.repeater_link, RECORD_PENDING_STATE), \
-                set_next_attempt_at(self.repeater_link, five_mins_ago):
-            repeater_links = RepeaterLink.objects.all_ready()
-            self.assertEqual(len(repeater_links), 1)
-            self.assertEqual(repeater_links[0].id, self.repeater_link.id)
+        with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE), \
+                set_next_attempt_at(self.repeater_stub, five_mins_ago):
+            repeater_stubs = RepeaterStub.objects.all_ready()
+            self.assertEqual(len(repeater_stubs), 1)
+            self.assertEqual(repeater_stubs[0].id, self.repeater_stub.id)
 
 
 @contextmanager
-def make_repeat_record(repeater_link, state):
-    repeat_record = repeater_link.repeat_records.create(
-        domain=repeater_link.domain,
+def make_repeat_record(repeater_stub, state):
+    repeat_record = repeater_stub.repeat_records.create(
+        domain=repeater_stub.domain,
         payload_id=str(uuid4()),
         state=state,
         registered_at=timezone.now()
@@ -186,22 +186,22 @@ def make_repeat_record(repeater_link, state):
 
 
 @contextmanager
-def pause(repeater_link):
-    repeater_link.is_paused = True
-    repeater_link.save()
+def pause(repeater_stub):
+    repeater_stub.is_paused = True
+    repeater_stub.save()
     try:
         yield
     finally:
-        repeater_link.is_paused = False
-        repeater_link.save()
+        repeater_stub.is_paused = False
+        repeater_stub.save()
 
 
 @contextmanager
-def set_next_attempt_at(repeater_link, when):
-    repeater_link.next_attempt_at = when
-    repeater_link.save()
+def set_next_attempt_at(repeater_stub, when):
+    repeater_stub.next_attempt_at = when
+    repeater_stub.save()
     try:
         yield
     finally:
-        repeater_link.next_attempt_at = None
-        repeater_link.save()
+        repeater_stub.next_attempt_at = None
+        repeater_stub.save()
