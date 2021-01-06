@@ -54,6 +54,10 @@ def get_export(export_type, domain, export_id=None, username=None):
 
 
 def get_or_create_default_export_settings_for_domain(domain):
+    """
+    Only creates settings if the the subscription level supports it
+    Currently only available to Enterprise accounts
+    """
     from corehq.apps.export.models import DefaultExportSettings
     settings = None
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
