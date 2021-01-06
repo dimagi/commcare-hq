@@ -332,8 +332,9 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
         export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
         # odata settings only apply to form exports
         export_settings = get_or_create_default_export_settings_for_domain(schema.domain)
-        export_instance.include_errors = export_settings.odata_include_duplicates
-        export_instance.split_multiselects = export_settings.odata_expand_checkbox
+        if export_settings:
+            export_instance.include_errors = export_settings.odata_include_duplicates
+            export_instance.split_multiselects = export_settings.odata_expand_checkbox
         clean_odata_columns(export_instance)
         return export_instance
 

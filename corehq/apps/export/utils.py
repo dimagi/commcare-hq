@@ -2,6 +2,7 @@ from django.http import Http404
 
 from couchdbkit import ResourceNotFound
 
+from corehq import toggles
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
@@ -56,14 +57,17 @@ def get_export(export_type, domain, export_id=None, username=None):
 def get_or_create_default_export_settings_for_domain(domain):
     """
     Only creates settings if the the subscription level supports it
-    Currently only available to Enterprise accounts
+    Currently only available to Enterprise accounts with the DEFAULT_EXPORT_SETTINGS FF enabled
     """
-    from corehq.apps.export.models import DefaultExportSettings
+    if not toggles.DEFAULT_EXPORT_SETTINGS.enabled(domain):
+        return None
+
     settings = None
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     # currently only available for enterprise customers
     supported_editions = [SoftwarePlanEdition.ENTERPRISE]
     if current_subscription.plan_version.plan.edition in supported_editions:
+        from corehq.apps.export.models import DefaultExportSettings
         settings = DefaultExportSettings.objects.get_or_create(account=current_subscription.account)[0]
 
     return settings
