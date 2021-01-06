@@ -139,6 +139,7 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 from .utils import get_all_repeater_types
+from ...util.urlsanitize.urlsanitize import sanitize_user_input_url
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -201,8 +202,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
     @cached_property
     def connection_settings(self):
         if not self.connection_settings_id:
-            return self.create_connection_settings()
-        return ConnectionSettings.objects.get(pk=self.connection_settings_id)
+            connection_settings = self.create_connection_settings()
+        else:
+            connection_settings = ConnectionSettings.objects.get(pk=self.connection_settings_id)
+        sanitize_user_input_url(connection_settings.url)
+        return connection_settings
 
     @property
     def name(self):
