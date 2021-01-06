@@ -205,7 +205,8 @@ class SQLRepeaterStub(models.Model):
     class Meta:
         db_table = 'repeaters_repeaterstub'
         indexes = [
-            models.Index(fields=['domain', 'couch_id']),
+            models.Index(fields=['domain']),
+            models.Index(fields=['couch_id']),
         ]
 
 
