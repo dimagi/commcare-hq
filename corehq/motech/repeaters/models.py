@@ -63,9 +63,11 @@ class.
 "Data Forwarding Records".
 
 """
+import traceback
 import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.functional import cached_property
@@ -120,6 +122,7 @@ from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
 from .const import (
+    MAX_ATTEMPTS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
@@ -207,6 +210,38 @@ class RepeaterStub(models.Model):
             models.Index(fields=['domain']),
             models.Index(fields=['repeater_id']),
         ]
+
+    @property
+    @memoized
+    def repeater(self):
+        return Repeater.get(self.repeater_id)
+
+    @property
+    def repeat_records_ready(self):
+        return self.repeat_records.filter(state__in=(RECORD_PENDING_STATE,
+                                                     RECORD_FAILURE_STATE))
+
+    @property
+    def is_ready(self):
+        if self.is_paused:
+            return False
+        if not (self.next_attempt_at is None
+                or self.next_attempt_at < timezone.now()):
+            return False
+        return self.repeat_records_ready.exists()
+
+    def set_next_attempt(self):
+        now = datetime.utcnow()
+        interval = _get_retry_interval(self.last_attempt_at, now)
+        self.last_attempt_at = now
+        self.next_attempt_at = now + interval
+        self.save()
+
+    def reset_next_attempt(self):
+        if self.last_attempt_at or self.next_attempt_at:
+            self.last_attempt_at = None
+            self.next_attempt_at = None
+            self.save()
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -1021,6 +1056,49 @@ class SQLRepeatRecord(models.Model):
         ]
         ordering = ['registered_at']
 
+    def add_success_attempt(self, response):
+        """
+        ``response`` can be a Requests response instance, or True if the
+        payload did not result in an API call.
+        """
+        self.repeater_stub.reset_next_attempt()
+        self.sqlrepeatrecordattempt_set.create(
+            state=RECORD_SUCCESS_STATE,
+            message=format_response(response),
+        )
+        self.state = RECORD_SUCCESS_STATE
+        self.save()
+
+    def add_failure_attempt(self, message):
+        if self.num_attempts < MAX_ATTEMPTS:
+            state = RECORD_FAILURE_STATE
+            self.repeater_stub.set_next_attempt()
+        else:
+            state = RECORD_CANCELLED_STATE
+        self.sqlrepeatrecordattempt_set.create(
+            state=state,
+            message=message,
+        )
+        self.state = state
+        self.save()
+
+    def add_payload_exception_attempt(self, message, tb_str):
+        self.sqlrepeatrecordattempt_set.create(
+            state=RECORD_CANCELLED_STATE,
+            message=message,
+            traceback=tb_str,
+        )
+        self.state = RECORD_CANCELLED_STATE
+        self.save()
+
+    @property
+    def attempts(self):
+        return self.sqlrepeatrecordattempt_set.all()
+
+    @property
+    def num_attempts(self):
+        return self.sqlrepeatrecordattempt_set.count()
+
 
 class SQLRepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(SQLRepeatRecord,
@@ -1052,6 +1130,90 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
+
+
+def attempt_forward_now(repeater_stub: RepeaterStub):
+    from corehq.motech.repeaters.tasks import process_repeater_stub
+
+    if not domain_can_forward(repeater_stub.domain):
+        return
+    if not repeater_stub.is_ready:
+        return
+    process_repeater_stub.delay(repeater_stub)
+
+
+def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> Any:
+    try:
+        return repeater.get_payload(repeat_record)
+    except Exception as err:
+        log_repeater_error_in_datadog(
+            repeater.domain,
+            status_code=None,
+            repeater_type=repeater.__class__.__name__
+        )
+        repeat_record.add_payload_exception_attempt(
+            message=str(err),
+            tb_str=traceback.format_exc()
+        )
+        raise
+
+
+def send_request(
+    repeater: Repeater,
+    repeat_record: SQLRepeatRecord,
+    payload: Any,
+) -> bool:
+    """
+    Calls ``repeater.send_request()`` and handles the result.
+
+    Returns True on success or cancelled, so that the caller knows
+    whether to retry later.
+    """
+
+    def is_success(resp):
+        return (
+            is_response(resp)
+            and 200 <= resp.status_code < 300
+            # `response` is `True` if the payload did not need to be
+            # sent. (This can happen, for example, with DHIS2 if the
+            # form that triggered the forwarder doesn't contain data
+            # for a DHIS2 Event.)
+            or resp is True
+        )
+
+    try:
+        response = repeater.send_request(repeat_record, payload)
+    except (Timeout, ConnectionError) as err:
+        log_repeater_timeout_in_datadog(repeat_record.domain)
+        message = str(RequestConnectionError(err))
+        repeat_record.add_failure_attempt(message)
+    except Exception as err:
+        repeat_record.add_failure_attempt(str(err))
+    else:
+        if is_success(response):
+            if is_response(response):
+                # Don't bother logging success in
+                # Datadog if the payload wasn't sent.
+                log_repeater_success_in_datadog(
+                    repeater.domain,
+                    response.status_code,
+                    repeater_type=repeater.__class__.__name__
+                )
+            repeat_record.add_success_attempt(response)
+        else:
+            message = format_response(response)
+            repeat_record.add_failure_attempt(message)
+    return repeat_record.state in (RECORD_SUCCESS_STATE,
+                                   RECORD_CANCELLED_STATE)  # Don't retry
+
+
+def format_response(response) -> Optional[str]:
+    if not is_response(response):
+        return None
+    response_text = getattr(response, "text", "")
+    if response_text:
+        return f'{response.status_code}: {response.reason}\n{response_text}'
+    return f'{response.status_code}: {response.reason}'
 
 
 def is_response(duck):

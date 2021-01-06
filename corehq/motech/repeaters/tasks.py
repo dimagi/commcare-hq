@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.couch import CriticalSection, get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.motech.models import RequestLog
@@ -25,12 +25,18 @@ from .const import (
     MAX_RETRY_WAIT,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORDS_AT_A_TIME,
 )
 from .dbaccessors import (
     get_overdue_repeat_record_count,
     iterate_repeat_records,
 )
-from .models import domain_can_forward
+from .models import (
+    RepeaterStub,
+    domain_can_forward,
+    get_payload,
+    send_request,
+)
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -150,3 +156,28 @@ repeaters_overdue = metrics_gauge_task(
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeater_stub(repeater_stub: RepeaterStub):
+    """
+    Worker task to send SQLRepeatRecords in chronological order.
+
+    This function assumes that ``repeater_stub`` checks have already
+    been performed. Call via ``models.attempt_forward_now()``.
+    """
+    with CriticalSection(
+        [f'process-repeater-{repeater_stub.repeater_id}'],
+        fail_hard=False, block=False, timeout=5 * 60 * 60,
+    ):
+        for repeat_record in repeater_stub.repeat_records_ready[:RECORDS_AT_A_TIME]:
+            try:
+                payload = get_payload(repeater_stub.repeater, repeat_record)
+            except Exception:
+                # The repeat record is cancelled if there is an error
+                # getting the payload. We can safely move to the next one.
+                continue
+            succeeded_or_cancelled = send_request(repeater_stub.repeater,
+                                                  repeat_record, payload)
+            if not succeeded_or_cancelled:
+                break  # Retry later
