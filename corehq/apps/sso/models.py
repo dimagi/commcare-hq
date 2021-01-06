@@ -5,14 +5,14 @@ from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
 
 
-class IdentityProviderType(object):
+class IdentityProviderType:
     AZURE_AD = 'azure_ad'
     CHOICES = (
         (AZURE_AD, "Azure AD"),
     )
 
 
-class ServiceProviderCertificate(object):
+class ServiceProviderCertificate:
 
     def __init__(self):
         """
@@ -83,7 +83,7 @@ class IdentityProvider(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     last_modified_by = models.EmailField()
 
-    class Meta(object):
+    class Meta:
         app_label = 'sso'
 
     def __str__(self):
@@ -127,7 +127,7 @@ class AuthenticatedEmailDomain(models.Model):
     email_domain = models.CharField(max_length=256, db_index=True, unique=True)
     identity_provider = models.ForeignKey(IdentityProvider, on_delete=models.PROTECT)
 
-    class Meta(object):
+    class Meta:
         app_label = 'sso'
 
     def __str__(self):
@@ -143,7 +143,7 @@ class UserExemptFromSingleSignOn(models.Model):
     username = models.CharField(max_length=128, db_index=True)
     email_domain = models.ForeignKey(AuthenticatedEmailDomain, on_delete=models.CASCADE)
 
-    class Meta(object):
+    class Meta:
         app_label = 'sso'
 
     def __str__(self):
@@ -160,7 +160,7 @@ class TrustedIdentityProvider(models.Model):
     date_acknowledged = models.DateTimeField(auto_now_add=True)
     acknowledged_by = models.EmailField()
 
-    class Meta(object):
+    class Meta:
         app_label = 'sso'
 
     def __str__(self):
