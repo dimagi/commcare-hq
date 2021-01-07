@@ -105,6 +105,7 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
+    url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
@@ -157,11 +158,6 @@ urlpatterns = [
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
 ] + LOCAL_APP_URLS
-
-if settings.ENABLE_SINGLE_SIGN_ON:
-    urlpatterns += [
-        url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
-    ]
 
 if settings.ENABLE_PRELOGIN_SITE:
     # handle redirects from old prelogin
