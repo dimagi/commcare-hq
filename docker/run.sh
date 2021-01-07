@@ -12,7 +12,7 @@ function setup() {
 
     rm *.log || true
 
-    pip-sync requirements/test-requirements.txt requirements/sso-requirements.txt
+    pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in requirements files
 
     # compile pyc files

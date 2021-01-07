@@ -1,5 +1,4 @@
 -r requirements.in
--r sso-requirements.in
 
 pip>=10.0.0
 

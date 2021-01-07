@@ -95,8 +95,6 @@ To update requirements edit:
 
 * ``requirements/dev-requirements.in`` for packages for dev environment only
 
-* ``requirements/sso-requirements.in`` for packages for SSO (Single Sign On) enabled environments only
-
 and run ``make requirements``.
 
 To upgrade all requirements to their latest allowed version you can run
