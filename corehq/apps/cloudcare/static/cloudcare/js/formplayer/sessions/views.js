@@ -8,7 +8,18 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         className: "formplayer-request",
         events: {
             "click": "rowClick",
+            "keydown": "rowKeyAction",
             "click .module-delete-control": "onDeleteSession",
+            "keydown .module-delete-control": "deleteKeyAction",
+        },
+
+        attributes: function () {
+            var sessionLabelId = "SessionLabel-".concat(this.model.get('sessionId'));
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-labelledby": sessionLabelId,
+            };
         },
 
         template: _.template($("#session-view-item-template").html() || ""),
@@ -19,9 +30,16 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
 
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.rowClick(e);
+            }
+        },
+
         templateContext: function () {
             return {
                 humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
+                labelId: "SessionLabel-".concat(this.model.get('sessionId')),
             };
         },
         onDeleteSession: function (e) {
@@ -37,6 +55,13 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
                     FormplayerFrontend.getChannel().request("deleteSession", self.model);
                 },
             });
+        },
+        deleteKeyAction: function (e) {
+            // The ARIA button role would activate on either Space or Enter,
+            // but we require Enter for now to avoid accidental deletions.
+            if (e.keyCode === 13) {
+                this.onDeleteSession(e);
+            }
         },
     });
 
