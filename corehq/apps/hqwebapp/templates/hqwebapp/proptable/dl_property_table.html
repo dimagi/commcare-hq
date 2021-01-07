@@ -22,7 +22,7 @@
             {% for cell in column %}
               {% if cell.name or cell.value %}
                 <dt title="{{ cell.expr }}">
-                  {{ cell.expr }}
+                  {{ cell.name }}
                 </dt>
                 <dd>
                   {{ cell.value }}

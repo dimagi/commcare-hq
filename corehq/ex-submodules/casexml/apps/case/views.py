@@ -32,24 +32,24 @@ class CaseDisplayWrapper(object):
                     [
                         {
                             "expr": "name",
-                            "name": _("Name"),
+                            "name": _("Case Name"),
                             "has_history": True,
                         },
                         {
                             "expr": "opened_on",
-                            "name": _("Opened On"),
+                            "name": _("Date Opened"),
                             "parse_date": True,
                             'is_phone_time': True,
                         },
                         {
                             "expr": "modified_on",
-                            "name": _("Modified On"),
+                            "name": _("Date Modified"),
                             "parse_date": True,
                             "is_phone_time": True,
                         },
                         {
                             "expr": "closed_on",
-                            "name": _("Closed On"),
+                            "name": _("Date Closed"),
                             "parse_date": True,
                             "is_phone_time": True,
                         },
@@ -67,7 +67,7 @@ class CaseDisplayWrapper(object):
                         },
                         {
                             "expr": "owner_id",
-                            "name": _("Owner"),
+                            "name": _("Owner ID"),
                             "process": 'doc_info',
                             "has_history": True,
                         },
