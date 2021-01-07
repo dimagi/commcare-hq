@@ -41,6 +41,14 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         tagName: 'tr',
         events: {
             'click': 'onClickUser',
+            'keydown': 'onKeyActionUser',
+        },
+        attributes: function () {
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-label": this.model.get('username'),
+            };
         },
         onClickUser: function () {
             Util.confirmationModal({
@@ -59,6 +67,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                     );
                 }.bind(this),
             });
+        },
+        onKeyActionUser: function (e) {
+            if (e.keyCode === 13) {
+                this.onClickUser();
+            }
         },
     });
 
@@ -99,12 +112,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'submit @ui.search': 'onSubmitUserSearch',
         },
         templateContext: function () {
-            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
-            var paginationOptions = paginateItems.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
-                pagesToShow: paginationOptions,
+                // Subtract 1 from page so that it is 0 indexed
+                pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
             };
         },
         navigate: function () {

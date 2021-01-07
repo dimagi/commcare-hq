@@ -13,10 +13,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         className: "formplayer-request",
+        attributes: function () {
+            var displayText = this.options.model.attributes.displayText;
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-label": displayText,
+            };
+        },
         events: {
             "click": "rowClick",
             "click .js-module-audio-play": "audioPlay",
             "click .js-module-audio-pause": "audioPause",
+            "keydown": "rowKeyAction",
         },
 
         initialize: function (options) {
@@ -66,6 +75,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
+        },
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.rowClick(e);
+            }
         },
         templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -213,13 +227,29 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click": "rowClick",
+            "keydown": "rowKeyAction",
         },
 
         className: "formplayer-request",
 
+        attributes: function () {
+            var labelId = "case-view-item-".concat(this.options.model.attributes.id);
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-labelledby": labelId,
+            };
+        },
+
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
+        },
+
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.rowClick(e);
+            }
         },
 
         templateContext: function () {
@@ -230,6 +260,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
+                labelId: "case-view-item-".concat(this.options.model.attributes.id),
             };
         },
     });
@@ -318,16 +349,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             return {
-                startPage: paginateItems.startPage,
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
+                pageCount: this.options.pageCount,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
@@ -344,43 +372,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
-    var paginateOptions = function (currentPage, totalPages) {
-        var maxPages = 5;
-        // ensure current page isn't out of range
-        if (currentPage < 1) {
-            currentPage = 1;
-        } else if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-        var startPage, endPage;
-        if (totalPages <= maxPages) {
-            // total pages less than max so show all pages
-            startPage = 1;
-            endPage = totalPages;
-        } else {
-            // total pages more than max so calculate start and end pages
-            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
-            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
-            if (currentPage <= maxPagesBeforeCurrentPage) {
-                // current page near the start
-                startPage = 1;
-                endPage = maxPages;
-            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
-                // current page near the end
-                startPage = totalPages - maxPages + 1;
-                endPage = totalPages;
-            } else {
-                // current page somewhere in the middle
-                startPage = currentPage - maxPagesBeforeCurrentPage;
-                endPage = currentPage + maxPagesAfterCurrentPage;
-            }
-        }
-        return {
-            startPage: startPage,
-            endPage: endPage,
-            pageCount: totalPages,
-        };
-    };
 
     // Return a two- or three-length array of case tile CSS styles
     //
@@ -462,14 +453,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
+        attributes: function () {
+            return {
+                "role": "link",
+                "tabindex": "0",
+            };
+        },
         events: {
             "click": "crumbClick",
+            "keydown": "crumbKeyAction",
         },
 
         crumbClick: function (e) {
             e.preventDefault();
             var crumbId = this.options.model.get('id');
             FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
+        },
+        crumbKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.crumbClick(e);
+            }
         },
     });
 
@@ -480,9 +483,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
+            'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
             FormplayerFrontend.trigger('navigateHome');
+        },
+        onKeyActionHome: function (e) {
+            if (e.keyCode === 13) {
+                this.onClickHome();
+            }
         },
 
     });
@@ -591,7 +600,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
-        paginateOptions: paginateOptions,
     };
 })
 ;
