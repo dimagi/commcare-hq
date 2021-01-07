@@ -94,15 +94,14 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
 
-def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=None, chunk_size=1000):
+def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
     from .models import RepeatRecord
     kwargs = {
         'include_docs': True,
         'reduce': False,
         'descending': True,
     }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state,
-                                                   last_checked_after=since))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
     for doc in paginate_view(
             RepeatRecord.get_db(),
