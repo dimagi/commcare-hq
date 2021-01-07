@@ -68,6 +68,7 @@ import warnings
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -139,7 +140,8 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 from .utils import get_all_repeater_types
-from ...util.urlsanitize.urlsanitize import sanitize_user_input_url, CannotResolveHost, InvalidURL
+from ...util.urlsanitize.urlsanitize import sanitize_user_input_url, CannotResolveHost, InvalidURL, \
+    PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -209,6 +211,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
             sanitize_user_input_url(connection_settings.url)
         except (CannotResolveHost, InvalidURL):
             pass
+        except PossibleSSRFAttempt as e:
+            if settings.DEBUG and str(e) == 'is_loopback':
+                pass
+            else:
+                raise
+
         return connection_settings
 
     @property
