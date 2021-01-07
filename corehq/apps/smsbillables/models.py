@@ -261,7 +261,8 @@ class SmsBillable(models.Model):
     calculating the SmsLineItem in the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
-    direct_gateway_fee = models.DecimalField(null=True, max_digits=10, decimal_places=4)
+    # we have observed prices with up to 5 decimal places from Twilio
+    direct_gateway_fee = models.DecimalField(null=True, max_digits=10, decimal_places=5)
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
