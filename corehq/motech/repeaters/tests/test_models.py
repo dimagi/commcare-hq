@@ -1,15 +1,21 @@
+from django.conf import settings
 from django.test import TestCase
+from nose.tools import assert_in
 
 from corehq.motech.const import BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import (
-    FormRepeater,
-)
-from corehq.motech.repeaters.repeater_generators import (
-    FormRepeaterXMLPayloadGenerator,
-)
+
+from ..models import FormRepeater, get_all_repeater_types
+from ..repeater_generators import FormRepeaterXMLPayloadGenerator
 
 DOMAIN = "greasy-spoon"
+
+
+def test_get_all_repeater_types():
+    types = get_all_repeater_types()
+    for cls in settings.REPEATER_CLASSES:
+        name = cls.split('.')[-1]
+        assert_in(name, types)
 
 
 class RepeaterConnectionSettingsTests(TestCase):

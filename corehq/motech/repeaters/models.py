@@ -63,12 +63,13 @@ class.
 "Data Forwarding Records".
 
 """
-import re
 import warnings
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.functional import cached_property
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -88,9 +89,11 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -109,6 +112,7 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
@@ -138,7 +142,6 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from .utils import get_all_repeater_types
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -250,7 +253,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def get_attempt_info(self, repeat_record):
         return None
 
-    def register(self, payload, next_check=None):
+    def register(self, payload):
         if not self.allowed_to_forward(payload):
             return
 
@@ -260,12 +263,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
             repeater_type=self.doc_type,
             domain=self.domain,
             registered_on=now,
-            next_check=next_check or now,
+            next_check=now,
             payload_id=payload.get_id
         )
         repeat_record.save()
-        if next_check is None:
-            repeat_record.attempt_forward_now()
+        repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -411,7 +413,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         """
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
-        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
+        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
         else:
             attempt = repeat_record.handle_failure(result)
@@ -646,6 +648,13 @@ class LocationRepeater(Repeater):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
 
 
+def get_all_repeater_types():
+    return OrderedDict([
+        (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
+        for cls in settings.REPEATER_CLASSES
+    ])
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
@@ -823,7 +832,7 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
-        if not _is_response(response):
+        if not is_response(response):
             return None
         response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
@@ -837,7 +846,7 @@ class RepeatRecord(Document):
         payload did not result in an API call.
         """
         now = datetime.utcnow()
-        if _is_response(response):
+        if is_response(response):
             # ^^^ Don't bother logging success in Datadog if the payload
             # did not need to be sent. (This can happen with DHIS2 if
             # the form that triggered the forwarder doesn't contain data
@@ -943,12 +952,19 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def _is_response(duck):
+def is_response(duck):
     """
     Returns True if ``duck`` has the attributes of a Requests response
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def domain_can_forward(domain):
+    return domain and (
+        domain_has_privilege(domain, ZAPIER_INTEGRATION)
+        or domain_has_privilege(domain, DATA_FORWARDING)
+    )
 
 
 # import signals
