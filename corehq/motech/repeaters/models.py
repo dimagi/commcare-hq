@@ -76,8 +76,8 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from memoized import memoized
-from requests.exceptions import ConnectionError, Timeout, RequestException
+from memoized import memoized, memoized_property
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -120,6 +120,7 @@ from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.couch import stale_ok
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 from .const import (
     MAX_ATTEMPTS,
@@ -151,7 +152,6 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from ...util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -302,6 +302,28 @@ class Repeater(QuickCachedDocumentMixin, Document):
     @property
     def name(self):
         return self.connection_settings.name
+
+    def save(self, **kwargs):
+        is_new = not self._id
+        super().save(**kwargs)
+        if is_new:
+            RepeaterStub.objects.create(
+                domain=self.domain,
+                repeater_id=self._id,
+                is_paused=self.paused,
+            )
+
+    def delete(self):
+        if self.repeater_stub.id:
+            self.repeater_stub.delete()
+        super().delete()
+
+    @memoized_property
+    def repeater_stub(self):
+        return RepeaterStub.objects.get(
+            domain=self.domain,
+            repeater_id=self._id,
+        )
 
     @classmethod
     def available_for_domain(cls, domain):
