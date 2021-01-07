@@ -63,12 +63,10 @@ class.
 "Data Forwarding Records".
 
 """
-import re
 import warnings
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -108,7 +106,7 @@ from corehq.motech.const import (
     OAUTH1,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import simple_post
+from corehq.motech.requests import simple_post, sanitize_user_input_url_for_repeaters
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
@@ -140,8 +138,6 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 from .utils import get_all_repeater_types
-from ...util.urlsanitize.urlsanitize import sanitize_user_input_url, CannotResolveHost, InvalidURL, \
-    PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -207,15 +203,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
             connection_settings = self.create_connection_settings()
         else:
             connection_settings = ConnectionSettings.objects.get(pk=self.connection_settings_id)
-        try:
-            sanitize_user_input_url(connection_settings.url)
-        except (CannotResolveHost, InvalidURL):
-            pass
-        except PossibleSSRFAttempt as e:
-            if settings.DEBUG and str(e) == 'is_loopback':
-                pass
-            else:
-                raise
+
+        sanitize_user_input_url_for_repeaters(connection_settings.url)
 
         return connection_settings
 

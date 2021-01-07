@@ -8,7 +8,8 @@ from django.utils.translation import gettext as _
 import attr
 from requests.structures import CaseInsensitiveDict
 
-from corehq.util.urlsanitize.urlsanitize import sanitize_user_input_url
+from corehq.util.urlsanitize.urlsanitize import sanitize_user_input_url, CannotResolveHost, InvalidURL, \
+    PossibleSSRFAttempt
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -129,7 +130,7 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        sanitize_user_input_url(url)
+        sanitize_user_input_url_for_repeaters(url)
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:
@@ -268,3 +269,15 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         message = f'HTTP status code {response.status_code}: {response.text}'
         requests.notify_error(message)
     return response
+
+
+def sanitize_user_input_url_for_repeaters(url):
+        try:
+            sanitize_user_input_url(url)
+        except (CannotResolveHost, InvalidURL):
+            pass
+        except PossibleSSRFAttempt as e:
+            if settings.DEBUG and str(e) == 'is_loopback':
+                pass
+            else:
+                raise
