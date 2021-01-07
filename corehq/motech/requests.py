@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 import attr
 from requests.structures import CaseInsensitiveDict
 
+from corehq.util.urlsanitize.urlsanitize import sanitize_user_input_url
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -123,17 +124,18 @@ class Requests(object):
         self._session.close()
         self._session = None
 
-    def _send_request(self, method, *args, **kwargs):
+    def _send_request(self, method, url, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
+        sanitize_user_input_url(url)
         if self._session:
-            response = self._session.request(method, *args, **kwargs)
+            response = self._session.request(method, url, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
             with self.auth_manager.get_session() as session:
-                response = session.request(method, *args, **kwargs)
+                response = session.request(method, url, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response
