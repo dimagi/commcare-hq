@@ -377,12 +377,12 @@ def _get_modules_with_parent_case_type(app, module, case_property_builder, case_
 
 
 def _get_all_case_modules(app, module):
-    # return all modules of the same case_type as the module's except the given module
+    # return all case modules except the given module
     return [{
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': False,
-    } for mod in app.modules if mod.case_type == module.case_type and mod.unique_id != module.unique_id]
+    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
