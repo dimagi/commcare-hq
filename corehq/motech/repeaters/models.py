@@ -173,17 +173,19 @@ class RepeaterStubManager(models.Manager):
         """
         Return all RepeaterStubs ready to be forwarded.
         """
-        return (
-            self.get_queryset()
-            # Is not paused
-            .filter(is_paused=False)
-            # `next_attempt_at` is not set in the future
-            .filter(models.Q(next_attempt_at__isnull=True)
-                    | models.Q(next_attempt_at__lte=timezone.now()))
-            # Has repeat records ready to be sent
-            .filter(repeat_records__state__in=(RECORD_PENDING_STATE,
-                                               RECORD_FAILURE_STATE))
+        not_paused = models.Q(is_paused=False)
+        next_attempt_not_in_the_future = (
+            models.Q(next_attempt_at__isnull=True)
+            | models.Q(next_attempt_at__lte=timezone.now())
         )
+        repeat_records_ready_to_send = models.Q(
+            repeat_records__state__in=(RECORD_PENDING_STATE,
+                                       RECORD_FAILURE_STATE)
+        )
+        return (self.get_queryset()
+                .filter(not_paused)
+                .filter(next_attempt_not_in_the_future)
+                .filter(repeat_records_ready_to_send))
 
 
 class RepeaterStub(models.Model):
