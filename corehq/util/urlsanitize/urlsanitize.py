@@ -11,6 +11,8 @@ def sanitize_user_input_url(url):
     raise CannotResolveHost if the url host does not resolve
     """
     hostname = urlparse(url).hostname
+    if hostname is None:
+        raise InvalidURL()
     try:
         ip_address_text = socket.gethostbyname(hostname)
     except socket.gaierror:
@@ -41,4 +43,8 @@ class PossibleSSRFAttempt(Exception):
 
 
 class CannotResolveHost(Exception):
+    pass
+
+
+class InvalidURL(Exception):
     pass

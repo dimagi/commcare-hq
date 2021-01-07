@@ -1,7 +1,7 @@
 import ipaddress
 import socket
 
-from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, CannotResolveHost
+from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, CannotResolveHost, InvalidURL
 
 RAISE = object()
 RETURN = object()
@@ -26,6 +26,7 @@ SUITE = [
     ('http://169.254.169.254.xip.io/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
     ('http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
     ('http://10.124.10.11', (RAISE, PossibleSSRFAttempt('is_private'))),
+    ('some-non-url', (RAISE, InvalidURL())),
 ]
 
 
