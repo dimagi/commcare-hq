@@ -430,3 +430,50 @@ class RepeaterStubOneToOneRepeaterTests(RepeaterFixtureMixin, TestCase):
                     domain='another-domain',
                     repeater_id=self.repeater.get_id,
                 )
+
+
+class SaveDeleteRepeaterTests(TestCase):
+
+    def setUp(self):
+        self.repeater = FormRepeater(
+            domain=DOMAIN,
+            url='https://www.example.com/api/',
+        )
+
+    def tearDown(self):
+        try:
+            self.repeater.delete()
+        except TypeError:
+            # test_delete() causes tearDown() to throw TypeError because
+            # self.repeater is already deleted.
+            pass
+
+    def test_save_new(self):
+        with self.assertNumQueries(1):
+            self.repeater.save()
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+    def test_save_old(self):
+        self.repeater.save()
+        self.repeater.paused = True
+        with self.assertNumQueries(0):
+            self.repeater.save()
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+    def test_delete(self):
+        self.repeater.save()
+        with self.assertNumQueries(3):
+            # 1. SELECT ... FROM "repeaters_repeaterstub" ...
+            # 2. SELECT ... FROM "repeaters_repeatrecord" ...
+            # 3. DELETE FROM "repeaters_repeaterstub" ...
+            self.repeater.delete()
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 0)
