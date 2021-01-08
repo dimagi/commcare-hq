@@ -8,9 +8,8 @@ from django.utils import timezone
 
 from nose.tools import assert_in
 
-from corehq.motech.const import ALGO_AES, BASIC_AUTH
+from corehq.motech.const import BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
     RECORD_CANCELLED_STATE,
@@ -35,6 +34,10 @@ class RepeaterConnectionSettingsTests(TestCase):
         self.rep = FormRepeater(
             domain="greasy-spoon",
             url="https://spam.example.com/api/",
+            auth_type=BASIC_AUTH,
+            username="terry",
+            password="Don't save me decrypted!",
+            notify_addresses_str="admin@example.com",
             format=FormRepeaterXMLPayloadGenerator.format_name,
         )
 
@@ -51,37 +54,9 @@ class RepeaterConnectionSettingsTests(TestCase):
 
         self.assertIsNotNone(self.rep.connection_settings_id)
         self.assertEqual(conn.name, self.rep.url)
-
-    def test_notify_addresses(self):
-        self.rep.notify_addresses_str = "admin@example.com"
-        conn = self.rep.connection_settings
-        self.assertEqual(conn.notify_addresses, ["admin@example.com"])
-
-    def test_notify_addresses_none(self):
-        self.rep.notify_addresses_str = None
-        conn = self.rep.connection_settings
-        self.assertEqual(conn.notify_addresses, [])
-
-    def test_password_encrypted(self):
-        self.rep.auth_type = BASIC_AUTH
-        self.rep.username = "terry"
-        self.rep.password = "Don't save me decrypted!"
-        conn = self.rep.connection_settings
-
         self.assertEqual(self.rep.plaintext_password, conn.plaintext_password)
         # rep.password was saved decrypted; conn.password is not:
         self.assertNotEqual(self.rep.password, conn.password)
-
-    def test_password_bug(self):
-        self.rep.auth_type = BASIC_AUTH
-        self.rep.username = "terry"
-        plaintext = "Don't save me decrypted!"
-        ciphertext = b64_aes_encrypt(plaintext)
-        bytestring_repr = f"b'{ciphertext}'"  # bug fixed by commit 3a900068
-        self.rep.password = f'${ALGO_AES}${bytestring_repr}'
-        conn = self.rep.connection_settings
-
-        self.assertEqual(conn.plaintext_password, self.rep.plaintext_password)
 
 
 class TestSQLRepeatRecordOrdering(TestCase):
