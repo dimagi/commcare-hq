@@ -22,6 +22,8 @@ from corehq.motech.forms import ConnectionSettingsForm
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
 
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+
 
 class Http409(Http400):
     status = 409
@@ -268,6 +270,8 @@ def test_connection_settings(request, domain):
                 })
         except RequestException as err:
             return JsonResponse({"success": False, "response": str(err)})
+        except PossibleSSRFAttempt:
+            return JsonResponse({"success": False, "response": "Invalid URL"})
     else:
         return JsonResponse({
             "success": False,
