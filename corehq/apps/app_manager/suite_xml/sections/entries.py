@@ -102,10 +102,13 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_parent_filter(relationship, parent_id):
-        return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
-            relationship=relationship,
-            parent_id=parent_id,
-        )
+        if relationship is None:
+            return ""
+        else:
+            return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
+                relationship=relationship,
+                parent_id=parent_id,
+            )
 
     @staticmethod
     def get_userdata_autoselect(key, session_id, mode):
