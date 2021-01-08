@@ -106,7 +106,7 @@ from corehq.motech.const import (
     OAUTH1,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import simple_post, sanitize_user_input_url_for_repeaters
+from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
@@ -200,13 +200,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
     @cached_property
     def connection_settings(self):
         if not self.connection_settings_id:
-            connection_settings = self.create_connection_settings()
-        else:
-            connection_settings = ConnectionSettings.objects.get(pk=self.connection_settings_id)
-
-        sanitize_user_input_url_for_repeaters(connection_settings.url)
-
-        return connection_settings
+            return self.create_connection_settings()
+        return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @property
     def name(self):
