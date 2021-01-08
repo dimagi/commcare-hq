@@ -87,12 +87,12 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='repeaterstub',
             index=models.Index(fields=['domain'],
-                               name='repeaters_r_domain_e5f4c3_idx'),
+                               name='repeaters_r_domain_23d304_idx'),
         ),
         migrations.AddIndex(
             model_name='repeaterstub',
             index=models.Index(fields=['repeater_id'],
-                               name='repeaters_r_repeate_cbc8be_idx'),
+                               name='repeaters_r_repeate_4c833b_idx'),
         ),
         migrations.AddIndex(
             model_name='sqlrepeatrecord',
