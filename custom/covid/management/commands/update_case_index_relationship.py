@@ -12,7 +12,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 BATCH_SIZE = 100
-CASE_TYPE = "lab_result"
 DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
@@ -35,10 +34,10 @@ def case_block(case):
     ).as_xml()).decode('utf-8')
 
 
-def update_cases(domain, username):
+def update_cases(domain, case_type, username):
     accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain(CASE_TYPE)
-    print(f"Found {len(case_ids)} {CASE_TYPE} cases in {domain}")
+    case_ids = accessor.get_case_ids_in_domain(case_type)
+    print(f"Found {len(case_ids)} {case_type} cases in {domain}")
 
     user_id = username_to_user_id(username)
 
@@ -59,18 +58,19 @@ def update_cases(domain, username):
 
 
 class Command(BaseCommand):
-    help = (f"Updates all {CASE_TYPE} case indices to use an extension relationship instead of parent.")
+    help = ("Updates all case indices of a specfied case type to use an extension relationship instead of parent.")
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('case_type')
         parser.add_argument('username')
         parser.add_argument('--and-linked', action='store_true', default=False)
 
-    def handle(self, domain, username, **options):
+    def handle(self, domain, case_type, username, **options):
         domains = {domain}
         if options["and_linked"]:
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
 
         for domain in domains:
             print(f"Processing {domain}")
-            update_cases(domain, username)
+            update_cases(domain, case_type, username)
