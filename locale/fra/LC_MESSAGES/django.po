@@ -36,9 +36,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 21:26+0000\n"
-"PO-Revision-Date: 2020-12-16 20:11+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
+"POT-Creation-Date: 2021-01-08 16:16+0000\n"
+"PO-Revision-Date: 2021-01-07 21:27+0000\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -3781,10 +3781,8 @@ msgid "Current"
 msgstr "Actuel"
 
 #: corehq/apps/app_manager/forms.py:59
-#, fuzzy
-#| msgid "Copy Application"
 msgid "Copy Application for Editing"
-msgstr "Copier l'application"
+msgstr ""
 
 #: corehq/apps/app_manager/forms.py:59
 msgid "Copy Application"
@@ -5416,10 +5414,8 @@ msgid "disabled"
 msgstr "désactivé"
 
 #: corehq/apps/app_manager/static_strings.py:254
-#, fuzzy
-#| msgid "Enable Case Search"
 msgid "Enable Text To Speech"
-msgstr "Activer la recherche de dossiers"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:255
 msgid ""
@@ -8566,10 +8562,8 @@ msgid "Search and Claim Options"
 msgstr "Options de recherche et de demande"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:198
-#, fuzzy
-#| msgid "Enable Case Search"
 msgid "Label for Case Search"
-msgstr "Activer la recherche de dossiers"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:207
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:208
@@ -11050,6 +11044,7 @@ msgstr "Succès avec les avertissements"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:48
 #: corehq/apps/reports/filters/select.py:150
+#: corehq/motech/repeaters/const.py:16
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html:13
 #: corehq/motech/repeaters/views/repeat_records.py:122
 msgid "Failed"
@@ -12115,7 +12110,7 @@ msgstr "Mettre à jour  {cc_name} les paramètrese du Supply"
 #: corehq/apps/settings/views.py:464
 #: corehq/apps/userreports/reports/builder/forms.py:835
 #: corehq/apps/users/templates/users/roles_and_permissions.html:88
-#: corehq/motech/repeaters/models.py:183 corehq/tabs/tabclasses.py:410
+#: corehq/motech/repeaters/models.py:229 corehq/tabs/tabclasses.py:410
 msgid "Data"
 msgstr "Données"
 
@@ -13144,32 +13139,24 @@ msgid "{success_msg} {count} form(s)"
 msgstr "{success_msg} {count} formulaire(s)"
 
 #: corehq/apps/data_interfaces/utils.py:121
-#, fuzzy
-#| msgid "no domain specified"
 msgid "No payloads specified"
-msgstr "aucun domaine n'est spécifié"
+msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:123
 msgid "No action specified"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:143
-#, fuzzy
-#| msgid "Successfully restored report \"{name}\""
 msgid "Successfully resent repeat record (id={})"
-msgstr "Rapport restauré avec succès \"{name}\""
+msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:147
-#, fuzzy
-#| msgid "Successfully restored report \"{name}\""
 msgid "Successfully cancelled repeat record (id={})"
-msgstr "Rapport restauré avec succès \"{name}\""
+msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:151
-#, fuzzy
-#| msgid "Successfully restored report \"{name}\""
 msgid "Successfully requeued repeat record (id={})"
-msgstr "Rapport restauré avec succès \"{name}\""
+msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:155
 msgid "Could not perform action for repeat record (id={}): {}"
@@ -17018,7 +17005,7 @@ msgstr ""
 
 #: corehq/apps/export/models/export_settings.py:12
 msgid "Excel (older versions)"
-msgstr ""
+msgstr "Excel (versions plus anciennes)"
 
 #: corehq/apps/export/models/new.py:364
 msgid "The ID of the associated {} case type"
@@ -25554,12 +25541,14 @@ msgid "Successful"
 msgstr "Succès"
 
 #: corehq/apps/reports/filters/select.py:148 corehq/apps/sms/models.py:438
+#: corehq/motech/repeaters/const.py:14
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html:21
 #: corehq/motech/repeaters/views/repeat_records.py:116
 msgid "Pending"
 msgstr "En attente"
 
 #: corehq/apps/reports/filters/select.py:149
+#: corehq/motech/repeaters/const.py:17
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html:20
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html:27
 #: corehq/motech/repeaters/views/repeat_records.py:119
@@ -36511,8 +36500,8 @@ msgid "Forward Cases as DHIS2 Tracked Entities"
 msgstr ""
 
 #: corehq/motech/dhis2/repeaters.py:152
-#: corehq/motech/repeaters/views/repeaters.py:226
-#: corehq/motech/repeaters/views/repeaters.py:227
+#: corehq/motech/repeaters/views/repeaters.py:217
+#: corehq/motech/repeaters/views/repeaters.py:218
 msgid "Forward Forms to DHIS2 as Anonymous Events"
 msgstr ""
 
@@ -36728,7 +36717,7 @@ msgstr ""
 msgid "Incremental Exports"
 msgstr ""
 
-#: corehq/motech/models.py:206 corehq/motech/repeaters/views/repeaters.py:52
+#: corehq/motech/models.py:206 corehq/motech/repeaters/views/repeaters.py:43
 #: corehq/privileges.py:176 corehq/tabs/tabclasses.py:1817
 msgid "Data Forwarding"
 msgstr "Transfert de données"
@@ -36906,8 +36895,8 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/openmrs/repeaters.py:91
-#: corehq/motech/repeaters/views/repeaters.py:213
-#: corehq/motech/repeaters/views/repeaters.py:214
+#: corehq/motech/repeaters/views/repeaters.py:204
+#: corehq/motech/repeaters/views/repeaters.py:205
 msgid "Forward to OpenMRS"
 msgstr ""
 
@@ -36938,6 +36927,12 @@ msgstr ""
 #: corehq/motech/openmrs/views.py:176
 msgid "OpenMRS Importers saved"
 msgstr ""
+
+#: corehq/motech/repeaters/const.py:15
+#, fuzzy
+#| msgid "Success"
+msgid "Succeeded"
+msgstr "Succès"
 
 #: corehq/motech/repeaters/forms.py:38
 msgid "Start Forwarding"
@@ -37000,39 +36995,39 @@ msgid ""
 "Atom feed."
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:460 corehq/tabs/tabclasses.py:1797
+#: corehq/motech/repeaters/models.py:520 corehq/tabs/tabclasses.py:1797
 msgid "Forward Forms"
 msgstr "Transférer les formulaires"
 
-#: corehq/motech/repeaters/models.py:513 corehq/tabs/tabclasses.py:1801
+#: corehq/motech/repeaters/models.py:573 corehq/tabs/tabclasses.py:1801
 msgid "Forward Cases"
 msgstr "Transférer les dossiers"
 
-#: corehq/motech/repeaters/models.py:552
+#: corehq/motech/repeaters/models.py:612
 msgid "Forward Cases on Creation Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:564
+#: corehq/motech/repeaters/models.py:624
 msgid "Forward Cases on Update Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:575
+#: corehq/motech/repeaters/models.py:635
 msgid "Forward Cases To Another Commcare Project"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:601 corehq/tabs/tabclasses.py:1799
+#: corehq/motech/repeaters/models.py:661 corehq/tabs/tabclasses.py:1799
 msgid "Forward Form Stubs"
 msgstr "Transférer les Form Stubs"
 
-#: corehq/motech/repeaters/models.py:621
+#: corehq/motech/repeaters/models.py:681
 msgid "Forward App Schema Changes"
 msgstr "Transférer les modifications de schéma d'application"
 
-#: corehq/motech/repeaters/models.py:630
+#: corehq/motech/repeaters/models.py:690
 msgid "Forward Users"
 msgstr "Transférer les utilisateurs"
 
-#: corehq/motech/repeaters/models.py:640
+#: corehq/motech/repeaters/models.py:700
 msgid "Forward Locations"
 msgstr "Transférer les sites"
 
@@ -37145,16 +37140,12 @@ msgid "Select %(total_cancelled)s cancelled payloads"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:49
-#, fuzzy
-#| msgid "Please specify at least one action."
 msgid "Please select at least one payload"
-msgstr "Veuillez spécifier au moins une action."
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:52
-#, fuzzy
-#| msgid "Location type not valid for the selected parent."
 msgid "This action is not allowed for some of the selected payloads"
-msgstr "Le type d'organisation n'est pas valide pour le parent sélectionné."
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:60
 msgid "Confirmation"
@@ -37223,45 +37214,45 @@ msgstr "Renvoyer "
 msgid "Cancel or Requeue payload"
 msgstr "Annuler ou recharger la charge utile"
 
-#: corehq/motech/repeaters/views/repeaters.py:81
+#: corehq/motech/repeaters/views/repeaters.py:72
 msgid "Forward Data"
 msgstr "Transférer les données"
 
-#: corehq/motech/repeaters/views/repeaters.py:177
+#: corehq/motech/repeaters/views/repeaters.py:168
 #, python-format
 msgid "Forwarding set up to %s"
 msgstr "Transfert de réglage vers %s"
 
-#: corehq/motech/repeaters/views/repeaters.py:237
-#: corehq/motech/repeaters/views/repeaters.py:238
+#: corehq/motech/repeaters/views/repeaters.py:228
+#: corehq/motech/repeaters/views/repeaters.py:229
 msgid "Forward Cases to DHIS2 as Tracked Entities"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:274
+#: corehq/motech/repeaters/views/repeaters.py:265
 msgid "Update Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:287
+#: corehq/motech/repeaters/views/repeaters.py:278
 msgid "Repeater Successfully Updated"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:299
+#: corehq/motech/repeaters/views/repeaters.py:290
 msgid "Edit Case Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:308
+#: corehq/motech/repeaters/views/repeaters.py:299
 msgid "Edit Form Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:317
+#: corehq/motech/repeaters/views/repeaters.py:308
 msgid "Edit OpenMRS Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:322
+#: corehq/motech/repeaters/views/repeaters.py:313
 msgid "Edit DHIS2 Anonymous Event Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:327
+#: corehq/motech/repeaters/views/repeaters.py:318
 msgid "Edit DHIS2 Tracked Entity Repeater"
 msgstr ""
 
@@ -41274,6 +41265,15 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
+#~ msgid "No Payloads are supplied"
+#~ msgstr "Diagnóstico de Casos"
+
+#~ msgid "No data is supplied"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Remote API Connection"
+#~ msgstr "Casos IRA Tratados"
+
 #~ msgid "Search Condition"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -43404,11 +43404,6 @@ msgstr "Saisir un JSON valide"
 #~ "\n"
 #~ "    Happy Application Building!\n"
 #~ "    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "Happy Application Building!\n"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
