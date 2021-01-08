@@ -440,6 +440,17 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class Argument(IdNode):
+    ROOT_NAME = 'argument'
+
+
+class SessionEndpoint(IdNode):
+    ROOT_NAME = 'endpoint'
+
+    arguments = NodeListField('argument', Argument)
+    stack = NodeField('stack', Stack)
+
+
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
 
@@ -912,6 +923,7 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    endpoints = NodeListField('endpoint', SessionEndpoint)
     remote_requests = NodeListField('remote-request', RemoteRequest)
 
     fixtures = NodeListField('fixture', Fixture)
