@@ -59,24 +59,12 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
         prods = Product.by_domain(self.domain, wrap=False)
         return sorted(prods, key=lambda p: p['name'])
 
-    def ordered_products(self, ordering):
-        return sorted(self.products, key=lambda p: (0, ordering.index(p['name'])) if p['name'] in ordering else (1, p['name']))
-
     @property
     def actions(self):
         return sorted(action_config.name for action_config in self.config.actions)
 
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
-
-    @property
-    def incr_actions(self):
-        """action types that increment/decrement stock"""
-        actions = [action_config for action_config in self.config.actions if action_config.action_type in ('receipts', 'consumption')]
-        if not any(a.action_type == 'consumption' for a in actions):
-            # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
-            actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
-        return actions
 
     @property
     @memoized
@@ -90,11 +78,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
         prog_id = self.request_params.get('program')
         if prog_id != '':
             return prog_id
-
-    @property
-    @memoized
-    def aggregate_by(self):
-        return self.request.GET.get('agg_type')
 
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):

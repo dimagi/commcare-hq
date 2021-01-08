@@ -240,6 +240,16 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 Util.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                    if (resp.nextScreen.autolaunch) {
+                        FormplayerFrontend.trigger("clearForm");
+                        urlObject.setSteps(resp.nextScreen.selections.concat([resp.nextScreen.autolaunch]));
+                        Util.setUrlToObject(urlObject);
+                        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu({
+                            appId: urlObject.appId,
+                            steps: urlObject.steps,
+                        });
+                        return;
+                    }
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");

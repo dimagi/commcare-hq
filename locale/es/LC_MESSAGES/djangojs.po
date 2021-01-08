@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-16 20:11+0000\n"
+"POT-Creation-Date: 2021-01-07 21:26+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -56,19 +56,6 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/maps_utils.js:1105
 msgid "Other"
 msgstr "Otro"
-
-#: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:38
-msgid ""
-"Error sending email, please try again or report an issue if this persists."
-msgstr ""
-
-#: corehq/apps/accounting/static/accounting/js/enterprise_settings.js:25
-msgid ""
-"Do not allow new users to sign up on commcarehq.org. This may take up to an "
-"hour to take effect. <br>This will affect users with email addresses from "
-"the following domains: <strong><%= domains %></strong><br>Contact <a "
-"href='mailto:<%= email %>'><%= email %></a> to change the list of domains."
-msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js:104
 msgid "Downgrading?"
@@ -338,63 +325,63 @@ msgstr ""
 msgid "There are errors in your configuration."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1179
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1181
 msgid "Plain"
 msgstr "Simple"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1182
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1184
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Date"
 msgstr "Fecha"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1185
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1187
 msgid "Time Since or Until Date"
 msgstr "Tiempo Desde o Hasta la Fecha"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1188
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1190
 msgid "Phone Number"
 msgstr "Número de Teléfono "
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1191
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1193
 msgid "ID Mapping"
 msgstr "Mapeo ID"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1194
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1196
 msgid "Late Flag"
 msgstr "Bandera Tardía"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1197
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1199
 msgid "Search Only"
 msgstr "Sólo Búsqueda"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1200
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1202
 msgid "Address"
 msgstr "Dirección"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1203
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1205
 msgid "Distance from current location"
 msgstr "Distancia de la ubicación actual"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1209
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1211
 msgid "Picture"
 msgstr "Imagen"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1212
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1214
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
 msgid "Audio"
 msgstr "Audio"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1220
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1222
 msgid "Icon"
 msgstr "Ícono"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1226
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1228
 msgid "Conditional ID Mapping"
 msgstr "Mapeo de ID Condicional"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1230
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1232
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -633,26 +620,26 @@ msgstr "Eliminar"
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:106
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:120
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:164
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:165
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -2797,19 +2784,19 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:277
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:278
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:279
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:280
 msgid "Submit"
 msgstr "Ingresar"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:340
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:341
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:342
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:343
 msgid "This answer is outside the allowed range."
 msgstr ""
 
@@ -2823,11 +2810,11 @@ msgstr ""
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:315
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:319
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:470
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:477
 msgid ""
 "We’re unable to submit this form right now due to high system usage. \n"
 "\n"
@@ -2835,11 +2822,11 @@ msgid ""
 "form in Incomplete Forms later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:474
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:481
 msgid "Form submission failed with error"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:478
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:485
 msgid ""
 "There are errors in this form's answers. These must be corrected before the "
 "form can be submitted."
@@ -2857,26 +2844,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:336
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:355
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:470
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:480
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:41
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:498
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:508
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:650
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:660
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2913,27 +2900,27 @@ msgstr ""
 "formulario. Por favor reporte un problema si este mensaje continúa "
 "apareciendo."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:50
 msgid "Delete incomplete form?"
 msgstr "¿Desea borrar el formulario incompleto?"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:33
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:51
 msgid "Are you sure you want to delete '"
 msgstr "¿Está seguro que quiere borrar ' ?"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:34
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:52
 msgid "Yes"
 msgstr "Sí"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:35
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:53
 msgid "No"
 msgstr "No"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:47
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:55
 msgid "Log in as "
 msgstr "Ingresar como"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:51
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:59
 msgid "Yes, log in as this user"
 msgstr "Sí, ingresar como este usuario"
 
@@ -3075,15 +3062,15 @@ msgstr "Comprar Créditos"
 msgid "Select a Timezone..."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:78
+#: corehq/apps/domain/static/domain/js/internal_settings.js:79
 msgid "Available Countries"
 msgstr "Países disponibles"
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:79
+#: corehq/apps/domain/static/domain/js/internal_settings.js:80
 msgid "Active Countries"
 msgstr "Países Activos"
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:80
+#: corehq/apps/domain/static/domain/js/internal_settings.js:81
 msgid "Search Countries..."
 msgstr "Buscar Países..."
 
@@ -3104,6 +3091,19 @@ msgid ""
 "You may not override this project space's timezone because you only have "
 "access to this project space through an Organization. You must be added to "
 "the project space as a member in order to override your timezone."
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js:38
+msgid ""
+"Error sending email, please try again or report an issue if this persists."
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js:25
+msgid ""
+"Do not allow new users to sign up on commcarehq.org. This may take up to an "
+"hour to take effect. <br>This will affect users with email addresses from "
+"the following domains: <strong><%= domains %></strong><br>Contact <a "
+"href='mailto:<%= email %>'><%= email %></a> to change the list of domains."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:100

@@ -1938,3 +1938,13 @@ APP_ANALYTICS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
 )
+
+DEFAULT_EXPORT_SETTINGS = StaticToggle(
+    'default_export_settings',
+    'Allow enterprise admin to set default export settings',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
+    """
+)
