@@ -70,6 +70,8 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.functional import cached_property
 from django.conf import settings
+from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -122,6 +124,7 @@ from .const import (
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_STATES,
     RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
@@ -162,6 +165,46 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
         'status_code': status_code,
         'repeater_type': repeater_type,
     })
+
+
+class RepeaterStubManager(models.Manager):
+
+    def all_ready(self):
+        """
+        Return all RepeaterStubs ready to be forwarded.
+        """
+        not_paused = models.Q(is_paused=False)
+        next_attempt_not_in_the_future = (
+            models.Q(next_attempt_at__isnull=True)
+            | models.Q(next_attempt_at__lte=timezone.now())
+        )
+        repeat_records_ready_to_send = models.Q(
+            repeat_records__state__in=(RECORD_PENDING_STATE,
+                                       RECORD_FAILURE_STATE)
+        )
+        return (self.get_queryset()
+                .filter(not_paused)
+                .filter(next_attempt_not_in_the_future)
+                .filter(repeat_records_ready_to_send))
+
+
+class RepeaterStub(models.Model):
+    """
+    This model links the SQLRepeatRecords of a Repeater.
+    """
+    domain = models.CharField(max_length=126)
+    repeater_id = models.CharField(max_length=36)
+    is_paused = models.BooleanField(default=False)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+
+    objects = RepeaterStubManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['repeater_id']),
+        ]
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -931,6 +974,41 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
+
+
+class SQLRepeatRecord(models.Model):
+    domain = models.CharField(max_length=126)
+    couch_id = models.CharField(max_length=36, null=True, blank=True)
+    payload_id = models.CharField(max_length=36)
+    repeater_stub = models.ForeignKey(RepeaterStub,
+                                      on_delete=models.CASCADE,
+                                      related_name='repeat_records')
+    state = models.TextField(choices=RECORD_STATES,
+                             default=RECORD_PENDING_STATE)
+    registered_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'repeaters_repeatrecord'
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['couch_id']),
+            models.Index(fields=['payload_id']),
+            models.Index(fields=['registered_at']),
+        ]
+        ordering = ['registered_at']
+
+
+class SQLRepeatRecordAttempt(models.Model):
+    repeat_record = models.ForeignKey(SQLRepeatRecord,
+                                      on_delete=models.CASCADE)
+    state = models.TextField(choices=RECORD_STATES)
+    message = models.TextField(null=True, blank=True)
+    traceback = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'repeaters_repeatrecordattempt'
+        ordering = ['created_at']
 
 
 def _get_retry_interval(last_checked, now):
