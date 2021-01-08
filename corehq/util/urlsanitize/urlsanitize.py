@@ -10,9 +10,13 @@ def sanitize_user_input_url(url):
     raise PossibleSSRFAttempt if the url resolves to a non-public ip address
     raise CannotResolveHost if the url host does not resolve
     """
-    hostname = urlparse(url).hostname
+    parsed_url = urlparse(url)
+    hostname = parsed_url.hostname
+    scheme = parsed_url.scheme
     if hostname is None:
         raise InvalidURL()
+    if scheme not in ['http', 'https']:
+        raise PossibleSSRFAttempt('scheme not http(s)')
     try:
         ip_address_text = socket.gethostbyname(hostname)
     except socket.gaierror:
