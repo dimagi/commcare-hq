@@ -83,6 +83,16 @@ def get_special_fields(domain=None):
             description=_("Use to specify the parent's case type. "
                           "Usually used with parent_id or parent_external_id")),
         FieldSpec(
+            field='parent_relationship_type',
+            description=_("Whether the relationship with the parent is 'child' or "
+                          "'extension'. Default value is 'child'"
+                          "Values other than 'child' or 'extension' are invalid. "
+                          "Used with parent_id or parent_external_id columns")),
+        FieldSpec(
+            field='parent_identifier',
+            description=_("The index identifier when creating child/extension cases "
+                          "Used with parent_id or parent_external_id columns")),
+        FieldSpec(
             field='parent_ref',
             description=_("This is a deprecated feature needed for a handful of clients. "
                           "Please do not use unless you know what you are doing"),

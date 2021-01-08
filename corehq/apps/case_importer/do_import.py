@@ -278,6 +278,8 @@ class _CaseImportRow(object):
         self.parent_external_id = fields_to_update.pop('parent_external_id', None)
         self.parent_type = fields_to_update.pop('parent_type', self.config.case_type)
         self.parent_ref = fields_to_update.pop('parent_ref', 'parent')
+        self.parent_relationship_type = fields_to_update.pop('parent_relationship_type', 'child')
+        self.parent_identifier = fields_to_update.pop('parent_identifier', None)
         self.to_close = fields_to_update.pop('close', False)
         self.uploaded_owner_name = fields_to_update.pop('owner_name', None)
         self.uploaded_owner_id = fields_to_update.pop('owner_id', None)
@@ -287,6 +289,21 @@ class _CaseImportRow(object):
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
             raise exceptions.BlankExternalId()
+
+    def validate_parent_column(self):
+        # host_id column is used to create extension cases. Run below validations
+        #   when user tries to create extension cases
+
+        if self.parent_relationship_type == 'child':
+            return
+        elif self.parent_relationship_type == 'extension':
+            if not self.parent_identifier:
+                raise exceptions.InvalidParentId(_(
+                    "'parent_identifier' column must be provided "
+                    "when 'parent_relationship_type' column is set to 'extension'"
+                ))
+        else:
+            raise exceptions.InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
 
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids
@@ -329,7 +346,14 @@ class _CaseImportRow(object):
                     search_field, search_id, self.domain, self.parent_type)
                 _log_case_lookup(self.domain)
                 if parent_case:
-                    return {self.parent_ref: (parent_case.type, parent_case.case_id)}
+                    self.validate_parent_column()
+                    if self.parent_relationship_type == 'child':
+                        # todo; kill one of columns based on Nick's feedback
+                        identifier = self.parent_identifier or self.parent_ref
+                        return {identifier: (parent_case.type, parent_case.case_id)}
+                    elif self.parent_relationship_type == 'extension':
+                        identifier = self.parent_identifier
+                        return {identifier: (parent_case.type, parent_case.case_id, "extension")}
                 raise exceptions.InvalidParentId(column)
 
     def _get_date_opened(self):
