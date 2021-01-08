@@ -10,6 +10,7 @@ from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from requests import RequestException
 
 from corehq import privileges, toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
@@ -265,7 +266,7 @@ def test_connection_settings(request, domain):
                     "status": response.status_code,
                     "response": response.text,
                 })
-        except Exception as err:
+        except RequestException as err:
             return JsonResponse({"success": False, "response": str(err)})
     else:
         return JsonResponse({
