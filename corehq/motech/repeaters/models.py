@@ -414,10 +414,25 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @property
     def plaintext_password(self):
+
+        def clean_repr(bytes_repr):
+            """
+            Drops the bytestring representation from ``bytes_repr``
+
+            >>> clean_repr("b'spam'")
+            'spam'
+            """
+            if bytes_repr.startswith("b'") and bytes_repr.endswith("'"):
+                return bytes_repr[2:-1]
+            return bytes_repr
+
         if self.password is None:
             return ''
         if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
             ciphertext = self.password.split('$', 2)[2]
+            # Work around Py2to3 string-handling bug in encryption code
+            # (fixed on 2018-03-12 by commit 3a900068)
+            ciphertext = clean_repr(ciphertext)
             return b64_aes_decrypt(ciphertext)
         return self.password
 
@@ -482,7 +497,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
             auth_type=self.auth_type,
             username=self.username,
             skip_cert_verify=self.skip_cert_verify,
-            notify_addresses_str=self.notify_addresses_str,
+            notify_addresses_str=self.notify_addresses_str or '',
         )
         # Allow ConnectionSettings to encrypt old Repeater passwords:
         conn.plaintext_password = self.plaintext_password
