@@ -244,24 +244,7 @@
         </div>
       {% endif %}
 
-      <!--[if IE]>
-        <div id="unsupported-browser"
-             class="alert alert-danger">
-          <p>
-            <i class="fa fa-warning-sign"></i>
-            <strong>
-              {% trans 'CommCare HQ does not work well with Internet Explorer.'%}
-            </strong>
-          </p>
-          <p>
-            {% blocktrans %}
-              We recommend
-              <a href="https://www.google.com/chrome">Chrome</a>
-              or <a href="http://www.mozilla.org/">Firefox</a>.
-            {% endblocktrans %}
-          </p>
-        </div>
-      <![endif]-->
+      {% include "hqwebapp/partials/unsupported_browser.html" %}
       {% block messages %}
         <div id="hq-messages-container"
              class="container-fluid messages-container">
@@ -359,6 +342,7 @@
     {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
     {% initial_page_data 'toggles_dict' toggles_dict %}
     {% initial_page_data 'previews_dict' previews_dict %}
+    {% initial_page_data 'secure_cookies' secure_cookies %}
 
     {% if demo_workflow_ab_v2 %}
       {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
@@ -412,7 +396,7 @@
           deps: ['knockout', 'ko.mapping'],
           callback: function (ko, mapping) {
             ko.mapping = mapping;
-          },
+          }
         });
         requirejs([
           'hqwebapp/js/common',

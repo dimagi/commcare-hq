@@ -53,7 +53,8 @@ class Command(BaseCommand):
     def handle(self, domain=None, reset=False,
                chunk_size=100, all=None, limit_to_db=None, **options):
         exporters = options.get('exporters')
-        already_exported = _get_names_from_file(options['already_exported'])
+        already_exported = get_lines_from_file(options['already_exported'])
+        print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
 
         if not domain:
             raise CommandError(USAGE)
@@ -84,13 +85,11 @@ class Command(BaseCommand):
                 sys.exit(skips)
 
 
-def _get_names_from_file(filename):
+def get_lines_from_file(filename):
     if not filename:
         return set()
     with open(filename) as f:
-        names = {line.strip() for line in f}
-    print("Found {} existing blobs, these will be skipped".format(len(names)))
-    return names
+        return {line.strip() for line in f}
 
 
 def _get_export_filename(slug, domain, already_exported):

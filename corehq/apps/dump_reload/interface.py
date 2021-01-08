@@ -45,24 +45,33 @@ class DataLoader(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
         """
         :param object_strings: iterable of JSON encoded object strings
         :param force: True if objects should be loaded into an existing domain
-        :return: tuple(total object count, loaded object count)
+        :return: loaded object Counter
         """
         raise NotImplementedError
 
-    def load_from_file(self, extracted_dump_path, force=False):
-        file_path = os.path.join(extracted_dump_path, '{}.gz'.format(self.slug))
+    def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False):
+        loaded_object_count = {}
+        for file in os.listdir(extracted_dump_path):
+            path = os.path.join(extracted_dump_path, file)
+            if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
+                counts = self.load_from_file(path, dump_meta, force, dry_run)
+                loaded_object_count.update(counts)
+        return loaded_object_count
+
+    def load_from_file(self, file_path, dump_meta, force=False, dry_run=False):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
-        self.stdout.write(f"Inspecting {extracted_dump_path} using '{self.slug}' data loader.")
-        line_count = _get_gzfile_line_count(file_path)
+        self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
+        meta_slug, _ = os.path.splitext(os.path.basename(file_path))
+        expected_count = sum(dump_meta[meta_slug].values())
         with gzip.open(file_path) as dump_file:
-            object_strings = with_progress_bar(dump_file, length=line_count, stream=self.stdout)
-            total_object_count, loaded_object_count = self.load_objects(object_strings, force)
+            object_strings = with_progress_bar(dump_file, length=expected_count)
+            loaded_object_count = self.load_objects(object_strings, force, dry_run)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
@@ -72,11 +81,4 @@ class DataLoader(metaclass=ABCMeta):
                 RuntimeWarning
             )
 
-        return total_object_count, loaded_object_count
-
-
-def _get_gzfile_line_count(file_path):
-    # This has to iterate through the whole file, which takes time (~15 minutes
-    # for an 11G sql.gz file), but it's worth it to predict completion time
-    with gzip.open(file_path) as f:
-        return sum(1 for _ in f)
+        return {meta_slug: loaded_object_count}

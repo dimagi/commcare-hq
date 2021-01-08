@@ -8,7 +8,7 @@
         "@mapbox/mapbox-gl-geocoder": "4.5.1",
         "At.js": "millerdev/At.js#master",
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
-        "DOMPurify": "cure53/DOMPurify#2.0.12",
+        "DOMPurify": "cure53/DOMPurify#2.2.2",
         "ace-builds": "1.3.3",
         "angular": "1.7.9",
         "angular-animate": "1.7.9",
@@ -27,7 +27,7 @@
         "angular-ui-bootstrap": "2.5.6",
         "autotrack": "2.4.1",
         "backbone": "npm:backbone#~1.3.2",
-        "backbone.marionette": "4.1.2",
+        "backbone.marionette": "4.1.3",
         "backbone.radio": "^2.0.0",
         "blazy": "1.6.2",
         "bootstrap": "3.4.1",
@@ -60,7 +60,7 @@
         "jquery-textchange": "jmalonzo/bower-jquery-textchange#0.2.3",
         "jquery-timeago": "rmm5t/jquery-timeago#1.2.0",
         "jquery-tiny-pubsub": "cowboy/jquery-tiny-pubsub#~0.7.0",
-        "jquery-treetable": "3.2.0",
+        "jquery-treetable": "ludo/jquery-treetable#3.2.0",
         "jquery-ui": "1.12.1",
         "jquery-ui-built-themes": "1.12.1",
         "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
@@ -72,6 +72,7 @@
         "less": "3.10.3",
         "marionette.approuter": "^1.0.2",
         "markdown-it": "7.0.1",
+        "modernizr": "^3.11.3",
         "moment": "2.27.0",
         "multiselect": "0.9.12",
         "npm": "6.14.6",
@@ -117,5 +118,9 @@
         "mem": "^4.0.0",
         "minimatch": "^3.0.2",
         "underscore.string": "^3.3.5"
+    },
+    "scripts": {
+        "postinstall": "yarn run -s build:modernizr",
+        "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib"
     }
 }

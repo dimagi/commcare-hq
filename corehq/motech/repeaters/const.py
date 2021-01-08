@@ -1,4 +1,5 @@
 from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
 
 from django.conf import settings
 
@@ -12,3 +13,9 @@ RECORD_PENDING_STATE = 'PENDING'
 RECORD_SUCCESS_STATE = 'SUCCESS'
 RECORD_FAILURE_STATE = 'FAIL'
 RECORD_CANCELLED_STATE = 'CANCELLED'
+RECORD_STATES = [
+    (RECORD_PENDING_STATE, _('Pending')),
+    (RECORD_SUCCESS_STATE, _('Succeeded')),
+    (RECORD_FAILURE_STATE, _('Failed')),
+    (RECORD_CANCELLED_STATE, _('Cancelled')),
+]

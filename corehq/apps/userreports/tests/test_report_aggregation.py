@@ -1,8 +1,6 @@
+from freezegun import freeze_time
 from django.http import HttpRequest
 from django.test import TestCase
-from datetime import datetime, timedelta
-
-from freezegun import freeze_time
 
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
@@ -607,57 +605,38 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
 
 
-@freeze_time("2020-01-15")
+@freeze_time("2020-12-30")
 class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
-    # Note that these constants are subtracted from today's date, so the month parts of the names
-    # are approximations: the first one will usually fall one year and two months ago, but will
-    # sometimes fall one year and three months ago. The only place this matters in tests is
-    # test_aggregate_date, which groups by month, so it matters which rows are in the same month.
-    ONE_YEAR_TWO_MONTHS = 365 + 28 * 2 + 5
-    ONE_YEAR_THREE_MONTHS = 365 + 28 * 3 + 4
-    ONE_YEAR_THREE_MONTHS_OTHER = 365 + 28 * 3 + 5
-    MORE_THAN_TWO_YEARS = 365 * 2 + 75
-
-    @classmethod
-    def _relative_date(cls, days_offset):
-        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m-%d")
-
-    @classmethod
-    def _relative_month(cls, days_offset):
-        return (datetime.utcnow() - timedelta(days=days_offset)).strftime("%Y-%m")
-
     @classmethod
     def _create_data(cls):
-        # This data uses relative dates because if the dates were hard-coded, eventually the
-        # age_in_months_buckets tests would break.
         for row in [
             {
                 "state": "MA",
                 "city": "Boston",
                 "number": 4,
                 "age_at_registration": 1,
-                "date": cls._relative_date(cls.ONE_YEAR_TWO_MONTHS),
+                "date": "2019-10-30"
             },
             {
                 "state": "MA",
                 "city": "Boston",
                 "number": 3,
                 "age_at_registration": 5,
-                "date": cls._relative_date(cls.ONE_YEAR_THREE_MONTHS),
+                "date": "2019-09-30"
             },
             {
                 "state": "MA",
                 "city": "Cambridge",
                 "number": 2,
                 "age_at_registration": 8,
-                "date": cls._relative_date(cls.ONE_YEAR_THREE_MONTHS_OTHER),
+                "date": "2019-09-29"
             },
             {
                 "state": "TN",
                 "city": "Nashville",
                 "number": 1,
                 "age_at_registration": 14,
-                "date": cls._relative_date(cls.MORE_THAN_TWO_YEARS),
+                "date": "2018-10-15"
             },
         ]:
             cls._new_case(row).save()
@@ -916,31 +895,14 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
         )
         view = self._create_view(report_config)
-        if (
-            self._relative_month(self.ONE_YEAR_THREE_MONTHS)
-            == self._relative_month(self.ONE_YEAR_THREE_MONTHS_OTHER)
-        ):
-            # Typical use case, the two of the MA rows that are a day apart fall in the same month
-            self.assertEqual(
-                view.export_table,
-                [['foo',
-                  [['report_column_display_state', 'month', 'report_column_display_number'],
-                   ['MA', self._relative_month(self.ONE_YEAR_TWO_MONTHS), 4],
-                   ['MA', self._relative_month(self.ONE_YEAR_THREE_MONTHS), 5],
-                   ['TN', self._relative_month(self.MORE_THAN_TWO_YEARS), 1]]]]
-            )
-        else:
-            # One day each month, those two rows will be in different months.
-            # This no longer tests that the aggregation is summing, it just makes sure this test doesn't fail.
-            self.assertEqual(
-                view.export_table,
-                [['foo',
-                  [['report_column_display_state', 'month', 'report_column_display_number'],
-                   ['MA', self._relative_month(self.ONE_YEAR_TWO_MONTHS), 4],
-                   ['MA', self._relative_month(self.ONE_YEAR_THREE_MONTHS), 3],
-                   ['MA', self._relative_month(self.ONE_YEAR_THREE_MONTHS_OTHER), 2],
-                   ['TN', self._relative_month(self.MORE_THAN_TWO_YEARS), 1]]]]
-            )
+        self.assertEqual(
+            view.export_table,
+            [['foo',
+                [['report_column_display_state', 'month', 'report_column_display_number'],
+                ['MA', '2019-10', 4],
+                ['MA', '2019-09', 5],
+                ['TN', '2018-10', 1]]]]
+        )
 
     def test_integer_buckets(self):
         report_config = self._create_report(

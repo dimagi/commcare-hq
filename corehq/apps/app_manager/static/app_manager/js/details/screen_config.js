@@ -1124,12 +1124,17 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     // Set up case search
                     self.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
                         spec.searchProperties || [],
+                        spec.autoLaunch,
                         spec.includeClosed,
                         spec.defaultProperties,
                         spec.lang,
+                        spec.searchCommandLabel,
                         spec.searchButtonDisplayCondition,
+                        spec.searchFilter,
+                        spec.searchRelevant,
                         spec.blacklistedOwnerIdsExpression,
-                        self.shortScreen.saveButton
+                        self.shortScreen.saveButton,
+                        self.filter.filterText
                     );
                 }
                 if (spec.state.long !== undefined) {

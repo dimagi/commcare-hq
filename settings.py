@@ -164,12 +164,17 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
+X_FRAME_OPTIONS = 'DENY'
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
+ADD_CAPTCHA_FIELD_TO_FORMS = False
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -244,6 +249,7 @@ HQ_APPS = (
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
+    'corehq.apps.enterprise',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
@@ -373,6 +379,7 @@ HQ_APPS = (
     'custom.covid',
     'custom.aaa',
     'custom.inddex',
+    'custom.onse',
 
     'custom.ccqa',
 
@@ -1006,13 +1013,13 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+RULE_UPDATE_HOUR = 0
 
 DEFAULT_ODATA_FEED_LIMIT = 25
 
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
-    # "icds-cas.gov.in": 'icds/login.html',
     # "default": 'login_and_password/login.html',
 }
 
@@ -1115,7 +1122,7 @@ if callable(COMPRESS_OFFLINE):
 
 # These default values can't be overridden.
 # Should you someday need to do so, use the lambda/if callable pattern above
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 
@@ -1452,8 +1459,7 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
 
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
 CUSTOM_DB_ROUTING = {
-    "aaa": "aaa-data",
-    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
+    "aaa": "aaa-data"
 }
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
@@ -1850,6 +1856,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2020.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
@@ -1864,6 +1871,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2020.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
@@ -1948,6 +1956,7 @@ DOMAIN_MODULE_MAP = {
 
     'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
+    'onse-iss': 'custom.onse',
 
     # From DOMAIN_MODULE_CONFIG on production
     'test-pna': 'custom.intrahealth',
@@ -2072,3 +2081,7 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+# Disable Datadog trace startup logs by default
+# https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
+os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')

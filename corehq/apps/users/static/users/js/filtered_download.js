@@ -15,6 +15,7 @@ hqDefine('users/js/filtered_download', [
             'role_id': $("#id_role_id").val(),
             'search_string': $("#id_search_string").val(),
             'location_id': $("[name=location_id]").val(),
+            'domains': $("#id_domains").val(),
         };
     }
 

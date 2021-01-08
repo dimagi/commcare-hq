@@ -499,12 +499,28 @@ def has_unsorted_history(old_obj, new_obj, rule, diff):
     return old_history == new_obj["history"]
 
 
-MALFORMED_DATE = re.compile(r"\d{4}-\d\d-0\d\d$")
+MALFORMED_DATE = re.compile(r"""
+(
+      \d\d-\d\d-\d{4}                   # MM-DD-YYYY
+    | \d{4}-\d\d-0\d\d                  # YYYY-MM-0DD
+    | \d\d/\d\d/\d\d\ \d\d:\d\d:\d\d    # MM/DD/YY HH:MM:SS
+)$
+""", re.VERBOSE)
 
 
 def has_malformed_date(old_obj, new_obj, rule, diff):
     old = diff.old_value
     if isinstance(old, str) and MALFORMED_DATE.match(old):
-        assert old[8] == "0", old
-        return diff.new_value == old[:8] + old[9:]
+        if len(old) == 10:
+            # MM/DD/YYYY
+            return diff.new_value == old[6:] + "-" + old[:5]
+        if len(old) == 11:
+            # YYYY-MM-0DD
+            assert old[8] == "0", old
+            return diff.new_value == old[:8] + old[9:]
+        if len(old) == 17:
+            # MM/DD/YY HH:MM:SS
+            old = old.replace("/", "-")
+            return diff.new_value == f"20{old[6:8]}-{old[:5]} 00:00:00"
+        raise ValueError(f"unexpected date format: {old}")
     return False

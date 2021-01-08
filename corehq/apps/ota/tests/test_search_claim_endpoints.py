@@ -13,8 +13,10 @@ from casexml.apps.case.util import post_case_blocks
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.models import (
     CLAIM_CASE_TYPE,
+    CASE_SEARCH_XPATH_QUERY_KEY,
     CaseSearchConfig,
     IgnorePatterns,
 )
@@ -29,7 +31,6 @@ from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needi
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
-    CASE_SEARCH_MAX_RESULTS,
 )
 from corehq.util.elastic import ensure_index_deleted
 
@@ -447,8 +448,8 @@ class CaseClaimEndpointTests(TestCase):
 
         matching_criteria = [
             {'name': 'Jamie Hand'},
-            {'name': 'Jamie Hand', '_xpath_query': 'date_opened > "2015-03-25"'},
-            {'_xpath_query': 'name = "not Jamie" or name = "Jamie Hand"'},
+            {'name': 'Jamie Hand', CASE_SEARCH_XPATH_QUERY_KEY: 'date_opened > "2015-03-25"'},
+            {CASE_SEARCH_XPATH_QUERY_KEY: 'name = "not Jamie" or name = "Jamie Hand"'},
         ]
         for params in matching_criteria:
             params.update({'case_type': CASE_TYPE})
@@ -457,8 +458,8 @@ class CaseClaimEndpointTests(TestCase):
 
         non_matching_criteria = [
             {'name': 'Jamie Face'},
-            {'name': 'Jamie Hand', '_xpath_query': 'date_opened < "2015-03-25"'},
-            {'_xpath_query': 'name = "not Jamie" and name = "Jamie Hand"'},
+            {'name': 'Jamie Hand', CASE_SEARCH_XPATH_QUERY_KEY: 'date_opened < "2015-03-25"'},
+            {CASE_SEARCH_XPATH_QUERY_KEY: 'name = "not Jamie" and name = "Jamie Hand"'},
         ]
         for params in non_matching_criteria:
             params.update({'case_type': CASE_TYPE})

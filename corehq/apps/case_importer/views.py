@@ -33,6 +33,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -104,11 +105,11 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     # using the soil framework.
 
     if extension not in valid_extensions:
-        raise SpreadsheetFileExtError(
+        raise SpreadsheetFileExtError(_(
             'The file you chose could not be processed. '
             'Please check that it is saved as a Microsoft '
             'Excel file.'
-        )
+        ))
 
     # stash content in the default storage for subsequent views
     case_upload = CaseUpload.create(uploaded_file_handle,
@@ -133,23 +134,23 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
         raise ImporterRawError(error_message)
 
     if row_count == 0:
-        raise ImporterError('Your spreadsheet is empty. Please try again with a different spreadsheet.')
+        raise ImporterError(_('Your spreadsheet is empty. Please try again with a different spreadsheet.'))
 
     if max_columns is not None and len(columns) > max_columns:
-        raise ImporterError(
+        raise ImporterError(_(
             'Your spreadsheet has too many columns. '
             'A maximum of %(max_columns)s is supported.'
-            % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
+        ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        raise ImporterError(
-            'No cases have been submitted to this domain and there are no '
-            'applications yet. You cannot import case details from an Excel '
-            'file until you have existing cases or applications.')
+        raise ImporterError(_(
+            'Your project does not use cases yet. To import cases from Excel, '
+            'you must first create an application with a case list.'
+        ))
 
     context = {
         'columns': columns,
@@ -219,6 +220,12 @@ def excel_fields(request, domain):
     # hide search column and matching case fields from the update list
     if search_column in excel_fields:
         excel_fields.remove(search_column)
+
+    # 'domain' case property cannot be created if domain mirror flag is enabled,
+    # as this enables a multi-domain case import.
+    # see: https://dimagi-dev.atlassian.net/browse/USH-81
+    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        excel_fields.remove('domain')
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])

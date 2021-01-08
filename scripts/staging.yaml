@@ -56,17 +56,20 @@ branches:
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/user-data-jit            # Farid September 2
-  - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
-  - gh/resolve-security-warnings # Graham Oct 16
-  - kev/formplayer-remove-prevalidate # Kevin Oct 20
   - gh/improve-queueing-repeaters # Graham Oct 22
-  - jls/require-search-text # Jenny Oct 22
-  - jls/combobox-select2 # Jenny Oct 28
-  - nh/import_de  # Norman Nov 4
-  - adil-uddin:feature/USH-212-separate-permission-for-geocoder # Adil/Jenny Nov 6
-  - mr/safari_warnings # Matt Nov 6
-  - smh/bulk-download-web-users # Steph Nov 9
-  - dependabot/pip/requirements/uwsgi-2.0.19.1 # Daniel Nov 9
-
+  - sr/es-alias # Sravan Nov 18
+  - mk/remove-draconian-full # MK Nov 30
+  - sr/autosubmi # Cal Dec 4
+  - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
+  - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
+  - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
+  #- jls/web-apps-sticky-search # Jenny Dec 28
+  - sr/parent-select # Jenny Dec 29
+  - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
+  - bmb/sso-architecture  # Biyeun Dec 30
+  - sr/ext-import # Sravan Jan 7
+  #- smh/query-screen-prompt-defaults # Steph Jan 5
+  - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
 submodules: {}
