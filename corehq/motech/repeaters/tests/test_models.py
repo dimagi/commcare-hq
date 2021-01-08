@@ -490,3 +490,32 @@ class TestMigrationCantDuplicate(RepeaterFixtureMixin, TestCase):
         self.assertEqual(RepeaterStub.objects.filter(
             repeater_id=self.repeater.get_id,
         ).count(), 1)
+
+
+class PauseResumeRetireRepeaterTests(RepeaterFixtureMixin, TestCase):
+
+    def _get_repeater_stub(self):
+        return RepeaterStub.objects.get(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        )
+
+    def test_pause(self):
+        self.assertFalse(self._get_repeater_stub().is_paused)
+        self.repeater.pause()
+        self.assertTrue(self._get_repeater_stub().is_paused)
+
+    def test_resume(self):
+        repeater_stub = self._get_repeater_stub()
+        repeater_stub.is_paused = True
+        repeater_stub.save()
+
+        self.repeater.resume()
+        self.assertFalse(self._get_repeater_stub().is_paused)
+
+    def test_retire(self):
+        self.repeater.retire()
+        self.assertFalse(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).exists())
