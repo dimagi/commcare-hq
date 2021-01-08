@@ -7,6 +7,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.users.util import username_to_user_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -40,6 +41,8 @@ def update_cases(domain, case_type, username):
     print(f"Found {len(case_ids)} {case_type} cases in {domain}")
 
     user_id = username_to_user_id(username)
+    if not user_id:
+        user_id = SYSTEM_USER_ID
 
     case_blocks = []
     skip_count = 0
