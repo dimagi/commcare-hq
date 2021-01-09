@@ -272,12 +272,12 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
 
 
 def sanitize_user_input_url_for_repeaters(url):
-        try:
-            sanitize_user_input_url(url)
-        except (CannotResolveHost, InvalidURL):
+    try:
+        sanitize_user_input_url(url)
+    except (CannotResolveHost, InvalidURL):
+        pass
+    except PossibleSSRFAttempt as e:
+        if settings.DEBUG and str(e) == 'is_loopback':
             pass
-        except PossibleSSRFAttempt as e:
-            if settings.DEBUG and str(e) == 'is_loopback':
-                pass
-            else:
-                raise
+        else:
+            raise
