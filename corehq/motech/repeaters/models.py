@@ -212,6 +212,10 @@ class RepeaterStub(models.Model):
             models.Index(fields=['domain']),
             models.Index(fields=['repeater_id']),
         ]
+        constraints = [
+            models.UniqueConstraint(fields=['repeater_id'],
+                                    name='one_to_one_repeater')
+        ]
 
     @property
     @memoized
