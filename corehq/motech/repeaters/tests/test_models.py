@@ -22,6 +22,7 @@ from ..const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
+from ..migration_functions import create_repeaterstubs
 from ..models import (
     FormRepeater,
     RepeaterStub,
@@ -477,3 +478,15 @@ class SaveDeleteRepeaterTests(TestCase):
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
         ).count(), 0)
+
+
+class TestMigrationCantDuplicate(RepeaterFixtureMixin, TestCase):
+
+    def test_migration_cant_duplicate(self):
+        self.assertEqual(RepeaterStub.objects.filter(
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+        create_repeaterstubs(None, None)
+        self.assertEqual(RepeaterStub.objects.filter(
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
