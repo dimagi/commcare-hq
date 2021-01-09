@@ -24,6 +24,7 @@ from ..const import (
 from ..models import (
     FormRepeater,
     RepeaterStub,
+    are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
     is_response,
@@ -385,3 +386,19 @@ class AddAttemptsTests(RepeaterTestCase):
                          RECORD_CANCELLED_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
+
+
+class TestAreRepeatRecordsMigrated(RepeaterTestCase):
+
+    def setUp(self):
+        super().setUp()
+        are_repeat_records_migrated.clear(DOMAIN)
+
+    def test_no(self):
+        is_migrated = are_repeat_records_migrated(DOMAIN)
+        self.assertFalse(is_migrated)
+
+    def test_yes(self):
+        with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE):
+            is_migrated = are_repeat_records_migrated(DOMAIN)
+        self.assertTrue(is_migrated)
