@@ -309,6 +309,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         ui: {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
+            searchTextBox: '.input-group',
             paginators: '.page-link',
             columnHeader: '.header-clickable',
         },
@@ -318,7 +319,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.columnHeader': 'columnSortAction',
-            'keypress': 'keyAction',
+            'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
         },
 
@@ -333,7 +334,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:search", searchText);
         },
 
-        keyAction: function (event) {
+        searchTextKeyAction: function (event) {
+            // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
                 this.caseListSearch(event);
             }
@@ -345,6 +347,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
             if (event.which === 13 || event.keyCode === 13) {
                 e.stopImmediatePropagation();
                 this.paginateAction(e);
