@@ -12,6 +12,8 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.motech.auth import api_auth_settings_choices
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import sanitize_user_input_url_for_repeaters
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -147,6 +149,14 @@ class ConnectionSettingsForm(forms.ModelForm):
         except EmailNotValidError:
             raise forms.ValidationError(_("Contains an invalid email address."))
         return emails
+
+    def clean_url(self):
+        url = self.cleaned_data['url']
+        try:
+            sanitize_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+        except PossibleSSRFAttempt:
+            raise forms.ValidationError(_("Invalid URL"))
+        return url
 
     def save(self, commit=True):
         self.instance.domain = self.domain
