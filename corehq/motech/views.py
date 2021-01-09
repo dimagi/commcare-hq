@@ -273,7 +273,13 @@ def test_connection_settings(request, domain):
         except PossibleSSRFAttempt:
             return JsonResponse({"success": False, "response": "Invalid URL"})
     else:
-        return JsonResponse({
-            "success": False,
-            "response": form.errors,
-        })
+        if set(form.errors.keys()) == {'url'}:
+            return JsonResponse({
+                "success": False,
+                "response": form.errors['url'],
+            })
+        else:
+            return JsonResponse({
+                "success": False,
+                "response": "Try saving the connection first"
+            })
