@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 import attr
 from mock import Mock, patch
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -641,10 +642,19 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_failure(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
+        with patch('corehq.motech.repeaters.models.simple_post', side_effect=RequestException('Boom!')):
             repeat_record.fire()
 
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
+        self.assertFalse(repeat_record.succeeded)
+
+    @run_with_all_backends
+    def test_unexpected_failure(self):
+        repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
+            repeat_record.fire()
+
+        self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
         self.assertFalse(repeat_record.succeeded)
 
     @run_with_all_backends
