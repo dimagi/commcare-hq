@@ -49,13 +49,9 @@ class RepeaterTestCase(TestCase):
             url='https://www.example.com/api/',
         )
         self.repeater.save()
-        self.repeater_stub = RepeaterStub.objects.create(
-            domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
-        )
+        self.repeater_stub = self.repeater.repeater_stub
 
     def tearDown(self):
-        self.repeater_stub.delete()
         self.repeater.delete()
         super().tearDown()
 
