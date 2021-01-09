@@ -81,6 +81,8 @@ def do_case_patch(migrator, cases, stop, batch_size):
     :param cases: string specifying a subset of cases to be patched. All
     cases with diffs with be patched if `None`. Accepted values:
 
+        - "with-diffs" to patch cases with diffs
+        - "with-changes" to patch cases with changes
         - a comma-delimited list of case ids
         - a path to a file containing a case id on each line. The path must
           begin with / or ./
@@ -143,17 +145,26 @@ class CaseDiffTool:
         if not counts or not counts.diffs + counts.changes:
             log.info("nothing to patch")
             return
-        if cases:
-            case_ids = list(get_ids_from_string_or_file(cases))
-            count = len(case_ids)
-            select = {"by_kind": {"CommCareCase": case_ids}}
+        if cases == "pending":
+            raise ValueError("cannot patch pending cases")
+        if cases == "with-diffs":
+            count = counts.diffs
+            diffs = statedb.iter_doc_diffs()
+        elif cases == "with-changes":
+            count = counts.changes
+            diffs = statedb.iter_doc_changes()
         else:
-            count = counts.diffs + counts.changes
-            select = {"kind": "CommCareCase"}
-        diffs = chain(
-            statedb.iter_doc_diffs(**select),
-            statedb.iter_doc_changes(**select),
-        )
+            if cases:
+                case_ids = list(get_ids_from_string_or_file(cases))
+                count = len(case_ids)
+                select = {"by_kind": {"CommCareCase": case_ids}}
+            else:
+                count = counts.diffs + counts.changes
+                select = {"kind": "CommCareCase"}
+            diffs = chain(
+                statedb.iter_doc_diffs(**select),
+                statedb.iter_doc_changes(**select),
+            )
         log.info(f"patching {count} cases")
         diffs = with_progress_bar(diffs, count, prefix="Case diffs", oneline=False)
         for pending_diffs in self.map_cases(patch_diffs, diffs):
