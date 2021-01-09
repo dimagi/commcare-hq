@@ -153,7 +153,7 @@ class ConnectionSettingsForm(forms.ModelForm):
     def clean_url(self):
         url = self.cleaned_data['url']
         try:
-            sanitize_user_input_url_for_repeaters(url)
+            sanitize_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
         except PossibleSSRFAttempt:
             raise forms.ValidationError(_("Invalid URL"))
         return url

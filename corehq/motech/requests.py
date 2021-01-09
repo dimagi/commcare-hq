@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 import attr
 from requests.structures import CaseInsensitiveDict
 
+from corehq.util.metrics import metrics_counter
 from corehq.util.urlsanitize.urlsanitize import sanitize_user_input_url, CannotResolveHost, InvalidURL, \
     PossibleSSRFAttempt
 from dimagi.utils.logging import notify_exception
@@ -130,7 +131,7 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        sanitize_user_input_url_for_repeaters(url)
+        sanitize_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:
@@ -271,7 +272,7 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     return response
 
 
-def sanitize_user_input_url_for_repeaters(url):
+def sanitize_user_input_url_for_repeaters(url, domain, src):
     try:
         sanitize_user_input_url(url)
     except (CannotResolveHost, InvalidURL):
@@ -280,4 +281,14 @@ def sanitize_user_input_url_for_repeaters(url):
         if settings.DEBUG and e.reason == 'is_loopback':
             pass
         else:
+            metrics_counter('commcare.repeaters.ssrf_attempt', tags={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason
+            })
+            notify_exception(None, 'Possible SSRF Attempt', details={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason,
+            })
             raise
