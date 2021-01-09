@@ -65,7 +65,6 @@ branches:
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
-  #- jls/web-apps-sticky-search # Jenny Dec 28
   - sr/parent-select # Jenny Dec 29
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
   - bmb/sso-architecture  # Biyeun Dec 30
@@ -73,4 +72,5 @@ branches:
   #- smh/query-screen-prompt-defaults # Steph Jan 5
   #- bmb/sso-architecture+lxml-upgrade  # Biyeun Jan 8
   #- dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
+  - jls/case-claim-checbox-ui-again # Jenny Jan 9
 submodules: {}
