@@ -64,10 +64,14 @@ class.
 
 """
 import warnings
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.functional import cached_property
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -88,9 +92,11 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -109,6 +115,7 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
@@ -118,6 +125,7 @@ from .const import (
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_STATES,
     RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
@@ -138,7 +146,6 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from .utils import get_all_repeater_types
 from ...util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
@@ -160,6 +167,46 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
         'status_code': status_code,
         'repeater_type': repeater_type,
     })
+
+
+class RepeaterStubManager(models.Manager):
+
+    def all_ready(self):
+        """
+        Return all RepeaterStubs ready to be forwarded.
+        """
+        not_paused = models.Q(is_paused=False)
+        next_attempt_not_in_the_future = (
+            models.Q(next_attempt_at__isnull=True)
+            | models.Q(next_attempt_at__lte=timezone.now())
+        )
+        repeat_records_ready_to_send = models.Q(
+            repeat_records__state__in=(RECORD_PENDING_STATE,
+                                       RECORD_FAILURE_STATE)
+        )
+        return (self.get_queryset()
+                .filter(not_paused)
+                .filter(next_attempt_not_in_the_future)
+                .filter(repeat_records_ready_to_send))
+
+
+class RepeaterStub(models.Model):
+    """
+    This model links the SQLRepeatRecords of a Repeater.
+    """
+    domain = models.CharField(max_length=126)
+    repeater_id = models.CharField(max_length=36)
+    is_paused = models.BooleanField(default=False)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+
+    objects = RepeaterStubManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['repeater_id']),
+        ]
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -251,7 +298,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def get_attempt_info(self, repeat_record):
         return None
 
-    def register(self, payload, next_check=None):
+    def register(self, payload):
         if not self.allowed_to_forward(payload):
             return
 
@@ -261,12 +308,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
             repeater_type=self.doc_type,
             domain=self.domain,
             registered_on=now,
-            next_check=next_check or now,
+            next_check=now,
             payload_id=payload.get_id
         )
         repeat_record.save()
-        if next_check is None:
-            repeat_record.attempt_forward_now()
+        repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -419,7 +465,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         """
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
-        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
+        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
         else:
             attempt = repeat_record.handle_failure(result)
@@ -654,6 +700,13 @@ class LocationRepeater(Repeater):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
 
 
+def get_all_repeater_types():
+    return OrderedDict([
+        (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
+        for cls in settings.REPEATER_CLASSES
+    ])
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
@@ -831,7 +884,7 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
-        if not _is_response(response):
+        if not is_response(response):
             return None
         response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
@@ -845,7 +898,7 @@ class RepeatRecord(Document):
         payload did not result in an API call.
         """
         now = datetime.utcnow()
-        if _is_response(response):
+        if is_response(response):
             # ^^^ Don't bother logging success in Datadog if the payload
             # did not need to be sent. (This can happen with DHIS2 if
             # the form that triggered the forwarder doesn't contain data
@@ -932,6 +985,41 @@ class RepeatRecord(Document):
         self.next_check = datetime.utcnow()
 
 
+class SQLRepeatRecord(models.Model):
+    domain = models.CharField(max_length=126)
+    couch_id = models.CharField(max_length=36, null=True, blank=True)
+    payload_id = models.CharField(max_length=36)
+    repeater_stub = models.ForeignKey(RepeaterStub,
+                                      on_delete=models.CASCADE,
+                                      related_name='repeat_records')
+    state = models.TextField(choices=RECORD_STATES,
+                             default=RECORD_PENDING_STATE)
+    registered_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'repeaters_repeatrecord'
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['couch_id']),
+            models.Index(fields=['payload_id']),
+            models.Index(fields=['registered_at']),
+        ]
+        ordering = ['registered_at']
+
+
+class SQLRepeatRecordAttempt(models.Model):
+    repeat_record = models.ForeignKey(SQLRepeatRecord,
+                                      on_delete=models.CASCADE)
+    state = models.TextField(choices=RECORD_STATES)
+    message = models.TextField(null=True, blank=True)
+    traceback = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'repeaters_repeatrecordattempt'
+        ordering = ['created_at']
+
+
 def _get_retry_interval(last_checked, now):
     """
     Returns a timedelta between MIN_RETRY_WAIT and MAX_RETRY_WAIT that
@@ -951,12 +1039,19 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def _is_response(duck):
+def is_response(duck):
     """
     Returns True if ``duck`` has the attributes of a Requests response
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def domain_can_forward(domain):
+    return domain and (
+        domain_has_privilege(domain, ZAPIER_INTEGRATION)
+        or domain_has_privilege(domain, DATA_FORWARDING)
+    )
 
 
 # import signals
