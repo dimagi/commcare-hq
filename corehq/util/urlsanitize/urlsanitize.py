@@ -43,7 +43,9 @@ def sanitize_ip(ip_address):
 
 
 class PossibleSSRFAttempt(Exception):
-    pass
+    def __init__(self, reason):
+        super().__init__("Invalid URL")
+        self.reason = reason
 
 
 class CannotResolveHost(Exception):

@@ -277,7 +277,7 @@ def sanitize_user_input_url_for_repeaters(url):
     except (CannotResolveHost, InvalidURL):
         pass
     except PossibleSSRFAttempt as e:
-        if settings.DEBUG and str(e) == 'is_loopback':
+        if settings.DEBUG and e.reason == 'is_loopback':
             pass
         else:
             raise

@@ -40,8 +40,12 @@ def test_example_suite():
             try:
                 sanitize_user_input_url(input_url)
             except value.__class__ as e:
-                assert str(e) == str(value), \
-                    f"sanitize_url({input_url!r} should raise {value.__class__.__name__}({str(value)}) raised {value.__class__.__name__}({str(e)})"
+                if value.__class__ == PossibleSSRFAttempt:
+                    assert e.reason == value.reason, \
+                        f"sanitize_url({input_url!r} should raise {value.__class__.__name__}({value.reason}) raised {value.__class__.__name__}({e.reason})"
+                else:
+                    assert str(e) == str(value), \
+                        f"sanitize_url({input_url!r} should raise {value.__class__.__name__}({str(value)}) raised {value.__class__.__name__}({str(e)})"
         else:
             raise Exception("result in suite should be RETURN or RAISE")
 
