@@ -63,7 +63,6 @@ branches:
   - sr/autosubmi # Cal Dec 4
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-  - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - sr/parent-select # Jenny Dec 29
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
