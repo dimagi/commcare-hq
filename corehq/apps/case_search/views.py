@@ -2,19 +2,38 @@ import json
 import re
 
 from django.http import Http404
-from django.views.generic import TemplateView
 
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy
 from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
-from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.util.view_utils import BadRequest, json_error
 
 
-class CaseSearchView(DomainViewMixin, TemplateView):
+class CaseSearchView(BaseDomainView):
+    section_name = ugettext_lazy("Data")
     template_name = 'case_search/case_search.html'
     urlname = 'case_search'
+    page_title = ugettext_lazy("Case Search")
+
+    @property
+    def section_url(self):
+        return reverse("data_interfaces_default", args=[self.domain])
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'settings_url': reverse("case_search_config", args=[self.domain]),
+        })
+        return context
 
     @cls_require_superuser_or_contractor
     def get(self, request, *args, **kwargs):

@@ -8,6 +8,13 @@
 {% block page_content %}
   {% registerurl 'case_data' request.domain '___' %}
 
+  <p class="lead">
+    {% blocktrans %}
+      Use this page to test out <a href='{{ settings_url }}' target='_blank'>case search configuration</a> and profile case search or
+      case list explorer queries.
+    {% endblocktrans %}
+  </p>
+
   <div id="case-search">
     <h3>{% trans "Search Parameters" %}</h3>
     <div class="row">
