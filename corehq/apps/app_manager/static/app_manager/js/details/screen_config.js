@@ -231,7 +231,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         ];
         if (enableOtherOption) {
             self.selectOptions.push(
-                {id: 'other', text: gettext('Other')},
+                {id: 'other', text: gettext('Other')}
             );
         }
         var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
