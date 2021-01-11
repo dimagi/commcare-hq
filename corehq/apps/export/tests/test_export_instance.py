@@ -4,6 +4,8 @@ from django.test import SimpleTestCase, TestCase
 
 import mock
 
+from couchexport.models import Format
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import PROPERTY_TAG_CASE
 from corehq.apps.export.models import (
@@ -26,6 +28,7 @@ from corehq.apps.export.models import (
     StockItem,
     TableConfiguration,
 )
+from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.apps.export.system_properties import (
     MAIN_FORM_TABLE_PROPERTIES,
     TOP_MAIN_FORM_TABLE_PROPERTIES,
@@ -165,6 +168,36 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
         table = instance.tables[0]
         self.assertNotEqual(table.columns[0].item.path, ROW_NUMBER_COLUMN.item.path)
         self.assertTrue(table.columns[0].selected)
+
+    def test_export_instance_settings_default_values(self, _, __):
+        instance = self._generate_instance({self.app_id: 3})
+        self.assertEqual(instance.export_format, Format.XLS_2007)
+        self.assertEqual(instance.split_multiselects, False)
+        self.assertEqual(instance.transform_dates, True)
+        self.assertEqual(instance.format_data_in_excel, False)
+        self.assertEqual(instance.is_deidentified, False)
+        self.assertEqual(instance.is_odata_config, False)
+        self.assertEqual(instance.is_daily_saved_export, False)
+        self.assertEqual(instance.auto_rebuild_enabled, True)
+        self.assertEqual(instance.include_errors, False)
+
+    def test_form_export_instance_settings_override(self, _, __):
+        mock_settings = mock.MagicMock(
+            forms_filetype=ExportFileType.CSV,
+            forms_auto_convert=False,
+            forms_auto_format_cells=True,
+            forms_include_duplicates=True,
+            forms_expand_checkbox=True
+        )
+        with mock.patch('corehq.apps.export.models.new.get_or_create_default_export_settings_for_domain') as m:
+            m.return_value = mock_settings
+            instance = self._generate_instance({self.app_id: 3})
+
+        self.assertEqual(instance.export_format, Format.CSV)
+        self.assertEqual(instance.transform_dates, False)
+        self.assertEqual(instance.format_data_in_excel, True)
+        self.assertEqual(instance.include_errors, True)
+        self.assertEqual(instance.split_multiselects, True)
 
 
 @mock.patch(
