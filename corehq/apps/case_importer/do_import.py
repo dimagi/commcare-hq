@@ -348,7 +348,6 @@ class _CaseImportRow(object):
                 if parent_case:
                     self.validate_parent_column()
                     if self.parent_relationship_type == 'child':
-                        # todo; kill one of columns based on Nick's feedback
                         identifier = self.parent_identifier or self.parent_ref
                         return {identifier: (parent_case.type, parent_case.case_id)}
                     elif self.parent_relationship_type == 'extension':
