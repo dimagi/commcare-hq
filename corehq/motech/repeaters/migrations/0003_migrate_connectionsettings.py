@@ -12,6 +12,22 @@ DELETED_REPEATER_CLASSES = (
     'BETSSuccessfulTreatmentRepeater',
     'BETSDiagnosisAndNotificationRepeater',
     'BETSAYUSHReferralRepeater',
+    'BETSUserRepeater',
+    'BETSLocationRepeater',
+    'BETSBeneficiaryRepeater',
+
+    'NikshayRegisterPatientRepeater',
+    'NikshayHIVTestRepeater',
+    'NikshayTreatmentOutcomeRepeater',
+    'NikshayFollowupRepeater',
+    'NikshayRegisterPrivatePatientRepeater',
+    'NikshayHealthEstablishmentRepeater',
+
+    'NinetyNineDotsRegisterPatientRepeater',
+    'NinetyNineDotsUpdatePatientRepeater',
+    'NinetyNineDotsAdherenceRepeater',
+    'NinetyNineDotsTreatmentOutcomeRepeater',
+    'NinetyNineDotsUnenrollPatientRepeater',
 )
 
 
