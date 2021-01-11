@@ -20,7 +20,7 @@
     <div class="row">
       <div class="col-sm-12">
         <div class="controls">
-          <form class="form-inline" data-bind="submit: submit" id="case-search-form">
+          <form class="form-inline" id="case-search-form">
             {% csrf_token %}
             <div class="panel panel-default">
               <div class="panel-heading">
@@ -111,8 +111,11 @@
                 </div>
               </div>
             {% endif %}
-            <button type="submit" class="btn btn-primary">
-              <i data-bind="attr: {class: submitButtonIcon}"></i> {% trans "Search" %}
+            <button type="button" class="btn btn-primary" data-bind="click: search">
+              <i data-bind="attr: {class: searchButtonIcon}"></i> {% trans "Search" %}
+            </button>
+            <button type="button" class="btn btn-default" data-bind="click: searchWithProfile">
+              <i data-bind="attr: {class: profileButtonIcon}"></i> {% trans "Profile" %}
             </button>
           </form>
         </div>
@@ -125,7 +128,7 @@
         <ul class="nav nav-tabs">
           <li class="active"><a data-toggle="tab" href="#tabs-results">{% trans "Results" %}</a></li>
           <li><a data-toggle="tab" href="#tabs-query">{% trans "Query" %}</a></li>
-          <li><a data-toggle="tab" href="#tabs-profile">{% trans "Profile" %}</a></li>
+          <li data-bind="visible: profile"><a data-toggle="tab" href="#tabs-profile">{% trans "Profile" %}</a></li>
         </ul>
         <div class="spacer"></div>
       </div>
@@ -176,7 +179,7 @@
           <div class="tab-pane fade" id="tabs-query">
             <pre data-bind="text: query"></pre>
           </div>
-          <div class="tab-pane fade" id="tabs-profile">
+          <div class="tab-pane fade" id="tabs-profile" data-bind="visible: profile">
             <p class="lead" data-bind="visible: count">
               {% blocktrans %}
                 See <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/search-profile.html' target='_blank'>ElasticSearch docs</a> for help interpreting profile data.

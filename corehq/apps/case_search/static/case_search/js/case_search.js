@@ -39,21 +39,24 @@ hqDefine('case_search/js/case_search', [
         };
 
         self.showResults = ko.computed(function () {
-            return self.count() !== undefined;
+            return !_.isUndefined(self.count()) && !_.isNaN(parseInt(self.count()));
         });
 
-        self.submitButtonIcon = ko.observable("fa fa-search");
+        self.searchButtonIcon = ko.observable("fa fa-search");
+        self.profileButtonIcon = ko.observable("fa fa-clock-o");
 
-        self.submit = function () {
+        self._submit = function (postData) {
+            postData = postData || {};
             self.results([]);
             self.count("-");
             self.took(null);
             self.query(null);
             self.profile(null);
-            self.submitButtonIcon("fa fa-spin fa-refresh");
+            self.searchButtonIcon("fa fa-spin fa-refresh");
+            self.profileButtonIcon("fa fa-spin fa-refresh");
             $.post({
                 url: window.location.href,
-                data: {q: JSON.stringify({
+                data: _.extend(postData, {q: JSON.stringify({
                     type: self.type(),
                     owner_id: self.owner_id(),
                     parameters: self.parameters(),
@@ -61,18 +64,31 @@ hqDefine('case_search/js/case_search', [
                     includeClosed: self.includeClosed(),
                     xpath: self.xpath(),
                 }
-                )},
+                )}),
                 success: function (data) {
                     self.results(data.values);
                     self.count(data.count);
                     self.took(data.took);
                     self.query(data.query);
-                    self.profile(data.profile);
-                    self.submitButtonIcon("fa fa-search");
+                    if (postData.include_profile) {
+                        self.profile(data.profile);
+                    }
+                    self.searchButtonIcon("fa fa-search");
+                    self.profileButtonIcon("fa fa-clock-o");
                 },
                 error: function (response) {
                     alertUser.alert_user(response.responseJSON.message, 'danger');
                 },
+            });
+        };
+
+        self.search = function () {
+            self._submit();
+        };
+
+        self.searchWithProfile = function () {
+            self._submit({
+                include_profile: true,
             });
         };
 
