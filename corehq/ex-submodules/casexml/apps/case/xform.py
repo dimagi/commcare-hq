@@ -147,7 +147,7 @@ def _get_or_update_cases(xforms, case_db):
 
 def _validate_case_ids(case_ids):
     for case_id in case_ids:
-        if not re.match(r'^[\w\-]*$', case_id):
+        if case_id and not re.match(r'^[\w\-]*$', case_id):
             raise InvalidCaseId("Invalid case id '%s'. Case id can have only alphabets, numbers and -s" % case_id)
 
 
