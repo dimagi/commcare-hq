@@ -421,7 +421,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=True,
             )
-            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'date_closed'})
 
     @property
     def uses_managed_data_source(self):
@@ -561,11 +561,10 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
     def _get_data_source_properties_from_case(self, case_properties):
         property_map = {
-            'closed': _('Case Closed'),
-            'user_id': _('User ID Last Updating Case'),
-            'owner_name': _('Case Owner'),
-            'mobile worker': _('Mobile Worker Last Updating Case'),
-            'case_id': _('Case ID')
+            'user_id': _('user_id_last_updating_case'),
+            'owner_name': _('owner_name'),
+            'mobile worker': _('mobile_worker_last_updating_case'),
+            'case_id': _('case_id')
         }
 
         properties = OrderedDict()
@@ -574,11 +573,10 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
             else:
                 data_types = ["string", "decimal", "datetime"]
-
             properties[property] = DataSourceProperty(
                 type=PROPERTY_TYPE_CASE_PROP,
                 id=property,
-                text=property_map.get(property, property.replace('_', ' ')),
+                text=property_map.get(property, property),
                 source=property,
                 data_types=data_types,
             )
@@ -594,7 +592,6 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 self._get_owner_location_with_descendants_pseudo_property()
             properties[COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID] = \
                 self._get_owner_location_archived_with_descendants_pseudo_property()
-
         return properties
 
     @staticmethod
@@ -602,7 +599,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id='case_id',
-            text=_('Case ID'),
+            text=_('case_id'),
             source='case_id',
             data_types=["string"],
         )
@@ -615,7 +612,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            text=_('Case Owner'),
+            text=_('owner_name'),
             source=COMPUTED_OWNER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
@@ -662,7 +659,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id=COMPUTED_USER_NAME_PROPERTY_ID,
-            text=_('Mobile Worker Last Updating Case'),
+            text=_('mobile_worker_last_updating_case'),
             source=COMPUTED_USER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
@@ -724,7 +721,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
         # the options are currently static, after loading the report builder a user can switch to an aggregated
         # report.
-        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
+        count_col = CountColumn("number_of_cases" if self.source_type == "case" else "number_of_forms")
         options[count_col.get_property()] = count_col
 
         return options

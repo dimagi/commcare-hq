@@ -461,8 +461,7 @@ class ParentCasePropertyBuilder(object):
         """
         case_types = sorted(case_types)
         return {
-            case_type: sorted(self.get_properties(case_type))
-            for case_type in case_types
+            case_type: sorted(self.get_properties(case_type)) for case_type in case_types
         }
 
 

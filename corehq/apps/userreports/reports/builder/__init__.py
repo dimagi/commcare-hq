@@ -1,9 +1,9 @@
 
 DEFAULT_CASE_PROPERTY_DATATYPES = {
-    "name": "string",
-    "modified_on": "datetime",
-    "opened_on": "datetime",
-    "owner_id": "string",
+    "case_name": "string",
+    "last_modified": "datetime",
+    "date_opened": "datetime",
+    "@owner_id": "string",
     "user_id": "string",
 }
 
