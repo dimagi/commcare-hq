@@ -74,10 +74,14 @@ class CaseSearchView(BaseDomainView):
 
         if xpath:
             search = search.xpath_query(self.domain, xpath)
+
+        search = search.enable_profiling()
+
         search_results = search.run()
         return json_response({
             'values': search_results.raw_hits,
             'count': search_results.total,
             'took': search_results.raw['took'],
             'query': search_results.query.dumps(pretty=True),
+            'profile': json.dumps(search_results.raw['profile'], indent=2),
         })

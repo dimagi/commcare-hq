@@ -20,6 +20,7 @@ hqDefine('case_search/js/case_search', [
         self.count = ko.observable();
         self.took = ko.observable();
         self.query = ko.observable();
+        self.profile = ko.observable();
         self.case_data_url = caseDataUrl;
         self.xpath = ko.observable();
         self.parameters = ko.observableArray();
@@ -37,11 +38,19 @@ hqDefine('case_search/js/case_search', [
             self.parameters.remove(this);
         };
 
+        self.showResults = ko.computed(function () {
+            return self.count() !== undefined;
+        });
+
+        self.submitButtonIcon = ko.observable("fa fa-search");
+
         self.submit = function () {
             self.results([]);
             self.count("-");
             self.took(null);
             self.query(null);
+            self.profile(null);
+            self.submitButtonIcon("fa fa-spin fa-refresh");
             $.post({
                 url: window.location.href,
                 data: {q: JSON.stringify({
@@ -58,6 +67,8 @@ hqDefine('case_search/js/case_search', [
                     self.count(data.count);
                     self.took(data.took);
                     self.query(data.query);
+                    self.profile(data.profile);
+                    self.submitButtonIcon("fa fa-search");
                 },
                 error: function (response) {
                     alertUser.alert_user(response.responseJSON.message, 'danger');
