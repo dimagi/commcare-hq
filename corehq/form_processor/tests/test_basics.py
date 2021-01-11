@@ -310,6 +310,21 @@ class FundamentalCaseTests(FundamentalBaseTests):
         self.assertTrue(form.is_error)
         self.assertTrue('InvalidCaseIndex' in form.problem)
 
+    def test_invalid_case_id(self):
+        case_id = uuid.uuid4().hex + "/"
+        modified_on = datetime.utcnow()
+        form, cases = _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name='create_case', date_modified=modified_on, date_opened=modified_on, update={
+                'dynamic': '123'
+            }
+        )
+        self.assertEqual(0, len(cases))
+        self.assertTrue(form.is_error)
+        self.assertEqual(f"InvalidCaseId: Invalid case id '{case_id}'. "
+                         "Case id can have only alphabets, numbers and -s",
+                         form.problem)
+
     def test_invalid_index_cross_domain(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(

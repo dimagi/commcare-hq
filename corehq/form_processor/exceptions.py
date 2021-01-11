@@ -83,3 +83,11 @@ class NotAllowed(Exception):
             couch_sql_migration_in_progress
         if couch_sql_migration_in_progress(domain):
             raise cls("couch-to-SQL migration in progress")
+
+
+class InvalidCaseId(Exception):
+    """
+    Raise when someone tries to use a case_id that
+    has invalid characters
+    """
+    pass

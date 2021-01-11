@@ -1,3 +1,5 @@
+import re
+
 from collections import namedtuple
 from itertools import groupby
 
@@ -8,6 +10,8 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+
+from corehq.form_processor.exceptions import InvalidCaseId
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -131,6 +135,7 @@ def _get_or_update_cases(xforms, case_db):
     """
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
+    _validate_case_ids(touched_cases.keys())
     _validate_indices(case_db, touched_cases.values())
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
     return CaseProcessingResult(
@@ -138,6 +143,12 @@ def _get_or_update_cases(xforms, case_db):
         [update.case for update in touched_cases.values()],
         dirtiness_flags,
     )
+
+
+def _validate_case_ids(case_ids):
+    for case_id in case_ids:
+        if not re.match(r'^[\w\-]*$', case_id):
+            raise InvalidCaseId("Invalid case id '%s'. Case id can have only alphabets, numbers and -s" % case_id)
 
 
 def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):

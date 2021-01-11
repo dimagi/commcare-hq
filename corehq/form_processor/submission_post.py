@@ -27,7 +27,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
-from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
+from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError, InvalidCaseId
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -297,7 +297,7 @@ class SubmissionPost(object):
                     submission_type = 'normal'
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
-                    except (IllegalCaseId, UsesReferrals, MissingProductId,
+                    except (IllegalCaseId, UsesReferrals, MissingProductId, InvalidCaseId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
                         submission_type = 'error'
