@@ -124,7 +124,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // and cannot be changed without migrating existing CaseSearch documents
         var defaultRelevant = false,
             prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (",
-            extraRelevant;
+            extraRelevant = "";
+        searchRelevant = searchRelevant || "";
         if (searchRelevant) {
             searchRelevant = searchRelevant.trim();
             if (searchRelevant === DEFAULT_CLAIM_RELEVANT) {
