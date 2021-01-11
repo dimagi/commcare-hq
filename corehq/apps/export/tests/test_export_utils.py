@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 
 from django.test import TestCase
 
@@ -13,59 +13,63 @@ class TestExportUtils(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportUtils, cls).setUpClass()
-        cls.domain = Domain(name='test-export-utils')
-        cls.domain.save()
-        cls.account = BillingAccount.get_or_create_account_by_domain(
+        cls.domain = Domain.get_or_create_with_name('test-export-utils', is_active=True)
+        cls.account, _ = BillingAccount.get_or_create_account_by_domain(
             cls.domain.name,
-            created_by='test'
-        )[0]
+            created_by='webuser@test.com'
+        )
         cls.account.save()
+        cls.subscription = Subscription.new_domain_subscription(
+            cls.account, cls.domain.name,
+            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ENTERPRISE),
+            date_start=date.today() - timedelta(days=3)
+        )
+        cls.subscription.is_active = True
+        cls.subscription.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.account.delete()
         cls.domain.delete()
         super(TestExportUtils, cls).tearDownClass()
 
-    def _create_subscription(self, plan):
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, DefaultProductPlan.get_default_plan_version(plan),
-            date_start=datetime.now() - timedelta(days=3)
-        )
-        subscription.is_active = True
-        subscription.save()
+    def update_subscription(self, plan):
+        if self.subscription.plan_version.plan.edition != plan:
+            self.subscription.change_plan(DefaultProductPlan.get_default_plan_version(plan))
+            self.subscription.save()
 
-    @flag_enabled('DEFAULT_EXPORT_SETTINGS')
     def test_default_export_settings_no_ff_enabled(self):
         """
-        Default export settings are only available if FF is enabled
+        Default export settings are only available if the feature flag is enabled
+        NOTE: no decorator to enable DEFAULT_EXPORT_SETTINGS feature flag
         """
-        self._create_subscription(SoftwarePlanEdition.ENTERPRISE)
+        self.update_subscription(SoftwarePlanEdition.ENTERPRISE)
         settings = get_or_create_default_export_settings_for_domain(self.domain)
-
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
     def test_default_export_settings_non_enterprise_domain(self):
         """
-        Default export settings are only available for enterprise domains
+        Verify software plan editions that do not have access to default export settings
+        are not able to create a DefaultExportSettings instance
         """
-        self._create_subscription(SoftwarePlanEdition.ADVANCED)
-        settings = get_or_create_default_export_settings_for_domain(self.domain)
-        self.assertIsNone(settings)
+        def test(plan_edition):
+            self.update_subscription(plan_edition)
+            settings = get_or_create_default_export_settings_for_domain(self.domain)
+            self.assertIsNone(settings)
 
+        yield test, SoftwarePlanEdition.COMMUNITY
+        yield test, SoftwarePlanEdition.STANDARD
+        yield test, SoftwarePlanEdition.PRO
+        yield test, SoftwarePlanEdition.ADVANCED
+        yield test, SoftwarePlanEdition.RESELLER
+        yield test, SoftwarePlanEdition.MANAGED_HOSTING
+
+    @flag_enabled('DEFAULT_EXPORT_SETTINGS')
     def test_default_export_settings_enterprise_domain(self):
         """
-        Default export settings are only available for enterprise domains
+        Verify software plan editions that do have access to default export settings
+        are able to create a DefaultExportSettings instance
         """
-        self._create_subscription(SoftwarePlanEdition.ENTERPRISE)
-        settings = get_or_create_default_export_settings_for_domain(self.domain)
-        self.assertIsNotNone(settings)
-
-    def test_default_export_settings_default_values(self):
-        """
-        Ensure default values are what we expect
-        """
-        self._create_subscription(SoftwarePlanEdition.ENTERPRISE)
+        self.update_subscription(SoftwarePlanEdition.ENTERPRISE)
         settings = get_or_create_default_export_settings_for_domain(self.domain)
         self.assertIsNotNone(settings)
