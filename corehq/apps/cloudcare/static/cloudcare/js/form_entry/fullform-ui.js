@@ -380,7 +380,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
-        self.toggleChildren = function (data, event) {
+        self.toggleChildren = function () {
             if (self.collapsible) {
                 if (self.showChildren()) {
                     self.showChildren(false);
