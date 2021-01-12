@@ -59,7 +59,6 @@ branches:
   - sr/case-reindex-staging # Sravan Oct 14
   - gh/improve-queueing-repeaters # Graham Oct 22
   - sr/es-alias # Sravan Nov 18
-  - mk/remove-draconian-full # MK Nov 30
   - sr/autosubmi # Cal Dec 4
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
