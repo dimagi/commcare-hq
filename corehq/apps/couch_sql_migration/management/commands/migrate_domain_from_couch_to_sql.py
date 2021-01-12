@@ -30,7 +30,7 @@ from ...couchsqlmigration import (
     do_couch_to_sql_migration,
     setup_logging,
 )
-from ...missingdocs import find_missing_docs, recheck_missing_docs
+from ...missingdocs import MissingIds, find_missing_docs, recheck_missing_docs
 from ...progress import (
     MigrationStatus,
     couch_sql_migration_in_progress,
@@ -42,6 +42,7 @@ from ...progress import (
 from ...rewind import rewind_iteration_state
 from ...statedb import (
     Counts,
+    NotFoundError,
     delete_state_db,
     init_state_db,
     open_state_db,
@@ -325,7 +326,11 @@ class Command(BaseCommand):
             resume = self.missing_docs == RESUME
             find_missing_docs(domain, self.state_dir, self.live_migrate, resume)
         print(f"Couch to SQL migration status for {domain}: {status}")
-        statedb = open_state_db(domain, self.state_dir)
+        try:
+            statedb = open_state_db(domain, self.state_dir)
+        except NotFoundError:
+            self.print_couch_stats(domain)
+            return
         doc_counts = statedb.get_doc_counts()
         has_diffs = False
         ZERO = Counts()
@@ -373,6 +378,12 @@ class Command(BaseCommand):
             assert i == counts.missing, (i, counts.missing)
         return has_diffs
 
+    def print_couch_stats(self, domain):
+        couchdb = XFormInstance.get_db()
+        for entity in MissingIds.DOC_TYPES:
+            count = get_couch_doc_count(domain, entity, couchdb)
+            print(f"Total {entity}s: {count}")
+
 
 def _confirm(message):
     response = input('{} [y/N]'.format(message)).lower()
@@ -411,12 +422,15 @@ def iter_chunks(model_class, field, domain, chunk_size=5000):
 
 
 def get_doc_count(model_class, where, entity, domain):
-    from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
-    from ...missingdocs import MissingIds
     sql_estimate = estimate_partitioned_row_count(model_class, where)
     couchdb = XFormInstance.get_db()
-    couch_count = sum(
+    couch_count = get_couch_doc_count(domain, entity, couchdb)
+    return min(sql_estimate, couch_count)
+
+
+def get_couch_doc_count(domain, entity, couchdb):
+    from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
+    return sum(
         get_doc_count_in_domain_by_type(domain, doc_type, couchdb)
         for doc_type in MissingIds.DOC_TYPES[entity]
     )
-    return min(sql_estimate, couch_count)
