@@ -6,7 +6,7 @@
     "doc_type": "XFormInstance",
     "external_blobs": {
         "form.xml": {
-            "content_length": 3410,
+            "content_length": 3452,
             "content_type": "text/xml",
             "doc_type": "BlobMetaRef"
         }

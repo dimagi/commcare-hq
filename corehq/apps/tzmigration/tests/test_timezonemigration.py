@@ -1,4 +1,6 @@
+import json
 import os
+import uuid
 
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -95,11 +97,23 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         self.assertDictEqual(actual_json, expected_json, msg)
 
     def test_migration(self):
-        xform = self.get_xml('form')
-        form_bad_tz = self.get_json('form')
-        case_bad_tz = self.get_json('case')
-        form_good_tz = self.get_json('form-tz')
-        case_good_tz = self.get_json('case-tz')
+        def replace_ids(string_json):
+            # using format on a string json does not work well, so use replace instead
+            for replacement in (("{instance_id}", form_id), ("{case_id}", case_id)):
+                string_json = string_json.replace(*replacement)
+            return string_json
+
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        xform = self.get_file('form', '.xml').format(
+            case_id=case_id, instance_id=form_id
+        ).encode('utf-8')
+
+        form_bad_tz = json.loads(replace_ids(self.get_file('form', '.json')))
+        case_bad_tz = json.loads(replace_ids(self.get_file('case', '.json')))
+        form_good_tz = json.loads(replace_ids(self.get_file('form-tz', '.json')))
+        case_good_tz = json.loads(replace_ids(self.get_file('case-tz', '.json')))
+
         with override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=False,
                                PHONE_TIMEZONES_SHOULD_BE_PROCESSED=False):
             submit_form_locally(xform, self.domain)
