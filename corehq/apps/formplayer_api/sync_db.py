@@ -3,7 +3,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import FORMPLAYER_USE_LIVEQUERY
 
 
-def sync_db(domain, username, restore_as):
+def sync_db(domain, username, restore_as=None):
     user = CouchUser.get_by_username(username)
     assert user.is_member_of(domain)
     user_id = user.user_id
@@ -12,7 +12,7 @@ def sync_db(domain, username, restore_as):
         'action': 'sync-db',
         'username': username,
         'domain': domain,
-        'restoreAs': restore_as,
+        'restoreAs': restore_as or username,
         'useLiveQuery': use_livequery,
     }
     response_json = _post_data(data, user_id)
