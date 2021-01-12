@@ -13,7 +13,7 @@ function setup() {
     rm *.log || true
 
     pip-sync requirements/test-requirements.txt
-    pip check  # make sure there are no incompatibilities in test-requirements.txt
+    pip check  # make sure there are no incompatibilities in requirements files
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py
