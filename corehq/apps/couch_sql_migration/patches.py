@@ -5,10 +5,12 @@ from contextlib import contextmanager
 from memoized import memoized
 
 import casexml.apps.case.xform as module
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import has_case_id
 from couchforms.models import XFormInstance
 from dimagi.ext.jsonobject import DateTimeProperty
 
+import corehq.form_processor.parsers.ledgers.form as ledger_form
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.form_processor.backends.sql.update_strategy import PROPERTY_TYPE_MAPPING
 from corehq.form_processor.exceptions import MissingFormXml
@@ -25,6 +27,7 @@ def migration_patches():
             patch_XFormInstance_get_xml(), \
             patch_DateTimeProperty_wrap(), \
             patch_case_date_modified_fixer(), \
+            patch_illegal_ledger_case_id(), \
             patch_kafka():
         yield
 
@@ -133,3 +136,20 @@ def patch_kafka():
         yield
     finally:
         ChangeProducer.send_change = send_change
+
+
+@contextmanager
+def patch_illegal_ledger_case_id():
+    def get_helpers(*args, **kw):
+        try:
+            yield from real_get_helpers(*args, **kw)
+        except IllegalCaseId:
+            pass  # ignore transfer with missing src and dest case_id
+
+    mod = ledger_form
+    real_get_helpers = mod._get_transaction_helpers_from_transfer_instruction
+    mod._get_transaction_helpers_from_transfer_instruction = get_helpers
+    try:
+        yield
+    finally:
+        mod._get_transaction_helpers_from_transfer_instruction = real_get_helpers
