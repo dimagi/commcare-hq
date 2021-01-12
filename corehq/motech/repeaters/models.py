@@ -67,19 +67,18 @@ import traceback
 import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Any, overload
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.utils.functional import cached_property
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
-from requests import Response
-from requests.exceptions import ConnectionError, RequestException, Timeout
+from requests.exceptions import ConnectionError, Timeout, RequestException
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -121,7 +120,6 @@ from corehq.motech.utils import b64_aes_decrypt
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
-from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 from .const import (
     MAX_ATTEMPTS,
@@ -152,6 +150,7 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
+from ...util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -1245,13 +1244,7 @@ def send_request(
                                    RECORD_CANCELLED_STATE)  # Don't retry
 
 
-@overload
-def format_response(response: Any) -> None:
-    ...
-@overload
-def format_response(response: Response) -> str:
-    ...
-def format_response(response):
+def format_response(response) -> Optional[str]:
     if not is_response(response):
         return None
     response_text = getattr(response, "text", "")
