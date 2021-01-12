@@ -8,18 +8,9 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         className: "formplayer-request",
         events: {
             "click": "rowClick",
-            "keydown": "rowKeyAction",
+            "keydown .module-heading": "activateKeyAction",
             "click .module-delete-control": "onDeleteSession",
             "keydown .module-delete-control": "deleteKeyAction",
-        },
-
-        attributes: function () {
-            var sessionLabelId = "SessionLabel-".concat(this.model.get('sessionId'));
-            return {
-                "role": "link",
-                "tabindex": "0",
-                "aria-labelledby": sessionLabelId,
-            };
         },
 
         template: _.template($("#session-view-item-template").html() || ""),
@@ -30,7 +21,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
 
-        rowKeyAction: function (e) {
+        activateKeyAction: function (e) {
             if (e.keyCode === 13) {
                 this.rowClick(e);
             }
