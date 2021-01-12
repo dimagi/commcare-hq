@@ -148,7 +148,7 @@ def _get_or_update_cases(xforms, case_db):
 def _validate_case_ids(case_ids):
     for case_id in case_ids:
         if case_id and not re.match(r'^[\w\-]*$', case_id):
-            raise InvalidCaseId("Invalid case id '%s'. Case id can have only alphabets, numbers and -s" % case_id)
+            raise InvalidCaseId("Invalid case id '%s'. Case id can have only alphanumeric characters, underscore and dash" % case_id)
 
 
 def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):

@@ -322,7 +322,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         self.assertEqual(0, len(cases))
         self.assertTrue(form.is_error)
         self.assertEqual(f"InvalidCaseId: Invalid case id '{case_id}'. "
-                         "Case id can have only alphabets, numbers and -s",
+                         "Case id can have only alphanumeric characters, underscore and dash",
                          form.problem)
 
     def test_invalid_index_cross_domain(self):
