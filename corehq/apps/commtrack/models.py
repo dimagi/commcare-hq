@@ -64,6 +64,9 @@ class SQLCommtrackConfig(SyncSQLToCouchMixin, models.Model):
         self.sqlactionconfig_set.set(actions, bulk=False)
         self.set_sqlactionconfig_order([a.id for a in actions])
 
+    def action_by_keyword(self, keyword):
+        return dict((a.keyword.lower(), a) for a in self.all_actions).get(keyword.lower())
+
     def _migration_sync_to_couch(self, couch_object):
         from corehq.apps.commtrack.management.commands.populate_commtrackconfig import Command
         for field_name in Command.attrs_to_sync():
@@ -94,6 +97,66 @@ class SQLCommtrackConfig(SyncSQLToCouchMixin, models.Model):
     def for_domain(cls, domain):
         return cls.objects.filter(domain=domain).first()
 
+    def get_consumption_config(self):
+        def _default_monthly_consumption(case_id, product_id):
+            # note: for now as an optimization hack, per-supply point type is not supported
+            # unless explicitly configured, because it will require looking up the case
+            facility_type = None
+            if self.sqlconsumptionconfig.use_supply_point_type_default_consumption:
+                try:
+                    supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
+                    facility_type = supply_point.sql_location.location_type_name
+                except ResourceNotFound:
+                    pass
+            return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
+
+        return ConsumptionConfiguration(
+            min_periods=self.sqlconsumptionconfig.min_transactions,
+            min_window=self.sqlconsumptionconfig.min_window,
+            max_window=self.sqlconsumptionconfig.optimal_window,
+            default_monthly_consumption_function=_default_monthly_consumption,
+            exclude_invalid_periods=self.sqlconsumptionconfig.exclude_invalid_periods
+        )
+
+    def get_ota_restore_settings(self):
+        # for some reason it doesn't like this import
+        from casexml.apps.phone.restore import StockSettings
+        default_product_ids = []
+        if self.sqlstockrestoreconfig.use_dynamic_product_list:
+            default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
+
+        def case_filter(stub):
+            return stub.type in set(self.sqlstockrestoreconfig.force_consumption_case_types)
+
+        return StockSettings(
+            section_to_consumption_types=self.sqlstockrestoreconfig.section_to_consumption_types,
+            consumption_config=self.get_consumption_config(),
+            default_product_list=default_product_ids,
+            force_consumption_case_filter=case_filter,
+            sync_consumption_ledger=self.sync_consumption_fixtures
+        )
+
+    def to_json(self):
+        config = {
+            "domain": self.domain,
+            "actions": [a.to_json() for a in self.all_actions],
+            "use_auto_emergency_levels": self.use_auto_emergency_levels,
+            "sync_consumption_fixtures": self.sync_consumption_fixtures,
+            "use_auto_consumption": self.use_auto_consumption,
+            "individual_consumption_defaults": self.individual_consumption_defaults,
+        }
+        for json_attr, sql_attr in {
+            'alert_config': 'sqlalertconfig',
+            'consumption_config': 'sqlconsumptionconfig',
+            'ota_restore_config': 'sqlstockrestoreconfig',
+            'stock_levels_config': 'sqlstocklevelsconfig',
+        }.items():
+            if hasattr(self, sql_attr):
+                config[json_attr] = getattr(self, sql_attr).to_json()
+            else:
+                config[json_attr] = {}
+        return config
+
 
 class SQLActionConfig(models.Model):
     # one of the base stock action types (see StockActions enum)
@@ -112,6 +175,38 @@ class SQLActionConfig(models.Model):
     class Meta:
         db_table = "commtrack_actionconfig"
         order_with_respect_to = "commtrack_config"
+
+    @property
+    def keyword(self):
+        return self._keyword
+
+    @keyword.setter
+    def keyword(self, val):
+        self._keyword = val.lower() if val else None
+
+    @property
+    def name(self):
+        return ':'.join(filter(None, [self.action, self.subaction]))
+
+    @property
+    def is_stock(self):
+        return self.action in STOCK_ACTION_ORDER
+
+    def __repr__(self):
+        return '{action} ({subaction}): {caption} ({_keyword})'.format(
+            action=self.action,
+            subaction=self.subaction,
+            caption=self.caption,
+            _keyword=self._keyword,
+        )
+
+    def to_json(self):
+        return {
+            'action': self.action,
+            'subaction': self.subaction,
+            '_keyword': self._keyword,
+            'caption': self.caption,
+        }
 
 
 class CommtrackActionConfig(DocumentSchema):
@@ -140,25 +235,6 @@ class CommtrackActionConfig(DocumentSchema):
 
         return super(CommtrackActionConfig, cls).wrap(data)
 
-    def __repr__(self):
-        return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
-
-    @property
-    def keyword(self):
-        return self._keyword
-
-    @keyword.setter
-    def keyword(self, val):
-        self._keyword = val.lower() if val else None
-
-    @property
-    def name(self):
-        return ':'.join(filter(None, [self.action, self.subaction]))
-
-    @property
-    def is_stock(self):
-        return self.action in STOCK_ACTION_ORDER
-
 
 class SQLConsumptionConfig(models.Model):
     min_transactions = models.IntegerField(default=2, null=True)
@@ -175,6 +251,15 @@ class SQLConsumptionConfig(models.Model):
 
     class Meta:
         db_table = "commtrack_consumptionconfig"
+
+    def to_json(self):
+        return {
+            "min_transactions": self.min_transactions,
+            "min_window": self.min_window,
+            "optimal_window": self.optimal_window,
+            "use_supply_point_type_default_consumption": self.use_supply_point_type_default_consumption,
+            "exclude_invalid_periods": self.exclude_invalid_periods,
+        }
 
 
 class ConsumptionConfig(DocumentSchema):
@@ -200,6 +285,13 @@ class SQLStockLevelsConfig(models.Model):
     class Meta:
         db_table = "commtrack_stocklevelsconfig"
 
+    def to_json(self):
+        return {
+            "emergency_level": self.emergency_level,
+            "understock_threshold": self.understock_threshold,
+            "overstock_threshold": self.overstock_threshold,
+        }
+
 
 class StockLevelsConfig(DocumentSchema):
     emergency_level = DecimalProperty(default=0.5)  # in months
@@ -223,6 +315,14 @@ class SQLAlertConfig(models.Model):
     class Meta:
         db_table = "commtrack_alertconfig"
 
+    def to_json(self):
+        return {
+            "stock_out_facilities": self.stock_out_facilities,
+            "stock_out_commodities": self.stock_out_commodities,
+            "stock_out_rates": self.stock_out_rates,
+            "non_report": self.non_report,
+        }
+
 
 class AlertConfig(DocumentSchema):
     stock_out_facilities = BooleanProperty(default=False)
@@ -244,6 +344,13 @@ class SQLStockRestoreConfig(models.Model):
 
     class Meta:
         db_table = "commtrack_stockrestoreconfig"
+
+    def to_json(self):
+        return {
+            "section_to_consumption_types": self.section_to_consumption_types,
+            "force_consumption_case_types": self.force_consumption_case_types,
+            "use_dynamic_product_list": self.use_dynamic_product_list,
+        }
 
 
 class StockRestoreConfig(DocumentSchema):
@@ -334,49 +441,6 @@ class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             return result[0]
         except IndexError:
             return None
-
-    @property
-    def all_actions(self):
-        return self.actions
-
-    def action_by_keyword(self, keyword):
-        return dict((a.keyword.lower(), a) for a in self.actions).get(keyword.lower())
-
-    def get_consumption_config(self):
-        def _default_monthly_consumption(case_id, product_id):
-            # note: for now as an optimization hack, per-supply point type is not supported
-            # unless explicitly configured, because it will require looking up the case
-            facility_type = None
-            if self.consumption_config.use_supply_point_type_default_consumption:
-                try:
-                    supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
-                    facility_type = supply_point.sql_location.location_type_name
-                except ResourceNotFound:
-                    pass
-            return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
-
-        return ConsumptionConfiguration(
-            min_periods=self.consumption_config.min_transactions,
-            min_window=self.consumption_config.min_window,
-            max_window=self.consumption_config.optimal_window,
-            default_monthly_consumption_function=_default_monthly_consumption,
-            exclude_invalid_periods=self.consumption_config.exclude_invalid_periods
-        )
-
-    def get_ota_restore_settings(self):
-        # for some reason it doesn't like this import
-        from casexml.apps.phone.restore import StockSettings
-        default_product_ids = []
-        if self.ota_restore_config.use_dynamic_product_list:
-            default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
-        case_filter = lambda stub: stub.type in set(self.ota_restore_config.force_consumption_case_types)
-        return StockSettings(
-            section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
-            consumption_config=self.get_consumption_config(),
-            default_product_list=default_product_ids,
-            force_consumption_case_filter=case_filter,
-            sync_consumption_ledger=self.sync_consumption_fixtures
-        )
 
 
 class SupplyPointCase(CommCareCase):
