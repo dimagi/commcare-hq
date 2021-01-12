@@ -27,20 +27,20 @@ def get_saml2_config(identity_provider):
             ),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
-        "attributeConsumingService": {
-            "serviceName": "CommCare HQ",
-            "serviceDescription": "SSO for CommCare HQ",
-            "requestedAttributes": [
-                {
-                    "name": "emailAddress",
-                    "isRequired": True,
-                    "nameFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
-                    "friendlyName": "Email Address",
-                    "attributeValue": ["email"],
-                },
-            ],
-        },
-        "NameIDFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
+        # "attributeConsumingService": {
+        #     "serviceName": "CommCare HQ",
+        #     "serviceDescription": "SSO for CommCare HQ",
+        #     "requestedAttributes": [
+        #         {
+        #             "name": "emailAddress",
+        #             "isRequired": True,
+        #             "nameFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
+        #             "friendlyName": "Email Address",
+        #             "attributeValue": ["email"],
+        #         },
+        #     ],
+        # },
+        "NameIDFormat": OneLogin_Saml2_Constants.NAMEID_UNSPECIFIED,
         "x509cert": identity_provider.sp_cert_public,
         "privateKey": identity_provider.sp_cert_private,
     }
