@@ -8,11 +8,18 @@ from django.http import (
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
+from corehq.util.soft_assert import soft_assert
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
+
+
+sso_soft_assert = soft_assert(
+    to=['{}@{}'.format('biyeun', 'dimagi.com')],
+    send_to_ops=False
+)
 
 
 @identity_provider_required
@@ -49,12 +56,19 @@ def sso_saml_acs(request, idp_slug):
     attributes = False
     saml_user_data_present = False
 
-    request_id = request.session.get('AuthNRequestID')
-    request.saml2_auth.process_response(request_id=request_id)
-    errors = request.saml2_auth.get_errors()
-    not_auth_warn = not request.saml2_auth.is_authenticated()
+    try:
+        request_id = request.session.get('AuthNRequestID')
+        request.saml2_auth.process_response(request_id=request_id)
+        sso_soft_assert(False, 'auth processed')
+        errors = request.saml2_auth.get_errors()
+        not_auth_warn = not request.saml2_auth.is_authenticated()
+    except Exception as e:
+        sso_soft_assert(False, 'reached exception')
+        errors = [e]
+        not_auth_warn = True
 
     if not errors:
+        sso_soft_assert(False, 'not errors')
         if 'AuthNRequestID' in request.session:
             del request.session['AuthNRequestID']
 
