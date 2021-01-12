@@ -268,7 +268,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.actionType.subscribe(function (value) {
                 var required;
                 if (value === 'open') {
-                    required = ['name'];
+                    required = ['case_name'];
                     if (self.case_transaction.condition.type() === 'never') {
                         self.case_transaction.condition.type('always');
                     }
@@ -311,7 +311,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             // link self.case_name to corresponding path observable in case_properties for convenience
             try {
                 self.case_name = _(self.case_properties()).find(function (p) {
-                    return p.key() === 'name' && p.required();
+                    return p.key() === 'case_name' && p.required();
                 }).path;
             } catch (e) {
                 self.case_name = null;
@@ -523,7 +523,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     if (self.path() || self.key()) {
                         if (case_transaction.propertyCounts()[self.key()] > 1) {
                             return gettext("Property updated by two questions");
-                        } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
+                        } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1 && self.key() != "case_name") {
                             return '<strong>' + self.key() + '</strong> is a reserved word';
                         } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
                             return gettext('Inside the wrong repeat!');
@@ -592,8 +592,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 var self = HQFormActions.normalize(o);
                 var required_properties = caseConfig.requires() === 'none' &&
                     caseConfig.actions.open_case.condition.type !== "never" &&
-                    !o.update_case.update.name ? [{
-                        key: 'name',
+                    !o.update_case.update.case_name ? [{
+                        key: 'case_name',
                         path: self.open_case.name_path,
                         required: true,
                     }] : [];
@@ -637,9 +637,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
             from_case_transaction: function (case_transaction) {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
-                var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
+                var x = caseConfigUtils.propertyArrayToDict(['case_name'], o.case_properties);
                 var case_properties = x[0],
-                    case_name = x[1].name;
+                    case_name = x[1].case_name;
                 var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
                 var open_condition = o.condition;
                 var close_condition = o.close_condition;
@@ -742,7 +742,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 var self = HQOpenSubCaseAction.normalize(o);
                 var case_properties = caseConfigUtils.propertyDictToArray([{
                     path: self.case_name,
-                    key: 'name',
+                    key: 'case_name',
                     required: true,
                 }], self.case_properties, caseConfig);
 
@@ -781,9 +781,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
             from_case_transaction: function (case_transaction) {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
-                var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
+                var x = caseConfigUtils.propertyArrayToDict(['case_name'], o.case_properties);
                 var case_properties = x[0],
-                    case_name = x[1].name;
+                    case_name = x[1].case_name;
 
                 return {
                     case_name: case_name,
