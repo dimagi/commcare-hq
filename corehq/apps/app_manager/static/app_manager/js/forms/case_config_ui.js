@@ -523,7 +523,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     if (self.path() || self.key()) {
                         if (case_transaction.propertyCounts()[self.key()] > 1) {
                             return gettext("Property updated by two questions");
-                        } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1 && self.key() != "case_name") {
+                        } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1 && self.key() !== "case_name") {
                             return '<strong>' + self.key() + '</strong> is a reserved word';
                         } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
                             return gettext('Inside the wrong repeat!');
@@ -637,9 +637,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
             from_case_transaction: function (case_transaction) {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
-                var x = caseConfigUtils.propertyArrayToDict(['case_name'], o.case_properties);
+                var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
                 var case_properties = x[0],
-                    case_name = x[1].case_name;
+                    case_name = x[1].name;
                 var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
                 var open_condition = o.condition;
                 var close_condition = o.close_condition;
@@ -741,8 +741,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             to_case_transaction: function (o, caseConfig) {
                 var self = HQOpenSubCaseAction.normalize(o);
                 var case_properties = caseConfigUtils.propertyDictToArray([{
-                    path: self.case_name,
-                    key: 'case_name',
+                    path: self.name,
+                    key: 'name',
                     required: true,
                 }], self.case_properties, caseConfig);
 
@@ -781,9 +781,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
             from_case_transaction: function (case_transaction) {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
-                var x = caseConfigUtils.propertyArrayToDict(['case_name'], o.case_properties);
+                var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
                 var case_properties = x[0],
-                    case_name = x[1].case_name;
+                    case_name = x[1].name;
 
                 return {
                     case_name: case_name,
