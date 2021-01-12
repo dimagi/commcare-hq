@@ -1,11 +1,13 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
+from couchexport.models import Format
+
 
 class ExportFileType(object):
-    CSV = "CSV"
-    EXCEL_2007_PLUS = "EXCEL_2007_PLUS"
-    EXCEL_PRE_2007 = "EXCEL_PRE_2007"
+    CSV = Format.CSV
+    EXCEL_2007_PLUS = Format.XLS_2007
+    EXCEL_PRE_2007 = Format.XLS
     CHOICES = (
         (CSV, ugettext_lazy("CSV (zip file)")),
         (EXCEL_2007_PLUS, ugettext_lazy("Excel 2007+")),
