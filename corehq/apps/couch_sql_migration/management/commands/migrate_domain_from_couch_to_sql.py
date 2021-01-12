@@ -7,35 +7,10 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
-from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    CASE_DOC_TYPES,
-    CleanBreak,
-    do_couch_to_sql_migration,
-    setup_logging,
-)
-from corehq.apps.couch_sql_migration.missingdocs import (
-    find_missing_docs,
-    recheck_missing_docs,
-)
-from corehq.apps.couch_sql_migration.progress import (
-    MigrationStatus,
-    couch_sql_migration_in_progress,
-    get_couch_sql_migration_status,
-    set_couch_sql_migration_complete,
-    set_couch_sql_migration_not_started,
-    set_couch_sql_migration_started,
-)
-from corehq.apps.couch_sql_migration.rewind import rewind_iteration_state
-from corehq.apps.couch_sql_migration.statedb import (
-    Counts,
-    delete_state_db,
-    init_state_db,
-    open_state_db,
-)
+from corehq.apps.domain.models import Domain
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -48,6 +23,29 @@ from corehq.sql_db.util import (
 )
 from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, shell_red
+
+from ...couchsqlmigration import (
+    CASE_DOC_TYPES,
+    CleanBreak,
+    do_couch_to_sql_migration,
+    setup_logging,
+)
+from ...missingdocs import find_missing_docs, recheck_missing_docs
+from ...progress import (
+    MigrationStatus,
+    couch_sql_migration_in_progress,
+    get_couch_sql_migration_status,
+    set_couch_sql_migration_complete,
+    set_couch_sql_migration_not_started,
+    set_couch_sql_migration_started,
+)
+from ...rewind import rewind_iteration_state
+from ...statedb import (
+    Counts,
+    delete_state_db,
+    init_state_db,
+    open_state_db,
+)
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
