@@ -150,8 +150,19 @@ def sso_saml_login(request, idp_slug):
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
     if request.saml2_errors:
-        return HttpResponse(request.saml2_errors)
-    return HttpResponseRedirect(request.saml2_auth.login())
+        return HttpResponse(json.dumps({
+            "errors": request.saml2_errors,
+            "request_data": request.saml2_request_data,
+        }), 'text/json')
+    try:
+        return HttpResponseRedirect(request.saml2_auth.login())
+    except Exception as e:
+        return HttpResponse(json.dumps({
+            "errors": e,
+            "failure_point": 'after redirect',
+            "request_data": request.saml2_request_data,
+        }), 'text/json')
+
 
 
 @use_saml2_auth
