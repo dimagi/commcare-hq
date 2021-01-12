@@ -125,6 +125,7 @@ from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 from .const import (
     MAX_ATTEMPTS,
+    MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
@@ -1077,7 +1078,11 @@ class SQLRepeatRecord(models.Model):
         that this repeat record does not hold up the rest.
         """
         self.repeater_stub.reset_next_attempt()
-        self._add_failure_attempt(message)
+        if self.num_attempts < MAX_ATTEMPTS:
+            state = RECORD_FAILURE_STATE
+        else:
+            state = RECORD_CANCELLED_STATE
+        self._add_failure_attempt(message, state)
 
     def add_server_failure_attempt(self, message):
         """
@@ -1091,13 +1096,13 @@ class SQLRepeatRecord(models.Model):
 
         """
         self.repeater_stub.set_next_attempt()
-        self._add_failure_attempt(message)
-
-    def _add_failure_attempt(self, message):
-        if self.num_attempts < MAX_ATTEMPTS:
+        if self.num_attempts < MAX_BACKOFF_ATTEMPTS:
             state = RECORD_FAILURE_STATE
         else:
             state = RECORD_CANCELLED_STATE
+        self._add_failure_attempt(message, state)
+
+    def _add_failure_attempt(self, message, state):
         self.sqlrepeatrecordattempt_set.create(
             state=state,
             message=message,
