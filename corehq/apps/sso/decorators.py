@@ -19,7 +19,11 @@ def use_saml2_auth(view_func):
     @wraps(view_func)
     def _inner(request, idp_slug, *args, **kwargs):
         request.idp = _get_idp_or_404(idp_slug)
-        request.saml2_auth = OneLogin_Saml2_Auth(request, get_saml2_config(request.idp))
+        try:
+            request.saml2_auth = OneLogin_Saml2_Auth(request, get_saml2_config(request.idp))
+            request.saml2_errors = None
+        except Exception as e:
+            request.saml2_errors = e
         return view_func(request, idp_slug, *args, **kwargs)
     return _inner
 

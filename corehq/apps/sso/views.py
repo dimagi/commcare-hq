@@ -149,6 +149,8 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
+    if request.saml2_errors:
+        return HttpResponse(request.saml2_errors)
     return HttpResponseRedirect(request.saml2_auth.login())
 
 
