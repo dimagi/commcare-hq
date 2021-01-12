@@ -30,15 +30,15 @@ def get_saml2_config(identity_provider):
         "attributeConsumingService": {
             "serviceName": "CommCare HQ",
             "serviceDescription": "SSO for CommCare HQ",
-            # "requestedAttributes": [
-            #     {
-            #         "name": "",
-            #         "isRequired": false,
-            #         "nameFormat": "",
-            #         "friendlyName": "",
-            #         "attributeValue": []
-            #     }
-            # ]
+            "requestedAttributes": [
+                {
+                    "name": "emailAddress",
+                    "isRequired": True,
+                    "nameFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
+                    "friendlyName": "Email Address",
+                    "attributeValue": ["email"],
+                },
+            ],
         },
         "NameIDFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
         "x509cert": identity_provider.sp_cert_public,
