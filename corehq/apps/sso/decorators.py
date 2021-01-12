@@ -20,7 +20,15 @@ def use_saml2_auth(view_func):
     def _inner(request, idp_slug, *args, **kwargs):
         request.idp = _get_idp_or_404(idp_slug)
         try:
-            request.saml2_auth = OneLogin_Saml2_Auth(request, get_saml2_config(request.idp))
+            request_data = {
+                'https': 'on' if request.is_secure() else 'off',
+                'http_host': request.META['HTTP_HOST'],
+                'script_name': request.META['PATH_INFO'],
+                'server_port': request.META['SERVER_PORT'],
+                'get_data': request.GET.copy(),
+                'post_data': request.POST.copy(),
+            }
+            request.saml2_auth = OneLogin_Saml2_Auth(request_data, get_saml2_config(request.idp))
             request.saml2_errors = None
         except Exception as e:
             request.saml2_errors = e
