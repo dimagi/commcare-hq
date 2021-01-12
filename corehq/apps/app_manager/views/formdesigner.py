@@ -200,9 +200,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
-    data.extend(
-        sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())
-    )
+    data.extend(item_lists_by_domain(domain))
     kw = {}
     if "pretty" in request.GET:
         kw["indent"] = 2
