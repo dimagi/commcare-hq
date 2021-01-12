@@ -78,10 +78,11 @@ class Command(BaseCommand):
             help='''
                 Diff specific items. The value of this option may be
                 'pending' to clear out in-process diffs OR 'with-diffs'
-                or 'with-changes' to re-diff items that previously had
-                diffs or changes respectively OR a comma-delimited list
-                of case ids OR a path to a file containing a case id on
-                each line. The path must begin with / or ./
+                or 'with-changes' to patch or re-diff items that
+                previously had diffs or changes respectively OR a
+                comma-delimited list of case ids OR a path to a file
+                containing a case id on each line. The path must begin
+                with / or ./
 
                 With the "show" or "filter" actions, this option should
                 be a doc type, optionally followed by a colon and one or
@@ -150,6 +151,8 @@ class Command(BaseCommand):
             raise CommandError(f'{action} --csv not allowed')
         if self.dry_run and action != FILTER:
             raise CommandError(f'{action} --dry-run not allowed')
+        if self.select == "pending" and action == PATCH:
+            raise CommandError(f'{action} --select=pending not allowed')
 
         if self.reset:
             if action != CASES:
