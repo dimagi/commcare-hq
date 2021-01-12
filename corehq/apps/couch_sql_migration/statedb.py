@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import os.path
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from functools import partial
@@ -16,10 +16,8 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    and_,
     bindparam,
     func,
-    or_,
 )
 from sqlalchemy.exc import IntegrityError
 
@@ -339,10 +337,11 @@ class StateDB(DiffDB):
 
     def add_missing_docs(self, kind, doc_ids):
         with self.session() as session:
-            session.bulk_save_objects([
-                MissingDoc(kind=kind, doc_id=doc_id)
-                for doc_id in doc_ids
-            ])
+            session.execute(
+                f"INSERT OR IGNORE INTO {MissingDoc.__tablename__} "
+                f"(kind, doc_id) VALUES (:kind, :doc_id)",
+                [{"kind": kind, "doc_id": x} for x in doc_ids],
+            )
 
     def delete_missing_docs(self, kind):
         with self.session() as session:

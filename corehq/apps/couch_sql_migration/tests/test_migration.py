@@ -1468,6 +1468,30 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration(finish=True)
         self.assertEqual(self._get_case_ids(), {"test-case"})
 
+    def test_missing_form_referenced_by_case(self):
+        form = self.submit_form(make_test_form("missing-form"))
+        self.submit_form(make_test_form("present-form", age=28))
+        self.assertEqual(self._get_form_ids(), {"present-form", "missing-form"})
+        form.delete_attachment("form.xml")
+        XFormInstance.get_db().delete_doc(form.form_id)
+
+        self.do_migration(finish=True, diffs=IGNORE)
+        self.do_migration(forms="missing", diffs=IGNORE)
+
+        form_ids = self._get_form_ids()
+        self.assertIn("present-form", form_ids)
+        self.assertNotIn("missing-form", form_ids)
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self.compare_diffs(missing={"XFormInstance": 1}, diffs=[
+            Diff("test-case", "diff", ["?"],
+                old={'forms': {'missing-form': 'missing'}},
+                new={'forms': {'missing-form': 'missing'}}),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='missing-form', new=''),
+        ])
+        statedb = open_state_db(self.domain_name, self.state_dir, readonly=False)
+        missing_forms = list(statedb.iter_missing_doc_ids("XFormInstance"))
+        self.assertEqual(missing_forms, ["missing-form"])
+
     def test_form_with_extra_xml_blob_metadata(self):
         form = create_form_with_extra_xml_blob_metadata(self.domain_name)
         self.do_migration(finish=True)
