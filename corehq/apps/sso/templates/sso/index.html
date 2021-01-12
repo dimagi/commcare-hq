@@ -44,9 +44,9 @@
   {% else %}
     <div class="alert alert-danger" role="alert">You don't have any attributes</div>
   {% endif %}
-  <a href="{% url "index" %}?slo" class="btn btn-danger">Logout</a>
+  <a href="{% url "sso_index" "vaultwax" %}?slo" class="btn btn-danger">Logout</a>
 {% else %}
-  <a href="{% url "index" %}?sso" class="btn btn-primary">Login</a> <a href="{% url "index" %}?sso2" class="btn btn-info">Login and access to attrs page</a>
+  <a href="{% url "sso_index" "vaultwax" %}?sso" class="btn btn-primary">Login</a> <a href="{% url "sso_index" "vaultwax" %}?sso2" class="btn btn-info">Login and access to attrs page</a>
 {% endif %}
 
 {% endblock %}

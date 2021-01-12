@@ -42,7 +42,7 @@ def prepare_django_request(request):
 
 
 @use_saml2_auth
-def index(request):
+def sso_index(request, idp_slug):
     req = prepare_django_request(request)
     auth = init_saml_auth(request)
     errors = []
@@ -59,7 +59,7 @@ def index(request):
         # request.session['AuthNRequestID'] = auth.get_last_request_id()
         # return HttpResponseRedirect(sso_built_url)
     elif 'sso2' in req['get_data']:
-        return_to = OneLogin_Saml2_Utils.get_self_url(req) + reverse('attrs')
+        return_to = OneLogin_Saml2_Utils.get_self_url(req) + reverse('sso_attrs')
         return HttpResponseRedirect(auth.login(return_to))
     elif 'slo' in req['get_data']:
         name_id = session_index = name_id_format = name_id_nq = name_id_spnq = None
