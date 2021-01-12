@@ -12,16 +12,24 @@ def get_saml2_config(identity_provider):
             reverse("sso_saml_metadata", args=(identity_provider.slug,))
         ),
         "assertionConsumerService": {
-            "url": "{}{}".format(
+            # "url": "{}{}".format(
+            #     get_url_base(),
+            #     reverse("sso_saml_acs", args=(identity_provider.slug,))
+            # ),
+            "url": "{}{}/?acs".format(
                 get_url_base(),
-                reverse("sso_saml_acs", args=(identity_provider.slug,))
+                reverse("sso_index", args=(identity_provider.slug,))
             ),
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": "{}{}".format(
+            # "url": "{}{}".format(
+            #     get_url_base(),
+            #     reverse("sso_saml_sls", args=(identity_provider.slug,))
+            # ),
+            "url": "{}{}/?sls".format(
                 get_url_base(),
-                reverse("sso_saml_sls", args=(identity_provider.slug,))
+                reverse("sso_index", args=(identity_provider.slug,))
             ),
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
