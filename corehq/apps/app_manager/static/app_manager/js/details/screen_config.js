@@ -223,22 +223,30 @@ hqDefine('app_manager/js/details/screen_config', function () {
         self.parentModules = ko.observable(init.parentModules);
         self.lang = ko.observable(init.lang);
         self.langs = ko.observable(init.langs);
-        var enableOtherOption = hqImport('hqwebapp/js/toggles').toggleEnabled('NON_PARENT_MENU_SELECTION');
+        self.enableOtherOption = hqImport('hqwebapp/js/toggles').toggleEnabled('NON_PARENT_MENU_SELECTION');
 
         self.selectOptions = [
             {id: 'none', text: gettext('None')},
             {id: 'parent', text: gettext('Parent')},
         ];
-        if (enableOtherOption) {
+        if (self.enableOtherOption) {
             self.selectOptions.push(
                 {id: 'other', text: gettext('Other')}
             );
         }
         var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
-        self.selectMode = ko.observable(selectMode);
-        self.active = ko.computed(function () {
-            return (self.selectMode() !== 'none');
-        });
+        if (self.enableOtherOption) {
+            self.selectMode = ko.observable(selectMode);
+            self.active = ko.computed(function () {
+                return (self.selectMode() !== 'none');
+            });
+        }
+        else {
+            self.active = ko.observable(init.active);
+            self.selectMode = ko.computed(function () {
+                return self.active ? 'parent' : 'none';
+            });
+        }
         self.relationship = ko.computed(function () {
             return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
         });

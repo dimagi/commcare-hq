@@ -289,8 +289,15 @@
             </label>
             <div>
               <select-toggle data-apply-bindings="false"
-                             params="options: selectOptions, value: selectMode">
+                             params="options: selectOptions, value: selectMode"
+                             data-bind="visible: enableOtherOption">
               </select-toggle>
+              <div class="{% css_field_class %} checkbox"
+                   data-bind="visible: !enableOtherOption">
+                <label>
+                  <input type="checkbox" data-bind="checked: active"/>
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-group" data-bind="visible: active, css: {'has-error': hasError}">
