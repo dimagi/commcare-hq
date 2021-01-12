@@ -168,6 +168,8 @@ class RemoteRequestFactory(object):
                 kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
+            if prop.default_value and self.app.enable_default_value_expression:
+                kwargs['default_value'] = prop.default_value
             if prop.itemset.nodeset:
                 kwargs['itemset'] = Itemset(
                     nodeset=prop.itemset.nodeset,
