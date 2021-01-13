@@ -475,6 +475,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration()
         self.assertEqual(self._get_form_ids('XFormError'), {'im-a-bad-form'})
 
+    def test_form_migration_integrity_error_resulting_in_missing_form(self):
+        self.submit_form(SIMPLE_FORM_XML)
+        with mock.patch.object(mod, "save_migrated_models", side_effect=mod.IntegrityError):
+            self.do_migration(diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
+
+    def test_form_migration_exception_resulting_in_missing_form(self):
+        self.submit_form(SIMPLE_FORM_XML)
+        with mock.patch.object(mod, "save_migrated_models", side_effect=Exception):
+            self.do_migration(diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
+
     def test_duplicate_form_migration(self):
         with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml', encoding='utf-8') as f:
             duplicate_form_xml = f.read()

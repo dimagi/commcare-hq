@@ -276,6 +276,7 @@ class CouchSqlDomainMigrator:
             try:
                 sql_form = get_sql_form(couch_form.form_id)
             except XFormNotFound:
+                sql_form = None
                 proc = "" if form_is_processed else " unprocessed"
                 log.error("Error migrating%s form %s",
                     proc, couch_form.form_id, exc_info=exc_info)
@@ -287,7 +288,7 @@ class CouchSqlDomainMigrator:
             try:
                 sql_form = get_sql_form(couch_form.form_id)
             except XFormNotFound:
-                pass
+                sql_form = None
             if self.stop_on_error:
                 raise err from None
         finally:
