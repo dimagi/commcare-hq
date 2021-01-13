@@ -93,7 +93,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = parseInt($field.val()) || undefined;
+                            value = parseInt($field.val());
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
