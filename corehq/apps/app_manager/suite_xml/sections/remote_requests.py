@@ -86,6 +86,7 @@ class RemoteRequestFactory(object):
 
         query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
         config_xpaths = [self.module.search_config.relevant, self.module.search_config.search_filter]
+        query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.app,
             query_xpaths + config_xpaths
