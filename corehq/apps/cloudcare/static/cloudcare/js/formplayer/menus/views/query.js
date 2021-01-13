@@ -22,6 +22,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             valueDropdown: 'select.query-field',
         },
 
+        modelEvents: {
+            'change': 'render',
+        },
+
         onRender: function () {
             this.ui.valueDropdown.select2({
                 allowClear: true,
@@ -71,6 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         changeDropdown: function (e) {
             e.preventDefault();
+            var self = this;
             var $fields = $(".query-field");
 
             // If there aren't at least two dropdowns, there are no dependencies
@@ -88,12 +93,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = $field.val();
-                        $field.html('');
-                        _.each(choices, function (choice, index) {
-                            $field.append(new Option(choice, index));
+                            value = parseInt($field.val()) || undefined;
+                        self.collection.models[i].set({
+                            itemsetChoices: choices,
+                            value: value,
                         });
-                        $field.val(value);
                         $field.trigger('change.select2');
                     }
                 }

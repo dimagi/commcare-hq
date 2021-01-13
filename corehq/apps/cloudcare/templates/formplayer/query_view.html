@@ -23,7 +23,9 @@
       <select class="query-field form-control">
         <option value=""></option>
         <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-          <option value="<%= i %>" <% if (value == itemsetChoices[i]) { %>selected<% } %>><%- itemsetChoices[i] %></option>
+          <option value="<%= i %>" <% if (value === i) { %>selected<% } %>>
+            <%- itemsetChoices[i] %>
+          </option>
         <% } %>
       <select>
     <% } else { %>
