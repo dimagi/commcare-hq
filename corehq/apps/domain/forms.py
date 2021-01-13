@@ -42,7 +42,6 @@ from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
-from pyzxcvbn import zxcvbn
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -95,7 +94,7 @@ from corehq.apps.callcenter.views import (
 )
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import (
-    custom_clean_password,
+    validate_password,
     has_custom_clean_password,
 )
 from corehq.apps.domain.models import (
@@ -1158,19 +1157,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if has_custom_clean_password():
-        message = custom_clean_password(txt)
-    else:
-        message = _clean_password(txt)
+    message = validate_password(txt)
     if message:
         raise forms.ValidationError(message)
     return txt
-
-
-def _clean_password(txt):
-    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-    if strength['score'] < 2:
-        return _('Password is not strong enough. Try making your password more complex.')
 
 
 class NoAutocompleteMixin(object):
