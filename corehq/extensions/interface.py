@@ -94,7 +94,12 @@ class ExtensionPoint:
             extension for extension in self.extensions
             if not domain or extension.should_call_for_domain(domain)
         ]
-        results = self._get_results(extensions, *args, **kwargs)
+
+        if not extensions:
+            results = iter([self.definition_function(*args, **kwargs)])
+        else:
+            results = self._get_results(extensions, *args, **kwargs)
+
         if self.result_formatter:
             return self.result_formatter(self, results)
         return list(results)
