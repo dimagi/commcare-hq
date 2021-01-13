@@ -61,11 +61,9 @@ def sso_saml_acs(request, idp_slug):
     try:
         request_id = request.session.get('AuthNRequestID')
         request.saml2_auth.process_response(request_id=request_id)
-        sso_soft_assert(False, 'auth processed')
         errors = request.saml2_auth.get_errors()
         not_auth_warn = not request.saml2_auth.is_authenticated()
     except Exception as e:
-        sso_soft_assert(False, 'reached exception')
         errors = [e]
         not_auth_warn = True
 
@@ -100,6 +98,7 @@ def sso_saml_acs(request, idp_slug):
         "not_auth_warn": not_auth_warn,
         "success_slo": success_slo,
         "attributes": attributes,
+        "request_data": request.saml2_request_data,
         "saml_user_data_present": saml_user_data_present,
     }), 'text/json')
 
@@ -157,7 +156,7 @@ def sso_saml_login(request, idp_slug):
             "request_data": request.saml2_request_data,
         }), 'text/json')
     try:
-        return HttpResponseRedirect(request.saml2_auth.login(set_nameid_policy=True))
+        return HttpResponseRedirect(request.saml2_auth.login())
     except Exception as e:
         return HttpResponse(json.dumps({
             "errors": e,
