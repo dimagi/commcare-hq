@@ -23,7 +23,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         modelEvents: {
-            'change': 'render'
+            'change': 'render',
         },
 
         onRender: function () {
