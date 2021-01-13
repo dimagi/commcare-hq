@@ -155,7 +155,7 @@ def sso_saml_login(request, idp_slug):
             "request_data": request.saml2_request_data,
         }), 'text/json')
     try:
-        return HttpResponseRedirect(request.saml2_auth.login())
+        return HttpResponseRedirect(request.saml2_auth.login(set_nameid_policy=True))
     except Exception as e:
         return HttpResponse(json.dumps({
             "errors": e,
