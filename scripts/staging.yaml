@@ -59,16 +59,22 @@ branches:
   - sr/case-reindex-staging # Sravan Oct 14
   - gh/improve-queueing-repeaters # Graham Oct 22
   - sr/es-alias # Sravan Nov 18
-  - jls/copy-linked-app # Jenny Nov 24
-  - mk/remove-draconian-full # MK Nov 30
-  - gh/improve-gateway-fee # Graham Dec 1
-  - sr/autosubmi # Cal Dec 4
-  - kev/webapps-submit-lazy-accumulation # Kevin Dec 9
-  - jls/store-2fa-request-domain # Jenny Dec 11
-  - jls/slimmer-initial-app # Jenny Nov 25
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
-  - gh/add-enterprise-app # Graham Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-  - adil-uddin:feature/USH-375-improve-pagination # Adil/Jenny Dec 21
-
+  - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
+  - sr/parent-select # Jenny Dec 29
+  - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
+  - bmb/sso-architecture  # Biyeun Dec 30
+  - sr/ext-import # Sravan Jan 7
+  - jls/web-apps-case-claim-itemsets+smh/query-screen-prompt-defaults
+  - smh/query-screen-prompt-defaults # Steph Jan 5
+  - jls/web-apps-case-claim-itemsets # Jenny Jan 12
+  #- bmb/sso-architecture+lxml-upgrade  # Biyeun Jan 8
+  #- dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
+  - jls/case-claim-checbox-ui-again # Jenny Jan 9
+  - solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
+  - bmb/update-datatables  # Biyeun Jan 11
+  #- mk/remove-aaa # MK Jan 12
+  - gh/filetype-migration # Graham Jan 12
+  - bmb/sso-debug  # Biyeun Jan 12
 submodules: {}
