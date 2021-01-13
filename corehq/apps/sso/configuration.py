@@ -27,20 +27,20 @@ def get_saml2_config(identity_provider):
             ),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
-        # "attributeConsumingService": {
-        #     "serviceName": "CommCare HQ",
-        #     "serviceDescription": "SSO for CommCare HQ",
-        #     "requestedAttributes": [
-        #         {
-        #             "name": "emailAddress",
-        #             "isRequired": True,
-        #             "nameFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
-        #             "friendlyName": "Email Address",
-        #             "attributeValue": ["email"],
-        #         },
-        #     ],
-        # },
-        "NameIDFormat": OneLogin_Saml2_Constants.NAMEID_UNSPECIFIED,
+        "attributeConsumingService": {
+            "serviceName": "CommCare HQ",
+            "serviceDescription": "SSO for CommCare HQ",
+            "requestedAttributes": [
+                {
+                    "name": "emailAddress",
+                    "isRequired": True,
+                    "nameFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
+                    "friendlyName": "Email Address",
+                    "attributeValue": ["email@example.com"],
+                },
+            ],
+        },
+        "NameIDFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
         "x509cert": identity_provider.sp_cert_public,
         "privateKey": identity_provider.sp_cert_private,
     }
@@ -56,11 +56,11 @@ def get_saml2_config(identity_provider):
             "entityId": identity_provider.entity_id,
             "singleSignOnService": {
                 "url": identity_provider.login_url,
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
             },
             "singleLogoutService": {
                 "url": identity_provider.logout_url,
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
             },
             "x509cert": identity_provider.idp_cert_public,
         },
