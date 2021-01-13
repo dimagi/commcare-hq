@@ -82,7 +82,7 @@ def _get_advanced_saml2_settings():
             "wantMessagesSigned": True,
             "wantAssertionsSigned": True,
             "wantNameId": True,
-            "wantNameIdEncrypted": True,
+            "wantNameIdEncrypted": False,  # Azure will not accept if True
             "wantAssertionsEncrypted": True,
             "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
