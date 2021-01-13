@@ -65,10 +65,6 @@ def _parse_date_or_datetime(val):
     return result
 
 
-def _format_slug_string_for_display(key):
-    return key.replace('_', ' ').replace('-', ' ')
-
-
 def _to_html(val, key=None, level=0, timeago=False):
     """
     Recursively convert a value to its HTML representation using <dl>s for

@@ -561,10 +561,10 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
     def _get_data_source_properties_from_case(self, case_properties):
         property_map = {
-            'user_id': _('user_id_last_updating_case'),
-            'owner_name': _('owner_name'),
-            'mobile worker': _('mobile_worker_last_updating_case'),
-            'case_id': _('case_id')
+            'owner_name': 'owner_name',
+            'case_id': 'case_id',
+            'user_id': 'user_id_last_updating_case',
+            'mobile worker': 'mobile_worker_last_updating_case',
         }
 
         properties = OrderedDict()
@@ -599,7 +599,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id='case_id',
-            text=_('case_id'),
+            text='case_id',
             source='case_id',
             data_types=["string"],
         )
@@ -612,7 +612,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            text=_('owner_name'),
+            text='owner_name',
             source=COMPUTED_OWNER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
@@ -659,7 +659,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id=COMPUTED_USER_NAME_PROPERTY_ID,
-            text=_('mobile_worker_last_updating_case'),
+            text='mobile_worker_last_updating_case',
             source=COMPUTED_USER_NAME_PROPERTY_ID,
             data_types=["string"],
         )

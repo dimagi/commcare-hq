@@ -122,8 +122,8 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         }
         self.assertEqual(expected_filter, builder.filter)
         expected_property_names = [
-            '@owner_id', 'case_name', 'closed', 'date_closed', 'date_opened', 'first_name',
-            'last_modified', 'last_name', 'user_id', 'computed/owner_name', 'computed/user_name'
+            '@owner_id', 'closed', 'date_closed', 'date_opened', 'first_name',
+            'last_modified', 'last_name', 'name', 'user_id', 'computed/owner_name', 'computed/user_name'
         ]
         self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
         owner_name_prop = builder.data_source_properties['computed/owner_name']
@@ -139,9 +139,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
-        self.assertTrue(
-            COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID
-            in builder.data_source_properties)
+        self.assertTrue(COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID in builder.data_source_properties)
 
         owner_location_prop = builder.data_source_properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID]
         self.assertEqual(COMPUTED_OWNER_LOCATION_PROPERTY_ID, owner_location_prop.get_id())
@@ -173,12 +171,13 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
         )
         # todo: we should filter out some of these columns
         expected_property_names = [
-            "doc_id", "inserted_at", "completed_time", "started_time", "username", "userID", "@xmlns",
-            "@name", "App Version", "deviceID", "location", "app_id", "build_id", "@version", "state",
-            "last_sync_token", "partial_submission", "received_on", "edited_on", "submit_ip",
+            "doc_id", "inserted_at", "completed_time", "started_time", "username", "userID", "@xmlns", "@name",
+            "App Version", "deviceID", "location", "app_id", "build_id", "@version", "state", "last_sync_token",
+            "partial_submission", "received_on", "edited_on", "submit_ip",
             "form.first_name", "form.last_name", "form.children", "form.dob", "form.state",
-            "form.case.@date_modified", 'form.case.@user_id', 'form.case.@case_id',
-            'form.case.update.first_name', 'form.case.update.last_name', "count", "hq_user", ]
+            "form.case.@date_modified", 'form.case.@user_id', 'form.case.@case_id', 'form.case.update.first_name',
+            'form.case.update.last_name', "count", "hq_user",
+        ]
 
         self.assertItemsEqual(expected_property_names, list(reference.data_source_properties))
         user_id_prop = reference.data_source_properties['userID']
@@ -195,11 +194,12 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             self.domain, self.app, DATA_SOURCE_TYPE_RAW, case_data_source._id,
         )
         # todo: we should filter out some of these columns
-        expected_property_names = ["doc_id", "inserted_at", "name", "case_type", "closed",
-                                   "closed_by_user_id", "closed_date", "external_id",
-                                   "last_modified_by_user_id", "last_modified_date", "opened_by_user_id",
-                                   "opened_date", "owner_id", "server_last_modified_date", "state",
-                                   "first_name", "last_name", "count", ]
+        expected_property_names = [
+            "doc_id", "inserted_at", "name", "case_type", "closed", "closed_by_user_id", "closed_date",
+            "external_id", "last_modified_by_user_id", "last_modified_date", "opened_by_user_id", "opened_date",
+            "owner_id", "server_last_modified_date", "state",
+            "first_name", "last_name", "count",
+        ]
         self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
         owner_id_prop = reference.data_source_properties['owner_id']
         self.assertEqual('owner_id', owner_id_prop.get_id())
