@@ -5,14 +5,22 @@ from django.http import (
     HttpResponseServerError,
     HttpResponseRedirect,
 )
+from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
+from corehq.util.soft_assert import soft_assert
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
+
+
+sso_soft_assert = soft_assert(
+    to=['{}@{}'.format('biyeun', 'dimagi.com')],
+    send_to_ops=False
+)
 
 
 @identity_provider_required
@@ -34,6 +42,7 @@ def sso_saml_metadata(request, idp_slug):
 
 
 @use_saml2_auth
+@csrf_exempt
 def sso_saml_acs(request, idp_slug):
     """
     ACS stands for "Assertion Consumer Service". The Identity Provider will send
@@ -49,12 +58,19 @@ def sso_saml_acs(request, idp_slug):
     attributes = False
     saml_user_data_present = False
 
-    request_id = request.session.get('AuthNRequestID')
-    request.saml2_auth.process_response(request_id=request_id)
-    errors = request.saml2_auth.get_errors()
-    not_auth_warn = not request.saml2_auth.is_authenticated()
+    try:
+        request_id = request.session.get('AuthNRequestID')
+        request.saml2_auth.process_response(request_id=request_id)
+        sso_soft_assert(False, 'auth processed')
+        errors = request.saml2_auth.get_errors()
+        not_auth_warn = not request.saml2_auth.is_authenticated()
+    except Exception as e:
+        sso_soft_assert(False, 'reached exception')
+        errors = [e]
+        not_auth_warn = True
 
     if not errors:
+        sso_soft_assert(False, 'not errors')
         if 'AuthNRequestID' in request.session:
             del request.session['AuthNRequestID']
 
@@ -135,7 +151,20 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    return HttpResponseRedirect(request.saml2_auth.login())
+    if request.saml2_errors:
+        return HttpResponse(json.dumps({
+            "errors": request.saml2_errors,
+            "request_data": request.saml2_request_data,
+        }), 'text/json')
+    try:
+        return HttpResponseRedirect(request.saml2_auth.login(set_nameid_policy=True))
+    except Exception as e:
+        return HttpResponse(json.dumps({
+            "errors": e,
+            "failure_point": 'after redirect',
+            "request_data": request.saml2_request_data,
+        }), 'text/json')
+
 
 
 @use_saml2_auth
