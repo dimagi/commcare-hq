@@ -5,6 +5,7 @@ from django.http import (
     HttpResponseServerError,
     HttpResponseRedirect,
 )
+from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
@@ -41,6 +42,7 @@ def sso_saml_metadata(request, idp_slug):
 
 
 @use_saml2_auth
+@csrf_exempt
 def sso_saml_acs(request, idp_slug):
     """
     ACS stands for "Assertion Consumer Service". The Identity Provider will send
