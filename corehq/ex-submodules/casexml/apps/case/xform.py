@@ -8,7 +8,7 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
+from corehq import toggles
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -51,7 +51,7 @@ class CaseProcessingResult(object):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.domain and not LIVEQUERY_SYNC.enabled(self.domain):
+        if self.domain and not toggles.LIVEQUERY_SYNC.enabled(self.domain):
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
@@ -142,7 +142,7 @@ def _get_or_update_cases(xforms, case_db):
 
 def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
-    if LIVEQUERY_SYNC.enabled(domain):
+    if toggles.LIVEQUERY_SYNC.enabled(domain):
         return []
 
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
@@ -272,10 +272,24 @@ def close_extension_cases(case_db, cases, device_id):
 
 
 def get_all_extensions_to_close(domain, cases):
-    if not EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    if not toggles.EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return set()
-    case_ids = [case.case_id for case in cases if case.closed]
-    return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
+    if not toggles.USH_DONT_CLOSE_PATIENT_EXTENSIONS.enabled(domain):
+        case_ids = [case.case_id for case in cases if case.closed]
+        return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
+    else:
+        # super-custom one-off excepton for USH projects
+        PATIENT_CASE_TYPE = 'patient'
+        CONTACT_CASE_TYPE = 'contact'
+        patient_case_ids = [case.case_id for case in cases if case.closed and case.type == PATIENT_CASE_TYPE]
+        patient_extensions = CaseAccessors(domain).get_extension_chain(patient_case_ids, include_closed=False)
+        valid_extensions = [
+            case.id
+            for case in CaseAccessors(domain).get_cases(patient_extensions)
+            if case.type != CONTACT_CASE_TYPE
+        ]
+        other_case_ids = [case.case_id for case in cases if case.closed and case.type != PATIENT_CASE_TYPE]
+        return valid_extensions + CaseAccessors(domain).get_extension_chain(other_case_ids, include_closed=False)
 
 
 def is_device_report(doc):
