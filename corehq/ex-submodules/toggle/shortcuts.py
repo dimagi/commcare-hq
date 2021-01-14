@@ -55,7 +55,7 @@ def parse_toggle(entry):
     """
     from corehq.toggles import NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN
     namespace = None
-    if entry.startswith(NAMESPACE_DOMAIN) or entry.startswith(NAMESPACE_EMAIL_DOMAIN):
+    if entry.startswith((NAMESPACE_DOMAIN + ':', NAMESPACE_EMAIL_DOMAIN + ':')):
         namespace, entry = entry.split(":")
     return namespace, entry
 
