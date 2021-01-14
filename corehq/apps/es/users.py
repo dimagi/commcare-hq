@@ -24,7 +24,7 @@ of all unknown users, web users, and demo users on a domain.
 """
 from copy import deepcopy
 
-from . import filters
+from . import filters, queries
 from .es_query import HQESQuery
 
 
@@ -51,6 +51,7 @@ class UserES(HQESQuery):
             role_id,
             is_active,
             username,
+            metadata,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -166,3 +167,16 @@ def role_id(role_id):
 
 def is_active(active=True):
     return filters.term("is_active", active)
+
+
+def metadata(key, value):
+    # Note that this dict is stored in ES under the `user_data` field, and
+    # transformed into a queryable format (in ES) as `user_data_es`, but it's
+    # referenced in python as `metadata`
+    return queries.nested(
+        'user_data_es',
+        filters.AND(
+            filters.term(field='user_data_es.key', value=key),
+            queries.match(field='user_data_es.value', search_string=value, fuzziness=0),
+        )
+    )

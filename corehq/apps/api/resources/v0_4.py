@@ -54,8 +54,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.repeaters.models import Repeater
-from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 

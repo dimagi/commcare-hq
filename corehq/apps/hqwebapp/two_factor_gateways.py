@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils import translation
@@ -12,9 +14,11 @@ from twilio.rest import Client
 from two_factor.models import PhoneDevice
 
 import settings
+from corehq.apps.users.models import CouchUser
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, \
     RateDefinition
+from corehq.project_limits.models import RateLimitedTwoFactorLog
 from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter, metrics_gauge
@@ -42,7 +46,7 @@ class Gateway(object):
 
         sid = backend.extra_fields['account_sid']
         token = backend.extra_fields['auth_token']
-        self.from_number = backend.load_balancing_numbers[0]
+        self.from_number = random.choice(backend.load_balancing_numbers)
         self.client = self._get_client(sid, token)
 
     def _get_client(self, sid, token):
@@ -137,12 +141,24 @@ def rate_limit_two_factor_setup(device):
     number = device.number
     username = device.user.username
     method = device.method if isinstance(device, PhoneDevice) else None
+    domain = None
 
     if ip_address and username and number and method:
+        user = CouchUser.get_by_username(username)
+        if user:
+            if len(user.domain_memberships) == 1:
+                domain = user.domain_memberships[0].domain
+            else:
+                domain = 'multiple'
 
         status, window = _check_for_exceeded_rate_limits(ip_address, number, username)
         if status == _status_accepted:
             _report_usage(ip_address, number, username)
+        else:
+            # log any attempts that are rate limited
+            RateLimitedTwoFactorLog.objects.create(ip_address=ip_address, phone_number=number,
+                                                   username=username, method=method,
+                                                   status=status or 'unknown', window=window or 'unknown')
 
     else:
         window = None
@@ -152,6 +168,7 @@ def rate_limit_two_factor_setup(device):
         'status': status,
         'method': method,
         'window': window or 'none',
+        'domain': domain or 'none',
     })
     return status != _status_accepted
 

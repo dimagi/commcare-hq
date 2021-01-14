@@ -1,6 +1,5 @@
 import requests
 from requests.exceptions import RequestException
-from uuid import uuid4
 
 from django.contrib import messages
 from django.http.response import Http404
@@ -12,6 +11,8 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -89,7 +90,6 @@ def gaen_otp_view(request, domain):
 
         try:
             case_id = request.POST['case_id']
-
             case = CaseAccessors(domain).get_case(case_id)
 
             case_name = case.name
@@ -110,9 +110,10 @@ def gaen_otp_view(request, domain):
                                                                      "styled_otp_code": styled_otp_code,
                                                                      "case_name": case_name,
                                                                      })
-    except RequestException:
-        request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
+    except RequestException as e:
+        request_error_msg = _("""We are having problems communicating with the Exposure Notification server
                                  please try again later""")
+        notify_exception(request, message=str(e))
     except InvalidOtpRequestException as e:
         request_error_msg = e.message
 
@@ -120,7 +121,9 @@ def gaen_otp_view(request, domain):
 
 
 def get_otp_response(post_data, gaen_otp_settings):
-    headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
+    headers = gaen_otp_settings.get_otp_request_headers()
+    post_data = gaen_otp_settings.change_post_data_type(post_data)
+
     otp_response = requests.post(gaen_otp_settings.server_url,
                                  data=post_data,
                                  headers=headers)
@@ -145,20 +148,13 @@ class InvalidOtpRequestException(Exception):
 
 
 def get_post_data_for_otp(request, domain):
-    post_params = {
-        'jobId': str(uuid4()),
-    }
+    gaen_otp_settings = get_gaen_otp_server_settings(domain)
+    property_map = gaen_otp_settings.get_property_map()
+    post_params = gaen_otp_settings.get_post_params()
 
-    property_map = {
-        'phone_number': 'mobile',
-        'test_date': 'testDate',
-        'onset_date': 'onsetDate',
-        'test_type': 'testType',
-    }
     for request_param, post_param in property_map.items():
         if request_param in request.POST:
             post_params[post_param] = request.POST[request_param]
-
     return post_params
 
 

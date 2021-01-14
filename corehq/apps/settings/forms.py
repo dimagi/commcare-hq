@@ -260,9 +260,11 @@ class HQApiKeyForm(forms.Form):
     ALL_DOMAINS = ''
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
-        forms.GenericIPAddressField(),
+        forms.GenericIPAddressField(
+            protocol='ipv4',
+        ),
         label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
-        required=False
+        required=False,
     )
     domain = forms.ChoiceField(
         required=False,

@@ -49,11 +49,9 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import (
     RetryBillableTaskException,
-    DeliveredBillableException,
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.messaging.util import use_phone_entries
+from corehq.apps.users.models import CouchUser
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
@@ -442,9 +440,14 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk])
 
 
-@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,
-                max_retries=10, bind=True)
+@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=60 * 60,
+                max_retries=23, bind=True)
 def store_billable(self, msg):
+    """
+    Creates billable in db that contains price of the message
+    default_retry_delay/max_retries are set based on twilio support numbers:
+    Most messages will have a price within 2 hours of delivery, all within 24 hours max
+    """
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -462,12 +465,10 @@ def store_billable(self, msg):
                 multipart_count=int(math.ceil(len(msg.text) / msg_length)),
             )
         except RetryBillableTaskException as e:
+            # WARNING: Please do not remove messages from this queue
+            # unless you have a backup plan for how to process them
+            # before the end of the month billing cycle. If not, LEAVE AS IS.
             self.retry(exc=e)
-        except DeliveredBillableException:
-            # don't retry, but do raise error for logging purposes and make sure
-            # the original message's ID is associated with the error
-            # (the backend ID is stored with it already)
-            raise DeliveredBillableException(f"msg_couch_id={msg.couch_id}")
 
 
 @no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
@@ -550,7 +551,7 @@ def _sync_case_phone_number(contact_case):
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
-    if not use_phone_entries():
+    if not settings.USE_PHONE_ENTRIES:
         return
 
     try:

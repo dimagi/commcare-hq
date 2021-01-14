@@ -56,14 +56,25 @@ branches:
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/user-data-jit            # Farid September 2
-  - ce/case-property-recipients # Cal 9/24
-  - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
-  - kev/send-timezone # Kevin Oct 8
-  - bmb/test-auto-pay  # Biyeun Oct 9
-  - mk/track-role-update # MK Oct 12
-  - sk/fix-ledger-incompat  # Simon Oct 13
-  - adil-uddin:feature/USH-81-import-cases-to-multiple-domain # Adil/Jenny Oct 13
   - sr/case-reindex-staging # Sravan Oct 14
-  - bmb/SAAS-11201  # Biyeun Oct 14
-
+  - gh/improve-queueing-repeaters # Graham Oct 22
+  - sr/es-alias # Sravan Nov 18
+  - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
+  - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
+  - sr/parent-select # Jenny Dec 29
+  - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
+  - bmb/sso-architecture  # Biyeun Dec 30
+  - sr/ext-import # Sravan Jan 7
+  - jls/web-apps-case-claim-itemsets+smh/query-screen-prompt-defaults
+  - smh/query-screen-prompt-defaults # Steph Jan 5
+  - jls/web-apps-case-claim-itemsets # Jenny Jan 12
+  #- bmb/sso-architecture+lxml-upgrade  # Biyeun Jan 8
+  #- dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
+  - jls/case-claim-checbox-ui-again # Jenny Jan 9
+  #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
+  - bmb/update-datatables  # Biyeun Jan 11
+  #- mk/remove-aaa # MK Jan 12
+  - gh/filetype-migration # Graham Jan 12
+  - bmb/sso-debug  # Biyeun Jan 12
 submodules: {}

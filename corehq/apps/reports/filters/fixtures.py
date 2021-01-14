@@ -36,7 +36,8 @@ class AsyncLocationFilter(BaseReportFilter):
         user = self.request.couch_user
         loc_id = self.request.GET.get('location_id')
         if not loc_id:
-            domain_membership = user.get_domain_membership(self.domain)
+            # Don't use mirroring, because any location found via mirroring won't exist in this domain
+            domain_membership = user.get_domain_membership(self.domain, allow_mirroring=False)
             if domain_membership:
                 loc_id = domain_membership.location_id
         return {

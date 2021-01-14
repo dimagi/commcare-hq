@@ -1,7 +1,7 @@
 Vellum
 ======
 
-[![Build Status](https://travis-ci.org/dimagi/Vellum.svg?branch=master)](https://travis-ci.org/dimagi/Vellum)
+[![Build Status](https://travis-ci.com/dimagi/Vellum.svg?branch=master)](https://travis-ci.com/dimagi/Vellum)
 
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
@@ -114,6 +114,19 @@ or to run a specific test:
 ```
 ./test "Name of specific test"
 ```
+
+a block like the following:
+```
+describe('the test', () => ...
+  describe('with this condition', () => ...
+    it('passes', ...)
+```
+would be referenced as `the test with this condition passes`.
+So the final command would be:
+```
+./test 'the test with this condition passes'
+```
+
 
 Contributing
 ------------

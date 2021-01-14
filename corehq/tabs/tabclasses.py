@@ -20,7 +20,10 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
-from corehq.apps.accounting.views import TriggerDowngradeView
+from corehq.apps.accounting.views import (
+    TriggerDowngradeView,
+    TriggerAutopaymentsView,
+)
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
@@ -410,7 +413,8 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
         '/a/{domain}/data_dictionary/',
-        '/a/{domain}/importer/'
+        '/a/{domain}/importer/',
+        '/a/{domain}/case/',
     )
 
     @property
@@ -805,19 +809,29 @@ class ProjectDataTab(UITab):
                     edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
             items.extend(edit_section)
 
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or
-             self.can_view_ecd_preview) and self.can_edit_commcare_data):
+        explore_data_views = []
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views = [
-                {
-                    'title': _(ExploreCaseDataView.page_title),
-                    'url': reverse(ExploreCaseDataView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': False,
+            explore_data_views.append({
+                'title': _(ExploreCaseDataView.page_title),
+                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+                'show_in_dropdown': False,
+                'icon': 'fa fa-map-marker',
+                'subpages': [],
+            })
+        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
+            from corehq.apps.case_search.models import case_search_enabled_for_domain
+            if case_search_enabled_for_domain(self.domain):
+                from corehq.apps.case_search.views import CaseSearchView
+                explore_data_views.append({
+                    'title': _(CaseSearchView.page_title),
+                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-search',
+                    'show_in_dropdown': False,
                     'subpages': [],
-                }
-            ]
+                })
+        if explore_data_views:
             items.append([_("Explore Data"), explore_data_views])
 
         if self.can_use_lookup_tables:
@@ -2010,10 +2024,16 @@ class AccountingTab(UITab):
             }
         ]
         if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
-            other_actions.append({
-                'title': _(TriggerDowngradeView.page_title),
-                'url': reverse(TriggerDowngradeView.urlname),
-            })
+            other_actions.extend([
+                {
+                    'title': _(TriggerDowngradeView.page_title),
+                    'url': reverse(TriggerDowngradeView.urlname),
+                },
+                {
+                    'title': _(TriggerAutopaymentsView.page_title),
+                    'url': reverse(TriggerAutopaymentsView.urlname),
+                },
+            ])
         items.append(('Other Actions', other_actions))
         return items
 
