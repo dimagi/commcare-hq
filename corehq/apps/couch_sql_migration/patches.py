@@ -28,6 +28,7 @@ def migration_patches():
             patch_DateTimeProperty_wrap(), \
             patch_case_date_modified_fixer(), \
             patch_illegal_ledger_case_id(), \
+            patch_ledger_balance_without_product(), \
             patch_kafka():
         yield
 
@@ -134,6 +135,18 @@ def patch_illegal_ledger_case_id():
             pass  # ignore transfer with missing src and dest case_id
 
     method = "_get_transaction_helpers_from_transfer_instruction"
+    with patch(ledger_form, method, get_helpers) as real_get_helpers:
+        yield
+
+
+@contextmanager
+def patch_ledger_balance_without_product():
+    def get_helpers(ledger_instruction):
+        if not ledger_instruction.entry_id:
+            return
+        yield from real_get_helpers(ledger_instruction)
+
+    method = "_get_transaction_helpers_from_balance_instruction"
     with patch(ledger_form, method, get_helpers) as real_get_helpers:
         yield
 

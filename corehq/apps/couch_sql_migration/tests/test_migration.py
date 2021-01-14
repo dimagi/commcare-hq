@@ -1714,6 +1714,37 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         self.do_migration()
         self.assertEqual(self._get_form_ids(), {form.form_id})
 
+    def test_ledger_balance_without_product(self):
+        received = timedelta(days=-5)
+        form = self.submit_form(TEST_FORM, received)
+        # Patch ledger transfer into form data and XML since it produces
+        # an error that causes the form to saved as XFormError.
+        form.form_data["stock"] = {
+            "balance": {
+                "@date": "",
+                "@entity-id": "410a1240",
+                "@section-id": "stock",
+                "@xmlns": "http://commcarehq.org/ledger/v1",
+                "entry": {
+                    "@id": "",
+                    "@quantity": "147"
+                }
+            }
+        }
+        form.save()
+        replace_form_xml(form, TEST_FORM.replace(
+            "<n0:case\n",
+            """<stock>
+                <n0:balance date=""
+                    entity-id="410a1240"
+                    section-id="stock" xmlns:n0="http://commcarehq.org/ledger/v1">
+                    <n0:entry id="" quantity="147"/>
+                </n0:balance>
+            </stock><n0:case\n"""
+        ))
+        self.do_migration()
+        self.assertEqual(self._get_form_ids(), {form.form_id})
+
     def fix_missing_ledger_diffs(self, form1, form2, diffs):
         self.assert_backend("sql")
         self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
