@@ -1,4 +1,5 @@
 import datetime
+import logging
 from contextlib import contextmanager
 
 from couchdbkit import ResourceNotFound
@@ -14,6 +15,8 @@ from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import MissingXMLNSError
 from dimagi.utils.couch import release_lock
+
+logger = logging.getLogger(__file__)
 
 
 @contextmanager
@@ -147,12 +150,15 @@ def _handle_id_conflict(xform, domain):
     interface = FormProcessorInterface(domain)
     if interface.is_duplicate(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
+        logger.info('Handling duplicate doc id %s for domain %s', conflict_id, domain)
         return _handle_duplicate(xform)
     else:
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        return interface.assign_new_id(xform), None
+        interface.assign_new_id(xform)
+        logger.info('Reassigned doc id from %s to %s', conflict_id, xform.form_id)
+        return xform, None
 
 
 def _handle_duplicate(new_doc):
