@@ -170,7 +170,7 @@ FOO_PATIENT = {
     "identifier": [{
         # We can't do this with a mapping. I think we're going to need
         # to allow users to set a JSON template for each case type, and
-        # then we use [JSONPath](https://github.com/json-path/JsonPath)
+        # then we use [JSONPath](https://github.com/h2non/jsonpath-ng)
         # to modify / extend it.
         "type": {
             "coding": [{
