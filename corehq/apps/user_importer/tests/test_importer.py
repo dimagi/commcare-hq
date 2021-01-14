@@ -761,7 +761,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
-    @disable_extensions('corehq.apps.domain.extension_points.validate_password')
+    @disable_extensions('corehq.apps.domain.extension_points.validate_password_rules')
     def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'

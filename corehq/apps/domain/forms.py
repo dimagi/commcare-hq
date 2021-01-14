@@ -93,10 +93,7 @@ from corehq.apps.callcenter.views import (
     CallCenterOwnerOptionsView,
 )
 from corehq.apps.domain.auth import get_active_users_by_email
-from corehq.apps.domain.extension_points import (
-    validate_password,
-    has_custom_clean_password,
-)
+from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -1157,7 +1154,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    message = validate_password(txt)
+    message = validate_password_rules(txt)
     if message:
         raise forms.ValidationError(message)
     return txt

@@ -20,7 +20,7 @@ def custom_domain_module(domain) -> Optional[str]:
 
 
 @extension_point(result_format=ResultFormat.FIRST)
-def validate_password(password) -> Optional[str]:
+def validate_password_rules(password) -> Optional[str]:
     """Ensure that password meets requirements
 
     Returns:
@@ -34,4 +34,4 @@ def validate_password(password) -> Optional[str]:
 @memoized
 def has_custom_clean_password():
     # the environment has a custom clean password method set
-    return bool(validate_password.extensions)
+    return bool(validate_password_rules.extensions)
