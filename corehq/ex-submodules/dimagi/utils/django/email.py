@@ -62,7 +62,7 @@ def get_valid_recipients(recipients, domain=None):
     if domain and BLOCKED_DOMAIN_EMAIL_SENDERS.enabled(domain):
         # don't sent email if domain is blocked
         metrics_gauge('commcare.bounced_email', len(recipients), tags={
-            'domain': domain,
+            'email_domain': domain,
         }, multiprocess_mode=MPM_LIVESUM)
         return []
 
