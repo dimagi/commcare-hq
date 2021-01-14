@@ -327,32 +327,34 @@ class ShortcutTests(TestCase):
 
 class NamespaceTests(TestCase):
 
-    def setUp(self):
-        self.domain = Domain(name='toggledomain', is_active=True)
-        self.domain.save()
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain(name='toggledomain', is_active=True)
+        cls.domain.save()
 
-        self.user = WebUser(username='johndoe@somedomain.com')
-        self.user.save()
+        cls.user = WebUser(username='johndoe@somedomain.com')
+        cls.user.save()
 
-        self.request = RequestFactory()
-        self.request.user = self.user
-        self.request.domain = self.domain
+        cls.request = RequestFactory()
+        cls.request.user = cls.user
+        cls.request.domain = cls.domain
 
-        self.second_domain = Domain(name='toggleotherdomain', is_active=True)
-        self.second_domain.save()
+        cls.second_domain = Domain(name='toggleotherdomain', is_active=True)
+        cls.second_domain.save()
 
-        self.second_user = WebUser(username='jakerow@otherdomain.com')
-        self.second_user.save()
+        cls.second_user = WebUser(username='jakerow@otherdomain.com')
+        cls.second_user.save()
 
-        self.second_request = RequestFactory()
-        self.second_request.user = self.second_user
-        self.second_request.domain = self.second_domain
+        cls.second_request = RequestFactory()
+        cls.second_request.user = cls.second_user
+        cls.second_request.domain = cls.second_domain
 
-    def tearDown(self):
-        self.domain.delete()
-        self.second_domain.delete()
-        self.user.delete(deleted_by='admin')
-        self.second_user.delete(deleted_by='admin')
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.second_domain.delete()
+        cls.user.delete(deleted_by='admin')
+        cls.second_user.delete(deleted_by='admin')
 
     def test_email_domain_namespace(self):
         email_domain_toggle = StaticToggle(
