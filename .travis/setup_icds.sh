@@ -12,7 +12,7 @@ chmod 600 $TRAVIS_BUILD_DIR/.travis/deploy_key.pem
 ssh-add $TRAVIS_BUILD_DIR/.travis/deploy_key.pem
 mkdir -p $TRAVIS_BUILD_DIR/extensions/icds/
 git clone git@github.com:dimagi/commcare-icds.git $TRAVIS_BUILD_DIR/extensions/icds/ --depth=1
-cd $TRAVIS_BUILD_DIR/extensions/icds/ && git checkout master && git status
+cd $TRAVIS_BUILD_DIR/extensions/icds/ && git remote set-branches origin '*'
 git fetch --all
 git branch -a
 git checkout -b $TRAVIS_PULL_REQUEST_BRANCH origin/$TRAVIS_PULL_REQUEST_BRANCH \
