@@ -4,6 +4,7 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
 from collections import namedtuple
 
+from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
 
 AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
                                 'email reason headers timestamp '
@@ -76,13 +77,53 @@ class BouncedEmail(models.Model):
             transient_bounce_query.count() + general_bounce_query.count() > BOUNCE_EVENT_THRESHOLD
         )
 
+    @staticmethod
+    def is_bad_email_format(email_address):
+        """
+        This is a very rudimentary check to see that an email is formatted
+        properly. It's not doing anything intelligent--like whether a TLD looks
+        correct or that the domain name might be misspelled (gamil vs gmail).
+        For the future, we might consider using something like Twilio's SendGrid.
+        Ideally, any email validation should happen at the UI level rather
+        than here, so that proper feedback can be given to the user.
+        This is just a fail-safe so that we stop sending to foobar@gmail
+        :param email_address:
+        :return: boolean (True if email is poorly formatted)
+        """
+        try:
+            if len(email_address.split('@')[1].split('.')) < 2:
+                # if no TLD was present
+                return True
+        except IndexError:
+            # if @ was missing
+            return True
+        return False
+
     @classmethod
     def get_hard_bounced_emails(cls, list_of_emails):
         # these are any Bounced Email Records we have
+        bad_emails = set()
+
+        for email_address in list_of_emails:
+            if (BLOCKED_EMAIL_DOMAIN_RECIPIENTS.enabled(email_address)
+                or cls.is_bad_email_format(email_address)
+            ):
+                bad_emails.add(email_address)
+
+        list_of_emails = set(list_of_emails).difference(bad_emails)
+
+        if len(list_of_emails) == 0:
+            # don't query the db if we don't have to
+            return bad_emails
+
         bounced_emails = set(
             BouncedEmail.objects.filter(email__in=list_of_emails).values_list(
                 'email', flat=True
             )
+        )
+
+        BouncedEmail.objects.filter(email__in=set()).values_list(
+            'email', flat=True
         )
 
         transient_emails = set(
@@ -95,13 +136,14 @@ class BouncedEmail(models.Model):
         bounced_emails.update(transient_emails)
 
         # These are emails that were marked as Suppressed or Undetermined
-        # by SNS metadata, meaining they definitely hard bounced
-        bad_emails = set(
+        # by SNS metadata, meaning they definitely hard bounced
+        permanent_bounces = set(
             PermanentBounceMeta.objects.filter(sub_type__in=[
                 BounceSubType.UNDETERMINED, BounceSubType.SUPPRESSED
             ], bounced_email__email__in=bounced_emails).values_list(
                 'bounced_email__email', flat=True)
         )
+        bad_emails.update(permanent_bounces)
 
         # These are definite complaints against us
         complaints = set(
