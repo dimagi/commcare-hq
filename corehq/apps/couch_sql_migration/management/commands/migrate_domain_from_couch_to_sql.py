@@ -150,9 +150,11 @@ class Command(BaseCommand):
                 be a comma-delimited list of form ids OR a file path to
                 a file having one form id per line OR 'missing' to
                 migrate missing forms cached in the statedb by the
-                'stats' command OR 'missing-blob-present' to migrate
-                forms referenced by a case that do not exist in Couch but
-                a blob does exit. The file path must begin with / or ./
+                'stats' command as well as case transactions for forms
+                referenced in case diffs OR 'missing-blob-present' to
+                migrate forms referenced by a case that do not exist in
+                Couch but a blob does exit. The file path must begin
+                with / or ./
             """)
         parser.add_argument('--patch',
             dest="patch", action='store_true', default=False,

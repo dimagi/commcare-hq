@@ -18,6 +18,7 @@ from django.test import TestCase, override_settings
 import attr
 import mock
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil.parser import parse as parse_date
 from gevent.pool import Pool
 from nose.tools import nottest
 from testil import tempdir
@@ -93,6 +94,7 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     RESET,
     STATS,
 )
+from ..patches import patch_XFormInstance_get_xml
 from ..statedb import init_state_db, open_state_db
 from ..util import UnhandledError
 
@@ -1466,6 +1468,30 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration(finish=True)
         self.assertEqual(self._get_case_ids(), {"test-case"})
 
+    def test_missing_form_referenced_by_case(self):
+        form = self.submit_form(make_test_form("missing-form"))
+        self.submit_form(make_test_form("present-form", age=28))
+        self.assertEqual(self._get_form_ids(), {"present-form", "missing-form"})
+        form.delete_attachment("form.xml")
+        XFormInstance.get_db().delete_doc(form.form_id)
+
+        self.do_migration(finish=True, diffs=IGNORE)
+        self.do_migration(forms="missing", diffs=IGNORE)
+
+        form_ids = self._get_form_ids()
+        self.assertIn("present-form", form_ids)
+        self.assertNotIn("missing-form", form_ids)
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self.compare_diffs(missing={"XFormInstance": 1}, diffs=[
+            Diff("test-case", "diff", ["?"],
+                old={'forms': {'missing-form': 'missing'}},
+                new={'forms': {'missing-form': 'missing'}}),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='missing-form', new=''),
+        ])
+        statedb = open_state_db(self.domain_name, self.state_dir, readonly=False)
+        missing_forms = list(statedb.iter_missing_doc_ids("XFormInstance"))
+        self.assertEqual(missing_forms, ["missing-form"])
+
     def test_form_with_extra_xml_blob_metadata(self):
         form = create_form_with_extra_xml_blob_metadata(self.domain_name)
         self.do_migration(finish=True)
@@ -1497,6 +1523,17 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_case_with_very_long_name(self):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
+
+    def test_form_with_malformed_received_on(self):
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        doc = form.to_json()
+        doc["received_on"] = "2013-05-23T08:33:54+00:00Z"
+        XFormInstance.get_db().save_doc(doc)
+        self.do_migration()
+        self.assertEqual(
+            self._get_form("test-form").received_on,
+            parse_date("2013-05-23T08:33:54"),
+        )
 
     def test_case_with_malformed_date_modified(self):
         bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
@@ -1690,7 +1727,7 @@ class TestHelperFunctions(TestCase):
             user_id=couch_form.user_id,
         )
         self.addCleanup(delete_blob)
-        with mod.patch_XFormInstance_get_xml():
+        with patch_XFormInstance_get_xml():
             mod._migrate_form_attachments(sql_form, couch_form)
         self.assertEqual(sql_form.form_data, couch_form.form_data)
         xml = sql_form.get_xml()

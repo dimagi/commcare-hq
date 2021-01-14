@@ -747,6 +747,14 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
+CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+    'case_claim_autolaunch',
+    'Allow case claim to be automatically launched in web apps',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
@@ -1920,5 +1928,23 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Allows the user to change the language of the form content while in the form itself in Web Apps
+    """
+)
+
+APP_ANALYTICS = StaticToggle(
+    'app_analytics',
+    'Allow user to use app analytics in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
+)
+
+DEFAULT_EXPORT_SETTINGS = StaticToggle(
+    'default_export_settings',
+    'Allow enterprise admin to set default export settings',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
 )

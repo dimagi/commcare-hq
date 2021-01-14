@@ -9,7 +9,7 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
 )
 from corehq.apps.es.case_search import CaseSearchES
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 
 
 class CaseSearchCriteria(object):

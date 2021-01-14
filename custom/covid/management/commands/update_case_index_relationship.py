@@ -8,11 +8,11 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.apps.users.util import username_to_user_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 BATCH_SIZE = 100
-CASE_TYPE = "lab_result"
 DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
@@ -35,10 +35,14 @@ def case_block(case):
     ).as_xml()).decode('utf-8')
 
 
-def update_cases(domain):
+def update_cases(domain, case_type, username):
     accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain(CASE_TYPE)
-    print(f"Found {len(case_ids)} {CASE_TYPE} cases in {domain}")
+    case_ids = accessor.get_case_ids_in_domain(case_type)
+    print(f"Found {len(case_ids)} {case_type} cases in {domain}")
+
+    user_id = username_to_user_id(username)
+    if not user_id:
+        user_id = SYSTEM_USER_ID
 
     case_blocks = []
     skip_count = 0
@@ -51,23 +55,25 @@ def update_cases(domain):
 
     total = 0
     for chunk in chunked(case_blocks, BATCH_SIZE):
-        submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=SYSTEM_USER_ID)
+        submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
         total += len(chunk)
         print("Updated {} cases on domain {}".format(total, domain))
 
 
 class Command(BaseCommand):
-    help = (f"Updates all {CASE_TYPE} case indices to use an extension relationship instead of parent.")
+    help = ("Updates all case indices of a specfied case type to use an extension relationship instead of parent.")
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('case_type')
+        parser.add_argument('username')
         parser.add_argument('--and-linked', action='store_true', default=False)
 
-    def handle(self, domain, **options):
+    def handle(self, domain, case_type, username, **options):
         domains = {domain}
         if options["and_linked"]:
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
 
         for domain in domains:
             print(f"Processing {domain}")
-            update_cases(domain)
+            update_cases(domain, case_type, username)

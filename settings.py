@@ -249,6 +249,7 @@ HQ_APPS = (
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
+    'corehq.apps.enterprise',
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
@@ -1010,6 +1011,7 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+RULE_UPDATE_HOUR = 0
 
 DEFAULT_ODATA_FEED_LIMIT = 25
 
@@ -2077,3 +2079,7 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+# Disable Datadog trace startup logs by default
+# https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
+os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')

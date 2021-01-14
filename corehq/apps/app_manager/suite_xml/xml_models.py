@@ -730,6 +730,7 @@ class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
+    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):

@@ -58,16 +58,18 @@ class RemoteRequestFactory(object):
         )
 
     def _build_remote_request_post(self):
-        return RemoteRequestPost(
-            url=absolute_reverse('claim_case', args=[self.domain]),
-            relevant=self.module.search_config.relevant,
-            data=[
+        kwargs = {
+            "url": absolute_reverse('claim_case', args=[self.domain]),
+            "data": [
                 QueryData(
                     key='case_id',
                     ref=QuerySessionXPath('case_id').instance(),
                 ),
-            ]
-        )
+            ],
+        }
+        if self.module.search_config.relevant:
+            kwargs["relevant"] = self.module.search_config.relevant
+        return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
         return Command(
@@ -78,18 +80,16 @@ class RemoteRequestFactory(object):
         )
 
     def _build_instances(self):
-        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
-        claim_relevant_xpaths = [self.module.search_config.relevant]
         prompt_select_instances = [
             Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
             for prop in self.module.search_config.properties
             if prop.itemset.instance_id
         ]
 
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(
-            self.app,
-            query_xpaths + claim_relevant_xpaths
-        )
+        query_xpaths = [QuerySessionXPath('case_id').instance()]
+        query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
+        query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
+        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
