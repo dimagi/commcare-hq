@@ -122,10 +122,6 @@ class BouncedEmail(models.Model):
             )
         )
 
-        BouncedEmail.objects.filter(email__in=set()).values_list(
-            'email', flat=True
-        )
-
         transient_emails = set(
             TransientBounceEmail.get_active_query().filter(
                 email__in=list_of_emails,
