@@ -18,10 +18,15 @@ class ExtensionError(Exception):
 class ResultFormat(Enum):
     FLATTEN = 'flatten'
     FIRST = 'first'
+    SET_FLATTEN = 'set_flatten'
 
 
 def flatten_results(point, results):
     return list(itertools.chain.from_iterable(results))
+
+
+def set_flatten_results(point, results):
+    return set(itertools.chain.from_iterable(results))
 
 
 def first_result(point, results):
@@ -33,7 +38,8 @@ def first_result(point, results):
 
 RESULT_FORMATTERS = {
     ResultFormat.FIRST: first_result,
-    ResultFormat.FLATTEN: flatten_results
+    ResultFormat.FLATTEN: flatten_results,
+    ResultFormat.SET_FLATTEN: set_flatten_results
 }
 
 

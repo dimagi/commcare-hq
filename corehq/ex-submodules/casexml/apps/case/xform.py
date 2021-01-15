@@ -279,7 +279,7 @@ def get_all_extensions_to_close(domain, cases):
         return get_extension_cases_to_close(domain, cases)
 
 
-@extension_point(result_format=ResultFormat.FLATTEN)
+@extension_point(result_format=ResultFormat.SET_FLATTEN)
 def get_extension_cases_to_close(domain, cases):
     case_ids = [case.case_id for case in cases if case.closed]
     return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
@@ -287,17 +287,26 @@ def get_extension_cases_to_close(domain, cases):
 
 @get_extension_cases_to_close.extend(domains=settings.USH_CUSTOM_EXTENSION_DOMAINS)
 def get_ush_extension_cases_to_close(domain, cases):
+    # When closing 'patient' type cases
+    #   dont include 'contact' type extension cases
+    #   in the chain, and further don't include the
+    #   extensions of those contact cases as well
     PATIENT_CASE_TYPE = 'patient'
     CONTACT_CASE_TYPE = 'contact'
     patient_case_ids = [case.case_id for case in cases if case.closed and case.type == PATIENT_CASE_TYPE]
-    patient_extensions = CaseAccessors(domain).get_extension_chain(patient_case_ids, include_closed=False)
-    valid_extensions = [
+    patient_extensions = CaseAccessors(domain).get_extension_chain(
+        patient_case_ids,
+        include_closed=False,
+        exclude_for_case_type=CONTACT_CASE_TYPE  # exclude extensions of CONTACT_CASE_TYPE from the chain
+    )
+    valid_extensions = {
         case.id
         for case in CaseAccessors(domain).get_cases(patient_extensions)
+        # exclude CONTACT_CASE_TYPE extensions of the PATIENT_CASE_TYPE
         if case.type != CONTACT_CASE_TYPE
-    ]
+    }
     other_case_ids = [case.case_id for case in cases if case.closed and case.type != PATIENT_CASE_TYPE]
-    return valid_extensions + CaseAccessors(domain).get_extension_chain(other_case_ids, include_closed=False)
+    return valid_extensions.union(CaseAccessors(domain).get_extension_chain(other_case_ids, include_closed=False))
 
 
 def is_device_report(doc):
