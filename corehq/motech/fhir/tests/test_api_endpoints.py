@@ -34,6 +34,7 @@ API_USERNAME = f'admin@{DOMAIN}.commcarehq.org'
 API_PASSWORD = 'Passw0rd!'
 FOO_CASE_ID = uuid4().hex
 BAR_CASE_ID = uuid4().hex
+BAZ_CASE_ID = uuid4().hex
 
 
 @skip('Covered functionality not yet implemented')
@@ -77,24 +78,31 @@ class PatientEndpointTests(TestCase, DomainSubscriptionMixin):
     def test_auth_bad_password(self):
         # Authentication should use the same code as existing API
         url = get_endpoint_url(BASE_URL, f'/Patient/{FOO_CASE_ID}')
-        with self.assertRaises(requests.HTTPError):
+        with self.assertRaisesRegex(requests.HTTPError, '[Ff]orbidden'):
             requests.get(url, auth=(API_USERNAME, 'bad_password'))
 
     def test_auth_bad_username(self):
         url = get_endpoint_url(BASE_URL, f'/Patient/{FOO_CASE_ID}')
-        with self.assertRaises(requests.HTTPError):
+        with self.assertRaisesRegex(requests.HTTPError, '[Ff]orbidden'):
             # Error should be the same as for bad password: It should
             # not reveal that the user does not exist.
             requests.get(url, auth=('admin@example.com', API_PASSWORD))
+
+    def test_auth_bad_resource(self):
+        url = get_endpoint_url(BASE_URL, f'/Patient/{BAZ_CASE_ID}')
+        with self.assertRaisesRegex(requests.HTTPError, '[Nn]ot found'):
+            requests.get(url, auth=(API_USERNAME, API_PASSWORD))
 
 
 def create_person_cases(owner_id):
     """
     Creates cases for Fred Foo and Barbara Bar.
     """
+    different_owner_id = uuid4().hex
     submit_case_blocks([
         get_foo_caseblock(owner_id).as_text(),
         get_bar_caseblock(owner_id).as_text(),
+        get_baz_caseblock(different_owner_id).as_text(),
     ], DOMAIN)
 
 
@@ -232,6 +240,28 @@ def get_bar_caseblock(owner_id):
             'passport_country_code': 'ZAF',
             'passport_number': 'B01234567',
             'sex': 'female',
+            'dob': '1990-01-01',
+            'covid19_last_test_date': '2021-01-01',
+            'covid19_last_test_status': 'negative',
+        }
+    )
+
+
+def get_baz_caseblock(owner_id):
+    return CaseBlock(
+        create=True,
+        case_id=BAZ_CASE_ID,
+        case_type='person',
+        case_name='BAZ, Bazza',
+        external_id='P-GBR-012345678',
+        owner_id=owner_id,
+        update={
+            'first_name': 'Bazza',
+            'last_name': 'Baz',
+            'passport_type': 'P',
+            'passport_country_code': 'GBR',
+            'passport_number': '012345678',
+            'sex': 'male',
             'dob': '1990-01-01',
             'covid19_last_test_date': '2021-01-01',
             'covid19_last_test_status': 'negative',
