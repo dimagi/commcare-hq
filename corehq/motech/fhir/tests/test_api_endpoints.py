@@ -131,25 +131,19 @@ def get_search_result():
             #            f"_getpages={bundle_id}"
             #            "&_getpagesoffset=20"
             #            "&_count=20"
-            #            "&_bundletype=searchset"  # (Seems HAPI FHIR should be
-            #                                      # able to figure this one
-            #                                      # out from `bundle_id`)
+            #            "&_bundletype=searchset"
             # }
         ],
         "entry": [
             {
-                "fullUrl": "http://hapi.fhir.org/baseR4/Patient/1721457",
-                "resource": {
-                    # ...
-                },
+                "fullUrl": get_endpoint_url(BASE_URL, f'/Patient/{FOO_CASE_ID}'),
+                "resource": FOO_PATIENT,
                 "search": {
                     "mode": "match"
                 }
             }, {
-                "fullUrl": "http://hapi.fhir.org/baseR4/Patient/1698449",
-                "resource": {
-                    # ...
-                },
+                "fullUrl": get_endpoint_url(BASE_URL, f'/Patient/{BAR_CASE_ID}'),
+                "resource": BAR_PATIENT,
                 "search": {
                     "mode": "match"
                 }
@@ -183,10 +177,12 @@ def get_foo_caseblock(owner_id):
 FOO_PATIENT = {
     "resourceType": "Patient",
     "id": FOO_CASE_ID,
-    "meta": {
-        # We could get `lastUpdated` from the case, but it's not necessary
-        # "lastUpdated": "2020-12-08T02:37:47.219+00:00",
-    },
+    # We could get `lastUpdated` from the case.
+    # TODO: It's not a user-defined case property. How would we map it?
+    #       Or do we just include it in all resources?
+    # "meta": {
+    #     "lastUpdated": "2020-12-08T02:37:47.219+00:00",
+    # },
     "identifier": [{
         # We can't do this with a mapping. I think we're going to need
         # to allow users to set a JSON template for each case type, and
@@ -245,6 +241,31 @@ def get_bar_caseblock(owner_id):
             'covid19_last_test_status': 'negative',
         }
     )
+
+
+BAR_PATIENT = {
+    "resourceType": "Patient",
+    "id": BAR_CASE_ID,
+    "identifier": [{
+        "type": {
+            "coding": [{
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                "code": "PPN"
+            }]
+        },
+        "value": "B01234567",
+        "assigner": {
+            "display": "ZAF"
+        }
+    }],
+    "active": True,
+    "name": [{
+        "family": "Bar",
+        "given": ["Barbara"]
+    }],
+    "gender": "female",
+    "birthDate": "1990-01-01",
+}
 
 
 def get_baz_caseblock(owner_id):
