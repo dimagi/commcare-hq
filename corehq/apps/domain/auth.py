@@ -185,12 +185,14 @@ def formplayer_as_user_auth(view):
     @wraps(view)
     def _inner(request, *args, **kwargs):
         with mutable_querydict(request.GET):
-            as_user = request.GET.pop('as', None)
+            request_user = request.GET.pop('for', None)
+            if not request_user:
+                request_user = request.GET.pop('as', None)
 
-        if not as_user:
+        if not request_user:
             return HttpResponse('User required', status=401)
 
-        couch_user = CouchUser.get_by_username(as_user[-1])
+        couch_user = CouchUser.get_by_username(request_user[-1])
         if not couch_user:
             return HttpResponse('Unknown user', status=401)
 
