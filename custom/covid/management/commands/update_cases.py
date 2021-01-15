@@ -15,7 +15,7 @@ class CaseUpdateCommand(BaseCommand):
     def case_block(self):
         raise NotImplementedError()
 
-    def update_cases(self, domain, user_id):
+    def update_cases(self, domain, case_type, user_id):
         raise NotImplementedError()
 
     def find_case_ids_by_type(self, domain, case_type):
@@ -26,10 +26,11 @@ class CaseUpdateCommand(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('case_type')
         parser.add_argument('username')
         parser.add_argument('--and-linked', action='store_true', default=False)
 
-    def handle(self, domain, username, **options):
+    def handle(self, domain, case_type, username, **options):
         domains = {domain}
         if options["and_linked"]:
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
@@ -40,4 +41,4 @@ class CaseUpdateCommand(BaseCommand):
 
         for domain in domains:
             print(f"Processing {domain}")
-            self.update_cases(domain, user_id)
+            self.update_cases(domain, case_type, user_id)

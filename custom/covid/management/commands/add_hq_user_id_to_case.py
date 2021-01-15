@@ -1,7 +1,5 @@
 from xml.etree import cElementTree as ElementTree
 
-from django.core.management.base import BaseCommand
-
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
@@ -13,7 +11,6 @@ from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 BATCH_SIZE = 100
 DEVICE_ID = __name__ + ".add_hq_user_id_to_case"
-CASE_TYPE = 'checkin'
 
 
 class Command(CaseUpdateCommand):
@@ -26,8 +23,8 @@ class Command(CaseUpdateCommand):
             update={'hq_user_id': user_id},
         ).as_xml()).decode('utf-8')
 
-    def update_cases(self, domain, user_id):
-        case_ids = self.find_case_ids_by_type(domain, CASE_TYPE)
+    def update_cases(self, domain, case_type, user_id):
+        case_ids = self.find_case_ids_by_type(domain, case_type)
         accessor = CaseAccessors(domain)
         case_blocks = []
         skip_count = 0
