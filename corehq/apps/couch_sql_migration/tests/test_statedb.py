@@ -287,6 +287,13 @@ def test_counters():
         })
 
 
+def test_add_duplicate_missing_docs():
+    with init_db() as db:
+        db.add_missing_docs("abc", ["doc1"])
+        db.add_missing_docs("abc", ["doc1"])
+        eq(list(db.iter_missing_doc_ids("abc")), ["doc1"])
+
+
 @with_setup(teardown=delete_db)
 def test_pickle():
     with init_db(memory=False) as db:

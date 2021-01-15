@@ -10,6 +10,7 @@ from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from requests import RequestException
 
 from corehq import privileges, toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
@@ -20,6 +21,8 @@ from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
+
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 class Http409(Http400):
@@ -265,10 +268,18 @@ def test_connection_settings(request, domain):
                     "status": response.status_code,
                     "response": response.text,
                 })
-        except Exception as err:
+        except RequestException as err:
             return JsonResponse({"success": False, "response": str(err)})
+        except PossibleSSRFAttempt:
+            return JsonResponse({"success": False, "response": "Invalid URL"})
     else:
-        return JsonResponse({
-            "success": False,
-            "response": form.errors,
-        })
+        if set(form.errors.keys()) == {'url'}:
+            return JsonResponse({
+                "success": False,
+                "response": form.errors['url'],
+            })
+        else:
+            return JsonResponse({
+                "success": False,
+                "response": "Try saving the connection first"
+            })
