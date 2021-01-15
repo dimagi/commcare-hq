@@ -2082,3 +2082,4 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+USH_CUSTOM_EXTENSION_DOMAINS = []

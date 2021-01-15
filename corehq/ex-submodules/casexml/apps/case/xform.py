@@ -10,6 +10,7 @@ from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq import toggles
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.extensions import extension_point, ResultFormat
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
@@ -274,22 +275,29 @@ def close_extension_cases(case_db, cases, device_id):
 def get_all_extensions_to_close(domain, cases):
     if not toggles.EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return set()
-    if not toggles.USH_DONT_CLOSE_PATIENT_EXTENSIONS.enabled(domain):
-        case_ids = [case.case_id for case in cases if case.closed]
-        return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
     else:
-        # super-custom one-off excepton for USH projects
-        PATIENT_CASE_TYPE = 'patient'
-        CONTACT_CASE_TYPE = 'contact'
-        patient_case_ids = [case.case_id for case in cases if case.closed and case.type == PATIENT_CASE_TYPE]
-        patient_extensions = CaseAccessors(domain).get_extension_chain(patient_case_ids, include_closed=False)
-        valid_extensions = [
-            case.id
-            for case in CaseAccessors(domain).get_cases(patient_extensions)
-            if case.type != CONTACT_CASE_TYPE
-        ]
-        other_case_ids = [case.case_id for case in cases if case.closed and case.type != PATIENT_CASE_TYPE]
-        return valid_extensions + CaseAccessors(domain).get_extension_chain(other_case_ids, include_closed=False)
+        return get_extension_cases_to_close(domain, cases)
+
+
+@extension_point(result_format=ResultFormat.FLATTEN)
+def get_extension_cases_to_close(domain, cases):
+    case_ids = [case.case_id for case in cases if case.closed]
+    return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
+
+
+@get_extension_cases_to_close.extend(domains=settings.USH_CUSTOM_EXTENSION_DOMAINS)
+def get_ush_extension_cases_to_close(domain, cases):
+    PATIENT_CASE_TYPE = 'patient'
+    CONTACT_CASE_TYPE = 'contact'
+    patient_case_ids = [case.case_id for case in cases if case.closed and case.type == PATIENT_CASE_TYPE]
+    patient_extensions = CaseAccessors(domain).get_extension_chain(patient_case_ids, include_closed=False)
+    valid_extensions = [
+        case.id
+        for case in CaseAccessors(domain).get_cases(patient_extensions)
+        if case.type != CONTACT_CASE_TYPE
+    ]
+    other_case_ids = [case.case_id for case in cases if case.closed and case.type != PATIENT_CASE_TYPE]
+    return valid_extensions + CaseAccessors(domain).get_extension_chain(other_case_ids, include_closed=False)
 
 
 def is_device_report(doc):
