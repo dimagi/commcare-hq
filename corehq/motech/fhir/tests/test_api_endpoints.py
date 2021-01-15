@@ -1,3 +1,13 @@
+"""
+These tests set goals for the functionality of CommCare's FHIR API.
+
+Examples are based on HAPI FHIR. You can explore requests and responses
+using their `online test server`_.
+
+
+.. _online test server: https://hapi.fhir.org/resource?serverId=home_r4&pretty=false&_summary=&resource=Patient#
+
+"""
 from uuid import uuid4
 
 from django.test import TestCase
