@@ -1957,3 +1957,19 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
 )
+
+BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
+    'blocked_email_domain_recipients',
+    'Block any outgoing email addresses that have an email domain which '
+    'match a domain in this list.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_EMAIL_DOMAIN],
+)
+
+BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
+    'blocked_domain_email_senders',
+    'Domains in this list are blocked from sending emails through our '
+    'messaging feature',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
