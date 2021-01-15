@@ -14,7 +14,7 @@ def sync_db(domain, username, restore_as=None):
         'action': 'sync-db',
         'username': username,
         'domain': domain,
-        'restoreAs': restore_as or username,
+        'restoreAs': restore_as,
         'useLiveQuery': use_livequery,
     }
     response_json = _post_data(data, user_id)
