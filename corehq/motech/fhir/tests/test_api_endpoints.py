@@ -8,6 +8,7 @@ using their `online test server`_.
 .. _online test server: https://hapi.fhir.org/resource?serverId=home_r4&pretty=false&_summary=&resource=Patient#
 
 """
+from unittest import skip
 from uuid import uuid4
 
 from django.test import TestCase
@@ -35,6 +36,7 @@ FOO_CASE_ID = uuid4().hex
 BAR_CASE_ID = uuid4().hex
 
 
+@skip('Covered functionality not yet implemented')
 class PatientEndpointTests(TestCase, DomainSubscriptionMixin):
 
     @classmethod
