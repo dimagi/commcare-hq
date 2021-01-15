@@ -98,10 +98,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
 
     def test_migration(self):
         def replace_ids(string_json):
-            # using format on a string json does not work well, so use replace instead
-            for replacement in (("{instance_id}", form_id), ("{case_id}", case_id)):
-                string_json = string_json.replace(*replacement)
-            return string_json
+            return string_json % {"instance_id": form_id, "case_id": case_id}
 
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
