@@ -1,7 +1,12 @@
+from datetime import datetime
+import uuid
+
 from django.core.management import call_command
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.callcenter.sync_user_case import sync_user_cases
@@ -51,15 +56,50 @@ class CaseCommandsTest(TestCase):
         delete_all_users()
         super().tearDown()
 
+    def submit_case_block(self, create, case_id, **kwargs):
+        return post_case_blocks(
+            [
+                CaseBlock.deprecated_init(
+                    create=create,
+                    case_id=case_id,
+                    **kwargs
+                ).as_xml()
+            ], domain=self.domain
+        )
+
     def test_add_hq_user_id_to_case(self):
-        checkin_case_first = self.case_accessor.get_case(self.checkin_case1.case_id)
-        self.assertEqual('', checkin_case_first.get_case_property('hq_user_id'))
-        self.assertEqual(checkin_case_first.username, 'mobile_worker_1')
+        checkin_case = self.case_accessor.get_case(self.checkin_case1.case_id)
+        self.assertEqual('', checkin_case.get_case_property('hq_user_id'))
+        self.assertEqual(checkin_case.username, 'mobile_worker_1')
 
-        call_command('add_hq_user_id_to_case', self.domain, None)
+        call_command('add_hq_user_id_to_case', self.domain, 'checkin', None)
 
-        checkin_case_first = self.case_accessor.get_case(self.checkin_case1.case_id)
-        lab_result_case_first = self.case_accessor.get_case(self.lab_result_case1.case_id)
+        checkin_case = self.case_accessor.get_case(self.checkin_case1.case_id)
+        lab_result_case = self.case_accessor.get_case(self.lab_result_case1.case_id)
 
-        self.assertEqual(checkin_case_first.get_case_property('hq_user_id'), self.user_id)
-        self.assertEqual(lab_result_case_first.hq_user_id, '')
+        self.assertEqual(checkin_case.get_case_property('hq_user_id'), self.user_id)
+        self.assertEqual(lab_result_case.hq_user_id, '')
+
+    def test_update_case_index_relationship(self):
+        patient_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient_case_id, user_id=self.user_id, owner_id='owner1', case_type='patient',
+            case_name='patient', date_modified=datetime.utcnow()
+        )
+
+        lab_result_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, lab_result_case_id, user_id=self.user_id, owner_id='owner1', case_type='lab_result',
+            case_name='lab_result', date_modified=datetime.utcnow(), index={
+                'patient': ('patient', patient_case_id, 'child')
+            }
+        )
+
+        lab_result_case = self.case_accessor.get_case(lab_result_case_id)
+        self.assertEqual(lab_result_case.indices[0].referenced_type, 'patient')
+        self.assertEqual(lab_result_case.indices[0].relationship, 'child')
+
+        call_command('update_case_index_relationship', self.domain, 'lab_result', None)
+
+        lab_result_case = self.case_accessor.get_case(lab_result_case_id)
+        self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
