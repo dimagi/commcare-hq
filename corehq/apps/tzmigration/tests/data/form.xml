@@ -52,7 +52,7 @@
 	<cur_toilet_assessment_date>2013-03-09</cur_toilet_assessment_date>
 	<cur_malaria_assessment_date>2013-03-09</cur_malaria_assessment_date>
 	<prev_malaria_assessment_date />
-	<n0:case case_id="{case_id}"
+	<n0:case case_id="c9cab5b1e8e1409fb292c13cb20295fa"
 		user_id="test" date_modified="2013-03-09T06:30:09.007+03"
 		xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:create>
@@ -73,7 +73,7 @@
 		<n1:timeEnd>2013-03-09T06:30:09.007+03</n1:timeEnd>
 		<n1:username>test</n1:username>
 		<n1:userID>test</n1:userID>
-		<n1:instanceID>{instance_id}</n1:instanceID>
+		<n1:instanceID>c872acb4e7384a43adecdb5182cea326</n1:instanceID>
 		<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare ODK, version "2.2.0"(6121). App v303. CommCare Version 2.2. Build 6121, built on: November-06-2012</n2:appVersion>
 	</n1:meta>
 </data>

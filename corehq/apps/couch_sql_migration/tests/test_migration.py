@@ -389,9 +389,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_form_ids()))
 
     def test_basic_form_migration_with_timezones(self):
-        form_xml = self.get_file('tz_form', '.xml').format(
-            case_id=uuid.uuid4().hex, instance_id=uuid.uuid4().hex
-        ).encode('utf-8')
+        form_xml = self.get_xml('tz_form')
         with override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=False,
                                PHONE_TIMEZONES_SHOULD_BE_PROCESSED=False):
             submit_form_locally(form_xml, self.domain_name)
