@@ -204,7 +204,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <action auto_launch="false">
+          <action auto_launch="false" redo_last="false">
             <display>
               <text>
                 <locale id="case_search.m0"/>
@@ -227,7 +227,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <action auto_launch="true">
+          <action auto_launch="true" redo_last="false">
             <display>
               <text>
                 <locale id="case_search.m0"/>

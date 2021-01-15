@@ -191,11 +191,7 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_reg_form_action(module))
 
                 if module_offers_search(module):
-                    if "search" in id:
-                        locale_id = id_strings.case_search_again_locale(module)
-                    else:
-                        locale_id = id_strings.case_search_locale(module)
-                    d.actions.append(self._get_case_search_action(module, locale_id))
+                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -299,7 +295,7 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def _get_case_search_action(module, locale_id):
+    def _get_case_search_action(module, in_search=False):
         relevant_kwarg = {}
         if module.search_config.search_button_display_condition:
             relevant_kwarg = dict(
@@ -308,10 +304,14 @@ class DetailContributor(SectionContributor):
         allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain)
         action = Action(
             display=Display(
-                text=Text(locale_id=locale_id)
+                text=Text(locale_id=(
+                    id_strings.case_search_again_locale(module) if in_search
+                    else id_strings.case_search_locale(module)
+                ))
             ),
             stack=Stack(),
             auto_launch=allow_auto_launch and module.search_config.auto_launch,
+            redo_last=in_search,
             **relevant_kwarg
         )
         frame = PushFrame()

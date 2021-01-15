@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
 
 
     var getMenuView = function (menuResponse) {
-        var menuData = {
+        var menuData = {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -112,6 +112,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             numEntitiesPerRow: menuResponse.numEntitiesPerRow,
             maxHeight: menuResponse.maxHeight,
             maxWidth: menuResponse.maxWidth,
+            redoLast: menuResponse.redoLast,
             useUniformUnits: menuResponse.useUniformUnits,
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,

@@ -49,7 +49,7 @@
         </text>
       </template>
     </field>
-    <action auto_launch="false">
+    <action auto_launch="false" redo_last="false">
       <display>
         <text>
           <locale id="case_search.m0"/>
@@ -148,7 +148,7 @@
         </text>
       </template>
     </field>
-    <action auto_launch="false">
+    <action auto_launch="false" redo_last="true">
       <display>
         <text>
           <locale id="case_search.m0.again"/>
@@ -180,7 +180,7 @@
         </text>
       </template>
     </field>
-    <action auto_launch="false">
+    <action auto_launch="false" redo_last="false">
       <display>
         <text>
           <locale id="case_search.m1"/>
@@ -231,7 +231,7 @@
         </text>
       </template>
     </field>
-    <action auto_launch="false">
+    <action auto_launch="false" redo_last="true">
       <display>
         <text>
           <locale id="case_search.m1.again"/>

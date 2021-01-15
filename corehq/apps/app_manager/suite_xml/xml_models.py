@@ -731,6 +731,7 @@ class Action(ActionMixin):
 
     display = NodeField('display', Display)
     auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):
