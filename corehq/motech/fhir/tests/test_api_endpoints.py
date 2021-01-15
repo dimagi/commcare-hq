@@ -28,7 +28,7 @@ from corehq.motech.utils import get_endpoint_url
 
 DOMAIN = 'fhir-drill'
 FHIR_VERSION = 'R4'  # We do not need to support older versions (e.g. DSTU2)
-# MVP: API is domain-specific, like existing API. See "[CEP] Case API v0.6"
+# MVP: API is domain-specific, like existing API.
 BASE_URL = f'localhost:8080/a/{DOMAIN}/api/fhir/{FHIR_VERSION}/'
 API_USERNAME = f'admin@{DOMAIN}.commcarehq.org'
 API_PASSWORD = 'Passw0rd!'
