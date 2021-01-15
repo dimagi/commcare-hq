@@ -220,7 +220,7 @@ FOO_PATIENT = {
 def get_bar_caseblock(owner_id):
     return CaseBlock(
         create=True,
-        case_id=FOO_CASE_ID,
+        case_id=BAR_CASE_ID,
         case_type='person',
         case_name='BAR, Barbara',
         external_id='PM-ZAF-B01234567',
