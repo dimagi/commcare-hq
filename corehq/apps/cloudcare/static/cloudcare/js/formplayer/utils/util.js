@@ -171,10 +171,12 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setQueryData = function (queryDict) {
             if (!this.queryData) {
-                this.queryData = {inputs: {}, execute: {}};
+                this.queryData = {data: {}};
             }
-            this.queryData.inputs[sessionStorage.queryKey] = queryDict;
-            this.queryData.execute[sessionStorage.queryKey] = true;
+            this.queryData.data[sessionStorage.queryKey] = {
+                inputs: queryDict,
+                execute: true,
+            };
         };
 
         this.clearExceptApp = function () {
