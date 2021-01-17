@@ -766,6 +766,14 @@ CASE_CLAIM_AUTOLAUNCH = StaticToggle(
 )
 
 
+WEBAPPS_STICKY_SEARCH = StaticToggle(
+    'webapps_sticky_search',
+    'COVID: In web apps, save user\'s most recent inputs on case search & claim screen.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index

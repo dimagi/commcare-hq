@@ -129,6 +129,9 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     };
 
     Util.getStickyQueryInputs = function () {
+        if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
+            return {};
+        }
         if (!this.stickyQueryInputs) {
             return {};
         }
