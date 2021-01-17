@@ -14,6 +14,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 appId = this.model.collection.appId,
                 initialValue = this.options.model.get('value');
 
+            // If input doesn't have a default value, check to see if there's a sticky value from user's last search
+            if (!initialValue) {
+                initialValue = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')];
+            }
+
             // Initial values are sent from formplayer as strings, but dropdowns expect an integer
             if (initialValue && this.options.model.get('input') === "select1") {
                 initialValue = parseInt(initialValue);

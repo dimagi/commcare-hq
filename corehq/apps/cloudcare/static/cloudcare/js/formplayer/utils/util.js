@@ -128,6 +128,20 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     };
 
+    Util.getStickyQueryInputs = function () {
+        if (!this.stickyQueryInputs) {
+            return {};
+        }
+        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+    };
+
+    Util.setStickyQueryInputs = function (inputs) {
+        if (!this.stickyQueryInputs) {
+            this.stickyQueryInputs = {};
+        }
+        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
+    };
+
     Util.CloudcareUrl = function (options) {
         this.appId = options.appId;
         this.copyOf = options.copyOf;
