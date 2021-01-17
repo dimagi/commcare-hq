@@ -38,19 +38,6 @@ class CaseCommandsTest(TestCase):
         sync_user_cases(cls.mobile_worker)
         cls.mobile_worker.save()
 
-        cls.checkin_case1 = cls.factory.create_case(
-            case_type="checkin",
-            owner_id=cls.mobile_worker.get_id,
-            update={"username": cls.mobile_worker.raw_username,
-                    "hq_user_id": None}
-        )
-        cls.lab_result_case1 = cls.factory.create_case(
-            case_type="lab_result",
-            owner_id=cls.mobile_worker.get_id,
-            update={"username": cls.mobile_worker.raw_username,
-                    "hq_user_id": None},
-        )
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
         delete_all_users()
@@ -68,15 +55,24 @@ class CaseCommandsTest(TestCase):
         )
 
     def test_add_hq_user_id_to_case(self):
-        checkin_case = self.case_accessor.get_case(self.checkin_case1.case_id)
+        checkin_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, checkin_case_id, user_id=self.user_id, case_type='checkin',
+            update={"username": self.mobile_worker.raw_username, "hq_user_id": None}
+        )
+        lab_result_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, lab_result_case_id, user_id=self.user_id, case_type='lab_result',
+            update={"username": self.mobile_worker.raw_username, "hq_user_id": None}
+        )
+        checkin_case = self.case_accessor.get_case(checkin_case_id)
         self.assertEqual('', checkin_case.get_case_property('hq_user_id'))
         self.assertEqual(checkin_case.username, 'mobile_worker_1')
 
         call_command('add_hq_user_id_to_case', self.domain, 'checkin', None)
 
-        checkin_case = self.case_accessor.get_case(self.checkin_case1.case_id)
-        lab_result_case = self.case_accessor.get_case(self.lab_result_case1.case_id)
-
+        checkin_case = self.case_accessor.get_case(checkin_case_id)
+        lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(checkin_case.get_case_property('hq_user_id'), self.user_id)
         self.assertEqual(lab_result_case.hq_user_id, '')
 
@@ -84,15 +80,12 @@ class CaseCommandsTest(TestCase):
         patient_case_id = uuid.uuid4().hex
         self.submit_case_block(
             True, patient_case_id, user_id=self.user_id, owner_id='owner1', case_type='patient',
-            case_name='patient', date_modified=datetime.utcnow()
         )
 
         lab_result_case_id = uuid.uuid4().hex
         self.submit_case_block(
             True, lab_result_case_id, user_id=self.user_id, owner_id='owner1', case_type='lab_result',
-            case_name='lab_result', date_modified=datetime.utcnow(), index={
-                'patient': ('patient', patient_case_id, 'child')
-            }
+            index={'patient': ('patient', patient_case_id, 'child')}
         )
 
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
