@@ -6,7 +6,7 @@ import sys
 from bdb import BdbQuit
 from collections import defaultdict
 from contextlib import suppress
-from itertools import groupby
+from itertools import chain, groupby
 from xml.sax.saxutils import unescape
 
 from django.conf import settings
@@ -98,6 +98,9 @@ class Command(BaseCommand):
         parser.add_argument('--patched',
             dest="patched", action='store_true', default=False,
             help="Show case diffs recorded in patch forms.")
+        parser.add_argument('--missing',
+            dest="missing", action='store_true', default=False,
+            help="Show only missing documents.")
         parser.add_argument('--csv',
             dest="csv", action='store_true', default=False,
             help="Output diffs to stdout in CSV format.")
@@ -136,6 +139,7 @@ class Command(BaseCommand):
             "stop",
             "changes",
             "patched",
+            "missing",
             "csv",
             "batch_size",
             "reset",
@@ -149,6 +153,8 @@ class Command(BaseCommand):
             raise CommandError(f'{action} --changes not allowed')
         if self.csv and action != SHOW:
             raise CommandError(f'{action} --csv not allowed')
+        if self.missing and action != SHOW:
+            raise CommandError(f'{action} --missing not allowed')
         if self.dry_run and action != FILTER:
             raise CommandError(f'{action} --dry-run not allowed')
         if self.select == "pending" and action == PATCH:
@@ -190,11 +196,15 @@ class Command(BaseCommand):
         print(f"showing diffs from {statedb}", file=sys.stderr)
         select = self.get_select_kwargs()
         if self.patched:
+            assert not self.missing, "--missing is not valid with --patched"
             items = iter_patch_form_diffs(domain, **select)
         elif self.changes:
+            assert not self.missing, "--missing is not valid with --changes"
             items = statedb.iter_doc_changes(**select)
         else:
-            items = statedb.iter_doc_diffs(**select)
+            items = [] if self.missing else statedb.iter_doc_diffs(**select)
+            if not select or select.keys() == {"kind"}:
+                items = chain(items, iter_missing_diffs(statedb, **select))
         prompt = os.isatty(sys.stdout.fileno()) and not self.csv
         if self.csv:
             items = self.with_progress(items, statedb, select)
@@ -481,6 +491,20 @@ def csv_diffs(json_diffs, related, changes, stream):
             rows.append(row)
     writer = csv.writer(stream)
     writer.writerows(rows)
+
+
+def iter_missing_diffs(statedb, kind=None):
+    class missing_doc_diff:
+        diff_type = "missing"
+        path = ()
+        old_value = ""
+        new_value = ""
+    if kind is None:
+        log.warning("missing docs (if any) have been omitted")
+        return
+    diff = type("diff", (), {"kind": kind, "json_diff": missing_doc_diff})
+    for doc_id in statedb.iter_missing_doc_ids(kind):
+        yield kind, doc_id, [diff]
 
 
 def iter_json_diffs(doc_diffs):
