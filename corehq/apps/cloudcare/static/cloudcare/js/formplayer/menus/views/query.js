@@ -60,12 +60,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         ui: {
+            clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
+            'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
 
@@ -109,6 +111,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         $field.trigger('change.select2');
                     }
                 }
+            });
+        },
+
+        clearAction: function () {
+            var fields = $(".query-field");
+            fields.each(function () {
+                this.value = '';
+                $(this).trigger('change.select2');
             });
         },
 
