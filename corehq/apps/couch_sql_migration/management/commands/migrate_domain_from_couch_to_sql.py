@@ -57,6 +57,7 @@ COMMIT = "COMMIT"
 RESET = "reset"  # was --blow-away
 REWIND = "rewind"
 STATS = "stats"
+INFO = "info"
 DIFF = "diff"
 
 CACHED = "cached"
@@ -82,6 +83,7 @@ class Command(BaseCommand):
             RESET,
             REWIND,
             STATS,
+            INFO,
             DIFF,
         ])
         parser.add_argument('--no-input', action='store_true', default=False)
@@ -297,6 +299,11 @@ class Command(BaseCommand):
 
     def do_stats(self, domain):
         self.print_stats(domain, short=not self.verbose)
+
+    def do_info(self, domain):
+        status = get_couch_sql_migration_status(domain)
+        print(f"Couch to SQL migration status for {domain}: {status}")
+        self.print_couch_stats(domain)
 
     def do_diff(self, domain):
         from .couch_sql_diff import format_doc_diffs
