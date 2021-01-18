@@ -68,7 +68,10 @@ class PatientEndpointTests(TestCase, DomainSubscriptionMixin):
         # expected differences, and that everything else is the same.
         diffs = sorted([diff.path for diff in json_diff(response.json(),
                                                         get_search_result())])
-        self.assertEqual(diffs, ['id', 'meta.lastUpdated'])
+        self.assertEqual(diffs, [
+            'id',  # a different UUID
+            'meta.lastUpdated',  # a different timestamp
+        ])
 
     def test_get(self):
         url = get_endpoint_url(BASE_URL, f'/Patient/{FOO_CASE_ID}')
