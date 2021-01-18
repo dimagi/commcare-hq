@@ -61,8 +61,9 @@ class LoginAuthentication(HQAuthenticationMixin, Authentication):
     """
     Just checks you are able to login. Does not check against any permissions/domains, etc.
     """
-    def __init__(self):
-        self.decorator_map = get_auth_decorator_map(require_domain=False, allow_sessions=False)
+    def __init__(self, allow_session_auth=False):
+        super().__init__()
+        self.decorator_map = get_auth_decorator_map(require_domain=False, allow_sessions=allow_session_auth)
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
