@@ -13,9 +13,10 @@ from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.views import ConnectionSettingsListView
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 from corehq.util.view_utils import absolute_reverse
 
-BASE_URL = 'http://dhis2.example.org/2.3.4/'
+BASE_URL = 'http://www.example.com/2.3.4/'
 USERNAME = 'admin'
 PASSWORD = 'district'
 DOMAIN = 'test-domain'
@@ -48,7 +49,7 @@ class SendRequestTests(SimpleTestCase):
         req.post('/api/dataValueSets', json=payload)
         self.request_mock.assert_called_with(
             'POST',
-            'http://dhis2.example.org/2.3.4/api/dataValueSets',
+            'http://www.example.com/2.3.4/api/dataValueSets',
             data=None,
             json=payload,
             headers={'Content-type': 'application/json', 'Accept': 'application/json'},
@@ -63,12 +64,21 @@ class SendRequestTests(SimpleTestCase):
         req.get('/api/me')
         self.request_mock.assert_called_with(
             'GET',
-            'http://dhis2.example.org/2.3.4/api/me',
+            'http://www.example.com/2.3.4/api/me',
             allow_redirects=True,
             headers={'Accept': 'application/json'},
             timeout=REQUEST_TIMEOUT,
             verify=False
         )
+
+    def test_bad_url(self):
+        payload = {'ham': ['spam', 'spam', 'spam']}
+        req = get_basic_requests(
+            DOMAIN, 'http://10.11.12.13/', USERNAME, PASSWORD,
+            logger=noop_logger
+        )
+        with self.assertRaises(PossibleSSRFAttempt):
+            req.post('/api/dataValueSets', json=payload)
 
 
 class SessionTests(SimpleTestCase):
@@ -156,7 +166,7 @@ class NotifyErrorTests(SimpleTestCase):
                 'foo\r\n'
                 '\r\n'
                 'Project space: test-domain\r\n'
-                'Remote API base URL: http://dhis2.example.org/2.3.4/\r\n'
+                'Remote API base URL: http://www.example.com/2.3.4/\r\n'
                 '\r\n'
                 '*Why am I getting this email?*\r\n'
                 'This address is configured in CommCare HQ as a notification '

@@ -11,7 +11,7 @@ from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.requests import get_basic_requests
 from corehq.util import as_text
 
-TEST_API_URL = 'http://localhost:9080/api/'
+TEST_API_URL = 'http://example.com:9080/api/'
 TEST_API_USERNAME = 'admin'
 TEST_API_PASSWORD = 'district'
 TEST_DOMAIN = 'test-domain'
@@ -68,7 +68,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_headers=self.request_headers,
             request_method=self.request_method,
             request_params=request_params,
-            request_url='http://localhost:9080/api/person/',
+            request_url=f'{TEST_API_URL}person/',
             response_body=as_text(self.content_json),
             response_status=self.status_code,
         )
