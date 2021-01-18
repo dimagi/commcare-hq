@@ -52,6 +52,6 @@ def process_row(row):
             sys.stderr.write(f"Row failure: domain mismatch with as_user: {','.join(row)}\n")
 
     try:
-        sync_db(domain, user.username, restore_as_user.username)
+        sync_db(domain, user.username, restore_as_user.username if restore_as_user else None)
     except Exception as e:
         sys.stderr.write(f"Row failure: {e}: {','.join(row)}\n")
