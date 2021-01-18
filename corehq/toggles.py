@@ -1948,3 +1948,15 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
 )
+
+USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
+    'ush_dont_close_patient_extensions',
+    'Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
+    Enabling this results in 'closing patient type cases will not close its contact type
+    extension cases'. Designed for specific USH domain use-case
+    """
+)
