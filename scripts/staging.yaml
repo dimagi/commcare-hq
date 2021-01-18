@@ -50,7 +50,10 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
-  - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
+  # DO NOT REMOVE this is similar to "autostaging", but for vellum
+  # If this branch conflicts, run: scripts/vellum-to-hq staging --push --fix-staging
+  - vellum-staging
+  
   - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
