@@ -9,7 +9,7 @@ services:
       WEB_HOST: "dockerhost"
     links:
       - postgres
-      - couch3
+      - couch
       - redis
     expose:
       - 8010
