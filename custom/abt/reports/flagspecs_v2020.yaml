@@ -1,4 +1,4 @@
-# From 1 - SOP Morn Mob
+# Module 1 Form 2: Spray Operator Morning Mobilization Inspection
 http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
 - question: [hand_wash_station]
     base_path: [morning_mobilization_grp, Q1]
@@ -35,7 +35,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     responsible_follow_up: "District coordinator"
   - question: [sop_health_problems]
     base_path: [morning_mobilization_grp]
-    comment: [sop_health_problems_comments]
+    comment: [sop_physical_comments]
     flag_name: "2a. Were any health problems observed among the Spray Operators?"
     flag_name_fr: "2a. Des problèmes de santé ont-ils été observés parmi les opérateurs de pulvérisation?"
     flag_name_por: "2a. Observou-se algum problema de saude nos operadores de pulverizacao?"
@@ -156,10 +156,10 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
-# Form 2 - Trans Veh Insp
+# Module 1 Form 3: Spray Operator Transportation Vehicle Inspection
 http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
   - question: [current_certificate_issued]
-    comment: [current_certificate_issued_comments]
+    comment: [vectorlink_certificate_issued_comments]
     base_path: [vehicle_inspection_grp, Q1]
     flag_name: "1. Is the current certificate issued after the ECO or authorized VectorLink representative inspected this vehicle in the vehicle?"
     flag_name_fr: "1. Le certificat actuel est-il délivré après que le représentant autorisé ou le représentant autorisé de VectorLink a inspecté ce véhicule dans le véhicule?"
@@ -327,7 +327,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Preuve de fuite de insecticide dans le véhicule."
     warning_por: "Problema notado: Evidencia de vazamento de insecticidas na viatura."
     responsible_follow_up: "ECO"
-# Form 3 - End of Day clean up
+# Module 1 Form 6: End of Day Cleanup Inspection
 http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
   - question: [sop_return_in_ppe]
     comment: [sop_return_in_ppe_comments]
@@ -351,7 +351,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: infrcomments faite en mangeant et/ou en buvant "
     warning_por: "Problema reportado: Violação relacionado a comer e/ou beber."
     responsible_follow_up: "District Coordinator"
- - question: [reconcile_insecticide]
+  - question: [reconcile_insecticide]
     base_path: [obs_rcd_mgmt_grp, Q3]
     comment: [reconcile_insecticide_comments]
     flag_name: "3. Does the team leader reconcile all sachets/bottles and serial numbers prior to spray operators performing triple rinse and/or PPE cleaning?"
@@ -362,7 +362,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
- - question: [wash_criteria_met]
+  - question: [wash_criteria_met]
     comment: [wash_criteria_met_comments]
     base_path: [obs_rcd_mgmt_grp, Q4]
     flag_name: "Team Leaders are supervising the cleaning and wash-up"
@@ -545,7 +545,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     responsible_follow_up: "District Coordinator"
   - question: [mask_distance]
     base_path: [fsp_grp, Q18]
-    comment: [mask_distance_comments]
+    comment: [copy-1-of-worker_wash_comments]
     flag_name: "18. Do the workers don their personal face mask and maintain 2 meter personal distancing after washing face and hands?"
     flag_name_fr: "18. "
     flag_name_por: "18. "
@@ -567,7 +567,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     responsible_follow_up: "District Coordinator"
   - question: [contaminated_water_drains]
     comment: [contaminated_water_drains_comments]
-    base_path: [fsp_grp, Q120]
+    base_path: [fsp_grp, Q20]
     flag_name: "20. Does all contaminated water drain properly into the soak pit?"
     flag_name_fr: "20. L'eau contaminée est-elle drainée correctement dans le puisard ?"
     flag_name_por: "20. Toda a agua contaminada e devidamente dreinada no tanque de imersao?"
@@ -643,7 +643,9 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Tanque de retencao Movel nao instalado distante de corpos de agua, inclinacoes ou locais propensos a inundacoes ."
     responsible_follow_up: "District Coordinator"
   - question: [barrel_water_present]
-    comment: [barrel_water_present_comments]
+    comment: [day1_operation_comments]  # 'barrel_water_present_comments' does not exist.
+    # comment will not be found: There is only one item in base_path. See expressions.py:119
+    # TODO: Move 'barrel_water_present' into 'Q27' question list
     base_path: [msp_grp]
     flag_name: "27a. Is there any water in the collection barrel at the beginning of clean up?"
     flag_name_fr: "27a. Y a-t-il de l'eau dans le tonneau de collecte au début du nettoyage?"
@@ -752,7 +754,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les opérateurs doivent se laver les mains et le visage avec de l'eau et du savon après avoir retiré l'EPI."
     warning_por: "Problema reportado: Roceadores deverao lavar as mãos e cara com agua e sabao depois de tirar o EPI."
     responsible_follow_up: "District Coordinator"
- - question: [face_mask]
+  - question: [face_mask]
     base_path: [msp_grp, Q37]
     comment: [face_mask_comments]
     flag_name: "37. Do the workers don their face masks and maintain 2-meter personal distancing after washing face and hands?"
@@ -808,7 +810,9 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Lavagem e /ou baldes de lixo nao foi coberto durante a noite."
     responsible_follow_up: "District Coordinator"
   - question: [ground_restored]
-    comment: [ground_restored_comments]
+    comment: [last_day_operations_comments]  # 'ground_restored_comments' does not exist
+    # TODO: Move 'ground_restored' question into 'Q42' question list so
+    #       that 'last_day_operations_comments' can be found
     base_path: [msp_grp]
     flag_name: "42a. Have the barrels been removed, hole for MSP refilled, and the ground returned to its original state?"
     flag_name_fr: "42a. Les tonneaux ont-ils été enlevés, les trous de puisards mobile effacer et le sol est remis à son état d'origine?"
@@ -819,7 +823,9 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: TRM nao foi propiramnete retornado ao cova."
     responsible_follow_up: "ECO"
   - question: [msp_removed]
-    comment: [msp_removed_comments]
+    # NOTE: 'last_day_operations_comments' same question as above
+    comment: [last_day_operations_comments]  # 'msp_removed_comments' does not exist
+    # TODO: Move 'msp_removed' question into 'Q42' question list
     base_path: [msp_grp]
     flag_name: "42b. Has the MSP been pulled out of the ground with the hole covered and site secured?"
     flag_name_fr: "42b. Les fûts ont-ils été enlevés, le trou pour le PM a-t-il été remblayé et le sol remis à son état d'origine ?"
@@ -830,7 +836,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Instalação do TRM no local nao foi seguradano final do dia."
     responsible_follow_up: "ECO"
   - question: [msp_secure]
-    comment: [msp_secure_comments]
+    comment: [msp_stored_comments]  # 'msp_secure_comments' does not exist
+    # TODO: Move 'msp_secure' question into 'Q43' question list
     base_path: [msp_grp]
     flag_name: "43a. Is the MSP kept in a secure room after returning from cleaning up?"
     flag_name_fr: "43a. Le PM est-il gardé dans une pièce sécurisée après être son nettoyage?"
@@ -862,7 +869,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les porteurs ne transportent pas de combinaisons propres aux équipes de terrain"
     warning_por: "Problema reportado: Carregadores nao transportam os fatos de trabalho limpos para o campo"
     responsible_follow_up: "District Coordinator"
-# Form 4 - Storekeeper
+# Module 1 Form 5: Storekeeper Performance Inspection
 http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
   - question: [ledger_present]
     comment: [ledger_present_comments]
@@ -919,7 +926,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: fiches de stocks manquantes : bouteilles/sachets vides et stocks de déchets "
     warning_por: "Problema reportado: Deficiente arquivo de registo de estoque: garrfas vazias e estoque de lixo."
     responsible_follow_up: "District Coordinator"
- - question: [separate_cards_batch]
+  - question: [separate_cards_batch]
     base_path: [stock_audit_grp, Q6]
     comment: [separate_cards_batch_comments]
     flag_name: "6. If there are insecticides that expire prior to next year’s campaign, have they been physically separated from the other insecticides and clearly marked in the store room?"
@@ -930,23 +937,12 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Insecticides expirant durant campagne suivante non séparés dans le magasin"
     warning_por: "Problema reportado: "
     responsible_follow_up: "ECO"
- - question: [separate_cards_batch]
-    comment: [separate_cards_batch_comments]
-    base_path: [stock_audit_grp, Q7]
-    flag_name: "7. If there are insecticides that expire during spray, are there separate stock cards for each batch of insecticide?"
-    flag_name_fr: "7. S'il y a des insecticides qui expirent pendant la pulvérisation, existe-t-il des fiches de stock distinctes pour chaque lot d'insecticide?"
-    flag_name_por: "7. Se ha insecticidas que expiram durante a pulverização, existem cartões de estoque separados para cada lote de insecticidas?"
-    answer: "no"
-    warning: "Problem reported: No separate stock cards for expiring insecticide."
-    warning_fr: "Problème signalé: pas de fiches de sotck séparés pour les insecticides périmés "
-    warning_por: "Problema reportado: Nao ha separacao de cartoes de estoque de insecticida expirado."
-    responsible_follow_up: "District Coordinator"
   - question: [expired_insecticides_separate]
     comment: [expired_insecticides_separate_comments]
-    base_path: [stock_audit_grp, Q8]
-    flag_name: "8. Have insecticides that expire during the spray season been physically separated from the other insecticides in the store room?"
-    flag_name_fr: "8. Est-ce-que les insecticides qui expirent pendant la saison de pulvérisation ont été physiquement séparés des autres insecticides dans le magasin?"
-    flag_name_por: "8. Os insecticidas que expiram durante a época de pulverização foram fisicamente separados dos outros estão no armazem?"
+    base_path: [stock_audit_grp, Q7]
+    flag_name: "7. If there are insecticides that expire during spray, have they been physically separated from the other insecticides and clearly marked in the store room?"
+    flag_name_fr: "7. S'il y a des insecticides qui expirent pendant la saison de pulvérisation, ont-ils été physiquement séparés des autres insecticides dans le magasin?"
+    flag_name_por: "7. Os insecticidas que expiram durante a época de pulverização foram fisicamente separados dos outros que estão no armazém?"
     answer: "no"
     warning: "Problem reported: Expiring insecticide not physically separated from others."
     warning_fr: "Problème signalé: les insecticides périmés ne sont pas séparés physiquement des autres insecticides dans le magasin"
@@ -954,10 +950,10 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     responsible_follow_up: "ECO"
   - question: [stock_used_cards]
     comment: [stock_used_cards_comments]
-    base_path: [stock_audit_grp, Q9]
-    flag_name: "9. Using the stock cards, can the storekeeper indicate the quantity of stock that has been used to date?"
-    flag_name_fr: "9. À l'aide des fiches de stock, le magasinier peut-il indiquer la quantité de stock utilisée à ce jour?"
-    flag_name_por: "9. Usando os cartoes de estoque, o fiel é capaz de indicar a quantidade de estoque usado até a data?"
+    base_path: [stock_audit_grp, Q8]
+    flag_name: "8. Using the stock cards, can the storekeeper indicate the quantity of stock that has been used to date?"
+    flag_name_fr: "8. À l'aide des fiches de stock, le magasinier peut-il indiquer la quantité de stock utilisée à ce jour?"
+    flag_name_por: "8. Usando os cartoes de estoque, o fiel é capaz de indicar a quantidade de estoque usado até a data?"
     answer: "no"
     warning: "Problem reported: Deficient record-keeping: usage."
     warning_fr: "Problème signalé: fiches de stock déficient: utilisation."
@@ -965,10 +961,10 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     responsible_follow_up: "District Coordinator"
   - question: [balance_mismatch]
     comment: [balance_mismatch_comments]
-    base_path: [stock_audit_grp, Q10]
-    flag_name: "10. Is the balance in the store ledger book different from the balance on the stock card for all stock items?"
-    flag_name_fr: "10. La balance du livre du grand magasin est-elle différente du solde de la carte de stock pour tous les articles en stock?"
-    flag_name_por: "10. O saldo no livro de registo se difere do saldo nos cartões de estoque  para todos os artigos de estoque?"
+    base_path: [stock_audit_grp, Q9]
+    flag_name: "9. Is the balance in the store ledger book different from the balance on the stock card for all stock items?"
+    flag_name_fr: "9. La balance du livre du grand magasin est-elle différente du solde de la carte de stock pour tous les articles en stock?"
+    flag_name_por: "9. O saldo no livro de registo se difere do saldo nos cartões de estoque  para todos os artigos de estoque?"
     answer: "yes"
     warning: "Problem reported: The balance in the store ledger book does not match the balance on the stock card for all stock items."
     warning_fr: "Problème signalé: La balance dans du registre du magasin ne correspond pas au solde de la fiche de stock pour tous les articles en stock."
@@ -976,10 +972,10 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     responsible_follow_up: "District Coordinator"
   - question: [balance_match_stock]
     comment: [balance_match_stock_comments]
-    base_path: [stock_audit_grp, Q11]
-    flag_name: "11. Does the balance on the stock card equal to the result of a physical stock count for each item?"
-    flag_name_fr: "11. Est-ce-que le solde de la carte de stock est égal au résultat d'un compte de stock physique pour chaque article?"
-    flag_name_por: "11. O saldo nos cartões de estoque corresponde ao estoque fisico existente contabilizado para cada item?"
+    base_path: [stock_audit_grp, Q10]
+    flag_name: "10. Does the balance on the stock card equal to the result of a physical stock count for each item?"
+    flag_name_fr: "10. Est-ce-que le solde de la carte de stock est égal au résultat d'un compte de stock physique pour chaque article?"
+    flag_name_por: "10. O saldo nos cartões de estoque corresponde ao estoque fisico existente contabilizado para cada item?"
     answer: "no"
     warning: "Problem reported: The balance on the stock card does not equal the result of a physical stock count for all items."
     warning_fr: "Problème signalé: le solde des fiches de stock ne correspond pas au résultat d'un comptage physique"
@@ -988,9 +984,9 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
   - question: [reconciliation_completed]
     comment: [reconciliation_completed_comments]
     base_path: [stock_audit_grp, Q11]
-    flag_name: "12. Is the Insecticide Reconciliation Form completed daily?"
-    flag_name_fr: "12. Est-ce-que le formulaire de rapprochement des insecticides est-il rempli journalièrement?"
-    flag_name_por: "12. O formulario de reconciliação de insecticida e diariamente preenchido?"
+    flag_name: "11. Is the Insecticide Reconciliation Form completed daily?"
+    flag_name_fr: "11. Est-ce-que le formulaire de rapprochement des insecticides est-il rempli journalièrement?"
+    flag_name_por: "11. O formulario de reconciliação de insecticida e diariamente preenchido?"
     answer: "no"
     warning: "Problem reported: The Insecticide Reconciliation Form is not completed daily."
     warning_fr: "Problème signalé: Le formulaire de rapprochement des insecticides n'est pas rempli tous les jours."
@@ -998,16 +994,27 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     responsible_follow_up: "District Coordinator"
   - question: [balance_match_opening]
     comment: [balance_match_opening_comments]
-    base_path: [stock_audit_grp, Q13]
-    flag_name: "13. Does the sum of the stock balance on the stock card + the stock issued out for the day + the stock balance of empty sachets/bottles, equal to the opening balance plus any subsequent receipts in the ledger?"
-    flag_name_fr: "13. Est-ce que la somme du solde du stock sur la carte de stock + le stock émis pour la journée + le solde du stock de sachets / bouteilles vides, égal au solde d'ouverture plus les reçus ultérieurs dans le grand livre?"
-    flag_name_por: "13. A soma do saldo do stock nos cartoes de estoque + o estoque  emitido para o dia + o saldo de estoque das saquetas/garrafas vazias, é igual ao saldo de abertura mais qualquer subsequentes entrada no livro de registo?"
+    base_path: [stock_audit_grp, Q12]
+    flag_name: "12. Does the sum of the stock balance on the stock card + the stock issued out for the day + the stock balance of empty sachets/bottles, equal to the opening balance plus any subsequent receipts in the ledger?"
+    flag_name_fr: "12. Est-ce que la somme du solde du stock sur la carte de stock + le stock émis pour la journée + le solde du stock de sachets / bouteilles vides, égal au solde d'ouverture plus les reçus ultérieurs dans le grand livre?"
+    flag_name_por: "12. A soma do saldo do stock nos cartoes de estoque + o estoque  emitido para o dia + o saldo de estoque das saquetas/garrafas vazias, é igual ao saldo de abertura mais qualquer subsequentes entrada no livro de registo?"
     answer: "no"
     warning: "Problem reported: The stock balance records of insecticides does not reconcile."
     warning_fr: "Problème signalé: Les registres de stocks de insecticides ne concordent pas."
     warning_por: "Problema reportado: O resgisto do balanco do insecticida nao e reconciliado."
     responsible_follow_up: "Operation Manager"
- - question: [covid_practices]
+  - question: [number_empties_match]
+    comment: [number_empties_match_comments]
+    base_path: [stock_audit_grp, Q13]
+    flag_name: "13. Does the number of empty sachets/bottles (including those sachets/bottles in the field at this moment) equal what the storekeeper indicates as the quantity of stock issued to date?"
+    flag_name_fr: "13. Le nombre de sachets / bouteilles vides (y compris les sachets / bouteilles sur le terrain en ce moment) est-il égal à ce que le magasinier indique comme quantité de stock délivré à ce jour?"
+    flag_name_por: "13. O numero de saquetas/garrafas vazias (incluindo as que estao no terreno no momento) corresponde ao que o lojista indica como quantidade do stock emitido na data?"
+    answer: "no"
+    warning: "Problem reported: insecticide inventory does not balance."
+    warning_fr: "Problème signalé: Inventaire des insecticides non conforme "
+    warning_por: "Problema reportado: Inventario de Pesticida nao esta no balanco."
+    responsible_follow_up: "Operation Manager"
+  - question: [covid_practices]
     base_path: [safety_reqs_grp, Q14]
     comment: [covid_practices_comments]
     flag_name: "14. Does the storekeeper wear an N95 or equivalent mask and maintain 2-meter personal distancing?"
@@ -1018,7 +1025,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
- - question: [pesticide_mishandling]
+  - question: [pesticide_mishandling]
     comment: [pesticide_mishandling_comments]
     base_path: [safety_reqs_grp, Q15]
     flag_name: "15. Do people handle insecticides while not wearing masks, gloves, boots and overalls?"
@@ -1198,23 +1205,12 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "roblème signalé: Stockage et / ou étiquetage déficient des déchets dangereux"
     warning_por: "Problema reportado: Deficiente armazenamento/ rotulagem de lixo perigoso."
     responsible_follow_up: "ECO"
-  - question: [number_empties_match]
-    comment: [number_empties_match_comments]
-    base_path: [pesticide_management_grp, Q31]
-    flag_name: "31. Does the number of empty sachets/bottles (including those sachets/bottles in the field at this moment) equal what the storekeeper indicates as the quantity of stock issued to date?"
-    flag_name_fr: "31. Le nombre de sachets / bouteilles vides (y compris les sachets / bouteilles sur le terrain en ce moment) est-il égal à ce que le magasinier indique comme quantité de stock délivré à ce jour?"
-    flag_name_por: "31. O numero de saquetas/garrafas vazias (incluindo as que estao no terreno no momento) corresponde ao que o lojista indica como quantidade do stock emitido na data?"
-    answer: "no"
-    warning: "Problem reported: insecticide inventory does not balance."
-    warning_fr: "Problème signalé: Inventaire des insecticides non conforme "
-    warning_por: "Problema reportado: Inventario de Pesticida nao esta no balanco."
-    responsible_follow_up: "Operation Manager"
   - question: [pesticide_stored_high]
     comment: [pesticide_stored_high_comments]
-    base_path: [pesticide_management_grp, Q32]
-    flag_name: "32. Is the insecticide stock stored no more than 2 m high and off of the ground?"
-    flag_name_fr: "32. Le stock de insecticides n'est-il pas entreposé à plus de 2 m de hauteur et hors du sol?"
-    flag_name_por: "32. O estoque de pesticidas é colocado a uma altura não mais de 2 m do chão?"
+    base_path: [pesticide_management_grp, Q31]
+    flag_name: "31. Is the insecticide stock stored no more than 2 m high and off of the ground?"
+    flag_name_fr: "31. Le stock de insecticides n'est-il pas entreposé à plus de 2 m de hauteur et hors du sol?"
+    flag_name_por: "31. O estoque de pesticidas é colocado a uma altura não mais de 2 m do chão?"
     answer: "no"
     warning: "Problem reported: Improper insecticide storage: Skids and/or stacking height."
     warning_fr: "Problème signalé: Stockage inadéquat des insecticides: patins et / ou hauteur d'empilage"
@@ -1222,16 +1218,17 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     responsible_follow_up: "District Coordinator"
   - question: [excess_accumulated_waste]
     comment: [excess_accumulated_waste_comments]
-    base_path: [pesticide_management_grp, Q33]
-    flag_name: "33. Is there more than one spray season of accumulated solid waste?"
-    flag_name_fr: "33. Y a-t-il plus d'une saison de pulvérisation de déchets solides accumulés?"
-    flag_name_por: "33. Ha residuos solidos acumulados de mais de uma campanha de pulverização?"
+    base_path: [pesticide_management_grp, Q32]
+    flag_name: "32. Is there more than one spray season of accumulated solid waste?"
+    flag_name_fr: "32. Y a-t-il plus d'une saison de pulvérisation de déchets solides accumulés?"
+    flag_name_por: "32. Ha residuos solidos acumulados de mais de uma campanha de pulverização?"
     answer: "yes"
     warning: "Problem reported: Surplus insecticide in inventory."
     warning_fr: "Problème signalé: : Surplus de insecticide dans l'inventaire"
     warning_por: "Problema reportado: Pesticida excedente no inventario."
     responsible_follow_up: "District Coordinator"
-# Form 5 - HO Prep & SOP Perf
+
+# Module 1 Form 4: Homeowner Preparation and Spray Operator Performance
 http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
   - question: [items_removed]
     comment: [items_removed_comments]
@@ -1289,8 +1286,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado: Items noa removidos da parede ou teto."
     responsible_follow_up: "District Coordinator"
   - question: [food_removed]
-    comment: [food_removed_comments]
-    base_path: [household_prep_grp]
+    comment: [food_removed_comments]  # TODO: Comment does not exist. Should this be 'food_store_rooms_comments'?
+    base_path: [household_prep_grp]  # TODO: Question is not in question list. Comment will not be found.
     flag_name: "6a. Was the food removed before spraying?"
     flag_name_fr: "6a. La nourriture a-t-elle été enlevée avant la pulvérisation?"
     flag_name_por: "6a. Os alimentos foram retirados antes da pulverização?"
@@ -1335,8 +1332,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
     responsible_follow_up: "District Coordinator"
   - question: [triple_rinse]
-    comment: [triple_rinse_comments]
-    base_path: [insecticide_prep_grp]
+    comment: [triple_rinse_comments]  # TODO: Does not exist. 'pesticide_packaged_comments'?
+    base_path: [insecticide_prep_grp]  # TODO: question not in question list.
     flag_name: "10a. Does the operator triple-rinse the bottle while preparing the insecticide in the tank?"
     flag_name_fr: "10a. Est-ce-que l'opérateur rinse trois fois la bouteille pendant la préparation du insecticide dans le réservoir?"
     flag_name_por: "10a. O roceador faz o tripla enxaguadela da garrafa durante a preparacao do pesticida no tanque?"
@@ -1399,21 +1396,21 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     flag_name_por: "15. O roceador foi visto fumando, comendo ou bebendo durante a preparação do agregado familiar ou durante a pulverização?"
     answer: "yes"
     warning_question: [sop_id]
-    comment: [sop_id_comments]
+    # comment: [sop_id_comments]  # duplicate key "comment". Question "sop_id_comments" does not exist
     warning_question_root: True
     warning: "Problem reported: Spray operator {msg} smoking or eating during household preparation or spraying."
     warning_fr: "Problème signalé: l'Operateur de pulvérisation {msg} est entrain de fumer ou manger pendant la préparation des pièces des bénéficiaires ou la pulverisation"
     warning_por: "Problema reportado: roceador {msg} fumando ou comendo durante a prepração do agregado ou pulverizando."
     responsible_follow_up: "District Coordinator"
-  - question: [sop_eating_during_spray]
-    comment: [sop_eating_during_spray_comments]
+  - question: [sop_drinking_during_spray]
+    comment: [sop_drinking_during_spray_comments]
     base_path: [spray_observe_grp, Q16]
     flag_name: "16. Is the spray operator observed drinking during household preparation or spraying?"
     flag_name_fr: "16.Est-ce-que l'opérateur de pulvérisation est observé en train de boire pendant la préparation du ménage ou la pulvérisation?"
     flag_name_por: "16. O roceador foi visto bebendo durante a preparação do agregado familiar ou durante a pulverização?"
     answer: "yes"
     warning_question: [sop_id]
-    comment: [sop_id_comments]
+    # comment: [sop_id_comments]  # duplicate key "comment". Question "sop_id_comments" does not exist
     warning_question_root: True
     warning: "Problem reported: Spray operator {msg} drinking during household preparation or spraying."
     warning_fr: "Problème signalé: l'Operateur de pulvérisation {msg} est entrain de boire pendant la préparation des pièces des bénéficiaires ou la pulverisation"
@@ -1453,8 +1450,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado: vazamentos da bomba."
     responsible_follow_up: "District Coordinator"
   - question: [pump_serviced]
-    comment: [pump_serviced_comments]
-    base_path: [spray_observe_grp]
+    comment: [pump_serviced_comments]  # TODO: Does not exist
+    base_path: [spray_observe_grp]  # TODO: Comment will not be found
     flag_name: "19a. Does the operator service the sprayer before proceeding?"
     flag_name_fr: "19a. L'opérateur entretient-il la pompe avant de continuer?"
     flag_name_por: "19a. O roceador  repara a bomba antes de prosseguir?"
@@ -1498,7 +1495,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     responsible_follow_up: "District Coordinator"
   - question: [swath_overlap]
     comment: [swath_overlap_comments]
-    base_path: [spray_observe_grp, swath_grp, Q22Z]
+    base_path: [spray_observe_grp, swath_grp_zim, Q22Z]
     flag_name: "22Z. Is there a 2 cm overlap with each successive swath?"
     flag_name_fr: "22Z. Y a-t-il un chevauchement de 2 cm avec chaque bande successive?"
     flag_name_por: "22Z. Ha 2cm de sobreposição em cada faixa sucessiva?"
@@ -1541,8 +1538,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado: Roceador nao re-pressurizou o tanque como se requere."
     responsible_follow_up: "District Coordinator"
   - question: [items_removed]
-    comment: [items_removed_comments]
-    base_path: [spray_observe_grp]
+    comment: [items_removed_comments]  # TODO: Does not exist. 'eaves_sprayed_comments'?
+    base_path: [spray_observe_grp]  # TODO: Question not in question list
     flag_name: "26a. Were the household items that are normally stored on the porches, roofs and exterior of the walls removed?"
     flag_name_fr: "26a. Est-ce-que les articles ménagers qui sont normalement entreposés sur les porches, les toits et l'extérieur des murs ont été enlevés?"
     flag_name_por: "26a. Os artigos da familia normalmente colocados nas varandas, tetos e no exterior das pares foram retirados?"
