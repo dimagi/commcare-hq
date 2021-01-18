@@ -3,7 +3,8 @@ import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from casexml.apps.case.xform import get_all_extensions_to_close, get_ush_extension_cases_to_close
+from casexml.apps.case.xform import (
+    get_all_extensions_to_close, get_extensions_to_close, get_ush_extension_cases_to_close)
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
@@ -118,8 +119,15 @@ class AutoCloseExtensionsTest(TestCase):
         )
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @flag_enabled('USH_DONT_CLOSE_PATIENT_EXTENSIONS')
     def test_get_ush_custom_extension_chain(self):
-        host = CaseStructure(case_id=self.host_id, attrs={'create': True, 'case_type': 'parent'})
+        # test USH specific tree of where only extension(2) should be included
+        #       patient (host)
+        #     /        \
+        #  contact(id=1)   extension(id=2)
+        #   /
+        # extension(id=3)
+        host = CaseStructure(case_id=self.host_id, attrs={'create': True, 'case_type': 'patient'})
         contact_extension = CaseStructure(
             case_id=self.extension_ids[0],
             indices=[CaseIndex(
@@ -146,13 +154,14 @@ class AutoCloseExtensionsTest(TestCase):
         )
         created_cases = self.factory.create_or_update_cases([ext_of_contact])
         self.factory.create_or_update_cases([extensions_1])
+        created_cases[-1].closed = True
         self.assertEqual(
             set(self.extension_ids),
-            get_all_extensions_to_close(self.domain, [created_cases[-1]])
+            get_extensions_to_close(self.domain, [created_cases[-1]])
         )
         # contact and its extensions shouldn't be included in USH case
         self.assertEqual(
-            [self.extension_ids[1]],
+            {self.extension_ids[1]},
             get_ush_extension_cases_to_close(self.domain, [created_cases[-1]])
         )
 
