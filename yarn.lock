@@ -218,6 +218,17 @@ angular-datamaps@0.1.2:
   resolved "https://registry.yarnpkg.com/angular-datamaps/-/angular-datamaps-0.1.2.tgz#b3b334e8a5bf13290ef374300663b1a1344558c2"
   integrity sha1-s7M06KW/EykO83QwBmOxoTRFWMI=
 
+angular-datatables@0.5.6:
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/angular-datatables/-/angular-datatables-0.5.6.tgz#bcf5d17bd40154b1e937067994e12e4465fa648a"
+  integrity sha1-vPXRe9QBVLHpNwZ5lOEuRGX6ZIo=
+  dependencies:
+    angular ">=1.3.0"
+    datatables.net "^1.10.11"
+    datatables.net-dt "^1.10.11"
+    grunt-parallel "^0.4.1"
+    jquery ">=1.11.0"
+
 angular-leaflet-directive@tombatossals/angular-leaflet-directive#master:
   version "0.10.1"
   resolved "https://codeload.github.com/tombatossals/angular-leaflet-directive/tar.gz/1cfbdf4a7f68bfddddc7472b5799c7b950337b2a"
@@ -283,6 +294,11 @@ angular@1.x, angular@^1.x:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.0.tgz#b1ec179887869215cab6dfd0df2e42caa65b1b51"
   integrity sha512-VdaMx+Qk0Skla7B5gw77a8hzlcOakwF8mjlW13DpIWIDlfqwAbSSLfd8N/qZnzEmQF4jC4iofInd3gE7vL8ZZg==
+
+angular@>=1.3.0:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.2.tgz#5983bbb5a9fa63e213cb7749199e0d352de3a2f1"
+  integrity sha512-IauMOej2xEe7/7Ennahkbb5qd/HFADiNuLSESz9Q27inmi32zB0lnAsFeLEWcox3Gd1F6YhNd1CP7/9IukJ0Gw==
 
 ansi-align@^2.0.0:
   version "2.0.0"
@@ -1256,7 +1272,7 @@ datatables-scroller@DataTables/Scroller#^1.5.1:
   version "0.0.0"
   resolved "https://codeload.github.com/DataTables/Scroller/tar.gz/7dc5c7a56c7797677b224cff4be0a3a18604cc75"
 
-datatables.net-dt@1.10.23:
+datatables.net-dt@^1.10.11:
   version "1.10.23"
   resolved "https://registry.yarnpkg.com/datatables.net-dt/-/datatables.net-dt-1.10.23.tgz#49f93e7eb439c2e1e89d28757cc4300597898cd3"
   integrity sha512-Iky6RAKXKv/cZ4mfQRyHHGOdD1GyV9YuvGQrPCl5qqh+ENqaWphOiWVW/vqDsgDaVjvLwLfeRNMbmnf3w9sRRg==
@@ -1264,10 +1280,17 @@ datatables.net-dt@1.10.23:
     datatables.net "1.10.23"
     jquery ">=1.7"
 
-datatables.net@1.10.23:
+datatables.net@1.10.23, datatables.net@^1.10.11:
   version "1.10.23"
   resolved "https://registry.yarnpkg.com/datatables.net/-/datatables.net-1.10.23.tgz#59f7d7b12845183b1b379530d1385077e113ec01"
   integrity sha512-we3tlNkzpxvgkKKlTxTMXPCt35untVXNg8zUYWpQyC1U5vJc+lT0+Zdc1ztK8d3lh5CfdnuFde2p8n3XwaGl3Q==
+  dependencies:
+    jquery ">=1.7"
+
+datatables@1.10.12:
+  version "1.10.12"
+  resolved "https://registry.yarnpkg.com/datatables/-/datatables-1.10.12.tgz#046f537d0516ebf7007ca7f6c1cad2f2ea0c19d8"
+  integrity sha1-BG9TfQUW6/cAfKf2wcrS8uoMGdg=
   dependencies:
     jquery ">=1.7"
 
@@ -2330,6 +2353,15 @@ grunt-mocha@1.2.0:
     lodash "^4.17.11"
     mocha "^5.2.0"
 
+grunt-parallel@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/grunt-parallel/-/grunt-parallel-0.4.1.tgz#89eb1fa10cd1e5b03ccd0d185cf30ba70c30cdc8"
+  integrity sha1-iesfoQzR5bA8zQ0YXPMLpwwwzcg=
+  dependencies:
+    grunt "~0.4.1"
+    lpad "~0.1.0"
+    q "~0.8.12"
+
 grunt@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/grunt/-/grunt-1.2.0.tgz#efc9257f5bec71ae290a3df1036463f5cc76147f"
@@ -3038,7 +3070,7 @@ jquery.rmi@dimagi/jquery.rmi#8c34f32817:
   version "1.0.0"
   resolved "https://codeload.github.com/dimagi/jquery.rmi/tar.gz/8c34f328172bff19e8df6ac024de3613b75711e7"
 
-jquery@3.5.1, "jquery@>= 1.7.1", "jquery@>= 1.7.2", jquery@>=1.10, jquery@>=1.7, jquery@>=1.7.2, jquery@>=1.8, jquery@>=1.9.0:
+jquery@3.5.1, "jquery@>= 1.7.1", "jquery@>= 1.7.2", jquery@>=1.10, jquery@>=1.11.0, jquery@>=1.7, jquery@>=1.7.2, jquery@>=1.8, jquery@>=1.9.0:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.1.tgz#d7b4d08e1bfdb86ad2f1a3d039ea17304717abb5"
   integrity sha512-XwIBPqcMn57FxfT+Go5pzySnm4KWkT1Tv7gjrpT1srtf8Weynl6R273VJ5GjkRb51IzMp5nbaPjJXMWeju2MKg==
@@ -3517,6 +3549,11 @@ lowercase-keys@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/lowercase-keys/-/lowercase-keys-1.0.1.tgz#6f9e30b47084d971a7c820ff15a6c5167b74c26f"
   integrity sha512-G2Lj61tXDnVFFOi8VZds+SoQjtQC3dgokKdDG2mTm1tx4m50NUHBOZSBwQQHyy0V12A0JTG4icfZQH+xPyh8VA==
+
+lpad@~0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/lpad/-/lpad-0.1.0.tgz#e4c60c29139321c5970de493b496ae0d774cd2a7"
+  integrity sha1-5MYMKROTIcWXDeSTtJauDXdM0qc=
 
 lru-cache@^4.0.1:
   version "4.1.5"
@@ -4842,6 +4879,11 @@ puppeteer@^3.0.2:
     tar-fs "^2.0.0"
     unbzip2-stream "^1.3.3"
     ws "^7.2.3"
+
+q@~0.8.12:
+  version "0.8.12"
+  resolved "https://registry.yarnpkg.com/q/-/q-0.8.12.tgz#9162a91e11819c4bcda7da15cf5fefaad0778823"
+  integrity sha1-kWKpHhGBnEvNp9oVz1/vqtB3iCM=
 
 qrcode-terminal@^0.12.0:
   version "0.12.0"
