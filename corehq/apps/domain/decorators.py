@@ -396,13 +396,8 @@ api_auth = _get_multi_auth_decorator(default=DIGEST)
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
-login_or_oauth2 = login_or_oauth2_ex()
 
-# Use these decorators on views to exclusively allow any one authorization method and not session based auth
-digest_auth = login_or_digest_ex(allow_sessions=False)
-basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
-oauth2_auth = login_or_oauth2_ex(allow_sessions=False)
 
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
