@@ -29,6 +29,8 @@ services:
       service: couch
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
+      - "5985:5984"
+
       - "5984:5984"
 
   redis:
