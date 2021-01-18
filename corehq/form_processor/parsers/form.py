@@ -16,7 +16,7 @@ from couchforms import XMLSyntaxError
 from couchforms.exceptions import MissingXMLNSError
 from dimagi.utils.couch import release_lock
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 @contextmanager

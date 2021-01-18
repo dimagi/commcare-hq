@@ -62,7 +62,7 @@ PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY',
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
@@ -141,7 +141,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         try:
             result = submission_post.run()
         except XFormLockError as err:
-            logger.warning('Unable to get lock for form %s' % err)
+            logger.warning('Unable to get lock for form %s', err)
             metrics_counter('commcare.xformlocked.count', tags={
                 'domain': domain, 'authenticated': authenticated
             })
