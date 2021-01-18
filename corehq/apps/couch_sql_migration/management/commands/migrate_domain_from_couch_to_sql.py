@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
+from couchforms.analytics import get_last_form_submission_received
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
@@ -383,6 +384,8 @@ class Command(BaseCommand):
         for entity in MissingIds.DOC_TYPES:
             count = get_couch_doc_count(domain, entity, couchdb)
             print(f"Total {entity}s: {count}")
+        received_on = get_last_form_submission_received(domain)
+        print(f"Last form submission: {received_on}")
 
 
 def _confirm(message):
