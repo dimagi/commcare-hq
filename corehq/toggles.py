@@ -183,6 +183,13 @@ class StaticToggle(object):
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
             and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
+        ) or (
+            NAMESPACE_EMAIL_DOMAIN in self.namespaces
+            and hasattr(request, 'user')
+            and self.enabled(
+                request.user.email or request.user.username,
+                namespace=NAMESPACE_EMAIL_DOMAIN
+            )
         )
 
     def set(self, item, enabled, namespace=None):
@@ -315,7 +322,7 @@ class PredictablyRandomToggle(StaticToggle):
             namespace = None  # because:
             # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
 
-        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_RANDOM_NAMESPACES}
         if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
             raise ValueError(
                 'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
@@ -380,8 +387,10 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_EMAIL_DOMAIN = 'email_domain'
 NAMESPACE_OTHER = 'other'
-ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN]
+ALL_RANDOM_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def any_toggle_enabled(*toggles):
@@ -1957,4 +1966,20 @@ NON_PARENT_MENU_SELECTION = StaticToggle(
     description="""
     Allow selecting of module of any case-type in select-parent workflow
     """,
+)
+
+BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
+    'blocked_email_domain_recipients',
+    'Block any outgoing email addresses that have an email domain which '
+    'match a domain in this list.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_EMAIL_DOMAIN],
+)
+
+BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
+    'blocked_domain_email_senders',
+    'Domains in this list are blocked from sending emails through our '
+    'messaging feature',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
