@@ -21,7 +21,7 @@ services:
     privileged: true  # allows mount inside container
     links:
       - postgres
-      - couch
+      - couch3
       - redis
       - elasticsearch
       - elasticsearch2
