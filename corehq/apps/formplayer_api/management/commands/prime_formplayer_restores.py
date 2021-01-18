@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import format_username
 
 
 class Command(BaseCommand):
@@ -41,6 +42,8 @@ def process_row(row):
 
     restore_as_user = None
     if as_user:
+        if '@' not in as_user:
+            as_user = format_username(as_user, domain)
         restore_as_user = CouchUser.get_by_username(as_user)
         if not restore_as_user:
             sys.stderr.write(f"Row failure: unknown as_user: {','.join(row)}\n")
@@ -49,6 +52,6 @@ def process_row(row):
             sys.stderr.write(f"Row failure: domain mismatch with as_user: {','.join(row)}\n")
 
     try:
-        sync_db(domain, username, restore_as_user)
+        sync_db(domain, user.username, restore_as_user.username)
     except Exception as e:
         sys.stderr.write(f"Row failure: {e}: {','.join(row)}\n")
