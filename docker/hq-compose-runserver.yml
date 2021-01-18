@@ -7,13 +7,13 @@ services:
       dockerfile: "${DOCKERFILE}"
     environment:
       COMMCAREHQ_BOOTSTRAP: "yes"
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 minio:9980 kafka:9092"
+      DEPENDENT_SERVICES: "couch3:5984 postgres:5432 redis:6379 elasticsearch:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
     privileged: true  # allows mount inside container
     command: [runserver]
     links:
       - postgres
-      - couch
+      - couch3
       - redis
       - elasticsearch
       - elasticsearch2
@@ -36,7 +36,7 @@ services:
       WEB_HOST: "web"
     links:
       - postgres
-      - couch
+      - couch3
       - redis
     expose:
       - 8010
@@ -48,10 +48,10 @@ services:
       file: hq-compose-services.yml
       service: postgres
 
-  couch:
+  couch3:
     extends:
       file: hq-compose-services.yml
-      service: couch
+      service: couch3
 
   redis:
     extends:

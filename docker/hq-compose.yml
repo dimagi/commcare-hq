@@ -21,7 +21,7 @@ services:
     privileged: true  # allows mount inside container
     links:
       - postgres
-      - couch3
+      - couch
       - redis
       - elasticsearch
       - elasticsearch2
@@ -52,7 +52,7 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
-  couch3:
+  couch:
     image: couchdb:3.1.1
     environment:
       COUCHDB_USER: commcarehq
@@ -68,7 +68,7 @@ services:
     volumes:
       - /opt/couchdb/data
 
-  couch:
+  couch2:
     image: klaemo/couchdb:2.0-dev
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ulimits:

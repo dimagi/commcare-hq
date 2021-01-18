@@ -23,18 +23,18 @@ services:
     ports:
       - "5432:5432"
 
-  couch:
+  couch2:
     extends:
       file: hq-compose.yml
-      service: couch
+      service: couch2
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
       - "5985:5984"
 
-  couch3:
+  couch:
     extends:
       file: hq-compose.yml
-      service: couch3
+      service: couch
     command: ["--with-haproxy"]
     ports:
       - "5984:5984"
