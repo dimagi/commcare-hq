@@ -52,8 +52,22 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
-  couch:
+  couch3:
     image: couchdb:3.1.1
+    environment:
+      COUCHDB_USER: commcarehq
+      COUCHDB_PASSWORD: commcarehq
+    ulimits:
+      # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
+      # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
+      nofile:
+        soft: 1024
+        hard: 1048576
+    volumes:
+      - /opt/couchdb/data
+
+  couch:
+    image: klaemo/couchdb:2.0-dev
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ulimits:
       # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
