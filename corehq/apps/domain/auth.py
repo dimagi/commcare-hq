@@ -1,4 +1,5 @@
 import base64
+import logging
 import re
 from functools import wraps
 
@@ -19,6 +20,9 @@ from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
+
+
+auth_logger = logging.getLogger("commcare_auth")
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -188,10 +192,18 @@ def formplayer_as_user_auth(view):
             as_user = request.GET.pop('as', None)
 
         if not as_user:
+            auth_logger.info(
+                "Request rejected reason=%s request=%s",
+                "formplayer_auth:user_required", request.path
+            )
             return HttpResponse('User required', status=401)
 
         couch_user = CouchUser.get_by_username(as_user[-1])
         if not couch_user:
+            auth_logger.info(
+                "Request rejected reason=%s request=%s",
+                "formplayer_auth:unknown_user", request.path
+            )
             return HttpResponse('Unknown user', status=401)
 
         request.user = couch_user.get_django_user()
