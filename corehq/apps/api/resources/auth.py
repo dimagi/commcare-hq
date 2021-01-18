@@ -22,7 +22,6 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.users.decorators import (
     require_api_permission,
-    require_permission,
     require_permission_raw,
 )
 from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
