@@ -351,6 +351,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.motech',
     'corehq.motech.dhis2',
+    'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
