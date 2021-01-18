@@ -135,8 +135,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.steps = options.steps;
         this.page = options.page;
         this.search = options.search;
-        this.queryDict = options.queryDict;
-        this.doQuery = options.doQuery;
+        this.queryData = options.queryData;
         this.singleApp = options.singleApp;
         this.installReference = options.installReference;
         this.sortIndex = options.sortIndex;
@@ -163,7 +162,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = sortIndex;
         };
 
-
         this.setSearch = function (search) {
             this.search = search;
             //clear out pagination on search
@@ -171,8 +169,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
-        this.setQuery = function (queryDict) {
-            this.queryDict = queryDict;
+        this.setQueryData = function (queryDict) {
+            if (!this.queryData) {
+                this.queryData = {};
+            }
+            this.queryData[sessionStorage.queryKey] = {
+                inputs: queryDict,
+                execute: true,
+            };
         };
 
         this.setDoQuery = function (doQuery) {
@@ -185,16 +189,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryDict = null;
-            this.doQuery = null;
+            this.queryData = null;
         };
 
         this.onSubmit = function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryDict = null;
-            this.doQuery = null;
+            this.queryData = null;
         };
 
         this.spliceSteps = function (index) {
@@ -208,8 +210,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             this.page = null;
             this.search = null;
-            this.queryDict = null;
-            this.doQuery = null;
+            this.queryData = null;
             this.sortIndex = null;
         };
     };
@@ -223,8 +224,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             steps: self.steps,
             page: self.page,
             search: self.search,
-            queryDict: self.queryDict,
-            doQuery: self.doQuery,
+            queryData: self.queryData,
             singleApp: self.singleApp,
             installReference: self.installReference,
             sortIndex: self.sortIndex,
@@ -241,8 +241,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'steps': data.steps,
             'page': data.page,
             'search': data.search,
-            'queryDict': data.queryDict,
-            'doQuery': data.doQuery,
+            'queryData': data.queryData,
             'singleApp': data.singleApp,
             'installReference': data.installReference,
             'sortIndex': data.sortIndex,

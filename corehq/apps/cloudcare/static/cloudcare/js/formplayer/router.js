@@ -176,8 +176,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
         var urlObject = Util.currentUrlToObject();
-        urlObject.setQuery(queryDict);
-        urlObject.setDoQuery(true);
+        urlObject.setQueryData(queryDict);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
