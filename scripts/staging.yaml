@@ -77,4 +77,5 @@ branches:
   - bmb/sso-debug  # Biyeun Jan 12
   #- sr/casesearch  # Sravan Jan 18
   - dmr/formplayer-sync-db  # SK Jan 18
+  - caseClaim+jls/parent-child-case-search # Jenny Jan 18
 submodules: {}
