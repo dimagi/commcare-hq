@@ -42,9 +42,8 @@ def process_row(row):
 
     restore_as_user = None
     if as_user:
-        if '@' not in as_user:
-            as_user = format_username(as_user, domain)
-        restore_as_user = CouchUser.get_by_username(as_user)
+        as_username = format_username(as_user, domain) if '@' not in as_user else as_user
+        restore_as_user = CouchUser.get_by_username(as_username)
         if not restore_as_user:
             sys.stderr.write(f"Row failure: unknown as_user: {','.join(row)}\n")
 
@@ -52,6 +51,6 @@ def process_row(row):
             sys.stderr.write(f"Row failure: domain mismatch with as_user: {','.join(row)}\n")
 
     try:
-        sync_db(domain, user.username, restore_as_user.username if restore_as_user else None)
+        sync_db(domain, user.username, as_user)
     except Exception as e:
         sys.stderr.write(f"Row failure: {e}: {','.join(row)}\n")
