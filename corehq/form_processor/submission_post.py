@@ -330,28 +330,34 @@ class SubmissionPost(object):
                 elif instance.is_error:
                     submission_type = 'error'
 
-            if instance.orig_id:
-                logger.info('Finished %s processing for Form %s with original id %s',
-                    submission_type, instance.form_id, instance.orig_id)
-            else:
-                logger.info('Finished %s processing for Form %s', submission_type, instance.form_id)
+            self._log_form_completion(instance, submission_type)
 
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _log_form_details(self, form):
+        attachments = form.attachments if hasattr(form, 'attachments') else []
+
         logger.info('Received Form %s with %d attachments',
-            form.form_id, len(form.attachments_list))
+            form.form_id, len(attachments))
 
-        for index, attachment in enumerate(form.attachments_list):
+        for index, (name, attachment) in enumerate(attachments.items()):
             attachment_msg = 'Form %s, Attachment %s: %s'
-            attachment_props = [form.form_id, index, attachment.name]
+            attachment_props = [form.form_id, index, name]
 
-            if attachment.is_image:
+            if attachment.has_size():
                 attachment_msg = attachment_msg + ' (%d bytes)'
                 attachment_props.append(attachment.raw_content.size)
 
             logger.info(attachment_msg, *attachment_props)
+
+    def _log_form_completion(self, form, submission_type):
+        # Orig_id only exists on SQL forms
+        if hasattr(form, 'orig_id') and form.orig_id is not None:
+            logger.info('Finished %s processing for Form %s with original id %s',
+                submission_type, form.form_id, form.orig_id)
+        else:
+            logger.info('Finished %s processing for Form %s', submission_type, form.form_id)
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
