@@ -12,6 +12,8 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.motech.auth import api_auth_settings_choices
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import sanitize_user_input_url_for_repeaters
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -95,20 +97,18 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.domain = domain
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Remote API Connection'),
-                crispy.Field('name'),
-                crispy.Field('notify_addresses_str'),
-                crispy.Field('url'),
-                crispy.Field('auth_type'),
-                crispy.Field('api_auth_settings'),
-                crispy.Field('username'),
-                crispy.Field('plaintext_password'),
-                crispy.Field('client_id'),
-                crispy.Field('plaintext_client_secret'),
-                twbscrispy.PrependedText('skip_cert_verify', ''),
-                self.test_connection_button,
-            ),
+            crispy.Field('name'),
+            crispy.Field('notify_addresses_str'),
+            crispy.Field('url'),
+            crispy.Field('auth_type'),
+            crispy.Field('api_auth_settings'),
+            crispy.Field('username'),
+            crispy.Field('plaintext_password'),
+            crispy.Field('client_id'),
+            crispy.Field('plaintext_client_secret'),
+            twbscrispy.PrependedText('skip_cert_verify', ''),
+            self.test_connection_button,
+
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
@@ -136,10 +136,6 @@ class ConnectionSettingsForm(forms.ModelForm):
                     css_id='test-connection-button',
                     css_class='btn btn-default disabled',
                 ),
-                crispy.Div(
-                    css_id='test-connection-result',
-                    css_class='text-success hide',
-                ),
                 css_class=hqcrispy.CSS_ACTION_CLASS,
             ),
             css_class='form-group'
@@ -153,6 +149,14 @@ class ConnectionSettingsForm(forms.ModelForm):
         except EmailNotValidError:
             raise forms.ValidationError(_("Contains an invalid email address."))
         return emails
+
+    def clean_url(self):
+        url = self.cleaned_data['url']
+        try:
+            sanitize_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+        except PossibleSSRFAttempt:
+            raise forms.ValidationError(_("Invalid URL"))
+        return url
 
     def save(self, commit=True):
         self.instance.domain = self.domain

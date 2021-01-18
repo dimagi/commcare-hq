@@ -1,5 +1,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 <legend>
   {% trans "Case Search and Claim" %}
@@ -192,13 +193,20 @@
       </div>
       <div class="panel-body">
         <div class="form-horizontal">
+          <div class="form-group">
+            <label for="search_command_label" class="{% css_label_class %} control-label">
+              {% trans "Label for Case Search" %}
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
+            </div>
+          </div>
           {% if show_auto_launch %}
             <div class="form-group">
               <label class="control-label {% css_label_class %}" for="search-auto-launch">
                 {% trans "Web Apps Autolaunch" %}
               <span class="hq-help-template" data-title="{% trans "Web Apps Autolaunch" %}"
-                    data-content="{% trans_html_attr "In Web Apps, automatically launch case claim whenever user
-visits this case list." %}">
+                    data-content="{% trans_html_attr "In Web Apps, automatically launch case claim whenever user visits this case list." %}">
               </span>
               </label>
               <div class="checkbox {% css_field_class %}">
@@ -252,7 +260,7 @@ visits this case list." %}">
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: relevant"
+              <textarea data-bind="value: extraRelevant"
                         class="form-control vertical-resize"
                         id="claim-relevant-condition"
                         spellcheck="false"
@@ -265,7 +273,7 @@ visits this case list." %}">
             </label>
             <div class="checkbox {% css_field_class %}">
               <label>
-                <input type="checkbox" id="search-default-relevant" data-bind="checked: default_relevant">
+                <input type="checkbox" id="search-default-relevant" data-bind="checked: defaultRelevant">
               </label>
             </div>
           </div>

@@ -124,6 +124,12 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLCommtrackConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLActionConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLAlertConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLConsumptionConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLStockLevelsConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLStockRestoreConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
@@ -133,6 +139,12 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeaterStub', SimpleFilter('domain')),
+    # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
+    # RepeatRecord, but this does not seem like a good idea.
+    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
@@ -244,7 +256,13 @@ def get_excluded_apps_and_models(excludes):
             try:
                 app_config = apps.get_app_config(exclude)
             except LookupError:
-                raise DomainDumpError('Unknown app in excludes: %s' % exclude)
+                from corehq.util.couch import get_document_class_by_doc_type
+                from corehq.util.exceptions import DocumentClassNotFound
+                # ignore this if it's a couch doc type
+                try:
+                    get_document_class_by_doc_type(exclude)
+                except DocumentClassNotFound:
+                    raise DomainDumpError('Unknown app in excludes: %s' % exclude)
             excluded_apps.add(app_config)
     return excluded_apps, excluded_models
 

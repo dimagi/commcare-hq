@@ -6,7 +6,7 @@ from django.core.mail.message import EmailMultiAlternatives
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.util.metrics.const import MPM_LIVESUM
 
 NO_HTML_EMAIL_MESSAGE = """
@@ -28,7 +28,7 @@ LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR
 def mark_local_bounced_email(bounced_addresses, message_id):
     from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
     from corehq.apps.users.models import Invitation, InvitationStatus
-    if Invitation.EMAIL_ID_PREFIX in message_id:
+    if isinstance(message_id, str) and Invitation.EMAIL_ID_PREFIX in message_id:
         try:
             invite = Invitation.objects.get(uuid=message_id.split(Invitation.EMAIL_ID_PREFIX)[1])
         except Invitation.DoesNotExist:
@@ -42,19 +42,30 @@ def mark_local_bounced_email(bounced_addresses, message_id):
         except MessagingSubEvent.DoesNotExist:
             pass
         else:
+            metrics_counter('commcare.messaging.email.preemptively_bounced', len(bounced_addresses), tags={
+                'domain': subevent.parent.domain,
+            })
             subevent.error(
                 MessagingEvent.ERROR_EMAIL_BOUNCED,
                 additional_error_text=", ".join(bounced_addresses)
             )
 
 
-def get_valid_recipients(recipients):
+def get_valid_recipients(recipients, domain=None):
     """
     This filters out any emails that have reported hard bounces or complaints to
     Amazon SES
     :param recipients: list of recipient emails
     :return: list of recipient emails not marked as bounced
     """
+    from corehq.toggles import BLOCKED_DOMAIN_EMAIL_SENDERS
+    if domain and BLOCKED_DOMAIN_EMAIL_SENDERS.enabled(domain):
+        # don't sent email if domain is blocked
+        metrics_gauge('commcare.bounced_email', len(recipients), tags={
+            'email_domain': domain,
+        }, multiprocess_mode=MPM_LIVESUM)
+        return []
+
     from corehq.util.models import BouncedEmail
     bounced_emails = BouncedEmail.get_hard_bounced_emails(recipients)
     for bounced_email in bounced_emails:
@@ -71,9 +82,10 @@ def get_valid_recipients(recipients):
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None,
-                    smtp_exception_skip_list=None, messaging_event_id=None):
+                    smtp_exception_skip_list=None, messaging_event_id=None,
+                    domain=None):
     recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
-    filtered_recipients = get_valid_recipients(recipients)
+    filtered_recipients = get_valid_recipients(recipients, domain)
     bounced_addresses = list(set(recipients) - set(filtered_recipients))
     if bounced_addresses and messaging_event_id:
         mark_local_bounced_email(bounced_addresses, messaging_event_id)

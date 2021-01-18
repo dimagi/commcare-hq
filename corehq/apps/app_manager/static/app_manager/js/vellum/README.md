@@ -115,6 +115,19 @@ or to run a specific test:
 ./test "Name of specific test"
 ```
 
+a block like the following:
+```
+describe('the test', () => ...
+  describe('with this condition', () => ...
+    it('passes', ...)
+```
+would be referenced as `the test with this condition passes`.
+So the final command would be:
+```
+./test 'the test with this condition passes'
+```
+
+
 Contributing
 ------------
 

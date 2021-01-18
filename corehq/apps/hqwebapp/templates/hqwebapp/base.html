@@ -459,7 +459,7 @@
 
     {% if request.use_datatables and not requirejs_main %}
       {% compress js %}
-        <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
         <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
       {% endcompress %}
