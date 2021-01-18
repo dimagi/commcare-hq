@@ -63,6 +63,8 @@ services:
       nofile:
         soft: 1024
         hard: 1048576
+    expose:
+      - "5984"
     volumes:
       - /opt/couchdb/data
 
