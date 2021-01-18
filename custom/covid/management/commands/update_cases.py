@@ -27,16 +27,19 @@ class CaseUpdateCommand(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('case_type')
-        parser.add_argument('username')
+        parser.add_argument('--username', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
 
-    def handle(self, domain, case_type, username, **options):
+    def handle(self, domain, case_type, **options):
         domains = {domain}
         if options["and_linked"]:
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
 
-        user_id = username_to_user_id(username)
-        if not user_id:
+        if options["username"]:
+            user_id = username_to_user_id(options["username"])
+            if not user_id:
+                raise Exception("The username you entered is invalid")
+        else:
             user_id = SYSTEM_USER_ID
 
         for domain in domains:

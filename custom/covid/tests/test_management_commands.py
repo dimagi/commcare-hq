@@ -43,6 +43,10 @@ class CaseCommandsTest(TestCase):
         delete_all_users()
         super().tearDown()
 
+    def test_invalid_username(self):
+        with self.assertRaises(Exception):
+            call_command('add_hq_user_id_to_case', self.domain, 'checkin', '--username=afakeuserthatdoesnotexist')
+
     def submit_case_block(self, create, case_id, **kwargs):
         return post_case_blocks(
             [
@@ -69,7 +73,7 @@ class CaseCommandsTest(TestCase):
         self.assertEqual('', checkin_case.get_case_property('hq_user_id'))
         self.assertEqual(checkin_case.username, 'mobile_worker_1')
 
-        call_command('add_hq_user_id_to_case', self.domain, 'checkin', None)
+        call_command('add_hq_user_id_to_case', self.domain, 'checkin')
 
         checkin_case = self.case_accessor.get_case(checkin_case_id)
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
@@ -92,7 +96,7 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(lab_result_case.indices[0].referenced_type, 'patient')
         self.assertEqual(lab_result_case.indices[0].relationship, 'child')
 
-        call_command('update_case_index_relationship', self.domain, 'lab_result', None)
+        call_command('update_case_index_relationship', self.domain, 'lab_result')
 
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
