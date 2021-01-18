@@ -10,18 +10,15 @@ from corehq.apps.api.odata.views import odata_permissions_check
 from corehq.apps.domain.auth import BASIC, determine_authtype_from_header
 from corehq.apps.domain.decorators import (
     api_key_auth,
-    api_key_auth_no_domain,
     basic_auth,
-    basic_auth_no_domain,
     basic_auth_or_try_api_key_auth,
     digest_auth,
-    digest_auth_no_domain,
     login_or_api_key,
     login_or_basic,
     login_or_digest,
     login_or_oauth2,
     oauth2_auth,
-    oauth2_auth_no_domain,
+    get_auth_decorator_map,
 )
 from corehq.apps.users.decorators import (
     require_api_permission,
@@ -65,13 +62,7 @@ class LoginAuthentication(HQAuthenticationMixin, Authentication):
     Just checks you are able to login. Does not check against any permissions/domains, etc.
     """
     def __init__(self):
-        super().__init__()
-        self.decorator_map = {
-            'digest': digest_auth_no_domain,
-            'basic': basic_auth_no_domain,
-            'api_key': api_key_auth_no_domain,
-            'oauth2': oauth2_auth_no_domain,
-        }
+        self.decorator_map = get_auth_decorator_map(require_domain=False, allow_sessions=False)
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[

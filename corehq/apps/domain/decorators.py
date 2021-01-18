@@ -404,11 +404,6 @@ basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 oauth2_auth = login_or_oauth2_ex(allow_sessions=False)
 
-digest_auth_no_domain = login_or_digest_ex(allow_sessions=False, require_domain=False)
-basic_auth_no_domain = login_or_basic_ex(allow_sessions=False, require_domain=False)
-api_key_auth_no_domain = login_or_api_key_ex(allow_sessions=False, require_domain=False)
-oauth2_auth_no_domain = login_or_oauth2_ex(allow_sessions=False, require_domain=False)
-
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
