@@ -336,7 +336,7 @@ class SubmissionPost(object):
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _log_form_details(self, form):
-        attachments = form.attachments if hasattr(form, 'attachments') else []
+        attachments = form.attachments if hasattr(form, 'attachments') else {}
 
         logger.info('Received Form %s with %d attachments',
             form.form_id, len(attachments))
