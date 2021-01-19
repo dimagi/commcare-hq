@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 21:26+0000\n"
+"POT-Creation-Date: 2021-01-13 20:14+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -1542,11 +1542,11 @@ msgstr ""
 msgid "has selected value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 msgid "True when ALL of the expressions are true."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 msgid "True when ANY of the expressions are true."
 msgstr ""
 
@@ -2762,27 +2762,27 @@ msgid ""
 "continue to see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:50
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
 msgid "Delete incomplete form?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:51
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:33
 msgid "Are you sure you want to delete '"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:52
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:34
 msgid "Yes"
 msgstr "हॉ"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:53
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:35
 msgid "No"
 msgstr "नहीं"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:55
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:47
 msgid "Log in as "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:59
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:51
 msgid "Yes, log in as this user"
 msgstr ""
 

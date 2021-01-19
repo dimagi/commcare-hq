@@ -254,6 +254,7 @@ HQ_APPS = (
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.enterprise',
+    'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
@@ -356,6 +357,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.motech',
     'corehq.motech.dhis2',
+    'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
@@ -1423,6 +1425,11 @@ LOGGING = {
             'propagate': False,
         },
         'kafka': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'commcare_auth': {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,

@@ -76,7 +76,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
-from requests.exceptions import ConnectionError, Timeout
+from requests.exceptions import ConnectionError, Timeout, RequestException
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -91,6 +91,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
@@ -145,6 +146,7 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
+from ...util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -458,8 +460,15 @@ class Repeater(QuickCachedDocumentMixin, Document):
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
             return self.handle_response(RequestConnectionError(error), repeat_record)
+        except RequestException as err:
+            return self.handle_response(err, repeat_record)
+        except PossibleSSRFAttempt:
+            return self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception as e:
-            return self.handle_response(e, repeat_record)
+            # This shouldn't ever happen in normal operation and would mean code broke
+            # we want to notify ourselves of the error detail and tell the user something vague
+            notify_exception(None, "Unexpected error sending repeat record request")
+            return self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
             return self.handle_response(response, repeat_record)
 
