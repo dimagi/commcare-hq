@@ -379,7 +379,7 @@ class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecific
                                        additional_doc_types=[LinkedApplication._doc_type])
 
     class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication()
+        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
