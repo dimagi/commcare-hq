@@ -345,7 +345,7 @@ class SubmissionPost(object):
             attachment_msg = 'Form %s, Attachment %s: %s'
             attachment_props = [form.form_id, index, name]
 
-            if attachment.has_size():
+            if hasattr(attachment, 'has_size') and attachment.has_size():
                 attachment_msg = attachment_msg + ' (%d bytes)'
                 attachment_props.append(attachment.raw_content.size)
 
