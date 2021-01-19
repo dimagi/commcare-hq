@@ -1156,6 +1156,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     // Set up case search
                     self.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
                         spec.searchProperties || [],
+                        spec.searchSessionVar,
                         spec.autoLaunch,
                         spec.includeClosed,
                         spec.defaultProperties,
