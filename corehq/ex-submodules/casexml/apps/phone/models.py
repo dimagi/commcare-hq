@@ -412,7 +412,9 @@ def synclog_to_sql_object(synclog_json_object):
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
-            is_formplayer=synclog_json_object.device_id.startswith("WebAppsLogin"),
+            is_formplayer=(
+                synclog_json_object.device_id and synclog_json_object.device_id.startswith("WebAppsLogin")
+            ),
             case_count=synclog_json_object.case_count(),
             request_user_id=synclog_json_object.request_user_id,
         )
