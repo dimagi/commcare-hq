@@ -19,7 +19,7 @@ from django.conf import settings
 
 from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_update_from_block
-from custom.covid.utils import get_ush_extension_cases_to_close
+from custom.covid.casesync import get_ush_extension_cases_to_close
 from dimagi.utils.logging import notify_exception
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
@@ -273,12 +273,11 @@ def close_extension_cases(case_db, cases, device_id):
 
 
 def get_all_extensions_to_close(domain, cases):
-    if not toggles.EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        return set()
-    if not toggles.USH_DONT_CLOSE_PATIENT_EXTENSIONS.enabled(domain):
+    if toggles.EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+        if toggles.USH_DONT_CLOSE_PATIENT_EXTENSIONS.enabled(domain):
+            return get_ush_extension_cases_to_close(domain, cases)
         return get_extensions_to_close(domain, cases)
-    else:
-        return get_ush_extension_cases_to_close(domain, cases)
+    return set()
 
 
 def get_extensions_to_close(domain, cases):
