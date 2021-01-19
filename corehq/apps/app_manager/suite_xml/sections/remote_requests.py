@@ -63,7 +63,7 @@ class RemoteRequestFactory(object):
             "data": [
                 QueryData(
                     key='case_id',
-                    ref=QuerySessionXPath('case_id').instance(),
+                    ref=QuerySessionXPath(self.module.search_config.session_var).instance(),
                 ),
             ],
         }
@@ -86,7 +86,7 @@ class RemoteRequestFactory(object):
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [QuerySessionXPath('case_id').instance()]
+        query_xpaths = [QuerySessionXPath(self.module.search_config.session_var).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
         query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
@@ -126,7 +126,7 @@ class RemoteRequestFactory(object):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
-            id='case_id',
+            id=self.module.search_config.session_var,
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
@@ -183,7 +183,7 @@ class RemoteRequestFactory(object):
     def _build_stack(self):
         stack = Stack()
         frame = PushFrame()
-        frame.add_rewind(QuerySessionXPath('case_id').instance())
+        frame.add_rewind(QuerySessionXPath(self.module.search_config.session_var).instance())
         stack.add_frame(frame)
         return stack
 
