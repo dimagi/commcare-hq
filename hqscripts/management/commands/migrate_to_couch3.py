@@ -26,3 +26,7 @@ class Command(BaseCommand):
                 db_not_created.append(db_name)
             else:
                 sync_dbs(old_db_obj, new_db_obj)
+        print("Clearing out connection objects")
+        couch_2_client.disconnect()
+        couch_3_client.disconnect()
+        print("Databases sucessfully migrated")
