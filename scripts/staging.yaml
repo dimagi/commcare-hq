@@ -66,6 +66,7 @@ branches:
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
   - bmb/sso-architecture  # Biyeun Dec 30
   - sr/ext-import # Sravan Jan 7
+  - jls/web-apps-case-claim-itemsets+smh/query-screen-prompt-defaults+caseClaim+jls/parent-child-case-search+jls/case-claim-session-var
   - jls/web-apps-case-claim-itemsets+smh/query-screen-prompt-defaults+caseClaim+jls/parent-child-case-search
   - smh/query-screen-prompt-defaults # Steph Jan 5
   - jls/web-apps-case-claim-itemsets # Jenny Jan 12
