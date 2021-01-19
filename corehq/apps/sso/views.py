@@ -57,10 +57,14 @@ def sso_saml_acs(request, idp_slug):
     success_slo = False
     attributes = False
     saml_user_data_present = False
+    request_id = None
+    processed_response = None
+    is_past_request_id = False
 
     try:
         request_id = request.session.get('AuthNRequestID')
-        request.saml2_auth.process_response(request_id=request_id)
+        is_past_request_id = True
+        processed_response = request.saml2_auth.process_response(request_id=request_id)
         errors = request.saml2_auth.get_errors()
         not_auth_warn = not request.saml2_auth.is_authenticated()
     except Exception as e:
@@ -100,6 +104,10 @@ def sso_saml_acs(request, idp_slug):
         "attributes": attributes,
         "request_data": request.saml2_request_data,
         "saml_user_data_present": saml_user_data_present,
+        "request_id": request_id,
+        "processed_response": processed_response,
+        "is_past_request_id": is_past_request_id,
+        "request": request,
     }), 'text/json')
 
 
