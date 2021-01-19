@@ -128,6 +128,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 }
                 hqImport('analytix/js/kissmetrix').track.event('Case Search', props);
             }
+            sessionStorage.queryKey = menuResponse.queryKey;
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {

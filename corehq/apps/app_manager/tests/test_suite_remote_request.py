@@ -170,6 +170,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
+    def test_case_search_session_var(self, *args):
+        self.module.search_config.session_var = "other_case_id"
+        suite = self.app.create_suite()
+        self.assertXmlPartialEqual('''
+            <partial>
+              <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
+            </partial>
+        ''', suite, './remote-request[1]/post/data')
+        self.assertXmlPartialEqual('''
+            <partial>
+              <stack>
+                <push>
+                  <rewind value="instance('commcaresession')/session/data/other_case_id"/>
+                </push>
+              </stack>
+            </partial>
+        ''', suite, './remote-request[1]/stack')
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual("other_case_id", suite.xpath("./remote-request[1]/session/datum/@id")[0])
+        self.assertEqual("./@case_id", suite.xpath("./remote-request[1]/session/datum/@value")[0])
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
@@ -328,3 +349,53 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite,
             "./remote-request[1]/instance[@id='states']",
         )
+
+    def test_prompt_default_value(self, *args):
+        """Setting the default to "default_value"
+        """
+        # Shouldn't be included for versions before 2.51
+        self.module.search_config.properties[0].default_value = 'foo'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+        self.app.build_spec = BuildSpec(version='2.51.0', build_number=1)
+        self.module.search_config.properties[0].default_value = 'foo'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt default="foo" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.51.0', build_number=1)
+        self.module.search_config.properties[0].default_value = "3"
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt default="3" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")

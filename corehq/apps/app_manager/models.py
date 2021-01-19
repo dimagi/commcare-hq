@@ -2087,6 +2087,7 @@ class CaseSearchProperty(DocumentSchema):
     label = DictProperty()
     appearance = StringProperty()
     input_ = StringProperty()
+    default_value = StringProperty()
 
     itemset = SchemaProperty(Itemset)
 
@@ -2101,6 +2102,7 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
+    session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)

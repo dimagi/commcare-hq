@@ -10,12 +10,17 @@
 
   <script type="text/html" id="property_template" class="hide">
     <tr>
-      <td class="col-sm-4">
+      <td class="col-sm-3">
         <input class="form-control" type="text" data-bind="value: property.name"/>
       </td>
-      <td class="col-sm-5">
+      <td class="col-sm-4">
         <input class="form-control" type="text" data-bind="value: property.label"/>
       </td>
+      {% if js_options.default_value_expression_enabled %}
+        <td class="col-sm-3">
+          <input class="form-control" type="text" data-bind="value: property.defaultValue"/>
+        </td>
+      {% endif %}
       {% if js_options.search_prompt_appearance_enabled %}
         <td class="col-sm-2">
           <select class="form-control" data-bind="value: property.appearance">
@@ -124,8 +129,11 @@
         <table class="table table-condensed">
           <thead data-bind="visible: searchProperties().length > 0">
           <tr>
-            <th class="col-sm-4">{% trans "Case Property" %}</th>
-            <th class="col-sm-5">{% trans "Display Text" %}</th>
+            <th class="col-sm-3">{% trans "Case Property" %}</th>
+            <th class="col-sm-4">{% trans "Display Text" %}</th>
+            {% if js_options.default_value_expression_enabled %}
+              <th class="col-sm-3">{% trans "Default Value Expression" %}</th>
+            {% endif %}
             {% if js_options.search_prompt_appearance_enabled %}
               <th class="col-sm-2">{% trans "Format" %}</th>
             {% endif %}
@@ -305,6 +313,17 @@
               <label>
                 <input type="checkbox" id="search-include-closed" data-bind="checked: includeClosed" />
               </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="search-session-var" class="control-label {% css_label_class %}">
+              {% trans "Session variable" %}
+              <span class="hq-help-template" data-title="{% trans "Session Variable" %}"
+                    data-content="{% trans_html_attr "Name of session variable that claimed case id should populate." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <input class="form-control" type="text" data-bind="value: sessionVar" id="search-session-var"/>
             </div>
           </div>
         </div>
