@@ -269,7 +269,10 @@ class GetRestoreUserTest(TestCase):
         self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreWebUser)
 
     def test_get_restore_user_commcare_user(self):
-        self.assertIsInstance(get_restore_user(self.domain, self.commcare_user, None), OTARestoreCommCareUser)
+        user = get_restore_user(self.domain, self.commcare_user, None)
+        self.assertIsInstance(user, OTARestoreCommCareUser)
+        self.assertEqual(user.request_user.user_id, self.commcare_user.user_id)
+        self.assertIsNone(user.restore_as_user())
 
     def test_get_restore_user_as_user(self):
         self.assertIsInstance(
@@ -308,3 +311,5 @@ class GetRestoreUserTest(TestCase):
             self.other_commcare_user
         )
         self.assertEqual(user.user_id, self.other_commcare_user._id)
+        self.assertEqual(user.request_user.user_id, self.commcare_user.user_id)
+        self.assertEqual(user.restore_as_user().user_id, self.other_commcare_user._id)

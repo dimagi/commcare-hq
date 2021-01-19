@@ -59,10 +59,11 @@ class OTARestoreUser(object):
     Note: When adding methods to this user, you'll need to ensure that it is
     functional with both a CommCareUser and WebUser.
     """
-    def __init__(self, domain, couch_user, loadtest_factor=1):
+    def __init__(self, domain, couch_user, loadtest_factor=1, request_user=None):
         self.domain = domain
         self._loadtest_factor = loadtest_factor
         self._couch_user = couch_user
+        self.request_user = request_user  # user making the request
 
     @property
     def user_id(self):
@@ -99,6 +100,11 @@ class OTARestoreUser(object):
     @memoized
     def project(self):
         return Domain.get_by_name(self.domain)
+
+    @property
+    def request_user_id(self):
+        # can be None in tests
+        return self.request_user.user_id if self.request_user else None
 
     @property
     def locations(self):
