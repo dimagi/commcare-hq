@@ -118,14 +118,25 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchFilter = ko.observable(searchFilter);
         self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
 
+        // Parse searchRelevant into DEFAULT_CLAIM_RELEVANT, which controls a checkbox,
+        // and the remainder of the expression, if any, which appears in a textbox.
         // Note that this fragile parsing logic needs to match the self.relevant calculation below
         // and cannot be changed without migrating existing CaseSearch documents
         var defaultRelevant = false,
-            extraRelevant = searchRelevant,
-            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (";
-        if (searchRelevant && searchRelevant.startsWith(prefix)) {
-            defaultRelevant = true;
-            extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
+            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (",
+            extraRelevant = "";
+        searchRelevant = searchRelevant || "";
+        if (searchRelevant) {
+            searchRelevant = searchRelevant.trim();
+            if (searchRelevant === DEFAULT_CLAIM_RELEVANT) {
+                defaultRelevant = true;
+                extraRelevant = "";
+            } else if (searchRelevant.startsWith(prefix)) {
+                defaultRelevant = true;
+                extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
+            } else {
+                extraRelevant = searchRelevant;
+            }
         }
         self.extraRelevant = ko.observable(extraRelevant);
         self.defaultRelevant = ko.observable(defaultRelevant);
