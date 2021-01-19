@@ -107,7 +107,6 @@ def sso_saml_acs(request, idp_slug):
         "request_id": request_id,
         "processed_response": processed_response,
         "is_past_request_id": is_past_request_id,
-        "request": request,
     }), 'text/json')
 
 
