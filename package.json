@@ -86,7 +86,7 @@
         "topojson": "3.0.2",
         "uglify-js": "2.8.29",
         "ui-select": "npm:ui-select#0.13.2",
-        "underscore": "1.8.3",
+        "underscore": "1.12.0",
         "url-polyfill": "1.1.10",
         "xpath": "dimagi/js-xpath#v0.0.3",
         "zxcvbn": "4.2.0"
