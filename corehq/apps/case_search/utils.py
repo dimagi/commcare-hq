@@ -102,4 +102,5 @@ class CaseSearchCriteria(object):
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
-            self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+            value = ".*" + value.lower() + ".*"
+            self.search_es = self.search_es.regexp_case_property_query(key, value)
