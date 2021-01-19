@@ -1423,6 +1423,11 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
+        },
+        'commcare_auth': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
         }
     }
 }
