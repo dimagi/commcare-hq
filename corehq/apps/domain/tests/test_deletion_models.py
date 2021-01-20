@@ -34,6 +34,7 @@ IGNORE_APPS = {
     'tastypie',
     'telerivet',
     'toggle_ui',
+    'sso',
 }
 
 IGNORE_MODELS = {
