@@ -102,6 +102,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     if (choices) {
                         var $field = $($fields.get(i)),
                             value = parseInt($field.val());
+                        $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
