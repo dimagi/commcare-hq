@@ -28,11 +28,16 @@ class Command(CaseUpdateCommand):
         case_ids = self.find_case_ids_by_type(domain, case_type)
         accessor = CaseAccessors(domain)
 
+        locations_objects = {}
         case_blocks = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
             owner_id = case.get_case_property('owner_id')
-            location_obj = SQLLocation.objects.get(location_id=owner_id)
+            if owner_id in locations_objects:
+                location_obj = locations_objects[owner_id]
+            else:
+                location_obj = SQLLocation.objects.get(location_id=owner_id)
+                locations_objects[owner_id] = location_obj
             if location_obj:
                 children = location_obj.get_children()
                 has_correct_child_location_type = False
