@@ -264,25 +264,3 @@ def build_filter_from_xpath(domain, xpath):
             bad_part = lex_token_error.groups()[1]
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
-
-
-def get_properties_from_ast(node):
-    """Returns a list of case properties referenced in the XPath expression
-
-    Skips malformed parts of the XPath expression
-    """
-    columns = set()
-
-    def visit(node):
-        if not hasattr(node, 'op'):
-            return
-
-        if node.op in ([EQ, NEQ] + list(COMPARISON_MAPPING.keys())):
-            columns.add(serialize(node.left))
-
-        if node.op in list(OPERATOR_MAPPING.keys()):
-            visit(node.left)
-            visit(node.right)
-
-    visit(node)
-    return list(columns)
