@@ -9,12 +9,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         template: _.template($("#query-view-item-template").html() || ""),
 
         templateContext: function () {
-            var imageUri = this.options.model.get('imageUri');
-            var audioUri = this.options.model.get('audioUri');
-            var appId = this.model.collection.appId;
+            var imageUri = this.options.model.get('imageUri'),
+                audioUri = this.options.model.get('audioUri'),
+                appId = this.model.collection.appId,
+                initialValue = this.options.model.get('value');
+
+            // Initial values are sent from formplayer as strings, but dropdowns expect an integer
+            if (initialValue && this.options.model.get('input') === "select1") {
+                initialValue = parseInt(initialValue);
+            }
+
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                value: initialValue,
             };
         },
 
