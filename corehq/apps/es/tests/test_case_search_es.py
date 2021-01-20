@@ -7,6 +7,8 @@ from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
     case_property_missing,
@@ -20,7 +22,7 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
 )
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import create_and_save_a_case
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
@@ -238,6 +240,7 @@ class TestCaseSearchLookups(TestCase):
 
     def setUp(self):
         self.domain = 'case_search_es'
+        self.case_type = 'person'
         super(TestCaseSearchLookups, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
@@ -256,7 +259,8 @@ class TestCaseSearchLookups(TestCase):
         case_id = case_properties.pop('_id')
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         owner_id = case_properties.pop('owner_id', None)
-        case = create_and_save_a_case(domain, case_id, case_name, case_properties, owner_id=owner_id)
+        case = create_and_save_a_case(
+            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type)
         return case
 
     def _bootstrap_cases_in_es_for_domain(self, domain):
@@ -265,14 +269,18 @@ class TestCaseSearchLookups(TestCase):
             CaseSearchReindexerFactory(domain=domain).build().reindex()
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
+        self._assert_queries_run_correctly(domain, input_cases, xpath_query, [(query, output)])
+
+    def _assert_queries_run_correctly(self, domain, input_cases, xpath_query, query_outputs):
         for case in input_cases:
             self._make_case(domain, case)
         self._bootstrap_cases_in_es_for_domain(domain)
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
-        self.assertItemsEqual(
-            query.get_ids(),
-            output
-        )
+        for query, output in query_outputs:
+            self.assertItemsEqual(
+                query.get_ids(),
+                output
+            )
         if xpath_query:
             self.assertItemsEqual(
                 CaseSearchES().xpath_query(self.domain, xpath_query).get_ids(),
@@ -315,6 +323,70 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c1', 'c2']
         )
+
+    def test_casesearch_criteria_standard(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        data = [
+            {'_id': 'rr', 'foo': 'red'},
+            {'_id': 'rb', 'foo': 'red beard'},
+            {'_id': 'crb', 'foo': 'Red Beard'},
+            {'_id': 'bb', 'foo': 'black beard'},
+            {'_id': 'rc', 'foo': 'red color'},
+            {'_id': 'an', 'foo': 'Alfred Nemo'},
+            {'_id': 'wb', 'foo': 'White bear'},
+        ]
+        query_matches = [
+            ({'foo': 'red'}, ['r']),
+            ({'foo': 'red beard'}, ['rb']),
+            ({'foo': 'red bear'}, []),
+            ({'foo': 'beard'}, []),
+            ({'foo': 'bear'}, []),
+        ]
+        self._assert_queries_run_correctly(
+            self.domain,
+            data,
+            None,
+            [
+                (
+                    CaseSearchCriteria(self.domain, self.case_type, criteria).search_es,
+                    output
+                )
+                for criteria, output in query_matches
+            ]
+        )
+        config.delete()
+
+    @flag_enabled('USH_WILDCARD_SEARCH')
+    def test_casesearch_criteria_advanced(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        data = [
+            {'_id': 'rb', 'foo': 'red beard'},
+            {'_id': 'crb', 'foo': 'Red Beard'},
+            {'_id': 'bb', 'foo': 'black beard'},
+            {'_id': 'rc', 'foo': 'red color'},
+            {'_id': 'an', 'foo': 'Alfred Nemo'},
+            {'_id': 'wb', 'foo': 'White bear'},
+        ]
+        query_matches = [
+            ({'foo': 'red'}, ['rb', 'crb', 'an', 'rc']),
+            ({'foo': 'red beard'}, ['rb', 'crb']),
+            ({'foo': 'red bear'}, ['rb', 'crb']),
+            ({'foo': 'beard'}, ['rb', 'crb', 'bb']),
+            ({'foo': 'bear'}, ['rb', 'crb', 'bb', 'wb']),
+        ]
+        self._assert_queries_run_correctly(
+            self.domain,
+            data,
+            None,
+            [
+                (
+                    CaseSearchCriteria(self.domain, self.case_type, criteria).search_es,
+                    output
+                )
+                for criteria, output in query_matches
+            ]
+        )
+        config.delete()
 
     def test_multiple_case_search_queries(self):
         query = (CaseSearchES().domain(self.domain)

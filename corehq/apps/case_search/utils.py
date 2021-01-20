@@ -1,5 +1,6 @@
 import re
 
+from corehq import toggles
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -21,6 +22,7 @@ class CaseSearchCriteria(object):
         self.case_type = case_type
         self.criteria = criteria
 
+        self.wildcard_enabled = toggles.USH_WILDCARD_SEARCH.enabled(domain)
         self.config = self._get_config()
         self.search_es = self._get_initial_search_es()
 
@@ -102,4 +104,10 @@ class CaseSearchCriteria(object):
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
-            self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+            if self.wildcard_enabled:
+                values = value.split()
+                for token in values:
+                    token = ".*" + token.lower() + ".*"
+                    self.search_es = self.search_es.regexp_case_property_query(key, token)
+            else:
+                self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
