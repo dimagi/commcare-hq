@@ -643,10 +643,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Tanque de retencao Movel nao instalado distante de corpos de agua, inclinacoes ou locais propensos a inundacoes ."
     responsible_follow_up: "District Coordinator"
   - question: [barrel_water_present]
-    comment: [day1_operation_comments]  # 'barrel_water_present_comments' does not exist.
-    # comment will not be found: There is only one item in base_path. See expressions.py:119
-    # TODO: Move 'barrel_water_present' into 'Q27' question list
-    base_path: [msp_grp]
+    comment: [day1_operation_comments]
+    base_path: [msp_grp, Q27]
     flag_name: "27a. Is there any water in the collection barrel at the beginning of clean up?"
     flag_name_fr: "27a. Y a-t-il de l'eau dans le tonneau de collecte au début du nettoyage?"
     flag_name_por: "27a. Ha alguma agua no barril de colecção no inicio da limpeza?"
@@ -810,10 +808,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Lavagem e /ou baldes de lixo nao foi coberto durante a noite."
     responsible_follow_up: "District Coordinator"
   - question: [ground_restored]
-    comment: [last_day_operations_comments]  # 'ground_restored_comments' does not exist
-    # TODO: Move 'ground_restored' question into 'Q42' question list so
-    #       that 'last_day_operations_comments' can be found
-    base_path: [msp_grp]
+    comment: [last_day_operations_comments]
+    base_path: [msp_grp, Q42]
     flag_name: "42a. Have the barrels been removed, hole for MSP refilled, and the ground returned to its original state?"
     flag_name_fr: "42a. Les tonneaux ont-ils été enlevés, les trous de puisards mobile effacer et le sol est remis à son état d'origine?"
     flag_name_por: "42a. Os barris foram removidos, cova do TRM fechada, e os solos retornados ão estado original?"
@@ -823,10 +819,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: TRM nao foi propiramnete retornado ao cova."
     responsible_follow_up: "ECO"
   - question: [msp_removed]
-    # NOTE: 'last_day_operations_comments' same question as above
-    comment: [last_day_operations_comments]  # 'msp_removed_comments' does not exist
-    # TODO: Move 'msp_removed' question into 'Q42' question list
-    base_path: [msp_grp]
+    comment: [last_day_operations_comments]
+    base_path: [msp_grp, Q42]
     flag_name: "42b. Has the MSP been pulled out of the ground with the hole covered and site secured?"
     flag_name_fr: "42b. Les fûts ont-ils été enlevés, le trou pour le PM a-t-il été remblayé et le sol remis à son état d'origine ?"
     flag_name_por: "42b. O TRM foi removido do chão e a cova coberta e o local seguro?"
@@ -836,9 +830,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_por: "Problema reportado: Instalação do TRM no local nao foi seguradano final do dia."
     responsible_follow_up: "ECO"
   - question: [msp_secure]
-    comment: [msp_stored_comments]  # 'msp_secure_comments' does not exist
-    # TODO: Move 'msp_secure' question into 'Q43' question list
-    base_path: [msp_grp]
+    comment: [msp_stored_comments]
+    base_path: [msp_grp, Q43]
     flag_name: "43a. Is the MSP kept in a secure room after returning from cleaning up?"
     flag_name_fr: "43a. Le PM est-il gardé dans une pièce sécurisée après être son nettoyage?"
     flag_name_por: "43a. O TRM e colocado numa sala segura depois de vir da limpeza?"
@@ -1286,8 +1279,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado: Items noa removidos da parede ou teto."
     responsible_follow_up: "District Coordinator"
   - question: [food_removed]
-    comment: [food_removed_comments]  # TODO: Comment does not exist. Should this be 'food_store_rooms_comments'?
-    base_path: [household_prep_grp]  # TODO: Question is not in question list. Comment will not be found.
+    comment: [food_store_rooms_comments]
+    base_path: [household_prep_grp, Q6]
     flag_name: "6a. Was the food removed before spraying?"
     flag_name_fr: "6a. La nourriture a-t-elle été enlevée avant la pulvérisation?"
     flag_name_por: "6a. Os alimentos foram retirados antes da pulverização?"
@@ -1332,8 +1325,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
     responsible_follow_up: "District Coordinator"
   - question: [triple_rinse]
-    comment: [triple_rinse_comments]  # TODO: Does not exist. 'pesticide_packaged_comments'?
-    base_path: [insecticide_prep_grp]  # TODO: question not in question list.
+    comment: [pesticide_packaged_comments]
+    base_path: [insecticide_prep_grp, Q10]
     flag_name: "10a. Does the operator triple-rinse the bottle while preparing the insecticide in the tank?"
     flag_name_fr: "10a. Est-ce-que l'opérateur rinse trois fois la bouteille pendant la préparation du insecticide dans le réservoir?"
     flag_name_por: "10a. O roceador faz o tripla enxaguadela da garrafa durante a preparacao do pesticida no tanque?"
@@ -1450,8 +1443,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado: vazamentos da bomba."
     responsible_follow_up: "District Coordinator"
   - question: [pump_serviced]
-    comment: [pump_serviced_comments]  # TODO: Does not exist
-    base_path: [spray_observe_grp]  # TODO: Comment will not be found
+    comment: [pump_leaks_comments]
+    base_path: [spray_observe_grp, Q19]
     flag_name: "19a. Does the operator service the sprayer before proceeding?"
     flag_name_fr: "19a. L'opérateur entretient-il la pompe avant de continuer?"
     flag_name_por: "19a. O roceador  repara a bomba antes de prosseguir?"
@@ -1538,8 +1531,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_por: "Problema reportado: Roceador nao re-pressurizou o tanque como se requere."
     responsible_follow_up: "District Coordinator"
   - question: [items_removed]
-    comment: [items_removed_comments]  # TODO: Does not exist. 'eaves_sprayed_comments'?
-    base_path: [spray_observe_grp]  # TODO: Question not in question list
+    comment: [eaves_sprayed_comments]
+    base_path: [spray_observe_grp, Q26]
     flag_name: "26a. Were the household items that are normally stored on the porches, roofs and exterior of the walls removed?"
     flag_name_fr: "26a. Est-ce-que les articles ménagers qui sont normalement entreposés sur les porches, les toits et l'extérieur des murs ont été enlevés?"
     flag_name_por: "26a. Os artigos da familia normalmente colocados nas varandas, tetos e no exterior das pares foram retirados?"
