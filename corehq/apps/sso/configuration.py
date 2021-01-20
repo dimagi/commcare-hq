@@ -79,11 +79,17 @@ def _get_advanced_saml2_settings():
             "logoutRequestSigned": True,
             "logoutResponseSigned": True,
             "signMetadata": False,
-            "wantMessagesSigned": True,
-            "wantAssertionsSigned": True,
+
+            # Signing/encrypting assertions and responses is a Premium feature offered
+            # by Azure AD (see: Token encryption) and is not available by default.
+            # Turning this off for now as HTTPS makes the handshake secure
+            # todo to discuss to make this a configurable parameter
+            "wantAssertionsSigned": False,
+            "wantMessagesSigned": False,
+            "wantAssertionsEncrypted": False,
+            
             "wantNameId": True,
             "wantNameIdEncrypted": False,  # Azure will not accept if True
-            "wantAssertionsEncrypted": True,
             "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
             "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",
