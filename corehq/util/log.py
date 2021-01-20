@@ -314,14 +314,18 @@ def step_calculator(length, granularity):
     """
     def should_update(i):
         assert i, "divide by zero protection"
-        nonlocal next_update
+        nonlocal next_update, max_wait
         now = datetime.now()
         if now > next_update:
             rate = i / (now - start).total_seconds()  # iterations / second
-            secs = min(max(twice_per_dot / rate, 0.1), 300)  # seconds / dot / 2
+            secs = min(max(twice_per_dot / rate, 0.1), max_wait)  # seconds / dot / 2
             next_update = now + timedelta(seconds=secs)
+            if secs == max_wait < 300:
+                max_wait = min(max_wait * 2, 300)
             return True
         return False
+    # start with short delay to compensate for excessive initial estimates
+    max_wait = 10
     twice_per_dot = max(length / granularity, 1) / 2  # iterations / dot / 2
     start = next_update = datetime.now()
     return should_update
