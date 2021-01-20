@@ -338,6 +338,10 @@ class SubmissionPost(object):
     def _log_form_details(self, form):
         attachments = form.attachments if hasattr(form, 'attachments') else {}
 
+        print('###################### Blub, blub, blub ####################')
+        logging.info('Received Form, root logger')
+        my_logger = logging.getLogger('dummyLogger')
+        my_logger.info('Dummy Logger')
         logger.info('Received Form %s with %d attachments',
             form.form_id, len(attachments))
 
