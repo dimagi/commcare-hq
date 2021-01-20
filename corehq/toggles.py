@@ -690,6 +690,8 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+        "Feature still being fine tuned so should be used cautiously. "
+        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
