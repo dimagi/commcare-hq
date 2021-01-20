@@ -277,7 +277,6 @@ class _CaseImportRow(object):
         self.parent_id = fields_to_update.pop('parent_id', None)
         self.parent_external_id = fields_to_update.pop('parent_external_id', None)
         self.parent_type = fields_to_update.pop('parent_type', self.config.case_type)
-        self.parent_ref = fields_to_update.pop('parent_ref', 'parent')
         self.parent_relationship_type = fields_to_update.pop('parent_relationship_type', 'child')
         self.parent_identifier = fields_to_update.pop('parent_identifier', None)
         self.to_close = fields_to_update.pop('close', False)
@@ -348,7 +347,7 @@ class _CaseImportRow(object):
                 if parent_case:
                     self.validate_parent_column()
                     if self.parent_relationship_type == 'child':
-                        identifier = self.parent_identifier or self.parent_ref
+                        identifier = self.parent_identifier or 'child'
                         return {identifier: (parent_case.type, parent_case.case_id)}
                     elif self.parent_relationship_type == 'extension':
                         identifier = self.parent_identifier
