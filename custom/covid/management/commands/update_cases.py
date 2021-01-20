@@ -15,7 +15,7 @@ class CaseUpdateCommand(BaseCommand):
     def case_block(self):
         raise NotImplementedError()
 
-    def update_cases(self, domain, case_type, user_id):
+    def update_cases(self, domain, case_type, user_id, active_location):
         raise NotImplementedError()
 
     def find_case_ids_by_type(self, domain, case_type):
@@ -28,6 +28,7 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('case_type')
         parser.add_argument('--username', type=str, default=None)
+        parser.add_argument('--active-location', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
 
     def handle(self, domain, case_type, **options):
@@ -42,6 +43,10 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
+        active_location = None
+        if options["active_location"]:
+            active_location = options["active_location"]
+
         for domain in domains:
             print(f"Processing {domain}")
-            self.update_cases(domain, case_type, user_id)
+            self.update_cases(domain, case_type, user_id, active_location)

@@ -34,7 +34,7 @@ class Command(CaseUpdateCommand):
             index={index.identifier: (index.referenced_type, index.referenced_id, "extension")},
         ).as_xml()).decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id):
+    def update_cases(self, domain, case_type, user_id, active_location):
         accessor = CaseAccessors(domain)
         case_ids = accessor.get_case_ids_in_domain(case_type)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
