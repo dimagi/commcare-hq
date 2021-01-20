@@ -518,8 +518,12 @@ def _populate_updated_fields(config, row):
             continue
 
         if update_field_name in RESERVED_FIELDS:
-            raise exceptions.InvalidCustomFieldNameException(
-                _('Field name "{}" is reserved').format(update_field_name))
+            if update_field_name == 'parent_ref':
+                raise exceptions.InvalidCustomFieldNameException(
+                    _('Field name "{}" is deprecated. Please use "parent_identifier" instead.'))
+            else:
+                raise exceptions.InvalidCustomFieldNameException(
+                    _('Field name "{}" is reserved').format(update_field_name))
 
         if isinstance(update_value, str) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an
