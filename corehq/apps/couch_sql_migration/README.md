@@ -167,6 +167,8 @@ https://dimagi-dev.atlassian.net/servicedesk/customer/portal/1
 
 ## Support request template
 
+Subject: XXXXXXX forms & cases migration
+
 We are planning to migrate the XXXXXXX domain forms and cases from Couch to SQL. No need to mention Couch or SQL to the customer though, to them it's maintenance we need to do to keep our systems operating at peak performance.
 
 The XXXXXXX domain currently has about XXXXXXX forms, which we expect to take about XXXXXXX to migrate. The following operations will be disabled while the migration is in progress:
