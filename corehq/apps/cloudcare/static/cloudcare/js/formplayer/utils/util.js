@@ -169,13 +169,13 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function (queryDict) {
+        this.setQueryData = function (queryDict, execute) {
             if (!this.queryData) {
                 this.queryData = {};
             }
             this.queryData[sessionStorage.queryKey] = {
                 inputs: queryDict,
-                execute: true,
+                execute: execute,
             };
         };
 
