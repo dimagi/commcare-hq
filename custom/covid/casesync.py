@@ -16,7 +16,7 @@ def get_ush_extension_cases_to_close(domain, cases):
     )
     valid_extensions = {
         case.case_id
-        for case in CaseAccessors(domain).get_cases(patient_extensions)
+        for case in CaseAccessors(domain).get_cases(list(patient_extensions))
         # exclude CONTACT_CASE_TYPE extensions of the PATIENT_CASE_TYPE
         if case.type != CONTACT_CASE_TYPE
     }

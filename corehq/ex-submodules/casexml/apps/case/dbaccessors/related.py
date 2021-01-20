@@ -49,10 +49,7 @@ def get_reverse_indexed_cases(domain, case_ids, relationship=None):
     )
 
 
-NO_MATCH = object()
-
-
-def get_all_reverse_indices_info(domain, case_ids, relationship=None, exclude_for_case_type=NO_MATCH):
+def get_all_reverse_indices_info(domain, case_ids, relationship=None, exclude_for_case_type=None):
     from casexml.apps.case.models import CommCareCase
 
     def _row_to_index_info(row):
@@ -71,7 +68,7 @@ def get_all_reverse_indices_info(domain, case_ids, relationship=None, exclude_fo
             keys=_get_keys_for_reverse_index_view(domain, case_ids, relationship),
             reduce=False,
         )
-        if row['value']['referenced_type'] != exclude_for_case_type
+        if not exclude_for_case_type or row['value']['referenced_type'] != exclude_for_case_type
     ]
 
 
