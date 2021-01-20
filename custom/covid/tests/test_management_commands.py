@@ -32,11 +32,8 @@ class CaseCommandsTest(TestCase):
         cls.factory = CaseFactory(domain=cls.domain)
         cls.case_accessor = CaseAccessors(cls.domain)
 
-        username = normalize_username("mobile_worker_1", cls.domain)
-        cls.mobile_worker = CommCareUser.create(cls.domain, username, "123", None, None)
+        cls.mobile_worker = CommCareUser.create(cls.domain, "username", "p@ssword123", None, None)
         cls.user_id = cls.mobile_worker.user_id
-        sync_user_cases(cls.mobile_worker)
-        cls.mobile_worker.save()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
@@ -59,26 +56,30 @@ class CaseCommandsTest(TestCase):
         )
 
     def test_add_hq_user_id_to_case(self):
-        self.setUpClass()
+        username = normalize_username("mobile_worker", self.domain)
+        new_mobile_worker = CommCareUser.create(self.domain, username, "123", None, None)
+        user_id = new_mobile_worker.user_id
+        new_mobile_worker.save()
+
         checkin_case_id = uuid.uuid4().hex
         self.submit_case_block(
-            True, checkin_case_id, user_id=self.user_id, case_type='checkin',
-            update={"username": self.mobile_worker.raw_username, "hq_user_id": None}
+            True, checkin_case_id, user_id=user_id, case_type='checkin',
+            update={"username": new_mobile_worker.raw_username, "hq_user_id": None}
         )
         lab_result_case_id = uuid.uuid4().hex
         self.submit_case_block(
-            True, lab_result_case_id, user_id=self.user_id, case_type='lab_result',
-            update={"username": self.mobile_worker.raw_username, "hq_user_id": None}
+            True, lab_result_case_id, user_id=user_id, case_type='lab_result',
+            update={"username": new_mobile_worker.raw_username, "hq_user_id": None}
         )
         checkin_case = self.case_accessor.get_case(checkin_case_id)
         self.assertEqual('', checkin_case.get_case_property('hq_user_id'))
-        self.assertEqual(checkin_case.username, 'mobile_worker_1')
+        self.assertEqual(checkin_case.username, 'mobile_worker')
 
         call_command('add_hq_user_id_to_case', self.domain, 'checkin')
 
         checkin_case = self.case_accessor.get_case(checkin_case_id)
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
-        self.assertEqual(checkin_case.get_case_property('hq_user_id'), self.user_id)
+        self.assertEqual(checkin_case.get_case_property('hq_user_id'), user_id)
         self.assertEqual(lab_result_case.hq_user_id, '')
 
     def test_update_case_index_relationship(self):
