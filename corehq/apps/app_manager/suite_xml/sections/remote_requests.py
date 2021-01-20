@@ -89,13 +89,14 @@ class RemoteRequestFactory(object):
         query_xpaths = [QuerySessionXPath(self.module.search_config.session_var).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
         query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
+        query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
 
         # sorted list to prevent intermittent test failures
-        return sorted(list(instances) + prompt_select_instances, key=lambda i: i.id)
+        return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
 
     def _build_session(self):
         return RemoteRequestSession(
@@ -168,6 +169,8 @@ class RemoteRequestFactory(object):
                 kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
+            if prop.default_value and self.app.enable_default_value_expression:
+                kwargs['default_value'] = prop.default_value
             if prop.itemset.nodeset:
                 kwargs['itemset'] = Itemset(
                     nodeset=prop.itemset.nodeset,
