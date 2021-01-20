@@ -286,7 +286,3 @@ def get_properties_from_ast(node):
 
     visit(node)
     return list(columns)
-
-
-def get_properties_from_xpath(xpath):
-    return get_properties_from_ast(parse_xpath(xpath))
