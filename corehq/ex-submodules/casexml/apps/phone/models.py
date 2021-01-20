@@ -59,10 +59,11 @@ class OTARestoreUser(object):
     Note: When adding methods to this user, you'll need to ensure that it is
     functional with both a CommCareUser and WebUser.
     """
-    def __init__(self, domain, couch_user, loadtest_factor=1):
+    def __init__(self, domain, couch_user, loadtest_factor=1, request_user=None):
         self.domain = domain
         self._loadtest_factor = loadtest_factor
         self._couch_user = couch_user
+        self.request_user = request_user  # user making the request
 
     @property
     def user_id(self):
@@ -99,6 +100,11 @@ class OTARestoreUser(object):
     @memoized
     def project(self):
         return Domain.get_by_name(self.domain)
+
+    @property
+    def request_user_id(self):
+        # can be None in tests
+        return self.request_user.user_id if self.request_user else None
 
     @property
     def locations(self):
@@ -271,6 +277,7 @@ class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
     domain = StringProperty()
     user_id = StringProperty()
+    request_user_id = StringProperty()  # ID of user making request
     build_id = StringProperty()  # only works with app-aware sync
     app_id = StringProperty()  # only works with app-aware sync
 
@@ -405,6 +412,11 @@ def synclog_to_sql_object(synclog_json_object):
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
+            is_formplayer=(
+                synclog_json_object.device_id and synclog_json_object.device_id.startswith("WebAppsLogin")
+            ),
+            case_count=synclog_json_object.case_count(),
+            request_user_id=synclog_json_object.request_user_id,
         )
     field_mapping = [
         ('previous_log_id', 'previous_synclog_id'),
@@ -440,6 +452,10 @@ class SyncLogSQL(models.Model):
     had_state_error = models.BooleanField(default=False)
     error_date = models.DateTimeField(null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
+
+    is_formplayer = models.BooleanField(null=True, db_index=True)
+    case_count = models.IntegerField(null=True)
+    request_user_id = models.CharField(max_length=255, null=True)
 
     def save(self, *args, **kwargs):
         super(SyncLogSQL, self).save(*args, **kwargs)
