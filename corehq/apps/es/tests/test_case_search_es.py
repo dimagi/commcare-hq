@@ -371,6 +371,7 @@ class TestCaseSearchLookups(TestCase):
             ({'foo': 'red'}, ['rb', 'crb', 'an', 'rc']),
             ({'foo': 'red beard'}, ['rb', 'crb']),
             ({'foo': 'red bear'}, ['rb', 'crb']),
+            ({'foo': 'red colour'}, []),  # fuzzy match doesn't work; todo
             ({'foo': 'beard'}, ['rb', 'crb', 'bb']),
             ({'foo': 'bear'}, ['rb', 'crb', 'bb', 'wb']),
         ]
