@@ -291,6 +291,31 @@ class TestCaseSearchLookups(TestCase):
             ['c1']
         )
 
+    def test_fuzzy_case_property_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'foo': 'redbeard'},
+                {'_id': 'c2', 'foo': 'blackbeard'},
+            ],
+            CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
+            None,
+            ['c2']
+        )
+
+    def test_regex_case_property_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'foo': 'redbeard'},
+                {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': 'redblack'},
+            ],
+            CaseSearchES().domain(self.domain).regexp_case_property_query("foo", ".*beard.*"),
+            None,
+            ['c1', 'c2']
+        )
+
     def test_multiple_case_search_queries(self):
         query = (CaseSearchES().domain(self.domain)
                  .case_property_query("foo", "redbeard")
