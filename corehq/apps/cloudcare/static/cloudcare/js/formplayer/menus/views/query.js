@@ -93,8 +93,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
-            urlObject.setQuery(this.getAnswers());
-            urlObject.setDoQuery(false);
+            urlObject.setQueryData(this.getAnswers(), false);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 for (var i = 0; i < response.models.length; i++) {
