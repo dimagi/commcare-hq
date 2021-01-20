@@ -19,7 +19,7 @@ def should_skip(case, location_obj, active_location):
     if location_obj:
         return case.closed or (location_obj.name != active_location)
     else:
-        return False
+        return True
 
 
 def needs_update(case):
