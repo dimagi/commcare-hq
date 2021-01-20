@@ -87,7 +87,7 @@ def sso_saml_acs(request, idp_slug):
             and OneLogin_Saml2_Utils.get_self_url(request) != request.POST['RelayState']
         ):
             return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
-    elif request.saml2_auth.get_settings().is_debug_active():
+    else:
         error_reason = request.saml2_auth.get_last_error_reason()
 
     # todo what's below is a debugging placeholder

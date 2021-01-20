@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.http import Http404
+from django.conf import settings
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 
 from corehq.apps.sso.models import IdentityProvider
@@ -25,7 +26,11 @@ def use_saml2_auth(view_func):
                 'https': 'on' if request.is_secure() else 'off',
                 'http_host': request.META['HTTP_HOST'],
                 'script_name': request.META['PATH_INFO'],
-                'server_port': request.META['SERVER_PORT'],
+
+                # see https://github.com/onelogin/python3-saml/issues/83
+                'server_port': (request.META['SERVER_PORT']
+                                if settings.SAML_DEBUG else '443'),
+                
                 'get_data': request.GET.copy(),
                 'post_data': request.POST.copy(),
             }
