@@ -62,6 +62,7 @@ def sso_saml_acs(request, idp_slug):
     is_past_request_id = False
     relay_state = None
     saml_relay = None
+    self_url = None
 
     try:
         request_id = request.session.get('AuthNRequestID')
@@ -85,14 +86,14 @@ def sso_saml_acs(request, idp_slug):
         request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
         request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
 
-        if ('RelayState' in request.POST
-            and OneLogin_Saml2_Utils.get_self_url(request) != request.POST['RelayState']
-        ):
+        if ('RelayState' in request.POST):
             relay_state = request.POST['RelayState']
             try:
+                self_url = OneLogin_Saml2_Utils.get_self_url(request)
+
                 saml_relay = OneLogin_Saml2_Utils.get_self_url(request)
             except Exception as e:
-                saml_relay = e
+                saml_relay = e.__str__
             # return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
     else:
         error_reason = request.saml2_auth.get_last_error_reason()
@@ -116,6 +117,7 @@ def sso_saml_acs(request, idp_slug):
         "is_past_request_id": is_past_request_id,
         "relay_state": relay_state,
         "saml_relay": saml_relay,
+        "self_url": self_url,
     }), 'text/json')
 
 
