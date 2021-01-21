@@ -327,7 +327,7 @@ class TestCaseSearchLookups(TestCase):
     def test_casesearch_criteria_standard(self):
         config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
         data = [
-            {'_id': 'rr', 'foo': 'red'},
+            {'_id': 'r', 'foo': 'red'},
             {'_id': 'rb', 'foo': 'red beard'},
             {'_id': 'crb', 'foo': 'Red Beard'},
             {'_id': 'bb', 'foo': 'black beard'},
