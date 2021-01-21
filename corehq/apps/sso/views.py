@@ -59,14 +59,13 @@ def sso_saml_acs(request, idp_slug):
     saml_user_data_present = False
     request_id = None
     processed_response = None
-    is_past_request_id = False
     relay_state = None
     saml_relay = None
     self_url = None
+    request_session_data = None
 
     try:
         request_id = request.session.get('AuthNRequestID')
-        is_past_request_id = True
         processed_response = request.saml2_auth.process_response(request_id=request_id)
         errors = request.saml2_auth.get_errors()
         not_auth_warn = not request.saml2_auth.is_authenticated()
@@ -86,15 +85,19 @@ def sso_saml_acs(request, idp_slug):
         request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
         request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
 
-        if ('RelayState' in request.POST):
-            relay_state = request.POST['RelayState']
-            try:
-                self_url = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
+        request_session_data = {
+            "samlUserdata": request.session['samlUserdata'],
+            "samlNameId": request.session['samlNameId'],
+            "samlNameIdFormat": request.session['samlNameIdFormat'],
+            "samlNameIdNameQualifier": request.session['samlNameIdNameQualifier'],
+            "samlNameIdSPNameQualifier": request.session['samlNameIdSPNameQualifier'],
+            "samlSessionIndex": request.session['samlSessionIndex'],
+        }
 
-                saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
-            except Exception as e:
-                saml_relay = e.__str__()
-            # return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
+        if 'RelayState' in request.POST:
+            relay_state = request.POST['RelayState']
+            self_url = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
+            saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
     else:
         error_reason = request.saml2_auth.get_last_error_reason()
 
@@ -109,15 +112,15 @@ def sso_saml_acs(request, idp_slug):
         "error_reason": error_reason,
         "not_auth_warn": not_auth_warn,
         "success_slo": success_slo,
-        "attributes": attributes,
         "request_data": request.saml2_request_data,
         "saml_user_data_present": saml_user_data_present,
         "request_id": request_id,
         "processed_response": processed_response,
-        "is_past_request_id": is_past_request_id,
         "relay_state": relay_state,
         "saml_relay": saml_relay,
         "self_url": self_url,
+        "attributes": attributes,
+        "request_session_data": request_session_data,
     }), 'text/json')
 
 
