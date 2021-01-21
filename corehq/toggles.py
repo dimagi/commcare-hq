@@ -1970,6 +1970,16 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+NON_PARENT_MENU_SELECTION = StaticToggle(
+    'non_parent_menu_selection',
+    'Allow selecting of module of any case-type in select-parent workflow',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allow selecting of module of any case-type in select-parent workflow
+    """,
+)
+
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
