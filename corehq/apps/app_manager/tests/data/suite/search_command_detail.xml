@@ -148,6 +148,19 @@
         </text>
       </template>
     </field>
+    <action auto_launch="false">
+      <display>
+        <text>
+          <locale id="case_search.m0.again"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <mark/>
+          <command value="'search_command.m0'"/>
+        </push>
+      </stack>
+    </action>
   </detail>
   <detail id="m1_case_short">
     <title>
@@ -218,6 +231,19 @@
         </text>
       </template>
     </field>
+    <action auto_launch="false">
+      <display>
+        <text>
+          <locale id="case_search.m1.again"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <mark/>
+          <command value="'search_command.m1'"/>
+        </push>
+      </stack>
+    </action>
   </detail>
   <detail id="m2_case_short"/>
   <detail id="m2_case_long">

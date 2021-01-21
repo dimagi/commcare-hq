@@ -212,6 +212,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             # populate these even if module_offers_search is false because search_config might just not exist yet
             'search_command_label':
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
+            'search_again_label':
+                module.search_config.again_label if hasattr(module, 'search_config') else "",
             'search_session_var': module.search_config.session_var if hasattr(module, 'search_config') else "",
         },
     }
@@ -1069,6 +1071,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         ):
             command_label = module.search_config.command_label
             command_label[lang] = search_properties.get('search_command_label', '')
+            again_label = module.search_config.again_label
+            again_label[lang] = search_properties.get('search_again_label', '')
             try:
                 properties = [
                     CaseSearchProperty.wrap(p)
@@ -1082,6 +1086,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 session_var=search_properties.get('session_var', ""),
                 command_label=command_label,
+                again_label=again_label,
                 properties=properties,
                 relevant=(
                     search_properties.get('relevant')

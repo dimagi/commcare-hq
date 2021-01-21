@@ -190,9 +190,12 @@ class DetailContributor(SectionContributor):
                     if target_form.is_registration_form(module.case_type):
                         d.actions.append(self._get_reg_form_action(module))
 
-                if module_offers_search(module) and "search" not in id:
-                    # Add the search action only if this isn't a search detail
-                    d.actions.append(self._get_case_search_action(module))
+                if module_offers_search(module):
+                    if "search" in id:
+                        locale_id = id_strings.case_search_again_locale(module)
+                    else:
+                        locale_id = id_strings.case_search_locale(module)
+                    d.actions.append(self._get_case_search_action(module, locale_id))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -296,7 +299,7 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def _get_case_search_action(module):
+    def _get_case_search_action(module, locale_id):
         relevant_kwarg = {}
         if module.search_config.search_button_display_condition:
             relevant_kwarg = dict(
@@ -305,7 +308,7 @@ class DetailContributor(SectionContributor):
         allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain)
         action = Action(
             display=Display(
-                text=Text(locale_id=id_strings.case_search_locale(module))
+                text=Text(locale_id=locale_id)
             ),
             stack=Stack(),
             auto_launch=allow_auto_launch and module.search_config.auto_launch,

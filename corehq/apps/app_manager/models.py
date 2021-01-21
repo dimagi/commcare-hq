@@ -2103,6 +2103,7 @@ class CaseSearch(DocumentSchema):
     """
     session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
+    again_label = DictProperty(default={'en': 'Search Again'})
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)

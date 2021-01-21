@@ -9,7 +9,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel,
+    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel, searchAgainLabel,
         searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
@@ -111,6 +111,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.sessionVar = ko.observable(sessionVar);
         self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
+        self.searchAgainLabel = ko.observable(searchAgainLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.autoLaunch = ko.observable(autoLaunch);
         self.includeClosed = ko.observable(includeClosed);
@@ -255,6 +256,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 relevant: self.relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
+                search_again_label: self.searchAgainLabel(),
                 search_filter: self.searchFilter(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
@@ -281,6 +283,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             saveButton.fire('change');
         });
         self.searchCommandLabel.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchAgainLabel.subscribe(function () {
             saveButton.fire('change');
         });
         self.searchButtonDisplayCondition.subscribe(function () {

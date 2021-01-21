@@ -138,6 +138,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # Regular and advanced modules should get the search detail
         search_config = CaseSearch(
             command_label={'en': 'Advanced Search'},
+            again_label={'en': 'Search One More Time'},
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
         )
         advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
