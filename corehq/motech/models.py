@@ -7,6 +7,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+import architect
 import jsonfield
 
 import corehq.motech.auth
@@ -224,6 +225,54 @@ class ConnectionSettings(models.Model):
         # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         return kinds
+
+
+@architect.install('partition', type='range', subtype='date', constraint='week',
+                   column='timestamp')
+# TODO: Drop RequestLog and rename
+class RequestLogPartitioned(models.Model):
+    domain = models.CharField(max_length=126)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    log_level = models.IntegerField(blank=True, null=True)
+    payload_id = models.CharField(max_length=32, blank=True, null=True)
+
+    request_method = models.CharField(max_length=12)
+    request_url = models.CharField(max_length=255)
+    request_headers = jsonfield.JSONField(blank=True)
+    request_params = jsonfield.JSONField(blank=True)
+    request_body = models.TextField(blank=True, null=True)
+    request_error = models.TextField(blank=True, null=True)
+
+    response_status = models.IntegerField(blank=True, null=True)
+    response_headers = jsonfield.JSONField(blank=True)
+    response_body = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'motech_requestlog'
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['timestamp']),
+            models.Index(fields=['payload_id']),
+            models.Index(fields=['request_url']),
+            models.Index(fields=['response_status']),
+        ]
+
+    @staticmethod
+    def log(level: int, log_entry: RequestLogEntry):
+        return RequestLogPartitioned.objects.create(
+            domain=log_entry.domain,
+            log_level=level,
+            payload_id=log_entry.payload_id,
+            request_method=log_entry.method,
+            request_url=log_entry.url,
+            request_headers=log_entry.headers,
+            request_params=log_entry.params,
+            request_body=as_text(log_entry.data),
+            request_error=log_entry.error,
+            response_status=log_entry.response_status,
+            response_headers=log_entry.response_headers,
+            response_body=as_text(log_entry.response_body),
+        )
 
 
 class RequestLog(models.Model):
