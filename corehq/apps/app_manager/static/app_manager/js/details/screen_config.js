@@ -1126,6 +1126,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         spec.searchProperties || [],
                         spec.searchSessionVar,
                         spec.autoLaunch,
+                        spec.defaultSearch,
                         spec.includeClosed,
                         spec.defaultProperties,
                         spec.lang,

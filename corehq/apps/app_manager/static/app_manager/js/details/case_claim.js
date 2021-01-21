@@ -9,8 +9,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel, searchAgainLabel,
-        searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
+    // TODO: extract js CaseSearch model?
+    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, defaultSearch, includeClosed, defaultProperties, lang, searchCommandLabel,
+        searchAgainLabel, searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -109,11 +110,37 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
+        self.getWorkflow = function (autoLaunch, defaultSearch) {
+            if (autoLaunch) {
+                if (defaultSearch) {
+                    return "es_only";   // TODO: constants here, next function, and in HTML
+                }
+                return "auto_launch";
+            } else if (defaultSearch) {
+               return "see_more";
+            }
+            return "classic";
+        };
+
+        self.serializeWorkflow = function () {
+            var options = {
+                auto_launch: false,
+                default_search: false,
+            };
+            if (_.contains(["es_only", "autolaunch"], self.searchWorkflow())) {
+                options.auto_launch = true;
+            }
+            if (_.contains(["es_only", "see_more"], self.searchWorkflow())) {
+                options.default_search = true;
+            }
+            return options;
+        };
+
         self.sessionVar = ko.observable(sessionVar);
         self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchAgainLabel = ko.observable(searchAgainLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.searchWorkflow = ko.observable(autoLaunch ? "autolaunch" : "classic");
+        self.searchWorkflow = ko.observable(self.getWorkflow(autoLaunch, defaultSearch));
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
@@ -249,10 +276,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
 
         self.serialize = function () {
-            return {
+            return _.extend({
                 properties: self._getProperties(),
                 session_var: self.sessionVar(),
-                auto_launch: self.searchWorkflow() === "autolaunch" ? "on" : "",
                 relevant: self.relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
@@ -261,7 +287,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
-            };
+            }, self.serializeWorkflow());
         };
 
         self.sessionVar.subscribe(function () {

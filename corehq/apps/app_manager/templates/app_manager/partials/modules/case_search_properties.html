@@ -194,16 +194,18 @@
       <div class="panel-body">
         <div class="form-horizontal">
           <div class="form-group">
+            <!-- TODO: hide if irrelevant -->
             <label for="search_command_label" class="{% css_label_class %} control-label">
               {% trans "Button Label on Case List" %}
               <span class="hq-help-template" data-title="{% trans "Button Label on Case List" %}"
-                    data-content="{% trans_html_attr "This text will be used for the first search button users see, on the case listusers see." %}">
+                    data-content="{% trans_html_attr "This text will be used for the first search button users see, on the case list." %}">
             </label>
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
             </div>
           </div>
           <div class="form-group">
+            <!-- TODO: hide if irrelevant -->
             <label for="search_again_label" class="{% css_label_class %} control-label">
               {% trans "Button Label on Search Results" %}
               <span class="hq-help-template" data-title="{% trans "Button Label for on Search Results" %}"
