@@ -7,7 +7,7 @@ from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
@@ -358,7 +358,10 @@ class TestCaseSearchLookups(TestCase):
 
     @flag_enabled('USH_WILDCARD_SEARCH')
     def test_casesearch_criteria_advanced(self):
+        fp, _ = FuzzyProperties.objects.get_or_create(
+            domain=self.domain, case_type=self.case_type, properties=['foo'])
         config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        config.fuzzy_properties.add(fp)
         data = [
             {'_id': 'rb', 'foo': 'red beard'},
             {'_id': 'crb', 'foo': 'Red Beard'},
@@ -371,8 +374,9 @@ class TestCaseSearchLookups(TestCase):
             ({'foo': 'red'}, ['rb', 'crb', 'an', 'rc']),
             ({'foo': 'red beard'}, ['rb', 'crb']),
             ({'foo': 'red bear'}, ['rb', 'crb']),
-            ({'foo': 'red colour'}, []),  # fuzzy match doesn't work; todo
-            ({'foo': 'beard'}, ['rb', 'crb', 'bb']),
+            ({'foo': 'red colour'}, []),  # fuzzy doesn't work on phrases
+            ({'foo': 'colour'}, ['rc']),  # fuzzy works on words
+            ({'foo': 'beard'}, ['rb', 'crb', 'bb', 'wb']),
             ({'foo': 'bear'}, ['rb', 'crb', 'bb', 'wb']),
         ]
         self._assert_queries_run_correctly(
@@ -387,6 +391,7 @@ class TestCaseSearchLookups(TestCase):
                 for criteria, output in query_matches
             ]
         )
+        fp.delete()
         config.delete()
 
     def test_multiple_case_search_queries(self):

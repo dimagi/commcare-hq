@@ -9,6 +9,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
 )
+from corehq.apps.es import queries
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 
@@ -106,8 +107,15 @@ class CaseSearchCriteria(object):
                 value = re.sub(to_remove, '', value)
             if self.wildcard_enabled:
                 values = value.split()
+                if len(values) == 1 and key in fuzzies:
+                    # fuzzy search can only be supported for single words
+                    self.search_es = self.search_es.case_property_query(
+                        key, value, fuzzy=True, clause=queries.SHOULD)
+                    clause = queries.SHOULD
+                else:
+                    clause = queries.MUST
                 for token in values:
                     token = ".*" + token.lower() + ".*"
-                    self.search_es = self.search_es.regexp_case_property_query(key, token)
+                    self.search_es = self.search_es.regexp_case_property_query(key, token, clause=clause)
             else:
                 self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
