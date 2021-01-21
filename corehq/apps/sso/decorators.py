@@ -29,7 +29,7 @@ def use_saml2_auth(view_func):
 
                 # see https://github.com/onelogin/python3-saml/issues/83
                 'server_port': (request.META['SERVER_PORT']
-                                if settings.SAML_DEBUG else '443'),
+                                if settings.SAML2_DEBUG else '443'),
                 
                 'get_data': request.GET.copy(),
                 'post_data': request.POST.copy(),
