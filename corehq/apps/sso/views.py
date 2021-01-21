@@ -93,7 +93,7 @@ def sso_saml_acs(request, idp_slug):
 
                 saml_relay = OneLogin_Saml2_Utils.get_self_url(request)
             except Exception as e:
-                saml_relay = e.__str__
+                saml_relay = e.__str__()
             # return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
     else:
         error_reason = request.saml2_auth.get_last_error_reason()
@@ -102,7 +102,7 @@ def sso_saml_acs(request, idp_slug):
     if 'samlUserdata' in request.session:
         saml_user_data_present = True
         if len(request.session['samlUserdata']) > 0:
-            attributes = request.session['samlUserdata'].items()
+            attributes = list(request.session['samlUserdata'].items())
 
     return HttpResponse(json.dumps({
         "errors": errors,
