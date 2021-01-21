@@ -97,26 +97,9 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
 
 
     var getMenuView = function (menuResponse) {
-        var menuData = {                    // TODO: make this more concise
+        var menuData = _.extend(menuResponse, {
             collection: menuResponse,
-            title: menuResponse.title,
-            headers: menuResponse.headers,
-            widthHints: menuResponse.widthHints,
-            actions: menuResponse.actions,
-            pageCount: menuResponse.pageCount,
-            currentPage: menuResponse.currentPage,
-            styles: menuResponse.styles,
-            type: menuResponse.type,
-            sessionId: menuResponse.sessionId,
-            tiles: menuResponse.tiles,
-            numEntitiesPerRow: menuResponse.numEntitiesPerRow,
-            maxHeight: menuResponse.maxHeight,
-            maxWidth: menuResponse.maxWidth,
-            redoLast: menuResponse.redoLast,
-            useUniformUnits: menuResponse.useUniformUnits,
-            isPersistentDetail: menuResponse.isPersistentDetail,
-            sortIndices: menuResponse.sortIndices,
-        };
+        });
         if (menuResponse.type === "commands") {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
