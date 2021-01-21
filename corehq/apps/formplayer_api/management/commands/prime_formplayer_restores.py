@@ -14,6 +14,7 @@ from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username, raw_username
 from corehq.util.argparse_types import validate_integer
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -21,6 +22,9 @@ class Command(BaseCommand):
         """Call the Formplayer sync API for users from CSV or matching criteria.
         Usage:
         
+        Redirect stdout to file to allow viewing progress bar:
+        %(prog)s [args] > output.csv
+
         ### With users in a CSV file ###
         
         CSV Columns: "domain, username, as_user"
@@ -90,7 +94,8 @@ class Command(BaseCommand):
             for user in users:
                 results.append(executor.submit(process_row, user, validate, dry_run))
 
-            futures.wait(results)
+            for _ in with_progress_bar(futures.as_completed(results), length=len(results), stream=sys.stderr):
+                pass
 
         if not results:
             print("\nNo users processed")
