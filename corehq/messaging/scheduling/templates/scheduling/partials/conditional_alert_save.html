@@ -1,7 +1,27 @@
 {% load i18n %}
 <div class="form-actions">
+
+  <div class="modal fade" id="conditional-alert-warning-modal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Conditional Alert</h4>
+        </div>
+        <div class="modal-body">
+          <p>This update may alert <span id="case-count"></span> cases. Are you sure you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal" id="conditional-alert-yes-btn">Yes</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal" id="conditional-alert-no-btn">No</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
   <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
-    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+    <button type="button" class="btn btn-primary" id="conditional-alert-save-btn">{% trans "Save" %}</button>
     <a href="{% url 'conditional_alert_list' domain %}" class="btn btn-default">Cancel</a>
   </div>
+  <div id="conditional-alert-case-count-url" url="{% url 'count_cases_by_case_type' domain %}" style="display: none;"></div>
 </div>

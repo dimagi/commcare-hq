@@ -1,5 +1,7 @@
 from functools import wraps
 from datetime import datetime, timedelta
+from rest_framework.views import APIView
+from django.http import JsonResponse
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -56,6 +58,8 @@ from corehq.messaging.scheduling.view_helpers import (
     UntranslatedConditionalAlertUploader,
     upload_conditional_alert_workbook,
 )
+
+from corehq.apps.es.cases import CaseES
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -1061,3 +1065,20 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
+
+
+class CountCasesBasedOnCaseTypeView(APIView):
+    urlname = 'count_cases_by_case_type'
+
+    def get(self, request, *args, **kwargs):
+        resp = {"case_count": -1}
+        try:
+            domain = kwargs.get("domain")
+            case_type = request.GET.get("case_type")
+            case_count = CaseES().domain(domain).case_type(case_type).count()
+            resp["case_count"] = case_count
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+        return JsonResponse(resp)

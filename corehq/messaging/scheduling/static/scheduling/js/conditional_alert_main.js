@@ -34,5 +34,34 @@ hqDefine("scheduling/js/conditional_alert_main", [
         // setup tab
         basicInformation.setRuleTabVisibility();
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
+
+        $("#conditional-alert-save-btn").click(function () {
+            var newRuleName = $("#id_conditional-alert-name").val();
+            if (!name) {
+                $("#conditional-alert-form").submit();
+            } else if (name !== newRuleName) {
+                var caseType = $(
+                    "#select2-id_criteria-case_type-container"
+                ).text();
+                var caseCountUrl = $("#conditional-alert-case-count-url").attr(
+                    "url"
+                );
+                $.ajax({
+                    type: "GET",
+                    url: caseCountUrl,
+                    data: { case_type: caseType },
+                    success: function (data) {
+                        $("#case-count").text(data["case_count"]);
+                    },
+                });
+                $("#conditional-alert-warning-modal").modal("show");
+
+                $("#conditional-alert-yes-btn").click(function () {
+                    $("#conditional-alert-form").submit();
+                });
+            } else {
+                $("#conditional-alert-form").submit();
+            }
+        });
     });
 });
