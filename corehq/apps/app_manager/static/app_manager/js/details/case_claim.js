@@ -9,9 +9,20 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    // TODO: extract js CaseSearch model?
-    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, defaultSearch, includeClosed, defaultProperties, lang, searchCommandLabel,
-        searchAgainLabel, searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
+    var searchConfigKeys = [
+        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
+        'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchRelevant', 'sessionVar',
+    ];
+    var searchConfigModel = function(options) {
+        hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
+        var self = _.extend({}, options);
+
+        // TODO: move config behavior in here
+
+        return self;
+    };
+
+    var searchViewModel = function (searchProperties, defaultProperties, searchConfig, lang, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -136,16 +147,18 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return options;
         };
 
-        self.sessionVar = ko.observable(sessionVar);
-        self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
-        self.searchAgainLabel = ko.observable(searchAgainLabel[lang] || "");
-        self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.searchWorkflow = ko.observable(self.getWorkflow(autoLaunch, defaultSearch));
-        self.includeClosed = ko.observable(includeClosed);
+        // Many search config atributes map directly to observables
+        var searchConfigObservableKeys = _.without(searchConfigKeys, ['autoLaunch', 'defaultSearch', 'searchRelevant']);
+        _.each(searchConfigObservableKeys, function (key) {
+            var initialValue = searchConfig[key];
+            if (key === "searchAgainLabel" || key === "searchCommandLabel") {
+                initialValue = initialValue[lang] || "";
+            }
+            self[key] = ko.observable(initialValue);
+        });
+        self.searchWorkflow = ko.observable(self.getWorkflow(searchConfig.autoLaunch, searchConfig.defaultSearch));
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
-        self.searchFilter = ko.observable(searchFilter);
-        self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
 
         // Parse searchRelevant into DEFAULT_CLAIM_RELEVANT, which controls a checkbox,
         // and the remainder of the expression, if any, which appears in a textbox.
@@ -153,8 +166,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // and cannot be changed without migrating existing CaseSearch documents
         var defaultRelevant = false,
             prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (",
-            extraRelevant = "";
-        searchRelevant = searchRelevant || "";
+            extraRelevant = "",
+            searchRelevant = searchConfig.searchRelevant || "";
         if (searchRelevant) {
             searchRelevant = searchRelevant.trim();
             if (searchRelevant === DEFAULT_CLAIM_RELEVANT) {
@@ -290,13 +303,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
             }, self.serializeWorkflow());
         };
 
-        self.sessionVar.subscribe(function () {
-            saveButton.fire('change');
+        _.each(searchConfigObservableKeys, function (key) {
+            self[key].subscribe(function () {
+                saveButton.fire('change');
+            });
         });
         self.searchWorkflow.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
         self.relevant.subscribe(function () {
@@ -308,26 +320,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.defaultProperties.subscribe(function () {
             saveButton.fire('change');
         });
-        self.searchCommandLabel.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchAgainLabel.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchButtonDisplayCondition.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchFilter.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.blacklistedOwnerIdsExpression.subscribe(function () {
-            saveButton.fire('change');
-        });
 
         return self;
     };
 
     return {
+        searchConfigKeys: searchConfigKeys,
         searchViewModel: searchViewModel,
     };
 });

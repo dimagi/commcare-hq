@@ -1122,20 +1122,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         self.shortScreen.saveButton
                     );
                     // Set up case search
-                    self.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
+                    var caseClaimModels = hqImport("app_manager/js/details/case_claim");
+                    self.search = caseClaimModels.searchViewModel(
                         spec.searchProperties || [],
-                        spec.searchSessionVar,
-                        spec.autoLaunch,
-                        spec.defaultSearch,
-                        spec.includeClosed,
                         spec.defaultProperties,
+                        _.pick(spec, caseClaimModels.searchConfigKeys),
                         spec.lang,
-                        spec.searchCommandLabel,
-                        spec.searchAgainLabel,
-                        spec.searchButtonDisplayCondition,
-                        spec.searchFilter,
-                        spec.searchRelevant,
-                        spec.blacklistedOwnerIdsExpression,
                         self.shortScreen.saveButton,
                         self.filter.filterText
                     );
