@@ -88,9 +88,12 @@ class Command(BaseCommand):
         results = []
         with futures.ThreadPoolExecutor(max_workers=pool_size) as executor:
             for user in users:
-                executor.submit(process_row, user, validate, dry_run)
+                results.append(executor.submit(process_row, user, validate, dry_run))
 
             futures.wait(results)
+
+        if not results:
+            print("\nNo users processed")
 
 
 def process_row(row, validate, dry_run):
