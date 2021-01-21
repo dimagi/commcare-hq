@@ -91,7 +91,7 @@ class Command(BaseCommand):
 
         results = []
         with futures.ThreadPoolExecutor(max_workers=pool_size) as executor:
-            sys.stderr.write(f"Spawning tasks\n")
+            sys.stderr.write("Spawning tasks\n")
             for user in users:
                 results.append(executor.submit(process_row, user, validate, dry_run))
 
@@ -100,6 +100,7 @@ class Command(BaseCommand):
 
         if not results:
             sys.stderr.write("\nNo users processed")
+
 
 def process_row(row, validate, dry_run):
     def _log_message(msg, is_error=True):
@@ -134,6 +135,7 @@ def process_row(row, validate, dry_run):
     except Exception as e:
         _log_message(f"{e}")
 
+
 def _get_users_from_csv(path):
     with open(path, 'r') as file:
         reader = csv.reader(file)
@@ -141,6 +143,7 @@ def _get_users_from_csv(path):
         for row in reader:
             if row != ["domain", "username", "as_user"]:  # skip header
                 yield row
+
 
 def _get_user_db_query(domains, date_cutoff, min_cases, limit):
     query = SyncLogSQL.objects.values(
@@ -157,6 +160,7 @@ def _get_user_db_query(domains, date_cutoff, min_cases, limit):
         query = query[:limit]
 
     return query
+
 
 def _get_users_from_db(domains, last_synced_days, min_cases, limit):
     query = _get_user_db_query(domains, last_synced_days, min_cases, limit)
