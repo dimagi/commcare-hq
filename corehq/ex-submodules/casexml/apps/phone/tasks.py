@@ -10,6 +10,7 @@ from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.util.queries import prune_weekpartition_table
 from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
@@ -94,16 +95,8 @@ def prune_synclogs():
     """
     Drops all partition tables containing data that's older than 63 days (7 weeks)
     """
-    oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while oldest_synclog and (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
-        year, week, _ = oldest_synclog.isocalendar()
-        table_name = "{base_name}_y{year}w{week}".format(
-            base_name=SyncLogSQL._meta.db_table,
-            year=year,
-            week="%02d" % week
-        )
-        drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
-        db = router.db_for_write(SyncLogSQL)
-        with connections[db].cursor() as cursor:
-            cursor.execute(drop_query)
-        oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
+    prune_weekpartition_table(
+        model_cls=SyncLogSQL,
+        retention_days=SYNCLOG_RETENTION_DAYS,
+        datetime_field='date',
+    )

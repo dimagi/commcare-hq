@@ -1,8 +1,9 @@
 import re
+from datetime import datetime
 
-from django.core.paginator import Paginator
-from django.core.paginator import EmptyPage
-from django.db import DEFAULT_DB_ALIAS
+from django.core.paginator import EmptyPage, Paginator
+from django.db import DEFAULT_DB_ALIAS, connections, router
+from django.db.models import Min, Model
 
 
 def fast_distinct(model_cls, column, using=DEFAULT_DB_ALIAS):
@@ -97,3 +98,24 @@ def paginated_queryset(queryset, chunk_size):
                 yield obj
         except EmptyPage:
             return
+
+
+def prune_weekpartition_table(
+    model_cls: Model.__class__,
+    retention_days: int,
+    datetime_field: str,
+):
+    """
+    Prunes a table partitioned by week
+    """
+    queryset = model_cls.objects.aggregate(Min(datetime_field))
+    oldest = queryset[f'{datetime_field}__min']
+    while oldest and (datetime.today() - oldest).days > retention_days:
+        year, week, _ = oldest.isocalendar()
+        table_name = f'{model_cls._meta.db_table}_y{year}w{week:02d}'
+        drop_query = f'DROP TABLE IF EXISTS {table_name}'
+        db = router.db_for_write(model_cls)
+        with connections[db].cursor() as cursor:
+            cursor.execute(drop_query)
+        queryset = model_cls.objects.aggregate(Min(datetime_field))
+        oldest = queryset[f'{datetime_field}__min']

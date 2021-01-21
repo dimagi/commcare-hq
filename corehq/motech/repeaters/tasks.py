@@ -9,7 +9,7 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.motech.models import RequestLog
+from corehq.motech.models import RequestLogPartitioned
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
@@ -17,6 +17,7 @@ from corehq.util.metrics import (
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
+from corehq.util.queries import prune_weekpartition_table
 from corehq.util.soft_assert import soft_assert
 
 from .const import (
@@ -46,17 +47,20 @@ logging = get_task_logger(__name__)
 
 
 @periodic_task(
-    run_every=crontab(day_of_month=27),
+    run_every=crontab(day_of_week=6),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
-def clean_logs():
+def prune_requestlogs():
     """
     Drop MOTECH logs older than 90 days.
 
     Runs on the 27th of every month.
     """
-    ninety_days_ago = datetime.now() - timedelta(days=90)
-    RequestLog.objects.filter(timestamp__lt=ninety_days_ago).delete()
+    prune_weekpartition_table(
+        model_cls=RequestLogPartitioned,
+        retention_days=90,
+        datetime_field='timestamp',
+    )
 
 
 @periodic_task(
