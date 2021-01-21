@@ -89,9 +89,9 @@ def sso_saml_acs(request, idp_slug):
         if ('RelayState' in request.POST):
             relay_state = request.POST['RelayState']
             try:
-                self_url = OneLogin_Saml2_Utils.get_self_url(request)
+                self_url = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
 
-                saml_relay = OneLogin_Saml2_Utils.get_self_url(request)
+                saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
             except Exception as e:
                 saml_relay = e.__str__()
             # return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
