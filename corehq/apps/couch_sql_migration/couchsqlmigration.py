@@ -276,6 +276,7 @@ class CouchSqlDomainMigrator:
             try:
                 sql_form = get_sql_form(couch_form.form_id)
             except XFormNotFound:
+                sql_form = None
                 proc = "" if form_is_processed else " unprocessed"
                 log.error("Error migrating%s form %s",
                     proc, couch_form.form_id, exc_info=exc_info)
@@ -287,7 +288,7 @@ class CouchSqlDomainMigrator:
             try:
                 sql_form = get_sql_form(couch_form.form_id)
             except XFormNotFound:
-                pass
+                sql_form = None
             if self.stop_on_error:
                 raise err from None
         finally:
@@ -295,9 +296,12 @@ class CouchSqlDomainMigrator:
                 self._save_diffs(couch_form, sql_form)
 
     def _save_diffs(self, couch_form, sql_form):
-        couch_json = couch_form.to_json()
-        sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
-        self.statedb.save_form_diffs(couch_json, sql_json)
+        if sql_form is not None:
+            couch_json = couch_form.to_json()
+            sql_json = sql_form_to_json(sql_form)
+            self.statedb.save_form_diffs(couch_json, sql_json)
+        else:
+            self.statedb.add_missing_docs("XFormInstance", [couch_form.form_id])
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -433,7 +437,8 @@ class CouchSqlDomainMigrator:
             form = XFormInstance.get(form_id)
         except XFormNotFound:
             form = MissingFormLoader(self.domain).load_form(form_id, case_id)
-            log.warning("couch form missing, blob present: %s", form_id)
+            blob = "missing" if form is None else "present"
+            log.warning("couch form missing, blob %s: %s", blob, form_id)
         except Exception:
             log.exception("Error migrating form %s", form_id)
             form = None
@@ -879,7 +884,10 @@ def _migrate_form_attachments(sql_form, couch_form):
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
             if couch_meta is None:
-                assert not metas[0].blob_exists(), metas
+                if metas[0].blob_exists():
+                    # not sure how this is possible, but at least one
+                    # form existed that hit this branch.
+                    return metas[0]
             elif metas[0].key != couch_meta.key:
                 assert not blobdb.exists(couch_meta.key), couch_meta
                 if metas[0].blob_exists():
@@ -1369,8 +1377,8 @@ class MissingFormLoader:
     def iter_blob_forms(self, diff):
         """Yield forms from blob XML that are missing in Couch and SQL
 
-        The "missing in Couch" condition is encoded in the diff record,
-        and therefore is not checked directly here.
+        The "missing in Couch, blob present" condition is encoded in
+        the diff record, and therefore is not checked directly here.
         """
         if not diff.old_value or MISSING_BLOB_PRESENT not in diff.old_value:
             return
@@ -1383,7 +1391,7 @@ class MissingFormLoader:
 
     def load_form(self, form_id, case_id=None):
         """Load a form from blob XML that is missing in Couch and SQL"""
-        metas = next(self.iter_blob_metas([form_id]), None)
+        metas = next(self.iter_blob_metas([form_id], maybe_missing=True), None)
         if metas is None:
             return None
         self.seen.add(form_id)
@@ -1407,7 +1415,7 @@ class MissingFormLoader:
             raise ValueError(f"unknown diff kind: {diff.kind}")
         return form_ids, case_id
 
-    def iter_blob_metas(self, form_ids):
+    def iter_blob_metas(self, form_ids, maybe_missing=False):
         form_ids = [f for f in form_ids if not sql_form_exists(f)]
         if not form_ids:
             return
@@ -1416,9 +1424,11 @@ class MissingFormLoader:
         for meta in metas:
             if meta.type_code == CODES.form_xml:
                 yield meta, [m for m in metas if m.parent_id == meta.parent_id]
-                assert meta.parent_id not in parents, metas
+                assert meta.parent_id not in parents, \
+                    f"found two XML blobs for form {meta.parent_id}"
                 parents.add(meta.parent_id)
-        assert parents == set(form_ids), (form_ids, parents)
+        assert maybe_missing or set(form_ids) == parents, \
+            f"unexpected missing XML for forms: {set(form_ids) - parents}"
 
     def xml_to_form(self, xml_meta, case_id, all_metas):
         form_id = xml_meta.parent_id
@@ -1454,6 +1464,8 @@ def get_main_forms_iteration_stop_date(statedb):
         return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"
+    if len(kwargs["startkey"]) != 3:
+        return None
     # this is tightly coupled to by_domain_doc_type_date/view in couch:
     # the last key element is expected to be a datetime
     return kwargs["startkey"][-1]

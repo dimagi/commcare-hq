@@ -10,7 +10,7 @@ from memoized import memoized
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.accounting.exceptions import EnterpriseReportError
+from corehq.apps.enterprise.exceptions import EnterpriseReportError
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -53,18 +53,21 @@ class EnterpriseReport(object):
 
     @classmethod
     def create(cls, slug, account_id, couch_user):
+        report = None
         if slug == cls.DOMAINS:
             report = EnterpriseDomainReport(account_id, couch_user)
-        if slug == cls.WEB_USERS:
+        elif slug == cls.WEB_USERS:
             report = EnterpriseWebUserReport(account_id, couch_user)
-        if slug == cls.MOBILE_USERS:
+        elif slug == cls.MOBILE_USERS:
             report = EnterpriseMobileWorkerReport(account_id, couch_user)
-        if slug == cls.FORM_SUBMISSIONS:
+        elif slug == cls.FORM_SUBMISSIONS:
             report = EnterpriseFormReport(account_id, couch_user)
+
         if report:
             report.slug = slug
             return report
-        raise EnterpriseReportError(_("Unrecognized report '{}'").format(slug))
+        else:
+            raise EnterpriseReportError(_("Unrecognized report '{}'").format(slug))
 
     def format_date(self, date):
         return date.strftime('%Y/%m/%d %H:%M:%S') if date else ''

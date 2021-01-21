@@ -58,16 +58,18 @@ class RemoteRequestFactory(object):
         )
 
     def _build_remote_request_post(self):
-        return RemoteRequestPost(
-            url=absolute_reverse('claim_case', args=[self.domain]),
-            relevant=self.module.search_config.relevant,
-            data=[
+        kwargs = {
+            "url": absolute_reverse('claim_case', args=[self.domain]),
+            "data": [
                 QueryData(
                     key='case_id',
-                    ref=QuerySessionXPath('case_id').instance(),
+                    ref=QuerySessionXPath(self.module.search_config.session_var).instance(),
                 ),
-            ]
-        )
+            ],
+        }
+        if self.module.search_config.relevant:
+            kwargs["relevant"] = self.module.search_config.relevant
+        return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
         return Command(
@@ -84,12 +86,10 @@ class RemoteRequestFactory(object):
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
-        config_xpaths = [self.module.search_config.relevant, self.module.search_config.search_filter]
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(
-            self.app,
-            query_xpaths + config_xpaths
-        )
+        query_xpaths = [QuerySessionXPath(self.module.search_config.session_var).instance()]
+        query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
+        query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
+        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
@@ -126,7 +126,7 @@ class RemoteRequestFactory(object):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
-            id='case_id',
+            id=self.module.search_config.session_var,
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
@@ -181,7 +181,7 @@ class RemoteRequestFactory(object):
     def _build_stack(self):
         stack = Stack()
         frame = PushFrame()
-        frame.add_rewind(QuerySessionXPath('case_id').instance())
+        frame.add_rewind(QuerySessionXPath(self.module.search_config.session_var).instance())
         stack.add_frame(frame)
         return stack
 

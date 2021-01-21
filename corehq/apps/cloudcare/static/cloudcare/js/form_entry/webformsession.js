@@ -106,6 +106,10 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             var self = this;
 
+            if (_.isFunction(requestParams)) {
+                requestParams = requestParams();
+            }
+
             requestParams.form_context = self.formContext;
             requestParams.domain = self.domain;
             requestParams.username = self.username;
@@ -444,20 +448,23 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             form.isSubmitting(true);
             var submitAttempts = 0,
                 timer = setInterval(function () {
-                    var answers;
                     if (form.blockSubmit() && submitAttempts < 10) {
                         submitAttempts++;
                         return;
                     }
                     clearInterval(timer);
 
-                    answers = accumulateAnswers(form);
-                    self.serverRequest(
-                        {
+                    var requestCallback = function () {
+                        var answers = accumulateAnswers(form);
+                        return {
                             'action': Const.SUBMIT,
                             'answers': answers,
                             'prevalidated': prevalidated,
-                        },
+                        };
+                    };
+                    requestCallback.action = Const.SUBMIT;
+                    self.serverRequest(
+                        requestCallback,
                         function (resp) {
                             form.isSubmitting(false);
                             if (resp.status === 'success') {
@@ -510,6 +517,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var self = this;
             self.session_id = self.session_id || resp.session_id;
             self.form = Utils.initialRender(resp, self.resourceMap, $form);
+            if (resp.shouldAutoSubmit) {
+                self.submitForm(self.form);
+            }
         };
 
         // Initialize
