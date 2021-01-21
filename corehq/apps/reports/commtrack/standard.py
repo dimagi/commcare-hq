@@ -6,7 +6,7 @@ from memoized import memoized
 
 from dimagi.utils.couch.loosechange import map_reduce
 
-from corehq.apps.commtrack.models import CommtrackActionConfig, CommtrackConfig
+from corehq.apps.commtrack.models import SQLCommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
@@ -51,7 +51,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     @property
     @memoized
     def config(self):
-        return CommtrackConfig.for_domain(self.domain)
+        return SQLCommtrackConfig.for_domain(self.domain)
 
     @property
     @memoized
