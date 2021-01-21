@@ -43,6 +43,7 @@ from corehq.apps.app_manager.decorators import (
     require_can_edit_apps,
     require_deploy_apps,
 )
+from corehq.apps.app_manager.exceptions import CaseSearchConfigError
 from corehq.apps.app_manager.models import (
     Application,
     AdvancedModule,
@@ -207,7 +208,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.relevant if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
-
+            'default_value_expression_enabled': app.enable_default_value_expression,
             # populate these even if module_offers_search is false because search_config might just not exist yet
             'search_command_label':
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
@@ -928,16 +929,20 @@ def _update_search_properties(module, search_properties, lang='en'):
             'name': prop['name'],
             'label': label,
         }
+        if prop['default_value']:
+            ret['default_value'] = prop['default_value']
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
+            keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+            missing = [key for key in keys if not fixture_props.get(key)]
+            if missing:
+                raise CaseSearchConfigError(_("""
+                    The case search property '{}' is missing the following lookup table attributes: {}
+                """).format(prop['name'], ", ".join(missing)))
             ret['itemset'] = {
-                'instance_uri': fixture_props['instance_uri'],
-                'instance_id': fixture_props['instance_id'],
-                'nodeset': fixture_props['nodeset'],
-                'label': fixture_props['label'],
-                'value': fixture_props['value'],
-                'sort': fixture_props['sort'],
+                key: fixture_props[key]
+                for key in keys
             }
 
         elif prop.get('appearance', '') == 'barcode_scan':
@@ -1079,16 +1084,20 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         ):
             command_label = module.search_config.command_label
             command_label[lang] = search_properties.get('search_command_label', '')
-            module.search_config = CaseSearch(
-                session_var=search_properties.get('session_var', ""),
-                command_label=command_label,
-                properties=[
+            try:
+                properties = [
                     CaseSearchProperty.wrap(p)
                     for p in _update_search_properties(
                         module,
                         search_properties.get('properties'), lang
                     )
-                ],
+                ]
+            except CaseSearchConfigError as e:
+                return HttpResponseBadRequest(e)
+            module.search_config = CaseSearch(
+                session_var=search_properties.get('session_var', ""),
+                command_label=command_label,
+                properties=properties,
                 relevant=(
                     search_properties.get('relevant')
                     if search_properties.get('relevant') is not None
