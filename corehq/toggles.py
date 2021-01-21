@@ -1976,7 +1976,7 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
 
 USH_WILDCARD_SEARCH = StaticToggle(
     'ush_wildcard_search',
-    'Enable wildcard search in Advanced Case Search',
+    'COVID: Enable wildcard search in Advanced Case Search',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
