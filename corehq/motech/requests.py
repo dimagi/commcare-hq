@@ -35,16 +35,19 @@ def log_request(self, func, logger):
         log_level = logging.INFO
         request_error = ''
         response_status = None
+        response_headers = {}
         response_body = ''
         try:
             response = func(method, url, *args, **kwargs)
             response_status = response.status_code
+            response_headers = response.headers
             response_body = response.content
         except Exception as err:
             log_level = logging.ERROR
             request_error = str(err)
             if getattr(err, 'response', None) is not None:
                 response_status = err.response.status_code
+                response_headers = err.response.headers
                 response_body = pformat_json(err.response.text)
             raise
         else:
@@ -52,8 +55,17 @@ def log_request(self, func, logger):
         finally:
             params, data, headers = unpack_request_args(method, args, kwargs)
             entry = RequestLogEntry(
-                self.domain_name, self.payload_id, method, url, headers, params, data,
-                request_error, response_status, response_body
+                domain=self.domain_name,
+                payload_id=self.payload_id,
+                method=method,
+                url=url,
+                headers=headers,
+                params=params,
+                data=data,
+                error=request_error,
+                response_status=response_status,
+                response_headers=response_headers,
+                response_body=response_body,
             )
             logger(log_level, entry)
 

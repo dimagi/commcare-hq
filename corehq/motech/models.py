@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 import attr
 from django.db import models
@@ -35,18 +35,19 @@ from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util import as_text
 
 
-@attr.s(frozen=True)
+@attr.s(auto_attribs=True, frozen=True, kw_only=True)
 class RequestLogEntry:
-    domain = attr.ib()
-    payload_id = attr.ib()
-    method = attr.ib()
-    url = attr.ib()
-    headers = attr.ib()
-    params = attr.ib()
-    data = attr.ib()
-    error = attr.ib()
-    response_status = attr.ib()
-    response_body = attr.ib()
+    domain: str
+    payload_id: str
+    method: str
+    url: str
+    headers: dict
+    params: dict
+    data: Any
+    error: str
+    response_status: int
+    response_headers: dict
+    response_body: str
 
 
 class ConnectionSettings(models.Model):
