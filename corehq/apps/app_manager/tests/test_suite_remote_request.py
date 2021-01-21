@@ -277,6 +277,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
+    def test_default_search(self, *args):
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual("false", suite.xpath("./remote-request[1]/session/query/@default_search")[0])
+
+        self.module.search_config.default_search = True
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual("true", suite.xpath("./remote-request[1]/session/query/@default_search")[0])
+
     def test_prompt_appearance(self, *args):
         """Setting the appearance to "barcode"
         """
