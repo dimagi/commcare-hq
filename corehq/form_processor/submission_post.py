@@ -338,10 +338,9 @@ class SubmissionPost(object):
     def _log_form_details(self, form):
         attachments = form.attachments if hasattr(form, 'attachments') else {}
 
-        print('###################### Blub, blub, blub ####################')
-        logging.info('Received Form, root logger')
-        my_logger = logging.getLogger('dummyLogger')
-        my_logger.info('Dummy Logger')
+        logging.info('Received Form %s with %d attachments',
+            form.form_id, len(attachments))
+        logging.info('Existing logger is disabled?: %s', logger.disabled)
         logger.info('Received Form %s with %d attachments',
             form.form_id, len(attachments))
 
@@ -353,6 +352,7 @@ class SubmissionPost(object):
                 attachment_msg = attachment_msg + ' (%d bytes)'
                 attachment_props.append(attachment.raw_content.size)
 
+            logging.info(attachment_msg, *attachment_props)
             logger.info(attachment_msg, *attachment_props)
 
     def _log_form_completion(self, form, submission_type):
