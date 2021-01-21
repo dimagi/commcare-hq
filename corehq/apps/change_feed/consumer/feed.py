@@ -178,7 +178,7 @@ class KafkaChangeFeed(ChangeFeed):
                 return [
                     topic_partitions[num::num_processes]
                     for num in range(num_processes)
-                ][num_processes]
+                ][self.process_num - 1]
 
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
