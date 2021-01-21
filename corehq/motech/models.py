@@ -2,6 +2,7 @@ import json
 import re
 from typing import Callable, Optional
 
+import attr
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -32,6 +33,20 @@ from corehq.motech.const import (
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util import as_text
+
+
+@attr.s(frozen=True)
+class RequestLogEntry:
+    domain = attr.ib()
+    payload_id = attr.ib()
+    method = attr.ib()
+    url = attr.ib()
+    headers = attr.ib()
+    params = attr.ib()
+    data = attr.ib()
+    error = attr.ib()
+    response_status = attr.ib()
+    response_body = attr.ib()
 
 
 class ConnectionSettings(models.Model):
@@ -236,7 +251,7 @@ class RequestLog(models.Model):
         db_table = 'dhis2_jsonapilog'
 
     @staticmethod
-    def log(level, log_entry):
+    def log(level: int, log_entry: RequestLogEntry):
         return RequestLog.objects.create(
             domain=log_entry.domain,
             log_level=level,
