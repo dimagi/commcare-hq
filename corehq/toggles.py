@@ -758,7 +758,10 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
-    'Allow case claim to be automatically launched in web apps',
+    '''
+        Support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results"
+    ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
 )
