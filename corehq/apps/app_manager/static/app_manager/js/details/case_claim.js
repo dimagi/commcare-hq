@@ -113,7 +113,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchAgainLabel = ko.observable(searchAgainLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.autoLaunch = ko.observable(autoLaunch);
+        self.searchWorkflow = ko.observable(autoLaunch ? "autolaunch" : "classic");
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
@@ -252,7 +252,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return {
                 properties: self._getProperties(),
                 session_var: self.sessionVar(),
-                auto_launch: self.autoLaunch(),
+                auto_launch: self.searchWorkflow() === "autolaunch" ? "on" : "",
                 relevant: self.relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
@@ -267,7 +267,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.sessionVar.subscribe(function () {
             saveButton.fire('change');
         });
-        self.autoLaunch.subscribe(function () {
+        self.searchWorkflow.subscribe(function () {
             saveButton.fire('change');
         });
         self.includeClosed.subscribe(function () {
