@@ -194,6 +194,24 @@
       <div class="panel-body">
         <div class="form-horizontal">
           <div class="form-group">
+            {% if show_search_workflow %}
+              <div class="form-group">
+                <label class="control-label {% css_label_class %}" for="search-workflow">
+                  {% trans "Web Apps Search Workflow" %}
+                  <span class="hq-help-template" data-title="{% trans "Web Apps Autolaunch" %}"
+                        data-content="{% trans_html_attr "In Web Apps, TODO." %}">
+                  </span>
+                </label>
+                <div class="{% css_field_class %}">
+                  <select class="form-control" data-bind="value: searchWorkflow" id="search-workflow">
+                    <option value="classic">{% trans "Normal Case List" %}</option>
+                    <option value="autolaunch">{% trans "Search First" %}</option>
+                    <option value="see_more">{% trans "See More" %}</option>
+                    <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
+                  </select>
+                </div>
+              </div>
+            {% endif %}
             <!-- TODO: hide if irrelevant -->
             <label for="search_command_label" class="{% css_label_class %} control-label">
               {% trans "Button Label on Case List" %}
@@ -215,25 +233,6 @@
               {% input_trans module.search_config.again_label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
           </div>
-          {% if show_search_workflow %}
-            <!-- TODO: move up -->
-            <div class="form-group">
-              <label class="control-label {% css_label_class %}" for="search-workflow">
-                {% trans "Web Apps Search Workflow" %}
-                <span class="hq-help-template" data-title="{% trans "Web Apps Autolaunch" %}"
-                      data-content="{% trans_html_attr "In Web Apps, TODO." %}">
-                </span>
-              </label>
-              <div class="{% css_field_class %}">
-                <select class="form-control" data-bind="value: searchWorkflow" id="search-workflow">
-                  <option value="classic">{% trans "Normal Case List" %}</option>
-                  <option value="autolaunch">{% trans "Search First" %}</option>
-                  <option value="see_more">{% trans "See More" %}</option>
-                  <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
-                </select>
-              </div>
-            </div>
-          {% endif %}
           <!-- TODO: deal with this -->
           <!--div class="form-group" data-bind="visible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
