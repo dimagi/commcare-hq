@@ -21,20 +21,20 @@ class Command(BaseCommand):
     help = inspect.cleandoc(
         """Call the Formplayer sync API for users from CSV or matching criteria.
         Usage:
-        
+
         Redirect stdout to file to allow viewing progress bar:
         %(prog)s [args] > output.csv
 
         ### With users in a CSV file ###
-        
+
         CSV Columns: "domain, username, as_user"
-        
+
         %(prog)s --from-csv path/to/users.csv
-        
+
         ### Query DB for users ###
-        
+
         %(prog)s --domains a b c --last-synced-days 2 --min-cases 500 --limit 1000
-        
+
         Use "--dry-run" and "--dry-run-count" to gauge impact of command.
         """
     )
@@ -72,18 +72,18 @@ class Command(BaseCommand):
         if from_csv:
             users = _get_users_from_csv(from_csv)
             if dry_run_count:
-                print(f"\n{len(list(users))} users in CSV file '{from_csv}'")
+                sys.stderr.write(f"\n{len(list(users))} users in CSV file '{from_csv}'\n")
                 return
         else:
             domains = [domain.strip() for domain in domains if domain.strip()] if domains else None
             date_cutoff = datetime.utcnow().date() - relativedelta(days=last_synced_days)
             if dry_run_count:
                 query = _get_user_db_query(domains, date_cutoff, min_cases, limit)
-                print(f"\nMatched {query.count()} users for filters:")
-                print(f"\tDomains: {domains or '---'}")
-                print(f"\tSynced after: {date_cutoff}")
-                print(f"\tMin cases: {min_cases or '---'}")
-                print(f"\tLimit: {limit or '---'}")
+                sys.stderr.write(f"\nMatched {query.count()} users for filters:\n")
+                sys.stderr.write(f"\tDomains: {domains or '---'}\n")
+                sys.stderr.write(f"\tSynced after: {date_cutoff}\n")
+                sys.stderr.write(f"\tMin cases: {min_cases or '---'}\n")
+                sys.stderr.write(f"\tLimit: {limit or '---'}\n")
                 return
 
             users = _get_users_from_db(domains, date_cutoff, min_cases, limit)
@@ -91,6 +91,7 @@ class Command(BaseCommand):
 
         results = []
         with futures.ThreadPoolExecutor(max_workers=pool_size) as executor:
+            sys.stderr.write(f"Spawning tasks\n")
             for user in users:
                 results.append(executor.submit(process_row, user, validate, dry_run))
 
@@ -98,8 +99,7 @@ class Command(BaseCommand):
                 pass
 
         if not results:
-            print("\nNo users processed")
-
+            sys.stderr.write("\nNo users processed")
 
 def process_row(row, validate, dry_run):
     def _log_message(msg, is_error=True):
@@ -134,7 +134,6 @@ def process_row(row, validate, dry_run):
     except Exception as e:
         _log_message(f"{e}")
 
-
 def _get_users_from_csv(path):
     with open(path, 'r') as file:
         reader = csv.reader(file)
@@ -142,7 +141,6 @@ def _get_users_from_csv(path):
         for row in reader:
             if row != ["domain", "username", "as_user"]:  # skip header
                 yield row
-
 
 def _get_user_db_query(domains, date_cutoff, min_cases, limit):
     query = SyncLogSQL.objects.values(
@@ -159,7 +157,6 @@ def _get_user_db_query(domains, date_cutoff, min_cases, limit):
         query = query[:limit]
 
     return query
-
 
 def _get_users_from_db(domains, last_synced_days, min_cases, limit):
     query = _get_user_db_query(domains, last_synced_days, min_cases, limit)
