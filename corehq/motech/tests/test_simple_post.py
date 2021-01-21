@@ -19,6 +19,10 @@ TEST_PAYLOAD_ID = 'abc123'
 class Response:
     status_code = 200
     content = b'OK'
+    headers = {
+        'Content-Length': '2',
+        'Content-Type': 'text/plain',
+    }
 
     @property
     def text(self):

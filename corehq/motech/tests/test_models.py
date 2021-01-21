@@ -35,6 +35,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             'Accept': 'application/json'
         }
         self.status_code = 201
+        self.response_headers = {'Content-Type': 'application/json'}
         self.error_message = ''
         self.uri = 'person/'
         self.json_data = {'name': 'Alice'}
@@ -43,6 +44,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
         self.response_mock = Mock()
         self.response_mock.status_code = self.status_code
         self.response_mock.content = self.content_json
+        self.response_mock.headers = self.response_headers
         self.response_mock.json.return_value = content
 
         self.request_patcher = patch.object(requests.Session, 'request')
@@ -71,6 +73,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_url=f'{TEST_API_URL}person/',
             response_body=as_text(self.content_json),
             response_status=self.status_code,
+            response_headers=self.response_headers,
         )
 
     def test_post_with_no_args(self):
