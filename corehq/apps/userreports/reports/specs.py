@@ -377,19 +377,15 @@ class SumWhenColumn(_CaseExpressionColumn):
     @classmethod
     def restricted_to_static(cls, domain):
         # The conditional expressions used here don't have sufficient safety checks,
-        # so this column type is only available for static reports.  To release this,
+        # so this column type is behind feature flag. To release this,
         # we should require that conditions be expressed using a PreFilterValue type
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return True
+        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
 
 
 class SumWhenTemplateColumn(SumWhenColumn):
     type = TypeProperty("sum_when_template")
     whens = ListProperty(DictProperty)      # List of SumWhenTemplateSpec dicts
-
-    @classmethod
-    def restricted_to_static(cls, domain):
-        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
 
     def get_whens(self):
         from corehq.apps.userreports.reports.factory import SumWhenTemplateFactory

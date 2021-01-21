@@ -1,4 +1,3 @@
-from datetime import datetime
 import uuid
 
 from django.core.management import call_command
@@ -10,6 +9,7 @@ from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.callcenter.sync_user_case import sync_user_cases
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
@@ -100,3 +100,40 @@ class CaseCommandsTest(TestCase):
 
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
+
+    def test_update_owner_ids(self):
+        parent_loc_type = LocationType.objects.create(
+            domain=self.domain,
+            name='health-department',
+        )
+        investigators = LocationType.objects.create(
+            domain=self.domain,
+            name='investigators',
+        )
+
+        parent_loc = SQLLocation.objects.create(
+            domain=self.domain, name='test-parent-location', location_id='test-parent-location',
+            location_type=parent_loc_type,
+        )
+        SQLLocation.objects.create(
+            domain=self.domain, name='test-child-location', location_id='test-child-location',
+            location_type=investigators, parent=parent_loc,
+        )
+        SQLLocation.objects.create(
+            domain=self.domain, name='test-wrong-child-location', location_id='test-wrong-child-location',
+            location_type=parent_loc_type, parent=parent_loc,
+        )
+
+        investigation_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, investigation_case_id, user_id=self.user_id, owner_id='test-parent-location',
+            case_type='investigation',
+        )
+
+        investigation_case = self.case_accessor.get_case(investigation_case_id)
+        self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-parent-location')
+
+        call_command('update_owner_ids', self.domain, 'investigation')
+
+        investigation_case = self.case_accessor.get_case(investigation_case_id)
+        self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-child-location')

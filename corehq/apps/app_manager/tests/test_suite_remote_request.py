@@ -170,6 +170,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
+    def test_case_search_session_var(self, *args):
+        self.module.search_config.session_var = "other_case_id"
+        suite = self.app.create_suite()
+        self.assertXmlPartialEqual('''
+            <partial>
+              <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
+            </partial>
+        ''', suite, './remote-request[1]/post/data')
+        self.assertXmlPartialEqual('''
+            <partial>
+              <stack>
+                <push>
+                  <rewind value="instance('commcaresession')/session/data/other_case_id"/>
+                </push>
+              </stack>
+            </partial>
+        ''', suite, './remote-request[1]/stack')
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual("other_case_id", suite.xpath("./remote-request[1]/session/datum/@id")[0])
+        self.assertEqual("./@case_id", suite.xpath("./remote-request[1]/session/datum/@value")[0])
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
