@@ -18,7 +18,7 @@ billiard==3.5.0.4         # via -r requirements.in, celery
 boto3==1.15.12            # via -r requirements.in
 botocore==1.18.12         # via boto3, s3transfer
 cairocffi==1.1.0          # via cairosvg, weasyprint
-cairosvg==2.4.2           # via weasyprint
+cairosvg==2.5.1           # via weasyprint
 https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl  # via -r requirements.in, django-celery-results
 certifi==2020.6.20        # via elasticsearch7, requests, sentry-sdk
 cffi==1.14.3              # via cairocffi, cryptography, csiphash, weasyprint
@@ -51,7 +51,7 @@ django-countries==4.6     # via -r requirements.in
 django-crispy-forms==1.10.0  # via -r requirements.in
 django-cte==1.1.4         # via -r requirements.in
 django-debug-toolbar==3.1  # via -r dev-requirements.in
-django-extensions==3.0.9  # via -r dev-requirements.in
+django-extensions==3.1.0  # via -r dev-requirements.in
 django-formtools==2.1     # via -r requirements.in, django-two-factor-auth
 django-logentry-admin==1.0.6  # via -r requirements.in
 https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl  # via -r test-requirements.in

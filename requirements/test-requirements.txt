@@ -15,7 +15,7 @@ billiard==3.5.0.4         # via -r requirements.in, celery
 boto3==1.15.12            # via -r requirements.in
 botocore==1.18.12         # via boto3, s3transfer
 cairocffi==1.1.0          # via cairosvg, weasyprint
-cairosvg==2.4.2           # via weasyprint
+cairosvg==2.5.1           # via weasyprint
 https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl  # via -r requirements.in, django-celery-results
 certifi==2020.6.20        # via elasticsearch7, requests, sentry-sdk
 cffi==1.14.3              # via cairocffi, cryptography, csiphash, weasyprint

@@ -54,7 +54,7 @@ from corehq.toggles import (
 from corehq.util.soft_assert import soft_assert
 from django_digest.decorators import httpdigest
 
-logger = logging.getLogger(__name__)
+auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
@@ -350,6 +350,10 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
             if authtype == FORMPLAYER and not allow_formplayer:
+                auth_logger.info(
+                    "Request rejected reason=%s request=%s",
+                    "formplayer_auth:not_enabled_for_request", request.path
+                )
                 return HttpResponseForbidden()
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
@@ -396,20 +400,20 @@ api_auth = _get_multi_auth_decorator(default=DIGEST)
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
-login_or_oauth2 = login_or_oauth2_ex()
 
-# Use these decorators on views to exclusively allow any one authorization method and not session based auth
-digest_auth = login_or_digest_ex(allow_sessions=False)
-basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
-oauth2_auth = login_or_oauth2_ex(allow_sessions=False)
-
-digest_auth_no_domain = login_or_digest_ex(allow_sessions=False, require_domain=False)
-basic_auth_no_domain = login_or_basic_ex(allow_sessions=False, require_domain=False)
-api_key_auth_no_domain = login_or_api_key_ex(allow_sessions=False, require_domain=False)
-oauth2_auth_no_domain = login_or_oauth2_ex(allow_sessions=False, require_domain=False)
 
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
+
+
+def get_auth_decorator_map(require_domain=True, allow_sessions=True):
+    # get a mapped set of decorators for different auth types with the specified parameters
+    return {
+        'digest': login_or_digest_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        'basic': login_or_basic_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        'api_key': login_or_api_key_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        'oauth2': login_or_oauth2_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+    }
 
 
 def two_factor_check(view_func, api_key):
@@ -598,6 +602,10 @@ cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_s
 def check_domain_migration(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
         if DATA_MIGRATION.enabled(domain):
+            auth_logger.info(
+                "Request rejected domain=%s reason=%s request=%s",
+                domain, "flag:migration", request.path
+            )
             return HttpResponse('Service Temporarily Unavailable',
                                 content_type='text/plain', status=503)
         return view_func(request, domain, *args, **kwargs)

@@ -9,7 +9,6 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
     build_filter_from_ast,
-    get_properties_from_ast,
 )
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
@@ -500,27 +499,3 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
         self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
-
-
-@es_test
-class TestGetProperties(SimpleTestCase):
-    pass
-
-
-@generate_cases([
-    # equality
-    ("property = 'value'", ['property']),
-    # comparison
-    ("property > 100", ['property']),
-    # complex expression
-    ("first_property > 100 or second_property = 'foo' and third_property = 'bar'",
-     ['first_property', 'second_property', 'third_property']),
-    # malformed expression
-    ("foo = 'bar' or baz = buzz or ham = 'spam' and eggs", ['foo', 'baz', 'ham']),
-    # related case lookup
-    ("parent/parent/foo = 'bar' and parent/baz = 'buzz'", ['parent/parent/foo', 'parent/baz']),
-    # duplicate properties
-    ("property = 'value' or property = 'other_value'", ['property']),
-], TestGetProperties)
-def test_get_properties_from_ast(self, expression, expected_values):
-    self.assertEqual(set(expected_values), set(get_properties_from_ast(parse_xpath(expression))))
