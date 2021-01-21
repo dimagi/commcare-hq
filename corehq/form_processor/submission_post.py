@@ -47,8 +47,6 @@ from phonelog.utils import process_device_log, SumoLogicLog
 
 from celery.task.control import revoke as revoke_celery_task
 
-logger = logging.getLogger(__name__)
-
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
     'case_result, case_models, stock_result'
@@ -226,7 +224,7 @@ class SubmissionPost(object):
         self._invalidate_caches(submitted_form)
 
         if submitted_form.is_submission_error_log:
-            logger.info('Processing form %s as a submission error', submitted_form.form_id)
+            logging.info('Processing form %s as a submission error', submitted_form.form_id)
             self.formdb.save_new_form(submitted_form)
 
             response = None
@@ -247,11 +245,11 @@ class SubmissionPost(object):
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
-            logger.info('Processing form %s as a system action', submitted_form.form_id)
+            logging.info('Processing form %s as a system action', submitted_form.form_id)
             return self.handle_system_action(submitted_form)
 
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
-            logger.info('Processing form %s as a device log', submitted_form.form_id)
+            logging.info('Processing form %s as a device log', submitted_form.form_id)
             return self.process_device_log(submitted_form)
 
         # Begin Normal Form Processing
@@ -338,7 +336,7 @@ class SubmissionPost(object):
     def _log_form_details(self, form):
         attachments = form.attachments if hasattr(form, 'attachments') else {}
 
-        logger.info('Received Form %s with %d attachments',
+        logging.info('Received Form %s with %d attachments',
             form.form_id, len(attachments))
 
         for index, (name, attachment) in enumerate(attachments.items()):
@@ -349,15 +347,15 @@ class SubmissionPost(object):
                 attachment_msg = attachment_msg + ' (%d bytes)'
                 attachment_props.append(attachment.raw_content.size)
 
-            logger.info(attachment_msg, *attachment_props)
+            logging.info(attachment_msg, *attachment_props)
 
     def _log_form_completion(self, form, submission_type):
         # Orig_id doesn't exist on all couch forms, only XFormError and XFormDeprecated
         if hasattr(form, 'orig_id') and form.orig_id is not None:
-            logger.info('Finished %s processing for Form %s with original id %s',
+            logging.info('Finished %s processing for Form %s with original id %s',
                 submission_type, form.form_id, form.orig_id)
         else:
-            logger.info('Finished %s processing for Form %s', submission_type, form.form_id)
+            logging.info('Finished %s processing for Form %s', submission_type, form.form_id)
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)

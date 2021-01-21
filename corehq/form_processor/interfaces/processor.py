@@ -19,8 +19,6 @@ from memoized import memoized
 from ..system_action import system_action
 from ..utils import should_use_sql_backend
 
-logger = logging.getLogger(__name__)
-
 
 class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata',
         ['case', 'is_creation', 'previous_owner_id', 'actions'])):
@@ -110,7 +108,7 @@ class FormProcessorInterface(object):
             if not lock.acquire(blocking=False):
                 raise XFormLockError(xform_id)
         except RedisError:
-            logger.warning('Redis error when locking %s, continuing with no lock', xform_id)
+            logging.warning('Redis error when locking %s, continuing with no lock', xform_id)
             lock = None
         return lock
 
