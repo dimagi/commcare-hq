@@ -352,6 +352,24 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
+        has_user_ids = False
+
+        if len(user_ids) > 0:
+            # if userid are passed then remove default active filter
+            # and move it with mobile worker filter
+            q = q.remove_default_filter('active')
+            has_user_ids = True
+            if HQUserType.DEACTIVATED in user_types:
+                deactivated_mbwf = filters.AND(user_es.is_active(False), user_es.mobile_users())
+                user_type_filters.append(deactivated_mbwf)
+            if HQUserType.ACTIVE in user_types:
+                activated_mbwf = filters.AND(user_es.is_active(), user_es.mobile_users())
+                user_type_filters.append(activated_mbwf)
+        elif HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+            q = q.show_inactive()
+        elif HQUserType.DEACTIVATED in user_types:
+            q = q.show_only_inactive()
+
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
@@ -360,11 +378,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
-
-        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
-            q = q.show_inactive()
-        elif HQUserType.DEACTIVATED in user_types:
-            q = q.show_only_inactive()
 
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
@@ -377,9 +390,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             )
 
         if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
-            # return all users with selected user_types
-            user_type_filters.append(user_es.mobile_users())
-            return q.OR(*user_type_filters)
+            if has_user_ids:
+                return q.OR(*user_type_filters, filters.OR(filters.term("_id", user_ids)))
+            else:
+                return q.OR(*user_type_filters, user_es.mobile_users())
 
         # return matching user types and exact matches
         location_ids = list(SQLLocation.active_objects
