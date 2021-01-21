@@ -6,7 +6,7 @@ from nose.tools import assert_equal
 
 from corehq.motech.auth import BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
-from corehq.motech.models import RequestLog
+from corehq.motech.models import RequestLogPartitioned
 from corehq.motech.requests import Requests, simple_post
 
 TEST_DOMAIN = 'pet-shop'
@@ -27,7 +27,7 @@ class Response:
 
 def test_simple_post():
     with patch.object(requests.Session, 'request') as request_mock, \
-            patch.object(RequestLog, 'log') as log_mock:
+            patch.object(RequestLogPartitioned, 'log') as log_mock:
         request_mock.return_value = Response()
         auth_manager = BasicAuthManager(TEST_API_USERNAME, TEST_API_PASSWORD)
         response = simple_post(
@@ -60,7 +60,7 @@ def test_simple_post():
 def test_simple_post_400():
     with patch.object(requests.Session, 'request') as request_mock, \
             patch.object(Requests, 'notify_error') as notify_mock, \
-            patch.object(RequestLog, 'log'):
+            patch.object(RequestLogPartitioned, 'log'):
         response = Response()
         response.status_code = 400
         response.content = b'Bad request'

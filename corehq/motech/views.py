@@ -19,7 +19,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm
-from corehq.motech.models import ConnectionSettings, RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLogPartitioned
 from no_exceptions.exceptions import Http400
 
 from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
@@ -46,7 +46,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         filter_url = self.request.GET.get("filter_url")
         filter_status = self.request.GET.get("filter_status")
 
-        queryset = RequestLog.objects.filter(domain=self.domain)
+        queryset = RequestLogPartitioned.objects.filter(domain=self.domain)
         if filter_from_date:
             queryset = queryset.filter(timestamp__gte=filter_from_date)
         if filter_to_date:
@@ -100,7 +100,7 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     context_object_name = 'log'
 
     def get_queryset(self):
-        return RequestLog.objects.filter(domain=self.domain)
+        return RequestLogPartitioned.objects.filter(domain=self.domain)
 
     @property
     def object(self):

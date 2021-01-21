@@ -13,7 +13,7 @@ from corehq.apps.export.export import (
 )
 from corehq.apps.export.filters import ServerModifiedOnRangeFilter
 from corehq.blobs import CODES, get_blob_db
-from corehq.motech.models import RequestLog
+from corehq.motech.models import RequestLogPartitioned
 from corehq.util.files import TransientTempfile
 from corehq.util.metrics import metrics_track_errors
 
@@ -67,7 +67,7 @@ class IncrementalExportCheckpoint(models.Model):
     blob_key = models.UUIDField(default=uuid4)
 
     status = models.PositiveSmallIntegerField(choices=IncrementalExportStatus.CHOICES, null=True)
-    request_log = models.ForeignKey(RequestLog, on_delete=models.CASCADE, null=True)
+    request_log = models.ForeignKey(RequestLogPartitioned, on_delete=models.CASCADE, null=True)
 
     @property
     def blob_parent_id(self):
@@ -82,7 +82,7 @@ class IncrementalExportCheckpoint(models.Model):
         return db.exists(key=str(self.blob_key))
 
     def log_request(self, log_level, log_entry):
-        log = RequestLog.log(log_level, log_entry)
+        log = RequestLogPartitioned.log(log_level, log_entry)
         self.status = IncrementalExportStatus.from_log_entry(log_entry)
         self.request_log = log
         self.save()

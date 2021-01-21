@@ -377,7 +377,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
-    ModelDeletion('motech', 'RequestLog', 'domain'),
+    ModelDeletion('motech', 'RequestLogPartitioned', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('repeaters', 'RepeaterStub', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),

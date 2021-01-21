@@ -47,7 +47,7 @@ class Dhis2ApiTests(SimpleTestCase):
     def setUp(self):
         self.requests = Requests(domain_name, base_url, username, password)
 
-    @patch('corehq.motech.requests.RequestLog', Mock())
+    @patch('corehq.motech.requests.RequestLogPartitioned', Mock())
     def test_get_index(self):
         endpoint = f"/api/{api_version}/trackedEntityInstances"
         params = {"ou": allen_town_health_post_ou}
@@ -57,7 +57,7 @@ class Dhis2ApiTests(SimpleTestCase):
         instances = response.json()["trackedEntityInstances"]
         assert_true(instances)
 
-    @patch('corehq.motech.requests.RequestLog', Mock())
+    @patch('corehq.motech.requests.RequestLogPartitioned', Mock())
     def test_query(self):
         last_name = "Pierce"
         endpoint = f"/api/{api_version}/trackedEntityInstances"
@@ -75,7 +75,7 @@ class Dhis2ApiTests(SimpleTestCase):
             "Query results do not match query filter."
         )
 
-    @patch('corehq.motech.requests.RequestLog', Mock())
+    @patch('corehq.motech.requests.RequestLogPartitioned', Mock())
     def test_grid_query(self):
         city = "Johannesburg"
         endpoint = f"/api/{api_version}/trackedEntityInstances/query"
@@ -89,7 +89,7 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
 
-    @patch('corehq.motech.requests.RequestLog', Mock())
+    @patch('corehq.motech.requests.RequestLogPartitioned', Mock())
     def test_create(self):
         endpoint = f"/api/{api_version}/trackedEntityInstances"
         json_data = {
@@ -116,7 +116,7 @@ class Dhis2ApiTests(SimpleTestCase):
         tei_url = result["response"]["importSummaries"][0]["href"]
         assert_true(tei_url.startswith(base_url))
 
-    @patch('corehq.motech.requests.RequestLog', Mock())
+    @patch('corehq.motech.requests.RequestLogPartitioned', Mock())
     def test_update(self):
         tei_id = "wrqfV2SkucE"
         with get_tracked_entity(self.requests, tei_id) as person:

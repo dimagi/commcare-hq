@@ -12,7 +12,7 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
-from corehq.motech.models import RequestLog, RequestLogEntry
+from corehq.motech.models import RequestLogPartitioned, RequestLogEntry
 from corehq.motech.utils import (
     get_endpoint_url,
     pformat_json,
@@ -115,7 +115,7 @@ class Requests(object):
         self.auth_manager = auth_manager
         self.notify_addresses = notify_addresses if notify_addresses else []
         self.payload_id = payload_id
-        self.logger = logger or RequestLog.log
+        self.logger = logger or RequestLogPartitioned.log
         self.send_request = log_request(self, self._send_request, self.logger)
         self._session = None
 

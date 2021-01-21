@@ -7,7 +7,7 @@ import requests
 from mock import Mock, patch
 
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
-from corehq.motech.models import ConnectionSettings, RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLogPartitioned
 from corehq.motech.requests import get_basic_requests
 from corehq.util import as_text
 
@@ -49,7 +49,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
         self.request_mock = self.request_patcher.start()
         self.request_mock.return_value = self.response_mock
 
-        self.create_patcher = patch.object(RequestLog.objects, 'create')
+        self.create_patcher = patch.object(RequestLogPartitioned.objects, 'create')
         self.create_mock = self.create_patcher.start()
 
     def tearDown(self):

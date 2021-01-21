@@ -115,7 +115,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.motech.models import RequestLog
+from corehq.motech.models import RequestLogPartitioned
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
     RepeaterStub,
@@ -898,12 +898,12 @@ class TestDeleteDomain(TestCase):
 
     def _assert_motech_count(self, domain_name, count):
         self._assert_queryset_count([
-            RequestLog.objects.filter(domain=domain_name),
+            RequestLogPartitioned.objects.filter(domain=domain_name),
         ], count)
 
     def test_motech_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            RequestLog.objects.create(domain=domain_name)
+            RequestLogPartitioned.objects.create(domain=domain_name)
             self._assert_motech_count(domain_name, 1)
 
         self.domain.delete()

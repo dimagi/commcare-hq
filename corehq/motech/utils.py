@@ -131,7 +131,7 @@ def unpack_request_args(request_method, args, kwargs):
     if data is None:
         data = json_data
     # Don't bother trying to cast `data` as a dict.
-    # RequestLog.request_body will store it, and it will be rendered
+    # RequestLogPartitioned.request_body will store it, and it will be rendered
     # as prettified JSON if possible, regardless of whether it's a
     # dict or a string.
     if args:
