@@ -352,7 +352,7 @@ class SubmissionPost(object):
             logger.info(attachment_msg, *attachment_props)
 
     def _log_form_completion(self, form, submission_type):
-        # Orig_id only exists on SQL forms
+        # Orig_id doesn't exist on all couch forms, only XFormError and XFormDeprecated
         if hasattr(form, 'orig_id') and form.orig_id is not None:
             logger.info('Finished %s processing for Form %s with original id %s',
                 submission_type, form.form_id, form.orig_id)
