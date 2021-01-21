@@ -97,36 +97,37 @@ class Command(BaseCommand):
 
 
 def process_row(row, validate, dry_run):
-    def _log_message(msg):
+    def _log_message(msg, is_error=True):
+        status = 'ERROR' if is_error else 'SUCCESS'
         row_csv = ','.join(row)
-        sys.stderr.write(f'{row_csv},"{msg}"\n')
+        print(f'{row_csv},{status},"{msg}"')
 
     domain, username, as_user = row
     if validate:
         user = CouchUser.get_by_username(username)
         if not user:
-            _log_message("ERROR: unknown username")
+            _log_message("unknown username")
             return
 
         if as_user:
             as_username = format_username(as_user, domain) if '@' not in as_user else as_user
             restore_as_user = CouchUser.get_by_username(as_username)
             if not restore_as_user:
-                _log_message("ERROR: unknown as_user")
+                _log_message("unknown as_user")
 
             if domain != restore_as_user.domain:
-                _log_message("ERROR: domain mismatch with as_user")
+                _log_message("domain mismatch with as_user")
 
     if dry_run:
-        _log_message("dry run success")
+        _log_message("dry run success", is_error=False)
         return
 
     try:
         sync_db(domain, username, as_user or None)
     except FormplayerResponseException as e:
-        _log_message(f"ERROR: {e.response_json['exception']}")
+        _log_message(f"{e.response_json['exception']}")
     except Exception as e:
-        _log_message(f"ERROR: {e}")
+        _log_message(f"{e}")
 
 
 def _get_users_from_csv(path):
