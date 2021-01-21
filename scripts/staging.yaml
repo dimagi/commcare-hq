@@ -78,6 +78,5 @@ branches:
   - bmb/sso-debug  # Biyeun Jan 12
   - sr/casesearch  # Sravan Jan 18
   - dmr/formplayer-sync-db  # SK Jan 18
-  - mjr/missing-attachments  # Matt Jan 20
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
 submodules: {}
