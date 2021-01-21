@@ -41,7 +41,7 @@ def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
     if locked_out:
         lockout_result = 'locked_out'
     else:
-        lockout_result = 'should_be_locked_out' if not user.should_be_locked_out() else 'allowed_to_retry'
+        lockout_result = 'should_be_locked_out' if user.should_be_locked_out() else 'allowed_to_retry'
 
     metrics_counter('commcare.auth.failed_attempts', tags={
         'result': lockout_result

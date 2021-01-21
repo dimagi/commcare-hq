@@ -308,8 +308,8 @@ class HQAuthenticationTokenForm(AuthenticationTokenForm):
             else:
                 raise
 
-        # Handle the edge-case where the user locks himself out on this screen,
-        # then enters a correct token afterwards
+        # Handle the edge-case where the user enters a correct token
+        # after being locked out
         couch_user = CouchUser.get_by_username(self.user.username)
         if couch_user and couch_user.is_locked_out():
             metrics_counter('commcare.auth.lockouts')
@@ -332,10 +332,10 @@ class HQBackupTokenForm(BackupTokenForm):
             else:
                 raise
 
-        # Handle the edge-case where the user locks himself out on this screen,
-        # then enters a correct token afterwards
+        # Handle the edge-case where the user enters a correct token
+        # after being locked out
         couch_user = CouchUser.get_by_username(self.user.username)
         if couch_user and couch_user.is_locked_out():
-            metrics_counter('commcare.auth.token_lockout')
+            metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
         return cleaned_data
