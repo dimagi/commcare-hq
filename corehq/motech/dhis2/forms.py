@@ -143,9 +143,7 @@ class DataSetMapForm(forms.ModelForm):
             or cleaned_data.get('org_unit_column')
         ):
             self.add_error('org_unit_column', _(
-                'Please set either a fixed value for "OrgUnitID", or '
-                'specify an "OrgUnitID column" where a DHIS2 Organisation '
-                'Unit ID will be found.'
+                'Either "OrgUnitID" or "OrgUnitID column" is required.'
             ))
 
         if (
@@ -153,9 +151,8 @@ class DataSetMapForm(forms.ModelForm):
             and cleaned_data.get('org_unit_column')
         ):
             self.add_error('org_unit_column', _(
-                'Please set either a fixed value for "OrgUnitID", or '
-                'specify an "OrgUnitID column" where a DHIS2 Organisation '
-                'Unit ID will be found, but not both.'
+                'Either "OrgUnitID" or "OrgUnitID column" is required, but '
+                'not both.'
             ))
 
         if (
@@ -163,11 +160,9 @@ class DataSetMapForm(forms.ModelForm):
             and cleaned_data.get('period_column')
         ):
             self.add_error('period_column', _(
-                'Please set a fixed value for "Period", or specify a "Period '
-                'column" where a period will be found, or if the UCR has a '
-                'date filter then leave both fields blank to filter the UCR '
-                'by the date range of the previous period. Do not set both '
-                '"Period" and "Period column".'
+                'Either "Period" or "Period column" is required, but not '
+                'both. Alternatively, leave both fields blank to use the '
+                "UCR's date filter."
             ))
 
         return self.cleaned_data
