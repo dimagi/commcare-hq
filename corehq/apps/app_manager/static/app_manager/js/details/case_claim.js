@@ -7,6 +7,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
                 return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
             });
+        },
+        subscribeToSave = function (model, observableNames, saveButton) {
+            _.each(observableNames, function (name) {
+                model[name].subscribe(function () {
+                    saveButton.fire('change');
+                });
+            });
         };
 
     var itemsetModel = function (options, saveButton) {
@@ -50,19 +57,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             },
         });
 
-        // Nodeset: if the nodeset is in the list,
-        self.nodeset.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.label.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.value.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.sort.subscribe(function () {
-            saveButton.fire('change');
-        });
+        subscribeToSave(self, ['nodeset', 'label', 'value', 'sort'], saveButton);
 
         return self;
     };
@@ -82,15 +77,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        self.name.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.label.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.appearance.subscribe(function () {
-            saveButton.fire('change');
-        });
+        subscribeToSave(self, ['name', 'label', 'appearance'], saveButton);
 
         return self;
     };
@@ -102,12 +89,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
         var self = ko.mapping.fromJS(options);
 
-        self.property.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.defaultValue.subscribe(function () {
-            saveButton.fire('change');
-        });
+        subscribeToSave(self, ['property', 'defaultValue'], saveButton);
 
         return self;
     };
@@ -309,23 +291,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             }, self.serializeWorkflow());
         };
 
-        _.each(searchConfigObservableKeys, function (key) {
-            self[key].subscribe(function () {
-                saveButton.fire('change');
-            });
-        });
-        self.searchWorkflow.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.relevant.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.defaultProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
+        subscribeToSave(self, searchConfigObservableKeys.concat(['searchWorkflow', 'relevant', 'searchProperties', 'defaultProperties']), saveButton);
 
         return self;
     };
