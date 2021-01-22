@@ -14,7 +14,11 @@ from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.models import ConnectionSettings
 
-from .const import SEND_FREQUENCY_CHOICES, SEND_FREQUENCY_MONTHLY
+from .const import (
+    SEND_FREQUENCY_CHOICES,
+    SEND_FREQUENCY_MONTHLY,
+    SEND_FREQUENCY_WEEKLY,
+)
 from .models import SQLDataSetMap, SQLDataValueMap
 
 
@@ -163,6 +167,23 @@ class DataSetMapForm(forms.ModelForm):
                 'Either "Period" or "Period column" is required, but not '
                 'both. Alternatively, leave both fields blank to use the '
                 "UCR's date filter."
+            ))
+
+        if (
+            cleaned_data.get('frequency') == SEND_FREQUENCY_WEEKLY
+            and not 1 <= cleaned_data.get('day_to_send') <= 7
+        ):
+            self.add_error('day_to_send', _(
+                'Enter a day of the week, where Monday is 1 and Sunday is 7.'
+            ))
+
+        if (
+            cleaned_data.get('frequency') != SEND_FREQUENCY_WEEKLY
+            and not 1 <= cleaned_data.get('day_to_send') <= 28
+        ):
+            self.add_error('day_to_send', _(
+                'Enter a day of the month that occurs in every month (i.e. '
+                'from 1 to 28).'
             ))
 
         return self.cleaned_data
