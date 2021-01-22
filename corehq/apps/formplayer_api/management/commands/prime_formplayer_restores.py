@@ -148,13 +148,15 @@ def _get_users_from_csv(path):
 def _get_user_db_query(domains, date_cutoff, min_cases, limit):
     query = SyncLogSQL.objects.values(
         "domain", "user_id", "request_user_id"
-    ).filter(date__gt=date_cutoff, is_formplayer=True).order_by("date")
+    ).filter(date__gt=date_cutoff, is_formplayer=True)
 
     if domains:
         query = query.filter(domain__in=domains)
 
     if min_cases:
         query = query.filter(case_count__gte=min_cases)
+
+    query = query.distinct()
 
     if limit:
         query = query[:limit]
