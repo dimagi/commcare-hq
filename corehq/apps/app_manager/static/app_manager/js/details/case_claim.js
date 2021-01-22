@@ -9,6 +9,64 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
+    var itemsetModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            'instance_id': '',
+            'instance_uri': '',
+            'nodeset': '',
+            'label': '',
+            'value': '',
+            'sort': '',
+        });
+        var self = ko.mapping.fromJS(options);
+
+        self.lookupTableNodeset = ko.pureComputed({
+            write: function (value) {
+                self.nodeset(value);
+                var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
+                    matches = reg.exec(value);
+                if (matches && matches.length > 1) {
+                    var instanceId = matches[1],
+                        itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
+
+                    self.instance_id(instanceId);
+                    if (itemList) {
+                        self.instance_uri(itemList['uri']);
+                    }
+                }
+            },
+            read: function () {
+                // is the nodeset a lookup table that we know about?
+                var itemLists = get('js_options').item_lists,
+                    itemListNodesets = _.map(itemLists, function (item) {
+                        return "instance('" + item.id + "')" + item.path;
+                    });
+                if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
+
+                    return self.nodeset();
+                } else {
+                    return '';
+                }
+            },
+        });
+
+        // Nodeset: if the nodeset is in the list,
+        self.nodeset.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.label.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.value.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.sort.subscribe(function () {
+            saveButton.fire('change');
+        });
+
+        return self;
+    };
+
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchRelevant', 'sessionVar',
@@ -25,64 +83,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var searchViewModel = function (searchProperties, defaultProperties, searchConfig, lang, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
-
-        var itemsetModel = function (instanceId, instanceUri, nodeset, label, value, sort) {
-            var self = {};
-
-            self.instance_id = ko.observable(instanceId);
-            self.instance_uri = ko.observable(instanceUri);
-            self.nodeset = ko.observable(nodeset);
-
-            self.label = ko.observable(label);
-            self.value = ko.observable(value);
-            self.sort = ko.observable(sort);
-
-            self.lookupTableNodeset = ko.pureComputed({
-                write: function (value) {
-                    self.nodeset(value);
-                    var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
-                        matches = reg.exec(value);
-                    if (matches && matches.length > 1) {
-                        var instanceId = matches[1],
-                            itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
-
-                        self.instance_id(instanceId);
-                        if (itemList) {
-                            self.instance_uri(itemList['uri']);
-                        }
-                    }
-                },
-                read: function () {
-                    // is the nodeset a lookup table that we know about?
-                    var itemLists = get('js_options').item_lists,
-                        itemListNodesets = _.map(itemLists, function (item) {
-                            return "instance('" + item.id + "')" + item.path;
-                        });
-                    if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
-
-                        return self.nodeset();
-                    } else {
-                        return '';
-                    }
-                },
-            });
-
-            // Nodeset: if the nodeset is in the list,
-            self.nodeset.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.label.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.value.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.sort.subscribe(function () {
-                saveButton.fire('change');
-            });
-
-            return self;
-        };
 
         var searchProperty = function (name, label, appearance, itemset) {
             var self = {};
@@ -202,15 +202,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
-                var propItemSet = itemsetModel(
-                    searchProperties[i].itemset.instance_id,
-                    searchProperties[i].itemset.instance_uri,
-                    searchProperties[i].itemset.nodeset,
-                    searchProperties[i].itemset.label,
-                    searchProperties[i].itemset.value,
-                    searchProperties[i].itemset.sort,
-                    searchProperties[i].itemset.filter
-                );
+                var propItemSet = itemsetModel({
+                    instance_id: searchProperties[i].itemset.instance_id,
+                    instance_uri: searchProperties[i].itemset.instance_uri,
+                    nodeset: searchProperties[i].itemset.nodeset,
+                    label: searchProperties[i].itemset.label,
+                    value: searchProperties[i].itemset.value,
+                    sort: searchProperties[i].itemset.sort,
+                }, saveButton);
                 self.searchProperties.push(searchProperty(
                     searchProperties[i].name,
                     label,
@@ -219,11 +218,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 ));
             }
         } else {
-            self.searchProperties.push(searchProperty('', '', '', itemsetModel()));
+            self.searchProperties.push(searchProperty('', '', '', itemsetModel({}, saveButton)));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(searchProperty('', '', '', itemsetModel()));
+            self.searchProperties.push(searchProperty('', '', '', itemsetModel({}, saveButton)));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
