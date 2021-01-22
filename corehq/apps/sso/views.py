@@ -5,14 +5,22 @@ from django.http import (
     HttpResponseServerError,
     HttpResponseRedirect,
 )
+from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
+from corehq.util.soft_assert import soft_assert
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
+
+
+sso_soft_assert = soft_assert(
+    to=['{}@{}'.format('biyeun', 'dimagi.com')],
+    send_to_ops=False
+)
 
 
 @identity_provider_required
@@ -34,6 +42,7 @@ def sso_saml_metadata(request, idp_slug):
 
 
 @use_saml2_auth
+@csrf_exempt
 def sso_saml_acs(request, idp_slug):
     """
     ACS stands for "Assertion Consumer Service". The Identity Provider will send
@@ -48,13 +57,24 @@ def sso_saml_acs(request, idp_slug):
     success_slo = False
     attributes = False
     saml_user_data_present = False
+    request_id = None
+    processed_response = None
+    relay_state = None
+    saml_relay = None
+    self_url = None
+    request_session_data = None
 
-    request_id = request.session.get('AuthNRequestID')
-    request.saml2_auth.process_response(request_id=request_id)
-    errors = request.saml2_auth.get_errors()
-    not_auth_warn = not request.saml2_auth.is_authenticated()
+    try:
+        request_id = request.session.get('AuthNRequestID')
+        processed_response = request.saml2_auth.process_response(request_id=request_id)
+        errors = request.saml2_auth.get_errors()
+        not_auth_warn = not request.saml2_auth.is_authenticated()
+    except Exception as e:
+        errors = [e]
+        not_auth_warn = True
 
     if not errors:
+        sso_soft_assert(False, 'not errors')
         if 'AuthNRequestID' in request.session:
             del request.session['AuthNRequestID']
 
@@ -65,26 +85,42 @@ def sso_saml_acs(request, idp_slug):
         request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
         request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
 
-        if ('RelayState' in request.POST
-            and OneLogin_Saml2_Utils.get_self_url(request) != request.POST['RelayState']
-        ):
-            return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
-    elif request.saml2_auth.get_settings().is_debug_active():
+        request_session_data = {
+            "samlUserdata": request.session['samlUserdata'],
+            "samlNameId": request.session['samlNameId'],
+            "samlNameIdFormat": request.session['samlNameIdFormat'],
+            "samlNameIdNameQualifier": request.session['samlNameIdNameQualifier'],
+            "samlNameIdSPNameQualifier": request.session['samlNameIdSPNameQualifier'],
+            "samlSessionIndex": request.session['samlSessionIndex'],
+        }
+
+        if 'RelayState' in request.POST:
+            relay_state = request.POST['RelayState']
+            self_url = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
+            saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
+    else:
         error_reason = request.saml2_auth.get_last_error_reason()
 
     # todo what's below is a debugging placeholder
     if 'samlUserdata' in request.session:
         saml_user_data_present = True
         if len(request.session['samlUserdata']) > 0:
-            attributes = request.session['samlUserdata'].items()
+            attributes = list(request.session['samlUserdata'].items())
 
     return HttpResponse(json.dumps({
         "errors": errors,
         "error_reason": error_reason,
         "not_auth_warn": not_auth_warn,
         "success_slo": success_slo,
-        "attributes": attributes,
+        "request_data": request.saml2_request_data,
         "saml_user_data_present": saml_user_data_present,
+        "request_id": request_id,
+        "processed_response": processed_response,
+        "relay_state": relay_state,
+        "saml_relay": saml_relay,
+        "self_url": self_url,
+        "attributes": attributes,
+        "request_session_data": request_session_data,
     }), 'text/json')
 
 
@@ -135,7 +171,19 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    return HttpResponseRedirect(request.saml2_auth.login())
+    if request.saml2_errors:
+        return HttpResponse(json.dumps({
+            "errors": request.saml2_errors,
+            "request_data": request.saml2_request_data,
+        }), 'text/json')
+    try:
+        return HttpResponseRedirect(request.saml2_auth.login())
+    except Exception as e:
+        return HttpResponse(json.dumps({
+            "errors": e,
+            "failure_point": 'after redirect',
+            "request_data": request.saml2_request_data,
+        }), 'text/json')
 
 
 @use_saml2_auth
