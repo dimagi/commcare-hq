@@ -5,6 +5,7 @@ from django.http import (
     HttpResponseServerError,
     HttpResponseRedirect,
 )
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
@@ -158,5 +159,6 @@ def sso_saml_logout(request, idp_slug):
         session_index=request.session.get('samlSessionIndex'),
         nq=request.session.get('samlNameIdNameQualifier'),
         name_id_format=request.session.get('samlNameIdFormat'),
-        spnq=request.session.get('samlNameIdSPNameQualifier')
+        spnq=request.session.get('samlNameIdSPNameQualifier'),
+        return_to=reverse('sso_saml_sls', args=(idp_slug,))
     ))
