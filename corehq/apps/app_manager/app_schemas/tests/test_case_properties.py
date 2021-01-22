@@ -44,6 +44,17 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             })
             self.assertCaseProperties(factory.app, 'house', ['foo', 'bar'])
 
+    def test_owner_id_maps_to_attribute(self):
+        factory = AppFactory()
+        # Create form1 which uses case type 'house'
+        module1, form1 = factory.new_module(Module, 'open_case', 'house')
+        # Form1 updates house.owner_id
+        factory.form_requires_case(form1, case_type='house', update={
+            'owner_id': 'new_owner'
+        })
+        # Verify that the actual case property is '@owner_id', not 'owner_id'
+        self.assertCaseProperties(factory.app, 'house', ['@owner_id'])
+
     def test_case_sharing(self):
         factory1 = AppFactory()
         factory2 = AppFactory()
