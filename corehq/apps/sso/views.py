@@ -5,6 +5,7 @@ from django.http import (
     HttpResponseServerError,
     HttpResponseRedirect,
 )
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
@@ -106,6 +107,7 @@ def sso_saml_sls(request, idp_slug):
     success_slo = False
     attributes = False
     saml_user_data_present = False
+    redirect_url = None
 
     request_id = request.session.get('LogoutRequestID')
     url = request.saml2_auth.process_slo(
@@ -116,17 +118,18 @@ def sso_saml_sls(request, idp_slug):
 
     if len(errors) == 0:
         if url is not None:
-            return HttpResponseRedirect(url)
+            redirect_url = url
+            # return HttpResponseRedirect(url)
         else:
             success_slo = True
-    elif request.saml2_auth.get_settings().is_debug_active():
+    else:
         error_reason = request.saml2_auth.get_last_error_reason()
 
     # todo what's below is a debugging placeholder
     if 'samlUserdata' in request.session:
         saml_user_data_present = True
         if len(request.session['samlUserdata']) > 0:
-            attributes = request.session['samlUserdata'].items()
+            attributes = list(request.session['samlUserdata'].items())
 
     return HttpResponse(json.dumps({
         "errors": errors,
@@ -134,6 +137,7 @@ def sso_saml_sls(request, idp_slug):
         "success_slo": success_slo,
         "attributes": attributes,
         "saml_user_data_present": saml_user_data_present,
+        "redirect_url": redirect_url,
     }), 'text/json')
 
 
@@ -155,5 +159,6 @@ def sso_saml_logout(request, idp_slug):
         session_index=request.session.get('samlSessionIndex'),
         nq=request.session.get('samlNameIdNameQualifier'),
         name_id_format=request.session.get('samlNameIdFormat'),
-        spnq=request.session.get('samlNameIdSPNameQualifier')
+        spnq=request.session.get('samlNameIdSPNameQualifier'),
+        return_to=reverse('sso_saml_sls', args=(idp_slug,))
     ))
