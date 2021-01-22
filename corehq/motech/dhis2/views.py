@@ -56,7 +56,8 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for dataset_map in self.base_query.all():
+        start, end = self.skip, self.skip + self.limit
+        for dataset_map in self.base_query.all()[start:end]:
             yield {
                 "itemData": self._get_item_data(dataset_map),
                 "template": "dataset-map-template",
@@ -188,7 +189,8 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
 
     @property
     def paginated_list(self):
-        for datavalue_map in self.base_query.all():
+        start, end = self.skip, self.skip + self.limit
+        for datavalue_map in self.base_query.all()[start:end]:
             yield {
                 "itemData": self._get_item_data(datavalue_map),
                 "template": "datavalue-map-template",
