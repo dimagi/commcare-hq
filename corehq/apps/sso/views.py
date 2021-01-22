@@ -97,6 +97,28 @@ def sso_saml_acs(request, idp_slug):
 
 
 @use_saml2_auth
+def sso_saml_status(request, idp_slug):
+    """
+    This view is for development debugging purposes only and will be removed
+    once development is complete
+    """
+    is_authenticated_with_saml = request.saml2_auth.is_authenticated()
+    request_session_data = {
+        "samlUserdata": request.session['samlUserdata'],
+        "samlNameId": request.session['samlNameId'],
+        "samlNameIdFormat": request.session['samlNameIdFormat'],
+        "samlNameIdNameQualifier": request.session['samlNameIdNameQualifier'],
+        "samlNameIdSPNameQualifier": request.session[
+            'samlNameIdSPNameQualifier'],
+        "samlSessionIndex": request.session['samlSessionIndex'],
+    }
+    return HttpResponse(json.dumps({
+        "request_session_data": request_session_data,
+        "is_authenticated_with_saml": is_authenticated_with_saml,
+    }))
+
+
+@use_saml2_auth
 def sso_saml_sls(request, idp_slug):
     """
     SLS stands for Single Logout Service. This view is responsible for
