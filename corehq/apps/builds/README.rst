@@ -103,53 +103,14 @@ You'll have to rebuild and redeploy your application to get it to sync.
 Adding CommCare (J2ME) Builds to CommCare HQ
 =====================================
 
-Following is a manual process to find and import a build. Alternatively, you can run
+- Go to `http://HQ_ADDRESS/builds/edit_menu/`
+- In the second section `Import a new build from the build server`
 
-``./manage.py commcare*build*importer`` to do the same without leaving your console.
+   #. In the Version field input the version in `x.y.z` format
+   #. In `Build Number` input any number (It doesn't matter what number)
+   #. Click `Import Build`
+- Now make sure the build is available in the app settings.  Go to ``/builds/edit_menu/``, then add the version and a label. You can also set the default here to be the version you've added.
 
-This will run you through all the builds and let you import the build you need.
-
--  First you need to get the CommCare build off the Dimagi build server:
-
-   #. Go here https://jenkins.dimagi.com/
-
-   #. Select the commcare\-core job for the version of CommCare you are interested in (e.g. "commcare\-core\-2.30")
-
-   #. Pick a build (probably the first one in the table on the left) and write down
-
-      the build number (under "#"). This will be referenced as ``$build_number``
-
-      below
-
-   #. Click on that row
-
-   #. Select the "Environment Variables" tab and write down the VERSION (all
-
-      the way at the bottom of the table.) This will
-
-      be referenced as ``$version`` below
-
-   #. Go back, and select "Build Artifacts" \-> "application" \-> "posttmp" \-> "artifacts.zip".   If you use the commandline option below,
-
-      note the path of the downloaded file. This will be
-
-      referenced as ``$build_path``.
-
-      If you use the web UI, copy the download URL. This will be called ``build_url``.
-
-You now have two options for how to install it.
-
-- Command line:
-
-  - ``cd`` into the commcare\-hq root directory, and run the following command:
-
-    ``python manage.py add_commcare_build $build_path $version $build_number``
-
-- Web UI
-
-  - Go to ``/builds/edit_menu/`` and follow the instructions at the bottom for adding your build.
-
-Now make sure the build is available in the app settings.  Go to ``/builds/edit_menu/``, then add the version and a label. You can also set the default here to be the version you've added.
 
 For legacy J2ME builds
 ^^^^^^^^^^^^^^^^^^^^^^
