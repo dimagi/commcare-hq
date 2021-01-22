@@ -137,8 +137,8 @@ class SQLDataSetMap(models.Model):
         try:
             return get_document_or_not_found(ReportConfiguration,
                                              self.domain, self.ucr_id)
-        except DocumentNotFound as err:
-            raise ValueError('UCR not found for {self!r}') from err
+        except DocumentNotFound:
+            return None
 
 
 class SQLDataValueMap(models.Model):
@@ -231,6 +231,8 @@ def get_dataset(
     dataset_map: Union[DataSetMap, SQLDataSetMap],
     send_date: date
 ) -> dict:
+    if not dataset_map.ucr:
+        raise ValueError('UCR not found for {dataset_map!r}')
     date_filter = get_date_filter(dataset_map.ucr)
     date_range = get_date_range(dataset_map.frequency, send_date)
     ucr_data = get_ucr_data(dataset_map.ucr, date_filter, date_range)

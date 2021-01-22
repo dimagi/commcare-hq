@@ -83,7 +83,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
             'description': dataset_map.description,
             'connectionSettings': str(dataset_map.connection_settings),
             'frequency': frequency_names[dataset_map.frequency],
-            'ucr': dataset_map.ucr.title,
+            'ucr': dataset_map.ucr.title if dataset_map.ucr else None,
 
             'editUrl': reverse(
                 DataSetMapUpdateView.urlname,
