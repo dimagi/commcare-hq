@@ -6,7 +6,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription, Def
     SubscriptionAdjustment
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.utils import get_or_create_default_export_settings_for_domain
-from corehq.util.test_utils import flag_enabled, generate_cases
+from corehq.util.test_utils import flag_enabled
 
 
 class TestExportUtils(TestCase):
