@@ -47,12 +47,11 @@ def sso_saml_acs(request, idp_slug):
     """
     # todo these are placeholders for the json dump below
     error_reason = None
-    success_slo = False
-    attributes = False
-    saml_user_data_present = False
+    request_session_data = None
+    saml_relay = None
 
     request_id = request.session.get('AuthNRequestID')
-    request.saml2_auth.process_response(request_id=request_id)
+    processed_response = request.saml2_auth.process_response(request_id=request_id)
     errors = request.saml2_auth.get_errors()
     not_auth_warn = not request.saml2_auth.is_authenticated()
 
@@ -67,26 +66,32 @@ def sso_saml_acs(request, idp_slug):
         request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
         request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
 
-        if ('RelayState' in request.POST
-            and OneLogin_Saml2_Utils.get_self_url(request) != request.POST['RelayState']
-        ):
-            return HttpResponseRedirect(request.saml2_auth.redirect_to(request.POST['RelayState']))
-    elif request.saml2_auth.get_settings().is_debug_active():
-        error_reason = request.saml2_auth.get_last_error_reason()
+        # todo for debugging purposes to dump into the response below
+        request_session_data = {
+            "samlUserdata": request.session['samlUserdata'],
+            "samlNameId": request.session['samlNameId'],
+            "samlNameIdFormat": request.session['samlNameIdFormat'],
+            "samlNameIdNameQualifier": request.session['samlNameIdNameQualifier'],
+            "samlNameIdSPNameQualifier": request.session['samlNameIdSPNameQualifier'],
+            "samlSessionIndex": request.session['samlSessionIndex'],
+        }
 
-    # todo what's below is a debugging placeholder
-    if 'samlUserdata' in request.session:
-        saml_user_data_present = True
-        if len(request.session['samlUserdata']) > 0:
-            attributes = request.session['samlUserdata'].items()
+        # todo redirect here?
+        saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
+
+        # todo this is the point where we would initiate a django auth session
+
+    else:
+        error_reason = request.saml2_auth.get_last_error_reason()
 
     return HttpResponse(json.dumps({
         "errors": errors,
         "error_reason": error_reason,
         "not_auth_warn": not_auth_warn,
-        "success_slo": success_slo,
-        "attributes": attributes,
-        "saml_user_data_present": saml_user_data_present,
+        "request_id": request_id,
+        "processed_response": processed_response,
+        "saml_relay": saml_relay,
+        "request_session_data": request_session_data,
     }), 'text/json')
 
 
