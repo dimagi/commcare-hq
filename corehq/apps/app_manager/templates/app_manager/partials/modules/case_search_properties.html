@@ -32,7 +32,7 @@
             <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
           </button>
-          <span data-bind="visible: property.itemSet.nodeset, text: property.itemSet.nodeset"></span>
+          <span data-bind="visible: property.itemset.nodeset, text: property.itemset.nodeset"></span>
           <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + property.uniqueId}">
             <div class="modal-dialog modal-md">
               <div class="modal-content">
@@ -48,7 +48,7 @@
                       <label class="control-label">
                         {% trans "Lookup Table" %}
                       </label>
-                      <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset">
+                      <select class="form-control" data-bind="value: property.itemset.lookupTableNodeset">
                         <option value="">{% trans "Select a lookup table..." %}</option>
                         {% for item in  js_options.item_lists %}
                           <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
@@ -57,15 +57,15 @@
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Label Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.label" placeholder="name"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemset.label" placeholder="name"/>
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Value Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.value" placeholder="id"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemset.value" placeholder="id"/>
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Sort Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.sort" placeholder="name"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemset.sort" placeholder="name"/>
                     </div>
                     <div class="panel panel-default">
                       <div class="panel-heading">
@@ -78,19 +78,19 @@
                           <label class="control-label" >
                             {% trans "Instance URI" %}
                           </label>
-                          <input class="form-control" type="text" data-bind="value: property.itemSet.instance_uri"/>
+                          <input class="form-control" type="text" data-bind="value: property.itemset.instance_uri"/>
                         </div>
                         <div class="form-group">
                           <label class="control-label" >
                             {% trans "Instance ID" %}
                           </label>
-                          <input class="form-control" type="text" data-bind="value: property.itemSet.instance_id"/>
+                          <input class="form-control" type="text" data-bind="value: property.itemset.instance_id"/>
                         </div>
                         <div class="form-group">
                           <label class="control-label" >
                             {% trans "Instance Nodeset" %}
                           </label>
-                          <input class="form-control" type="text" data-bind="value: property.itemSet.nodeset"/>
+                          <input class="form-control" type="text" data-bind="value: property.itemset.nodeset"/>
                         </div>
                       </div>
                     </div>

@@ -26,7 +26,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
-        var itemSet = function (instanceId, instanceUri, nodeset, label, value, sort) {
+        var itemsetModel = function (instanceId, instanceUri, nodeset, label, value, sort) {
             var self = {};
 
             self.instance_id = ko.observable(instanceId);
@@ -84,14 +84,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
-        var searchProperty = function (name, label, appearance, itemSet) {
+        var searchProperty = function (name, label, appearance, itemset) {
             var self = {};
             self.uniqueId = generateSemiRandomId();
             self.name = ko.observable(name);
             self.label = ko.observable(label);
             self.appearance = ko.observable(appearance);
 
-            self.itemSet = itemSet;
+            self.itemset = itemset;
 
             self.name.subscribe(function () {
                 saveButton.fire('change');
@@ -202,7 +202,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
-                var propItemSet = itemSet(
+                var propItemSet = itemsetModel(
                     searchProperties[i].itemset.instance_id,
                     searchProperties[i].itemset.instance_uri,
                     searchProperties[i].itemset.nodeset,
@@ -219,11 +219,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 ));
             }
         } else {
-            self.searchProperties.push(searchProperty('', '', '', itemSet()));
+            self.searchProperties.push(searchProperty('', '', '', itemsetModel()));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(searchProperty('', '', '', itemSet()));
+            self.searchProperties.push(searchProperty('', '', '', itemsetModel()));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
@@ -240,7 +240,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         appearance: p.appearance(),
-                        fixture: ko.toJSON(p.itemSet),
+                        fixture: ko.toJSON(p.itemset),
                     };
                 }
             );
