@@ -67,6 +67,51 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var searchPropertyModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            name: '',
+            label: '',
+            appearance: '',
+            itemsetOptions: {},
+        });
+        var self = {};
+        self.uniqueId = generateSemiRandomId();
+        self.name = ko.observable(options.name);
+        self.label = ko.observable(options.label);
+        self.appearance = ko.observable(options.appearance);
+
+        self.itemset = itemsetModel(options.itemsetOptions, saveButton);
+
+        self.name.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.label.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.appearance.subscribe(function () {
+            saveButton.fire('change');
+        });
+
+        return self;
+    };
+
+    var defaultPropertyModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            property: '',
+            defaultValue: '',
+        });
+        var self = ko.mapping.fromJS(options);
+
+        self.property.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.defaultValue.subscribe(function () {
+            saveButton.fire('change');
+        });
+
+        return self;
+    };
+
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchRelevant', 'sessionVar',
@@ -83,43 +128,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var searchViewModel = function (searchProperties, defaultProperties, searchConfig, lang, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
-
-        var searchProperty = function (name, label, appearance, itemset) {
-            var self = {};
-            self.uniqueId = generateSemiRandomId();
-            self.name = ko.observable(name);
-            self.label = ko.observable(label);
-            self.appearance = ko.observable(appearance);
-
-            self.itemset = itemset;
-
-            self.name.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.label.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.appearance.subscribe(function () {
-                saveButton.fire('change');
-            });
-
-            return self;
-        };
-
-        var defaultProperty = function (property, defaultValue) {
-            var self = {};
-            self.property = ko.observable(property);
-            self.defaultValue = ko.observable(defaultValue);
-
-            self.property.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.defaultValue.subscribe(function () {
-                saveButton.fire('change');
-            });
-
-            return self;
-        };
 
         self.getWorkflow = function (autoLaunch, defaultSearch) {
             if (autoLaunch) {
@@ -202,27 +210,26 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
-                var propItemSet = itemsetModel({
-                    instance_id: searchProperties[i].itemset.instance_id,
-                    instance_uri: searchProperties[i].itemset.instance_uri,
-                    nodeset: searchProperties[i].itemset.nodeset,
-                    label: searchProperties[i].itemset.label,
-                    value: searchProperties[i].itemset.value,
-                    sort: searchProperties[i].itemset.sort,
-                }, saveButton);
-                self.searchProperties.push(searchProperty(
-                    searchProperties[i].name,
-                    label,
-                    appearance,
-                    propItemSet
-                ));
+                self.searchProperties.push(searchPropertyModel({
+                    name: searchProperties[i].name,
+                    label: label,
+                    appearance: appearance,
+                    itemsetOptions: {
+                        instance_id: searchProperties[i].itemset.instance_id,
+                        instance_uri: searchProperties[i].itemset.instance_uri,
+                        nodeset: searchProperties[i].itemset.nodeset,
+                        label: searchProperties[i].itemset.label,
+                        value: searchProperties[i].itemset.value,
+                        sort: searchProperties[i].itemset.sort,
+                    },
+                }, saveButton));
             }
         } else {
-            self.searchProperties.push(searchProperty('', '', '', itemsetModel({}, saveButton)));
+            self.searchProperties.push(searchPropertyModel({}, saveButton));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(searchProperty('', '', '', itemsetModel({}, saveButton)));
+            self.searchProperties.push(searchPropertyModel({}, saveButton));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
@@ -247,16 +254,16 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (defaultProperties.length > 0) {
             for (var k = 0; k < defaultProperties.length; k++) {
-                self.defaultProperties.push(defaultProperty(
-                    defaultProperties[k].property,
-                    defaultProperties[k].defaultValue
-                ));
+                self.defaultProperties.push(defaultPropertyModel({
+                    property: defaultProperties[k].property,
+                    defaultValue: defaultProperties[k].defaultValue,
+                }, saveButton));
             }
         } else {
-            self.defaultProperties.push(defaultProperty('', ''));
+            self.defaultProperties.push(defaultPropertyModel({}, saveButton));
         }
         self.addDefaultProperty = function () {
-            self.defaultProperties.push(defaultProperty('',''));
+            self.defaultProperties.push(defaultPropertyModel({}, saveButton));
         };
         self.removeDefaultProperty = function (property) {
             self.defaultProperties.remove(property);
