@@ -22,6 +22,12 @@ class TestDecorators(TestCase):
 
         self.request = RequestFactory().get('/sso/test')
         self.request_args = (self.idp.slug, )
+        self.request.is_secure = lambda: False
+        self.request.META = {
+            'HTTP_HOST': 'test.commcarehq.org',
+            'PATH_INFO': '/sso/test',
+            'SERVER_PORT': '80',
+        }
         self.view = mock.MagicMock(return_value='fake response')
 
     def test_identity_provider_required_decorator(self):
@@ -37,6 +43,7 @@ class TestDecorators(TestCase):
 
         self.view.assert_called_once_with(self.request, *self.request_args)
         self.assertEqual(self.request.idp, self.idp)
+        self.assertIsNotNone(self.request.saml2_request_data)
         self.assertIsNotNone(self.request.saml2_auth)
 
     def tearDown(self):
