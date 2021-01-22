@@ -1,7 +1,7 @@
 import datetime
 
 from django.urls import reverse
-import settings
+from django.conf import settings
 from dimagi.utils.web import get_url_base
 
 
