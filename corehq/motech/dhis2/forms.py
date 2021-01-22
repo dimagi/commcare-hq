@@ -169,18 +169,18 @@ class DataSetMapForm(forms.ModelForm):
                 "UCR's date filter."
             ))
 
-        if (
-            cleaned_data.get('frequency') == SEND_FREQUENCY_WEEKLY
-            and not 1 <= cleaned_data.get('day_to_send') <= 7
-        ):
+        if (cleaned_data.get('frequency') == SEND_FREQUENCY_WEEKLY
+            and (not cleaned_data.get('day_to_send')
+                 or not 1 <= cleaned_data.get('day_to_send') <= 7)):
+
             self.add_error('day_to_send', _(
                 'Enter a day of the week, where Monday is 1 and Sunday is 7.'
             ))
 
-        if (
-            cleaned_data.get('frequency') != SEND_FREQUENCY_WEEKLY
-            and not 1 <= cleaned_data.get('day_to_send') <= 28
-        ):
+        elif (cleaned_data.get('frequency') != SEND_FREQUENCY_WEEKLY
+              and (not cleaned_data.get('day_to_send')
+                   or not 1 <= cleaned_data.get('day_to_send') <= 28)):
+
             self.add_error('day_to_send', _(
                 'Enter a day of the month that occurs in every month (i.e. '
                 'from 1 to 28).'
