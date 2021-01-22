@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -157,8 +157,16 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
         return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
 
     def post(self, request, *args, **kwargs):
-        super().post(request, *args, **kwargs)
-        return self.paginate_crud_response
+        post_response = super().post(request, *args, **kwargs)
+        try:
+            return self.paginate_crud_response
+        except Http404:
+            # POST was a DataSetMapForm, not a CRUD action
+            # See CRUDPaginatedViewMixin.allowed_actions
+            # **NOTE:** This means that DataSetMapForm cannot have a
+            #           field named "action"
+            pass
+        return post_response
 
     @property
     def total(self):
