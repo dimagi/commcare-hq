@@ -73,6 +73,9 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
             _('Action')
         ]
 
+    def refresh_item(self, item_id):
+        pass
+
     def _get_item_data(self, dataset_map):
         frequency_names = dict(SEND_FREQUENCY_CHOICES)
         return {
@@ -190,6 +193,9 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
                 "itemData": self._get_item_data(datavalue_map),
                 "template": "datavalue-map-template",
             }
+
+    def refresh_item(self, item_id):
+        pass
 
     def get_create_item_data(self, create_form):
         datavalue_map = create_form.save()
