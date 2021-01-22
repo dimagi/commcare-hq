@@ -1,6 +1,7 @@
 from functools import wraps
 from datetime import datetime, timedelta
 from rest_framework.views import APIView
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.conf import settings
 from django.contrib import messages
@@ -1069,6 +1070,10 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
 class CountCasesBasedOnCaseTypeView(APIView):
     urlname = 'count_cases_by_case_type'
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(CountCasesBasedOnCaseTypeView, self).dispatch(*args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         resp = {"case_count": -1}
