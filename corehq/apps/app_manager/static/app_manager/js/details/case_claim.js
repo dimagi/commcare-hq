@@ -98,7 +98,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchRelevant', 'sessionVar',
     ];
-    var searchConfigModel = function(options, lang, searchFilterObservable, saveButton) {
+    var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
         options.searchCommandLabel = options.searchCommandLabel[lang] || "";
@@ -113,7 +113,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     }
                     return "auto_launch";
                 } else if (self.defaultSearch()) {
-                   return "see_more";
+                    return "see_more";
                 }
                 return "classic";
             },
