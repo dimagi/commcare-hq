@@ -40,23 +40,23 @@ class DataSetMapForm(forms.ModelForm):
         required=False,
     )
     org_unit_id = forms.CharField(
-        label=_('OrgUnitID'),
+        label=_('OrgUnitID¹'),
         required=False,
     )
     org_unit_column = forms.CharField(
-        label=_('OrgUnitID column'),
-        help_text=_('Please set either a fixed value for "OrgUnitID", or '
+        label=_('OrgUnitID column¹'),
+        help_text=_('¹ Please set either a fixed value for "OrgUnitID", or '
                     'specify an "OrgUnitID column" where a DHIS2 Organisation '
                     'Unit ID will be found.'),
         required=False,
     )
     period = forms.CharField(
-        label=_('Period'),
+        label=_('Period²'),
         required=False,
     )
     period_column = forms.CharField(
-        label=_('Period column'),
-        help_text=_('Please set a fixed value for "Period", or specify a '
+        label=_('Period column²'),
+        help_text=_('² Please set a fixed value for "Period", or specify a '
                     '"Period column" where a period will be found, or if the '
                     'UCR has a date filter then leave both fields blank to '
                     'filter the UCR by the date range of the previous '
