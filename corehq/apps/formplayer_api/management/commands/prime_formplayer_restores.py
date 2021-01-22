@@ -89,51 +89,54 @@ class Command(BaseCommand):
             users = _get_users_from_db(domains, date_cutoff, min_cases, limit)
             validate = False
 
-        results = []
         with futures.ThreadPoolExecutor(max_workers=pool_size) as executor:
             sys.stderr.write("Spawning tasks\n")
-            for user in users:
-                results.append(executor.submit(process_row, user, validate, dry_run))
+            results = {executor.submit(process_row, user, validate, dry_run): user for user in users}
 
-            for _ in with_progress_bar(futures.as_completed(results), length=len(results), stream=sys.stderr):
-                pass
+            for future in with_progress_bar(futures.as_completed(results), length=len(results), stream=sys.stderr):
+                user = results[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    _log_message(user, f"unexpected error: {e}", is_error=True)
 
         if not results:
             sys.stderr.write("\nNo users processed")
 
 
-def process_row(row, validate, dry_run):
-    def _log_message(msg, is_error=True):
-        status = 'ERROR' if is_error else 'SUCCESS'
-        row_csv = ','.join(row)
-        print(f'{row_csv},{status},"{msg}"')
+def _log_message(row, msg, is_error=True):
+    status = 'ERROR' if is_error else 'SUCCESS'
+    row_csv = ','.join(['' if f is None else f for f in row])
+    sys.stdout.write(f'{row_csv},{status},"{msg}"\n')
 
+
+def process_row(row, validate, dry_run):
     domain, username, as_user = row
     if validate:
         user = CouchUser.get_by_username(username)
         if not user:
-            _log_message("unknown username")
+            _log_message(row, "unknown username")
             return
 
         if as_user:
             as_username = format_username(as_user, domain) if '@' not in as_user else as_user
             restore_as_user = CouchUser.get_by_username(as_username)
             if not restore_as_user:
-                _log_message("unknown as_user")
+                _log_message(row, "unknown as_user")
 
             if domain != restore_as_user.domain:
-                _log_message("domain mismatch with as_user")
+                _log_message(row, "domain mismatch with as_user")
 
     if dry_run:
-        _log_message("dry run success", is_error=False)
+        _log_message(row, "dry run success", is_error=False)
         return
 
     try:
         sync_db(domain, username, as_user or None)
     except FormplayerResponseException as e:
-        _log_message(f"{e.response_json['exception']}")
+        _log_message(row, f"{e.response_json['exception']}")
     except Exception as e:
-        _log_message(f"{e}")
+        _log_message(row, f"{e}")
 
 
 def _get_users_from_csv(path):
