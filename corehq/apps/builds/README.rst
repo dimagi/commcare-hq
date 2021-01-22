@@ -107,10 +107,9 @@ Adding CommCare (J2ME) Builds to CommCare HQ
 - In the second section `Import a new build from the build server`
 
    #. In the Version field input the version in `x.y.z` format
-   #. In `Build Number` input any number (It doesn't matter what number)
+   #. In `Build Number` input any number (it doesn't matter what number)
    #. Click `Import Build`
-- Now make sure the build is available in the app settings.  Go to ``/builds/edit_menu/``, then add the version and a label. You can also set the default here to be the version you've added.
-
+- In the first section `Menu Options` add the version to HQ to make sure the build is available in the app settings.
 
 For legacy J2ME builds
 ^^^^^^^^^^^^^^^^^^^^^^
