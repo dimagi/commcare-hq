@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict, deque, namedtuple
-from itertools import chain
 
 from memoized import memoized
 
@@ -402,6 +401,12 @@ class ParentCasePropertyBuilder(object):
 
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
+
+        for case_type, case_properties in case_properties_by_case_type.items():
+            for prop in list(case_properties):
+                if prop == 'owner_id':
+                    case_properties.remove(prop)
+                    case_properties.add('@owner_id')
 
         if self.exclude_invalid_properties:
             from corehq.apps.app_manager.helpers.validators import validate_property
