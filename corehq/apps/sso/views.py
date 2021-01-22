@@ -108,12 +108,17 @@ def sso_saml_sls(request, idp_slug):
     attributes = False
     saml_user_data_present = False
     redirect_url = None
+    url = None
+    process_slo_exception = None
 
     request_id = request.session.get('LogoutRequestID')
-    url = request.saml2_auth.process_slo(
-        request_id=request_id,
-        delete_session_cb=lambda: request.session.flush()
-    )
+    try:
+        url = request.saml2_auth.process_slo(
+            request_id=request_id,
+            delete_session_cb=lambda: request.session.flush()
+        )
+    except Exception as e:
+        process_slo_exception = e.__str__()
     errors = request.saml2_auth.get_errors()
 
     if len(errors) == 0:
@@ -138,6 +143,7 @@ def sso_saml_sls(request, idp_slug):
         "attributes": attributes,
         "saml_user_data_present": saml_user_data_present,
         "redirect_url": redirect_url,
+        "process_slo_exception": process_slo_exception,
     }), 'text/json')
 
 
