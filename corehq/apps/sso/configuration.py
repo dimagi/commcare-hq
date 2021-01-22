@@ -2,6 +2,8 @@ import datetime
 
 from django.urls import reverse
 from django.conf import settings
+from onelogin.saml2.constants import OneLogin_Saml2_Constants
+
 from dimagi.utils.web import get_url_base
 
 
@@ -16,16 +18,17 @@ def get_saml2_config(identity_provider):
                 get_url_base(),
                 reverse("sso_saml_acs", args=(identity_provider.slug,))
             ),
-            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+            "binding": OneLogin_Saml2_Constants.BINDING_HTTP_POST,
         },
         "singleLogoutService": {
             "url": "{}{}".format(
                 get_url_base(),
                 reverse("sso_saml_sls", args=(identity_provider.slug,))
             ),
-            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+            "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
-        "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        },
+        "NameIDFormat": OneLogin_Saml2_Constants.NAMEID_EMAIL_ADDRESS,
         "x509cert": identity_provider.sp_cert_public,
         "privateKey": identity_provider.sp_cert_private,
     }
@@ -41,11 +44,11 @@ def get_saml2_config(identity_provider):
             "entityId": identity_provider.entity_id,
             "singleSignOnService": {
                 "url": identity_provider.login_url,
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
             },
             "singleLogoutService": {
                 "url": identity_provider.logout_url,
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
             },
             "x509cert": identity_provider.idp_cert_public,
         },
