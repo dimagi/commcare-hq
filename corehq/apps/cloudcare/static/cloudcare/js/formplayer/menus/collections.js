@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'clearSession',
             'notification',
             'persistentCaseTile',
+            'queryKey',
             'selections',
             'tiles',
             'title',

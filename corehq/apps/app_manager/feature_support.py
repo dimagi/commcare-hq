@@ -173,3 +173,7 @@ class CommCareFeatureSupportMixin(object):
     @property
     def enable_markdown_tables(self):
         return self._require_minimum_version('2.50')
+
+    @property
+    def enable_default_value_expression(self):
+        return self._require_minimum_version('2.51')
