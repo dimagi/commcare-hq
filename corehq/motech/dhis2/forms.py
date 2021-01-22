@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -15,6 +16,8 @@ from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.models import ConnectionSettings
 
 from .const import (
+    DHIS2_UID_MESSAGE,
+    DHIS2_UID_RE,
     SEND_FREQUENCY_CHOICES,
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_WEEKLY,
@@ -225,14 +228,20 @@ class DataValueMapBaseForm(forms.ModelForm):
     column = forms.CharField(
         label=_('Column'),
         required=True,
+        validators=[RegexValidator(r'^[a-zA-Z]\w{0,63}$', _(
+            "A column name must start with a letter, and can be followed by "
+            "letters, numbers and underscores. It can't be longer than 64 "
+            "characters."))],
     )
     data_element_id = forms.CharField(
         label=_('Data element ID'),
         required=True,
+        validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
     )
     category_option_combo_id = forms.CharField(
         label=_('Category option combo ID'),
         required=True,
+        validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
     )
     comment = forms.CharField(
         label=_('Comment'),
