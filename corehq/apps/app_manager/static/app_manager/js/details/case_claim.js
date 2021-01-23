@@ -118,7 +118,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 return "classic";
             },
             write: function (value) {
-                self.autoLaunch(_.contains(["es_only", "autolaunch"], value));
+                self.autoLaunch(_.contains(["es_only", "auto_launch"], value));
                 self.defaultSearch(_.contains["es_only", "see_more"], value);
             },
         });
