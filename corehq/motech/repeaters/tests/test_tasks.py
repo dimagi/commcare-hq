@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
@@ -48,13 +49,14 @@ class TestProcessRepeaterStub(TestCase):
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
         )
-        now = timezone.now()
+        just_now = timezone.now() - timedelta(seconds=10)
         for payload_id in PAYLOAD_IDS:
             self.repeater_stub.repeat_records.create(
                 domain=self.repeater_stub.domain,
                 payload_id=payload_id,
-                registered_at=now,
+                registered_at=just_now,
             )
+            just_now += timedelta(seconds=1)
 
     def tearDown(self):
         self.repeater_stub.delete()
