@@ -373,11 +373,12 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
-            location_codes = row.get('location_code') or []
+            location_codes = row.get('location_code') or None
             if location_codes and not isinstance(location_codes, list):
                 location_codes = [location_codes]
-            # ignore empty
-            location_codes = [code for code in location_codes if code]
+            if location_codes is not None:
+                # ignore empty
+                location_codes = [code for code in location_codes if code]
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user = row.get('web_user')
@@ -457,10 +458,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 if is_active is not None:
                     user.is_active = is_active
 
-                if domain_info.can_assign_locations:
+                if domain_info.can_assign_locations and location_codes is not None:
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
                     # the user's information is updated, or none of it
+                    # Do not update location info if the column is not included at all
                     location_ids = []
                     for code in location_codes:
                         loc = get_location_from_site_code(code, domain_info.location_cache)
@@ -534,10 +536,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
                             current_user.set_role(domain, role_qualified_id)
-                            if user.location_id:
-                                current_user.set_location(domain, user.location_id)
-                            else:
-                                current_user.unset_location(domain)
+                            if location_codes is not None:
+                                if user.location_id:
+                                    current_user.set_location(domain, user.location_id)
+                                else:
+                                    current_user.unset_location(domain)
                             current_user.save()
 
                 if send_account_confirmation_email and not web_user:
