@@ -8,17 +8,26 @@ from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
 
 def get_select_chain(app, module, include_self=True):
-    select_chain = [module] if include_self else []
+    select_chain = [(module, 'case_id')] if include_self else []
     current_module = module
+    case_type = module.case_type
+    i = len(select_chain)
     while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
+        is_other_relation = current_module.parent_select.relationship is None
         current_module = app.get_module_by_unique_id(
             current_module.parent_select.module_id,
             error=_("Case list used by parent child selection in '{}' not found").format(
                 current_module.default_name()),
         )
+        if is_other_relation and case_type == current_module.case_type:
+            session_var = 'case_id_' + case_type
+        else:
+            session_var = ('parent_' * i or 'case_') + 'id'
+        case_type = current_module.case_type
         if current_module in select_chain:
             raise SuiteValidationError("Circular reference in case hierarchy")
-        select_chain.append(current_module)
+        select_chain.append((current_module, session_var))
+        i += 1
     return select_chain
 
 
@@ -37,12 +46,12 @@ def get_select_chain_meta(app, module):
     select_chain = get_select_chain(app, module)
     return [
         {
-            'session_var': ('parent_' * i or 'case_') + 'id',
+            'session_var': session_var,
             'case_type': mod.case_type,
             'module': mod,
             'index': i
         }
-        for i, mod in reversed(list(enumerate(select_chain)))
+        for i, (mod, session_var) in reversed(list(enumerate(select_chain)))
     ]
 
 
