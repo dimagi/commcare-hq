@@ -528,7 +528,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                                     'role': role_qualified_id
                                 },
                             )
-                            if invite_created:
+                            if invite_created and send_account_confirmation_email:
                                 invite.send_activation_email()
 
                         elif current_user.is_member_of(domain):
