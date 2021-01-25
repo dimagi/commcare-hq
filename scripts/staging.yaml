@@ -71,7 +71,6 @@ branches:
   - mk/remove-aaa # MK Jan 18
   - gh/filetype-migration # Graham Jan 12
   - bmb/sso-debug  # Biyeun Jan 12
-  - sr/parent-select+sr/ext-close2
   - sr/parent-select # Jenny Dec 29
   - sr/casesearch  # Sravan Jan 18
   - sr/ext-close2 # Sravan Jan 21
