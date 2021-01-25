@@ -144,8 +144,14 @@ def _get_users_from_csv(path):
         reader = csv.reader(file)
 
         for row in reader:
-            if row != ["domain", "username", "as_user"]:  # skip header
-                yield row
+            if not row or row == ["domain", "username", "as_user"]:  # skip header
+                continue
+
+            if len(row) != 3:
+                _log_message(row, "Expected exactly 3 values in each row", True)
+                continue
+
+            yield row
 
 
 def _get_user_db_query(domains, date_cutoff, min_cases, limit):
