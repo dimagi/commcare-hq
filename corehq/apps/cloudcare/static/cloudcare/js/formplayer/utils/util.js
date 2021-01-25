@@ -136,6 +136,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.page = options.page;
         this.search = options.search;
         this.queryDict = options.queryDict;
+        this.doQuery = options.doQuery;
         this.singleApp = options.singleApp;
         this.installReference = options.installReference;
         this.sortIndex = options.sortIndex;
@@ -174,6 +175,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.queryDict = queryDict;
         };
 
+        this.setDoQuery = function (doQuery) {
+            this.doQuery = doQuery;
+        };
+
         this.clearExceptApp = function () {
             this.sessionId = null;
             this.steps = null;
@@ -181,6 +186,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryDict = null;
+            this.doQuery = null;
         };
 
         this.onSubmit = function () {
@@ -188,6 +194,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryDict = null;
+            this.doQuery = null;
         };
 
         this.spliceSteps = function (index) {
@@ -202,6 +209,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.search = null;
             this.queryDict = null;
+            this.doQuery = null;
             this.sortIndex = null;
         };
     };
@@ -216,6 +224,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             page: self.page,
             search: self.search,
             queryDict: self.queryDict,
+            doQuery: self.doQuery,
             singleApp: self.singleApp,
             installReference: self.installReference,
             sortIndex: self.sortIndex,
@@ -233,6 +242,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'page': data.page,
             'search': data.search,
             'queryDict': data.queryDict,
+            'doQuery': data.doQuery,
             'singleApp': data.singleApp,
             'installReference': data.installReference,
             'sortIndex': data.sortIndex,
