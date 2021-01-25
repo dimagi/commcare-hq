@@ -79,12 +79,12 @@ def _get_couchdb_counts(domain):
     couch_db_counts = Counter()
     for provider in DOC_PROVIDERS:
         if isinstance(provider, DocTypeIDProvider):
-            for doc_type in provider.doc_types:
-                if doc_type == 'CommCareUser':
-                    continue  # want to split deleted
-                doc_class = get_document_class_by_doc_type(doc_type)
-                count = get_doc_count_in_domain_by_class(domain, doc_class)
-                couch_db_counts.update({doc_type: count})
+            doc_type = provider.doc_type
+            if doc_type == 'CommCareUser':
+                continue  # want to split deleted
+            doc_class = get_document_class_by_doc_type(doc_type)
+            count = get_doc_count_in_domain_by_class(domain, doc_class)
+            couch_db_counts.update({doc_type: count})
 
     for _ in CommCareMultimedia.get_db().view('hqmedia/by_domain', key=domain, include_docs=False):
         couch_db_counts.update(['CommCareMultimedia'])
