@@ -89,7 +89,6 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
-from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.apps.export.utils import (
     get_default_export_settings_for_domain,
     is_occurrence_deleted,
@@ -1128,7 +1127,7 @@ class CaseExportInstance(ExportInstance):
             return cls(
                 domain=schema.domain,
                 case_type=schema.case_type,
-                export_format=ExportFileType.get_file_format(settings.cases_filetype),
+                export_format=settings.cases_filetype,
                 transform_dates=settings.cases_auto_convert,
             )
         else:
@@ -1207,7 +1206,7 @@ class FormExportInstance(ExportInstance):
                 domain=schema.domain,
                 xmlns=schema.xmlns,
                 app_id=schema.app_id,
-                export_format=ExportFileType.get_file_format(settings.forms_filetype),
+                export_format=settings.forms_filetype,
                 transform_dates=settings.forms_auto_convert,
                 format_data_in_excel=settings.forms_auto_format_cells,
                 include_errors=settings.forms_include_duplicates,

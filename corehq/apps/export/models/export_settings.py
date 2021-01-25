@@ -14,17 +14,6 @@ class ExportFileType(object):
         (EXCEL_PRE_2007, ugettext_lazy("Excel (older versions)")),
     )
 
-    @classmethod
-    def get_file_format(cls, filetype):
-        if filetype == ExportFileType.EXCEL_2007_PLUS:
-            return Format.XLS_2007
-        elif filetype == ExportFileType.EXCEL_PRE_2007:
-            return Format.XLS
-        elif filetype == ExportFileType.CSV:
-            return Format.CSV
-        else:
-            raise ValueError(f"{filetype} is not supported for export")
-
 
 class DefaultExportSettings(models.Model):
     """
