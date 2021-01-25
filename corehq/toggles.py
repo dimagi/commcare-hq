@@ -690,6 +690,8 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+        "Feature still being fine tuned so should be used cautiously. "
+        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
@@ -1968,6 +1970,13 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     Enabling this results in 'closing patient type cases will not close its contact type
     extension cases'. Designed for specific USH domain use-case
     """
+)
+
+ENTERPRISE_SSO = StaticToggle(
+    'enterprise_sso',
+    'Enable Enterprise SSO options for the users specified in this list.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
 )
 
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
