@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
+from couchforms.analytics import get_last_form_submission_received
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
@@ -56,6 +57,7 @@ COMMIT = "COMMIT"
 RESET = "reset"  # was --blow-away
 REWIND = "rewind"
 STATS = "stats"
+INFO = "info"
 DIFF = "diff"
 
 CACHED = "cached"
@@ -81,6 +83,7 @@ class Command(BaseCommand):
             RESET,
             REWIND,
             STATS,
+            INFO,
             DIFF,
         ])
         parser.add_argument('--no-input', action='store_true', default=False)
@@ -297,6 +300,11 @@ class Command(BaseCommand):
     def do_stats(self, domain):
         self.print_stats(domain, short=not self.verbose)
 
+    def do_info(self, domain):
+        status = get_couch_sql_migration_status(domain)
+        print(f"Couch to SQL migration status for {domain}: {status}")
+        self.print_couch_stats(domain)
+
     def do_diff(self, domain):
         from .couch_sql_diff import format_doc_diffs
         statedb = open_state_db(domain, self.state_dir)
@@ -383,6 +391,8 @@ class Command(BaseCommand):
         for entity in MissingIds.DOC_TYPES:
             count = get_couch_doc_count(domain, entity, couchdb)
             print(f"Total {entity}s: {count}")
+        received_on = get_last_form_submission_received(domain)
+        print(f"Last form submission: {received_on}")
 
 
 def _confirm(message):
