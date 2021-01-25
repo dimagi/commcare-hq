@@ -1,3 +1,8 @@
+from corehq.apps.es import UserES
+from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
@@ -19,7 +24,8 @@ from corehq.apps.reports.filters.forms import (
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CommCareUser, WebUser
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -221,3 +227,45 @@ class TestCaseListFilter(TestCase):
 
 def _make_filter(slug, value):
     return {'slug': slug, 'value': value}
+
+
+class TestEMWFilterOutput(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        from corehq.apps.reports.tests.filters.user_list import dummy_user_list
+
+        for user in dummy_user_list:
+            u = CommCareUser.get_by_username(user['username'])
+            if u:
+                u.delete(u)
+        cls.user_list = []
+        for user in dummy_user_list:
+            user_obj = CommCareUser.create(**user)
+            user_obj.save()
+            cls.user_list.append(user_obj)
+
+    def setUp(self):
+        super().setUp()
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+        self._send_users_to_es()
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
+        super().tearDownClass()
+
+    def _send_users_to_es(self):
+        for user_obj in self.user_list:
+            send_to_elasticsearch('users', transform_user_for_elasticsearch(user_obj.to_json()))
+        self.es.indices.refresh(USER_INDEX)
+
+    def test_users_in_es(self):
+        from corehq.apps.reports.util import SimplifiedUserInfo
+        user_ids = ['abcd1', 'abcd2', 'abcd3', 'abcd4', 'abcd5']
+        res = UserES().user_ids(user_ids).show_inactive()\
+            .values(*SimplifiedUserInfo.ES_FIELDS)
+        self.assertEqual(len(res), 1)
