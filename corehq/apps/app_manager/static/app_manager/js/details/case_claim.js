@@ -1,6 +1,5 @@
 /* global Uint8Array */
 hqDefine("app_manager/js/details/case_claim", function () {
-
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
         // https://stackoverflow.com/a/2117523
@@ -67,6 +66,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             name: '',
             label: '',
             appearance: '',
+            defaultValue: '',
             itemsetOptions: {},
         });
         var self = {};
@@ -74,10 +74,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.name = ko.observable(options.name);
         self.label = ko.observable(options.label);
         self.appearance = ko.observable(options.appearance);
+        self.defaultValue = ko.observable(options.defaultValue);
 
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'appearance'], saveButton);
+        subscribeToSave(self, ['name', 'label', 'appearance', 'defaultValue'], saveButton);
 
         return self;
     };
@@ -209,6 +210,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     name: searchProperties[i].name,
                     label: label,
                     appearance: appearance,
+                    defaultValue: searchProperties[i].default_value,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
                         instance_uri: searchProperties[i].itemset.instance_uri,
@@ -241,6 +243,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         appearance: p.appearance(),
+                        default_value: p.defaultValue(),
                         fixture: ko.toJSON(p.itemset),
                     };
                 }
