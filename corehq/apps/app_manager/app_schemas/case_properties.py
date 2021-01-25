@@ -189,6 +189,18 @@ def _flatten_case_properties(case_properties_by_case_type):
     return result
 
 
+def _clean_case_type_properties(case_properties_by_case_type):
+    for case_properties in case_properties_by_case_type.values():
+        _replace_properties_with_attributes(case_properties)
+
+
+def _replace_properties_with_attributes(case_properties):
+    for prop in list(case_properties):
+        if prop == 'owner_id':
+            case_properties.remove(prop)
+            case_properties.add('@owner_id')
+
+
 def _propagate_and_normalize_case_properties(case_properties_by_case_type, parent_type_map,
                                              include_parent_properties):
     """
@@ -402,11 +414,7 @@ class ParentCasePropertyBuilder(object):
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
 
-        for case_type, case_properties in case_properties_by_case_type.items():
-            for prop in list(case_properties):
-                if prop == 'owner_id':
-                    case_properties.remove(prop)
-                    case_properties.add('@owner_id')
+        _clean_case_type_properties(case_properties_by_case_type)
 
         if self.exclude_invalid_properties:
             from corehq.apps.app_manager.helpers.validators import validate_property

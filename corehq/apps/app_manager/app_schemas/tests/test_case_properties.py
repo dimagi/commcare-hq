@@ -10,6 +10,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     _CaseTypeEquivalence,
     _CaseTypeRef,
     get_case_properties,
+    _replace_properties_with_attributes
 )
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -192,3 +193,15 @@ class DocTests(SimpleTestCase):
     def test_doctests(self):
         results = doctest.testmod(corehq.apps.app_manager.app_schemas.case_properties)
         self.assertEqual(results.failed, 0)
+
+
+class ReplacePropertyWithAttributesTests(SimpleTestCase):
+    def test_replaces_owner_id_with_attribute(self):
+        case_properties = {'owner_id'}
+        _replace_properties_with_attributes(case_properties)
+        self.assertSetEqual(case_properties, {'@owner_id'})
+
+    def test_replacement_preserves_other_names(self):
+        case_properties = {'@one', 'owner_id', '@two'}
+        _replace_properties_with_attributes(case_properties)
+        self.assertSetEqual(case_properties, {'@one', '@owner_id', '@two'})
