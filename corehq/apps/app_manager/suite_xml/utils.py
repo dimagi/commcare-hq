@@ -8,6 +8,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
 
 def get_select_chain(app, module, include_self=True):
+    return [
+        module
+        for (module, _) in get_select_chain_with_sessions(app, module, include_self=include_self)
+    ]
+
+
+def get_select_chain_with_sessions(app, module, include_self=True):
     select_chain = [(module, 'case_id')] if include_self else []
     current_module = module
     case_type = module.case_type
@@ -43,7 +50,7 @@ def get_select_chain_meta(app, module):
     if not (module and module.module_type == 'basic'):
         return []
 
-    select_chain = get_select_chain(app, module)
+    select_chain = get_select_chain_with_sessions(app, module)
     return [
         {
             'session_var': session_var,
