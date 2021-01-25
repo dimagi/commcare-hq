@@ -741,7 +741,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         """
         langs = set()
         for item in self.columns + self.filters:
-            if isinstance(item['display'], dict):
+            if isinstance(item.get('display'), dict):
                 langs |= set(item['display'].keys())
         return langs
 
