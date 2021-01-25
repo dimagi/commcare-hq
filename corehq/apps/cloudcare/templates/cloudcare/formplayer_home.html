@@ -13,6 +13,7 @@
   {{ block.super }}
   <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
   <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+  <script src="{% static 'select-woo/dist/js/selectWoo.full.min.js' %}"></script>
   <style id="persistent-cell-layout-style"></style>
   <style id="persistent-cell-grid-style"></style>
   <style id="list-cell-layout-style"></style>
@@ -40,6 +41,10 @@
           rel="stylesheet"
           media="all"
           href="{% static 'datatables.net-dt/css/jquery.dataTables.min.css' %}"/>
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select-woo/dist/css/selectWoo.min.css' %}" />
     <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
