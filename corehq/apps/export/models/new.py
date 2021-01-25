@@ -91,7 +91,7 @@ from corehq.apps.export.dbaccessors import (
 )
 from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.apps.export.utils import (
-    get_or_create_default_export_settings_for_domain,
+    get_default_export_settings_for_domain,
     is_occurrence_deleted,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -1123,7 +1123,7 @@ class CaseExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        settings = get_or_create_default_export_settings_for_domain(schema.domain)
+        settings = get_default_export_settings_for_domain(schema.domain)
         if settings is not None:
             return cls(
                 domain=schema.domain,
@@ -1201,7 +1201,7 @@ class FormExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        settings = get_or_create_default_export_settings_for_domain(schema.domain)
+        settings = get_default_export_settings_for_domain(schema.domain)
         if settings is not None:
             return cls(
                 domain=schema.domain,

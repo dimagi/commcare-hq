@@ -54,7 +54,7 @@ def get_export(export_type, domain, export_id=None, username=None):
     raise Exception("Unexpected export type received %s" % export_type)
 
 
-def get_or_create_default_export_settings_for_domain(domain):
+def get_default_export_settings_for_domain(domain):
     """
     Only creates settings if the the subscription level supports it
     Currently only available to Enterprise accounts with the DEFAULT_EXPORT_SETTINGS FF enabled

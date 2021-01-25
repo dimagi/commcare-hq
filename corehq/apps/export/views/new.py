@@ -41,7 +41,7 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     FormExportInstance,
 )
-from corehq.apps.export.utils import get_or_create_default_export_settings_for_domain
+from corehq.apps.export.utils import get_default_export_settings_for_domain
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
@@ -331,7 +331,7 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
         # odata settings only apply to form exports
-        export_settings = get_or_create_default_export_settings_for_domain(schema.domain)
+        export_settings = get_default_export_settings_for_domain(schema.domain)
         if export_settings:
             export_instance.include_errors = export_settings.odata_include_duplicates
             export_instance.split_multiselects = export_settings.odata_expand_checkbox
