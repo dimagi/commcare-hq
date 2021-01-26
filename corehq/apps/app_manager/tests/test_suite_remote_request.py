@@ -310,6 +310,40 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
+    def test_prompt_daterange(self, *args):
+        """Setting the appearance to "barcode"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].input_ = 'daterange'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_prompt_itemset(self):
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
