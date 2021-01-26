@@ -301,7 +301,7 @@ class DetailContributor(SectionContributor):
             relevant_kwarg = dict(
                 relevant=XPath(module.search_config.search_button_display_condition),
             )
-        allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain)
+        allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain) and not in_search
         action = Action(
             display=Display(
                 text=Text(locale_id=(
