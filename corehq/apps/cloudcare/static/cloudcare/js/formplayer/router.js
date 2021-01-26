@@ -143,7 +143,11 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("menu:select", function (index) {
         var urlObject = Util.currentUrlToObject();
-        urlObject.addStep(index);
+        if (index === undefined) {
+            urlObject.setQueryData(undefined, false);
+        } else {
+            urlObject.addStep(index);
+        }
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
