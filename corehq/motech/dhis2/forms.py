@@ -46,10 +46,12 @@ class DataSetMapForm(forms.ModelForm):
         label=_('DataSetID'),
         help_text=_('Set DataSetID if this UCR adds values to an existing '
                     'DHIS2 DataSet'),
+        validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
         required=False,
     )
     org_unit_id = forms.CharField(
         label=_('OrgUnitID¹'),
+        validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
         required=False,
     )
     org_unit_column = forms.CharField(
@@ -74,6 +76,7 @@ class DataSetMapForm(forms.ModelForm):
     )
     attribute_option_combo_id = forms.CharField(
         label=_('AttributeOptionComboID'),
+        validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
         required=False,
     )
     complete_date = forms.DateField(
