@@ -78,4 +78,5 @@ branches:
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
   - mjr/failed_logins  # Matt Jan 21
   - mjr/owner_id_fix  # Matt Jan 22
+  - nh/reminders  # Norman Jan 26
 submodules: {}
