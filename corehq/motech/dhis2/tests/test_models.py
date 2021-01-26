@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.management import call_command
 from django.test import TestCase
 
 from nose.tools import assert_equal
@@ -14,6 +15,7 @@ from ..const import (
 from ..models import (
     DataSetMap,
     get_date_range,
+    SQLDataSetMap,
     get_info_for_columns,
     get_period,
     get_previous_month,
@@ -203,13 +205,23 @@ class GetInfoForColumnsTests(TestCase):
             }]
         })
         cls.dataset_map.save()
+        call_command('populate_sqldatasetmap')
+        cls.sqldataset_map = SQLDataSetMap.objects.get(
+            domain=cls.domain,
+            couch_id=cls.dataset_map._id,
+        )
 
     @classmethod
     def tearDownClass(cls):
+        cls.sqldataset_map.delete()
         cls.dataset_map.delete()
         cls.connection_settings.delete()
         super().tearDownClass()
 
     def test_couch(self):
         info_for_columns = get_info_for_columns(self.dataset_map)
+        self.assertEqual(info_for_columns, self.expected_value)
+
+    def test_sql(self):
+        info_for_columns = get_info_for_columns(self.sqldataset_map)
         self.assertEqual(info_for_columns, self.expected_value)
