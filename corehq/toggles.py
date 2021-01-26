@@ -740,6 +740,17 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
+    'ush_dont_close_patient_extensions',
+    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
+    Enabling this results in 'closing patient type cases will not close its contact type
+    extension cases'. Designed for specific USH domain use-case
+    """
+)
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
