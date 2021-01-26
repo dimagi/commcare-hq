@@ -189,7 +189,7 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
             forms_include_duplicates=True,
             forms_expand_checkbox=True
         )
-        with mock.patch('corehq.apps.export.models.new.get_or_create_default_export_settings_for_domain') as m:
+        with mock.patch('corehq.apps.export.models.new.get_default_export_settings_for_domain') as m:
             m.return_value = mock_settings
             instance = self._generate_instance({self.app_id: 3})
 
