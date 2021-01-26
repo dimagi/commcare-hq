@@ -37,7 +37,7 @@
             <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
           </button>
-          <span data-bind="visible: property.itemSet.nodeset, text: property.itemSet.nodeset"></span>
+          <span data-bind="visible: property.itemset.nodeset, text: property.itemset.nodeset"></span>
           <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + property.uniqueId}">
             <div class="modal-dialog modal-md">
               <div class="modal-content">
@@ -53,7 +53,7 @@
                       <label class="control-label">
                         {% trans "Lookup Table" %}
                       </label>
-                      <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset">
+                      <select class="form-control" data-bind="value: property.itemset.lookupTableNodeset">
                         <option value="">{% trans "Select a lookup table..." %}</option>
                         {% for item in  js_options.item_lists %}
                           <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
@@ -62,15 +62,15 @@
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Label Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.label" placeholder="name"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemset.label" placeholder="name"/>
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Value Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.value" placeholder="id"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemset.value" placeholder="id"/>
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Sort Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.sort" placeholder="name"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemset.sort" placeholder="name"/>
                     </div>
                     <div class="panel panel-default">
                       <div class="panel-heading">
@@ -83,19 +83,19 @@
                           <label class="control-label" >
                             {% trans "Instance URI" %}
                           </label>
-                          <input class="form-control" type="text" data-bind="value: property.itemSet.instance_uri"/>
+                          <input class="form-control" type="text" data-bind="value: property.itemset.instance_uri"/>
                         </div>
                         <div class="form-group">
                           <label class="control-label" >
                             {% trans "Instance ID" %}
                           </label>
-                          <input class="form-control" type="text" data-bind="value: property.itemSet.instance_id"/>
+                          <input class="form-control" type="text" data-bind="value: property.itemset.instance_id"/>
                         </div>
                         <div class="form-group">
                           <label class="control-label" >
                             {% trans "Instance Nodeset" %}
                           </label>
-                          <input class="form-control" type="text" data-bind="value: property.itemSet.nodeset"/>
+                          <input class="form-control" type="text" data-bind="value: property.itemset.nodeset"/>
                         </div>
                       </div>
                     </div>
@@ -199,36 +199,53 @@
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
-      <div class="panel-body">
+      <div class="panel-body" data-bind="with: searchConfig">
         <div class="form-horizontal">
           <div class="form-group">
+            {% if show_search_workflow %}
+              <div class="form-group">
+                <label class="control-label {% css_label_class %}" for="search-workflow">
+                  {% trans "Web Apps Search Workflow" %}
+                  <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
+                        data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the \"classic\" case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a \"Search Cases\" module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks \"See More\" to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. User never sees the results of the casedb." %}">
+                  </span>
+                </label>
+                <div class="{% css_field_class %}">
+                  <select class="form-control" data-bind="value: workflow" id="search-workflow">
+                    <option value="classic">{% trans "Normal Case List" %}</option>
+                    <option value="auto_launch">{% trans "Search First" %}</option>
+                    <option value="see_more">{% trans "See More" %}</option>
+                    <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
+                  </select>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search_command_label" class="{% css_label_class %} control-label">
-              {% trans "Label for Case Search" %}
+              {% trans "Button Label on Case List" %}
+              <span class="hq-help-template" data-title="{% trans "Button Label on Case List" %}"
+                    data-content="{% trans_html_attr "This text will be used for the first search button users see, on the case list." %}">
             </label>
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
             </div>
           </div>
-          {% if show_auto_launch %}
-            <div class="form-group">
-              <label class="control-label {% css_label_class %}" for="search-auto-launch">
-                {% trans "Web Apps Autolaunch" %}
-              <span class="hq-help-template" data-title="{% trans "Web Apps Autolaunch" %}"
-                    data-content="{% trans_html_attr "In Web Apps, automatically launch case claim whenever user visits this case list." %}">
-              </span>
-              </label>
-              <div class="checkbox {% css_field_class %}">
-                <label>
-                  <input type="checkbox" id="search-auto-launch" data-bind="checked: autoLaunch">
-                </label>
-              </div>
+          <div class="form-group">
+            <label for="search_again_label" class="{% css_label_class %} control-label">
+              {% trans "Button Label on Search Results" %}
+              <span class="hq-help-template" data-title="{% trans "Button Label for on Search Results" %}"
+                    data-content="{% trans_html_attr "This text will be used for the search button displayed at the bottom of search results, so users can search again." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.again_label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
-          {% endif %}
-          <div class="form-group" data-bind="visible: !autoLaunch()">
+          </div>
+          <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
               <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
-                    data-content="{% trans_html_attr "If this XPath expression evaluates to false, the case search button will not be displayed. If no expression is given, the button will always be displayed." %}">
+                    data-content="{% trans_html_attr "If this XPath expression evaluates to false, the case search button will not be displayed on the case list. If no expression is given, the button will always be displayed on the case list." %}">
               </span>
             </label>
             <div class="{% css_field_class %}">
