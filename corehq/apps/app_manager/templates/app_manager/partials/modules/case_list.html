@@ -282,30 +282,37 @@
           {% trans "Parent Child Selection" %}
         </h4>
       </div>
-      <div class="form-horizontal panel-body">
-        <div class="form-group">
-          <label class="control-label {% css_label_class %}">
-            {% trans "Select Parent First" %}
-          </label>
-          <div class="{% css_field_class %} checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: active"/>
+        <div class="form-horizontal panel-body">
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Select Parent First" %}
             </label>
-          </div>
-        </div>
-        <div class="form-group" data-bind="visible: active, css: {'has-error': hasError}">
-          <label class="control-label {% css_label_class %}">
-            {% trans "Use Case List from" %}
-          </label>
-          <div class="{% css_field_class %}">
-            <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-            <div class="help-block" data-bind="visible: hasError">
-              {% blocktrans %}
-                This menu could not be found. It may have been deleted. Please select a different menu.
-              {% endblocktrans %}
+            <div>
+              <select-toggle data-apply-bindings="false"
+                             params="options: selectOptions, value: selectMode"
+                             data-bind="visible: enableOtherOption">
+              </select-toggle>
+              <div class="{% css_field_class %} checkbox"
+                   data-bind="visible: !enableOtherOption">
+                <label>
+                  <input type="checkbox" data-bind="checked: active"/>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
+          <div class="form-group" data-bind="visible: active, css: {'has-error': hasError}">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Use Case List from" %}
+            </label>
+            <div class="{% css_field_class %}">
+              <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+              <div class="help-block" data-bind="visible: hasError">
+                {% blocktrans %}
+                  This menu could not be found. It may have been deleted. Please select a different menu.
+                {% endblocktrans %}
+              </div>
+            </div>
+          </div>
         <div class="spacer"></div>
       </div>
     </div>
