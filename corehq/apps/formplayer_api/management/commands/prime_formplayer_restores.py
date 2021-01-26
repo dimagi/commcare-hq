@@ -179,7 +179,7 @@ def _get_users_from_db(domains, last_synced_days, min_cases, limit):
         request_user = CouchUser.get_by_user_id(row["request_user_id"]).username
 
         as_username = None
-        if row["user_id"] == row["request_user_id"]:
+        if row["user_id"] != row["request_user_id"]:
             as_user = CouchUser.get_by_user_id(row["user_id"])
             as_username = raw_username(as_user.username) if as_user else None
 
