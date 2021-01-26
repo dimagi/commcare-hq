@@ -1975,3 +1975,10 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+PRIME_FORMPLAYER_DBS = StaticToggle(
+    'prime_formplayer_dbs',
+    'COVID: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
