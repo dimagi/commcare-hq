@@ -64,6 +64,10 @@ class DataSetMapForm(forms.ModelForm):
     period = forms.CharField(
         label=_('Period²'),
         required=False,
+        help_text=_('Weekly periods use the format yyyyWn (e.g. "2004W10" for '
+                    'week 10, 2004). Monthly periods use the format yyyyMM '
+                    '(e.g. "200403" for March 2004). Quarterly periods use '
+                    'the format yyyyQn (e.g. "2004Q1" for January-March 2004).')
     )
     period_column = forms.CharField(
         label=_('Period column²'),
