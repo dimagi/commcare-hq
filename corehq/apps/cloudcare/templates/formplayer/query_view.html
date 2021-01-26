@@ -28,6 +28,9 @@
           </option>
         <% } %>
       <select>
+    <% } %>
+    <% if (input == "daterange") { %>
+      <input type="text" class="daterange query-field form-control" value="<%- value %>">
     <% } else { %>
       <input type="text" class="query-field form-control" value="<%- value %>">
     <% } %>
