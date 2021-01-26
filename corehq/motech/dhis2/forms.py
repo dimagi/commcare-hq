@@ -22,6 +22,7 @@ from .const import (
     DHIS2_UID_RE,
     SEND_FREQUENCY_CHOICES,
     SEND_FREQUENCY_MONTHLY,
+    SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
 )
 from .models import SQLDataSetMap, SQLDataValueMap
@@ -63,11 +64,11 @@ class DataSetMapForm(forms.ModelForm):
     )
     period = forms.CharField(
         label=_('Period²'),
+        help_text=_('Week periods use the format yyyyWn (e.g. "2004W10" for '
+                    'week 10, 2004). Month periods use the format yyyyMM '
+                    '(e.g. "200403" for March 2004). Quarter periods use the '
+                    'format yyyyQn (e.g. "2004Q1" for January-March 2004).'),
         required=False,
-        help_text=_('Weekly periods use the format yyyyWn (e.g. "2004W10" for '
-                    'week 10, 2004). Monthly periods use the format yyyyMM '
-                    '(e.g. "200403" for March 2004). Quarterly periods use '
-                    'the format yyyyQn (e.g. "2004Q1" for January-March 2004).')
     )
     period_column = forms.CharField(
         label=_('Period column²'),
@@ -197,6 +198,27 @@ class DataSetMapForm(forms.ModelForm):
                 'Enter a day of the month that occurs in every month (i.e. '
                 'from 1 to 28).'
             ))
+
+        if cleaned_data.get('period'):
+            period_validators = {
+                SEND_FREQUENCY_WEEKLY: RegexValidator(r'^\d{4}W\d{1,2}$', _(
+                    'Please enter a valid week period in the format yyyyWn '
+                    '(e.g. "2004W10" for week 10, 2004).'
+                )),
+                SEND_FREQUENCY_MONTHLY: RegexValidator(r'^\d{6}$', _(
+                    'Please enter a valid month period in the format yyyyMM '
+                    '(e.g. "200403" for March 2004).'
+                )),
+                SEND_FREQUENCY_QUARTERLY: RegexValidator(r'^\d{4}Q\d$', _(
+                    'Please enter a valid quarter period in the format yyyyQn '
+                    '(e.g. "2004Q1" for January-March 2004).'
+                )),
+            }
+            validate_period = period_validators[cleaned_data.get('frequency')]
+            try:
+                validate_period(cleaned_data.get('period'))
+            except ValidationError:
+                self.add_error('period', validate_period.message)
 
         return self.cleaned_data
 
