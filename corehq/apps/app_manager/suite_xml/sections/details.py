@@ -297,7 +297,7 @@ class DetailContributor(SectionContributor):
     @staticmethod
     def _get_case_search_action(module, in_search=False):
         relevant_kwarg = {}
-        if module.search_config.search_button_display_condition:
+        if not in_search and module.search_config.search_button_display_condition:
             relevant_kwarg = dict(
                 relevant=XPath(module.search_config.search_button_display_condition),
             )
