@@ -11,7 +11,8 @@ def get_request_data(request):
     :return: dictionary with fields that python3-saml expects
     """
     return {
-        'https': 'on' if request.is_secure() else 'off',
+        'https': ('off' if settings.SAML2_DEBUG and not request.is_secure()
+                  else 'on'),
         'http_host': request.META['HTTP_HOST'],
         'script_name': request.META['PATH_INFO'],
 
