@@ -65,6 +65,7 @@ branches:
   - dependabot/npm_and_yarn/markdown-it-12.0.4 # Amit Dec 28
   - bmb/sso-architecture  # Biyeun Dec 30
   - jls/results-button # Jenny Jan 25
+  - jls/web-apps-sticky-search-again # Jenny Jan 26
   - bmb/sso-architecture+lxml-upgrade  # Biyeun Jan 8
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
   #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
