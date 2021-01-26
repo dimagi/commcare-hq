@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             };
         },
 
-        initialize: function (options) {
+        initialize: function () {
             // If input doesn't have a default value, check to see if there's a sticky value from user's last search
             if (!this.options.model.get('value')) {
                 this.options.model.set('value', hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')]);
