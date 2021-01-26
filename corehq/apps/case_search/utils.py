@@ -58,6 +58,7 @@ class CaseSearchCriteria(object):
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
+        self._add_daterange_queries()
         self._add_case_property_queries()
 
     def _add_include_closed(self):
@@ -103,3 +104,20 @@ class CaseSearchCriteria(object):
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
             self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+
+    def _add_daterange_queries(self):
+        # Add query for specially formatted daterange param
+        #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
+        #   used by App manager case-search feature
+        pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
+        drop_keys = []
+        for key, val in self.criteria.items():
+            if val.startswith('__range__'):
+                match = pattern.match(val)
+                if match:
+                    [_, _, startdate, enddate] = val.split('__')
+                    drop_keys.append(key)
+                    self.search_es = self.search_es.date_range_case_property_query(
+                        key, gte=startdate, lte=enddate)
+        for key in drop_keys:
+            self.criteria.pop(key)
