@@ -19,11 +19,14 @@ def get_indexed_case_ids(domain, case_ids):
     )]
 
 
-def get_extension_case_ids(domain, case_ids):
+def get_extension_case_ids(domain, case_ids, exclude_for_case_type=None):
     """
     Given a base list of case ids,  get all ids of all extension cases that reference them
     """
-    return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_EXTENSION)]
+    return [
+        r.case_id for r in
+        get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_EXTENSION, exclude_for_case_type)
+    ]
 
 
 def get_reverse_indexed_case_ids(domain, case_ids):
@@ -46,7 +49,7 @@ def get_reverse_indexed_cases(domain, case_ids, relationship=None):
     )
 
 
-def get_all_reverse_indices_info(domain, case_ids, relationship=None):
+def get_all_reverse_indices_info(domain, case_ids, relationship=None, exclude_for_case_type=None):
     from casexml.apps.case.models import CommCareCase
 
     def _row_to_index_info(row):
@@ -58,11 +61,15 @@ def get_all_reverse_indices_info(domain, case_ids, relationship=None):
             relationship=row['value']['relationship']
         )
 
-    return list(map(_row_to_index_info, CommCareCase.get_db().view(
-        'case_indices/related',
-        keys=_get_keys_for_reverse_index_view(domain, case_ids, relationship),
-        reduce=False,
-    )))
+    return [
+        _row_to_index_info(row)
+        for row in CommCareCase.get_db().view(
+            'case_indices/related',
+            keys=_get_keys_for_reverse_index_view(domain, case_ids, relationship),
+            reduce=False,
+        )
+        if not exclude_for_case_type or row['value']['referenced_type'] != exclude_for_case_type
+    ]
 
 
 def _get_keys_for_reverse_index_view(domain, case_ids, relationship=None):
