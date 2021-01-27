@@ -51,7 +51,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
-      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxslt1-dev libpq-dev
+      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev
 
 
 ##### macOS Notes
