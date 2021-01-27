@@ -629,6 +629,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         if (!query || !option.text) {
             return true;
         }
+        query = query.toLowerCase();
+        option.text = option.text.toLowerCase();
 
         var match;
         if (matchType === Const.COMBOBOX_MULTIWORD) {
@@ -645,8 +647,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         } else if (matchType === Const.COMBOBOX_FUZZY) {
             // Fuzzy filter, matches if query is "close" to answer
             match = (
-                (window.Levenshtein.get(option.text.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
-                option.text.toLowerCase() === query.toLowerCase()
+                (window.Levenshtein.get(option.text, query) <= 2 && query.length > 3) ||
+                option.text === query
             );
         }
 
@@ -656,7 +658,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         }
 
         // Standard filter, matches only start of word
-        return option.text.toLowerCase().startsWith(query.toLowerCase());
+        return option.text.startsWith(query);
     };
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
