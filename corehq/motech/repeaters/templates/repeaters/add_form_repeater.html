@@ -6,7 +6,6 @@
 {% requirejs_main 'repeaters/js/add_form_repeater' %}
 
 {% block page_content %}
-    {% registerurl "test_repeater" domain %}
     {% initial_page_data "repeater_type" repeater_type %}
     {% crispy form %}
 {% endblock %}

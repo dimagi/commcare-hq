@@ -316,6 +316,10 @@ class ESQuery(object):
         es.es_query['query']['bool']['must'] = query
         return es
 
+    def enable_profiling(self):
+        self.es_query['profile'] = True
+        return self
+
     def add_query(self, new_query, clause):
         """
         Add a query to the current list of queries

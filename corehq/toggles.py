@@ -183,6 +183,13 @@ class StaticToggle(object):
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
             and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
+        ) or (
+            NAMESPACE_EMAIL_DOMAIN in self.namespaces
+            and hasattr(request, 'user')
+            and self.enabled(
+                request.user.email or request.user.username,
+                namespace=NAMESPACE_EMAIL_DOMAIN
+            )
         )
 
     def set(self, item, enabled, namespace=None):
@@ -315,7 +322,7 @@ class PredictablyRandomToggle(StaticToggle):
             namespace = None  # because:
             # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
 
-        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_RANDOM_NAMESPACES}
         if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
             raise ValueError(
                 'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
@@ -380,8 +387,10 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_EMAIL_DOMAIN = 'email_domain'
 NAMESPACE_OTHER = 'other'
-ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN]
+ALL_RANDOM_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def any_toggle_enabled(*toggles):
@@ -681,6 +690,8 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+        "Feature still being fine tuned so should be used cautiously. "
+        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
@@ -1947,4 +1958,27 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     description="""
     Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
+)
+
+ENTERPRISE_SSO = StaticToggle(
+    'enterprise_sso',
+    'Enable Enterprise SSO options for the users specified in this list.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+)
+
+BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
+    'blocked_email_domain_recipients',
+    'Block any outgoing email addresses that have an email domain which '
+    'match a domain in this list.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_EMAIL_DOMAIN],
+)
+
+BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
+    'blocked_domain_email_senders',
+    'Domains in this list are blocked from sending emails through our '
+    'messaging feature',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

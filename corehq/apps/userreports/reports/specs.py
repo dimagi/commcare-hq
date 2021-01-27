@@ -363,8 +363,10 @@ class AgeInMonthsBucketsColumn(IntegerBucketsColumn):
     type = TypeProperty('age_in_months_buckets')
 
     def _base_expression(self, bounds):
-        return "extract(year from age({}))*12 + extract(month from age({})) BETWEEN {} and {}".format(
-            self.field, self.field, bounds[0], bounds[1])
+        current_date = date.today().isoformat()
+        return "extract(year from age(date('{}'), {}))*12 + \
+            extract(month from age(date('{}'), {})) BETWEEN {} and {}".format(
+            current_date, self.field, current_date, self.field, bounds[0], bounds[1])
 
 
 class SumWhenColumn(_CaseExpressionColumn):
@@ -375,19 +377,15 @@ class SumWhenColumn(_CaseExpressionColumn):
     @classmethod
     def restricted_to_static(cls, domain):
         # The conditional expressions used here don't have sufficient safety checks,
-        # so this column type is only available for static reports.  To release this,
+        # so this column type is behind feature flag. To release this,
         # we should require that conditions be expressed using a PreFilterValue type
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return True
+        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
 
 
 class SumWhenTemplateColumn(SumWhenColumn):
     type = TypeProperty("sum_when_template")
     whens = ListProperty(DictProperty)      # List of SumWhenTemplateSpec dicts
-
-    @classmethod
-    def restricted_to_static(cls, domain):
-        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
 
     def get_whens(self):
         from corehq.apps.userreports.reports.factory import SumWhenTemplateFactory
