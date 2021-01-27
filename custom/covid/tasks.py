@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import periodic_task
 from dateutil.relativedelta import relativedelta
@@ -11,6 +12,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from corehq.toggles import PRIME_FORMPLAYER_DBS
 from corehq.util.celery_utils import no_result_task
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
@@ -46,6 +48,7 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
         as_user = CouchUser.get_by_user_id(sync_user_id)
         as_username = raw_username(as_user.username) if as_user else None
 
+    metric_tags = {"domain": domain}
     try:
         sync_db(domain, request_user, as_username)
     except FormplayerResponseException:
@@ -54,6 +57,13 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
             'username': request_user,
             'as_user': as_username
         })
+        metrics_counter("commcare.prime_formplayer_db.error", tags=metric_tags)
     except Exception as e:
         # most likely an error contacting formplayer, try again
-        self.retry(exc=e)
+        try:
+            raise self.retry(exc=e)
+        except MaxRetriesExceededError:
+            metrics_counter("commcare.prime_formplayer_db.error", tags=metric_tags)
+            raise
+    else:
+        metrics_counter("commcare.prime_formplayer_db.success", tags=metric_tags)
