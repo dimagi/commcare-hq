@@ -139,6 +139,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.singleApp = options.singleApp;
         this.installReference = options.installReference;
         this.sortIndex = options.sortIndex;
+        this.forceManualAction = options.forceManualAction;
 
         this.setSteps = function (steps) {
             this.steps = steps;
@@ -179,6 +180,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             };
         };
 
+        this.setForceManualAction = function (force) {
+            this.forceManualAction = force;
+        }
+
         this.clearExceptApp = function () {
             this.sessionId = null;
             this.steps = null;
@@ -186,6 +191,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.forceManualAction = null;
         };
 
         this.onSubmit = function () {
@@ -193,10 +199,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.forceManualAction = null;
         };
 
         this.spliceSteps = function (index) {
-
             // null out the session if we clicked the root (home)
             if (index === 0) {
                 this.steps = null;
@@ -208,6 +214,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
             this.queryData = null;
             this.sortIndex = null;
+            this.forceManualAction = null;
         };
     };
 
@@ -224,6 +231,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             singleApp: self.singleApp,
             installReference: self.installReference,
             sortIndex: self.sortIndex,
+            forceManualAction: self.forceManualAction,
         };
         return JSON.stringify(dict);
     };
@@ -241,6 +249,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'singleApp': data.singleApp,
             'installReference': data.installReference,
             'sortIndex': data.sortIndex,
+            'forceManualAction': data.forceManualAction,
         };
         return new Util.CloudcareUrl(options);
     };

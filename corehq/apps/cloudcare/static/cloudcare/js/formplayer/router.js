@@ -145,6 +145,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         var urlObject = Util.currentUrlToObject();
         if (index === undefined) {
             urlObject.setQueryData(undefined, false);
+            urlObject.setForceManualAction(true);
         } else {
             urlObject.addStep(index);
         }
