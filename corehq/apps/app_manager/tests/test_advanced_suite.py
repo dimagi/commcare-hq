@@ -273,7 +273,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_module.parent_select.relationship = None
 
         child_form = app.new_form(1, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
+        child_form.xmlns = 'http://id_m0-f0'
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(
