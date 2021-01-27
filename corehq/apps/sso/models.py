@@ -136,7 +136,7 @@ class AuthenticatedEmailDomain(models.Model):
 
 class UserExemptFromSingleSignOn(models.Model):
     """
-    This specifies what users are exempt SSO for a given
+    This specifies what users are exempt from SSO for a given
     AuthenticatedEmailDomain. Other users will be required to use SSO once
     an AuthenticatedEmailDomain is specified for their email domain.
     """
