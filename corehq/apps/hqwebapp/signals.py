@@ -5,6 +5,7 @@ from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.dispatch import receiver
 
 from corehq.apps.users.models import CouchUser
+from corehq.util.metrics import metrics_counter
 
 
 def clear_login_attempts(user):
@@ -26,9 +27,27 @@ def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
 
 
 @receiver(user_login_failed)
-def add_failed_attempt(sender, credentials, **kwargs):
+def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
     user = CouchUser.get_by_username(credentials['username'])
-    if user and not user.is_locked_out() and user.supports_lockout():
+    if not user:
+        metrics_counter('commcare.auth.invalid_user')
+        return
+
+    if token_failure:
+        metrics_counter('commcare.auth.invalid_token')
+
+    locked_out = user.is_locked_out()
+
+    if locked_out:
+        lockout_result = 'locked_out'
+    else:
+        lockout_result = 'should_be_locked_out' if user.should_be_locked_out() else 'allowed_to_retry'
+
+    metrics_counter('commcare.auth.failed_attempts', tags={
+        'result': lockout_result
+    })
+
+    if not locked_out:
         if user.attempt_date == date.today():
             user.login_attempts += 1
         else:
