@@ -352,7 +352,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
-        has_user_ids = len(user_ids) > 0
+        has_user_ids = bool(user_ids)
 
         if has_user_ids:
             # if userid are passed then remove default active filter
