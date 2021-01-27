@@ -19,7 +19,7 @@ SYNC_CUTOFF_HOURS = 8
 MIN_CASE_COUNT = 20000
 
 
-@periodic_task(run_every=crontab(minute=0, hour=2), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute=0, hour=8), queue=settings.CELERY_PERIODIC_QUEUE)
 def prime_formplayer_dbs():
     domains = PRIME_FORMPLAYER_DBS.get_enabled_domains()
     for domain in domains:
