@@ -302,7 +302,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(
-            self.get_xml('advanced_module_parent_null_relationship'),
+            self.get_xml('parent_null_relationship_same_type'),
             app.create_suite(),
             "./entry[1]"
         )

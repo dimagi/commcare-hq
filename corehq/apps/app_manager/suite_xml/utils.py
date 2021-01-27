@@ -31,7 +31,7 @@ def get_select_chain_with_sessions(app, module, include_self=True):
         else:
             session_var = ('parent_' * i or 'case_') + 'id'
         case_type = current_module.case_type
-        if current_module in select_chain:
+        if current_module in [m for (m, _) in select_chain]:
             raise SuiteValidationError("Circular reference in case hierarchy")
         select_chain.append((current_module, session_var))
         i += 1
