@@ -39,28 +39,28 @@ hqDefine("scheduling/js/conditional_alert_main", [
             var newRuleName = $("#id_conditional-alert-name").val();
             if (!name) {
                 $("#conditional-alert-form").submit();
-            } else if (name !== newRuleName) {
-                var caseType = $(
-                    "#select2-id_criteria-case_type-container"
-                ).text();
-                var caseCountUrl = $("#conditional-alert-case-count-url").attr(
-                    "url"
-                );
+
+            } else {
+                var caseType = $("#id_criteria-case_type").val();
+                var caseCountUrl = initialPageData.reverse('count_cases_by_case_type');
+                $("#conditional-alert-save-btn").html('<i class="fa fa-spin fa-spinner"></i>');
                 $.ajax({
                     type: "GET",
                     url: caseCountUrl,
                     data: { case_type: caseType },
                     success: function (data) {
-                        $("#case-count").text(data["case_count"]);
+                        $("#case-count").text(data.case_count);
+                        $("#conditional-alert-warning-modal").modal("show");
+                        $("#conditional-alert-save-btn").text('Save');
+                    },
+                    error: function(data){
+                        $("#conditional-alert-save-btn").text(data.responseJSON.error);
                     },
                 });
-                $("#conditional-alert-warning-modal").modal("show");
 
                 $("#conditional-alert-yes-btn").click(function () {
                     $("#conditional-alert-form").submit();
                 });
-            } else {
-                $("#conditional-alert-form").submit();
             }
         });
     });
