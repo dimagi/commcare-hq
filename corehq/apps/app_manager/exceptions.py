@@ -163,6 +163,10 @@ class AppLinkError(AppManagerException):
     pass
 
 
+class CaseSearchConfigError(AppManagerException):
+    pass
+
+
 class SavedAppBuildException(AppManagerException):
     pass
 

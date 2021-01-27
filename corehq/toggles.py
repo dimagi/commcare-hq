@@ -690,6 +690,8 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+        "Feature still being fine tuned so should be used cautiously. "
+        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
@@ -1102,6 +1104,16 @@ LEGACY_CHILD_MODULES = StaticToggle(
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
     )
+)
+
+NON_PARENT_MENU_SELECTION = StaticToggle(
+    'non_parent_menu_selection',
+    'Allow selecting of module of any case-type in select-parent workflow',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allow selecting of module of any case-type in select-parent workflow
+    """,
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1958,14 +1970,11 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     """
 )
 
-NON_PARENT_MENU_SELECTION = StaticToggle(
-    'non_parent_menu_selection',
-    'Allow selecting of module of any case-type in select-parent workflow',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Allow selecting of module of any case-type in select-parent workflow
-    """,
+ENTERPRISE_SSO = StaticToggle(
+    'enterprise_sso',
+    'Enable Enterprise SSO options for the users specified in this list.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
 )
 
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
