@@ -1,9 +1,11 @@
 import uuid
 
 from django.test import TestCase
+from testil import eq
 
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.exceptions import MissingSyncLog
+from casexml.apps.phone.models import get_alt_device_id
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice
 
@@ -101,3 +103,8 @@ class TestSyncPurge(TestCase):
         fourth_sync = device.sync()
         response = fourth_sync.config.get_response()
         self.assertEqual(response.status_code, 200)
+
+
+def test_get_alt_device_id():
+    eq(get_alt_device_id('WebAppsLogin*mr.snuggles@example.com*as*example.mr.snuggles'),
+                         'WebAppsLogin*mr_snuggles@example_com*as*example.mr.snuggles')
