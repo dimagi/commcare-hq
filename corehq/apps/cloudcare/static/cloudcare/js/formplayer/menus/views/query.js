@@ -29,7 +29,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         ui: {
             valueDropdown: 'select.query-field',
-            dateRange: 'input.daterange'
+            dateRange: 'input.daterange',
         },
 
         modelEvents: {
@@ -45,8 +45,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: 'YYYY-MM-DD',
-                    separator: separator
-            }});
+                    separator: separator,
+                }
+            });
         },
     });
 
@@ -83,11 +84,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             $fields.each(function (index) {
                 var answer = null;
                 if (this.value !== '') {
-                    if (model[index].get('input') == 'daterange') {
+                    if (model[index].get('input') === 'daterange') {
                         // special format handled by CaseSearch API
                         answer = "__range__" + this.value.replace(separator, "__");
-                    }
-                    else {
+                    } else {
                         answer = this.value;
                     }
                     answers[model[index].get('id')] = answer;

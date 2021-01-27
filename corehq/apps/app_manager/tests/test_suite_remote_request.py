@@ -311,7 +311,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
     def test_prompt_daterange(self, *args):
-        """Setting the appearance to "barcode"
+        """Setting the appearance to "daterange"
         """
         # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].input_ = 'daterange'
