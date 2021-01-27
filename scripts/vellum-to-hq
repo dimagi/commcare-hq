@@ -228,7 +228,7 @@ def require_clean_working_tree(git, context="", abort=sys.exit):
 
 def get_version(vellum_tar):
     try:
-        return sh.tar("xOf", vellum_tar, "version.txt").strip()
+        return sh.tar("xOf", vellum_tar, "./version.txt").strip()
     except sh.ErrorReturnCode:
         return ""
 
