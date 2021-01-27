@@ -373,7 +373,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
-            location_codes = row.get('location_code') or None
+            location_codes = row.get('location_code', []) if row.has('location_code') else None
             if location_codes and not isinstance(location_codes, list):
                 location_codes = [location_codes]
             if location_codes is not None:
