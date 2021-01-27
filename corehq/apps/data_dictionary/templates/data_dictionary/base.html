@@ -97,7 +97,7 @@
           {% trans "Add Case Property Group" %}
         </button>
       </form>
-      <p class="text-muted" style="margin-top: .5rem;">
+      <p class="help-block">
         {% url 'generate_data_dictionary' domain as refresh_url %}
         {% blocktrans %}
         Missing properties or case types? <a href="{{ refresh_url }}" target="_blank">Click to sync</a>
