@@ -30,16 +30,22 @@ class FormPillowTest(TestCase):
         super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         self.pillow = get_xform_pillow(skip_ucr=True)
-        self.es = get_es_new()
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
         factory = AppFactory(domain=self.domain)
         self.app = factory.app
         self.app.save()
 
+    @classmethod
+    def setUpClass(cls):
+        cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
+
     def tearDown(self):
         self.app.delete()
-        ensure_index_deleted(USER_INDEX)
         super(FormPillowTest, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
 
     def test_xform_pillow_couch(self):
         form = self._make_form()
