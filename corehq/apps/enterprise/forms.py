@@ -98,16 +98,22 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_domain_creation": self.account.restrict_domain_creation,
             "restrict_signup": self.account.restrict_signup,
             "restrict_signup_message": self.account.restrict_signup_message,
-            "forms_filetype": self.export_settings.forms_filetype,
-            "forms_auto_convert": self.export_settings.forms_auto_convert,
-            "forms_auto_format_cells": self.export_settings.forms_auto_format_cells,
-            "forms_include_duplicates": self.export_settings.forms_include_duplicates,
-            "forms_expand_checkbox": self.export_settings.forms_expand_checkbox,
-            "cases_filetype": self.export_settings.cases_filetype,
-            "cases_auto_convert": self.export_settings.cases_auto_convert,
-            "odata_include_duplicates": self.export_settings.odata_include_duplicates,
-            "odata_expand_checkbox": self.export_settings.odata_expand_checkbox,
         }
+
+        if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+            export_settings_args = {
+                "forms_filetype": self.export_settings.forms_filetype,
+                "forms_auto_convert": self.export_settings.forms_auto_convert,
+                "forms_auto_format_cells": self.export_settings.forms_auto_format_cells,
+                "forms_include_duplicates": self.export_settings.forms_include_duplicates,
+                "forms_expand_checkbox": self.export_settings.forms_expand_checkbox,
+                "cases_filetype": self.export_settings.cases_filetype,
+                "cases_auto_convert": self.export_settings.cases_auto_convert,
+                "odata_include_duplicates": self.export_settings.odata_include_duplicates,
+                "odata_expand_checkbox": self.export_settings.odata_expand_checkbox
+            }
+            kwargs.update(export_settings_args)
+
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_id = 'enterprise-settings-form'
@@ -188,30 +194,51 @@ class EnterpriseSettingsForm(forms.Form):
             raise ValidationError(_("If restricting signups, a message is required."))
         return message
 
-    def save(self, account, export_settings):
+    def save(self, account):
         account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
         account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
-        # forms
-        export_settings.forms_filetype = self.cleaned_data.get('forms_filetype', export_settings.forms_filetype)
-        export_settings.forms_auto_convert = self.cleaned_data.get('forms_auto_convert',
-                                                                   export_settings.forms_auto_convert)
-        export_settings.forms_auto_format_cells = self.cleaned_data.get('forms_auto_format_cells',
-                                                                        export_settings.forms_auto_format_cells)
-        export_settings.forms_include_duplicates = self.cleaned_data.get('forms_include_duplicates',
-                                                                         export_settings.forms_include_duplicates)
-        export_settings.forms_expand_checkbox = self.cleaned_data.get('forms_expand_checkbox',
-                                                                      export_settings.forms_expand_checkbox)
-        # cases
-        export_settings.cases_filetype = self.cleaned_data.get('cases_filetype',
-                                                               export_settings.cases_filetype)
-        export_settings.cases_auto_convert = self.cleaned_data.get('cases_auto_convert',
-                                                                   export_settings.cases_auto_convert)
-        # odata
-        export_settings.odata_include_duplicates = \
-            self.cleaned_data.get('odata_include_duplicates', export_settings.odata_include_duplicates)
-        export_settings.odata_expand_checkbox = \
-            self.cleaned_data.get('odata_expand_checkbox', export_settings.odata_expand_checkbox)
-        export_settings.save()
+
+        if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+            # forms
+            self.export_settings.forms_filetype = self.cleaned_data.get(
+                'forms_filetype',
+                self.export_settings.forms_filetype
+            )
+            self.export_settings.forms_auto_convert = self.cleaned_data.get(
+                'forms_auto_convert',
+                self.export_settings.forms_auto_convert
+            )
+            self.export_settings.forms_auto_format_cells = self.cleaned_data.get(
+                'forms_auto_format_cells',
+                self.export_settings.forms_auto_format_cells
+            )
+            self.export_settings.forms_include_duplicates = self.cleaned_data.get(
+                'forms_include_duplicates',
+                self.export_settings.forms_include_duplicates
+            )
+            self.export_settings.forms_expand_checkbox = self.cleaned_data.get(
+                'forms_expand_checkbox',
+                self.export_settings.forms_expand_checkbox
+            )
+            # cases
+            self.export_settings.cases_filetype = self.cleaned_data.get(
+                'cases_filetype',
+                self.export_settings.cases_filetype
+            )
+            self.export_settings.cases_auto_convert = self.cleaned_data.get(
+                'cases_auto_convert',
+                self.export_settings.cases_auto_convert
+            )
+            # odata
+            self.export_settings.odata_include_duplicates = self.cleaned_data.get(
+                'odata_include_duplicates',
+                self.export_settings.odata_include_duplicates
+            )
+            self.export_settings.odata_expand_checkbox = self.cleaned_data.get(
+                'odata_expand_checkbox',
+                self.export_settings.odata_expand_checkbox
+            )
+            self.export_settings.save()
         return True

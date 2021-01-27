@@ -42,7 +42,7 @@ from corehq.apps.domain.decorators import (
 )
 
 from corehq.apps.accounting.utils.subscription import get_account_or_404
-from corehq.apps.export.models import DefaultExportSettings
+from corehq.apps.export.utils import get_default_export_settings_for_domain
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.const import USER_DATE_FORMAT
 
@@ -113,7 +113,7 @@ def enterprise_dashboard_email(request, domain, slug):
 @login_and_domain_required
 def enterprise_settings(request, domain):
     account = get_account_or_404(request, domain)
-    export_settings = DefaultExportSettings.objects.get_or_create(account=account)[0]
+    export_settings = get_default_export_settings_for_domain(domain)
 
     if request.method == 'POST':
         form = EnterpriseSettingsForm(request.POST, domain=domain, account=account,
@@ -139,11 +139,11 @@ def enterprise_settings(request, domain):
 @require_POST
 def edit_enterprise_settings(request, domain):
     account = get_account_or_404(request, domain)
-    export_settings = DefaultExportSettings.objects.get_or_create(account=account)[0]
+    export_settings = get_default_export_settings_for_domain(domain)
     form = EnterpriseSettingsForm(request.POST, domain=domain, account=account, export_settings=export_settings)
 
     if form.is_valid():
-        form.save(account, export_settings)
+        form.save(account)
         messages.success(request, "Account successfully updated.")
     else:
         return enterprise_settings(request, domain)
