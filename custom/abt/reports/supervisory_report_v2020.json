@@ -66,10 +66,6 @@
             {
                 "field": "level_4",
                 "order": "ASC"
-            },
-            {
-                "field": "username",
-                "order": "ASC"
             }
         ],
         "filters": [
@@ -245,27 +241,6 @@
                     "sw": "Date and Time Submitted",
                     "kin": "Date and Time Submitted",
                     "por": "Data e Hora de Submiss\u00e3o"
-                },
-                "aggregation": "simple"
-            },
-            {
-                "description": null,
-                "field": "username",
-                "format": "default",
-                "transform": {
-
-                },
-                "column_id": "username",
-                "alias": null,
-                "calculate_total": false,
-                "type": "field",
-                "display": {
-                    "fra": "Nom d'utilisateur",
-                    "frm": "Nom d'utilisateur",
-                    "en": "Username",
-                    "sw": "Username",
-                    "kin": "Username",
-                    "por": "Utilizador"
                 },
                 "aggregation": "simple"
             },
