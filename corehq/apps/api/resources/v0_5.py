@@ -825,7 +825,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
 
     class Meta(object):
         resource_name = 'user_domains'
-        authentication = LoginAuthentication()
+        authentication = LoginAuthentication(allow_session_auth=True)
         object_class = UserDomain
         include_resource_uri = False
 
