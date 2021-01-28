@@ -6,4 +6,4 @@ class HqWebAppConfig(AppConfig):
 
     def ready(self):
         # Ensure the login signal handlers have been loaded
-        import corehq.apps.hqwebapp.login_handlers  # noqa
+        from . import login_handlers, signals  # noqa
