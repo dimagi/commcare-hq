@@ -884,7 +884,10 @@ def _migrate_form_attachments(sql_form, couch_form):
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
             if couch_meta is None:
-                assert not metas[0].blob_exists(), metas
+                if metas[0].blob_exists():
+                    # not sure how this is possible, but at least one
+                    # form existed that hit this branch.
+                    return metas[0]
             elif metas[0].key != couch_meta.key:
                 assert not blobdb.exists(couch_meta.key), couch_meta
                 if metas[0].blob_exists():
