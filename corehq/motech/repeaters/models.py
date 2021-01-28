@@ -1222,8 +1222,7 @@ def send_request(
     else:
         if is_success(response):
             if is_response(response):
-                # Don't bother logging success in
-                # Datadog if the payload wasn't sent.
+                # Log success in Datadog if the payload was sent.
                 log_repeater_success_in_datadog(
                     repeater.domain,
                     response.status_code,
