@@ -182,7 +182,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setForceManualAction = function (force) {
             this.forceManualAction = force;
-        }
+        };
 
         this.clearExceptApp = function () {
             this.sessionId = null;
