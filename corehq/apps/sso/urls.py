@@ -6,6 +6,7 @@ from corehq.apps.sso.views import (
     sso_saml_login,
     sso_saml_sls,
     sso_saml_logout,
+    sso_saml_status,
 )
 
 saml_urls = [
@@ -14,6 +15,7 @@ saml_urls = [
     url(r'^sls/$', sso_saml_sls, name='sso_saml_sls'),
     url(r'^logout/$', sso_saml_logout, name='sso_saml_logout'),
     url(r'^login/$', sso_saml_login, name='sso_saml_login'),
+    url(r'^status/$', sso_saml_status, name='sso_saml_status'),
 ]
 
 urlpatterns = [
