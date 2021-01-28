@@ -1093,7 +1093,7 @@ class SQLRepeatRecord(models.Model):
         self.repeater_stub.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
-    def _add_failure_attempt(self, message, max_attempts)
+    def _add_failure_attempt(self, message, max_attempts):
         if self.num_attempts < max_attempts:
             state = RECORD_FAILURE_STATE
         else:
