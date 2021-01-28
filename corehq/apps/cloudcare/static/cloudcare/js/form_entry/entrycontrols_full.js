@@ -842,13 +842,27 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self.templateType = 'ethiopian-date';
 
         EntrySingleAnswer.call(self, question, options);
-
+        self._calendarInstance = $.calendars.instance('ethiopian');
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
             self.$picker.calendarsPicker({
-                calendar: $.calendars.instance('ethiopian'),
+                calendar: self._calendarInstance,
                 showAnim: '',
+                onSelect: function (dates) {
+                    // transform date to gregorian to store as the answer
+                    if (dates) {
+                        self.answer(moment(dates[0].toJSDate()).format('YYYY-MM-DD'));
+                    } else {
+                        self.answer(Const.NO_ANSWER);
+                    }
+                },
             });
+
+            if (self.answer()) {
+                var ethiopianDate = self._calendarInstance.fromJSDate(moment(self.answer()).toDate());
+                // TODO: what if answer isn't a date
+                self.$picker.calendarsPicker('setDate', ethiopianDate);
+            }
         };
 
     }
