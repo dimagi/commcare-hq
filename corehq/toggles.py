@@ -2030,3 +2030,11 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
+    'clean_old_formplayer_syncs',
+    'Delete old formplayer syncs during submission processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001
+)
