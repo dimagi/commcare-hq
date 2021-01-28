@@ -15,10 +15,8 @@ try:
 except:
     from auditcare.utils import get_current_user
 
-from django.dispatch import Signal
 
 log = logging.getLogger(__name__)
-user_login_failed = Signal(providing_args=['request', 'username'])
 
 
 def model_to_json(instance):
