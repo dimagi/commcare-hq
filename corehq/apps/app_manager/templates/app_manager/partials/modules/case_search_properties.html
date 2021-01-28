@@ -48,62 +48,71 @@
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                  <h3>
-                    {% trans "Add Lookup Table" %}
-                  </h3>
+                  <h4 class="modal-title">
+                    {% trans "Lookup Table:" %}
+                    <!-- ko text: property.label --><!-- /ko -->
+                  </h4>
                 </div>
                 <div class="modal-body">
                   <div class="form-horizontal">
                     <div class="form-group">
-                      <label class="control-label">
+                      <label class="control-label col-xs-12 col-sm-3">
                         {% trans "Lookup Table" %}
                       </label>
-                      <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset">
-                        <option value="">{% trans "Select a lookup table..." %}</option>
-                        {% for item in  js_options.item_lists %}
-                          <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label">{% trans "Label Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.label" placeholder="name"/>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label">{% trans "Value Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.value" placeholder="id"/>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label">{% trans "Sort Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.sort" placeholder="name"/>
-                    </div>
-                    <div class="panel panel-default">
-                      <div class="panel-heading">
-                        <h3 class="panel-title panel-title-nolink">
-                          {% trans "Advanced" %}
-                        </h3>
+                      <div class="col-xs-12 col-sm-9">
+                        <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset">
+                          <option value="">{% trans "Select a lookup table..." %}</option>
+                          {% for item in  js_options.item_lists %}
+                            <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
+                          {% endfor %}
+                        </select>
                       </div>
-                      <div class="panel-body">
-                        <div class="form-group">
-                          <label class="control-label" >
-                            {% trans "Instance URI" %}
-                          </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label col-xs-12 col-sm-3">{% trans "Label Field" %}</label>
+                      <div class="col-xs-12 col-sm-9">
+                        <input class="form-control" type="text" data-bind="value: property.itemSet.label" placeholder="name"/>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label col-xs-12 col-sm-3">{% trans "Value Field" %}</label>
+                      <div class="col-xs-12 col-sm-9">
+                        <input class="form-control" type="text" data-bind="value: property.itemSet.value" placeholder="id"/>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label col-xs-12 col-sm-3">{% trans "Sort Field" %}</label>
+                      <div class="col-xs-12 col-sm-9">
+                        <input class="form-control" type="text" data-bind="value: property.itemSet.sort" placeholder="name"/>
+                      </div>
+                    </div>
+                    <fieldset>
+                      <legend>{% trans "Advanced" %}</legend>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Instance URI" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
                           <input class="form-control" type="text" data-bind="value: property.itemSet.instance_uri"/>
                         </div>
-                        <div class="form-group">
-                          <label class="control-label" >
-                            {% trans "Instance ID" %}
-                          </label>
+                      </div>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Instance ID" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
                           <input class="form-control" type="text" data-bind="value: property.itemSet.instance_id"/>
                         </div>
-                        <div class="form-group">
-                          <label class="control-label" >
-                            {% trans "Instance Nodeset" %}
-                          </label>
+                      </div>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Instance Nodeset" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
                           <input class="form-control" type="text" data-bind="value: property.itemSet.nodeset"/>
                         </div>
                       </div>
-                    </div>
+                    </fieldset>
                   </div>
                 </div>
                 <div class="modal-footer">
