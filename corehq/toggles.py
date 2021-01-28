@@ -1106,6 +1106,16 @@ LEGACY_CHILD_MODULES = StaticToggle(
     )
 )
 
+NON_PARENT_MENU_SELECTION = StaticToggle(
+    'non_parent_menu_selection',
+    'Allow selecting of module of any case-type in select-parent workflow',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allow selecting of module of any case-type in select-parent workflow
+    """,
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
