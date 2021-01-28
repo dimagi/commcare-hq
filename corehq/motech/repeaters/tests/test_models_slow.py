@@ -31,28 +31,7 @@ DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 ResponseMock = namedtuple('ResponseMock', 'status_code reason')
 
 
-class RepeaterFixtureMixin:
-
-    def setUp(self):
-        url = 'https://www.example.com/api/'
-        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.repeater = FormRepeater(
-            domain=DOMAIN,
-            connection_settings_id=conn.id,
-            include_app_id_param=False,
-        )
-        self.repeater.save()
-        self.repeater_stub = RepeaterStub.objects.create(
-            domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
-        )
-
-    def tearDown(self):
-        self.repeater_stub.delete()
-        self.repeater.delete()
-
-
-class ServerErrorTests(RepeaterFixtureMixin, TestCase, DomainSubscriptionMixin):
+class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -60,8 +39,25 @@ class ServerErrorTests(RepeaterFixtureMixin, TestCase, DomainSubscriptionMixin):
         cls.domain_obj = create_domain(DOMAIN)
         cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
 
+        url = 'https://www.example.com/api/'
+        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        cls.repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings_id=conn.id,
+            include_app_id_param=False,
+        )
+        cls.repeater.save()
+        cls.repeater_stub = RepeaterStub.objects.create(
+            domain=DOMAIN,
+            repeater_id=cls.repeater.get_id,
+        )
+        cls.instance_id = str(uuid4())
+        post_xform(cls.instance_id)
+
     @classmethod
     def tearDownClass(cls):
+        cls.repeater_stub.delete()
+        cls.repeater.delete()
         cls.teardown_subscriptions()
         cls.domain_obj.delete()
         clear_plan_version_cache()
@@ -69,31 +65,15 @@ class ServerErrorTests(RepeaterFixtureMixin, TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
-        self.instance_id = str(uuid4())
         self.repeat_record = self.repeater_stub.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
             registered_at=timezone.now(),
         )
-        self.post_xform()
 
-    def post_xform(self):
-        xform = f"""<?xml version='1.0' ?>
-<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-      xmlns="https://www.commcarehq.org/test/ServerErrorTests/">
-    <foo/>
-    <bar/>
-    <meta>
-        <deviceID>ServerErrorTests</deviceID>
-        <timeStart>2011-10-01T15:25:18.404-04</timeStart>
-        <timeEnd>2011-10-01T15:26:29.551-04</timeEnd>
-        <username>admin</username>
-        <userID>testy.mctestface</userID>
-        <instanceID>{self.instance_id}</instanceID>
-    </meta>
-</data>
-"""
-        submit_form_locally(xform, DOMAIN)
+    def tearDown(self):
+        self.repeat_record.delete()
+        super().tearDown()
 
     def reget_repeater_stub(self):
         return RepeaterStub.objects.get(pk=self.repeater_stub.pk)
@@ -162,3 +142,22 @@ class ServerErrorTests(RepeaterFixtureMixin, TestCase, DomainSubscriptionMixin):
                              RECORD_FAILURE_STATE)
             repeater_stub = self.reget_repeater_stub()
             self.assertIsNotNone(repeater_stub.next_attempt_at)
+
+
+def post_xform(instance_id):
+    xform = f"""<?xml version='1.0' ?>
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+      xmlns="https://www.commcarehq.org/test/ServerErrorTests/">
+    <foo/>
+    <bar/>
+    <meta>
+        <deviceID>ServerErrorTests</deviceID>
+        <timeStart>2011-10-01T15:25:18.404-04</timeStart>
+        <timeEnd>2011-10-01T15:26:29.551-04</timeEnd>
+        <username>admin</username>
+        <userID>testy.mctestface</userID>
+        <instanceID>{instance_id}</instanceID>
+    </meta>
+</data>
+"""
+    submit_form_locally(xform, DOMAIN)
