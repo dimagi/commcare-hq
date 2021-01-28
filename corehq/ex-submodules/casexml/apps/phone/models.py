@@ -389,7 +389,7 @@ def delete_synclogs(current_synclog):
         SyncLogSQL.objects.filter(
             user_id=current_synclog.user_id,
             date__lt=current_synclog.date,
-        ).filter(Q(device_id=current_synclog.device_id) | Q(device_id=alt_device_id)).delete()
+        ).filter(Q(device_id=current_synclog.device_id) | Q(device_id=alt_device_id))[:1000].delete()
     elif current_synclog.previous_log_id:
         SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
 
