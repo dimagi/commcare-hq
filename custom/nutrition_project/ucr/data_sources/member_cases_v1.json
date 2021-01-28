@@ -1,0 +1,87 @@
+{
+  "domains": [
+    "india-nutrition-project"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-member_cases_v1",
+    "display_name": "Cases - Member V1",
+    "referenced_doc_type": "CommCareCase",
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "member"
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "flw_id",
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "owner_id"
+          ]
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false
+      },
+      {
+        "type": "expression",
+        "column_id": "supervisor_id",
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "type": "location_parent_id",
+          "location_id_expression": {
+            "type": "property_path",
+            "property_path": [
+              "owner_id"
+            ]
+          }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false
+      },
+      {
+        "type": "expression",
+        "column_id": "opened_on",
+        "display_name": "opened_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "opened_on"
+          ]
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false
+      },
+      {
+        "type": "expression",
+        "column_id": "closed",
+        "display_name": "closed",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "closed"
+          ]
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false
+      }
+    ]
+  }
+}

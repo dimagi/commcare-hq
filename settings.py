@@ -387,6 +387,7 @@ HQ_APPS = (
     'custom.aaa',
     'custom.inddex',
     'custom.onse',
+    'custom.nutrition_project',
 
     'custom.ccqa',
 
@@ -1075,6 +1076,7 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
     "custom.succeed.commcare_extensions",
+    "custom.nutrition_project.commcare_extensions"
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1960,6 +1962,7 @@ DOMAIN_MODULE_MAP = {
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
+    'india-nutrition-project': 'custom.nutrition_project',
 
     'crs-remind': 'custom.apps.crs_reports',
 
