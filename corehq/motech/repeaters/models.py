@@ -1077,11 +1077,7 @@ class SQLRepeatRecord(models.Model):
         that this repeat record does not hold up the rest.
         """
         self.repeater_stub.reset_next_attempt()
-        if self.num_attempts < MAX_ATTEMPTS:
-            state = RECORD_FAILURE_STATE
-        else:
-            state = RECORD_CANCELLED_STATE
-        self._add_failure_attempt(message, state)
+        self._add_failure_attempt(message, MAX_ATTEMPTS)
 
     def add_server_failure_attempt(self, message):
         """
@@ -1095,13 +1091,13 @@ class SQLRepeatRecord(models.Model):
 
         """
         self.repeater_stub.set_next_attempt()
-        if self.num_attempts < MAX_BACKOFF_ATTEMPTS:
+        self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
+
+    def _add_failure_attempt(self, message, max_attempts)
+        if self.num_attempts < max_attempts:
             state = RECORD_FAILURE_STATE
         else:
             state = RECORD_CANCELLED_STATE
-        self._add_failure_attempt(message, state)
-
-    def _add_failure_attempt(self, message, state):
         self.sqlrepeatrecordattempt_set.create(
             state=state,
             message=message,
