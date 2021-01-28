@@ -630,7 +630,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return true;
         }
         query = query.toLowerCase();
-        option.text = option.text.toLowerCase();
+        var haystack = option.text.toLowerCase();
 
         var match;
         if (matchType === Const.COMBOBOX_MULTIWORD) {
@@ -639,7 +639,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
             // where n is number of words in the query, and m is number of words in the choice
             var wordsInQuery = query.split(' ');
-            var wordsInChoice = option.text.split(' ');
+            var wordsInChoice = haystack.split(' ');
 
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
@@ -647,8 +647,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         } else if (matchType === Const.COMBOBOX_FUZZY) {
             // Fuzzy filter, matches if query is "close" to answer
             match = (
-                (window.Levenshtein.get(option.text, query) <= 2 && query.length > 3) ||
-                option.text === query
+                (window.Levenshtein.get(haystack, query) <= 2 && query.length > 3) ||
+                haystack === query
             );
         }
 
@@ -658,7 +658,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         }
 
         // Standard filter, matches only start of word
-        return option.text.startsWith(query);
+        return haystack.startsWith(query);
     };
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
