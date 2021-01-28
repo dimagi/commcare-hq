@@ -309,7 +309,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         ui: {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
-            searchTextBox: '.input-group',
+            searchTextBox: '.module-search-container',
             paginators: '.page-link',
             columnHeader: '.header-clickable',
         },
@@ -380,6 +380,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
+                pageNumLabel: _.template(gettext("Page <%=num%>")),
             };
         },
     });

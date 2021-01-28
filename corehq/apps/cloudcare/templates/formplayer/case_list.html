@@ -82,7 +82,7 @@
           </li>
           <% } %>
           <% for (i = 0; i < pageCount; i++) { %>
-          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" aria-label="<%= `Page ${i + 1}` %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0" data-id="<%= i %>"><%= i + 1 %></a></li>
+          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0" data-id="<%= i %>"><%= i + 1 %></a></li>
           <% } %>
           <% if (currentPage < pageCount - 1) { %>
           <li class="page-item" id="next-page">
