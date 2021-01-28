@@ -177,7 +177,7 @@ def process_repeater_stub(repeater_stub: RepeaterStub):
                 # The repeat record is cancelled if there is an error
                 # getting the payload. We can safely move to the next one.
                 continue
-            succeeded_or_cancelled = send_request(repeater_stub.repeater,
-                                                  repeat_record, payload)
-            if not succeeded_or_cancelled:
-                break  # Retry later
+            should_retry = not send_request(repeater_stub.repeater,
+                                            repeat_record, payload)
+            if should_retry:
+                break
