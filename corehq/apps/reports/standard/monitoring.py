@@ -1268,7 +1268,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @property
     @memoized
     def activity_times(self):
-        all_times = []
         users = _get_selected_users(self.domain, self.request)
         user_ids = [user.user_id for user in users]
         xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
