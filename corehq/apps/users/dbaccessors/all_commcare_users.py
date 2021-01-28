@@ -56,7 +56,7 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
                 user_filters.get('location_id', None), count_only]):
         return get_all_commcare_users_by_domain(domain)
 
-    query = _get_es_query(domain, user_filters)
+    query = _get_es_query(domain, user_filters).remove_default_filter('active')
 
     if count_only:
         return query.count()
