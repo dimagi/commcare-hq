@@ -227,7 +227,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             steps: self.steps,
             page: self.page,
             search: self.search,
-            queryData: self.queryData,
+            queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             installReference: self.installReference,
             sortIndex: self.sortIndex,
