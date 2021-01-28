@@ -530,6 +530,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    default_search = SimpleBooleanField("@default_search", "true", "false")
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -732,6 +733,7 @@ class Action(ActionMixin):
 
     display = NodeField('display', Display)
     auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):
