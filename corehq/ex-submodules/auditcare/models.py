@@ -30,8 +30,6 @@ except:
     user_logged_in = None
     user_logged_out = None
 
-from auditcare.signals import user_login_failed
-
 
 def make_uuid():
     return uuid.uuid4().hex
@@ -353,14 +351,12 @@ setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
 ACCESS_LOGIN = 'login'
 ACCESS_LOGOUT = 'logout'
-ACCESS_FAILED = 'login_failed'
 ACCESS_USER_LOCKOUT = 'user_lockout'
 ACCESS_IP_LOCKOUT = 'ip_lockout'
 ACCESS_PASSWORD = 'password_change'
 ACCESS_CHOICES = (
     (ACCESS_LOGIN, "Login"),
     (ACCESS_LOGOUT, "Logout"),
-    (ACCESS_FAILED, "Failed Login"),
     (ACCESS_USER_LOCKOUT, "User Lockout"),
     (ACCESS_IP_LOCKOUT, "IP Lockout"),
     (ACCESS_PASSWORD, "Password Change"),
@@ -407,20 +403,6 @@ class AccessAudit(AuditEvent):
         audit.save()
 
     @classmethod
-    def audit_login_failed(cls, request, username, *args, **kwargs):
-        '''Creates an instance of a Access log.
-        '''
-        audit = cls.create_audit(cls, username)
-        audit.ip_address = get_ip(request)
-        audit.access_type = 'login_failed'
-        if username != None:
-            audit.description = "Login Failure: %s" % (username)
-        else:
-            audit.description = "Login Failure"
-        audit.session_key = request.session.session_key
-        audit.save()
-
-    @classmethod
     def audit_logout(cls, request, user):
         '''Log a logout event'''
         audit = cls.create_audit(cls, user)
@@ -438,7 +420,6 @@ class AccessAudit(AuditEvent):
 
 
 setattr(AuditEvent, 'audit_login', AccessAudit.audit_login)
-setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
 setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
 
 
@@ -504,13 +485,6 @@ def audit_logout(sender, **kwargs):
 
 if user_logged_out:
     user_logged_out.connect(audit_logout)
-
-
-def audit_login_failed(sender, **kwargs):
-    AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
-
-
-user_login_failed.connect(audit_login_failed)
 
 
 def wrap_audit_event(event):

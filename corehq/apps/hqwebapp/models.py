@@ -1,14 +1,12 @@
+import architect
+
 from collections import namedtuple
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from tastypie.models import ApiKey
-
 from corehq.util.markup import mark_up_urls
 from corehq.util.quickcache import quickcache
-
-from .signals import *
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
 
@@ -53,3 +51,26 @@ class MaintenanceAlert(models.Model):
             return active_alerts[0]
         else:
             return ''
+
+
+@architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
+class UserAccessLog(models.Model):
+    TYPE_LOGIN = 'login'
+    TYPE_LOGOUT = 'logout'
+    TYPE_FAILURE = 'failure'
+
+    ACTIONS = (
+        (TYPE_LOGIN, 'Login'),
+        (TYPE_LOGOUT, 'Logout'),
+        (TYPE_FAILURE, 'Login Failure')
+    )
+
+    user_id = models.CharField(max_length=255, db_index=True)
+    action = models.CharField(max_length=20, choices=ACTIONS)
+    ip = models.GenericIPAddressField()
+    user_agent = models.CharField(max_length=255, blank=True)
+    path = models.CharField(max_length=255, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.timestamp}: {self.user_id} - {self.action}'
