@@ -36,6 +36,7 @@ class FormPillowTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.es = get_es_new()
         initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
@@ -46,6 +47,7 @@ class FormPillowTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
+        super().tearDownClass()
 
     def test_xform_pillow_couch(self):
         form = self._make_form()
