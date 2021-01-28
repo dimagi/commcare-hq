@@ -466,6 +466,7 @@ class RestoreState(object):
             previous_log_id=previous_log_id,
             extensions_checked=True,
             device_id=self.params.device_id,
+            request_user_id=self.restore_user.request_user_id,
         )
         if self.params.app:
             new_synclog.app_id = self.params.app.copy_of or self.params.app_id

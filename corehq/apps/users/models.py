@@ -1112,6 +1112,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.username.endswith('@dimagi.com')
 
     def is_locked_out(self):
+        return self.supports_lockout() and self.should_be_locked_out()
+
+    def should_be_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
@@ -1855,11 +1858,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_ota_restore_user(self):
+    def to_ota_restore_user(self, request_user=None):
         return OTARestoreCommCareUser(
             self.domain,
             self,
             loadtest_factor=self.loadtest_factor or 1,
+            request_user=request_user,
         )
 
     def _get_form_ids(self):
@@ -2467,10 +2471,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_web_user(self):
         return True
 
-    def to_ota_restore_user(self, domain):
+    def to_ota_restore_user(self, domain, request_user=None):
         return OTARestoreWebUser(
             domain,
             self,
+            request_user=request_user
         )
 
     def get_email(self):

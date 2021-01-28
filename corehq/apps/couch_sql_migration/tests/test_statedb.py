@@ -66,7 +66,7 @@ def test_db_unique_id():
 @with_setup(teardown=delete_db)
 def test_open_state_db():
     assert not os.path.exists(_get_state_db_filepath("test", state_dir))
-    with assert_raises(mod.Error):
+    with assert_raises(mod.NotFoundError):
         open_state_db("test", state_dir)
     with init_db(memory=False) as db:
         uid = db.unique_id
