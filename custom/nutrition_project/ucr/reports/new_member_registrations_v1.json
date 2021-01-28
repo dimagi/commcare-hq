@@ -13,6 +13,7 @@
     "visible": true,
     "aggregation_columns": [
       "flw_id",
+      "supervisor_id",
       "month"
     ],
     "filters": [
@@ -69,29 +70,19 @@
       {
         "display": "Month",
         "column_id": "month",
-        "type": "aggregate_date",
-        "field": "opened_on",
-        "format": "%Y-%m",
-        "transform": {},
-        "calculate_total": false,
-        "description": null,
-        "visible": true
+        "type": "field",
+        "field": "month",
+        "aggregation": "simple"
       },
       {
-        "display": {
-          "en": "FLW ID",
-          "hin": "FLW ID"
-        },
+        "display": "FLW ID",
         "column_id": "flw_id",
         "type": "field",
         "field": "flw_id",
         "aggregation": "simple"
       },
       {
-        "display": {
-          "en": "FLW Name",
-          "hin": "FLW Name"
-        },
+        "display": "FLW Name",
         "column_id": "flw_name",
         "type": "field",
         "field": "flw_id",
@@ -102,14 +93,11 @@
         }
       },
       {
-        "display": {
-          "en": "Population"
-        },
-        "column_id": "open_count",
+        "display": "Population",
+        "column_id": "count",
         "type": "field",
         "field": "doc_id",
-        "aggregation": "count",
-        "calculate_total": false
+        "aggregation": "count"
       }
     ]
   },

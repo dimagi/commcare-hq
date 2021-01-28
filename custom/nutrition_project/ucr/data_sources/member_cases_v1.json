@@ -29,10 +29,7 @@
           "property_path": [
             "owner_id"
           ]
-        },
-        "is_nullable": true,
-        "is_primary_key": false,
-        "create_index": false
+        }
       },
       {
         "type": "expression",
@@ -47,10 +44,7 @@
               "owner_id"
             ]
           }
-        },
-        "is_nullable": true,
-        "is_primary_key": false,
-        "create_index": false
+        }
       },
       {
         "type": "expression",
@@ -62,10 +56,22 @@
           "property_path": [
             "opened_on"
           ]
-        },
-        "is_nullable": true,
-        "is_primary_key": false,
-        "create_index": false
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "month",
+        "display_name": "month",
+        "datatype": "date",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "property_path",
+            "property_path": [
+              "opened_on"
+            ]
+          }
+        }
       },
       {
         "type": "expression",
@@ -77,10 +83,16 @@
           "property_path": [
             "closed"
           ]
-        },
-        "is_nullable": true,
-        "is_primary_key": false,
-        "create_index": false
+        }
+      }
+    ],
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "flw_id",
+          "supervisor_id",
+          "month"
+        ]
       }
     ]
   }
