@@ -40,5 +40,7 @@ script:
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
+after_failure:
+  - docker logs hqtest_couch_1
 services:
   - docker
