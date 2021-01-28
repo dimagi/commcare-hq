@@ -39,9 +39,10 @@ def test_get_all_repeater_types():
         assert_in(name, types)
 
 
-class RepeaterFixtureMixin:
+class RepeaterTestCase(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.repeater = FormRepeater(
             domain=DOMAIN,
             url='https://www.example.com/api/',
@@ -55,9 +56,10 @@ class RepeaterFixtureMixin:
     def tearDown(self):
         self.repeater_stub.delete()
         self.repeater.delete()
+        super().tearDown()
 
 
-class RepeaterConnectionSettingsTests(RepeaterFixtureMixin, TestCase):
+class RepeaterConnectionSettingsTests(RepeaterTestCase):
 
     def tearDown(self):
         if self.repeater.connection_settings_id:
@@ -105,7 +107,7 @@ class RepeaterConnectionSettingsTests(RepeaterFixtureMixin, TestCase):
         self.assertEqual(conn.plaintext_password, self.repeater.plaintext_password)
 
 
-class TestSQLRepeatRecordOrdering(RepeaterFixtureMixin, TestCase):
+class TestSQLRepeatRecordOrdering(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
@@ -140,7 +142,7 @@ class TestSQLRepeatRecordOrdering(RepeaterFixtureMixin, TestCase):
         self.assertEqual(repeat_records[1].payload_id, 'cain')
 
 
-class RepeaterStubManagerTests(RepeaterFixtureMixin, TestCase):
+class RepeaterStubManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
         repeater_stubs = RepeaterStub.objects.all_ready()
@@ -275,7 +277,7 @@ class FormatResponseTests(SimpleTestCase):
                                                 '<h1>Hello World</h1>')
 
 
-class AddAttemptsTests(RepeaterFixtureMixin, TestCase):
+class AddAttemptsTests(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
@@ -287,10 +289,6 @@ class AddAttemptsTests(RepeaterFixtureMixin, TestCase):
             payload_id='eggs',
             registered_at=timezone.now(),
         )
-
-    def tearDown(self):
-        self.repeater_stub.delete()
-        self.repeater.delete()
 
     def test_add_success_attempt_true(self):
         self.repeat_record.add_success_attempt(response=True)
