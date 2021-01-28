@@ -29,9 +29,6 @@
       </td>
       {% endif %}
       <td class="col-sm-2">
-        {% if js_options.search_prompt_appearance_enabled %}
-          <span data-bind="visible: property.itemSet.nodeset, text: property.itemSet.nodeset"></span>
-        {% endif %}
         <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + property.uniqueId}">
           <div class="modal-dialog modal-md">
             <div class="modal-content">
