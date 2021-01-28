@@ -1165,7 +1165,7 @@ def attempt_forward_now(repeater_stub: RepeaterStub):
     process_repeater_stub.delay(repeater_stub)
 
 
-def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> Any:
+def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
     try:
         return repeater.get_payload(repeat_record)
     except Exception as err:
