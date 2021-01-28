@@ -12,18 +12,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var imageUri = this.options.model.get('imageUri'),
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
-                initialValue = this.options.model.get('value');
+                value = this.options.model.get('value');
 
             // Initial values are sent from formplayer as strings, but dropdowns expect an integer
-            if (initialValue && this.options.model.get('input') === "select1") {
-                initialValue = parseInt(initialValue);
+            if (value && this.options.model.get('input') === "select1") {
+                value = parseInt(value);
             }
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
-                value: initialValue,
+                value: value,
             };
+        },
+
+        initialize: function () {
+            // If input doesn't have a default value, check to see if there's a sticky value from user's last search
+            if (!this.options.model.get('value')) {
+                this.options.model.set('value', hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')]);
+            }
         },
 
         ui: {
@@ -60,12 +67,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         ui: {
+            clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
+            'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
 
@@ -109,6 +118,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         $field.trigger('change.select2');
                     }
                 }
+            });
+        },
+
+        clearAction: function () {
+            var fields = $(".query-field");
+            fields.each(function () {
+                this.value = '';
+                $(this).trigger('change.select2');
             });
         },
 
