@@ -62,11 +62,13 @@ class Command(BaseCommand):
                             help='Number of threads to use.')
         parser.add_argument('--dry-run', action='store_true', help='Only print the list of users.')
         parser.add_argument('--dry-run-count', action='store_true', help='Only print the count of matched users.')
+        parser.add_argument('--quiet', action='store_true', help='Only output error rows to stdout')
 
     def handle(self, from_csv=None, domains=None, last_synced_days=None, min_cases=None, limit=None, **options):
         pool_size = options['threads']
         dry_run = options['dry_run']
         dry_run_count = options['dry_run_count']
+        quiet = options['quiet']
 
         validate = True
         if from_csv:
@@ -91,7 +93,7 @@ class Command(BaseCommand):
 
         with futures.ThreadPoolExecutor(max_workers=pool_size) as executor:
             sys.stderr.write("Spawning tasks\n")
-            results = {executor.submit(process_row, user, validate, dry_run): user for user in users}
+            results = {executor.submit(process_row, user, validate, dry_run, quiet): user for user in users}
 
             for future in with_progress_bar(futures.as_completed(results), length=len(results), stream=sys.stderr):
                 user = results[future]
@@ -110,7 +112,7 @@ def _log_message(row, msg, is_error=True):
     sys.stdout.write(f'{row_csv},{status},"{msg}"\n')
 
 
-def process_row(row, validate, dry_run):
+def process_row(row, validate, dry_run, quiet):
     domain, username, as_user = row
     if validate:
         user = CouchUser.get_by_username(username)
@@ -127,7 +129,7 @@ def process_row(row, validate, dry_run):
             if domain != restore_as_user.domain:
                 _log_message(row, "domain mismatch with as_user")
 
-    if dry_run:
+    if dry_run and not quiet:
         _log_message(row, "dry run success", is_error=False)
         return
 
@@ -137,6 +139,9 @@ def process_row(row, validate, dry_run):
         _log_message(row, f"{e.response_json['exception']}")
     except Exception as e:
         _log_message(row, f"{e}")
+    else:
+        if not quiet:
+            _log_message(row, "")
 
 
 def _get_users_from_csv(path):
