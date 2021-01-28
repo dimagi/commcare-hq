@@ -1,0 +1,248 @@
+{
+  "domains": [
+    "india-nutrition-project"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-deliveries_v1",
+    "display_name": "Deliveries V1",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {
+      "type": "property_path",
+      "property_path": [
+        "form",
+        "delivery_details",
+        "child_birth_details",
+        "child_details"
+      ]
+    },
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/F8AE9C85-38E3-4B84-BD16-0198C4907FD9"
+        },
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "app_id"
+          },
+          "property_value": "b3c758f7c79e47e3a503115894f18503"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "username"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "received_on"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "child_safe_and_alive"
+        },
+        "column_id": "child_safe_and_alive",
+        "datatype": "string",
+        "display_name": "child_safe_and_alive"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "case_open_member_0",
+            "case",
+            "update",
+            "member_gender"
+          ]
+        },
+        "column_id": "gender",
+        "datatype": "string",
+        "display_name": "gender"
+      },
+      {
+        "type": "expression",
+        "column_id": "residential_status",
+        "display_name": "residential_status",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_residential_status"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "member_case_id_loaded"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "case_open_child_growth_0",
+            "case",
+            "update",
+            "weight"
+          ]
+        },
+        "column_id": "weight",
+        "datatype": "string",
+        "display_name": "weight"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "case_open_child_care_0",
+            "case",
+            "update",
+            "low_birth_weight"
+          ]
+        },
+        "column_id": "low_birth_weight",
+        "datatype": "string",
+        "display_name": "low_birth_weight"
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

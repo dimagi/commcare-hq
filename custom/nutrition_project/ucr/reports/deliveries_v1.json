@@ -1,0 +1,264 @@
+{
+  "domains": [
+    "india-nutrition-project"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "report_id": "static-deliveries_v1",
+  "data_source_table": "static-deliveries_v1",
+  "config": {
+    "title": "Deliveries",
+    "description": "Deliveries per flw per month",
+    "visible": true,
+    "aggregation_columns": [
+      "supervisor_id",
+      "flw_id",
+      "month"
+    ],
+    "filters": [
+      [
+        {
+          "display": "Filter by FLW",
+          "slug": "flw_id",
+          "type": "dynamic_choice_list",
+          "field": "userID",
+          "choice_provider": {
+            "type": "location"
+          },
+          "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+          },
+          "datatype": "string"
+        },
+        {
+          "display": "Filter by Supervisor",
+          "slug": "supervisor_id",
+          "type": "dynamic_choice_list",
+          "field": "supervisor_id",
+          "choice_provider": {
+            "type": "location"
+          },
+          "datatype": "string"
+        }
+      ]
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "received_on",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "Supervisor ID",
+        "column_id": "supervisor_id",
+        "type": "field",
+        "field": "supervisor_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "FLW ID",
+        "column_id": "flw_id",
+        "type": "field",
+        "field": "flw_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "M_permanent_resident_child_safe_and_alive",
+        "column_id": "M_permanent_resident_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND gender = 'M' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_permanent_resident_not_child_safe_and_alive",
+        "column_id": "M_permanent_resident_not_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'no' AND gender = 'M' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_temp_resident_child_safe_and_alive",
+        "column_id": "M_temp_resident_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND gender = 'M' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_temp_resident_not_child_safe_and_alive",
+        "column_id": "M_temp_resident_not_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'no' AND gender = 'M' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_permanent_resident_child_safe_and_alive",
+        "column_id": "F_permanent_resident_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND gender = 'F' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_permanent_resident_not_child_safe_and_alive",
+        "column_id": "F_permanent_resident_not_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'no' AND gender = 'F' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_temp_resident_child_safe_and_alive",
+        "column_id": "F_temp_resident_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND gender = 'F' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_temp_resident_not_child_safe_and_alive",
+        "column_id": "F_temp_resident_not_child_safe_and_alive",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'no' AND gender = 'F' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_permanent_resident_child_weighed",
+        "column_id": "M_permanent_resident_child_weighed",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND gender = 'M' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_temp_resident_child_weighed",
+        "column_id": "M_temp_resident_child_weighed",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND gender = 'M' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_permanent_resident_child_weighed",
+        "column_id": "F_permanent_resident_child_weighed",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND gender = 'F' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_temp_resident_child_weighed",
+        "column_id": "F_temp_resident_child_weighed",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND gender = 'F' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_permanent_resident_child_low_birth_weight",
+        "column_id": "M_permanent_resident_child_low_birth_weight",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND low_birth_weight = 'yes' AND gender = 'M' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "M_temp_resident_child_low_birth_weight",
+        "column_id": "M_temp_resident_child_low_birth_weight",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND low_birth_weight = 'yes' AND gender = 'M' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_permanent_resident_child_low_birth_weight",
+        "column_id": "F_permanent_resident_child_low_birth_weight",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND low_birth_weight = 'yes' AND gender = 'F' AND residential_status = 'permanent_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      },
+      {
+        "display": "F_temp_resident_child_low_birth_weight",
+        "column_id": "F_temp_resident_child_low_birth_weight",
+        "type": "sum_when",
+        "whens": [
+          [
+            "child_safe_and_alive = 'yes' AND weight is NOT NULL AND low_birth_weight = 'yes' AND gender = 'F' AND residential_status = 'temp_resident'",
+            1
+          ]
+        ],
+        "else_": 0
+      }
+    ]
+  },
+  "doc_type": "ReportConfiguration"
+}
