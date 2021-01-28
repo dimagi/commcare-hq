@@ -5,12 +5,8 @@ from collections import namedtuple
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from tastypie.models import ApiKey
-
 from corehq.util.markup import mark_up_urls
 from corehq.util.quickcache import quickcache
-
-from .signals import *
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
 
