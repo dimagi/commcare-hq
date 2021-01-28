@@ -141,7 +141,7 @@ pexpect==4.8.0            # via ipython
 phonenumberslite==8.12.10  # via -r requirements.in
 pickleshare==0.7.5        # via ipython
 pillow==7.2.0             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
-pip-tools==5.3.1          # via -r test-requirements.in
+pip-tools==5.5.0          # via -r test-requirements.in
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements.in
 prometheus-client==0.7.1  # via -r requirements.in
