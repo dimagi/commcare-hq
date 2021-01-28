@@ -1189,8 +1189,8 @@ def send_request(
     """
     Calls ``repeater.send_request()`` and handles the result.
 
-    Returns True on success or cancelled, so that the caller knows
-    whether to retry later.
+    Returns True on success or cancelled, which means the caller should
+    not retry. False means a retry should be attempted later.
     """
 
     def is_success(resp):
