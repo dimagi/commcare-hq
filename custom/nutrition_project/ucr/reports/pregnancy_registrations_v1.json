@@ -1,0 +1,119 @@
+{
+  "domains": [
+    "india-nutrition-project"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "report_id": "static-pregnancy_registrations_v1",
+  "data_source_table": "static-pregnancy_registrations_v1",
+  "config": {
+    "title": "Pregnancy Registrations",
+    "description": "Pregnancy Registrations per flw per month",
+    "visible": true,
+    "aggregation_columns": [
+      "flw_id",
+      "supervisor_id",
+      "month"
+    ],
+    "filters": [
+      [
+        {
+          "display": "Filter by FLW",
+          "slug": "flw_id",
+          "type": "dynamic_choice_list",
+          "field": "userID",
+          "choice_provider": {
+            "type": "location"
+          },
+          "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+          },
+          "datatype": "string"
+        },
+        {
+          "display": "Filter by Supervisor",
+          "slug": "supervisor_id",
+          "type": "dynamic_choice_list",
+          "field": "supervisor_id",
+          "choice_provider": {
+            "type": "location"
+          },
+          "datatype": "string"
+        },
+        {
+          "display": "Residential Status",
+          "slug": "residential_status",
+          "type": "choice_list",
+          "field": "residential_status",
+          "datatype": "string",
+          "choices": [
+            {
+              "display": "Permanent",
+              "value": "permanent_resident"
+            },
+            {
+              "display": "Temporary",
+              "value": "temp_resident"
+            },
+            {
+              "display": "Unavailable",
+              "value": null
+            }
+          ]
+        },
+        {
+          "display": "Currently Pregnant",
+          "slug": "currently_pregnant",
+          "type": "choice_list",
+          "field": "closed",
+          "datatype": "string",
+          "choices": [
+            {
+              "display": "Yes",
+              "value": "True"
+            },
+            {
+              "display": "No",
+              "value": "False"
+            }
+          ]
+        }
+      ]
+    ],
+    "columns": [
+      [
+        {
+          "display": "Month",
+          "column_id": "month",
+          "type": "field",
+          "field": "month",
+          "aggregation": "simple"
+        },
+        {
+          "display": "Supervisor ID",
+          "column_id": "supervisor_id",
+          "type": "field",
+          "field": "supervisor_id",
+          "aggregation": "simple"
+        },
+        {
+          "display": "FLW ID",
+          "column_id": "flw_id",
+          "type": "field",
+          "field": "flw_id",
+          "aggregation": "simple"
+        },
+        {
+          "display": "Count",
+          "column_id": "count",
+          "type": "field",
+          "field": "doc_id",
+          "aggregation": "count"
+        }
+      ]
+    ]
+  },
+  "doc_type": "ReportConfiguration"
+}
