@@ -1156,8 +1156,8 @@ class SQLRepeatRecord(models.Model):
         return len(self.attempts)
 
     def get_numbered_attempts(self):
-        for i, attempt in enumerate(self.attempts):
-            yield i + 1, attempt
+        for i, attempt in enumerate(self.attempts, start=1):
+            yield i, attempt
 
     @property
     def record_id(self):
