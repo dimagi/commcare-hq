@@ -10,6 +10,8 @@ alembic==1.4.3
     # via -r requirements.in
 amqp==2.6.1
     # via kombu
+appnope==0.1.2
+    # via ipython
 architect==0.5.6
     # via -r requirements.in
 argparse==1.4.0
@@ -328,7 +330,7 @@ laboratory==0.2.0
     # via -r requirements.in
 linecache2==1.0.0
     # via traceback2
-lxml==4.3.5
+lxml==4.6.2
     # via
     #   -r requirements.in
     #   eulxml

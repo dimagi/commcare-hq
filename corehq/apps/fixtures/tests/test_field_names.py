@@ -121,7 +121,7 @@ class FieldNameCleanTest(TestCase):
             <_with_>so fail</_with_>
             <_crazy___combo__d>just why</_crazy___combo__d>
         </dirty_fields>
-        """, ElementTree.tostring(self.data_item.to_xml()))
+        """, ElementTree.tostring(self.data_item.to_xml(), encoding='utf-8'))
 
 
 class FieldNameValidationTest(SimpleTestCase):
