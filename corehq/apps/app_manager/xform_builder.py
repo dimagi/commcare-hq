@@ -109,7 +109,7 @@ class XFormBuilder(object):
         return self.ns['d']
 
     def tostring(self, **kwargs):
-        return etree.tostring(self._etree, **kwargs)
+        return etree.tostring(self._etree, encoding='utf-8', **kwargs)
 
     def new_question(self, name, label, data_type='string', group=None, choices=None, label_safe=False, **params):
         """
@@ -306,7 +306,7 @@ class XFormBuilder(object):
             Returns a question node for a non-repeating group
 
             >>> node = get_group_question_node('non-repeating_group')
-            >>> etree.tostring(node)
+            >>> etree.tostring(node, encoding='utf-8')
             '<group ref="/data/non-repeating_group"><label ref="jr:itext('non-repeating_group-label')" /></group>'
 
             """
@@ -325,7 +325,7 @@ class XFormBuilder(object):
             Returns a question node for a repeat group
 
             >>> node = get_repeat_group_question_node('repeat_group')
-            >>> etree.tostring(node)
+            >>> etree.tostring(node, encoding='utf-8')
             '<group><label ref="jr:itext(\'repeat_group-label\')"/><repeat nodeset="/data/repeat_group"/></group>'
 
             """
@@ -393,7 +393,7 @@ class XFormBuilder(object):
             Return a question node for a normal question
 
             >>> node = get_input_question_node('text_question')
-            >>> etree.tostring(node)
+            >>> etree.tostring(node, encoding='utf-8')
             '<input ref="/data/text_question"><label ref="jr:itext(\'text_question-label\')"/></input>'
 
             """

@@ -840,7 +840,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node)
+                s = etree.tostring(field.template.node, encoding='utf-8')
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
