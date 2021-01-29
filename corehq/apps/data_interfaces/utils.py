@@ -177,9 +177,12 @@ def operate_on_payloads(
     if from_excel:
         return response
 
-    response["success_count_msg"] = _(
-        "Successfully performed {action} action on {count} form(s)"
-    ).format(action=action, count=success_count)
+    if success_count:
+        response["success_count_msg"] = _(
+            "Successfully performed {action} action on {count} form(s)"
+        ).format(action=action, count=success_count)
+    else:
+        response["success_count_msg"] = ''
 
     return {"messages": response}
 
