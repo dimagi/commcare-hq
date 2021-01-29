@@ -184,7 +184,7 @@ def operate_on_payloads(
     return {"messages": response}
 
 
-def _get_couch_repeat_record(domain, record_id) -> 'RepeatRecord':
+def _get_couch_repeat_record(domain, record_id):
     from corehq.motech.repeaters.models import RepeatRecord
 
     try:
@@ -196,7 +196,7 @@ def _get_couch_repeat_record(domain, record_id) -> 'RepeatRecord':
     return couch_record
 
 
-def _get_sql_repeat_record(domain, record_id) -> 'SQLRepeatRecord':
+def _get_sql_repeat_record(domain, record_id):
     from corehq.motech.repeaters.models import SQLRepeatRecord
 
     try:
