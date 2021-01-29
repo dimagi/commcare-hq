@@ -274,6 +274,35 @@ describe('Entries', function () {
         assert.isTrue(spy.calledOnce);
     });
 
+    it('Should return EthiopanDateEntry', function () {
+        questionJSON.datatype = Const.DATE;
+        questionJSON.answer = '2021-01-29'; // 2013-05-21 in Ethiopian
+        questionJSON.style = { raw: 'ethiopian' };
+
+        var entry = UI.Question(questionJSON).entry;
+        entry.entryId = 'fake-div';
+        assert.isTrue(entry instanceof Controls.EthiopianDateEntry);
+        assert.equal(entry.templateType, 'ethiopian-date');
+
+        $(document.body).append("<div id='"+ entry.entryId + "'></div>");
+        entry.afterRender();
+
+        // the date is set correctly to ethiopian
+        assert.equal(entry.$picker.calendarsPicker('getDate').toString(), '2013-05-21');
+
+        // select a new date, ensure the correct gregorian date is saved as the answer
+        entry.$picker.calendarsPicker('selectDate', $("[title='Select Kidame, Tir 22, 2013']")[0]);
+        assert.equal(entry.answer(), '2021-01-30');
+
+        entry.$picker.calendarsPicker('clear');
+        assert.equal(entry.answer(), Const.NO_ANSWER);
+
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledTwice);
+
+        $("#" + entry.entryId).remove();
+    });
+
     it('Should return InfoEntry', function () {
         questionJSON.datatype = Const.INFO;
         var entry = UI.Question(questionJSON).entry;

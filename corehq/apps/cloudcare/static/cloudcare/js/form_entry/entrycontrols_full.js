@@ -837,6 +837,53 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
 
+    function EthiopianDateEntry(question, options) {
+        var self = this,
+            ethiopianLanguageMap = {
+                am: 'am',
+                amh: 'am',
+            },
+            calendarLanguage = ethiopianLanguageMap[initialPageData.get('language')] ? ethiopianLanguageMap[initialPageData.get('language')] : 'en';
+
+        self.templateType = 'ethiopian-date';
+
+        EntrySingleAnswer.call(self, question, options);
+
+
+        self._calendarInstance = $.calendars.instance('ethiopian', calendarLanguage);
+        self.afterRender = function () {
+            self.$picker = $('#' + self.entryId);
+            self.$picker.calendarsPicker({
+                calendar: self._calendarInstance,
+                showAnim: '',
+                onSelect: function (dates) {
+                    // transform date to gregorian to store as the answer
+                    if (dates.length) {
+                        self.answer(moment(dates[0].toJSDate()).format('YYYY-MM-DD'));
+                    } else {
+                        self.answer(Const.NO_ANSWER);
+                    }
+                },
+            });
+
+            self.$picker.blur(function (change) {
+                // calendarsPicker doesn't pick up changes if you don't actively select them in the widget
+                var changedPicker = $(change.target)[0];
+                if (changedPicker.value) {
+                    self.$picker.calendarsPicker('setDate', changedPicker.value);
+                }
+            });
+
+            if (self.answer()) {
+                // convert any default values to ethiopian and set it
+                var ethiopianDate = self._calendarInstance.fromJSDate(moment(self.answer()).toDate());
+                self.$picker.calendarsPicker('setDate', ethiopianDate);
+            }
+        };
+
+    }
+    EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1030,7 +1077,11 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 entry = new MultiSelectEntry(question, {});
                 break;
             case Const.DATE:
-                entry = new DateEntry(question, {});
+                if (style === 'ethiopian') {
+                    entry = new EthiopianDateEntry(question, {});
+                } else {
+                    entry = new DateEntry(question, {});
+                }
                 break;
             case Const.TIME:
                 entry = new TimeEntry(question, {});
@@ -1082,6 +1133,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
+        EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,
         FreeTextEntry: FreeTextEntry,
         InfoEntry: InfoEntry,
