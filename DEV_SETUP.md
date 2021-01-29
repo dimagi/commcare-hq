@@ -498,8 +498,8 @@ installing `yarn` above for more details.
 
 It's recommended to install grunt globally (with `yarn`) in order to use grunt from the command line:
 
-    $ yarn install global grunt
-    $ yarn install global grunt-cli
+    $ yarn add global grunt
+    $ yarn add global grunt-cli
 
 In order for the tests to run the __development server needs to be running on port 8000__.
 
