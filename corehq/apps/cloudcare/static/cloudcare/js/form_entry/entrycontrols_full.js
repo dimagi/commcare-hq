@@ -838,11 +838,19 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     TimeEntry.prototype.serverFormat = 'HH:mm';
 
     function EthiopianDateEntry(question, options) {
-        var self = this;
+        var self = this,
+            ethiopianLanguageMap = {
+                am: 'am',
+                amh: 'am',
+            },
+            calendarLanguage = ethiopianLanguageMap[initialPageData.get('language')] ? ethiopianLanguageMap[initialPageData.get('language')] : 'en';
+
         self.templateType = 'ethiopian-date';
 
         EntrySingleAnswer.call(self, question, options);
-        self._calendarInstance = $.calendars.instance('ethiopian', 'am');
+
+
+        self._calendarInstance = $.calendars.instance('ethiopian', calendarLanguage);
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
             self.$picker.calendarsPicker({
