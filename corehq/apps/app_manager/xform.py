@@ -790,8 +790,8 @@ class XForm(WrappedNode):
                     translation.remove(node.xml)
 
         def replace_ref_s(xmlstring, find, replace):
-            find = find.encode('ascii', 'xmlcharrefreplace')
-            replace = replace.encode('ascii', 'xmlcharrefreplace')
+            find = find.encode('utf-8', 'xmlcharrefreplace')
+            replace = replace.encode('utf-8', 'xmlcharrefreplace')
             return xmlstring.replace(find, replace)
 
         xf_string = self.render()
