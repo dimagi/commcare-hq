@@ -219,10 +219,37 @@ hqDefine('app_manager/js/details/screen_config', function () {
             is_parent: true,
         });
         self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
-        self.active = ko.observable(init.active);
+        self.allCaseModules = ko.observable(init.allCaseModules);
         self.parentModules = ko.observable(init.parentModules);
         self.lang = ko.observable(init.lang);
         self.langs = ko.observable(init.langs);
+        self.enableOtherOption = hqImport('hqwebapp/js/toggles').toggleEnabled('NON_PARENT_MENU_SELECTION');
+
+        self.selectOptions = [
+            {id: 'none', text: gettext('None')},
+            {id: 'parent', text: gettext('Parent')},
+        ];
+        if (self.enableOtherOption) {
+            self.selectOptions.push(
+                {id: 'other', text: gettext('Other')}
+            );
+        }
+        var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
+        if (self.enableOtherOption) {
+            self.selectMode = ko.observable(selectMode);
+            self.active = ko.computed(function () {
+                return (self.selectMode() !== 'none');
+            });
+        }
+        else {
+            self.active = ko.observable(init.active);
+            self.selectMode = ko.computed(function () {
+                return self.active ? 'parent' : 'none';
+            });
+        }
+        self.relationship = ko.computed(function () {
+            return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
+        });
 
         function getTranslation(name, langs) {
             var firstLang = _(langs).find(function (lang) {
@@ -230,11 +257,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
             return name[firstLang];
         }
+        self.dropdownModules = ko.computed(function () {
+            return (self.selectMode() === 'parent') ? self.parentModules() : self.allCaseModules();
+        });
         self.hasError = ko.computed(function () {
-            return !_.contains(_.pluck(self.parentModules(), 'unique_id'), self.moduleId());
+            return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
         });
         self.moduleOptions = ko.computed(function () {
-            var options = _(self.parentModules()).map(function (module) {
+            var options = _(self.dropdownModules()).map(function (module) {
                 var STAR = '\u2605',
                     SPACE = '\u3000';
                 var marker = (module.is_parent ? STAR : SPACE);
@@ -921,7 +951,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         if (self.config.hasOwnProperty('parentSelect')) {
                             parentSelect = {
                                 module_id: self.config.parentSelect.moduleId(),
-                                relationship: 'parent',
+                                relationship: self.config.parentSelect.relationship(),
                                 active: self.config.parentSelect.active(),
                             };
                         }
@@ -1032,7 +1062,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.parentSelect = module.parentSelect({
                         active: spec.parentSelect.active,
                         moduleId: spec.parentSelect.module_id,
+                        relationship: spec.parentSelect.relationship,
                         parentModules: spec.parentModules,
+                        allCaseModules: spec.allCaseModules,
                         lang: self.lang,
                         langs: self.langs,
                     });
@@ -1124,6 +1156,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     // Set up case search
                     self.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
                         spec.searchProperties || [],
+                        spec.searchSessionVar,
                         spec.autoLaunch,
                         spec.includeClosed,
                         spec.defaultProperties,

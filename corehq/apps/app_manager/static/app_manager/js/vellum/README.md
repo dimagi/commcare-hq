@@ -99,7 +99,7 @@ $ yarn upgrade
 Test in a browser:
 ```
 $ npm run testserver
-$ chromium-browser http://localhost:8088
+$ chromium-browser http://localhost:${VELLUM_PORT:-8088}
 ```
 
 By default, the test page will load the non-built version unless a `built`
@@ -115,6 +115,19 @@ or to run a specific test:
 ./test "Name of specific test"
 ```
 
+a block like the following:
+```
+describe('the test', () => ...
+  describe('with this condition', () => ...
+    it('passes', ...)
+```
+would be referenced as `the test with this condition passes`.
+So the final command would be:
+```
+./test 'the test with this condition passes'
+```
+
+
 Contributing
 ------------
 
@@ -122,7 +135,8 @@ Follow the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
 
 Install dependencies:
 ```
-$ yarn install
+$ npm install --no-package-lock yarn  # if yarn is not installed globally
+$ `npm bin`/yarn install
 ```
 
 Build optimized version (test locally by changing `useBuilt` in `tests/main.js`):

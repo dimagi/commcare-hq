@@ -18,6 +18,10 @@ DEBUG = True
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+
+# For Single Sign On (SSO) Implementations
+SAML2_DEBUG = False
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -250,6 +254,7 @@ HQ_APPS = (
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.enterprise',
+    'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
@@ -294,6 +299,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.smsforms',
+    'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.messaging',
     'corehq.messaging.scheduling',
@@ -351,6 +357,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.motech',
     'corehq.motech.dhis2',
+    'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
@@ -1417,6 +1424,11 @@ LOGGING = {
             'propagate': False,
         },
         'kafka': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'commcare_auth': {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
