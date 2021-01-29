@@ -1093,6 +1093,6 @@ class CountCasesBasedOnCaseTypeView(APIView):
         except Exception as e:
             messages.error(request, str(e))
             resp = JsonResponse({"error": _("Try Again")})
-            resp.status_code = 400
+            resp.status_code = 403
 
         return resp

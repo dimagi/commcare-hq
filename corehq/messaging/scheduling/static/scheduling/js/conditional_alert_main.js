@@ -48,9 +48,8 @@ hqDefine(
                     var caseCountUrl = initialPageData.reverse(
                         "count_cases_by_case_type"
                     );
-                    $("#conditional-alert-save-btn").html(
-                        '<i class="fa fa-spin fa-spinner"></i>'
-                    );
+
+                    $("#conditional-alert-save-btn").prop("disabled", true);
                     $.ajax({
                         type: "GET",
                         url: caseCountUrl,
@@ -58,12 +57,18 @@ hqDefine(
                         success: function (data) {
                             $("#case-count").text(data.case_count);
                             $("#conditional-alert-warning-modal").modal("show");
-                            $("#conditional-alert-save-btn").text("Save");
                         },
                         error: function (data) {
+                            $("#conditional-alert-save-btn")
+                                .removeClass("btn-primary")
+                                .addClass("btn-danger");
+
                             $("#conditional-alert-save-btn").text(
                                 data.responseJSON.error
                             );
+                        },
+                        complete: function () {
+                            $("#conditional-alert-save-btn").prop("disabled", false);
                         },
                     });
 
