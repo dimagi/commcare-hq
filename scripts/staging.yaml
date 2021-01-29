@@ -80,4 +80,5 @@ branches:
   # - sr/cs-help  # Sravan Jan 29
   # - mjr/login_logging  # Matt Jan 28
   - revert-29050-revert-29043-dmr/sync-purge-alt-device-id-too  # Danny Jan 28
+  - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
 submodules: {}
