@@ -62,10 +62,8 @@ branches:
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
-  - bmb/sso-architecture  # Biyeun Dec 30
   - jls/results-button # Jenny Jan 25
   - jls/web-apps-sticky-search-again # Jenny Jan 26
-  - bmb/sso-architecture+lxml-upgrade  # Biyeun Jan 8
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
   #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
   - mk/remove-aaa # MK Jan 18
