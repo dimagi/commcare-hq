@@ -53,7 +53,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
   couch:
-    image: couchdb:3.1.1
+    image: apache/couchdb:3.1.1
     environment:
       COUCHDB_USER: commcarehq
       COUCHDB_PASSWORD: commcarehq
