@@ -185,7 +185,7 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(SQLLocation.objects.get(location_id=patient_primary_case.owner_id).name, 'active')
         self.assertEqual(patient_primary_case.get_case_property('is_assigned_primary'), 'yes')
 
-        call_command('add_assignment_cases', self.domain, 'patient', '--active-location=active-location')
+        call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
 
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
 

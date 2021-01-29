@@ -28,7 +28,6 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('case_type')
         parser.add_argument('--username', type=str, default=None)
-        parser.add_argument('--active-location', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
 
     def handle(self, domain, case_type, **options):
@@ -43,9 +42,14 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
-        active_location = None
-        if options["active_location"]:
-            active_location = options["active_location"]
+        try:
+            if options["location"]:
+                active_location = options["location"]
+            else:
+                print("Warning: No active location was entered")
+                active_location = None
+        except KeyError:
+            active_location = None
 
         for domain in domains:
             print(f"Processing {domain}")

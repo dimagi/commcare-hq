@@ -17,12 +17,6 @@ DEVICE_ID = __name__ + ".add_assignment_cases"
 
 def should_skip(case, location_obj, location):
     if location_obj:
-        print("location_obj")
-        print(location_obj)
-        print("location_obj.id")
-        print(location_obj.id)
-        print("location_obj.location_id")
-        print(location_obj.location_id)
         return case.closed or (location_obj.location_id != location)
     else:
         return True
@@ -82,3 +76,7 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+    def add_arguments(self, parser):
+        super().add_arguments(parser)
+        parser.add_argument('--location', type=str, default=None)
