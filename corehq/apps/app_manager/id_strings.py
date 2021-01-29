@@ -234,6 +234,11 @@ def case_search_locale(module):
     return "case_search.m{module.id}".format(module=module)
 
 
+@pattern('case_search.m%d.again')
+def case_search_again_locale(module):
+    return "case_search.m{module.id}.again".format(module=module)
+
+
 @pattern('search_command.m%d')
 def search_command(module):
     return "search_command.m{module.id}".format(module=module)
