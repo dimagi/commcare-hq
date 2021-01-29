@@ -12,8 +12,8 @@
     "description": "New member registrations per flw per month",
     "visible": true,
     "aggregation_columns": [
-      "flw_id",
       "supervisor_id",
+      "flw_id",
       "month"
     ],
     "filters": [
@@ -70,9 +70,9 @@
       {
         "display": "Month",
         "column_id": "month",
-        "type": "field",
-        "field": "month",
-        "aggregation": "simple"
+        "type": "aggregate_date",
+        "field": "opened_on",
+        "format": "%Y-%m"
       },
       {
         "display": "FLW ID",
