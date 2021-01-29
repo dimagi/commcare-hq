@@ -140,21 +140,6 @@
           }
         }
       },
-       {
-        "type": "expression",
-        "column_id": "month",
-        "display_name": "month",
-        "datatype": "date",
-        "expression": {
-          "type": "month_start_date",
-          "date_expression": {
-            "type": "property_path",
-            "property_path": [
-              "opened_on"
-            ]
-          }
-        }
-      },
       {
         "type": "expression",
         "column_id": "member_case_id",
@@ -263,9 +248,8 @@
     "sql_column_indexes": [
       {
         "column_ids": [
-          "flw_id",
           "supervisor_id",
-          "month"
+          "flw_id"
         ]
       }
     ]
