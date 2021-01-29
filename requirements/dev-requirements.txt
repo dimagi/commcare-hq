@@ -252,7 +252,7 @@ git-build-branch==0.1.9
     # via -r dev-requirements.in
 gnureadline==6.3.8
     # via -r dev-requirements.in
-graphviz==0.14.2
+graphviz==0.16
     # via -r dev-requirements.in
 greenlet==0.4.17
     # via
