@@ -1185,7 +1185,8 @@ class SQLRepeatRecord(models.Model):
     def last_message(self):
         # Uses `list(queryset)[-1]` instead of `queryset.last()` to use
         # prefetched attempts, if available.
-        return list(self.attempts)[-1].message
+        attempts = list(self.attempts)
+        return attempts[-1].message if attempts else None
 
 
 class SQLRepeatRecordAttempt(models.Model):
