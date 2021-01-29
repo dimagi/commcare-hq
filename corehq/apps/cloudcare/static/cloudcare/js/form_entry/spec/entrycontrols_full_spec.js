@@ -280,11 +280,10 @@ describe('Entries', function () {
         questionJSON.style = { raw: 'ethiopian' };
 
         var entry = UI.Question(questionJSON).entry;
-        entry.entryId = 'fake-div';
+        entry.entryId = 'date-entry-ethiopian';
         assert.isTrue(entry instanceof Controls.EthiopianDateEntry);
         assert.equal(entry.templateType, 'ethiopian-date');
 
-        $(document.body).append("<div id='" + entry.entryId + "'></div>");
         entry.afterRender();
 
         // the date is set correctly to ethiopian
@@ -299,8 +298,6 @@ describe('Entries', function () {
 
         this.clock.tick(1000);
         assert.isTrue(spy.calledTwice);
-
-        $("#" + entry.entryId).remove();
     });
 
     it('Should return InfoEntry', function () {
