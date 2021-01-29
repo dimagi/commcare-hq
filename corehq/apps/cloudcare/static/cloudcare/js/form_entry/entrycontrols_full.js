@@ -850,7 +850,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 showAnim: '',
                 onSelect: function (dates) {
                     // transform date to gregorian to store as the answer
-                    if (dates) {
+                    if (dates.length) {
                         self.answer(moment(dates[0].toJSDate()).format('YYYY-MM-DD'));
                     } else {
                         self.answer(Const.NO_ANSWER);
@@ -860,7 +860,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
             if (self.answer()) {
                 var ethiopianDate = self._calendarInstance.fromJSDate(moment(self.answer()).toDate());
-                // TODO: what if answer isn't a date
                 self.$picker.calendarsPicker('setDate', ethiopianDate);
             }
         };
