@@ -260,15 +260,18 @@ def _get_repeat_record_ids(
         return []
     if payload_id:
         if use_sql:
-            return [r.pk for r in get_sql_repeat_records_by_payload_id(
-                domain, payload_id)]
+            records = get_sql_repeat_records_by_payload_id(domain, payload_id)
+            return [r.id for r in records]
         else:
-            return [r['id'] for r in get_couch_repeat_records_by_payload_id(
-                domain, payload_id)]
+            records = get_couch_repeat_records_by_payload_id(domain, payload_id)
+            return [r._id for r in records]
     else:
         if use_sql:
-            return [r['id'] for r in SQLRepeatRecord.objects.filter(
-                domain=domain, repeater__couch_id=repeater_id).values('id')]
+            queryset = SQLRepeatRecord.objects.filter(
+                domain=domain,
+                repeater_stub__repeater_id=repeater_id,
+            )
+            return [r['id'] for r in queryset.values('id')]
         else:
-            return [r['id'] for r in iter_repeat_records_by_repeater(
-                domain, repeater_id)]
+            records = iter_repeat_records_by_repeater(domain, repeater_id)
+            return [r._id for r in records]

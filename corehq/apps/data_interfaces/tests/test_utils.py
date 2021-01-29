@@ -1,5 +1,8 @@
-from unittest.case import TestCase
+from datetime import datetime
 from unittest.mock import Mock, patch
+from uuid import uuid4
+
+from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceNotFound
 
@@ -11,9 +14,18 @@ from corehq.apps.data_interfaces.utils import (
     _get_couch_repeat_record,
     operate_on_payloads,
 )
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import (
+    FormRepeater,
+    RepeaterStub,
+    RepeatRecord,
+    SQLRepeatRecord,
+)
+
+DOMAIN = 'test-domain'
 
 
-class TestUtils(TestCase):
+class TestUtils(SimpleTestCase):
 
     def test__get_ids_no_data(self):
         response = _get_repeat_record_ids(None, None, 'test_domain', False)
@@ -491,3 +503,90 @@ class TestTasks(TestCase):
         self.assertEqual(mock_payload_two.requeue.call_count, 0)
         self.assertEqual(mock_payload_two.save.call_count, 0)
         self.assertEqual(response, expected_response)
+
+
+class TestGetRepeatRecordIDs(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.instance_id = str(uuid4())
+        url = 'https://www.example.com/api/'
+        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        cls.repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings_id=conn.id,
+            include_app_id_param=False,
+        )
+        cls.repeater.save()
+        cls.repeater_stub = RepeaterStub.objects.create(
+            domain=DOMAIN,
+            repeater_id=cls.repeater.get_id,
+        )
+        cls.create_repeat_records()
+
+    @classmethod
+    def tearDownClass(cls):
+        for record in cls.couch_records + cls.sql_records:
+            record.delete()
+        cls.repeater_stub.delete()
+        cls.repeater.delete()
+        super().tearDownClass()
+
+    @classmethod
+    def create_repeat_records(cls):
+        now = datetime.now()
+        cls.couch_records = []
+        cls.sql_records = []
+        for __ in range(3):
+            couch_record = RepeatRecord(
+                domain=DOMAIN,
+                repeater_id=cls.repeater._id,
+                repeater_type='FormRepeater',
+                payload_id=cls.instance_id,
+                registered_on=now,
+            )
+            couch_record.save()
+            cls.couch_records.append(couch_record)
+
+            cls.sql_records.append(SQLRepeatRecord.objects.create(
+                domain=DOMAIN,
+                couch_id=couch_record._id,
+                payload_id=cls.instance_id,
+                repeater_stub=cls.repeater_stub,
+                registered_at=now,
+            ))
+
+    def test_no_payload_id_no_repeater_id_sql(self):
+        result = _get_repeat_record_ids(payload_id=None, repeater_id=None,
+                                        domain=DOMAIN, use_sql=True)
+        self.assertEqual(result, [])
+
+    def test_no_payload_id_no_repeater_id_couch(self):
+        result = _get_repeat_record_ids(payload_id=None, repeater_id=None,
+                                        domain=DOMAIN, use_sql=False)
+        self.assertEqual(result, [])
+
+    def test_payload_id_sql(self):
+        result = _get_repeat_record_ids(payload_id=self.instance_id,
+                                        repeater_id=None,
+                                        domain=DOMAIN, use_sql=True)
+        self.assertEqual(set(result), {r.pk for r in self.sql_records})
+
+    def test_payload_id_couch(self):
+        result = _get_repeat_record_ids(payload_id=self.instance_id,
+                                        repeater_id=None,
+                                        domain=DOMAIN, use_sql=False)
+        self.assertEqual(set(result), {r._id for r in self.couch_records})
+
+    def test_repeater_id_sql(self):
+        result = _get_repeat_record_ids(payload_id=None,
+                                        repeater_id=self.repeater._id,
+                                        domain=DOMAIN, use_sql=True)
+        self.assertEqual(set(result), {r.pk for r in self.sql_records})
+
+    def test_repeater_id_couch(self):
+        result = _get_repeat_record_ids(payload_id=None,
+                                        repeater_id=self.repeater._id,
+                                        domain=DOMAIN, use_sql=False)
+        self.assertEqual(set(result), {r._id for r in self.couch_records})
