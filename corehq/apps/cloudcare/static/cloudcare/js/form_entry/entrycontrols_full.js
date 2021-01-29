@@ -849,7 +849,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         EntrySingleAnswer.call(self, question, options);
 
-
         self._calendarInstance = $.calendars.instance('ethiopian', calendarLanguage);
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);

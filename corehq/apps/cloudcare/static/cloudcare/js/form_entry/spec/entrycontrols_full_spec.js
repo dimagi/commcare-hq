@@ -284,7 +284,7 @@ describe('Entries', function () {
         assert.isTrue(entry instanceof Controls.EthiopianDateEntry);
         assert.equal(entry.templateType, 'ethiopian-date');
 
-        $(document.body).append("<div id='"+ entry.entryId + "'></div>");
+        $(document.body).append("<div id='" + entry.entryId + "'></div>");
         entry.afterRender();
 
         // the date is set correctly to ethiopian
