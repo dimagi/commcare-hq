@@ -15,9 +15,15 @@ BATCH_SIZE = 100
 DEVICE_ID = __name__ + ".add_assignment_cases"
 
 
-def should_skip(case, location_obj, active_location):
+def should_skip(case, location_obj, location):
     if location_obj:
-        return case.closed or (location_obj.name != active_location)
+        print("location_obj")
+        print(location_obj)
+        print("location_obj.id")
+        print(location_obj.id)
+        print("location_obj.location_id")
+        print(location_obj.location_id)
+        return case.closed or (location_obj.location_id != location)
     else:
         return True
 
@@ -46,9 +52,9 @@ class Command(CaseUpdateCommand):
             update={"assignment_type": assignment_type},
         ).as_xml()).decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id, active_location):
-        case_ids = self.find_case_ids_by_type(domain, case_type)
+    def update_cases(self, domain, case_type, user_id, location):
         accessor = CaseAccessors(domain)
+        case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type)
 
         location_objects = {}
         case_blocks = []
@@ -60,7 +66,7 @@ class Command(CaseUpdateCommand):
             else:
                 location_obj = SQLLocation.objects.get(location_id=owner_id)
                 location_objects[owner_id] = location_obj
-            if should_skip(case, location_obj, active_location):
+            if should_skip(case, location_obj, location):
                 skip_count += 1
             elif needs_update(case):
                 new_owner_id = find_owner_id(case, accessor)

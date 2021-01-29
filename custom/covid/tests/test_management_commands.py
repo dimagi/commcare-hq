@@ -148,7 +148,7 @@ class CaseCommandsTest(TestCase):
             administrative=True,
         )
         SQLLocation.objects.create(
-            domain=self.domain, name='active', location_id='test-location', location_type=location_type,
+            domain=self.domain, name='active', location_id='active-location', location_type=location_type,
         )
         checkin_case_id = uuid.uuid4().hex
         hq_user_id = uuid.uuid4().hex
@@ -159,25 +159,25 @@ class CaseCommandsTest(TestCase):
 
         patient_case_primary_id = uuid.uuid4().hex
         self.submit_case_block(
-            True, patient_case_primary_id, user_id=self.user_id, owner_id='test-location', case_type='patient',
+            True, patient_case_primary_id, user_id=self.user_id, owner_id='active-location', case_type='patient',
             update={"is_assigned_primary": 'yes', "assigned_to_primary_checkin_case_id": checkin_case_id},
         )
 
         patient_case_temp_id = uuid.uuid4().hex
         self.submit_case_block(
-            True, patient_case_temp_id, user_id=self.user_id, owner_id='test-location', case_type='patient',
+            True, patient_case_temp_id, user_id=self.user_id, owner_id='active-location', case_type='patient',
             update={"is_assigned_temp": 'yes', "assigned_to_primary_checkin_case_id": checkin_case_id},
         )
         patient_case_both_primary_and_temp_id = uuid.uuid4().hex
         self.submit_case_block(
-            True, patient_case_both_primary_and_temp_id, user_id=self.user_id, owner_id='test-location',
+            True, patient_case_both_primary_and_temp_id, user_id=self.user_id, owner_id='active-location',
             case_type='patient', update={"is_assigned_temp": 'yes',
                                          "is_assigned_primary": 'yes',
                                          "assigned_to_primary_checkin_case_id": checkin_case_id},
         )
         patient_case_not_primary_or_temp_id = uuid.uuid4().hex
         self.submit_case_block(
-            True, patient_case_not_primary_or_temp_id, user_id=self.user_id, owner_id='test-location',
+            True, patient_case_not_primary_or_temp_id, user_id=self.user_id, owner_id='active-location',
             case_type='patient', update={"assigned_to_primary_checkin_case_id": checkin_case_id},
         )
         patient_primary_case = self.case_accessor.get_case(patient_case_primary_id)
@@ -185,7 +185,7 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(SQLLocation.objects.get(location_id=patient_primary_case.owner_id).name, 'active')
         self.assertEqual(patient_primary_case.get_case_property('is_assigned_primary'), 'yes')
 
-        call_command('add_assignment_cases', self.domain, 'patient', '--active-location=active')
+        call_command('add_assignment_cases', self.domain, 'patient', '--active-location=active-location')
 
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
 
