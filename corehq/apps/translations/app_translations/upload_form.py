@@ -200,8 +200,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 # - The new translation uses markdown...unless the user has explicitly specified it is NOT markdown
                 # - The question has used markdown in the past. If the markdown node exists, it needs to stay up to
                 #   date, since mobile will display the markdown value if it's present.
-                print('new_translation')
-                print(new_translation)
                 is_markdown = self._looks_like_markdown(new_translation) and not self.markdown_vetoes[label_id]
                 if is_markdown or self.markdowns[label_id]:
                     # If it looks like Markdown, add it ... unless it
