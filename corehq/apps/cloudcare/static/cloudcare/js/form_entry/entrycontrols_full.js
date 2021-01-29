@@ -858,7 +858,16 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 },
             });
 
+            self.$picker.blur(function (change) {
+                // calendarsPicker doesn't pick up changes if you don't actively select them in the widget
+                var changedPicker = $(change.target)[0];
+                if (changedPicker.value) {
+                    self.$picker.calendarsPicker('setDate', changedPicker.value);
+                }
+            });
+
             if (self.answer()) {
+                // convert any default values to ethiopian and set it
                 var ethiopianDate = self._calendarInstance.fromJSDate(moment(self.answer()).toDate());
                 self.$picker.calendarsPicker('setDate', ethiopianDate);
             }
