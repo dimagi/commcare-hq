@@ -109,7 +109,7 @@ class XFormBuilder(object):
         return self.ns['d']
 
     def tostring(self, **kwargs):
-        encoding = kwargs.pop('encoding') if 'encoding' in kwargs else 'utf-8'
+        encoding = kwargs.pop('encoding', 'utf-8')
         return etree.tostring(self._etree, encoding=encoding, **kwargs)
 
     def new_question(self, name, label, data_type='string', group=None, choices=None, label_safe=False, **params):
