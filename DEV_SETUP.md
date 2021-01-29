@@ -69,6 +69,15 @@ Save those backups to somewhere you'll be able to access from the new environmen
   - [Homebrew](https://brew.sh)
   - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
   - [pango](https://www.pango.org/) (available via homebrew)
+  - libxmlsec1 (install with homebrew)
+
+  
+##### xmlsec
+
+`xmlsec` is a `pip` dependency that will require some non-`pip`-installable
+packages. The above notes should have covered these requirements for linux and macOS, 
+but if you are on a different platform or still experiencing issues,
+please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/). 
 
 
 #### Set up virtual environment

@@ -11,6 +11,7 @@ from django.db import models
 
 import architect
 import six
+from django.db.models import Q
 from memoized import memoized
 
 from casexml.apps.case import const
@@ -21,6 +22,7 @@ from casexml.apps.phone.exceptions import (
     IncompatibleSyncLogType,
     MissingSyncLog,
 )
+from corehq import toggles
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -40,7 +42,7 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
-from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT
+from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT, NAMESPACE_OTHER
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 
@@ -383,13 +385,35 @@ def delete_synclogs(current_synclog):
             date__lt=current_synclog.date
         ).delete()
     elif current_synclog.user_id and current_synclog.is_formplayer:
-        SyncLogSQL.objects.filter(
+        query = SyncLogSQL.objects.filter(
             user_id=current_synclog.user_id,
-            device_id=current_synclog.device_id,
             date__lt=current_synclog.date,
-        ).delete()
+        )
+        device_id_filter = Q(device_id=current_synclog.device_id)
+        if toggles.CLEAN_OLD_FORMPLAYER_SYNCS.enabled(current_synclog.user_id, NAMESPACE_OTHER):
+            # see comment in get_alt_device_id about the purpose of this short-lived code
+            alt_device_id = get_alt_device_id(current_synclog.device_id)
+            device_id_filter = device_id_filter | Q(device_id=alt_device_id)
+        query.filter(device_id_filter).delete()
     elif current_synclog.previous_log_id:
         SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
+
+
+def get_alt_device_id(device_id):
+    # this function and its usage can be deleted on or after March 31
+    # https://github.com/dimagi/formplayer/pull/808 changed the device_id format
+    # and this logic helps us purge both old and new format device_ids
+    try:
+        parts = device_id.split('*')
+        if len(parts) == 4:
+            return '*'.join([parts[0], parts[1].replace('.', '_'), parts[2], parts[3]])
+        else:
+            return device_id
+    # this is a short lived piece of code and an optimization
+    # and it's more important to us that it never causes an error
+    # than it is that it works
+    except Exception:
+        return device_id
 
 
 def synclog_to_sql_object(synclog_json_object):

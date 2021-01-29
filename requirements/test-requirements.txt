@@ -114,7 +114,7 @@ openpyxl==2.6.4           # via -r requirements.in, commcaretranslationchecker
 pbr==5.5.0                # via mock
 phonenumberslite==8.12.10  # via -r requirements.in
 pillow==7.2.0             # via -r requirements.in, cairosvg, django-simple-captcha, reportlab
-pip-tools==5.3.1          # via -r test-requirements.in
+pip-tools==5.5.0          # via -r test-requirements.in
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements.in
 prometheus-client==0.7.1  # via -r requirements.in
@@ -158,7 +158,7 @@ sentry-sdk==0.19.4        # via -r requirements.in
 sh==1.14.1                # via -r requirements.in
 simpleeval==0.9.10        # via -r requirements.in
 simplejson==3.17.2        # via -r requirements.in, django-prbac
-six==1.15.0               # via -r requirements.in, cryptography, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, freezegun, ghdiff, html5lib, isodate, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, pip-tools, protobuf, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, tenacity, twilio, unittest2
+six==1.15.0               # via -r requirements.in, cryptography, django-braces, django-simple-captcha, django-statici18n, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, freezegun, ghdiff, html5lib, isodate, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, protobuf, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, tenacity, twilio, unittest2
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3         # via -r requirements.in
 sortedcontainers==2.3.0   # via intervaltree
