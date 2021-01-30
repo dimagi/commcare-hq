@@ -102,14 +102,19 @@ def get_add_case_preloads_case_id_xpath(module, form):
     xpath = None
     if 'open_case' in form.active_actions():
         xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
-    elif module.root_module_id and module.parent_select.active:
+    else:
+        case_id = get_add_case_preloads_case_id(module)
+        xpath = CaseIDXPath(session_var(case_id))
+    return xpath
+
+
+def get_add_case_preloads_case_id(module):
+    if module.root_module_id and module.parent_select.active:
         # This is a submodule. case_id will have changed to avoid a clash with the parent case.
         # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
-        case_id = '_'.join((CASE_ID, form.get_case_type()))
+        return '_'.join((CASE_ID, module.case_type))
         xpath = CaseIDXPath(session_var(case_id))
-    else:
-        xpath = SESSION_CASE_ID
-    return xpath
+    return CASE_ID
 
 
 def relative_path(from_path, to_path):

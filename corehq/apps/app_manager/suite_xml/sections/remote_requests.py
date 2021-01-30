@@ -26,6 +26,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.xform import get_add_case_preloads_case_id
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.util.view_utils import absolute_reverse
@@ -63,13 +64,16 @@ class RemoteRequestFactory(object):
             "data": [
                 QueryData(
                     key='case_id',
-                    ref=QuerySessionXPath(self.module.search_config.session_var).instance(),
+                    ref=QuerySessionXPath(self._session_var()).instance(),
                 ),
             ],
         }
         if self.module.search_config.relevant:
             kwargs["relevant"] = self.module.search_config.relevant
         return RemoteRequestPost(**kwargs)
+
+    def _session_var(self):
+        return get_add_case_preloads_case_id(self.module)
 
     def _build_command(self):
         return Command(
@@ -86,7 +90,7 @@ class RemoteRequestFactory(object):
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [QuerySessionXPath(self.module.search_config.session_var).instance()]
+        query_xpaths = [QuerySessionXPath(self._session_var()).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
         query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
         query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
@@ -128,7 +132,7 @@ class RemoteRequestFactory(object):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
-            id=self.module.search_config.session_var,
+            id=self._session_var(),
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
@@ -185,7 +189,7 @@ class RemoteRequestFactory(object):
     def _build_stack(self):
         stack = Stack()
         frame = PushFrame()
-        frame.add_rewind(QuerySessionXPath(self.module.search_config.session_var).instance())
+        frame.add_rewind(QuerySessionXPath(self._session_var()).instance())
         stack.add_frame(frame)
         return stack
 

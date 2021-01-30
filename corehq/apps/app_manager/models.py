@@ -2102,7 +2102,6 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
     again_label = DictProperty(default={'en': 'Search Again'})
     properties = SchemaListProperty(CaseSearchProperty)

@@ -171,14 +171,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
-    def test_case_search_session_var(self, *args):
-        self.module.search_config.session_var = "other_case_id"
+    def test_case_search_parent_child_select_parent_first(self, *args):
+        self._add_parent_config(relationship=None)
         suite = self.app.create_suite()
         self.assertXmlPartialEqual('''
             <partial>
               <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
             </partial>
-        ''', suite, './remote-request[1]/post/data')
+        ''', suite, './remote-request[1]/')
+        #''', suite, './remote-request[1]/post/data')
         self.assertXmlPartialEqual('''
             <partial>
               <stack>
@@ -191,6 +192,18 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual("other_case_id", suite.xpath("./remote-request[1]/session/datum/@id")[0])
         self.assertEqual("./@case_id", suite.xpath("./remote-request[1]/session/datum/@value")[0])
+        self._remove_parent_config(self.parent_module)
+
+    def _add_parent_config(self, relationship):
+        self.parent_module = self.app.add_module(Module.new_module("Parent Module", None))
+        self.parent_module.case_type = 'parent_case'
+        self.module.root_module_id = self.parent_module.unique_id
+        self.module.parent_select.active = True
+        self.module.parent_select.relationship = relationship
+        self.module.parent_select.module_id = self.parent_module.unique_id
+
+    def _remove_parent_config(self, parent_module):
+        self.app.delete_module(parent_module.unique_id)
 
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"

@@ -43,7 +43,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
                     searchRelevant: options.search_relevant || "",
-                    sessionVar: options.search_session_var,
                     autoLaunch: options.auto_launch,
                     defaultSearch: options.default_search,
                     includeClosed: options.include_closed,
