@@ -139,7 +139,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xform import validate_xform
-from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath
+from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath, CaseClaimXpath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
@@ -2119,10 +2119,11 @@ class CaseSearch(DocumentSchema):
     def get_relevant(self):
         relevant = self.additional_relevant or ""
         if self.default_relevant:
+            default_condition = CaseClaimXpath(self.session_var).default_relevant()
             if relevant:
-                relevant = f"({relevant}) and ({CLAIM_DEFAULT_RELEVANT_CONDITION})"
+                relevant = f"({relevant}) and ({default_condition})"
             else:
-                relevant = CLAIM_DEFAULT_RELEVANT_CONDITION
+                relevant = default_condition
         return relevant
 
 

@@ -193,9 +193,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual('''
             <partial>
-              <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
+              <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                    relevant="(instance('groups')/groups/group) and (count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/other_case_id]) = 0)">
+                <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
+              </post>
             </partial>
-        ''', suite, './remote-request[1]/post/data')
+        ''', suite, './remote-request[1]/post')
         self.assertXmlPartialEqual('''
             <partial>
               <stack>
