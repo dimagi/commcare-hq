@@ -2108,12 +2108,22 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    default_relevant = BooleanProperty(default=True)
+    additional_relevant = StringProperty()
     search_filter = StringProperty()
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+
+    def get_relevant(self):
+        relevant = self.additional_relevant or ""
+        if self.default_relevant:
+            if relevant:
+                relevant = f"({relevant}) and ({CLAIM_DEFAULT_RELEVANT_CONDITION})"
+            else:
+                relevant = CLAIM_DEFAULT_RELEVANT_CONDITION
+        return relevant
 
 
 class ParentSelect(DocumentSchema):
