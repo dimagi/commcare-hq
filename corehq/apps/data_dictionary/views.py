@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
+from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, RateDefinition
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
@@ -31,17 +32,36 @@ from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 
 
+data_dictionary_rebuild_rate_limiter = RateLimiter(
+    feature_key='data_dictionary_rebuilds_per_user',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'data_dictionary_rebuilds_per_user',
+        default=RateDefinition(
+            per_hour=3,
+            per_minute=2,
+            per_second=1,
+        )
+    ).get_rate_limits(),
+    scope_length=1,
+)
+
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
 def generate_data_dictionary(request, domain):
-    try:
-        util.generate_data_dictionary(domain)
-    except util.OldExportsEnabledException:
-        return JsonResponse({
-            "failed": "Data Dictionary requires access to new exports"
-        }, status=400)
+    if data_dictionary_rebuild_rate_limiter.allow_usage(domain):
+        data_dictionary_rebuild_rate_limiter.report_usage(domain)
+        try:
+            util.generate_data_dictionary(domain)
+        except util.OldExportsEnabledException:
+            return JsonResponse({
+                "failed": "Data Dictionary requires access to new exports"
+            }, status=400)
 
-    return JsonResponse({"status": "success"})
+        return JsonResponse({"status": "success"})
+    else:
+        return JsonResponse({
+            "failed": "Rate limit exceeded. Please try again later."
+        }, status=429)
 
 
 @login_and_domain_required
