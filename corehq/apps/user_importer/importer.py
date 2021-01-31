@@ -588,115 +588,111 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
     ret = {"errors": [], "rows": []}
     current = 0
 
-    try:
-        for row in user_specs:
-            if update_progress:
-                update_progress(current)
-                current += 1
-            role_updated = False
+    for row in user_specs:
+        if update_progress:
+            update_progress(current)
+            current += 1
+        role_updated = False
 
-            username = row.get('username')
-            domain = row.get('domain') or upload_domain
-            status_row = {
-                'username': username,
-                'row': row,
-            }
-            roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
-                                                                                    allow_admin_role=True)}
-            domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
+        username = row.get('username')
+        domain = row.get('domain') or upload_domain
+        status_row = {
+            'username': username,
+            'row': row,
+        }
+        roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
+                                                                                allow_admin_role=True)}
+        domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
 
-            validators = get_user_import_validators(
-                Domain.get_by_name(domain),
-                domain_user_specs,
-                True,
-                allowed_roles=list(roles_by_name),
-                upload_domain=upload_domain,
-            )
-            try:
-                for validator in validators:
-                    validator(row)
-            except UserUploadError as e:
-                status_row['flag'] = str(e)
-                ret['rows'].append(status_row)
-                continue
+        validators = get_user_import_validators(
+            Domain.get_by_name(domain),
+            domain_user_specs,
+            True,
+            allowed_roles=list(roles_by_name),
+            upload_domain=upload_domain,
+        )
+        try:
+            for validator in validators:
+                validator(row)
+        except UserUploadError as e:
+            status_row['flag'] = str(e)
+            ret['rows'].append(status_row)
+            continue
 
-            email = row.get('email')
-            role = row.get('role', None)
-            status = row.get('status')
+        email = row.get('email')
+        role = row.get('role', None)
+        status = row.get('status')
 
-            try:
-                remove = spec_value_to_boolean_or_none(row, 'remove')
-                role_qualified_id = None
+        try:
+            remove = spec_value_to_boolean_or_none(row, 'remove')
+            if not role:
+                raise UserUploadError(_(
+                    "You cannot upload a web user without a role. {username} does not have "
+                    "a role").format(username=username))
+            role_qualified_id = roles_by_name[role]
+            if email:
+                email = email.lower()
+            if not upload_user.can_edit_web_users():
+                raise UserUploadError(_(
+                    "Only users with the edit web users permission can upload web users"
+                ))
 
-                if role:
-                    role_qualified_id = roles_by_name[role]
-                if email:
-                    email = email.lower()
-                if username:
-                    if not upload_user.can_edit_web_users():
+            user = CouchUser.get_by_username(username)
+            if user:
+                if username and user.username != username:
+                    raise UserUploadError(_(
+                        'Changing usernames is not supported: %(username)r to %(new_username)r'
+                    ) % {'username': user.username, 'new_username': username})
+                if remove:
+                    if not user or not user.is_member_of(domain):
                         raise UserUploadError(_(
-                            "Only users with the edit web users permission can upload web users"
-                        ))
-
-                    user = CouchUser.get_by_username(username)
-                    if user:
-                        if remove:
-                            if not user or not user.is_member_of(domain):
-                                raise UserUploadError(_(
-                                    "You cannot remove a web user that is not a member of this project. "
-                                    "{username} is not a member.").format(username=username)
-                                )
-                            else:
-                                user.delete_domain_membership(domain)
-                                user.save()
-                        else:
-                            if not role:
-                                raise UserUploadError(_(
-                                    "You cannot upload a web user without a role. {username} does not have "
-                                    "a role").format(username=username)
-                                )
-
-                            if user.is_member_of(domain):
-                                user_current_role = user.get_role(domain=domain)
-                                role_updated = not (user_current_role
-                                                    and user_current_role.get_qualified_id() == role_qualified_id)
-                                if role_updated:
-                                    user.set_role(domain, role_qualified_id)
-                                status_row['flag'] = 'updated'
-                                user.save()
-
-                            elif not user.is_member_of(domain) and user.is_active:
-                                user.add_as_web_user(domain, role=role_qualified_id)
-                                status_row['flag'] = 'updated'
-
-                            elif not user.is_member_of(domain) and status == 'Invited':
-                                invite = Invitation.objects.filter(email=email, domain=domain).first()
-                                invite.invited_by = upload_user.user_id
-                                invite.invited_on = datetime.utcnow()
-                                invite.role = role_qualified_id
-                                status_row['flag'] = 'updated'
-
-                    else:
-                        invite, invite_created = Invitation.objects.update_or_create(
-                            email=username,
-                            domain=domain,
-                            defaults={
-                                'invited_by': upload_user.user_id,
-                                'invited_on': datetime.utcnow(),
-                                'role': role_qualified_id
-                            },
+                            "You cannot remove a web user that is not a member of this project. "
+                            "{username} is not a member.").format(username=username)
                         )
-                        if invite_created:
-                            invite.send_activation_email()
-                        status_row['flag'] = 'invited'
+                    else:
+                        user.delete_domain_membership(domain)
+                        user.save()
+                else:
+                    if user.is_member_of(domain):
+                        user_current_role = user.get_role(domain=domain)
+                        role_updated = not (user_current_role
+                                            and user_current_role.get_qualified_id() == role_qualified_id)
+                        if role_updated:
+                            user.set_role(domain, role_qualified_id)
+                        status_row['flag'] = 'updated'
+                        user.save()
 
-                    if role_updated:
-                        log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                    elif not user.is_member_of(domain) and user.is_active:
+                        user.add_as_web_user(domain, role=role_qualified_id)
+                        status_row['flag'] = 'updated'
 
-            except (UserUploadError, CouchUser.Inconsistent) as e:
-                status_row['flag'] = str(e)
+                    elif not user.is_member_of(domain) and status == 'Invited':
+                        invite = Invitation.objects.filter(email=email, domain=domain).first()
+                        invite.invited_by = upload_user.user_id
+                        invite.invited_on = datetime.utcnow()
+                        invite.role = role_qualified_id
+                        status_row['flag'] = 'updated'
 
-            ret["rows"].append(status_row)
-    finally:
-        pass  # unclear what to do here yet
+            else:
+                invite, invite_created = Invitation.objects.update_or_create(
+                    email=username,
+                    domain=domain,
+                    defaults={
+                        'invited_by': upload_user.user_id,
+                        'invited_on': datetime.utcnow(),
+                        'role': role_qualified_id
+                    },
+                )
+                if invite_created:
+                    invite.send_activation_email()
+                status_row['flag'] = 'invited'
+
+            if role_updated:
+                log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+
+        except (UserUploadError, CouchUser.Inconsistent) as e:
+            status_row['flag'] = str(e)
+
+        ret["rows"].append(status_row)
+
     return ret
