@@ -604,9 +604,10 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
 class TestFormMeta(BaseIndexTest):
     def test_meta_drift(self):
         self.assertTrue(
-            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
+            """<setvalue ref="/data/meta/drift" \
 value="if(count(instance('commcaresession')/session/context/drift) = 1, \
-instance('commcaresession')/session/context/drift, '')"/>""" in
+instance('commcaresession')/session/context/drift, '')" \
+event="xforms-revalidate"/>""" in
             self.form.render_xform().decode('utf-8')
         )
         self.assertTrue("<orx:drift/>" in self.form.render_xform().decode('utf-8'))
