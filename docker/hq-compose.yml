@@ -62,7 +62,6 @@ services:
       - "5984"
     volumes:
       - /opt/couchdb/data
-      - ./files/couch3.ini:/opt/couchdb/etc/local.d/custom_opts.ini
 
   couch2:
     image: klaemo/couchdb:2.0-dev
