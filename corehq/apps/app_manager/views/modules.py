@@ -33,7 +33,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
 )
 from corehq.apps.app_manager.const import (
-    CLAIM_DEFAULT_RELEVANT_CONDITION,
     MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
 )
@@ -205,8 +204,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
-            'search_relevant':
-                module.search_config.relevant if module_offers_search(module) else "",
+            'search_default_relevant':
+                module.search_config.default_relevant if module_offers_search(module) else True,
+            'search_additional_relevant':
+                module.search_config.additional_relevant if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
             'default_value_expression_enabled': app.enable_default_value_expression,
@@ -1104,11 +1105,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 command_label=command_label,
                 again_label=again_label,
                 properties=properties,
-                relevant=(
-                    search_properties.get('relevant')
-                    if search_properties.get('relevant') is not None
-                    else CLAIM_DEFAULT_RELEVANT_CONDITION
-                ),
+                default_relevant=bool(search_properties.get('search_default_relevant')),
+                additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 include_closed=bool(search_properties.get('include_closed')),
