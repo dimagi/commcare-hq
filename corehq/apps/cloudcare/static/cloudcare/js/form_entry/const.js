@@ -30,6 +30,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         COLLAPSIBLE: 'group-collapse',
         COLLAPSIBLE_OPEN: 'collapse-open',
         COLLAPSIBLE_CLOSED: 'collapse-closed',
+        ETHIOPIAN: 'ethiopian',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
