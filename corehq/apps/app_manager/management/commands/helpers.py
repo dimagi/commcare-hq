@@ -31,6 +31,7 @@ class AppMigrationCommandBase(BaseCommand):
     Base class for commands that want to migrate apps.
     """
     include_builds = False
+    include_linked_apps = False
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -53,9 +54,15 @@ class AppMigrationCommandBase(BaseCommand):
         self.results_callback(results)
         logger.info('done')
 
+    def _doc_types(self):
+        doc_types = ["Application", "Application-Deleted"]
+        if self.include_linked_apps:
+            doc_types.extend(["LinkedApplication", "LinkedApplication-Deleted"])
+        return doc_types
+
     def _migrate_app(self, app_doc):
         try:
-            if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
+            if app_doc["doc_type"] in self._doc_types():
                 migrated_app = self.migrate_app(app_doc)
                 if migrated_app:
                     return DocUpdate(migrated_app)
