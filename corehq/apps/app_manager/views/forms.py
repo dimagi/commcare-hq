@@ -438,6 +438,10 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
+
+    if should_edit('session_endpoint_id'):
+        form.session_endpoint_ids = [request.POST['session_endpoint_id']]
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -763,6 +767,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             for assertion in form.custom_assertions
         ],
         'form_icon': None,
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
