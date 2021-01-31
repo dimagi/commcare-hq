@@ -597,7 +597,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
-            # username = normalize_username(str(username), domain) if username else None #TODO: fix for web
             status_row = {
                 'username': username,
                 'row': row,
@@ -666,7 +665,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                                 status_row['flag'] = 'updated'
                                 user.save()
 
-                            elif not user.is_member_of(domain) and status == 'Active User':
+                            elif not user.is_member_of(domain) and user.is_active:
                                 user.add_as_web_user(domain, role=role_qualified_id)
                                 status_row['flag'] = 'updated'
 
@@ -679,7 +678,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
                     else:
                         invite, invite_created = Invitation.objects.update_or_create(
-                            email=email,
+                            email=username,
                             domain=domain,
                             defaults={
                                 'invited_by': upload_user.user_id,
