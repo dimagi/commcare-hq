@@ -757,6 +757,12 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+USH_WILDCARD_SEARCH = StaticToggle(
+    'ush_wildcard_search',
+    'COVID: Enable wildcard search in Advanced Case Search',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
