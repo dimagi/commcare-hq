@@ -112,7 +112,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             generator = related_locations_fixture_generator
         else:
             generator = location_fixture_generator
-        fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1])
+        fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1], encoding='utf-8')
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
@@ -146,7 +146,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_metadata(self):
@@ -406,7 +406,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1]).decode('utf-8')
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1], encoding='utf-8').decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
@@ -523,7 +523,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_simple_location_fixture(self):
