@@ -29,6 +29,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'maxWidth',
             'numEntitiesPerRow',
             'pageCount',
+            'redoLast',
             'shouldRequestLocation',
             'shouldWatchLocation',
             'sortIndices',

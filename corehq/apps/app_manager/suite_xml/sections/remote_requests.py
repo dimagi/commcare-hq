@@ -111,7 +111,8 @@ class RemoteRequestFactory(object):
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
                 data=self._get_remote_request_query_datums(),
-                prompts=self._build_query_prompts()
+                prompts=self._build_query_prompts(),
+                default_search=self.module.search_config.default_search,
             )
         ]
 
