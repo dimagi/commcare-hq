@@ -287,6 +287,21 @@ DomainInfo = namedtuple('DomainInfo', [
 ])
 
 
+def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id):
+    invite, invite_created = Invitation.objects.update_or_create(
+        email=email,
+        domain=domain,
+        defaults={
+            'invited_by': upload_user.user_id,
+            'invited_on': datetime.utcnow(),
+            'supply_point': location_id,
+            'role': role_qualified_id
+        },
+    )
+    if invite_created:
+        invite.send_activation_email()
+
+
 def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     domain_info_by_domain = {}
@@ -521,18 +536,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                             current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
 
                         elif not current_user or not current_user.is_member_of(domain):
-                            invite, invite_created = Invitation.objects.update_or_create(
-                                email=web_user,
-                                domain=domain,
-                                defaults={
-                                    'invited_by': upload_user.user_id,
-                                    'invited_on': datetime.utcnow(),
-                                    'supply_point': user.location_id,
-                                    'role': role_qualified_id
-                                },
-                            )
-                            if invite_created:
-                                invite.send_activation_email()
+                            create_or_update_web_user_invite(web_user, domain, role_qualified_id, upload_user,
+                                                             user.location_id)
 
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
@@ -619,7 +624,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             ret['rows'].append(status_row)
             continue
 
-        email = row.get('email')
         role = row.get('role', None)
         status = row.get('status')
 
@@ -630,8 +634,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     "You cannot upload a web user without a role. {username} does not have "
                     "a role").format(username=username))
             role_qualified_id = roles_by_name[role]
-            if email:
-                email = email.lower()
             if not upload_user.can_edit_web_users():
                 raise UserUploadError(_(
                     "Only users with the edit web users permission can upload web users"
@@ -667,24 +669,11 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         status_row['flag'] = 'updated'
 
                     elif not user.is_member_of(domain) and status == 'Invited':
-                        invite = Invitation.objects.filter(email=email, domain=domain).first()
-                        invite.invited_by = upload_user.user_id
-                        invite.invited_on = datetime.utcnow()
-                        invite.role = role_qualified_id
+                        create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
                         status_row['flag'] = 'updated'
 
             else:
-                invite, invite_created = Invitation.objects.update_or_create(
-                    email=username,
-                    domain=domain,
-                    defaults={
-                        'invited_by': upload_user.user_id,
-                        'invited_on': datetime.utcnow(),
-                        'role': role_qualified_id
-                    },
-                )
-                if invite_created:
-                    invite.send_activation_email()
+                create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
                 status_row['flag'] = 'invited'
 
             if role_updated:
