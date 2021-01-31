@@ -320,6 +320,14 @@ class LocationXpath(XPath):
         return [unicode_slug(t) for t in _gen(hierarchy)]
 
 
+class CaseClaimXpath(object):
+    def __init__(self, session_var_name):
+        self.session_var_name = session_var_name
+
+    def default_relevant(self):
+        return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
+
+
 class LedgerdbXpath(XPath):
 
     def ledger(self):
