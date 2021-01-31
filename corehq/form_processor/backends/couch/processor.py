@@ -97,7 +97,7 @@ class FormProcessorCouch(object):
                     data = data[repeat_index]
             data[i.last()] = response
 
-        new_xml = etree.tostring(xml)
+        new_xml = etree.tostring(xml, encoding='utf-8')
         new_form._deferred_blobs = None     # will be re-populated by apply_deprecation
         new_form.external_blobs.clear()     # will be re-populated by apply_deprecation
         new_form.deferred_put_attachment(new_xml, "form.xml", content_type="text/xml")
