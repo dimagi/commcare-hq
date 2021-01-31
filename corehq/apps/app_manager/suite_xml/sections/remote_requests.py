@@ -67,8 +67,9 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        if self.module.search_config.relevant:
-            kwargs["relevant"] = self.module.search_config.relevant
+        relevant = self.module.search_config.get_relevant()
+        if relevant:
+            kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
@@ -88,7 +89,7 @@ class RemoteRequestFactory(object):
 
         query_xpaths = [QuerySessionXPath(self.module.search_config.session_var).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
-        query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
+        query_xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
         query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
         # we use the module's case list/details view to select the datum so also
