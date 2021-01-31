@@ -139,7 +139,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xform import validate_xform
-from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath
+from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath, CaseClaimXpath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
@@ -2108,12 +2108,23 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    default_relevant = BooleanProperty(default=True)
+    additional_relevant = StringProperty()
     search_filter = StringProperty()
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+
+    def get_relevant(self):
+        relevant = self.additional_relevant or ""
+        if self.default_relevant:
+            default_condition = CaseClaimXpath(self.session_var).default_relevant()
+            if relevant:
+                relevant = f"({relevant}) and ({default_condition})"
+            else:
+                relevant = default_condition
+        return relevant
 
 
 class ParentSelect(DocumentSchema):
