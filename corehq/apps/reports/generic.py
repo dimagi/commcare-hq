@@ -649,7 +649,6 @@ class GenericReportView(object):
         return json_response(self.json_dict)
 
     @property
-    @request_cache()
     def export_response(self):
         """
         Intention: Not to be overridden in general.
@@ -660,9 +659,13 @@ class GenericReportView(object):
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
         else:
-            temp = io.BytesIO()
-            export_from_tables(self.export_table, temp, self.export_format)
-            return export_response(temp, self.export_format, self.export_name)
+            self._export_response_direct()
+
+    @request_cache()
+    def _export_response_direct(self):
+        temp = io.BytesIO()
+        export_from_tables(self.export_table, temp, self.export_format)
+        return export_response(temp, self.export_format, self.export_name)
 
     @property
     @request_cache()
