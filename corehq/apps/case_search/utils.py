@@ -1,5 +1,6 @@
 import re
 
+from corehq import toggles
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -8,6 +9,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
 )
+from corehq.apps.es import queries
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 
@@ -21,6 +23,7 @@ class CaseSearchCriteria(object):
         self.case_type = case_type
         self.criteria = criteria
 
+        self.wildcard_enabled = toggles.USH_WILDCARD_SEARCH.enabled(domain)
         self.config = self._get_config()
         self.search_es = self._get_initial_search_es()
 
@@ -102,4 +105,17 @@ class CaseSearchCriteria(object):
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
-            self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+            if self.wildcard_enabled:
+                values = value.split()
+                if len(values) == 1 and key in fuzzies:
+                    # fuzzy search can only be supported for single words
+                    self.search_es = self.search_es.case_property_query(
+                        key, value, fuzzy=True, clause=queries.SHOULD)
+                    clause = queries.SHOULD
+                else:
+                    clause = queries.MUST
+                for token in values:
+                    token = ".*" + token.lower() + ".*"
+                    self.search_es = self.search_es.regexp_case_property_query(key, token, clause=clause)
+            else:
+                self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
