@@ -1,7 +1,6 @@
 from corehq.apps.app_manager.management.commands.helpers import (
     AppMigrationCommandBase,
 )
-from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
 
 
