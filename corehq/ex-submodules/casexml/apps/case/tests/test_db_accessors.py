@@ -58,6 +58,12 @@ class TestExtensionCaseIds(TestCase):
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
+        # exclude_for_case_type should exclude the result
+        self.assertEqual(
+            CaseAccessors(self.domain).get_extension_case_ids(
+                [host_id], exclude_for_case_type=CaseIndex.DEFAULT_RELATED_CASE_TYPE),
+            []
+        )
 
     def test_extension_of_multiple_hosts_returned(self):
         """ Should return an extension from any host if there are multiple indices """
