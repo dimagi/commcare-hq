@@ -155,6 +155,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         if module_offers_search(module):
             yield id_strings.case_search_locale(module), trans(module.search_config.command_label)
+            yield id_strings.case_search_again_locale(module), trans(module.search_config.again_label)
             # icon and audio not yet available
             for prop in module.search_config.properties:
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
