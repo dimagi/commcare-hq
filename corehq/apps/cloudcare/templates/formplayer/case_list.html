@@ -68,7 +68,7 @@
         <ul class="pagination">
           <% if (currentPage > 0) { %>
           <li class="page-item" id="prev-page">
-            <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
+            <a class="page-link" aria-label="Previous" tabindex="0" data-id="<%= currentPage - 1 %>">
               <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
               <span class="sr-only">{% trans "Previous" %}</span>
             </a>
@@ -82,11 +82,11 @@
           </li>
           <% } %>
           <% for (i = 0; i < pageCount; i++) { %>
-          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
+          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0" data-id="<%= i %>"><%= i + 1 %></a></li>
           <% } %>
           <% if (currentPage < pageCount - 1) { %>
           <li class="page-item" id="next-page">
-            <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
+            <a class="page-link" aria-label="Next" tabindex="0" data-id="<%= currentPage + 1 %>">
               <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
               <span class="sr-only">{% trans "Next" %}</span>
             </a>
