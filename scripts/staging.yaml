@@ -63,6 +63,7 @@ branches:
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - jls/results-button # Jenny Jan 25
+  - jls/case-claim-session-var-relevant # Jenny Jan 30
   - jls/web-apps-sticky-search-again # Jenny Jan 26
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
   #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
