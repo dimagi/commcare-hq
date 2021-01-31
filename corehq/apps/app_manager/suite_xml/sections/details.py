@@ -210,7 +210,7 @@ class DetailContributor(SectionContributor):
                 etree.fromstring("<variables>{}</variables>".format(custom_variables))
             ]
             d.variables.extend([
-                load_xmlobject_from_string(etree.tostring(e), xmlclass=DetailVariable)
+                load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
                 for e in custom_variable_elements
             ])
 

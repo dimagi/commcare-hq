@@ -47,7 +47,7 @@ class TestXmlMixin(TestFileMixin):
     def _assertXpathHelper(self, element, xpath, message, should_not_exist):
         element = parse_normalize(element, to_string=False)
         if bool(element.xpath(xpath)) == should_not_exist:
-            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True))
+            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True, encoding='utf-8'))
 
     def assertHtmlEqual(self, expected, actual, normalize=True):
         if normalize:
@@ -110,7 +110,7 @@ def parse_normalize(xml, to_string=True, is_html=False):
     parser = parser_class(remove_blank_text=True)
     parse = lambda *args: normalize_attributes(markup_class(*args))
     parsed = parse(xml, parser)
-    return lxml.etree.tostring(parsed, pretty_print=True, method=meth) if to_string else parsed
+    return lxml.etree.tostring(parsed, pretty_print=True, method=meth, encoding='utf-8') if to_string else parsed
 
 
 def _check_shared(expected, actual, checker, extension):
@@ -141,7 +141,7 @@ def extract_xml_partial(xml, xpath):
     root = lxml.etree.Element('partial')
     for node in nodes:
         root.append(node)
-    return lxml.etree.tostring(root, pretty_print=True)
+    return lxml.etree.tostring(root, pretty_print=True, encoding='utf-8')
 
 
 def add_build(version, build_number):
