@@ -194,7 +194,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual('''
             <partial>
               <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
-                    relevant="(instance('groups')/groups/group) and (count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/other_case_id]) = 0)">
+                    relevant="(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/other_case_id]) = 0) and (instance('groups')/groups/group)">
                 <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
               </post>
             </partial>
