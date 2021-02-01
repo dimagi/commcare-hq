@@ -2,7 +2,6 @@ from django.test import SimpleTestCase
 
 from mock import patch
 
-from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -71,7 +70,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
-            relevant="{} and {}".format("instance('groups')/groups/group", CLAIM_DEFAULT_RELEVANT_CONDITION),
+            default_relevant=True,
+            additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
                 DefaultCaseSearchProperty(
@@ -87,6 +87,23 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 ),
             ],
         )
+
+    def test_search_config_model(self, *args):
+        config = CaseSearch()
+
+        config.default_relevant = True
+        self.assertEqual(config.get_relevant(), """
+            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0
+        """.strip())
+
+        config.default_relevant = False
+        self.assertEqual(config.get_relevant(), "")
+
+        config.additional_relevant = "double(now()) mod 2 = 0"
+        self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
+
+        config.default_relevant = True
+        self.assertEqual(config.get_relevant(), "(double(now()) mod 2 = 0) and (count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0)")
 
     def test_remote_request(self, *args):
         """
@@ -176,9 +193,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual('''
             <partial>
-              <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
+              <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                    relevant="(instance('groups')/groups/group) and (count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/other_case_id]) = 0)">
+                <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
+              </post>
             </partial>
-        ''', suite, './remote-request[1]/post/data')
+        ''', suite, './remote-request[1]/post')
         self.assertXmlPartialEqual('''
             <partial>
               <stack>
