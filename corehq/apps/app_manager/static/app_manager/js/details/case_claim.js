@@ -75,6 +75,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hqImport('hqwebapp/js/assert_properties').assertRequired(options, [
                 'name',
                 'label',
+                'hint',
                 'appearance',
                 'defaultValue',
                 'itemSet',
@@ -84,6 +85,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.uniqueId = generateSemiRandomId();
             self.name = ko.observable(options.name);
             self.label = ko.observable(options.label);
+            self.hint = ko.observable(options.hint);
             self.appearance = ko.observable(options.appearance);
             self.defaultValue = ko.observable(options.defaultValue);
 
@@ -93,6 +95,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 saveButton.fire('change');
             });
             self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.hint.subscribe(function () {
                 saveButton.fire('change');
             });
             self.appearance.subscribe(function () {
@@ -165,8 +170,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
-                // property labels come in keyed by lang.
+                // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
+                if (searchProperties[i].hint) {
+                    var hint = searchProperties[i].hint[lang] || "";
+                }
+                else {
+                    var hint = {};
+                }
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
@@ -184,6 +195,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 self.searchProperties.push(searchProperty({
                     name: searchProperties[i].name,
                     label: label,
+                    hint: hint,
                     appearance: appearance,
                     defaultValue: defaultValue,
                     itemSet: propItemSet,
@@ -193,6 +205,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.searchProperties.push(searchProperty({
                 name: '',
                 label: '',
+                hint: '',
                 appearance: '',
                 defaultValue: '',
                 itemSet: itemSet(),
@@ -203,6 +216,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.searchProperties.push(searchProperty({
                 name: '',
                 label: '',
+                hint: '',
                 appearance: '',
                 defaultValue: '',
                 itemSet: itemSet(),
@@ -222,6 +236,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                        hint: p.hint(),
                         appearance: p.appearance(),
                         default_value: p.defaultValue(),
                         fixture: ko.toJSON(p.itemSet),
