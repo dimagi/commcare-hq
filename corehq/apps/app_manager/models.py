@@ -2121,7 +2121,7 @@ class CaseSearch(DocumentSchema):
         if self.default_relevant:
             default_condition = CaseClaimXpath(self.session_var).default_relevant()
             if relevant:
-                relevant = f"({relevant}) and ({default_condition})"
+                relevant = f"({default_condition}) and ({relevant})"
             else:
                 relevant = default_condition
         return relevant
