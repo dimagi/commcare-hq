@@ -10,21 +10,21 @@
 
   <script type="text/html" id="property_template" class="hide">
     <tr>
-      <td class="col-sm-3">
+      <td class="col-sm-4">
         <input class="form-control" type="text" data-bind="value: property.name"/>
       </td>
-      <td class="col-sm-4">
+      <td class="col-sm-6">
         <input class="form-control" type="text" data-bind="value: property.label"/>
       </td>
       {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled%}
-      <td class="col-sm-5">
+      <td class="col-sm-4">
         <button type="button"
                 class="btn btn-default"
                 data-bind="
                     attr: {'data-target': '#lookup-table-prompt-' +   property.uniqueId}"
                 data-toggle="modal">
           <i class="fa fa-pencil"></i>
-          {% trans "Edit" %}
+          {% trans "Configure" %}
         </button>
       </td>
       {% endif %}
@@ -161,9 +161,9 @@
           <thead data-bind="visible: searchProperties().length > 0">
           <tr>
             <th class="col-sm-4">{% trans "Case Property" %}</th>
-            <th class="col-sm-5">{% trans "Display Text" %}</th>
+            <th class="col-sm-6">{% trans "Display Text" %}</th>
             {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled%}
-              <th class="col-sm-4">{% trans "More Options" %}</th>
+              <th class="col-sm-4">{% trans "Other Options" %}</th>
             {% endif %}
           </tr>
           </thead>
