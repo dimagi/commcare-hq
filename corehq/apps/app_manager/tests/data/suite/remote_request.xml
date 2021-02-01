@@ -21,6 +21,7 @@
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
+             default_search="false"
              storage-instance="results"
              template="case">
         <data key="case_type" ref="'case'"/>
