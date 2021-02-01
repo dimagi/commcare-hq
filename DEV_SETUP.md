@@ -69,6 +69,15 @@ Save those backups to somewhere you'll be able to access from the new environmen
   - [Homebrew](https://brew.sh)
   - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
   - [pango](https://www.pango.org/) (available via homebrew)
+  - libxmlsec1 (install with homebrew)
+
+  
+##### xmlsec
+
+`xmlsec` is a `pip` dependency that will require some non-`pip`-installable
+packages. The above notes should have covered these requirements for linux and macOS, 
+but if you are on a different platform or still experiencing issues,
+please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/). 
 
 
 #### Set up virtual environment
@@ -489,8 +498,14 @@ installing `yarn` above for more details.
 
 It's recommended to install grunt globally (with `yarn`) in order to use grunt from the command line:
 
-    $ yarn install global grunt
-    $ yarn install global grunt-cli
+    $ yarn global add grunt
+    $ yarn global add grunt-cli
+
+You'll then need to add the yarn bin folder to your path:
+    
+    $ export PATH="$(yarn global bin):$PATH"
+    
+More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
 In order for the tests to run the __development server needs to be running on port 8000__.
 

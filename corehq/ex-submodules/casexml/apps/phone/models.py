@@ -22,6 +22,7 @@ from casexml.apps.phone.exceptions import (
     IncompatibleSyncLogType,
     MissingSyncLog,
 )
+from corehq import toggles
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -41,7 +42,7 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
-from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT
+from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT, NAMESPACE_OTHER
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 
@@ -384,12 +385,16 @@ def delete_synclogs(current_synclog):
             date__lt=current_synclog.date
         ).delete()
     elif current_synclog.user_id and current_synclog.is_formplayer:
-        # see comment in get_alt_device_id about the purpose of this short-lived code
-        alt_device_id = get_alt_device_id(current_synclog.device_id)
-        SyncLogSQL.objects.filter(
+        query = SyncLogSQL.objects.filter(
             user_id=current_synclog.user_id,
             date__lt=current_synclog.date,
-        ).filter(Q(device_id=current_synclog.device_id) | Q(device_id=alt_device_id)).delete()
+        )
+        device_id_filter = Q(device_id=current_synclog.device_id)
+        if toggles.CLEAN_OLD_FORMPLAYER_SYNCS.enabled(current_synclog.user_id, NAMESPACE_OTHER):
+            # see comment in get_alt_device_id about the purpose of this short-lived code
+            alt_device_id = get_alt_device_id(current_synclog.device_id)
+            device_id_filter = device_id_filter | Q(device_id=alt_device_id)
+        query.filter(device_id_filter).delete()
     elif current_synclog.previous_log_id:
         SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
 
