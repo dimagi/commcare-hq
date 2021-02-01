@@ -328,7 +328,7 @@ laboratory==0.2.0
     # via -r requirements.in
 linecache2==1.0.0
     # via traceback2
-lxml==4.3.5
+lxml==4.6.2
     # via
     #   -r requirements.in
     #   eulxml

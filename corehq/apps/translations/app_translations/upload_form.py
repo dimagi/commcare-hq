@@ -297,7 +297,9 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         value_node_ = self._get_value_node(text_node_)
         if not value_node_.exists():
             return False
-        old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
+        old_trans = etree.tostring(
+            value_node_.xml, method="text", encoding='utf-8'
+        ).decode('utf-8').strip()
         return self._looks_like_markdown(old_trans) and not self._had_markdown(text_node_)
 
     def _has_translation(self, row):
