@@ -97,14 +97,15 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchRelevant', 'sessionVar',
+        'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchAdditionalRelevant', 'sessionVar',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
         options.searchCommandLabel = options.searchCommandLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
-        var self = ko.mapping.fromJS(_.pick(options, _.without(searchConfigKeys, 'searchRelevant')));
+        var self = ko.mapping.fromJS(options);
 
         self.workflow = ko.computed({
             read: function () {
@@ -124,42 +125,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             },
         });
 
-        // Parse searchRelevant into DEFAULT_CLAIM_RELEVANT, which controls a checkbox,
-        // and the remainder of the expression, if any, which appears in a textbox.
-        // Note that this fragile parsing logic needs to match the self.relevant calculation below
-        // and cannot be changed without migrating existing CaseSearch documents
-        var DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
-            defaultRelevant = false,
-            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (",
-            extraRelevant = "",
-            searchRelevant = options.searchRelevant || "";
-        if (searchRelevant) {
-            searchRelevant = searchRelevant.trim();
-            if (searchRelevant === DEFAULT_CLAIM_RELEVANT) {
-                defaultRelevant = true;
-                extraRelevant = "";
-            } else if (searchRelevant.startsWith(prefix)) {
-                defaultRelevant = true;
-                extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
-            } else {
-                extraRelevant = searchRelevant;
-            }
-        }
-        self.extraRelevant = ko.observable(extraRelevant);
-        self.defaultRelevant = ko.observable(defaultRelevant);
-
-        self.relevant = ko.computed(function () {
-            if (self.defaultRelevant()) {
-                if (self.extraRelevant().trim() === "") {
-                    return DEFAULT_CLAIM_RELEVANT;
-                } else {
-                    // Note this needs to match the initialization logic for defaultRelevant and extraRelevant above
-                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.extraRelevant().trim() + ")";
-                }
-            }
-            return self.extraRelevant().trim();
-        });
-
         // Allow search filter to be copied from another part of the page
         self.setSearchFilterVisible = ko.computed(function () {
             return searchFilterObservable && searchFilterObservable();
@@ -171,14 +136,15 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.searchFilter(searchFilterObservable());
         };
 
-        subscribeToSave(self, _.without(searchConfigKeys, 'searchRelevant').concat(['relevant']), saveButton);
+        subscribeToSave(self, searchConfigKeys, saveButton);
 
         self.serialize = function () {
             return {
                 auto_launch: self.autoLaunch(),
                 default_search: self.defaultSearch(),
                 session_var: self.sessionVar(),
-                relevant: self.relevant(),
+                search_default_relevant: self.searchDefaultRelevant(),
+                search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
                 search_again_label: self.searchAgainLabel(),
