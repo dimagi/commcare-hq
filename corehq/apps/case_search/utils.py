@@ -85,26 +85,6 @@ class CaseSearchCriteria(object):
             for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
                 self.search_es = self.search_es.blacklist_owner_id(blacklisted_owner_id)
 
-    def _add_case_property_queries(self):
-        try:
-            fuzzies = self.config.fuzzy_properties.get(
-                domain=self.domain, case_type=self.case_type).properties
-        except FuzzyProperties.DoesNotExist:
-            fuzzies = []
-
-        for key, value in self.criteria.items():
-            if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
-                continue
-            remove_char_regexs = self.config.ignore_patterns.filter(
-                domain=self.domain,
-                case_type=self.case_type,
-                case_property=key,
-            )
-            for removal_regex in remove_char_regexs:
-                to_remove = re.escape(removal_regex.regex)
-                value = re.sub(to_remove, '', value)
-            self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-
     def _add_daterange_queries(self):
         # Add query for specially formatted daterange param
         #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
@@ -121,3 +101,24 @@ class CaseSearchCriteria(object):
                         key, gte=startdate, lte=enddate)
         for key in drop_keys:
             self.criteria.pop(key)
+
+    def _add_case_property_queries(self):
+        try:
+            fuzzies = self.config.fuzzy_properties.get(
+                domain=self.domain, case_type=self.case_type).properties
+        except FuzzyProperties.DoesNotExist:
+            fuzzies = []
+
+        for key, value in self.criteria.items():
+            if (key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE)
+                    or key.startswith('__range__')):
+                continue
+            remove_char_regexs = self.config.ignore_patterns.filter(
+                domain=self.domain,
+                case_type=self.case_type,
+                case_property=key,
+            )
+            for removal_regex in remove_char_regexs:
+                to_remove = re.escape(removal_regex.regex)
+                value = re.sub(to_remove, '', value)
+            self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
