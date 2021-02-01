@@ -70,14 +70,17 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=None, input_name='name'):
+def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None):
     template = '''
         <input type="text"
-               name="{}"
+               name="{}" {} {}
                class="form-control"
                value="%(value)s"
                placeholder="%(placeholder)s" />
-    '''.format(input_name)
+    '''.format(
+        input_name,
+        f"id='{input_id}'" if input_id else "",
+        f"data-bind='{data_bind}'" if data_bind else "")
     return _input_trans(template, name, langs=langs)
 
 

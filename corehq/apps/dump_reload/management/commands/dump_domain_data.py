@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument('domain_name')
         parser.add_argument(
             '-e', '--exclude', dest='exclude', action='append', default=[],
-            help='An app_label or app_label.ModelName to exclude '
+            help='An app_label, app_label.ModelName or CouchDB doc_type to exclude '
                  '(use multiple --exclude to exclude multiple apps/models).'
         )
         parser.add_argument(

@@ -240,6 +240,13 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default',
+    'aaa-data': 'default',
+    'icds-ucr-citus': 'icds-ucr'
+}
+
 if os.path.exists("extensions/icds/custom/icds"):
     # code is not present in fork PR builds
     LOCAL_APPS = (
@@ -249,9 +256,6 @@ if os.path.exists("extensions/icds/custom/icds"):
     )
     COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
 
-REPORTING_DATABASES = {
-    'default': 'default',
-    'ucr': 'default',
-    'aaa-data': 'default',
-    'icds-ucr-citus': 'icds-ucr',
-}
+    LOCAL_CUSTOM_DB_ROUTING = {
+        "icds_reports": "icds-ucr-citus"
+    }

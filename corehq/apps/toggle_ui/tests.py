@@ -1,9 +1,12 @@
 import uuid
+from decimal import Decimal
 
 from django.test import TestCase
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.toggles import NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 
 from corehq.apps.toggle_ui.migration_helpers import move_toggles
@@ -57,3 +60,29 @@ class MigrationHelperTest(TestCase):
             self.assertEqual(expected_users, set(dsa_toggle.enabled_users))
         finally:
             MigrationHelperTest._delete_toggles(moz, dsa)
+
+
+class TestToggleAudit(TestCase):
+    def test_log_toggle_changes(self):
+        slug = uuid.uuid4().hex
+        ToggleAudit.objects.log_toggle_changes(
+            slug, "username1", {"domain:item1", "item2"}, {"item2", "item3"}, 0.001
+        )
+        query = ToggleAudit.objects.filter(slug=slug)
+        self.assertEqual(3, query.count())
+        add = query.filter(action=ToggleAudit.ACTION_ADD).all()
+        self.assertEqual(1, len(add))
+        self.assertEqual(add[0].username, "username1")
+        self.assertEqual(add[0].item, "item1")
+        self.assertEqual(add[0].namespace, NAMESPACE_DOMAIN)
+
+        remove = query.filter(action=ToggleAudit.ACTION_REMOVE).all()
+        self.assertEqual(1, len(remove))
+        self.assertEqual(remove[0].username, "username1")
+        self.assertEqual(remove[0].item, "item3")
+        self.assertEqual(remove[0].namespace, NAMESPACE_USER)
+
+        randomness = query.filter(action=ToggleAudit.ACTION_UPDATE_RANDOMNESS).all()
+        self.assertEqual(1, len(randomness))
+        self.assertEqual(randomness[0].username, "username1")
+        self.assertAlmostEqual(randomness[0].randomness, Decimal(0.001))

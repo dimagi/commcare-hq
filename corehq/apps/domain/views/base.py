@@ -124,7 +124,7 @@ def _domains_to_links(domain_objects, view_name):
         'name': o.name,
         'display_name': o.display_name(),
         'url': reverse(view_name, args=[o.name]),
-    } for o in domain_objects], key=lambda link: link['display_name'].lower())
+    } for o in domain_objects if o], key=lambda link: link['display_name'].lower())
 
 
 class DomainViewMixin(object):

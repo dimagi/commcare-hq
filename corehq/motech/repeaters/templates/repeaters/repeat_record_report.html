@@ -34,22 +34,22 @@
                 {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_cancellable|urlencode }}">
-                {% blocktrans %}Select {{ total_cancel }} cancellable payloads{% endblocktrans %}
+              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_pending|urlencode }}">
+                {% blocktrans %}Select {{ total_pending }} pending payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_requeue|urlencode }}">
-                {% blocktrans %}Select {{ total_requeue }} requeue payloads{% endblocktrans %}
+              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_cancelled|urlencode }}">
+                {% blocktrans %}Select {{ total_cancelled }} cancelled payloads{% endblocktrans %}
             </label>
           </div>
         </div>
       {% endif %}
   </div>
   <div id="warning" class="alert alert-warning hide">
-    {% blocktrans %}You need to select at least one payload!{% endblocktrans %}
+    {% blocktrans %}Please select at least one payload{% endblocktrans %}
   </div>
   <div id="not-allowed" class="alert alert-warning hide">
-    {% blocktrans %}This action is not allowed for some of selected payloads!{% endblocktrans %}
+    {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
   </div>
   <div class="modal fade" id="are-you-sure">
     <div class="modal-dialog">

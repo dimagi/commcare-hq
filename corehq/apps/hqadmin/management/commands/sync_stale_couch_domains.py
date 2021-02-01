@@ -5,15 +5,13 @@ from corehq.apps.hqadmin.couch_domain_utils import (
     cleanup_stale_es_on_couch_domains,
 )
 
-ALL_COUCH_DOMAINS = object()
-
 
 class Command(BaseCommand):
     help = """Force a sync of data on all high priority couch db domains
     (determined by the feature flag ACTIVE_COUCH_DOMAINS)"""
 
     def add_arguments(self, parser):
-        parser.add_argument('--domains', default=ALL_COUCH_DOMAINS)
+        parser.add_argument('--domains', default=None)
         parser.add_argument(
             '--start',
             action='store',

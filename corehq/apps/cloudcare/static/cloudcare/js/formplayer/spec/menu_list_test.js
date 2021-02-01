@@ -2,14 +2,26 @@
 /* eslint-env mocha */
 describe('Render a case list', function () {
     var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures");
+
+    before(function () {
+        hqImport("hqwebapp/js/initial_page_data").register(
+            "toggles_dict",
+            {
+                APP_ANALYTICS: true,
+            }
+        );
+    });
+
     describe('#getMenuView', function () {
         var server;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
+            sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
         });
 
         afterEach(function () {
             server.restore();
+            Backbone.history.getFragment.restore();
         });
 
         var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;

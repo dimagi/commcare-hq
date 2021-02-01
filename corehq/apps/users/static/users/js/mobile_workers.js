@@ -221,7 +221,7 @@ hqDefine("users/js/mobile_workers",[
     var newUserCreationModel = function (options) {
         assertProperties.assertRequired(options, [
             'custom_fields_slugs',
-            'draconian_security',
+            'skip_standard_password_validations',
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
@@ -244,7 +244,7 @@ hqDefine("users/js/mobile_workers",[
         // These don't need to be observables, but it doesn't add much overhead
         // and eliminates the need to remember which flags are observable and which aren't
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
-        self.useDraconianSecurity = ko.observable(options.draconian_security);
+        self.skipStandardValidations = ko.observable(options.skip_standard_password_validations);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.stagedUser()) {
@@ -268,26 +268,17 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.WARNING;
             }
 
-            if (self.useDraconianSecurity()) {
-                if (!(
-                    password.length >= 8 &&
-                    /\W/.test(password) &&
-                    /\d/.test(password) &&
-                    /[A-Z]/.test(password)
-                )) {
+            if (!self.skipStandardValidations()) {
+                // Standard validation
+                var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
+                if (score > 1) {
+                    return self.STATUS.SUCCESS;
+                } else if (score < 1) {
                     return self.STATUS.ERROR;
                 }
-                return self.STATUS.SUCCESS;
+                return self.STATUS.WARNING;
             }
-
-            // Standard validation
-            var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
-            if (score > 1) {
-                return self.STATUS.SUCCESS;
-            } else if (score < 1) {
-                return self.STATUS.ERROR;
-            }
-            return self.STATUS.WARNING;
+            return self.STATUS.SUCCESS;
         });
 
         self.requiredEmailMissing = ko.computed(function () {
@@ -514,7 +505,7 @@ hqDefine("users/js/mobile_workers",[
 
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
-            draconian_security: initialPageData.get('draconian_security'),
+            skip_standard_password_validations: initialPageData.get('skip_standard_password_validations'),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),

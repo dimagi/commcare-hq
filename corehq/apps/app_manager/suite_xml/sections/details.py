@@ -302,11 +302,13 @@ class DetailContributor(SectionContributor):
             relevant_kwarg = dict(
                 relevant=XPath(module.search_config.search_button_display_condition),
             )
+        allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain)
         action = Action(
             display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
             stack=Stack(),
+            auto_launch=allow_auto_launch and module.search_config.auto_launch,
             **relevant_kwarg
         )
         frame = PushFrame()

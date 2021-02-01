@@ -4,6 +4,7 @@ from collections import OrderedDict
 from functools import partial
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -18,13 +19,14 @@ from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.http import require_GET
+from django_prbac.utils import has_privilege
 
 from lxml import etree
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
-from corehq import toggles
+from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -41,6 +43,7 @@ from corehq.apps.app_manager.decorators import (
     require_can_edit_apps,
     require_deploy_apps,
 )
+from corehq.apps.app_manager.exceptions import CaseSearchConfigError
 from corehq.apps.app_manager.models import (
     Application,
     AdvancedModule,
@@ -128,6 +131,11 @@ def get_module_template(user, module):
 def get_module_view_context(request, app, module, lang=None):
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
+        'show_auto_launch': (
+            app.cloudcare_enabled
+            and has_privilege(request, privileges.CLOUDCARE)
+            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+        ),
     }
     module_brief = {
         'id': module.id,
@@ -190,12 +198,21 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
+            'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
+            'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
+            'search_relevant':
+                module.search_config.relevant if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+            'default_value_expression_enabled': app.enable_default_value_expression,
+            # populate these even if module_offers_search is false because search_config might just not exist yet
+            'search_command_label':
+                module.search_config.command_label if hasattr(module, 'search_config') else "",
+            'search_session_var': module.search_config.session_var if hasattr(module, 'search_config') else "",
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -245,6 +262,7 @@ def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
         'parent_case_modules': _get_modules_with_parent_case_type(
             app, module, case_property_builder, module.case_type),
+        'all_case_modules': _get_all_case_modules(app, module),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             add_ons.show("submenus", request, app, module=module) and not module.is_training_module
@@ -347,15 +365,27 @@ def _setup_case_property_builder(app):
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
 def _get_modules_with_parent_case_type(app, module, case_property_builder, case_type_):
-        parent_types = case_property_builder.get_parent_types(case_type_)
-        modules = app.modules
-        parent_module_ids = [mod.unique_id for mod in modules
-                             if mod.case_type in parent_types]
-        return [{
-            'unique_id': mod.unique_id,
-            'name': mod.name,
-            'is_parent': mod.unique_id in parent_module_ids,
-        } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
+
+    parent_types = case_property_builder.get_parent_types(case_type_)
+    modules = app.modules
+    parent_module_ids = [
+        mod.unique_id for mod in modules
+        if mod.case_type in parent_types]
+
+    return [{
+        'unique_id': mod.unique_id,
+        'name': mod.name,
+        'is_parent': mod.unique_id in parent_module_ids,
+    } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
+
+
+def _get_all_case_modules(app, module):
+    # return all case modules except the given module
+    return [{
+        'unique_id': mod.unique_id,
+        'name': mod.name,
+        'is_parent': False,
+    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
@@ -662,7 +692,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes')
+    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
     return response
 
 
@@ -899,16 +929,20 @@ def _update_search_properties(module, search_properties, lang='en'):
             'name': prop['name'],
             'label': label,
         }
+        if prop['default_value']:
+            ret['default_value'] = prop['default_value']
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
+            keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+            missing = [key for key in keys if not fixture_props.get(key)]
+            if missing:
+                raise CaseSearchConfigError(_("""
+                    The case search property '{}' is missing the following lookup table attributes: {}
+                """).format(prop['name'], ", ".join(missing)))
             ret['itemset'] = {
-                'instance_uri': fixture_props['instance_uri'],
-                'instance_id': fixture_props['instance_id'],
-                'nodeset': fixture_props['nodeset'],
-                'label': fixture_props['label'],
-                'value': fixture_props['value'],
-                'sort': fixture_props['sort'],
+                key: fixture_props[key]
+                for key in keys
             }
 
         elif prop.get('appearance', '') == 'barcode_scan':
@@ -1048,20 +1082,30 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_properties.get('properties') is not None
                 or search_properties.get('default_properties') is not None
         ):
-            module.search_config = CaseSearch(
-                properties=[
+            command_label = module.search_config.command_label
+            command_label[lang] = search_properties.get('search_command_label', '')
+            try:
+                properties = [
                     CaseSearchProperty.wrap(p)
                     for p in _update_search_properties(
                         module,
                         search_properties.get('properties'), lang
                     )
-                ],
+                ]
+            except CaseSearchConfigError as e:
+                return HttpResponseBadRequest(e)
+            module.search_config = CaseSearch(
+                session_var=search_properties.get('session_var', ""),
+                command_label=command_label,
+                properties=properties,
                 relevant=(
                     search_properties.get('relevant')
                     if search_properties.get('relevant') is not None
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
                 ),
+                auto_launch=bool(search_properties.get('auto_launch')),
                 include_closed=bool(search_properties.get('include_closed')),
+                search_filter=search_properties.get('search_filter', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
@@ -1169,7 +1213,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes')
+        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1208,7 +1252,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes')
+        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]

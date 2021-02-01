@@ -144,3 +144,8 @@ BULK_DOWNLOAD_WEB_USERS = StaticUINotify(
     'bulk_download_web_users_nov2020',
     ends_on=datetime(2021, 5, 18),
 )
+
+MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS = StaticUINotify(
+    'multi_domain_download_mobile_workers_nov2020',
+    ends_on=datetime(2021, 5, 28),
+)

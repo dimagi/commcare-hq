@@ -77,9 +77,11 @@ class ExportByDomain(BlobExporter):
 
     def _migrate(self, migrator, chunk_size, limit_to_db):
         from corehq.apps.dump_reload.sql.dump import get_all_model_iterators_builders_for_domain
+        from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
 
+        iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP['blobs.BlobMeta']
         builders = get_all_model_iterators_builders_for_domain(
-            BlobMeta, self.domain, limit_to_db)
+            BlobMeta, self.domain, iterator_builders, limit_to_db)
         for model_class, builder in builders:
             for iterator in builder.iterators():
                 for obj in iterator:

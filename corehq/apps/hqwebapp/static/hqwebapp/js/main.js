@@ -396,7 +396,7 @@ hqDefine('hqwebapp/js/main', [
             if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
                 $maintenance.removeClass('hide');
                 $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/' });
+                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
                 });
             }
         }

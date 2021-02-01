@@ -1507,7 +1507,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             couch_user.created_on = datetime.utcnow()
 
         if 'user_data' in kwargs:
-            notify_exception(None, "Created user using user_data")
+            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         metadata = metadata or {}
         metadata.update({'commcare_project': domain})
         couch_user.update_metadata(metadata)
@@ -1830,7 +1830,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
         # metadata can't be set until domain is present
         if 'user_data' in kwargs:
-            notify_exception(None, "Created user using user_data")
+            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         commcare_user.update_metadata(metadata or {})
 
         if location:
@@ -1856,11 +1856,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_ota_restore_user(self):
+    def to_ota_restore_user(self, request_user=None):
         return OTARestoreCommCareUser(
             self.domain,
             self,
             loadtest_factor=self.loadtest_factor or 1,
+            request_user=request_user,
         )
 
     def _get_form_ids(self):
@@ -2468,10 +2469,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_web_user(self):
         return True
 
-    def to_ota_restore_user(self, domain):
+    def to_ota_restore_user(self, domain, request_user=None):
         return OTARestoreWebUser(
             domain,
             self,
+            request_user=request_user
         )
 
     def get_email(self):

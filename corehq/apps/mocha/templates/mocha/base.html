@@ -36,6 +36,7 @@
     {% block core_libraries %}
       {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
     {% endblock %}
+    <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
 
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}

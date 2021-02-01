@@ -65,25 +65,6 @@ class BasePayloadGenerator(object):
             "</data>" % datetime.utcnow()
         )
 
-    def handle_success(self, response, payload_doc, repeat_record):
-        """handle a successful post
-
-        e.g. could be used to store something to the payload_doc once a
-        response is recieved
-
-        """
-        return True
-
-    def handle_failure(self, response, payload_doc, repeat_record):
-        """handle a failed post
-        """
-        return True
-
-    def handle_exception(self, exception, repeat_record):
-        """handle an exception
-        """
-        return True
-
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 

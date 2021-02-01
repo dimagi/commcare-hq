@@ -2087,6 +2087,7 @@ class CaseSearchProperty(DocumentSchema):
     label = DictProperty()
     appearance = StringProperty()
     input_ = StringProperty()
+    default_value = StringProperty()
 
     itemset = SchemaProperty(Itemset)
 
@@ -2101,9 +2102,12 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
+    session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    auto_launch = BooleanProperty(default=False)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    search_filter = StringProperty()
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
@@ -4579,12 +4583,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             return self.langs
 
     def convert_to_application(self):
-        self.doc_type = 'Application'
-        del self.upstream_app_id
-        del self.upstream_version
-        del self.linked_app_translations
-        del self.linked_app_logo_refs
-        del self.linked_app_attrs
+        doc = self.to_json()
+        doc['doc_type'] = 'Application'
+        del doc['upstream_app_id']
+        del doc['upstream_version']
+        del doc['linked_app_translations']
+        del doc['linked_app_logo_refs']
+        del doc['linked_app_attrs']
+        return Application.wrap(doc)
 
     @property
     def commcare_flavor(self):

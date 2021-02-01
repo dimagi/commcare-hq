@@ -1,6 +1,5 @@
 /* global Uint8Array */
 hqDefine("app_manager/js/details/case_claim", function () {
-
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
         // https://stackoverflow.com/a/2117523
@@ -9,8 +8,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             });
         };
 
-    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-        searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
+    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel,
+        searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -72,14 +71,23 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
-        var searchProperty = function (name, label, appearance, itemSet) {
+        var searchProperty = function (options) {
+            hqImport('hqwebapp/js/assert_properties').assertRequired(options, [
+                'name',
+                'label',
+                'appearance',
+                'defaultValue',
+                'itemSet',
+            ]);
+
             var self = {};
             self.uniqueId = generateSemiRandomId();
-            self.name = ko.observable(name);
-            self.label = ko.observable(label);
-            self.appearance = ko.observable(appearance);
+            self.name = ko.observable(options.name);
+            self.label = ko.observable(options.label);
+            self.appearance = ko.observable(options.appearance);
+            self.defaultValue = ko.observable(options.defaultValue);
 
-            self.itemSet = itemSet;
+            self.itemSet = options.itemSet;
 
             self.name.subscribe(function () {
                 saveButton.fire('change');
@@ -90,7 +98,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.appearance.subscribe(function () {
                 saveButton.fire('change');
             });
-
+            self.defaultValue.subscribe(function () {
+                saveButton.fire('change');
+            });
             return self;
         };
 
@@ -109,22 +119,59 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self;
         };
 
+        self.sessionVar = ko.observable(sessionVar);
+        self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.relevant = ko.observable();
-        self.default_relevant = ko.observable(true);
+        self.autoLaunch = ko.observable(autoLaunch);
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
+        self.searchFilter = ko.observable(searchFilter);
         self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
+
+        // Parse searchRelevant into DEFAULT_CLAIM_RELEVANT, which controls a checkbox,
+        // and the remainder of the expression, if any, which appears in a textbox.
+        // Note that this fragile parsing logic needs to match the self.relevant calculation below
+        // and cannot be changed without migrating existing CaseSearch documents
+        var defaultRelevant = false,
+            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (",
+            extraRelevant = "";
+        searchRelevant = searchRelevant || "";
+        if (searchRelevant) {
+            searchRelevant = searchRelevant.trim();
+            if (searchRelevant === DEFAULT_CLAIM_RELEVANT) {
+                defaultRelevant = true;
+                extraRelevant = "";
+            } else if (searchRelevant.startsWith(prefix)) {
+                defaultRelevant = true;
+                extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
+            } else {
+                extraRelevant = searchRelevant;
+            }
+        }
+        self.extraRelevant = ko.observable(extraRelevant);
+        self.defaultRelevant = ko.observable(defaultRelevant);
+
+        // Allow search filter to be copied from another part of the page
+        self.setSearchFilterVisible = ko.computed(function () {
+            return searchFilterObservable && searchFilterObservable();
+        });
+        self.setSearchFilterEnabled = ko.computed(function () {
+            return self.setSearchFilterVisible() && searchFilterObservable() !== self.searchFilter();
+        });
+        self.setSearchFilter = function () {
+            self.searchFilter(searchFilterObservable());
+        };
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
                 var label = searchProperties[i].label[lang];
-                var appearance = searchProperties[i].appearance;
+                var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
+                var defaultValue = searchProperties[i].default_value;
                 var propItemSet = itemSet(
                     searchProperties[i].itemset.instance_id,
                     searchProperties[i].itemset.instance_uri,
@@ -134,19 +181,32 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     searchProperties[i].itemset.sort,
                     searchProperties[i].itemset.filter
                 );
-                self.searchProperties.push(searchProperty(
-                    searchProperties[i].name,
-                    label,
-                    appearance,
-                    propItemSet
-                ));
+                self.searchProperties.push(searchProperty({
+                    name: searchProperties[i].name,
+                    label: label,
+                    appearance: appearance,
+                    defaultValue: defaultValue,
+                    itemSet: propItemSet,
+                }));
             }
         } else {
-            self.searchProperties.push(searchProperty('', '', '', itemSet()));
+            self.searchProperties.push(searchProperty({
+                name: '',
+                label: '',
+                appearance: '',
+                defaultValue: '',
+                itemSet: itemSet(),
+            }));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(searchProperty('', '', '', itemSet()));
+            self.searchProperties.push(searchProperty({
+                name: '',
+                label: '',
+                appearance: '',
+                defaultValue: '',
+                itemSet: itemSet(),
+            }));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
@@ -163,6 +223,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         appearance: p.appearance(),
+                        default_value: p.defaultValue(),
                         fixture: ko.toJSON(p.itemSet),
                     };
                 }
@@ -199,32 +260,43 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             );
         };
-        self._getRelevant = function () {
-            if (self.default_relevant()) {
-                if (!self.relevant() || self.relevant().trim() === "") {
+        self.relevant = ko.computed(function () {
+            if (self.defaultRelevant()) {
+                if (self.extraRelevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
-                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                    // Note this needs to match the initialization logic for defaultRelevant and extraRelevant above
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.extraRelevant().trim() + ")";
                 }
             }
-            return self.relevant().trim();
-        };
+            return self.extraRelevant().trim();
+        });
 
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
-                relevant: self._getRelevant(),
+                session_var: self.sessionVar(),
+                auto_launch: self.autoLaunch(),
+                relevant: self.relevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
+                search_command_label: self.searchCommandLabel(),
+                search_filter: self.searchFilter(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
         };
 
+        self.sessionVar.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.autoLaunch.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
-        self.default_relevant.subscribe(function () {
+        self.relevant.subscribe(function () {
             saveButton.fire('change');
         });
         self.searchProperties.subscribe(function () {
@@ -233,7 +305,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.defaultProperties.subscribe(function () {
             saveButton.fire('change');
         });
+        self.searchCommandLabel.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.searchButtonDisplayCondition.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchFilter.subscribe(function () {
             saveButton.fire('change');
         });
         self.blacklistedOwnerIdsExpression.subscribe(function () {

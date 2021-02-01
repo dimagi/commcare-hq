@@ -32,6 +32,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 return;
             }
 
+            if (menuResponse.autolaunch) {
+                FormplayerFrontend.trigger("menu:select", menuResponse.autolaunch);
+                return;
+            }
+
             var urlObject = Util.currentUrlToObject();
 
             // If we don't have an appId in the URL (usually due to form preview)

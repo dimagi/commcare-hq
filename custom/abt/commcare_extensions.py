@@ -7,4 +7,5 @@ def abt_ucr_expressions():
         ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
         ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
         ('abt_supervisor_v2019', 'custom.abt.reports.expressions.abt_supervisor_v2019_expression'),
+        ('abt_supervisor_v2020', 'custom.abt.reports.expressions.abt_supervisor_v2020_expression'),
     ]

@@ -370,28 +370,38 @@ def _get_export_properties(export):
     return properties
 
 
+def find_question_id(form, value):
+    if not isinstance(form, dict):
+        # Recursive calls should always give `form` a form value.
+        # However, https://dimagi-dev.atlassian.net/browse/SAAS-11326
+        # was caused by resized repeats, where empty string tokens were
+        # inserted rather than no element.
+        # This check can be removed when repeats handle resizing.
+        return None
+
+    for k, v in form.items():
+        if isinstance(v, dict):
+            ret = find_question_id(v, value)
+            if ret:
+                return [k] + ret
+        elif isinstance(v, list):
+            for repeat in v:
+                ret = find_question_id(repeat, value)
+                if ret:
+                    return [k] + ret
+        else:
+            if v == value:
+                return [k]
+
+    return None
+
+
 def _extract_form_attachment_info(form, properties):
     """
     This is a helper function for build_form_multimedia_zip.
     Return a dict containing information about the given form and its relevant
     attachments
     """
-    def find_question_id(form, value):
-        for k, v in form.items():
-            if isinstance(v, dict):
-                ret = find_question_id(v, value)
-                if ret:
-                    return [k] + ret
-            elif isinstance(v, list):
-                for repeat in v:
-                    ret = find_question_id(repeat, value)
-                    if ret:
-                        return [k] + ret
-            else:
-                if v == value:
-                    return [k]
-
-        return None
 
     unknown_number = 0
 

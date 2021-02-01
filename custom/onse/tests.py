@@ -6,7 +6,7 @@ from nose.tools import assert_equal
 from custom.onse import tasks
 
 
-def test_get_last_quarter():
+def test_previous_quarter():
     test_dates = [
         (date(2020, 1, 1), '2019Q4'),
         (date(2020, 3, 31), '2019Q4'),
@@ -18,8 +18,7 @@ def test_get_last_quarter():
         (date(2020, 12, 31), '2020Q3'),
     ]
     for test_date, expected_value in test_dates:
-        last_quarter = tasks.get_last_quarter(test_date)
-        assert_equal(last_quarter, expected_value)
+        assert_equal(tasks.previous_quarter(test_date), expected_value)
 
 
 def test_doctests():

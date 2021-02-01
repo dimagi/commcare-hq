@@ -1,8 +1,6 @@
 from django.conf import settings
-from django.urls import reverse
 
 from corehq.apps.accounting.models import Subscription, BillingAccount
-from corehq.apps.accounting.views import ManageBillingAccountView
 
 
 def get_meta(request):

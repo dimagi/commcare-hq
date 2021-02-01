@@ -330,7 +330,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=_("Type the letters in the box"))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,

@@ -35,6 +35,14 @@
           <label for="enable">{% trans "Enable Case Search" %}</label>
         </p>
 
+        {% if request.user.is_superuser %}
+          <div data-bind="visible: toggleEnabled">
+            {% blocktrans %}
+              Visit <a href='{{ case_search_url }}' target='_blank'>Case Search</a> to test out your configuration.
+            {% endblocktrans %}
+          </div>
+        {% endif %}
+
         <div id="fuzzies_div" data-bind="visible: toggleEnabled">
           <h2>{% trans "Fuzzy Search Properties" %}</h2>
           <p>

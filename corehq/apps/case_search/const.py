@@ -9,6 +9,9 @@ INDICES_PATH = 'indices'
 REFERENCED_ID = 'referenced_id'
 IDENTIFIER = 'identifier'
 
+# Maximum number of results to pull from ElasticSearch
+CASE_SEARCH_MAX_RESULTS = 500
+
 # Added to each case response when case searches are performed
 RELEVANCE_SCORE = "commcare_search_score"
 
@@ -21,7 +24,7 @@ SYSTEM_PROPERTIES = [
     INDEXED_ON,
 ]
 
-# Properties that are inconsitent between case models stored in HQ and casedb
+# Properties that are inconsistent between case models stored in HQ and casedb
 # expressions. We store these as case properties in the case search index so
 # they are easily searchable, then remove them when pulling the case source
 # from ES

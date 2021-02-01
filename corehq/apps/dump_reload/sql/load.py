@@ -1,9 +1,11 @@
 import json
+import logging
 import multiprocessing as mp
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import partial
+from queue import Full
 from typing import Tuple
 
 from django.apps import apps
@@ -17,18 +19,30 @@ from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.routers import HINT_PARTITION_VALUE
 
+
+logger = logging.getLogger("load_sql")
+
 CHUNK_SIZE = 200
+ENQUEUE_TIMEOUT = 10
 
 
 class SqlDataLoader(DataLoader):
     slug = 'sql'
 
-    def load_objects(self, object_strings, force=False):
+    def load_objects(self, object_strings, force=False, dry_run=False):
+        if dry_run:
+            dry_run_stats = Counter()
+            for line in object_strings:
+                obj = self.line_to_object(line)
+                if obj is not None:
+                    dry_run_stats[obj['model']] += 1
+            return dry_run_stats
 
         def enqueue_object(dbalias_to_workerqueue, obj):
             db_alias = get_db_alias(obj)
-            __, queue = dbalias_to_workerqueue[db_alias]
-            queue.put(obj)
+            worker, queue = dbalias_to_workerqueue[db_alias]
+            # add a timeout here otherwise this blocks forever if the worker dies / errors
+            queue.put(obj, timeout=ENQUEUE_TIMEOUT)
 
         def collect_results(dbalias_to_workerqueue) -> Tuple[list, list]:
             load_stats = []
@@ -44,7 +58,11 @@ class SqlDataLoader(DataLoader):
 
         def terminate_workers(dbalias_to_workerqueue):
             for __, queue in dbalias_to_workerqueue.values():
-                queue.put(None)
+                try:
+                    queue.put(None, timeout=1)
+                except Full:
+                    # If the queue is full it's likely the worker is already terminated
+                    pass
 
         num_aliases = len(settings.DATABASES)
         manager = mp.Manager()
@@ -62,7 +80,8 @@ class SqlDataLoader(DataLoader):
                         enqueue_object(dbalias_to_workerqueue, obj)
                     except Exception as err:
                         __, errors = collect_results(dbalias_to_workerqueue)
-                        errors.append(err)
+                        if not isinstance(err, Full):
+                            errors.append(err)
                         break
             else:
                 load_stats, errors = collect_results(dbalias_to_workerqueue)
@@ -150,12 +169,19 @@ def load_data_for_db(db_alias):
                     continue
                 model_counter.update([Model])
                 try:
-                    obj.save(using=db_alias)
+                    # Force insert here to prevent Django from attempting to do an update.
+                    # We want to ensure that if there is already data in the DB that we don't
+                    # save over it and rather error out.
+                    obj.save(using=db_alias, force_insert=True)
                 except DatabaseError as err:
+                    logger.exception("Error saving data")
                     m = Model._meta
+                    key = f"pk={obj.object.pk}"
+                    if hasattr(obj.object, "natural_key"):
+                        key = f"key={obj.object.natural_key()}"
                     raise type(err)(
                         f'Could not load {m.app_label}.{m.object_name}'
-                        f'(pk={obj.object.pk}) in DB {db_alias!r}'
+                        f'({key}) in DB {db_alias!r}'
                     ) from err
     print(f'Loading DB {db_alias!r} complete')
     yield LoadStat(db_alias, model_counter)
@@ -175,7 +201,8 @@ def constraint_checks_deferred(db_alias):
         try:
             yield
         finally:
-            cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
+            if not cursor.db.needs_rollback:
+                cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
 
 
 def get_db_alias(obj: dict) -> str:

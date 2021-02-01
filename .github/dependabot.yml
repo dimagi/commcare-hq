@@ -8,3 +8,12 @@ updates:
   open-pull-requests-limit: 5
   labels:
   - product/invisible
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 5
+  labels:
+  - product/invisible
+  - dependencies/javascript

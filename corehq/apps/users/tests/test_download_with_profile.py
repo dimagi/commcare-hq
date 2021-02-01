@@ -83,7 +83,7 @@ class TestDownloadMobileWorkersWithProfile(TestCase, DomainSubscriptionMixin):
         super().tearDownClass()
 
     def test_download_with_profile(self):
-        (headers, rows) = parse_mobile_users(self.group_memoizer, self.domain_obj.name, {})
+        (headers, rows) = parse_mobile_users(self.domain_obj.name, {})
         self.assertIn('user_profile', headers)
         self.assertIn('data: _type', headers)
 

@@ -72,6 +72,11 @@ class UserModelTest(TestCase):
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
 
+    def test_user_data_not_allowed_in_create(self):
+        message = "Do not access user_data directly, pass metadata argument to create."
+        with self.assertRaisesMessage(ValueError, message):
+            CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
+
     def test_metadata(self):
         metadata = self.user.metadata
         self.assertEqual(metadata, {'commcare_project': 'my-domain'})

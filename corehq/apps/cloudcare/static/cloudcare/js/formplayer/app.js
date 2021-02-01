@@ -176,6 +176,12 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 showError(message, $("#cloudcare-notifications"));
             }
         };
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+            hqImport('analytix/js/kissmetrix').track.event('Viewed Form', {
+                domain: data.domain,
+                name: data.title,
+            });
+        }
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
                 var $alert;
@@ -234,6 +240,16 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 Util.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                    if (resp.nextScreen.autolaunch) {
+                        FormplayerFrontend.trigger("clearForm");
+                        urlObject.setSteps(resp.nextScreen.selections.concat([resp.nextScreen.autolaunch]));
+                        Util.setUrlToObject(urlObject);
+                        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu({
+                            appId: urlObject.appId,
+                            steps: urlObject.steps,
+                        });
+                        return;
+                    }
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");

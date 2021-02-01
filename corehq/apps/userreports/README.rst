@@ -1466,8 +1466,7 @@ Here's an example using ``age_in_months_buckets``:
 SumWhenColumn and SumWhenTemplateColumn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Note: ``SumWhenColumn`` usage is limited to static reports, and ``SumWhenTemplateColumn``
-usage is behind a feature flag.
+Note: ``SumWhenColumn`` and ``SumWhenTemplateColumn`` usage is behind a feature flag.
 
 Sum When columns allow you to aggregate data based on arbitrary conditions.
 

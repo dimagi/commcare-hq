@@ -1268,7 +1268,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @property
     @memoized
     def activity_times(self):
-        all_times = []
         users = _get_selected_users(self.domain, self.request)
         user_ids = [user.user_id for user in users]
         xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
@@ -1332,6 +1331,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
+        # Apply the fix made in https://github.com/gak/pygooglechart/pull/25/
+        #   since a new version is not yet released
+        ScatterChart.BASE_URL = 'https://chart.googleapis.com/chart'
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
@@ -1360,7 +1362,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
         # our google charts library doesn't support unicode
         # TODO: replace with some in JS (d3?)
-        chart.set_axis_labels('y', [''] + [day_names[n].encode('ascii', 'replace') for n in days] + [''])
+        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'

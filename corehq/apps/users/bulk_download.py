@@ -47,7 +47,6 @@ def build_data_headers(keys, header_prefix='data'):
         {header_prefix: {key: None for key in keys}}
     )
 
-
 def get_devices(user):
     """
     Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
@@ -103,6 +102,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'User IMEIs (read only)': get_devices(user),
         'location_code': location_codes,
         'role': role.name if role else '',
+        'domain': domain,
         'user_profile': profile.name if profile else '',
         'registered_on (read only)': _format_date(user.created_on),
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
@@ -160,7 +160,7 @@ def get_user_rows(user_dicts, user_headers):
         yield [row.get(header, '') for header in user_headers]
 
 
-def parse_mobile_users(group_memoizer, domain, user_filters, task=None, total_count=None):
+def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
@@ -172,17 +172,26 @@ def parse_mobile_users(group_memoizer, domain, user_filters, task=None, total_co
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
-        group_names = sorted([
-            group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
-        ], key=alphanumeric_sort_key)
-        user_dict = make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition)
-        user_dicts.append(user_dict)
-        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
-        user_groups_length = max(user_groups_length, len(group_names))
-        max_location_length = max(max_location_length, len(user_dict["location_code"]))
-        if task:
-            DownloadBase.set_progress(task, n, total_count)
+    domains_list = [domain]
+    is_multi_domain_download = False
+    if 'domains' in user_filters:
+        domains_list = user_filters['domains']
+    if domains_list != [domain]:
+        is_multi_domain_download = True
+
+    for current_domain in domains_list:
+        for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
+            group_memoizer = load_memoizer(current_domain)
+            group_names = sorted([
+                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+            ], key=alphanumeric_sort_key)
+            user_dict = make_mobile_user_dict(user, group_names, location_cache, current_domain, fields_definition)
+            user_dicts.append(user_dict)
+            unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
+            user_groups_length = max(user_groups_length, len(group_names))
+            max_location_length = max(max_location_length, len(user_dict["location_code"]))
+            if task:
+                DownloadBase.set_progress(task, n, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
@@ -205,6 +214,8 @@ def parse_mobile_users(group_memoizer, domain, user_filters, task=None, total_co
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
+    if is_multi_domain_download:
+        user_headers += ['domain']
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
@@ -267,10 +278,17 @@ def count_users_and_groups(domain, user_filters, group_memoizer):
 
 
 def dump_usernames(domain, download_id, user_filters, task, owner_id):
-    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    domains_list = [domain]
+    if 'domains' in user_filters:
+        domains_list = user_filters['domains']  # for instances of multi-domain download
+    users_count = 0
+    for download_domain in domains_list:
+        users_count += get_commcare_users_by_filters(download_domain, user_filters, count_only=True)
     DownloadBase.set_progress(task, 0, users_count)
 
-    usernames = get_mobile_usernames_by_filters(domain, user_filters)
+    usernames = []
+    for download_domain in domains_list:
+        usernames += get_mobile_usernames_by_filters(download_domain, user_filters)
 
     headers = [('users', [['username']])]
     rows = [('users', [[username] for username in usernames])]
@@ -299,36 +317,43 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     DownloadBase.set_progress(task, total_count, total_count)
 
 
+def load_memoizer(domain):
+    group_memoizer = GroupMemoizer(domain=domain)
+    # load groups manually instead of calling group_memoizer.load_all()
+    # so that we can detect blank groups
+    blank_groups = set()
+    for group in Group.by_domain(domain):
+        if group.name:
+            group_memoizer.add_group(group)
+        else:
+            blank_groups.add(group)
+    if blank_groups:
+        raise GroupNameError(blank_groups=blank_groups)
+
+    return group_memoizer
+
+
 def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
-    def _load_memoizer(domain):
-        group_memoizer = GroupMemoizer(domain=domain)
-        # load groups manually instead of calling group_memoizer.load_all()
-        # so that we can detect blank groups
-        blank_groups = set()
-        for group in Group.by_domain(domain):
-            if group.name:
-                group_memoizer.add_group(group)
-            else:
-                blank_groups.add(group)
-        if blank_groups:
-            raise GroupNameError(blank_groups=blank_groups)
 
-        return group_memoizer
+    domains_list = user_filters['domains']
 
-    group_memoizer = _load_memoizer(domain)
+    users_groups_count = 0
+    groups = set()
+    for current_domain in domains_list:
+        group_memoizer = load_memoizer(current_domain)
+        users_groups_count += count_users_and_groups(current_domain, user_filters, group_memoizer)
+        groups.update(group_memoizer.groups)
 
-    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
     user_headers, user_rows = parse_mobile_users(
-        group_memoizer,
         domain,
         user_filters,
         task,
         users_groups_count,
     )
 
-    group_headers, group_rows = parse_groups(group_memoizer.groups)
+    group_headers, group_rows = parse_groups(groups)
     headers = [
         ('users', [user_headers]),
         ('groups', [group_headers]),
