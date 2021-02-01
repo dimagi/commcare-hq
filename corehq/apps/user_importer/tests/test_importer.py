@@ -1064,14 +1064,13 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
 
-# TODO: uploads need to handle multiple domains
     def test_multi_domain(self):
         self.setup_users()
         dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
         dm.save()
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(username=123,
+            [self._get_spec(username='123@email.com',
                             domain=self.other_domain.name,
                             role=self.other_domain_role.name,
                             email='123@email.com'
