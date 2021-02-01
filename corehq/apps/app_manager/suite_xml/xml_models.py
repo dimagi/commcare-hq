@@ -131,6 +131,11 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
+class Hint(XmlObject):
+    ROOT_NAME = 'hint'
+    text = NodeField('text', Text)
+
+
 class ConfigurationItem(Text):
     ROOT_NAME = "text"
     id = StringField("@id")
@@ -213,10 +218,11 @@ class PracticeUserRestoreResource(AbstractResource):
 
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_image', 'media_audio')
+    ORDER = ('text', 'media_image', 'media_audio', 'hint')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+    hint = NodeField('hint', Hint)
 
 
 class Itemset(XmlObject):

@@ -276,6 +276,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
+    def test_prompt_hint(self, *args):
+        self.module.search_config.properties[0].hint = {'en': 'Search against name'}
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+              <hint>
+                  <text>
+                    <locale id="search_property.m0.name.hint"/>
+                  </text>
+              </hint>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_prompt_appearance(self, *args):
         """Setting the appearance to "barcode"
         """
