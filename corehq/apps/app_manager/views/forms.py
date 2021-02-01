@@ -66,7 +66,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    MappingItem,
     ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
@@ -352,9 +351,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     "a release notes form <TODO messaging>")},
                 status_code=400
             )
-    if (should_edit("form_links_xpath_expressions") and
-            should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+    if (should_edit("form_links_xpath_expressions")
+            and should_edit("form_links_form_ids")
+            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
