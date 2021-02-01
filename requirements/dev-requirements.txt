@@ -587,7 +587,7 @@ sortedcontainers==2.3.0
     # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
-sphinx-rtd-theme==0.4.3
+sphinx-rtd-theme==0.5.1
     # via -r dev-requirements.in
 sphinx==2.2.2
     # via
