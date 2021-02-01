@@ -29,24 +29,6 @@
             "property_name": "app_id"
           },
           "property_value": "b3c758f7c79e47e3a503115894f18503"
-        },
-        {
-          "type": "not",
-          "filter": {
-            "type": "boolean_expression",
-            "operator": "in",
-            "expression": {
-              "type": "property_path",
-              "property_path": [
-                "form",
-                "final_edd_calc"
-              ]
-            },
-            "property_value": [
-              "",
-              null
-            ]
-          }
         }
       ]
     },
