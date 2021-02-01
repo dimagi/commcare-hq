@@ -103,7 +103,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(double(now()) mod 2 = 0) and (count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0)")
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0) and (double(now()) mod 2 = 0)")
 
     def test_remote_request(self, *args):
         """
