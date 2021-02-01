@@ -1,5 +1,8 @@
 from functools import wraps
 from datetime import datetime, timedelta
+from rest_framework.views import APIView
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -56,6 +59,8 @@ from corehq.messaging.scheduling.view_helpers import (
     UntranslatedConditionalAlertUploader,
     upload_conditional_alert_workbook,
 )
+
+from corehq.apps.es.cases import CaseES
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -885,7 +890,16 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule)
+            # list of fields that are getting changed everytime a request came manually from django form.
+            changed_schedule_fields = [
+                'send_time_type', 'repeat', 'stop_type', 'use_user_data_filter',
+                'start_offset_type', 'start_day_of_week', 'visit_window_position',
+                'capture_custom_metadata_item', 'stop_date_case_property_enabled'
+            ]
+            user_changed_data = self.schedule_form.changed_data
+            if (user_changed_data != changed_schedule_fields) or self.criteria_form.has_changed():
+                initiate_messaging_rule_run(rule)
+
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -1061,3 +1075,24 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
+
+
+class CountCasesBasedOnCaseTypeView(APIView):
+    urlname = 'count_cases_by_case_type'
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(CountCasesBasedOnCaseTypeView, self).dispatch(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            domain = kwargs.get("domain")
+            case_type = request.GET.get("case_type")
+            case_count = CaseES().domain(domain).case_type(case_type).count()
+            resp = JsonResponse({"case_count": case_count})
+        except Exception as e:
+            messages.error(request, str(e))
+            resp = JsonResponse({"error": _("Try Again")})
+            resp.status_code = 403
+
+        return resp
