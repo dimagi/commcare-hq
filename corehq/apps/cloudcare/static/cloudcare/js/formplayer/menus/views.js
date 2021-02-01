@@ -273,6 +273,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
+            this.redoLast = options.redoLast;
         },
 
         ui: {
@@ -291,8 +292,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         caseListAction: function (e) {
-            var index = $(e.currentTarget).data().index;
-            FormplayerFrontend.trigger("menu:select", "action " + index);
+            var index = $(e.currentTarget).data().index,
+                step = "action " + index;
+            if (step === this.redoLast) {
+                FormplayerFrontend.trigger("menu:select");
+            } else {
+                FormplayerFrontend.trigger("menu:select", step);
+            }
         },
 
         caseListSearch: function (e) {
