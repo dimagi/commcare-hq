@@ -368,6 +368,7 @@ class XFormError(XFormInstance):
         instance.__class__ = XFormError
         instance.doc_type = 'XFormError'
         instance.problem = error_message
+        instance.orig_id = None
 
         if with_new_id:
             new_id = uuid.uuid4().hex

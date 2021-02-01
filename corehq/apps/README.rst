@@ -137,6 +137,8 @@ smsbillables
 smsforms
    SMS surveys allow end users to interact with a CommCare form via SMS instead of
    via mobile or Web Apps. This is part of ``messaging``.
+sso
+   Features related to Single Sign On.
 styleguide
    Documentation of best practices for UI development, including live examples of common patterns.
 zapier

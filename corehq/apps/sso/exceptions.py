@@ -1,0 +1,2 @@
+class ServiceProviderCertificateError(Exception):
+    pass
