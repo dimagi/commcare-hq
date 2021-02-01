@@ -18,7 +18,7 @@ def get_all_commcare_users_by_domain(domain):
 
 
 def get_mobile_usernames_by_filters(domain, user_filters):
-    query = _get_es_query(domain, user_filters).remove_default_filter('active')
+    query = _get_es_query(domain, user_filters)
     return query.values_list('base_username', flat=True)
 
 
@@ -27,7 +27,7 @@ def _get_es_query(domain, user_filters):
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
 
-    query = UserES().domain(domain).mobile_users()
+    query = UserES().domain(domain).mobile_users().remove_default_filter('active')
 
     if role_id:
         query = query.role_id(role_id)
@@ -56,7 +56,7 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
                 user_filters.get('location_id', None), count_only]):
         return get_all_commcare_users_by_domain(domain)
 
-    query = _get_es_query(domain, user_filters).remove_default_filter('active')
+    query = _get_es_query(domain, user_filters)
 
     if count_only:
         return query.count()
