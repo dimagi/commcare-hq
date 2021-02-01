@@ -78,4 +78,5 @@ branches:
   # - mjr/login_logging  # Matt Jan 28
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - solleks:cdg/accessible_pagination # Charlie/Steph Jan 31
+  - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
 submodules: {}
