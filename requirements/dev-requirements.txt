@@ -77,8 +77,6 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
-coverage==4.5.1
-    # via -r test-requirements.in
 cryptography==3.3.1
     # via pyopenssl
 csiphash==0.0.5
@@ -587,7 +585,7 @@ sortedcontainers==2.3.0
     # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
-sphinx-rtd-theme==0.4.3
+sphinx-rtd-theme==0.5.1
     # via -r dev-requirements.in
 sphinx==2.2.2
     # via
