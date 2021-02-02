@@ -80,4 +80,5 @@ branches:
   - jls/caseSearchItemsetFix # Jenny Feb 1
   - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
   - smh/add-assignment-cases-management-command # Steph Feb 2
+  - jls/fix-case-claim-session-var # Jenny Feb 2
 submodules: {}
