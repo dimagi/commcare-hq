@@ -16,8 +16,8 @@ def test_vellum_xml_patch():
 def diff(actual, expected):
     if actual != expected:
         diff = difflib.unified_diff(
-            expected.splitlines(1),
-            actual.splitlines(1),
+            expected.splitlines(keepends=True),
+            actual.splitlines(keepends=True),
             fromfile='expected',
             tofile='actual'
         )
