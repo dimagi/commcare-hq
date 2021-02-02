@@ -15,7 +15,7 @@ class CaseUpdateCommand(BaseCommand):
     def case_block(self):
         raise NotImplementedError()
 
-    def update_cases(self, domain, case_type, user_id):
+    def update_cases(self, domain, case_type, user_id, active_location):
         raise NotImplementedError()
 
     def find_case_ids_by_type(self, domain, case_type):
@@ -42,6 +42,15 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
+        try:
+            if options["location"]:
+                active_location = options["location"]
+            else:
+                print("Warning: No active location was entered")
+                active_location = None
+        except KeyError:
+            active_location = None
+
         for domain in domains:
             print(f"Processing {domain}")
-            self.update_cases(domain, case_type, user_id)
+            self.update_cases(domain, case_type, user_id, active_location)
