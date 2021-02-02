@@ -68,7 +68,7 @@ kafka-python==1.4.7
 kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 laboratory==0.2.0
-lxml~=4.3.0
+lxml~=4.6.2
 markdown==2.2.1
 mock==2.0.0
 openpyxl~=2.6
