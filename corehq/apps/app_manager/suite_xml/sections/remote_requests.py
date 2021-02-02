@@ -9,6 +9,7 @@ from corehq.apps.app_manager.suite_xml.sections.details import (
     DetailsHelper,
     get_instances_for_module,
 )
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
@@ -127,6 +128,9 @@ class RemoteRequestFactory(object):
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
         if self.module.search_config.search_filter:
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
+
+        # Add module filters, since results that don't match this won't be selectable
+        nodeset += EntriesHelper.get_filter_xpath(self.module)
 
         return [SessionDatum(
             id=self.module.search_config.session_var,

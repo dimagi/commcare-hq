@@ -188,6 +188,26 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
+    def test_case_search_case_list_filter(self, *args):
+        search_filter = "rating > 3"
+        self.module.search_config.search_filter = search_filter
+        case_list_filter = "energy < 4"
+        self.module.case_details.short.filter = case_list_filter
+
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}'][{}][{}]".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                search_filter,
+                case_list_filter
+            ),
+            suite.xpath(ref_path)[0]
+        )
+
     def test_case_search_session_var(self, *args):
         self.module.search_config.session_var = "other_case_id"
         suite = self.app.create_suite()
