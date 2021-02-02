@@ -17,7 +17,7 @@
         <input class="form-control" type="text" data-bind="value: property.label"/>
       </td>
       {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled%}
-      <td class="col-sm-4">
+      <td class="col-sm-2">
         <button type="button"
                 class="btn btn-default"
                 data-bind="
@@ -163,7 +163,7 @@
             <th class="col-sm-4">{% trans "Case Property" %}</th>
             <th class="col-sm-6">{% trans "Display Text" %}</th>
             {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled%}
-              <th class="col-sm-4">{% trans "Other Options" %}</th>
+              <th class="col-sm-2">{% trans "Other Options" %}</th>
             {% endif %}
           </tr>
           </thead>
