@@ -359,7 +359,7 @@ oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
     #   requests-oauthlib
-openpyxl==2.6.4
+openpyxl==3.0.6
     # via
     #   -r requirements.in
     #   commcaretranslationchecker
