@@ -419,7 +419,7 @@ pycryptodome==3.9.9
     # via -r requirements.in
 pyflakes==2.2.0
     # via flake8
-pygithub==1.54
+pygithub==1.54.1
     # via -r requirements.in
 pygments==2.7.1
     # via
