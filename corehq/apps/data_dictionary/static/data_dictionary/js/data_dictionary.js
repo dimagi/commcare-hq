@@ -59,6 +59,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.deprecated(false);
         };
 
+        self.showAllowedValues = function () {
+            console.log('show allowed values UI here!');
+        };
+
         return self;
     };
 

@@ -72,12 +72,15 @@
                               placeholder: '{% trans "Click here to add a description" %}',
                             "></textarea>
           </td>
-          <!-- ko if: !deprecated() -->
-          <td><button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button></td>
-          <!-- /ko -->
-          <!-- ko if: deprecated() -->
-          <td><button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button></td>
-          <!-- /ko -->
+          <td>
+            <!-- ko if: !deprecated() -->
+            <button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button>
+            <!-- /ko -->
+            <!-- ko if: deprecated() -->
+            <button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button>
+            <!-- /ko -->
+            <button data-bind="click: showAllowedValues" class="btn btn-primary btn-sm">{% trans "Edit Allowed Values" %}</button>
+          </td>
         </tr>
         <!-- /ko -->
         </tbody>
