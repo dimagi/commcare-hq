@@ -192,14 +192,12 @@ class ConnectionSettings(models.Model):
         this instance. Used for informing users, and determining whether
         the instance can be deleted.
         """
-        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
         from corehq.motech.repeaters.models import Repeater
 
         kinds = set()
         if self.incrementalexport_set.exists():
             kinds.add(_('Incremental Exports'))
-        if any(m.connection_settings_id == self.id
-               for m in get_dataset_maps(self.domain)):
+        if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
         if any(r.connection_settings_id == self.id
                 for r in Repeater.by_domain(self.domain)):
