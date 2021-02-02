@@ -141,7 +141,7 @@ def process_row(row, validate, dry_run, quiet):
         _log_message(row, f"{e}")
     else:
         if not quiet:
-            _log_message(row, "")
+            _log_message(row, "", is_error=False)
 
 
 def _get_users_from_csv(path):
