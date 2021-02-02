@@ -65,6 +65,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options = _.defaults(options, {
             name: '',
             label: '',
+            hint: '',
             appearance: '',
             defaultValue: '',
             itemsetOptions: {},
@@ -73,12 +74,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.uniqueId = generateSemiRandomId();
         self.name = ko.observable(options.name);
         self.label = ko.observable(options.label);
+        self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
 
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'appearance', 'defaultValue'], saveButton);
+        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue'], saveButton);
 
         return self;
     };
@@ -168,12 +170,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
-                if (searchProperties[i].hint) {
-                    var hint = searchProperties[i].hint[lang] || "";
-                }
-                else {
-                    var hint = {};
-                }
+                var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
