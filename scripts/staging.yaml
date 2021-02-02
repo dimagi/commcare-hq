@@ -80,4 +80,5 @@ branches:
   - solleks:cdg/accessible_pagination # Charlie/Steph Jan 31
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - jls/caseSearchItemsetFix # Jenny Feb 1
+  - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
 submodules: {}
