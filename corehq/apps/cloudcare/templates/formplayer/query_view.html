@@ -14,9 +14,21 @@
   </form>
 </script>
 
+
+
 <script type="text/template" id="query-view-item-template">
   <td class="col-sm-2">
-    <div><%- text ? text : "" %></div>
+    <div>
+      <%- text ? text : "" %>
+      <% if (hint !== null) { %>
+      <div class="hq-help">
+        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
+          <i class="fa fa-question-circle icon-question-sign"></i>
+        </a>
+      </div>
+      <% } %>
+    </div>
+  </td>
   </td>
   <td class="col-sm-2">
     <% if (input == "select1") { %>

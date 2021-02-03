@@ -1,6 +1,8 @@
 /*global DOMPurify, Marionette */
 
-hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+hqDefine("cloudcare/js/formplayer/menus/views/query", [
+        'hqwebapp/js/hq.helpers',
+    ], function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     var QueryView = Marionette.View.extend({
@@ -28,6 +30,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         ui: {
             valueDropdown: 'select.query-field',
+            hqHelp: '.hq-help',
         },
 
         modelEvents: {
@@ -40,6 +43,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 placeholder: " ",   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
+            this.ui.hqHelp.hqHelp();
         },
     });
 

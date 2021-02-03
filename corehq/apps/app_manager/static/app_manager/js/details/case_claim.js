@@ -13,6 +13,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     saveButton.fire('change');
                 });
             });
+            $(".hq-help").hqHelp();
         };
 
     var itemsetModel = function (options, saveButton) {
