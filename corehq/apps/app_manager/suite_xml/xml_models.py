@@ -131,11 +131,6 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
-class Hint(XmlObject):
-    ROOT_NAME = 'hint'
-    text = NodeField('text', Text)
-
-
 class ConfigurationItem(Text):
     ROOT_NAME = "text"
     id = StringField("@id")
@@ -222,7 +217,11 @@ class Display(OrderedXmlObject):
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
-    hint = NodeField('hint', Hint)
+    hint = NodeField('hint', 'self')
+
+
+class Hint(Display):
+    ROOT_NAME = 'hint'
 
 
 class Itemset(XmlObject):
