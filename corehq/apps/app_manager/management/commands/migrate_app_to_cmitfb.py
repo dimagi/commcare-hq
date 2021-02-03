@@ -195,10 +195,10 @@ def fix_user_props_copy(app, module, form, form_ix, preloads, dry):
     if updated:
         if dry:
             logger.info("updated setvalues in XML:\n%s", "\n".join(line
-                for line in ET.tostring(xform.xml).split("\n")
+                for line in ET.tostring(xform.xml, encoding='utf-8').split("\n")
                 if "setvalue" in line))
         else:
-            save_xform(app, form, ET.tostring(xform.xml))
+            save_xform(app, form, ET.tostring(xform.xml, encoding='utf-8'))
     return updated
 
 
@@ -230,10 +230,10 @@ def fix_user_props_caseref(app, module, form, form_ix, dry):
     if updated:
         if dry:
             logger.info("updated setvalues in XML:\n%s", "\n".join(line
-                for line in ET.tostring(xform.xml).split("\n")
+                for line in ET.tostring(xform.xml, encoding='utf-8').split("\n")
                 if "setvalue" in line))
         else:
-            save_xform(app, form, ET.tostring(xform.xml))
+            save_xform(app, form, ET.tostring(xform.xml, encoding='utf-8'))
     if ref_warnings:
         for ref, ref_values in ref_warnings:
             logger.warning("%s %s has unexpected #user refs: %s",
@@ -317,10 +317,10 @@ def migrate_preloads(app, form, preload_items, form_ix, dry):
                 app.domain, app._id, form_ix, nodeset, hashtag + prop)
     if dry:
         logger.info("setvalue XML: %s", " ".join(line.strip()
-            for line in ET.tostring(xform.xml).split("\n")
+            for line in ET.tostring(xform.xml, encoding='utf-8').split("\n")
             if "setvalue" in line))
     else:
-        save_xform(app, form, ET.tostring(xform.xml))
+        save_xform(app, form, ET.tostring(xform.xml, encoding='utf-8'))
 
 
 def should_migrate_usercase(app, migrate_usercase):
