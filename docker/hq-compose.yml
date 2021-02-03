@@ -53,16 +53,13 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
   couch:
-    image: apache/couchdb:3.1.1
-    environment:
-      COUCHDB_USER: commcarehq
-      COUCHDB_PASSWORD: commcarehq
-    command: ["--with-haproxy"]
+    image: dimagi/couchdb-dev:3.1.1
+    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     expose:
       - "5984"
     volumes:
-      - /opt/couchdb/data
-      - ./files/couch3.ini:/opt/couchdb/etc/local.d/custom_opts.ini
+      - /usr/src/couchdb/dev/lib/node1/data
+
 
   couch2:
     image: klaemo/couchdb:2.0-dev
