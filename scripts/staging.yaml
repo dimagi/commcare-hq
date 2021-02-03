@@ -62,8 +62,6 @@ branches:
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
-  - jls/results-button # Jenny Jan 25
-  - jls/case-claim-session-var-relevant # Jenny Jan 30
   - jls/web-apps-sticky-search-again # Jenny Jan 26
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
   #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
@@ -80,4 +78,7 @@ branches:
   - solleks:cdg/accessible_pagination # Charlie/Steph Jan 31
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - jls/caseSearchItemsetFix # Jenny Feb 1
+  - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
+  - jls/fix-case-claim-session-var # Jenny Feb 2
+  - smh/bulk-upload-web-users # Steph Feb 2
 submodules: {}
