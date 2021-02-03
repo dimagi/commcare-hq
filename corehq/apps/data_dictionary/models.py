@@ -25,6 +25,9 @@ class CaseType(models.Model):
     class Meta(object):
         unique_together = ('domain', 'name')
 
+    def __str__(self):
+        return self.name or repr(self)
+
     @classmethod
     def get_or_create(cls, domain, case_type):
         key = 'data-dict-case-type-{domain}-{type}'.format(
