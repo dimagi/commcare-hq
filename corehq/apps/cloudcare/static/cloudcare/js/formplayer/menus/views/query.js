@@ -1,8 +1,8 @@
 /*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", [
-        'hqwebapp/js/hq.helpers',
-    ], function () {
+    'hqwebapp/js/hq.helpers',
+], function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     var QueryView = Marionette.View.extend({
