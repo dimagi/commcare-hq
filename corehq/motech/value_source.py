@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import attr
 from jsonobject.containers import JsonDict
-from jsonpath_rw import parse as parse_jsonpath
+from jsonpath_ng import parse as parse_jsonpath
 from schema import Optional as SchemaOptional
 from schema import Or, Schema, SchemaError
 

@@ -79,7 +79,7 @@ decorator==4.0.11
     # via
     #   -r requirements.in
     #   datadog
-    #   jsonpath-rw
+    #   jsonpath-ng
 defusedxml==0.5.0
     # via
     #   -r requirements.in
@@ -260,7 +260,7 @@ jsonobject==0.9.9
     # via
     #   -r requirements.in
     #   jsonobject-couchdbkit
-jsonpath-rw==1.4.0
+git+git://github.com/kaapstorm/python-jsonpath-rw@wherenot+update_create#egg=jsonpath-ng
     # via -r requirements.in
 kafka-python==1.4.7
     # via -r requirements.in
@@ -319,7 +319,7 @@ pip-tools==5.5.0
 ply==3.11
     # via
     #   eulxml
-    #   jsonpath-rw
+    #   jsonpath-ng
 polib==1.1.0
     # via -r requirements.in
 prometheus-client==0.7.1
@@ -460,7 +460,7 @@ six==1.15.0
     #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
-    #   jsonpath-rw
+    #   jsonpath-ng
     #   mock
     #   protobuf
     #   pyopenssl

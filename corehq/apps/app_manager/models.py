@@ -35,7 +35,7 @@ from django.utils.translation import ugettext_lazy
 import qrcode
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
-from jsonpath_rw import jsonpath, parse
+from jsonpath_ng import jsonpath, parse
 from lxml import etree
 from memoized import memoized
 
