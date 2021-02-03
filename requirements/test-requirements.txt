@@ -200,6 +200,8 @@ fakecouch==0.0.15
     # via -r test-requirements.in
 faker==5.0.2
     # via -r requirements.in
+fhirclient==3.2.0
+    # via -r requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==0.3.15
@@ -235,7 +237,9 @@ intervaltree==3.1.0
 iso8601==0.1.13
     # via -r requirements.in
 isodate==0.6.0
-    # via python3-saml
+    # via
+    #   fhirclient
+    #   python3-saml
 jdcal==1.4.1
     # via openpyxl
 jinja2==2.11.2
@@ -414,6 +418,7 @@ requests==2.24.0
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
+    #   fhirclient
     #   pygithub
     #   requests-mock
     #   requests-oauthlib
