@@ -291,7 +291,7 @@ class FormListForm(object):
 
 
 class HQAuthenticationTokenForm(AuthenticationTokenForm):
-    def __init__(self, user, initial_device, request=None, **kwargs):
+    def __init__(self, user, initial_device, request, **kwargs):
         super().__init__(user, initial_device, **kwargs)
         self.request = request
 
@@ -315,7 +315,7 @@ class HQAuthenticationTokenForm(AuthenticationTokenForm):
 
 class HQBackupTokenForm(BackupTokenForm):
 
-    def __init__(self, user, initial_device, request=None, **kwargs):
+    def __init__(self, user, initial_device, request, **kwargs):
         super().__init__(user, initial_device, **kwargs)
         self.request = request
 
