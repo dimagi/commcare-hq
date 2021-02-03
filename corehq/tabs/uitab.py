@@ -1,4 +1,5 @@
 from collections import defaultdict
+from corehq.apps.users.models import DomainMembershipError
 
 from django.conf import settings
 from django.core.cache import cache
@@ -232,8 +233,11 @@ class UITab(object):
     @classmethod
     def clear_dropdown_cache(cls, domain, user):
         user_id = user.get_id
-        user_role = user.get_role(domain)
-        role_rev = user_role._rev if user_role else None
+        try:
+            user_role = user.get_role(domain)
+            role_rev = user_role._rev if user_role else None
+        except DomainMembershipError:
+            role_rev = None
         for is_active in True, False:
             key = make_template_fragment_key('header_tab', [
                 cls.class_name(),
