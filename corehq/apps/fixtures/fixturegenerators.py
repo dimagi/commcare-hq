@@ -38,6 +38,7 @@ def item_lists_by_domain(domain):
             'name': data_type.tag,
             'structure': structure,
         })
+    ret = sorted(ret, key=lambda x: x['name'].lower())
 
     products = product_fixture_generator_json(domain)
     if products:

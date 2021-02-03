@@ -153,7 +153,8 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
     @property
     def paginated_list(self):
-        for connection_settings in self.base_query.all():
+        start, end = self.skip, self.skip + self.limit
+        for connection_settings in self.base_query.all()[start:end]:
             yield {
                 "itemData": self._get_item_data(connection_settings),
                 "template": "connection-settings-template",
