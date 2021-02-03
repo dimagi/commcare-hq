@@ -3,7 +3,7 @@
         "domain",
         "type"
     ],
-    "_id": "{case_id}",
+    "_id": "c9cab5b1e8e1409fb292c13cb20295fa",
     "_rev": "1-7017a92edb372bbad7c0636531ac5041",
     "actions": [
         {
@@ -20,7 +20,7 @@
             },
             "updated_unknown_properties": {},
             "user_id": "test",
-            "xform_id": "{instance_id}",
+            "xform_id": "c872acb4e7384a43adecdb5182cea326",
             "xform_name": "Visit",
             "xform_xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B"
         },
@@ -43,7 +43,7 @@
                 "toilet_assessment_date": "2013-03-09"
             },
             "user_id": "test",
-            "xform_id": "{instance_id}",
+            "xform_id": "c872acb4e7384a43adecdb5182cea326",
             "xform_name": "Visit",
             "xform_xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B"
         }
@@ -76,6 +76,6 @@
     "user_id": "test",
     "version": "2.0",
     "xform_ids": [
-        "{instance_id}"
+        "c872acb4e7384a43adecdb5182cea326"
     ]
 }
