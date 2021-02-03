@@ -437,7 +437,7 @@ schema==0.7.2
     # via -r requirements.in
 sentry-sdk==0.19.4
     # via -r requirements.in
-setproctitle==1.1.10
+setproctitle==1.2.2
     # via -r prod-requirements.in
 sh==1.14.1
     # via -r requirements.in
