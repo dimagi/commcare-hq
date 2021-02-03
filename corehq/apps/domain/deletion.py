@@ -296,11 +296,11 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
+    ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
     ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain', [
         'SQLActionConfig', 'SQLAlertConfig', 'SQLConsumptionConfig',
         'SQLStockLevelsConfig', 'SQLStockRestoreConfig',
     ]),
-    ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', ['CustomDataFieldsProfile', 'Field']),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
