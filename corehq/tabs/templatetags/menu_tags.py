@@ -89,10 +89,13 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
+        user_role = couch_user.get_role(domain)
+
         context.dicts[0]['active_tab'] = active_tab
         flat = context.flatten()
         flat.update({
             'tabs': visible_tabs,
+            'role_rev': user_role._rev if user_role else None
         })
         return mark_safe(render_to_string('tabs/menu_main.html', flat))
 
