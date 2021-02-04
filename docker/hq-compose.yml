@@ -78,7 +78,7 @@ services:
     expose:
       - "5984"
     volumes:
-      - /usr/src/couchdb/dev/lib/node1/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb3:}/usr/src/couchdb/dev/lib/node1/data
 
 
   redis:
