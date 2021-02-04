@@ -96,7 +96,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
     };
 
     var searchConfigKeys = [
-        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
+        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
         'searchAdditionalRelevant', 'sessionVar',
     ];
@@ -149,7 +149,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_command_label: self.searchCommandLabel(),
                 search_again_label: self.searchAgainLabel(),
                 search_filter: self.searchFilter(),
-                include_closed: self.includeClosed(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
         };
