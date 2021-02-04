@@ -67,7 +67,6 @@ branches:
   #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
   - mk/remove-aaa # MK Jan 18
   - sr/parent-select # Jenny Dec 29
-  - sr/casesearch  # Sravan Jan 18
   - sr/ext-close2 # Sravan Jan 21
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
   - nh/reminders  # Norman Jan 26
