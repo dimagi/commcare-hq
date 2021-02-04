@@ -45,6 +45,9 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             id_row = data_by_headings.pop(0)
             self.assertEqual('case_id', id_row['Source Field'])
             self.assertEqual('id', id_row['Field'])
+            domain_row = data_by_headings.pop(0)
+            self.assertEqual('domain', domain_row['Source Field'])
+            self.assertEqual('domain', domain_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             for i, input_column in enumerate(main_table.selected_columns):
@@ -117,6 +120,9 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             id_row = data_by_headings.pop(0)
             self.assertEqual('form.meta.instanceID', id_row['Source Field'])
             self.assertEqual('id', id_row['Field'])
+            domain_row = data_by_headings.pop(0)
+            self.assertEqual('domain', domain_row['Source Field'])
+            self.assertEqual('domain', domain_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             # basic sanity check
