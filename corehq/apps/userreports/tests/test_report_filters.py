@@ -457,6 +457,27 @@ class PreFilterTestCase(SimpleTestCase):
                 'exists_field != :exists_field_slug'
             )
 
+    def test_pre_filter_value_exists_date_types(self):
+        pre_values = ['', None]
+        operator = '!='
+        date_types = [DATA_TYPE_DATE, DATA_TYPE_DATETIME]
+        for pre_value in pre_values:
+            for datatype in date_types:
+                filter_ = {
+                    'type': 'pre',
+                    'field': 'exists_field',
+                    'slug': 'exists_field_slug',
+                    'datatype': datatype,
+                    'pre_value': pre_value,
+                    'pre_operator': operator
+                }
+                filter_value = PreFilterValue(filter_, {'operand': pre_value, 'operator': operator})
+                self.assertEqual(filter_value.to_sql_values(), {})
+                self.assertEqual(
+                    str(filter_value.to_sql_filter().build_expression()),
+                    'exists_field IS NOT NULL'
+                )
+
     def test_pre_filter_value_array(self):
         pre_value = ['yes', 'maybe']
         filter_ = {
