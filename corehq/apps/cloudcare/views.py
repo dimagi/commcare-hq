@@ -292,6 +292,7 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
