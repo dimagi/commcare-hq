@@ -42,15 +42,8 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
-        try:
-            if options["location"]:
-                active_location = options["location"]
-            else:
-                print("Warning: No active location was entered")
-                active_location = None
-        except KeyError:
-            active_location = None
+        location = options.get('location')
 
         for domain in domains:
             print(f"Processing {domain}")
-            self.update_cases(domain, case_type, user_id, active_location)
+            self.update_cases(domain, case_type, user_id, location)
