@@ -62,12 +62,6 @@ class CaseProperty(models.Model):
     )
     group = models.TextField(default='', blank=True)
 
-    # option 1: "choices" property, could either go with a dict of choice ids to display names
-    # or a list of structured data (e.g. {"value": "fever", "display": "patient has a fever"})
-    # advantages: easy to implement. no joins necessary.
-    # disadvantages: less structured data / validation. no reuse of choices
-    choices = JSONField(default=dict)
-
     class Meta(object):
         unique_together = ('case_type', 'name')
 
@@ -92,13 +86,8 @@ class CaseProperty(models.Model):
         return super(CaseProperty, self).save(*args, **kwargs)
 
 
-# option 2: normalized list of "choices" mapping to properties.
-# advantages: clearly structured in DB. easy to add more information to properties.
-# disadvantages: lots of joins.
-# note: could also make it a manytomany if we wanted to reuse property choices across properties
-# though not convinced that's worth it.
 class CasePropertyChoice(models.Model):
-    case_property = models.ForeignKey(CaseProperty, on_delete=models.CASCADE)
+    case_property = models.ForeignKey(CaseProperty, on_delete=models.CASCADE, related_name='choices')
     value = models.TextField()
     display = models.TextField()
 
