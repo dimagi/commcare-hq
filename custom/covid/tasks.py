@@ -6,6 +6,7 @@ from celery.task import periodic_task
 from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.formplayer_api.exceptions import FormplayerResponseException
 from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.users.models import CouchUser
@@ -84,12 +85,14 @@ def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
             date__gt=sync_window,
             is_formplayer=True,
             case_count__gt=min_case_load
-        ).distinct()
+        ).exclude(auth_type=FORMPLAYER)  # ignore syncs that were done by SMS or by this task
+        .distinct()
     )
 
     users_synced_since_cutoff = set(
         SyncLogSQL.objects.values_list("request_user_id", "user_id")
         .filter(domain=domain, date__gt=sync_cutoff, is_formplayer=True)
+        .exclude(auth_type=FORMPLAYER)
         .distinct()
     )
 
