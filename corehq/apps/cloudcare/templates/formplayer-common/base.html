@@ -49,6 +49,11 @@
   {% compress js %}
     <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
     <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
+    {% if request.use_daterangepicker and not requirejs_main %}
+        <script src="{% static 'moment/moment.js' %}"></script>
+        <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
+    {% endif %}
   {% endcompress %}
 
   <style id="list-cell-layout-style"></style>

@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'hqwebapp/js/hq.helpers',
 ], function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var separator = " to ";
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
@@ -31,6 +32,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         ui: {
             valueDropdown: 'select.query-field',
             hqHelp: '.hq-help',
+            dateRange: 'input.daterange',
         },
 
         modelEvents: {
@@ -44,6 +46,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
+            this.ui.dateRange.daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    separator: separator,
+                }
+            });
         },
     });
 
@@ -78,8 +86,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 answers = {},
                 model = this.parentModel;
             $fields.each(function (index) {
+                var answer = null;
                 if (this.value !== '') {
-                    answers[model[index].get('id')] = this.value;
+                    if (model[index].get('input') === 'daterange') {
+                        // special format handled by CaseSearch API
+                        answer = "__range__" + this.value.replace(separator, "__");
+                    } else {
+                        answer = this.value;
+                    }
+                    answers[model[index].get('id')] = answer;
                 }
             });
             return answers;
