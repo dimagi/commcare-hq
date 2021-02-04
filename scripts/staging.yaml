@@ -82,4 +82,5 @@ branches:
   - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
   - sr/cs-help2  # Sravan Feb 4
   - sr/daterange-webapps # Sravan Feb 4
+  - jls/remove-case-claim-include-closed # Jenny Feb 4
 submodules: {}
