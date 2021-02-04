@@ -174,10 +174,9 @@ class KafkaChangeFeed(ChangeFeed):
             if self.process_num == 0:
                 return None
             else:
-                num_processes = self.num_processes - 1
                 return [
-                    topic_partitions[num::num_processes]
-                    for num in range(num_processes)
+                    topic_partitions[num::self.num_processes]
+                    for num in range(self.num_processes - 1)
                 ][self.process_num - 1]
 
 
