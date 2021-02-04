@@ -64,7 +64,6 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     "filter": [
                         {'term': {'domain.exact': 'swashbucklers'}},
                         {"term": {"type.exact": "case_type"}},
-                        {"term": {"closed": False}},
                         {
                             "bool": {
                                 "must_not": {
@@ -156,7 +155,6 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     "filter": [
                         {'term': {'domain.exact': 'swashbucklers'}},
                         {"term": {"type.exact": "case_type"}},
-                        {"term": {"closed": False}},
                         {"match_all": {}}
                     ],
                     "must": {
