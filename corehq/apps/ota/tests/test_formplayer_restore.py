@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -38,19 +39,16 @@ class FormplayerRestoreTest(TestCase):
     def test_formplayer_restore(self):
         self._test_formplayer_restore(self.commcare_user)
 
-    def _test_formplayer_restore(self, as_user, for_user=None):
+    def _test_formplayer_restore(self, as_user):
         data = {'version': 2.0, 'as': as_user.username}
-        if for_user:
-            data['for'] = for_user.username
-
         resp = self._do_post(data)
         self.assertEqual(resp.status_code, 200)
         self.assertIn("ota_restore_success", resp.getvalue().decode("utf-8"))
         synclog = list(SyncLogSQL.objects.all())[0]
         self.assertTrue(synclog.is_formplayer)
         self.assertEqual(synclog.user_id, as_user.user_id)
-        request_user = for_user or as_user
-        self.assertEqual(synclog.request_user_id, request_user.user_id)
+        self.assertEqual(synclog.request_user_id, as_user.user_id)
+        self.assertEqual(synclog.auth_type, FORMPLAYER)
 
     def test_missing_as_user_param(self):
         resp = self._do_post({'version': 2.0})
