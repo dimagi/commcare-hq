@@ -203,7 +203,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param case_sync: Override default case sync algorithm
     :param skip_fixtures: Do not include fixtures in sync payload
     :param auth_type: The type of auth that was used to authenticate the request.
-        Used to determine if the request is coming from an actual user of as part of some automation.
+        Used to determine if the request is coming from an actual user or as part of some automation.
     :return: Tuple of (http response, timing context or None)
     """
 
