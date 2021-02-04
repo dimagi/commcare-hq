@@ -66,8 +66,6 @@ branches:
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
   #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
   - mk/remove-aaa # MK Jan 18
-  - sr/parent-select # Jenny Dec 29
-  - sr/ext-close2 # Sravan Jan 21
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
   - nh/reminders  # Norman Jan 26
   - ap/fix-deactivated-users-not-showing-in-reports # Amit Jan 28
