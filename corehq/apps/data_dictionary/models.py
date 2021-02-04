@@ -67,6 +67,9 @@ class CaseProperty(models.Model):
     class Meta(object):
         unique_together = ('case_type', 'name')
 
+    def __str__(self):
+        return f'{self.case_type}.{self.name}' if self.name else repr(self)
+
     @classmethod
     def get_or_create(cls, name, case_type, domain):
         key = 'data-dict-property-{domain}-{type}-{name}'.format(

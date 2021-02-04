@@ -35,6 +35,9 @@ class FHIRResourceType(models.Model):
     # cannot be built using only FHIRResourceAttributes
     template = JSONField(null=True, blank=True, default=None)
 
+    def __str__(self):
+        return self.fhirclient_class
+
     def get_fhirclient_class(self) -> type:
         """
         Returns a FHIR resource class from the fhirclient library.
@@ -120,6 +123,17 @@ class FHIRResourceProperty(models.Model):
     @property
     def case_type(self) -> CaseType:
         return self.resource_type.case_type
+
+    @property
+    def case_property_name(self) -> Optional[str]:
+        if self.case_property:
+            return self.case_property.name
+        if (
+            self.value_source_config
+            and 'case_property' in self.value_source_config
+        ):
+            return self.value_source_config['case_property']
+        return None
 
     def get_value_source(self) -> ValueSource:
         """
