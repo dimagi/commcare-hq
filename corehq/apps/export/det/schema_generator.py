@@ -123,6 +123,7 @@ def generate_from_case_export_instance(export_instance, output_file):
 
     dd_property_types_by_name = _get_dd_property_types(export_instance.domain, export_instance.case_type)
     helper = CaseDETSchemaHelper(dd_property_types=dd_property_types_by_name)
+    main_output_table.rows.append(DETRow(source_field='domain', field='domain'))
     _add_rows_for_table(main_input_table, main_output_table, helper=helper)
     _add_id_row_if_necessary(main_output_table, CASE_ID_SOURCE)
     # todo: add rows for other tables
@@ -169,6 +170,7 @@ def generate_from_form_export_instance(export_instance, output_file):
                 filter_value=export_instance.xmlns,
                 rows=[],
             )
+            output_table.rows.append(DETRow(source_field='domain', field='domain'))
             _add_rows_for_table(input_table, output_table, helper=FormDETSchemaHelper())
             _add_id_row_if_necessary(output_table, FORM_ID_SOURCE)
         else:
