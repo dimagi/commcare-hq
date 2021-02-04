@@ -78,22 +78,21 @@ def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
     """
     assert sync_window > sync_cutoff
 
-    users_synced_in_window = set(
+    base_query = (
         SyncLogSQL.objects.values("request_user_id", "user_id")
         .filter(
             domain=domain,
-            date__gt=sync_window,
             is_formplayer=True,
-            case_count__gt=min_case_load
         ).exclude(auth_type=FORMPLAYER)  # ignore syncs that were done by SMS or by this task
-        .distinct()
     )
 
-    users_synced_since_cutoff = set(
-        SyncLogSQL.objects.values_list("request_user_id", "user_id")
-        .filter(domain=domain, date__gt=sync_cutoff, is_formplayer=True)
-        .exclude(auth_type=FORMPLAYER)
-        .distinct()
+    users_synced_in_window = set(
+        base_query.filter(
+            date__gt=sync_window,
+            case_count__gt=min_case_load
+        ).distinct()
     )
+
+    users_synced_since_cutoff = set(base_query.filter(date__gt=sync_cutoff).distinct())
 
     return list(users_synced_in_window - users_synced_since_cutoff)
