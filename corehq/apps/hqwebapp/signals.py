@@ -47,7 +47,7 @@ def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
         'result': lockout_result
     })
 
-    if not locked_out:
+    if not locked_out and user.supports_lockout():
         if user.attempt_date == date.today():
             user.login_attempts += 1
         else:
