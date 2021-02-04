@@ -1,5 +1,3 @@
-import uuid
-
 import six
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -8,7 +6,7 @@ from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser
 from corehq.util.hmac_request import get_hmac_digest
 
 
