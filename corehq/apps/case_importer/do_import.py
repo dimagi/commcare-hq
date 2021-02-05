@@ -37,6 +37,38 @@ RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 ALL_LOCATIONS = 'ALL_LOCATIONS'
 
 
+def validate_import(spreadsheet, config, domain, task=None, record_form_callback=None):
+    # not functional, just a proximate sketch - could also consider putting directly
+    # into _Importer class
+    validator = _Validator(domain, config, task)
+    return validator.validate_import(spreadsheet)
+
+
+class _Validator(object):
+    def __init__(self, domain, config, task):
+        self.domain = domain
+        self.config = config
+        self.task = task
+        self.results = _ImportResults()
+        # probably want to cache this once
+        self.data_dictionary = get_data_dictionary_for_domain(domain)  # not the right method
+
+    def validate_import(self, spreadsheet):
+        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+            try:
+                # this does some amount of validation
+                _populate_updated_fields(self.config, row)
+                # this will do new validation
+                self._do_additional_validation(row)
+            except exceptions.CaseRowError as error:
+                self.results.add_error(row_num, error)
+
+    def _do_additional_validation(self, row):
+        # check config / row combination against allowed values, date types etc. here
+        # raise errors if fail
+        pass
+
+
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
     if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):

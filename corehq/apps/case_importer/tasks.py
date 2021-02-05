@@ -8,12 +8,23 @@ from corehq.apps.hqadmin.tasks import (
 from corehq.util.metrics import metrics_gauge_task
 from corehq.util.metrics.const import MPM_MAX
 
-from .do_import import do_import
+from .do_import import do_import, validate_import
 from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
 from .tracking.task_status import make_task_status_success
 from .util import get_importer_error_message, exit_celery_with_error_message
+
+
+@task(serializer='pickle', queue='case_import_queue')
+def validate_import_file_async(config, domain, excel_id):
+    """Validates a case import file prior to actually running the import."""
+    # not tested code, just outlining how it might work
+    case_upload = CaseUpload.get(excel_id)
+    try:
+        case_upload.check_file()
+        with case_upload.get_spreadsheet() as spreadsheet:
+            validate_import(spreadsheet, config, domain,)
 
 
 @task(serializer='pickle', queue='case_import_queue')
