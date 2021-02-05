@@ -61,6 +61,31 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.showAllowedValues = function () {
             console.log('show allowed values UI here!');
+            // I attempted to use something like this but wasn't able to wrangle HQ's JS system to work.
+            // some docs are here: https://commcare-hq.readthedocs.io/js-guide/code-organization.html
+            // Leaving the (broken) version in in case it's helpful.
+            var mapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
+                lang: 'en',
+                langs: ['en'],
+                items: [
+                    {
+                        "doc_type": "MappingItem",
+                        "value": {
+                            "en": "one"
+                        },
+                        "key": "1"
+                    },
+                    {
+                        "doc_type": "MappingItem",
+                        "value": {
+                            "en": "two"
+                        },
+                        "key": "2"
+                    },
+                ],
+                property_name: 'name',
+            });
+
         };
 
         return self;

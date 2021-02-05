@@ -3,7 +3,6 @@
 {% load i18n %}
 
 {% requirejs_main "data_dictionary/js/data_dictionary" %}
-
 {% block page_navigation %}
   <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
   <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
@@ -109,4 +108,7 @@
       </p>
     </div>
   </div>
+{% endblock %}
+{% block js %}
+{% include 'hqwebapp/includes/ui_element_js.html' %}
 {% endblock %}
