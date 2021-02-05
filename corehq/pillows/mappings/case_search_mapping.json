@@ -30,6 +30,8 @@
                 "value": {
                     "type": "string",
                     "null_value": "",
+                    "analyzer": "my_ngram_analyzer",
+                    "search_analyzer": "standard",
                     "fields": {
                         "exact": {
                             "index": "not_analyzed",

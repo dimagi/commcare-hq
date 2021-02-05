@@ -10,7 +10,14 @@ from pillowtop.logger import pillow_logging
 
 def _get_analysis(*names):
     return {
-        "analyzer": {name: ANALYZERS[name] for name in names}
+        "analyzer": {name: ANALYZERS[name] for name in names},
+        "tokenizer": {
+            "ngram_tokenizer": {
+                "type": "nGram",
+                "min_gram": "1",
+                "max_gram": "10",
+            }
+        }
     }
 
 
@@ -23,6 +30,10 @@ ANALYZERS = {
     "comma": {
         "type": "pattern",
         "pattern": r"\s*,\s*"
+    },
+    "my_ngram_analyzer": {
+        "type": "custom",
+        "tokenizer": "ngram_tokenizer"
     }
 }
 
@@ -79,6 +90,12 @@ ES_INDEX_SETTINGS = {
             "analysis": _get_analysis('default'),
         },
     },
+
+    CASE_SEARCH_HQ_INDEX_NAME: {
+        "settings": {
+            "analysis": _get_analysis('default', 'my_ngram_analyzer')
+        }
+    }
 }
 
 
