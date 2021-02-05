@@ -355,6 +355,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                     "formplayer_auth:not_enabled_for_request", request.path
                 )
                 return HttpResponseForbidden()
+            request.auth_type = authtype  # store auth type on request for access in views
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
