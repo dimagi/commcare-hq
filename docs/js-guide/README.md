@@ -7,7 +7,7 @@ Dimagi's internal JavaScript guide for use in the CommCare HQ project
 
 - [Static Files Organization](./code-organization.md)
 - [Managing Dependencies](./dependencies.md)
-   - [Historical Background on Module Patterns](./module_history.md)
+   - [Historical Background on Module Patterns](./module-history.md)
    - [RequireJS Migration Guide](./migrating.md)
    - [Third Party Libraries](./libraries.md): usage and conventions of framkework-level dependencies (jQuery, knockout, etc.)
    - [Installing external packages with yarn](./external-packages.md)

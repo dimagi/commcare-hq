@@ -2,7 +2,7 @@
 
 This page is a guide to upgrading legacy code in HQ to use RequireJS.
 For information on how to work within existing code, see [Managing Dependencies](./dependencies.md).
-Both that page and [Historical Background on Module Patterns](./module_history.md) are useful background for this guide.
+Both that page and [Historical Background on Module Patterns](./module-history.md) are useful background for this guide.
 
 - [Background: modules and pages](#background-modules-and-pages)
 - [Basic Migration Process](#basic-migration-process)
