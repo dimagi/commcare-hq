@@ -1,12 +1,23 @@
+from django.contrib import messages
+from django.utils.decorators import method_decorator
+from memoized import memoized
+from django.urls import reverse
+
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import (
     DateCreatedFilter,
     NameFilter,
 )
 from corehq.apps.accounting.interface import AddItemInterface
+from corehq.apps.accounting.views import AccountingSectionView
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.toggles import ENTERPRISE_SSO
 
+from corehq.apps.sso.forms import (
+    CreateIdentityProviderForm,
+)
+from corehq.apps.sso.aync_handlers import Select2IdentityProviderHandler
 from corehq.apps.sso.models import IdentityProvider
 
 
@@ -30,9 +41,7 @@ class IdentityProviderInterface(AddItemInterface):
 
     @property
     def new_item_view(self):
-        # todo replace with NewIdentityProviderView
-        #return NewIdentityProviderAdminView
-        return ""
+        return NewIdentityProviderAdminView
 
     @property
     def headers(self):
@@ -76,3 +85,49 @@ class IdentityProviderInterface(AddItemInterface):
             )
 
         return queryset
+
+
+@method_decorator(ENTERPRISE_SSO.required_decorator(), name='dispatch')
+class BaseIdentityProviderAdminView(AccountingSectionView):
+    @property
+    def parent_pages(self):
+        return [{
+            'title': IdentityProviderInterface.name,
+            'url': IdentityProviderInterface.get_url(),
+        }]
+
+
+class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMixin):
+    page_title = 'New Identity Provider'
+    template_name = 'sso/accounting_admin/new_identity_provider.html'
+    urlname = 'new_identity_provider'
+    async_handlers = [
+        Select2IdentityProviderHandler,
+    ]
+
+    @property
+    @memoized
+    def create_idp_form(self):
+        if self.request.method == 'POST':
+            return CreateIdentityProviderForm(self.request.POST)
+        return CreateIdentityProviderForm()
+
+    @property
+    def page_context(self):
+        return {
+            'create_idp_form': self.create_idp_form,
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.create_idp_form.is_valid():
+            self.create_idp_form.create_identity_provider(self.request.user)
+            messages.success(request, "New Identity Provider created!")
+        return self.get(request, *args, **kwargs)
+
+
