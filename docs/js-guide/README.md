@@ -12,4 +12,5 @@ Dimagi's internal JavaScript guide for use in the CommCare HQ project
 - [Production Static Files](./static-files.md) (collectstatic, compression, map files, CDN)
 - [Testing](./testing.md)
 - [Linting](./linting.md)
+- [Inheritance](./inheritance.md)
 - [Migrating](./migrating.md)

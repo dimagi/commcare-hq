@@ -2,7 +2,6 @@
 
 Modernizing our JavaScript code base often means doing migrations. Migrations currently in progress:
 1. [Migrating to RequireJS](#migrating-to-requirejs)
-1. [Moving away from classical inheritance](#moving-away-from-classical-inheritance)
 
 ## Migrating to RequireJS
 
@@ -152,17 +151,3 @@ Tactics that can help track down problems with the RequireJS build process, whic
       - This will **overwrite** your local versions of `requirejs_config.js` and `resource_versions.js`, so be cautious running it if you have uncommitted changes.
       - This will also copy the generated bundle files from `staticfiles` back into `corehq`.
       - If you don't need to test locally but just want to see the results of dependency tracing, leave off the `--local`. A list of each bundle's contents will be written to `staticfiles/build.txt`, but no files will be added to or overwritten in `corehq`.
-
-## Moving away from classical inheritance
-
-See [our approach to inheritance](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
-- In the class definition, make sure the instance is initialized to an empty object instead of `this`. There's usually a `var self = this;` line that should be switched to `var self = {};`
-- Throughout the class definition, make sure the code is consistently using `self` instead of `this`
-- Make sure the class definition returns `self` at the end (typically it won't return anything)
-- Update class name from `UpperCamelCase` to `lowerCamelCase`
-- Remove `new` operator from anywhere the class is instantiated
-- Sanity test that the pages using the class still load
-
-[Sample pull request](https://github.com/dimagi/commcare-hq/pull/19938)
-
-Code that actually manipulates the prototype needs more thought.
