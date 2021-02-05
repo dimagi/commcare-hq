@@ -1,8 +1,8 @@
 /*global DOMPurify, Marionette */
 
-hqDefine("cloudcare/js/formplayer/menus/views/query", [
-    'hqwebapp/js/hq.helpers',
-], function () {
+hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
+    // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var separator = " to ";
 
