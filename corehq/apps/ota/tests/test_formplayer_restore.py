@@ -26,7 +26,6 @@ class FormplayerRestoreTest(TestCase):
         create_domain(cls.domain)
         create_domain(cls.wrong_domain)
         cls.commcare_user = CommCareUser.create(cls.domain, cls.username, '123', None, None)
-        cls.web_user = WebUser.create(cls.domain, uuid.uuid4().hex, '123', None, None)
         cls.uri = reverse('ota_restore', args=[cls.domain])
         cls.uri_wrong_domain = reverse('ota_restore', args=[cls.wrong_domain])
 
@@ -38,9 +37,6 @@ class FormplayerRestoreTest(TestCase):
 
     def test_formplayer_restore(self):
         self._test_formplayer_restore(self.commcare_user)
-
-    def test_formplayer_restore_web_user_as(self):
-        self._test_formplayer_restore(self.commcare_user, self.web_user)
 
     def _test_formplayer_restore(self, as_user, for_user=None):
         data = {'version': 2.0, 'as': as_user.username}
