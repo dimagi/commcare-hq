@@ -64,7 +64,6 @@ branches:
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - jls/web-apps-sticky-search-again # Jenny Jan 26
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
-  #- solleks:cdg/accessible_pagination  # Ben / Charlie Jan 11
   - mk/remove-aaa # MK Jan 18
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
   - nh/reminders  # Norman Jan 26
@@ -83,4 +82,5 @@ branches:
   - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
   - sr/cs-help2  # Sravan Feb 4
   - sr/daterange-webapps # Sravan Feb 4
+  - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
 submodules: {}
