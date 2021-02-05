@@ -1,5 +1,8 @@
 # Historical Background on Module Patterns
 
+This page discusses the evolution of HQ's javascript module usage.
+For practical documentation on writing modules, see [Managing Dependencies](./dependencies.md).
+
 We talk about JavaScript modules, but (at least pre-ES6) JavaScript
 has no built in support for modules.
 It's easy to say that, but think about how crazy that is.
@@ -14,14 +17,12 @@ one of a number of patterns.
 We're in the process of migrating to [RequireJS](https://requirejs.org/). Part of this process has included developing a lighter-weight alternative module system called `hqDefine`.
 
 `hqDefine` serves as a stepping stone between legacy code and requirejs modules: it adds encapsulation but not
-full-blown dependency management. **New code should be written to be compatible with RequireJS.** This is typically
-easy; once familiar with the module patterns described below, see the [migration guide](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.md#migrating-to-requirejs) for details on making sure your code will work with RequireJS.
+full-blown dependency management. New code is written in RequireJS, but `hqDefine` exists to support
+legacy code that does not yet use RequireJS.
 
-Before diving into `hqDefine`, I want to talk first about the status quo
-convention for sanity with no module system.
+Before diving into `hqDefine`, I want to talk first about the status quo convention for sanity with no module system.
 As we'll describe, it's a step down from our current preferred choice,
-but it's still miles ahead of having no convention at all,
-and you're likely to encounter it throughout our code base for some time yet.
+but it's still miles ahead of having no convention at all.
 
 ## The Crockford Pattern
 
@@ -120,11 +121,9 @@ described in the next sesion.
 
 There are many great module systems out there, so why did we write our own?
 The answer's pretty simple: while it's great to start with
-require.js or system.js, getting from here to there is nearly impossible
-without some intermediate. Imagine the amount of times you see
-`$` or `_` (for jQuery or underscore.js) throughout our codebase;
-that alone would make it nearly impossible to refactor all our code at once
-to fit into one of these admittedly super nice systems.
+require.js or system.js, with a code base HQ's size,
+getting from here to there is nearly impossible
+without an intermediate step.
 
 Using the above example again, using `hqDefine`,
 you'd write your file like this:
