@@ -1,8 +1,8 @@
 # RequireJS Migration Guide
 
 This page is a guide to upgrading legacy code in HQ to use RequireJS.
-For information on how to work within existing code, see [Managing Dependencies](./dependencies.md).
-Both that page and [Historical Background on Module Patterns](./module-history.md) are useful background for this guide.
+For information on how to work within existing code, see [Managing Dependencies](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/dependencies.md).
+Both that page and [Historical Background on Module Patterns](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.md) are useful background for this guide.
 
 - [Background: modules and pages](#background-modules-and-pages)
 - [Basic Migration Process](#basic-migration-process)
@@ -18,7 +18,10 @@ These docs walk through the process of migrating a single page to RequireJS.
 
 ## Basic Migration Process
 
-Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`. See above for details on moving inline script blocks to files, and see [module patterns](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-organization.md#module-patterns) for details on `hqDefine`. Also, pages that are not descendants of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html) cannot yet be migrated.
+Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`.
+This is already true for the vast majority of code in HQ.  Pages that are not descendants of
+[hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html),
+which are rare, cannot yet be migrated.
 
 Once these conditions are met, migrating to RequireJS is essentially the process of explicitly adding each module's dependencies to the module's definition, and also updating each HTML page to reference a single "main" module rather than including a bunch of `<script>` tags:
 1. Add `requirejs_main` tag and remove `<script>` tags

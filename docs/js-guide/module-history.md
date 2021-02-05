@@ -1,7 +1,7 @@
 # Historical Background on Module Patterns
 
 This page discusses the evolution of HQ's javascript module usage.
-For practical documentation on writing modules, see [Managing Dependencies](./dependencies.md).
+For practical documentation on writing modules, see [Managing Dependencies](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/dependencies.md).
 
 We talk about JavaScript modules, but (at least pre-ES6) JavaScript
 has no built in support for modules.
