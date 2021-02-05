@@ -70,10 +70,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
+            valueInput: 'input.query-field',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
+            'change @ui.valueInput': 'setStickyQueryInputs',
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
@@ -118,20 +120,28 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         $field.trigger('change.select2');
                     }
                 }
+                self.setStickyQueryInputs();
             });
         },
 
         clearAction: function () {
-            var fields = $(".query-field");
+            var self = this,
+                fields = $(".query-field");
             fields.each(function () {
                 this.value = '';
                 $(this).trigger('change.select2');
             });
+            self.setStickyQueryInputs();
         },
 
         submitAction: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
+        },
+
+        setStickyQueryInputs: function () {
+            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            Util.setStickyQueryInputs(this.getAnswers());
         },
     });
 
