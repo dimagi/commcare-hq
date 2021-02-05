@@ -1183,6 +1183,12 @@ class FormatResponseTests(SimpleTestCase):
 
 class TestGetRetryInterval(SimpleTestCase):
 
+    def test_no_last_checked(self):
+        last_checked = None
+        now = fromisoformat("2020-01-01 00:05:00")
+        interval = _get_retry_interval(last_checked, now)
+        self.assertEqual(interval, MIN_RETRY_WAIT)
+
     def test_min_interval(self):
         last_checked = fromisoformat("2020-01-01 00:00:00")
         now = fromisoformat("2020-01-01 00:05:00")

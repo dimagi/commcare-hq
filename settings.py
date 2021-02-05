@@ -18,6 +18,10 @@ DEBUG = True
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+
+# For Single Sign On (SSO) Implementations
+SAML2_DEBUG = False
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -295,6 +299,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.smsforms',
+    'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.messaging',
     'corehq.messaging.scheduling',
