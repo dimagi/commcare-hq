@@ -7,7 +7,7 @@ from corehq.toggles import FORMPLAYER_USE_LIVEQUERY
 def sync_db(domain, username, restore_as=None):
     """Call Formplayer API to force a sync for a user."""
     user = CouchUser.get_by_username(username)
-    assert user.is_member_of(domain)
+    assert user.is_member_of(domain, allow_mirroring=True)
     user_id = user.user_id
     use_livequery = FORMPLAYER_USE_LIVEQUERY.enabled(domain)
     data = {
