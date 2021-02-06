@@ -139,7 +139,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         fixture_xml = self.generate_product_fixture_xml(user)
         index_schema, fixture = call_fixture_generator(product_fixture_generator, user)
 
-        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture))
+        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture, encoding='utf-8'))
 
         schema_xml = """
             <schema id="commtrack:products">
@@ -151,7 +151,7 @@ class FixtureTest(TestCase, TestXmlMixin):
                 </indices>
             </schema>
         """
-        self.assertXmlEqual(schema_xml, ElementTree.tostring(index_schema))
+        self.assertXmlEqual(schema_xml, ElementTree.tostring(index_schema, encoding='utf-8'))
 
         # test restore with different user
         user2 = create_restore_user(self.domain, username='user2')
@@ -159,7 +159,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         fixture_xml = self.generate_product_fixture_xml(user2)
         index_schema, fixture = call_fixture_generator(product_fixture_generator, user2)
 
-        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture))
+        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture, encoding='utf-8'))
 
     def test_selective_product_sync(self):
         user = self.user
@@ -173,7 +173,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_original)
+            ElementTree.tostring(fixture_original, encoding='utf-8')
         )
 
         first_sync = self._get_latest_synclog()
@@ -208,7 +208,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_post_change)
+            ElementTree.tostring(fixture_post_change, encoding='utf-8')
         )
 
     def generate_program_xml(self, program_list, user):
@@ -254,7 +254,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture[0])
+            ElementTree.tostring(fixture[0], encoding='utf-8')
         )
 
         # test restore with different user
@@ -265,7 +265,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture[0])
+            ElementTree.tostring(fixture[0], encoding='utf-8')
         )
 
     def test_selective_program_sync(self):
@@ -284,7 +284,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture_original[0])
+            ElementTree.tostring(fixture_original[0], encoding='utf-8')
         )
 
         first_sync = self._get_latest_synclog()
@@ -318,7 +318,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture_post_change[0])
+            ElementTree.tostring(fixture_post_change[0], encoding='utf-8')
         )
 
 
