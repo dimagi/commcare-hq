@@ -110,6 +110,9 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
+            'keypress @ui.next': 'onKeyPressNext',
+            'keypress @ui.prev': 'onKeyPressPrev',
+            'keypress @ui.page': 'onKeyPressPage',
         },
         templateContext: function () {
             return {
@@ -117,6 +120,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 totalPages: this.totalPages(),
                 // Subtract 1 from page so that it is 0 indexed
                 pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
+                pageNumLabel: _.template(gettext("Page <%=num%>")),
             };
         },
         navigate: function () {
@@ -151,6 +155,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             }
             this.model.set('page', this.model.get('page') + 1);
         },
+        onKeyPressNext: function (e) {
+            if (event.which === 13 || event.keyCode === 13) {
+                this.onClickNext(e);
+            }
+        },
         onClickPrev: function (e) {
             e.preventDefault();
             if (this.model.get('page') === 1) {
@@ -159,10 +168,20 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             }
             this.model.set('page', this.model.get('page') - 1);
         },
+        onKeyPressPrev: function (e) {
+            if (event.which === 13 || event.keyCode === 13) {
+                this.onClickPrev(e);
+            }
+        },
         onClickPage: function (e) {
             e.preventDefault();
             var page = $(e.currentTarget).data().page;
             this.model.set('page', page);
+        },
+        onKeyPressPage: function (e) {
+            if (event.which === 13 || event.keyCode === 13) {
+                this.onClickPage(e);
+            }
         },
         onSubmitUserSearch: function (e) {
             e.preventDefault();

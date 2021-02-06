@@ -32,7 +32,7 @@
           <% } else { %>
         <li>
           <% } %>
-          <a class="js-user-previous">
+          <a class="js-user-previous" aria-label="Previous" tabindex="0">
             <span>&laquo;</span>
           </a>
         </li>
@@ -40,9 +40,9 @@
         <!-- Render page buttons -->
         <% for (var i = pagesToShow.start; i < pagesToShow.end; i++) { %>
         <% if (i + 1 === page) { %>
-        <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
+        <li class="js-page active" data-page="<%= i + 1 %>" aria-label="<%= pageNumLabel({num: i + 1}) %>" aria-current="page" tabindex="0"><a><%= i + 1 %></a></li>
         <% } else { %>
-        <li class="js-page" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
+        <li class="js-page" data-page="<%= i + 1 %>" aria-label="<%= pageNumLabel({num: i + 1}) %>" tabindex="0"><a><%= i + 1 %></a></li>
         <% } %>
         <% } %>
 
@@ -52,7 +52,7 @@
           <% } else { %>
         <li>
           <% } %>
-          <a class="js-user-next">
+          <a class="js-user-next" aria-label="Next" tabindex="0">
             <span>&raquo;</span>
           </a>
         </li>
