@@ -127,20 +127,21 @@ class ValueSource:
         raise NotImplementedError
 
     def get_external_value(self, external_data):
-        if self.jsonpath is not None:
-            try:
-                jsonpath = parse_jsonpath(self.jsonpath)
-            except Exception as err:
-                raise JsonpathError from err
-            matches = jsonpath.find(external_data)
-            values = [m.value for m in matches]
-            if not values:
-                return None
-            elif len(values) == 1:
-                return values[0]
-            else:
-                return values
-        raise ConfigurationError(f"{self} is not configured to parse external data")
+        if self.jsonpath is None:
+            raise ConfigurationError(f"{self} is not configured to navigate "
+                                     "external data")
+        try:
+            jsonpath = parse_jsonpath(self.jsonpath)
+        except Exception as err:
+            raise JsonpathError from err
+        matches = jsonpath.find(external_data)
+        values = [m.value for m in matches]
+        if not values:
+            return None
+        elif len(values) == 1:
+            return values[0]
+        else:
+            return values
 
     def set_external_value(self, external_data: dict, info: CaseTriggerInfo):
         """
