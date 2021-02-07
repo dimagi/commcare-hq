@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import attr
 from jsonobject.containers import JsonDict
-from jsonpath_ng import parse as parse_jsonpath
+from jsonpath_ng.ext.parser import parse as parse_jsonpath
 from schema import Optional as SchemaOptional
 from schema import Or, Schema, SchemaError
 
@@ -141,6 +141,23 @@ class ValueSource:
             else:
                 return values
         raise ConfigurationError(f"{self} is not configured to parse external data")
+
+    def set_external_value(self, external_data: dict, info: CaseTriggerInfo):
+        """
+        Builds ``external_data`` by reference.
+
+        Currently implemented for dicts using JSONPath but could be
+        implemented for other types as long as they are mutable.
+        """
+        if self.jsonpath is None:
+            raise ConfigurationError(f"{self} is not configured to navigate "
+                                     "external data")
+        value = self.get_value(info)
+        try:
+            jsonpath = parse_jsonpath(self.jsonpath)
+        except Exception as err:
+            raise JsonpathError from err
+        jsonpath.update(external_data, value, create=True)
 
     def serialize(self, value: Any) -> Any:
         """

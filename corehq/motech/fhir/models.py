@@ -1,14 +1,22 @@
 from importlib import import_module
-from typing import List, Optional
+from typing import List, Optional, Union
+
+from django.db import models
 
 import attr
-from django.db import models
 from jsonfield import JSONField
 
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from casexml.apps.case.models import CommCareCase
+
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir.const import FHIR_VERSIONS, FHIR_VERSION_4_0_1
-from corehq.motech.value_source import ValueSource, as_value_source
+from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    ValueSource,
+    as_value_source,
+)
 
 
 @attr.s(auto_attribs=True)
@@ -138,34 +146,6 @@ class FHIRResourceProperty(models.Model):
     def get_value_source(self) -> ValueSource:
         """
         Returns a ValueSource for building FHIR resources.
-
-        e.g. You could build a FHIR resource as follows::
-
-            def build_fhir_resource(case, version=FHIR_VERSION_4_0_1):
-                case_type = CaseType.objects.get(
-                    domain=case.domain,
-                    name=case.type,
-                )
-                resource_type = FHIRResourceType.objects.get(
-                    case_type=case_type,
-                    fhir_version=version,
-                )
-
-                # CaseTriggerInfo packages data for use by ValueSource
-                prop_names = [p.name for p in case_type.properties]
-                info = CaseTriggerInfo(
-                    domain=domain,
-                    case_id=case.case_id,
-                    case_type=case.type,
-                    updates={p: case.get_case_property(p) for p in prop_names},
-                )
-
-                fhir_resource = resource_type.template or {}
-                for property in resource_type.properties:
-                    value_source = property.get_value_source()
-                    value_source.set_external_value(fhir_resource, info)
-                return fhir_resource
-
         """
         if self.value_source_config:
             return as_value_source(self.value_source_config)
@@ -181,3 +161,36 @@ class FHIRResourceProperty(models.Model):
         if self.value_map:
             value_source_config['value_map'] = self.value_map
         return as_value_source(value_source_config)
+
+
+def build_fhir_resource(case, version=FHIR_VERSION_4_0_1):
+    case_type = CaseType.objects.get(
+        domain=case.domain,
+        name=case.type,
+    )
+    info = get_case_trigger_info(case, case_type)
+    resource_type = FHIRResourceType.objects.get(
+        case_type=case_type,
+        fhir_version=version,
+    )
+    fhir_resource = resource_type.template or {}
+    for prop in resource_type.properties.all():
+        value_source = prop.get_value_source()
+        value_source.set_external_value(fhir_resource, info)
+    return fhir_resource
+
+
+def get_case_trigger_info(
+        case: Union[CommCareCase, CommCareCaseSQL],
+        case_type: CaseType,
+) -> CaseTriggerInfo:
+    """
+    CaseTriggerInfo packages case (and form) data for use by ValueSource
+    """
+    prop_names = [p.name for p in case_type.properties.all()]
+    return CaseTriggerInfo(
+        domain=case.domain,
+        case_id=case.case_id,
+        type=case.type,
+        updates={p: case.get_case_property(p) for p in prop_names},
+    )
