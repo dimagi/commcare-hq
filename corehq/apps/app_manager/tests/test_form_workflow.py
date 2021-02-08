@@ -362,6 +362,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         m5, m5f0 = factory.new_basic_module('m5', 'patient', parent_module=m1)
         factory.form_requires_case(m5f0)
 
+        factory.new_shadow_module('shadow_module', m1, with_form=False)
+
         for module in factory.app.get_modules():
             for form in module.get_forms():
                 form.post_form_workflow = mode
