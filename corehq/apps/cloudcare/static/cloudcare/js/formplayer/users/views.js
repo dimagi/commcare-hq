@@ -91,12 +91,16 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             search: '.js-user-search',
             query: '.js-user-query',
             page: '.js-page',
+            gosearch: '.js-page-go-search',
+            seriessearch: '.js-page-series'
         },
         events: {
             'click @ui.next': 'onClickNext',
             'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
+            'click @ui.gosearch': 'onSubmitPageSearch',
+            'click @ui.seriessearch': 'onClickPagelimit',
         },
         templateContext: function () {
             var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
@@ -158,6 +162,22 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 'query': this.ui.query.val(),
                 'page': 1,  // Reset page to one when doing a query
             });
+        },
+        onSubmitPageSearch: function (e) {
+            e.preventDefault();
+            var page = Number($('#goText').val());
+            if (page && page<=this.totalPages()) {
+                this.model.set('page', page);
+            } else {
+                FormplayerFrontend.trigger('showError', 'Enter valid Page number');
+            }
+        },
+        onClickPagelimit: function (e) {
+            e.preventDefault();
+            var rowCount = document.getElementById("itemsText").value;
+            this.limit = rowCount;
+            this.fetchUsers();
+            this.model.set('page', 1);
         },
     });
 

@@ -96,8 +96,30 @@
             </a>
           </li>
           <% } %>
-          <% for (i = startPage-1; i < endPage; i++) { %>
-          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
+          <% if (pageCount <= 5) { %>
+            <% for (i = startPage-1; i < endPage; i++) { %>
+              <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
+            <% } %>
+          <% } else { %>
+            <% if (startPage <= 3) { %>
+              <% for (i = 0; i < startPage; i++) { %>
+                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i+1 %></a></li>
+              <% } %>
+            <% } else { %>
+                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="0">{% trans "1" %}</a></li>
+                <li class="page-item"><a class="paginate-disabled">{% trans "..." %}</a></li>
+            <% } %>
+            <% for (i = startPage; i < endPage; i++) { %>
+              <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i+1 %></a></li>
+            <% } %>
+            <% if (endPage >= pageCount - 2) { %>
+              <% for (i = endPage + 1; i <= pageCount; i++) { %>
+                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i-1 %>"><%= i %></a></li>
+              <% } %>
+            <% } else { %>
+              <li class="page-item"><a class="paginate-disabled">{% trans "..." %}</a></li>
+              <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= pageCount-1 %>"><%= pageCount %></a></li>
+            <% } %>
           <% } %>
           <% if (currentPage < endPage - 1) { %>
           <li class="page-item" id="next-page">
@@ -129,6 +151,13 @@
               </a>
             </li>
             <% } %>
+            <span>{% trans "Go to page" %}</span>
+            <li>
+              <input type="text" size="4" class="page-item form-control pagination-form" placeholder="Page" id="goText">
+            </li>
+            <li>
+              <input type="button" class="btn btn-primary pagination-form" id="case-list-go-button" value="Go">
+            </li>
         </ul>
       </nav>
     </div>
