@@ -49,7 +49,7 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "received_on",
+        "field": "completed_time",
         "format": "%Y-%m"
       },
       {
