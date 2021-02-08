@@ -9,7 +9,7 @@ def access_authenticated_link(request, domain, link_id):
         if link.is_valid():
             response_data = {
                 'status': 'valid',
-                'data': link.data,
+                'data': link.get_data(),
             }
             return JsonResponse(response_data)
         else:
