@@ -39,15 +39,12 @@
         "display_name": "username",
         "datatype": "string",
         "expression": {
-          "type": "root_doc",
-          "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "meta",
-              "username"
-            ]
-          }
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "username"
+          ]
         }
       },
       {
@@ -56,15 +53,12 @@
         "display_name": "userID",
         "datatype": "string",
         "expression": {
-          "type": "root_doc",
-          "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "meta",
-              "userID"
-            ]
-          }
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
         }
       },
       {
@@ -96,13 +90,10 @@
         "display_name": "received_on",
         "datatype": "datetime",
         "expression": {
-          "type": "root_doc",
-          "expression": {
-            "type": "property_path",
-            "property_path": [
-              "received_on"
-            ]
-          }
+          "type": "property_path",
+          "property_path": [
+            "received_on"
+          ]
         }
       },
       {
@@ -111,15 +102,12 @@
         "display_name": "completed_time",
         "datatype": "datetime",
         "expression": {
-          "type": "root_doc",
-          "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "meta",
-              "timeEnd"
-            ]
-          }
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
         }
       },
       {
@@ -214,16 +202,13 @@
         "type": "related_doc",
         "related_doc_type": "CommCareUser",
         "doc_id_expression": {
-          "type": "root_doc",
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "meta",
-              "userID"
-            ]
-          }
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
         }
       }
     },
