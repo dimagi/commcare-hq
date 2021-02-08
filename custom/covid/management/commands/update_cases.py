@@ -12,10 +12,13 @@ class CaseUpdateCommand(BaseCommand):
         Override all methods that raise NotImplementedError.
     """
 
+    def __init__(self):
+        self.location = None
+
     def case_block(self):
         raise NotImplementedError()
 
-    def update_cases(self, domain, case_type, user_id, active_location):
+    def update_cases(self, domain, case_type, user_id):
         raise NotImplementedError()
 
     def find_case_ids_by_type(self, domain, case_type):
@@ -42,8 +45,8 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
-        location = options.get('location')
+        self.location = options.get('location')
 
         for domain in domains:
             print(f"Processing {domain}")
-            self.update_cases(domain, case_type, user_id, location)
+            self.update_cases(domain, case_type, user_id)

@@ -38,9 +38,9 @@ class Command(CaseUpdateCommand):
             update={"assignment_type": assignment_type},
         ).as_xml()).decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id, location):
+    def update_cases(self, domain, case_type, user_id):
         accessor = CaseAccessors(domain)
-        case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[location])
+        case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[self.location])
 
         case_blocks = []
         skip_count = 0
