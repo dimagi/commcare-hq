@@ -22,9 +22,15 @@ def handle_logout(sender, request, user, **kwargs):
 
 
 def handle_access_event(event_type, request, user_id):
-    ip_address = get_ip(request)
+    ip_address = ''
+    agent = ''
+    path = ''
+
+    if request:
+        ip_address = get_ip(request)
+        agent = request.META.get('HTTP_USER_AGENT', agent)
+        path = request.path
+
     timestamp = datetime.now()
-    agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
-    path = request.path
     UserAccessLog.objects.create(action=event_type, user_id=user_id, ip=ip_address,
         user_agent=agent, path=path, timestamp=timestamp)
