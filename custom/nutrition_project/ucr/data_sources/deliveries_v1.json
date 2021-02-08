@@ -180,7 +180,8 @@
               ]
             }
           }
-        }
+        },
+        "comment": "Picked from the mother case since child does not have residential status"
       },
       {
         "type": "expression",
