@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
     Application,
     AutoSelectCase,
     CaseIndex,
+    CaseSearchProperty,
     DetailColumn,
     FormActionCondition,
     LoadUpdateAction,
@@ -200,6 +201,10 @@ class AppFactory(object):
         case_module.search_config.command_label = {
             'en': 'Find a Mother',
         }
+        case_module.search_config.properties = [CaseSearchProperty(
+            name='name',
+            label={'en': 'Name of Mother'}
+        )]
         return factory
 
     @staticmethod
