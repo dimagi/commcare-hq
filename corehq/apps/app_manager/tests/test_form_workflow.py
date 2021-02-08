@@ -239,6 +239,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m2f0.post_form_workflow = WORKFLOW_PARENT_MODULE
 
+        #m3 = factory.new_shadow_module('shadow_module', m1, with_form=False)
+
         expected = """
         <partial>
             <stack>
