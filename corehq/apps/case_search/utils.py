@@ -54,10 +54,14 @@ class CaseSearchCriteria(object):
         return search_es
 
     def _assemble_optional_search_params(self):
+        self._add_include_closed()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_case_property_queries()
+
+    def _add_include_closed(self):
+        self.search_es = self.search_es.is_closed(False)
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
