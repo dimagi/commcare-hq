@@ -915,7 +915,7 @@ def _update_search_properties(module, search_properties, lang='en'):
     >>> search_properties = [
     ...     {'name': 'name', 'label': 'Name'},
     ...     {'name': 'dob'. 'label': 'Date of birth'}
-    ... ]  # Incoming search properties' labels are not dictionaries
+    ... ]  # Incoming search properties' labels/hints are not dictionaries
     >>> lang = 'en'
     >>> list(_update_search_properties(module, search_properties, lang)) == [
     ...     {'name': 'name', 'label': {'fr': 'Nom', 'en': 'Name'}},
@@ -931,12 +931,15 @@ def _update_search_properties(module, search_properties, lang='en'):
             label.update({lang: prop['label']})
         else:
             label = {lang: prop['label']}
+        hint = {lang: prop['hint']}
         ret = {
             'name': prop['name'],
             'label': label,
         }
         if prop['default_value']:
             ret['default_value'] = prop['default_value']
+        if prop['hint']:
+            ret['hint'] = hint
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
@@ -953,6 +956,8 @@ def _update_search_properties(module, search_properties, lang='en'):
 
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
+        elif prop.get('appearance', '') == 'daterange':
+            ret['input_'] = 'daterange'
 
         yield ret
 
