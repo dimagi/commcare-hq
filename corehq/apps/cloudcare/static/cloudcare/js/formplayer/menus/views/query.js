@@ -47,7 +47,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onRender: function () {
-            this.ui.valueDropdown.select2({
+            this.ui.valueDropdown.selectWoo({
                 allowClear: true,
                 placeholder: " ",   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
@@ -131,12 +131,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     if (choices) {
                         var $field = $($fields.get(i)),
                             value = parseInt(response.models[i].get('value'));
-                        $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
+                        $field.selectWoo('close');    // force close dropdown, the set below can interfere with this when clearing selection
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
                         });
-                        $field.trigger('change.select2');
+                        $field.trigger('change.selectWoo');
                     }
                 }
                 self.setStickyQueryInputs();
