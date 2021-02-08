@@ -17,32 +17,30 @@
       "month"
     ],
     "filters": [
-      [
-        {
-          "display": "Filter by FLW",
-          "slug": "flw_id",
-          "type": "dynamic_choice_list",
-          "field": "userID",
-          "choice_provider": {
-            "type": "location"
-          },
-          "ancestor_expression": {
-            "field": "supervisor_id",
-            "location_type": "supervisor"
-          },
-          "datatype": "string"
+      {
+        "display": "Filter by FLW",
+        "slug": "flw_id",
+        "type": "dynamic_choice_list",
+        "field": "userID",
+        "choice_provider": {
+          "type": "location"
         },
-        {
-          "display": "Filter by Supervisor",
-          "slug": "supervisor_id",
-          "type": "dynamic_choice_list",
+        "ancestor_expression": {
           "field": "supervisor_id",
-          "choice_provider": {
-            "type": "location"
-          },
-          "datatype": "string"
-        }
-      ]
+          "location_type": "supervisor"
+        },
+        "datatype": "string"
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string"
+      }
     ],
     "columns": [
       {
