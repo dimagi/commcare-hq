@@ -83,4 +83,5 @@ branches:
   - sr/cs-help2  # Sravan Feb 4
   - sr/daterange-webapps # Sravan Feb 4
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
+  - dependabot/pip/requirements/sentry-sdk-0.19.5 # Amit Feb 8
 submodules: {}
