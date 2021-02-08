@@ -303,7 +303,7 @@ class AbtExpressionSpec(JsonObject):
                             'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
                 elif warning_type == "not_selected" and form_value:
-                    value = spec.get("velue", "")
+                    value = spec.get("value", "")
                     if form_value and value not in form_value:
                         warning_question_data = partial if not spec.get('warning_question_root', False) else item
                         docs.append({

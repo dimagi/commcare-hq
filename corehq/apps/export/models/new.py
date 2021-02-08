@@ -40,7 +40,6 @@ from soil.progress import set_task_progress
 from corehq import feature_previews
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
-    get_case_properties,
 )
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
@@ -90,7 +89,10 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
-from corehq.apps.export.utils import is_occurrence_deleted
+from corehq.apps.export.utils import (
+    get_default_export_settings_for_domain,
+    is_occurrence_deleted,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -749,7 +751,7 @@ class ExportInstance(BlobMixin, Document):
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
 
-    # Whether to typset the cells in Excel 2007+ exports
+    # Whether to typeset the cells in Excel 2007+ exports
     format_data_in_excel = BooleanProperty(default=False)
 
     # Whether the export is de-identified
@@ -1120,10 +1122,19 @@ class CaseExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        return cls(
-            domain=schema.domain,
-            case_type=schema.case_type,
-        )
+        settings = get_default_export_settings_for_domain(schema.domain)
+        if settings is not None:
+            return cls(
+                domain=schema.domain,
+                case_type=schema.case_type,
+                export_format=settings.cases_filetype,
+                transform_dates=settings.cases_auto_convert,
+            )
+        else:
+            return cls(
+                domain=schema.domain,
+                case_type=schema.case_type,
+            )
 
     def get_filters(self):
         if self.filters:
@@ -1189,11 +1200,24 @@ class FormExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        return cls(
-            domain=schema.domain,
-            xmlns=schema.xmlns,
-            app_id=schema.app_id,
-        )
+        settings = get_default_export_settings_for_domain(schema.domain)
+        if settings is not None:
+            return cls(
+                domain=schema.domain,
+                xmlns=schema.xmlns,
+                app_id=schema.app_id,
+                export_format=settings.forms_filetype,
+                transform_dates=settings.forms_auto_convert,
+                format_data_in_excel=settings.forms_auto_format_cells,
+                include_errors=settings.forms_include_duplicates,
+                split_multiselects=settings.forms_expand_checkbox,
+            )
+        else:
+            return cls(
+                domain=schema.domain,
+                xmlns=schema.xmlns,
+                app_id=schema.app_id,
+            )
 
     def get_filters(self):
         if self.filters:

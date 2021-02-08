@@ -18,7 +18,7 @@ from corehq.apps.user_importer.validation import (
     BooleanColumnValidator)
 
 factory = Faker()
-factory.seed(1571040848)
+Faker.seed(1571040848)
 
 IsActiveValidator = BooleanColumnValidator('domain', 'is_active')
 IsAccountConfirmedValidator = BooleanColumnValidator('domain', 'is_account_confirmed')

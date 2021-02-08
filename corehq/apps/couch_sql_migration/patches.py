@@ -4,11 +4,13 @@ from contextlib import contextmanager
 
 from memoized import memoized
 
-import casexml.apps.case.xform as module
+import casexml.apps.case.xform as case_xform
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import has_case_id
 from couchforms.models import XFormInstance
 from dimagi.ext.jsonobject import DateTimeProperty
 
+import corehq.form_processor.parsers.ledgers.form as ledger_form
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.form_processor.backends.sql.update_strategy import PROPERTY_TYPE_MAPPING
 from corehq.form_processor.exceptions import MissingFormXml
@@ -25,6 +27,8 @@ def migration_patches():
             patch_XFormInstance_get_xml(), \
             patch_DateTimeProperty_wrap(), \
             patch_case_date_modified_fixer(), \
+            patch_illegal_ledger_case_id(), \
+            patch_ledger_balance_without_product(), \
             patch_kafka():
         yield
 
@@ -69,11 +73,8 @@ def patch_case_date_modified_fixer():
                     case_block["@date_modified"] = f"20{old[6:8]}-{old[:5]} {old[9:]}"
         return has_case
 
-    module.has_case_id = has_case_id_and_valid_date_modified
-    try:
+    with patch(case_xform, "has_case_id", has_case_id_and_valid_date_modified):
         yield
-    finally:
-        module.has_case_id = has_case_id
 
 
 @contextmanager
@@ -86,12 +87,8 @@ def patch_DateTimeProperty_wrap():
         return real_wrap(self, value)
 
     weird_utc_date = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)\+00:00Z$")
-    real_wrap = DateTimeProperty._wrap
-    DateTimeProperty._wrap = wrap
-    try:
+    with patch(DateTimeProperty, "_wrap", wrap) as real_wrap:
         yield
-    finally:
-        DateTimeProperty._wrap = real_wrap
 
 
 @contextmanager
@@ -110,15 +107,13 @@ def patch_XFormInstance_get_xml():
     if hasattr(XFormInstance, "_unsafe_get_xml"):
         # noop when already patched
         yield
-        return
-
-    XFormInstance._unsafe_get_xml = XFormInstance.get_xml
-    XFormInstance.get_xml = get_xml
-    try:
-        yield
-    finally:
-        XFormInstance.get_xml = XFormInstance._unsafe_get_xml
-        del XFormInstance._unsafe_get_xml
+    else:
+        with patch(XFormInstance, "get_xml", get_xml) as unsafe_get_xml:
+            XFormInstance._unsafe_get_xml = unsafe_get_xml
+            try:
+                yield
+            finally:
+                del XFormInstance._unsafe_get_xml
 
 
 @contextmanager
@@ -127,9 +122,40 @@ def patch_kafka():
         doc_id = change_meta.document_id
         log.debug("kafka not publishing doc_id=%s to %s", doc_id, topic)
 
-    send_change = ChangeProducer.send_change
-    ChangeProducer.send_change = drop_change
-    try:
+    with patch(ChangeProducer, "send_change", drop_change):
         yield
+
+
+@contextmanager
+def patch_illegal_ledger_case_id():
+    def get_helpers(*args, **kw):
+        try:
+            yield from real_get_helpers(*args, **kw)
+        except IllegalCaseId:
+            pass  # ignore transfer with missing src and dest case_id
+
+    method = "_get_transaction_helpers_from_transfer_instruction"
+    with patch(ledger_form, method, get_helpers) as real_get_helpers:
+        yield
+
+
+@contextmanager
+def patch_ledger_balance_without_product():
+    def get_helpers(ledger_instruction):
+        if not ledger_instruction.entry_id:
+            return
+        yield from real_get_helpers(ledger_instruction)
+
+    method = "_get_transaction_helpers_from_balance_instruction"
+    with patch(ledger_form, method, get_helpers) as real_get_helpers:
+        yield
+
+
+@contextmanager
+def patch(obj, attr, new_value):
+    old_value = getattr(obj, attr)
+    setattr(obj, attr, new_value)
+    try:
+        yield old_value
     finally:
-        ChangeProducer.send_change = send_change
+        setattr(obj, attr, old_value)

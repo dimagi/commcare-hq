@@ -11,6 +11,7 @@ from django.db import models
 
 import architect
 import six
+from django.db.models import Q
 from memoized import memoized
 
 from casexml.apps.case import const
@@ -21,6 +22,7 @@ from casexml.apps.phone.exceptions import (
     IncompatibleSyncLogType,
     MissingSyncLog,
 )
+from corehq import toggles
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -40,7 +42,7 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
-from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT
+from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT, NAMESPACE_OTHER
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 
@@ -59,10 +61,11 @@ class OTARestoreUser(object):
     Note: When adding methods to this user, you'll need to ensure that it is
     functional with both a CommCareUser and WebUser.
     """
-    def __init__(self, domain, couch_user, loadtest_factor=1):
+    def __init__(self, domain, couch_user, loadtest_factor=1, request_user=None):
         self.domain = domain
         self._loadtest_factor = loadtest_factor
         self._couch_user = couch_user
+        self.request_user = request_user  # user making the request
 
     @property
     def user_id(self):
@@ -99,6 +102,11 @@ class OTARestoreUser(object):
     @memoized
     def project(self):
         return Domain.get_by_name(self.domain)
+
+    @property
+    def request_user_id(self):
+        # can be None in tests
+        return self.request_user.user_id if self.request_user else None
 
     @property
     def locations(self):
@@ -271,6 +279,7 @@ class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
     domain = StringProperty()
     user_id = StringProperty()
+    request_user_id = StringProperty()  # ID of user making request
     build_id = StringProperty()  # only works with app-aware sync
     app_id = StringProperty()  # only works with app-aware sync
 
@@ -375,8 +384,36 @@ def delete_synclogs(current_synclog):
             app_id=current_synclog.app_id,
             date__lt=current_synclog.date
         ).delete()
+    elif current_synclog.user_id and current_synclog.is_formplayer:
+        query = SyncLogSQL.objects.filter(
+            user_id=current_synclog.user_id,
+            date__lt=current_synclog.date,
+        )
+        device_id_filter = Q(device_id=current_synclog.device_id)
+        if toggles.CLEAN_OLD_FORMPLAYER_SYNCS.enabled(current_synclog.user_id, NAMESPACE_OTHER):
+            # see comment in get_alt_device_id about the purpose of this short-lived code
+            alt_device_id = get_alt_device_id(current_synclog.device_id)
+            device_id_filter = device_id_filter | Q(device_id=alt_device_id)
+        query.filter(device_id_filter).delete()
     elif current_synclog.previous_log_id:
         SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
+
+
+def get_alt_device_id(device_id):
+    # this function and its usage can be deleted on or after March 31
+    # https://github.com/dimagi/formplayer/pull/808 changed the device_id format
+    # and this logic helps us purge both old and new format device_ids
+    try:
+        parts = device_id.split('*')
+        if len(parts) == 4:
+            return '*'.join([parts[0], parts[1].replace('.', '_'), parts[2], parts[3]])
+        else:
+            return device_id
+    # this is a short lived piece of code and an optimization
+    # and it's more important to us that it never causes an error
+    # than it is that it works
+    except Exception:
+        return device_id
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -405,6 +442,9 @@ def synclog_to_sql_object(synclog_json_object):
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
+            is_formplayer=synclog_json_object.is_formplayer,
+            case_count=synclog_json_object.case_count(),
+            request_user_id=synclog_json_object.request_user_id,
         )
     field_mapping = [
         ('previous_log_id', 'previous_synclog_id'),
@@ -440,6 +480,10 @@ class SyncLogSQL(models.Model):
     had_state_error = models.BooleanField(default=False)
     error_date = models.DateTimeField(null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
+
+    is_formplayer = models.BooleanField(null=True, db_index=True)
+    case_count = models.IntegerField(null=True)
+    request_user_id = models.CharField(max_length=255, null=True)
 
     def save(self, *args, **kwargs):
         super(SyncLogSQL, self).save(*args, **kwargs)
@@ -600,6 +644,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if self._purged_cases is None:
             self._purged_cases = set()
         return self._purged_cases
+
+    @property
+    def is_formplayer(self):
+        return self.device_id and self.device_id.startswith("WebAppsLogin")
 
     def case_count(self):
         return len(self.case_ids_on_phone)

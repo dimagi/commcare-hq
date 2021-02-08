@@ -2,48 +2,37 @@ import datetime
 import json
 from datetime import date
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
-from django.db.models import Sum
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseNotFound,
     HttpResponseRedirect,
-    JsonResponse,
 )
-from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
-from django.views.decorators.http import require_POST
+from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
-from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
-from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_unpaid_invoice_over_threshold,
 )
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
-from couchexport.export import Format
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
@@ -63,7 +52,6 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
 )
-from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     CreditLineError,
@@ -79,7 +67,6 @@ from corehq.apps.accounting.forms import (
     ChangeSubscriptionForm,
     CreateAdminForm,
     CreditForm,
-    EnterpriseSettingsForm,
     FeatureRateForm,
     HideInvoiceForm,
     InvoiceInfoForm,
@@ -111,7 +98,6 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     CreditAdjustment,
     CreditLine,
-    CustomerBillingRecord,
     CustomerInvoice,
     DefaultProductPlan,
     Invoice,
@@ -122,26 +108,16 @@ from corehq.apps.accounting.models import (
     Subscription,
     WireInvoice,
 )
-from corehq.apps.accounting.tasks import email_enterprise_report
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict,
     fmt_product_rate_dict,
-    get_customer_cards,
     has_subscription_already_ended,
     log_accounting_error,
-    quantize_accounting_decimal,
 )
 from corehq.apps.domain.decorators import (
-    login_and_domain_required,
     require_superuser,
 )
 from corehq.apps.domain.views.accounting import (
-    PAYMENT_ERROR_MESSAGES,
-    BillingStatementPdfView,
-    BulkStripePaymentView,
-    DomainAccountingSettings,
-    InvoiceStripePaymentView,
-    WireInvoiceView,
     DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -150,7 +126,6 @@ from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
 )
-from corehq.const import USER_DATE_FORMAT
 
 
 @require_superuser
@@ -1273,278 +1248,6 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
-def _get_account_or_404(request, domain):
-    account = BillingAccount.get_account_by_domain(domain)
-
-    if account is None:
-        raise Http404()
-
-    if not account.has_enterprise_admin(request.couch_user.username):
-        if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
-            raise Http404()
-
-    return account
-
-
-@always_allow_project_access
-@login_and_domain_required
-def enterprise_dashboard(request, domain):
-    account = _get_account_or_404(request, domain)
-
-    if not has_privilege(request, privileges.PROJECT_ACCESS):
-        return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
-
-    context = {
-        'account': account,
-        'domain': domain,
-        'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
-            EnterpriseReport.DOMAINS,
-            EnterpriseReport.WEB_USERS,
-            EnterpriseReport.MOBILE_USERS,
-            EnterpriseReport.FORM_SUBMISSIONS,
-        )],
-        'current_page': {
-            'page_name': _('Enterprise Dashboard'),
-            'title': _('Enterprise Dashboard'),
-        }
-    }
-    return render(request, "accounting/enterprise_dashboard.html", context)
-
-
-@login_and_domain_required
-def enterprise_dashboard_total(request, domain, slug):
-    account = _get_account_or_404(request, domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
-    return JsonResponse({'total': report.total})
-
-
-@login_and_domain_required
-def enterprise_dashboard_download(request, domain, slug, export_hash):
-    account = _get_account_or_404(request, domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
-
-    redis = get_redis_client()
-    content = redis.get(export_hash)
-
-    if content:
-        file = ContentFile(content)
-        response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
-        response['Content-Length'] = file.size
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
-        return response
-
-    return HttpResponseNotFound(_("That report was not found. Please remember that "
-                                  "download links expire after 24 hours."))
-
-
-@login_and_domain_required
-def enterprise_dashboard_email(request, domain, slug):
-    account = _get_account_or_404(request, domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
-    email_enterprise_report.delay(domain, slug, request.couch_user)
-    message = _("Generating {title} report, will email to {email} when complete.").format(**{
-        'title': report.title,
-        'email': request.couch_user.username,
-    })
-    return JsonResponse({'message': message})
-
-
-@login_and_domain_required
-def enterprise_settings(request, domain):
-    account = _get_account_or_404(request, domain)
-
-    if request.method == 'POST':
-        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
-    else:
-        form = EnterpriseSettingsForm(domain=domain, account=account)
-
-    context = {
-        'account': account,
-        'accounts_email': settings.ACCOUNTS_EMAIL,
-        'domain': domain,
-        'restrict_signup': request.POST.get('restrict_signup', account.restrict_signup),
-        'current_page': {
-            'title': _('Enterprise Settings'),
-            'page_name': _('Enterprise Settings'),
-        },
-        'settings_form': form,
-    }
-    return render(request, "accounting/enterprise_settings.html", context)
-
-
-@login_and_domain_required
-@require_POST
-def edit_enterprise_settings(request, domain):
-    account = _get_account_or_404(request, domain)
-    form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
-
-    if form.is_valid():
-        form.save(account)
-        messages.success(request, "Account successfully updated.")
-    else:
-        return enterprise_settings(request, domain)
-
-    return HttpResponseRedirect(reverse('enterprise_settings', args=[domain]))
-
-
-class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
-    template_name = 'domain/billing_statements.html'
-    urlname = 'enterprise_billing_statements'
-    page_title = ugettext_lazy("Billing Statements")
-
-    limit_text = ugettext_lazy("statements per page")
-    empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
-    loading_message = ugettext_lazy("Loading statements...")
-
-    @property
-    def stripe_cards(self):
-        return get_customer_cards(self.request.user.username, self.domain)
-
-    @property
-    def show_hidden(self):
-        if not self.request.user.is_superuser:
-            return False
-        return bool(self.request.POST.get('additionalData[show_hidden]'))
-
-    @property
-    def show_unpaid(self):
-        try:
-            return json.loads(self.request.POST.get('additionalData[show_unpaid]'))
-        except TypeError:
-            return False
-
-    @property
-    def invoices(self):
-        account = self.account or _get_account_or_404(self.request, self.request.domain)
-        invoices = CustomerInvoice.objects.filter(account=account)
-        if not self.show_hidden:
-            invoices = invoices.filter(is_hidden=False)
-        if self.show_unpaid:
-            invoices = invoices.filter(date_paid__exact=None)
-        return invoices.order_by('-date_start', '-date_end')
-
-    @property
-    def total(self):
-        return self.paginated_invoices.count
-
-    @property
-    @memoized
-    def paginated_invoices(self):
-        return Paginator(self.invoices, self.limit)
-
-    @property
-    def total_balance(self):
-        """
-        Returns the total balance of unpaid, unhidden invoices.
-        Doesn't take into account the view settings on the page.
-        """
-        account = self.account or _get_account_or_404(self.request, self.request.domain)
-        invoices = (CustomerInvoice.objects
-                    .filter(account=account)
-                    .filter(date_paid__exact=None)
-                    .filter(is_hidden=False))
-        return invoices.aggregate(
-            total_balance=Sum('balance')
-        ).get('total_balance') or 0.00
-
-    @property
-    def column_names(self):
-        return [
-            _("Statement No."),
-            _("Billing Period"),
-            _("Date Due"),
-            _("Payment Status"),
-            _("PDF"),
-        ]
-
-    @property
-    def page_context(self):
-        pagination_context = self.pagination_context
-        pagination_context.update({
-            'stripe_options': {
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                'stripe_cards': self.stripe_cards,
-            },
-            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
-            'payment_urls': {
-                'process_invoice_payment_url': reverse(
-                    InvoiceStripePaymentView.urlname,
-                    args=[self.domain],
-                ),
-                'process_bulk_payment_url': reverse(
-                    BulkStripePaymentView.urlname,
-                    args=[self.domain],
-                ),
-                'process_wire_invoice_url': reverse(
-                    WireInvoiceView.urlname,
-                    args=[self.domain],
-                ),
-            },
-            'total_balance': self.total_balance,
-            'show_plan': False
-        })
-        return pagination_context
-
-    @property
-    def can_pay_invoices(self):
-        return self.request.couch_user.is_domain_admin(self.domain)
-
-    @property
-    def paginated_list(self):
-        for invoice in self.paginated_invoices.page(self.page).object_list:
-            try:
-                last_billing_record = CustomerBillingRecord.objects.filter(
-                    invoice=invoice
-                ).latest('date_created')
-                if invoice.is_paid:
-                    payment_status = (_("Paid on %s.")
-                                      % invoice.date_paid.strftime(USER_DATE_FORMAT))
-                    payment_class = "label label-default"
-                else:
-                    payment_status = _("Not Paid")
-                    payment_class = "label label-danger"
-                date_due = (
-                    (invoice.date_due.strftime(USER_DATE_FORMAT)
-                     if not invoice.is_paid else _("Already Paid"))
-                    if invoice.date_due else _("None")
-                )
-                yield {
-                    'itemData': {
-                        'id': invoice.id,
-                        'invoice_number': invoice.invoice_number,
-                        'start': invoice.date_start.strftime(USER_DATE_FORMAT),
-                        'end': invoice.date_end.strftime(USER_DATE_FORMAT),
-                        'plan': None,
-                        'payment_status': payment_status,
-                        'payment_class': payment_class,
-                        'date_due': date_due,
-                        'pdfUrl': reverse(
-                            BillingStatementPdfView.urlname,
-                            args=[self.domain, last_billing_record.pdf_data_id]
-                        ),
-                        'canMakePayment': (not invoice.is_paid
-                                           and self.can_pay_invoices),
-                        'balance': "%s" % quantize_accounting_decimal(invoice.balance),
-                    },
-                    'template': 'statement-row-template',
-                }
-            except CustomerBillingRecord.DoesNotExist:
-                log_accounting_error(
-                    "An invoice was generated for %(invoice_id)d "
-                    "(domain: %(domain)s), but no billing record!" % {
-                        'invoice_id': invoice.id,
-                        'domain': self.domain,
-                    },
-                    show_stack_trace=True
-                )
-
-    def refresh_item(self, item_id):
-        pass
-
-    def post(self, *args, **kwargs):
-        return self.paginate_crud_response
-
-
 class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/trigger_accounting_tests.html'
     async_handlers = [
@@ -1555,7 +1258,6 @@ class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def trigger_form(self):
         raise NotImplementedError("please implement self.trigger_form")
-
 
     @property
     def page_url(self):

@@ -1,4 +1,4 @@
-hqDefine("accounting/js/enterprise_dashboard", [
+hqDefine("enterprise/js/enterprise_dashboard", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',

@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 import attr
 from couchdbkit import Database
 from couchdbkit.exceptions import ResourceNotFound
-from dateutil.parser import parser as parse_date
+from dateutil.parser import parse as parse_date
 from django.conf import settings
 from memoized import memoized
 
