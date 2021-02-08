@@ -74,7 +74,7 @@ branches:
   - jls/caseSearchItemsetFix # Jenny Feb 1
   - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
   - jls/fix-case-claim-session-var+jls/remove-case-claim-include-closed
-  - jls/remove-case-claim-include-closed # Jenny Feb 4
+  # - jls/remove-case-claim-include-closed # Jenny Feb 4
   - jls/fix-case-claim-session-var # Jenny Feb 2
   - smh/bulk-upload-web-users # Steph Feb 2
   - null-date-prefilter # MK Feb 3
