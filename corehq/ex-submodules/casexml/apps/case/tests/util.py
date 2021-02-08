@@ -32,7 +32,7 @@ class _RestoreCaseBlock(object):
         self.version = version
 
     def to_string(self):
-        return ElementTree.tostring(self.xml_element)
+        return ElementTree.tostring(self.xml_element, encoding='utf-8')
 
     def get_case_id(self):
         if self.version == V1:
@@ -82,8 +82,8 @@ def check_xml_line_by_line(test_case, expected, actual):
     # this is totally wacky, but elementtree strips needless
     # whitespace that mindom will preserve in the original string
     parser = etree.XMLParser(remove_blank_text=True)
-    parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True).decode('utf-8')
-    parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True).decode('utf-8')
+    parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True, encoding='utf-8').decode('utf-8')
+    parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True, encoding='utf-8').decode('utf-8')
 
     if parsed_expected == parsed_actual:
         return
@@ -182,7 +182,7 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
 
     def check_block(case_block):
         case_block.set('xmlns', XMLNS)
-        case_block = _RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block)), version=version)
+        case_block = _RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block, encoding='utf-8')), version=version)
         case_id = case_block.get_case_id()
         n = 0
 
