@@ -384,9 +384,9 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.covid',
-    'custom.aaa',
     'custom.inddex',
     'custom.onse',
+    'custom.nutrition_project',
 
     'custom.ccqa',
 
@@ -1070,11 +1070,11 @@ USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 LOCAL_CUSTOM_DB_ROUTING = {}
 
 DEFAULT_COMMCARE_EXTENSIONS = [
-    "custom.aaa.commcare_extensions",
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
     "custom.succeed.commcare_extensions",
+    "custom.nutrition_project.commcare_extensions"
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1467,9 +1467,7 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
     DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
-CUSTOM_DB_ROUTING = {
-    "aaa": "aaa-data"
-}
+CUSTOM_DB_ROUTING = {}
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
 INDICATOR_CONFIG = {
@@ -1955,11 +1953,10 @@ DOMAIN_MODULE_MAP = {
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
-    'reach-test': 'custom.aaa',
-    'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
+    'india-nutrition-project': 'custom.nutrition_project',
 
     'crs-remind': 'custom.apps.crs_reports',
 
