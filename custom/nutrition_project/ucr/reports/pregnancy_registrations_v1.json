@@ -107,7 +107,7 @@
         },
         {
           "display": "Count",
-          "column_id": "count",
+          "column_id": "total_count",
           "type": "field",
           "field": "doc_id",
           "aggregation": "count"
