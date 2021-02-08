@@ -1,7 +1,7 @@
 Formplayer in HQ
 ================
 
-Theis documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`_ fits into the larger
+This documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`_ fits into the larger
 CommCare system, especially how it relates to CommCare HQ development. For details on building, runnning, and
 contributing to formplayer, see the formplayer repository.
 
