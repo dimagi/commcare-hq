@@ -85,7 +85,7 @@ class EntriesHelper(object):
         return datums_meta
 
     @staticmethod
-    def get_filter_xpath(module):   # jls
+    def get_filter_xpath(module):
         filter = module.case_details.short.filter
         if filter:
             xpath = '[%s]' % interpolate_xpath(filter)
@@ -101,7 +101,7 @@ class EntriesHelper(object):
         )
 
     @staticmethod
-    def get_parent_filter(relationship, parent_id):     # jls
+    def get_parent_filter(relationship, parent_id):
         if relationship is None:
             return ""
         else:
