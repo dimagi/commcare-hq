@@ -106,7 +106,7 @@ These sandbox db files effectively serve as a cache.
 
 What **does** cause a problem is if a user is associated with machine A, and then gets switched over to machine
 B, and then goes back to machine A. In that situation, any work done on machine A wouldn't get synced to machine B
-until the next time the user did a "sync" on machine B. Until then, they would be working form stale data. This is
+until the next time the user did a "sync" on machine B. Until then, they would be working from stale data. This is
 especially a problem for SMS Forms, where the user doesn't have an option to explicitly sync, and where if the
 underlying case database switches mid-form or between consecutive forms to a stale one, the user will see very
 unintuitive behavior. Formplayer currently doesn't have a concept of "this user has made a request handled by a
