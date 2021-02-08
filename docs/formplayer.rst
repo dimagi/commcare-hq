@@ -37,9 +37,8 @@ decisions are particularly useful for HQ devs who are new to fromplayer to under
 Sandboxes
 +++++++++
 Sharing the commcare-core code between mobile and formplayer allows us to keep CommCare Android and web apps
-essentially compatible. However, because commcare-core was first written for mobile and formplayer is a farly
-thin wrapper around it,
-paradigms that make more sense on mobile than on the web. Mobile is offline-first, so submitting
+essentially compatible. However, because commcare-core was first written for mobile some of the
+paradigms it uses make more sense on mobile than on the web. Mobile is offline-first, so submitting
 up newly entered data and syncing back down changes others have made are intentional steps designed not to block
 someone who was unable to reach the server for hours, days, or longer. That model makes very
 little sense on the always-online Web Apps, but the sync/restore process is still a core part of the working model.
