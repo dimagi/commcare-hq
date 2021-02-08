@@ -19,4 +19,4 @@ def access_authenticated_link(request, domain, link_id):
     except AuthenticatedLink.DoesNotExist:
         return JsonResponse({
             'status': 'not_authorized'
-        }, status=410)
+        }, status=401)
