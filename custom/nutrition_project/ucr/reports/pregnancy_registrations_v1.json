@@ -67,7 +67,7 @@
           "display": "Currently Pregnant",
           "slug": "currently_pregnant",
           "type": "choice_list",
-          "field": "closed",
+          "field": "currently_pregnant",
           "datatype": "string",
           "choices": [
             {
