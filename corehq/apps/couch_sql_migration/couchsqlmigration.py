@@ -229,7 +229,6 @@ class CouchSqlDomainMigrator:
                 process_form(doc)
 
     def _migrate_form(self, couch_form, case_ids, **kw):
-        set_local_domain_sql_backend_override(self.domain)
         form_id = couch_form.form_id
         self._migrate_form_and_associated_models(couch_form, **kw)
         self.case_diff_queue.update(case_ids, form_id)
@@ -238,6 +237,7 @@ class CouchSqlDomainMigrator:
         """
         Copies `couch_form` into a new sql form
         """
+        set_local_domain_sql_backend_override(self.domain)
         sql_form = None
         try:
             assert couch_form.domain == self.domain, couch_form.form_id
@@ -351,6 +351,7 @@ class CouchSqlDomainMigrator:
                 pool.spawn(copy_case, doc)
 
     def _copy_unprocessed_case(self, doc):
+        set_local_domain_sql_backend_override(self.domain)
         couch_case = CommCareCase.wrap(doc)
         log.debug('Processing doc: %(doc_type)s(%(_id)s)', doc)
         try:
