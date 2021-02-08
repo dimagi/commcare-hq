@@ -50,6 +50,7 @@ class CaseSearchCriteria(object):
         search_es = (CaseSearchES()
                      .domain(self.domain)
                      .case_type(self.case_type)
+                     .is_closed(False)
                      .size(CASE_SEARCH_MAX_RESULTS))
         return search_es
 
