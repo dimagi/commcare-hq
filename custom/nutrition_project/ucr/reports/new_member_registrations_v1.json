@@ -8,7 +8,7 @@
   "report_id": "static-new_member_registrations_v1",
   "data_source_table": "static-member_cases_v1",
   "config": {
-    "title": "New member registrations",
+    "title": "New member registrations per month (Static)",
     "description": "New member registrations per flw per month",
     "visible": true,
     "aggregation_columns": [

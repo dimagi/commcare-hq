@@ -7,7 +7,7 @@
   ],
   "config": {
     "table_id": "static-member_cases_v1",
-    "display_name": "Cases - Member V1",
+    "display_name": "Cases - Member V1 (Static)",
     "referenced_doc_type": "CommCareCase",
     "configured_filter": {
       "operator": "eq",
