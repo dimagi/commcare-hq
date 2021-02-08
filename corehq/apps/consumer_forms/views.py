@@ -10,7 +10,9 @@ def consumer_form_reference(request, domain, link_id):
     """
     link = get_object_or_404(AuthenticatedLink, domain=domain, link_id=link_id)
     # print(link.get_data())
-    return JsonResponse({'link': link.get_data()})
+    return render(request, template_name='consumer_forms/consumer_forms_reference.html', context={
+        'link_data': link.get_data()
+    })
 
 
 def consumer_form(request, domain, form_id):
