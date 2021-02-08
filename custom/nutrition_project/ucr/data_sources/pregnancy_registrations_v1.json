@@ -159,27 +159,6 @@
       },
       {
         "type": "expression",
-        "column_id": "closed",
-        "display_name": "closed",
-        "datatype": "string",
-        "expression": {
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "closed"
-          },
-          "type": "related_doc",
-          "related_doc_type": "CommCareCase",
-          "doc_id_expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "member_case_id_loaded"
-            ]
-          }
-        }
-      },
-      {
-        "type": "expression",
         "column_id": "form.final_edd_calc",
         "display_name": "form.final_edd_calc",
         "datatype": "string",
