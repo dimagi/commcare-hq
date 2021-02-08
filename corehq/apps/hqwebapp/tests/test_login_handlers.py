@@ -15,7 +15,7 @@ class TestLoginAccessHandler(TestCase):
         handle_access_event('some_event', request, 'test_user')
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
-        self.assertEqual(log_entry.user_agent, '')
+        self.assertIsNone(log_entry.user_agent)
 
     def test_missing_request_logs_empty_attributes(self):
         handle_access_event('some_event', None, 'test_user')
@@ -23,7 +23,7 @@ class TestLoginAccessHandler(TestCase):
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertIsNone(log_entry.ip)
         self.assertEqual(log_entry.path, '')
-        self.assertEqual(log_entry.user_agent, '')
+        self.assertIsNone(log_entry.user_agent)
 
 
 class TestHandleLogin(TestCase):
@@ -40,7 +40,7 @@ class TestHandleLogin(TestCase):
         self.assertEqual(log_entry.action, 'login')
         self.assertEqual(log_entry.user_id, 'test_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent, 'Mozilla')
+        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
         self.assertEqual(log_entry.path, '/login')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
 
@@ -59,7 +59,7 @@ class TestHandleLogout(TestCase):
         self.assertEqual(log_entry.action, 'logout')
         self.assertEqual(log_entry.user_id, 'test_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent, 'Mozilla')
+        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
         self.assertEqual(log_entry.path, '/logout')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
 
@@ -78,6 +78,6 @@ class TestHandleFailedLogin(TestCase):
         self.assertEqual(log_entry.action, 'failure')
         self.assertEqual(log_entry.user_id, 'fake_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent, 'Mozilla')
+        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
         self.assertEqual(log_entry.path, '/login')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')

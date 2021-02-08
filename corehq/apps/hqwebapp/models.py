@@ -53,6 +53,23 @@ class MaintenanceAlert(models.Model):
             return ''
 
 
+class UserAgent(models.Model):
+    MAX_LENGTH = 255
+
+    value = models.CharField(max_length=MAX_LENGTH, db_index=True)
+
+
+class UserAccessLogManager(models.Manager):
+    def create(self, **obj_data):
+        user_agent = obj_data.pop('user_agent', '')
+        if user_agent:
+            user_agent = user_agent[:UserAgent.MAX_LENGTH]
+            agent_ref, _ = UserAgent.objects.get_or_create(value=user_agent)
+            obj_data['user_agent'] = agent_ref
+
+        return super().create(**obj_data)
+
+
 @architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
 class UserAccessLog(models.Model):
     TYPE_LOGIN = 'login'
@@ -68,9 +85,12 @@ class UserAccessLog(models.Model):
     user_id = models.CharField(max_length=255, db_index=True)
     action = models.CharField(max_length=20, choices=ACTIONS)
     ip = models.GenericIPAddressField(blank=True, null=True)
-    user_agent = models.CharField(max_length=255, blank=True)
+    # user_agent = models.CharField(max_length=255, blank=True)
+    user_agent = models.ForeignKey(UserAgent, null=True, on_delete=models.PROTECT)
     path = models.CharField(max_length=255, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    objects = UserAccessLogManager()
 
     def __str__(self):
         return f'{self.timestamp}: {self.user_id} - {self.action}'
