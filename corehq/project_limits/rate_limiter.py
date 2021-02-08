@@ -50,6 +50,13 @@ class RateLimiter(object):
         for rate_counter, limit in self.get_rate_limits(*scope):
             rate_counter.increment((self.feature_key,) + scope, delta=delta)
 
+    def get_window_of_first_exceeded_limit(self, scope=None):
+        for rate_counter_key, current_rate, limit in self.iter_rates(scope):
+            if current_rate >= limit:
+                return rate_counter_key
+
+        return None
+
     def allow_usage(self, scope=None):
         return all(current_rate < limit
                    for rate_counter_key, current_rate, limit in self.iter_rates(scope))
@@ -193,6 +200,7 @@ class RateDefinition(object):
 
     def get_rate_limits(self):
         return [(rate_counter, limit) for limit, rate_counter in (
+            # order matters for returning the highest priority window
             (self.per_week, week_rate_counter),
             (self.per_day, day_rate_counter),
             (self.per_hour, hour_rate_counter),

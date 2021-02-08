@@ -38,8 +38,8 @@ class TestFormatFilename(SimpleTestCase):
     (b"Surveys > Survey Category 1 (Ex. Household) > Survey 1: 2016-12-23 2016-12-23.zip",
      "Surveys  Survey Category 1 (Ex. Household)  Survey 1 2016-12-23 2016-12-23.zip"),
 
-    ("ICDS CAS - AWW > ड्य\n ूलिस्ट > टीकों का रà\n ��कार्ड: 2016-05-31 2016-05-31.zip",
-     "ICDS CAS - AWW  ड्य ूलिस्ट  टीकों का रà ��कार्ड 2016-05-31 2016-05-31.zip"),
+    ("TEST DOMAIN - App > ड्य\n ूलिस्ट > टीकों का रà\n ��कार्ड: 2016-05-31 2016-05-31.zip",
+     "TEST DOMAIN - App  ड्य ूलिस्ट  टीकों का रà ��कार्ड 2016-05-31 2016-05-31.zip"),
 
 ], TestFormatFilename)
 def test_format_and_set_as_header(self, filename, expected_filename):

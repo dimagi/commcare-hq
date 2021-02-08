@@ -47,7 +47,6 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     update_hubspot_properties,
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
@@ -139,6 +138,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
+    get_referring_apps,
     get_indicator_adapter,
     has_report_builder_access,
     has_report_builder_add_on_privilege,
@@ -242,28 +242,11 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
-            'referring_apps': self.get_referring_apps(),
+            'referring_apps': get_referring_apps(self.domain, self.report_id),
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
         }
-
-    def get_referring_apps(self):
-        to_ret = []
-        apps = get_apps_in_domain(self.domain)
-        for app in apps:
-            app_url = reverse('view_app', args=[self.domain, app.id])
-            for module in app.get_report_modules():
-                module_url = reverse('view_module', args=[self.domain, app.id, module.unique_id])
-                for config in module.report_configs:
-                    if config.report_id == self.report_id:
-                        to_ret.append({
-                            "app_url": app_url,
-                            "app_name": app.name,
-                            "module_url": module_url,
-                            "module_name": module.default_name()
-                        })
-        return to_ret
 
     @property
     @memoized

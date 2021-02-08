@@ -205,10 +205,9 @@ def from_demo_user(form_json):
     except (KeyError, ValueError):
         return False
 
+
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
-
-IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
 
 
 def _submitted_by_demo_user(form_meta, domain):
@@ -240,7 +239,7 @@ def should_ignore_submission(request):
     the submissions should be ignored
     """
     form_json = None
-    if IGNORE_ALL_DEMO_USER_SUBMISSIONS:
+    if settings.IGNORE_ALL_DEMO_USER_SUBMISSIONS:
         instance, _ = couchforms.get_instance_and_attachment(request)
         try:
             form_json = convert_xform_to_json(instance)

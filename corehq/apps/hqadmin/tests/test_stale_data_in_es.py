@@ -82,7 +82,7 @@ class TestStaleDataInESSQL(TestCase):
             _fake_es_check = _make_fake_es_check(num_to_process)
             patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
             with mock.patch(f'{patch_path}.CHUNK_SIZE', 1),\
-                    mock.patch(f'{patch_path}.CaseBackend._yield_missing_in_es', _fake_es_check):
+                    mock.patch(f'{patch_path}.CaseHelper._yield_missing_in_es', _fake_es_check):
                 return self._stale_data_in_es(
                     'case', iteration_key=iteration_key, expect_exception=expect_exception
                 )
@@ -127,7 +127,7 @@ class TestStaleDataInESSQL(TestCase):
             _fake_es_check = _make_fake_es_check(num_to_process)
             patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
             with mock.patch(f'{patch_path}.CHUNK_SIZE', 1), \
-                    mock.patch(f'{patch_path}.FormBackend._yield_missing_in_es', _fake_es_check):
+                    mock.patch(f'{patch_path}.FormHelper._yield_missing_in_es', _fake_es_check):
                 return self._stale_data_in_es(
                     'form', iteration_key=iteration_key, expect_exception=expect_exception
                 )
@@ -267,7 +267,7 @@ class TestStaleDataInESSQL(TestCase):
         refresh = False
         for doc_id in doc_ids:
             try:
-                es_interface.delete_doc(index_info.index, index_info.type, doc_id)
+                es_interface.delete_doc(index_info.alias, index_info.type, doc_id)
             except elasticsearch.NotFoundError:
                 pass
             else:

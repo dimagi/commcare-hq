@@ -113,6 +113,7 @@ hqDefine('case_importer/js/import_history', [
             };
         }());
 
+        self.query = ko.observable('');
         self.goToPage = function (page) {
             if (self.state() === self.states.MISSING) {
                 // only show spinner on first fetch
@@ -122,6 +123,7 @@ hqDefine('case_importer/js/import_history', [
             $.get(initialPageData.reverse('case_importer_uploads'), {
                 page: page,
                 limit: self.itemsPerPage(),
+                query: self.query(),
             }).done(function (data) {
                 self.showPaginationSpinner(false);
                 self.state(self.states.SUCCESS);

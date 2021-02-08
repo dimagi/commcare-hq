@@ -341,6 +341,11 @@ hqDefine('app_manager/js/releases/releases', function () {
             return '';
         });
 
+        self.trackClick = function (message) {
+            hqImport('analytix/js/kissmetrix').track.event(message);
+            return true;
+        };
+
         self.onViewChanges = function (appIdOne, appIdTwo) {
             appDiff.renderDiff(appIdOne, appIdTwo);
         };

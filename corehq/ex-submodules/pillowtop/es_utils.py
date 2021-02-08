@@ -3,6 +3,7 @@ from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
+from corehq.pillows.mappings.utils import transform_for_es7
 from corehq.util.es.elasticsearch import TransportError
 from pillowtop.logger import pillow_logging
 
@@ -136,22 +137,27 @@ def set_index_normal_settings(es, index):
     return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 
-def create_index_and_set_settings_normal(es, index, metadata=None):
-    metadata = metadata or {}
-    es.indices.create(index=index, body=metadata)
-    set_index_normal_settings(es, index)
-
-
 def initialize_index_and_mapping(es, index_info):
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
         initialize_index(es, index_info)
-    initialize_mapping_if_necessary(es, index_info)
     assume_alias(es, index_info.index, index_info.alias)
 
 
 def initialize_index(es, index_info):
-    return create_index_and_set_settings_normal(es, index_info.index, index_info.meta)
+    index = index_info.index
+    mapping = index_info.mapping
+    mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+    meta = copy(index_info.meta)
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        mapping = transform_for_es7(mapping)
+        meta.update({'mappings': mapping})
+    else:
+        meta.update({'mappings': {index_info.type: mapping}})
+
+    pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
+    es.indices.create(index=index, body=meta)
+    set_index_normal_settings(es, index)
 
 
 def mapping_exists(es, index_info):
@@ -162,23 +168,6 @@ def mapping_exists(es, index_info):
             return es.indices.get_mapping(index_info.index, index_info.type)
     except TransportError:
         return {}
-
-
-def initialize_mapping_if_necessary(es, index_info):
-    """
-    Initializes the elasticsearch mapping for this pillow if it is not found.
-    """
-    es_interface = ElasticsearchInterface(es)
-    if not mapping_exists(es, index_info):
-        pillow_logging.info("Initializing elasticsearch mapping for [%s]" % index_info.type)
-        mapping = copy(index_info.mapping)
-        mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-        mapping_res = es_interface.put_mapping(index_info.type, mapping, index_info.index)
-        if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-            # API confirms OK, trust it.
-            pillow_logging.info("Mapping set: [%s] %s" % (index_info.type, mapping_res))
-    else:
-        pillow_logging.info("Elasticsearch mapping for [%s] was already present." % index_info.type)
 
 
 def assume_alias(es, index, alias):
@@ -192,12 +181,6 @@ def assume_alias(es, index, alias):
         for aliased_index in alias_indices:
             es.indices.delete_alias(aliased_index, alias)
     es.indices.put_alias(index, alias)
-
-
-def doc_exists(pillow, doc_id_or_dict):
-    index_info = get_index_info_from_pillow(pillow)
-    from corehq.elastic import doc_exists_in_es
-    return doc_exists_in_es(index_info, doc_id_or_dict)
 
 
 def get_index_info_from_pillow(pillow):

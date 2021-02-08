@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
@@ -10,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from captcha.fields import CaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
@@ -18,23 +20,21 @@ from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
+from corehq.util.metrics import metrics_counter
 
 LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
+
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("Email Address"), max_length=75,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
+        captcha = CaptchaField(label=_("Type the letters in the box"))
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
         return username
-
-    def clean_password(self):
-        from corehq.apps.hqwebapp.utils import decode_password
-        # decode password submitted from HQ login
-        # also pass in username to track replay attack
-        return decode_password(self.cleaned_data['password'], self.clean_username())
 
     def clean(self):
         username = self.cleaned_data.get('username')
@@ -45,16 +45,22 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if not password:
             raise ValidationError(_("Please enter a password."))
 
+        if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
+            if not self.cleaned_data.get('captcha'):
+                raise ValidationError(_("Please enter valid CAPTCHA"))
+
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
-            if user and user.is_locked_out() and user.supports_lockout():
+            if user and user.is_locked_out():
+                metrics_counter('commcare.auth.lockouts')
                 raise ValidationError(LOCKOUT_MESSAGE)
             else:
                 raise
         user = CouchUser.get_by_username(username)
-        if user and user.is_locked_out() and user.supports_lockout():
+        if user and user.is_locked_out():
+            metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
         return cleaned_data
 
@@ -293,14 +299,20 @@ class HQAuthenticationTokenForm(AuthenticationTokenForm):
         try:
             cleaned_data = super(HQAuthenticationTokenForm, self).clean()
         except ValidationError:
-            user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                token_failure=True)
             couch_user = CouchUser.get_by_username(self.user.username)
-            if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+            if couch_user and couch_user.is_locked_out():
+                metrics_counter('commcare.auth.token_lockout')
                 raise ValidationError(LOCKOUT_MESSAGE)
             else:
                 raise
+
+        # Handle the edge-case where the user enters a correct token
+        # after being locked out
         couch_user = CouchUser.get_by_username(self.user.username)
-        if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+        if couch_user and couch_user.is_locked_out():
+            metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
         return cleaned_data
 
@@ -311,13 +323,19 @@ class HQBackupTokenForm(BackupTokenForm):
         try:
             cleaned_data = super(HQBackupTokenForm, self).clean()
         except ValidationError:
-            user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                token_failure=True)
             couch_user = CouchUser.get_by_username(self.user.username)
-            if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+            if couch_user and couch_user.is_locked_out():
+                metrics_counter('commcare.auth.token_lockout')
                 raise ValidationError(LOCKOUT_MESSAGE)
             else:
                 raise
+
+        # Handle the edge-case where the user enters a correct token
+        # after being locked out
         couch_user = CouchUser.get_by_username(self.user.username)
-        if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+        if couch_user and couch_user.is_locked_out():
+            metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
         return cleaned_data

@@ -490,6 +490,9 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
 def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
     app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
+    if is_linked_app(app_copy):
+        app_copy = app_copy.convert_to_application()
+        app_copy.save()
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -673,7 +676,7 @@ def new_app(request, domain):
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Module", lang)
+        module = Module.new_module("Untitled Menu", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
         form_args = [module.id, form.id]

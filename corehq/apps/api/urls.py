@@ -35,7 +35,6 @@ from corehq.apps.fixtures.resources.v0_1 import (
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
-from corehq.apps.sms.resources import v0_5 as sms_v0_5
 
 API_LIST = (
     ((0, 3), (
@@ -76,8 +75,6 @@ API_LIST = (
         DomainForms,
         DomainCases,
         DomainUsernames,
-        sms_v0_5.UserSelfRegistrationResource,
-        sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCaseResource,
         v0_5.ODataFormResource,

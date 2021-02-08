@@ -45,7 +45,10 @@ def case_uploads(request, domain):
     except (TypeError, ValueError):
         page = 1
 
-    case_upload_records = get_case_upload_records(domain, request.couch_user, limit, skip=limit * (page - 1))
+    query = request.GET.get('query', '')
+
+    case_upload_records = get_case_upload_records(domain, request.couch_user,
+                                                  limit, skip=limit * (page - 1), query=query)
 
     with transaction.atomic():
         for case_upload_record in case_upload_records:

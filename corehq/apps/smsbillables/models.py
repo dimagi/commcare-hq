@@ -17,7 +17,7 @@ from corehq.apps.sms.phonenumbers_helper import (
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import (
     AmbiguousPrefixException,
-    RetryBillableTaskException
+    RetryBillableTaskException,
 )
 from corehq.apps.smsbillables.utils import (
     log_smsbillables_error,
@@ -279,7 +279,8 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
-        if self.direct_gateway_fee is None:
+        used_gateway_fee = self.gateway_fee is not None and self.gateway_fee.amount is not None
+        if used_gateway_fee:
             return self.multipart_count * self._single_gateway_charge
         else:
             return self._single_gateway_charge
@@ -365,22 +366,19 @@ class SmsBillable(models.Model):
                     direct_gateway_fee, multipart_count = \
                         cls.get_charge_details_through_api(backend_instance, backend_message_id)
 
-                    gateway_fee = SmsGatewayFee.get_by_criteria(
-                        backend_api_id,
-                        direction,
-                    )
                 else:
                     log_smsbillables_error(
-                        "Could not create gateway fee for message %s: no backend_message_id" % couch_id
+                        "Could not create direct gateway fee for message %s: no backend_message_id" % couch_id
                     )
-            else:
-                gateway_fee = SmsGatewayFee.get_by_criteria(
-                    backend_api_id,
-                    direction,
-                    backend_instance=backend_id,
-                    country_code=country_code,
-                    national_number=national_number,
-                )
+
+            # always grab the gateway fee even if using an api
+            gateway_fee = SmsGatewayFee.get_by_criteria(
+                backend_api_id,
+                direction,
+                backend_instance=backend_id,
+                country_code=country_code,
+                national_number=national_number,
+            )
             if gateway_fee:
                 conversion_rate = cls.get_conversion_rate(gateway_fee)
             else:
@@ -413,7 +411,7 @@ class SmsBillable(models.Model):
             'sending',
             'receiving',
         ] or price is None:
-            raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+            raise RetryBillableTaskException(f"backend_message_id={backend_message_id}")
 
         return abs(Decimal(price)), multipart_count
 

@@ -154,7 +154,6 @@ ES_SEARCH_TIMEOUT = 5
 if os.path.exists("extensions/icds/custom/icds"):
     icds_apps = [
         "custom.icds",
-        "custom.icds.data_management",
         "custom.icds_reports"
     ]
     for app in icds_apps:
@@ -163,3 +162,4 @@ if os.path.exists("extensions/icds/custom/icds"):
 
     if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
         COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
+        CUSTOM_DB_ROUTING["icds_reports"] = "icds-ucr-citus"

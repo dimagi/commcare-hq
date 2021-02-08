@@ -32,7 +32,7 @@ class UnderXMonthsTemplateSpec(SumWhenTemplateSpec):
     expression = "age_at_registration < ?"
 
 
-### Templates for ICDS
+# Templates for Use
 
 class AdultFemaleMigrantDeathSpec(SumWhenTemplateSpec):
     type = TypeProperty("adult_female_migrant_death")

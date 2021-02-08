@@ -21,8 +21,9 @@ class UnexpectedDeletedXForm(Exception):
 
 
 class BadSubmissionRequest(Exception):
-    def __init__(self, message):
+    def __init__(self, message, status_code=400):
         self.message = message
+        self.status_code = status_code
 
 
 class MultipartFilenameError(BadSubmissionRequest):
@@ -37,7 +38,7 @@ class MultipartFilenameError(BadSubmissionRequest):
 class MultipartEmptyPayload(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
-            'If you use multipart/form-data, the file %s'
+            'If you use multipart/form-data, the file %s '
             'must not have an empty payload\n' % MAGIC_PROPERTY
         )
 
@@ -45,3 +46,17 @@ class MultipartEmptyPayload(BadSubmissionRequest):
 class EmptyPayload(BadSubmissionRequest):
     def __init__(self):
         super().__init__('Post may not have an empty body\n')
+
+
+class UnprocessableFormSubmission(BadSubmissionRequest):
+    pass
+
+
+class InvalidSubmissionFileExtensionError(UnprocessableFormSubmission):
+    def __init__(self):
+        super().__init__(
+            "If you use multipart/form-data, please use xml file only for "
+            "submitting form xml. You may also do a normal (non-multipart) "
+            "with the xml submission as the request body instead\n",
+            422
+        )

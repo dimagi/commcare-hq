@@ -4,6 +4,10 @@
 
 {% requirejs_main "motech/js/connection_settings" %}
 
+{% block pagination_header %}
+  <h2>{% trans "Connection Settings" %}</h2>
+{% endblock %}
+
 {% block pagination_templates %}
   <script type="text/html" id="connection-settings-template">
     <td>

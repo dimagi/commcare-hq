@@ -27,6 +27,7 @@ from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .diffrule import ANY
+from .patches import migration_patches
 from .rebuildcase import rebuild_and_diff_cases
 from .retrydb import (
     couch_form_exists,
@@ -393,14 +394,18 @@ def diff_case_forms(couch_json, sql_json):
 
 
 def diff_form_state(form_id, *, in_couch=False):
-    in_couch = in_couch or couch_form_exists(form_id)
-    in_sql = sql_form_exists(form_id)
-    couch_miss = "missing"
-    if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
-        couch_miss = MISSING_BLOB_PRESENT
-        log.warning("couch form missing, blob present: %s", form_id)
-    old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
-    new = {"form_state": FORM_PRESENT if in_sql else "missing"}
+    if form_id is None:
+        old = {"form_state": "unknown"}
+        new = {"form_state": "unknown"}
+    else:
+        in_couch = in_couch or couch_form_exists(form_id)
+        in_sql = sql_form_exists(form_id)
+        couch_miss = "missing"
+        if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
+            couch_miss = MISSING_BLOB_PRESENT
+            log.warning("couch form missing, blob present: %s", form_id)
+        old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
+        new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
 
 
@@ -468,7 +473,6 @@ def find_form_ids_updating_case(case_id):
 
 @contextmanager
 def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
-    from .couchsqlmigration import migration_patches
     global _diff_state
     _diff_state = WorkerState(domain, no_action_case_forms, cutoff_date)
     try:

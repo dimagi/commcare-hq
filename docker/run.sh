@@ -12,8 +12,7 @@ function setup() {
 
     rm *.log || true
 
-    scripts/uninstall-requirements.sh
-    pip install -r requirements/test-requirements.txt
+    pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
 
     # compile pyc files
@@ -55,6 +54,7 @@ function run_tests() {
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+    [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
     delta=$((`date +%s` - $now))
 
     send_timing_metric_to_datadog "tests" $delta
@@ -111,8 +111,8 @@ function _run_tests() {
 
     if [ "$TEST" == "python-sharded-and-javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "coverage run manage.py test $@ $TESTS"
-        /vendor/bin/coverage run manage.py test "$@" $TESTS
+        echo "./manage.py test $@ $TESTS"
+        ./manage.py test "$@" $TESTS
 
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
@@ -121,8 +121,8 @@ function _run_tests() {
          grunt test "$@"
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "coverage run manage.py test $@ $TESTS"
-        /vendor/bin/coverage run manage.py test "$@" $TESTS
+        echo "./manage.py test $@ $TESTS"
+        ./manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &

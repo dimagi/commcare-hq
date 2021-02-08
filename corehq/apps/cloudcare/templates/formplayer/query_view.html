@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script type="text/template" id="query-view-list-template">
   <form>
@@ -8,7 +9,7 @@
       </tbody>
     </table>
     <button class="btn btn-default" type="submit" id="query-submit-button">
-      <div>Submit</div>
+      <div>{% trans "Submit" %}</div>
     </button>
   </form>
 </script>
@@ -18,6 +19,17 @@
     <div><%- text ? text : "" %></div>
   </td>
   <td class="col-sm-2">
-    <input type="text" class="query-field form-control">
+    <% if (input == "select1") { %>
+      <select class="query-field form-control">
+        <option value=""></option>
+        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
+          <option value="<%= i %>" <% if (value === i) { %>selected<% } %>>
+            <%- itemsetChoices[i] %>
+          </option>
+        <% } %>
+      <select>
+    <% } else { %>
+      <input type="text" class="query-field form-control" value="<%- value %>">
+    <% } %>
   </td>
 </script>

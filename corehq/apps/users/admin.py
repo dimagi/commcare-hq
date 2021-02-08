@@ -39,9 +39,9 @@ admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 
-class DomainPermissionsMirrorAdmin(admin.ModelAdmin):
-    list_display = ['source', 'mirror']
-    list_filter = ['source', 'mirror']
+class HQApiKeyAdmin(admin.ModelAdmin):
+    list_display = ['user', 'name', 'created', 'domain']
+    list_filter = ['created', 'domain']
 
 
-admin.site.register(DomainPermissionsMirror, DomainPermissionsMirrorAdmin)
+admin.site.register(HQApiKey, HQApiKeyAdmin)

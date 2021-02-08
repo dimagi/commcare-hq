@@ -5,15 +5,16 @@ from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
-from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import privileges
 
 from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.toggles import CUSTOM_DATA_FIELDS_PROFILES, REGEX_FIELD_VALIDATION
+from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -254,7 +255,7 @@ class CustomDataModelMixin(object):
 
     @property
     def show_profiles(self):
-        return self._show_profiles and CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain)
+        return self._show_profiles and domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
 
     @memoized
     def get_definition(self):

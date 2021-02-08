@@ -61,9 +61,20 @@ context.update({'options': options})
 
 and then use a single `{% initial_page_data 'thingOptions' %}` in your Django template.
 
-It's common to see little bits of inline JavaScript initializing variables and calling constructor functions. This isn't ideal because it makes it harder to reason about when code is executed, particularly in JavaScript-heavy areas.
-
 Note that the `initial_page_data` approach uses a global namespace (as does the inline JavaScript approach). That is a problem for another day. An error will be thrown if you accidentally register two variables with the same name with `initial_page_data`.
+
+#### Initial Page Data in Tests
+
+Since initial page data contains server-provided data, JavaScript tests relying on it may need to fake it. The `register` method allows setting initial page data in JavaScript instead of in a Django template:
+
+```
+hqDefine("my_app/js/spec/my_test", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
+    initialPageData.register("apps", [{
+        "_id": "my-app_id",
+    }])
+    ...
+});
+```
 
 ### Partials
 
@@ -131,6 +142,17 @@ $.get(initial_page_data.reverse('more_widget_info', widgetId)).done(function () 
 `registerurl` is essentially a special case of initial page data, and it gets messy when used in partials in the
 same way as initial page data. Encoding a url in a DOM element, in an attribute like `data-url`, is sometimes
 cleaner than using the `registerurl` template tag. See [partials](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/integration-patterns.md#partials) above for more detail.
+
+Like initial page data, `registerurl` can be used in JavaScript tests directly:
+
+```
+hqDefine("my_app/js/spec/my_test", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
+    initialPageData.registerUrl("apps", [{
+        "build_schema": "/a/---/data/export/build_full_schema/",
+    }])
+    ...
+});
+```
 
 
 ## Toggles and Feature Previews

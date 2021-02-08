@@ -508,6 +508,7 @@ class QueryPrompt(DisplayNode):
     key = StringField('@key')
     appearance = StringField('@appearance', required=False)
     input_ = StringField('@input', required=False)
+    default_value = StringField('@default', required=False)
 
     itemset = NodeField('itemset', Itemset)
 
@@ -529,6 +530,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    default_search = SimpleBooleanField("@default_search", "true", "false")
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -730,6 +732,8 @@ class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
+    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):

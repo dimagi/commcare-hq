@@ -53,15 +53,35 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
-  - jls/turn-off-analytics-logging # Jenny June 19
+  - jls/migrateCommtrackConfig-2 # Jenny Sept 27
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-  - bmb/celery-4.4.2  # Biyeun August 19
-  - fr/linked-domain-keywords   # Farid August 26
-  - sr/es7-reindex # Sravn Sept 2
   - fr/user-data-jit            # Farid September 2
-  - jls/collapsible-groups+jls/marionette-3
-  - jls/marionette-3 # Jenny Aug 27
-  - jls/collapsible-groups # Jenny Sept 4
-  - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
-  - kev/email-logging # Kevin Sept 10
+  - sr/case-reindex-staging # Sravan Oct 14
+  # - gh/improve-queueing-repeaters # Graham Oct 22
+  - sr/es-alias # Sravan Nov 18
+  - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
+  - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
+  - jls/web-apps-sticky-search-again # Jenny Jan 26
+  - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
+  - mk/remove-aaa # MK Jan 18
+  - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
+  - nh/reminders  # Norman Jan 26
+  - ap/fix-deactivated-users-not-showing-in-reports # Amit Jan 28
+  #- mjr/login_logging  # Matt Jan 28
+  - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
+  - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
+  - jls/caseSearchItemsetFix # Jenny Feb 1
+  - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
+  - jls/fix-case-claim-session-var+jls/remove-case-claim-include-closed
+  # - jls/remove-case-claim-include-closed # Jenny Feb 4
+  - jls/fix-case-claim-session-var # Jenny Feb 2
+  - smh/bulk-upload-web-users # Steph Feb 2
+  - null-date-prefilter # MK Feb 3
+  - ap/fix-header-tab-caching # Amit Feb 3
+  - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
+  - sr/cs-help2  # Sravan Feb 4
+  - sr/daterange-webapps # Sravan Feb 4
+  - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
+  - dependabot/pip/requirements/sentry-sdk-0.19.5 # Amit Feb 8
 submodules: {}

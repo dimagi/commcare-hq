@@ -3,10 +3,14 @@ from functools import wraps
 from typing import Callable, Optional
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 import attr
 from requests.structures import CaseInsensitiveDict
 
+from corehq.util.metrics import metrics_counter
+from corehq.util.urlsanitize.urlsanitize import sanitize_user_input_url, CannotResolveHost, InvalidURL, \
+    PossibleSSRFAttempt
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -18,6 +22,7 @@ from corehq.motech.utils import (
     pformat_json,
     unpack_request_args,
 )
+from corehq.util.view_utils import absolute_reverse
 
 
 @attr.s(frozen=True)
@@ -121,17 +126,18 @@ class Requests(object):
         self._session.close()
         self._session = None
 
-    def _send_request(self, method, *args, **kwargs):
+    def _send_request(self, method, url, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
+        sanitize_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
-            response = self._session.request(method, *args, **kwargs)
+            response = self._session.request(method, url, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
             with self.auth_manager.get_session() as session:
-                response = session.request(method, *args, **kwargs)
+                response = session.request(method, url, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response
@@ -170,19 +176,36 @@ class Requests(object):
         notify_exception(None, message, details)
 
     def notify_error(self, message, details=None):
+        from corehq.motech.views import ConnectionSettingsListView
+
         if not self.notify_addresses:
             return
         message_lines = [
             message,
-            f'Project space: {self.domain_name}',
-            f'Remote API base URL: {self.base_url}',
+            '',
+            _('Project space: {}').format(self.domain_name),
+            _('Remote API base URL: {}').format(self.base_url),
         ]
         if self.payload_id:
-            message_lines.append(f'Payload ID: {self.payload_id}')
+            message_lines.append(_('Payload ID: {}').format(self.payload_id))
         if details:
-            message_lines.extend(['', '', details])
+            message_lines.extend(['', details])
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[self.domain_name])
+        message_lines.extend([
+            '',
+            _('*Why am I getting this email?*'),
+            _('This address is configured in CommCare HQ as a notification '
+              'address for integration errors.'),
+            '',
+            _('*How do I unsubscribe?*'),
+            _('Open Connection Settings in CommCare HQ ({}) and remove your '
+              'email address from the "Addresses to send notifications" field '
+              'for remote connections. If necessary, please provide an '
+              'alternate address.').format(connection_settings_url),
+        ])
         send_mail_async.delay(
-            'MOTECH Error',
+            _('MOTECH Error'),
             '\r\n'.join(message_lines),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
@@ -232,10 +255,40 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     default_headers.update(headers)
     requests = Requests(
         domain,
-        base_url=None,
+        base_url=url,
         verify=verify,
         auth_manager=auth_manager,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
-    return requests.post(url, data=data, headers=default_headers)
+    try:
+        response = requests.post(None, data=data, headers=default_headers)
+    except Exception as err:
+        requests.notify_error(str(err))
+        raise
+    if not 200 <= response.status_code < 300:
+        message = f'HTTP status code {response.status_code}: {response.text}'
+        requests.notify_error(message)
+    return response
+
+
+def sanitize_user_input_url_for_repeaters(url, domain, src):
+    try:
+        sanitize_user_input_url(url)
+    except (CannotResolveHost, InvalidURL):
+        pass
+    except PossibleSSRFAttempt as e:
+        if settings.DEBUG and e.reason == 'is_loopback':
+            pass
+        else:
+            metrics_counter('commcare.repeaters.ssrf_attempt', tags={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason
+            })
+            notify_exception(None, 'Possible SSRF Attempt', details={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason,
+            })
+            raise

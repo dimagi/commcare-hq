@@ -17,7 +17,7 @@ from corehq.apps.case_importer.tracking.dbaccessors import (
     get_case_ids_for_case_upload,
     get_case_upload_records,
 )
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord
+from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta, CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CouchUser, WebUser
@@ -31,16 +31,32 @@ class DbaccessorsTest(TestCase):
         super(DbaccessorsTest, cls).setUpClass()
         cls.domain_obj = create_domain('test-case-importer-dbaccessors')
         cls.domain = cls.domain_obj.name
-        cls.user = WebUser.create(cls.domain, 'username', 'password', None, None)
+        cls.user = WebUser.create(cls.domain, 'username1', 'password', None, None)
+        cls.meta1 = CaseUploadFileMeta(
+            identifier="123",
+            filename="one.xlsx",
+            length=1000,
+        )
+        cls.meta1.save()
         cls.case_upload_1 = CaseUploadRecord(
             upload_id=UUID('7ca20e75-8ba3-4d0d-9c9c-66371e8895dc'),
             task_id=UUID('a2ebc913-11e6-4b6b-b909-355a863e0682'),
             domain=cls.domain,
+            comment='This is the first upload',
+            upload_file_meta=cls.meta1,
         )
+        cls.meta2 = CaseUploadFileMeta(
+            identifier="234",
+            filename="two.xlsx",
+            length=1500,
+        )
+        cls.meta2.save()
         cls.case_upload_2 = CaseUploadRecord(
             upload_id=UUID('63d07615-7f89-458e-863d-5f9b5f4f4b7b'),
             task_id=UUID('fe47f168-0632-40d9-b01a-79612e98298b'),
             domain=cls.domain,
+            comment='This is the second upload',
+            upload_file_meta=cls.meta2,
         )
         cls.case_upload_1.save()
         cls.case_upload_2.save()
@@ -49,6 +65,8 @@ class DbaccessorsTest(TestCase):
     def tearDownClass(cls):
         cls.case_upload_1.delete()
         cls.case_upload_2.delete()
+        cls.meta1.delete()
+        cls.meta2.delete()
         cls.domain_obj.delete()
         super(DbaccessorsTest, cls).tearDownClass()
 
@@ -69,6 +87,17 @@ class DbaccessorsTest(TestCase):
         self.assert_model_lists_equal(
             get_case_upload_records(self.domain, self.user, limit=1, skip=1),
             # skips latest, gets previous
+            [self.case_upload_1])
+
+    def test_get_case_uploads_by_query(self):
+        self.assert_model_lists_equal(
+            get_case_upload_records(self.domain, self.user, limit=10, query='second'),
+            [self.case_upload_2])
+        self.assert_model_lists_equal(
+            get_case_upload_records(self.domain, self.user, limit=10, query='SECOND'),
+            [self.case_upload_2])
+        self.assert_model_lists_equal(
+            get_case_upload_records(self.domain, self.user, limit=10, query='one'),
             [self.case_upload_1])
 
 

@@ -18,6 +18,8 @@ from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, 
 from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from memoized import memoized
+
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
@@ -140,7 +142,10 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address], logged_subevent.id)
+        metrics_counter('commcare.messaging.email.sent', tags={'domain': logged_event.domain})
+        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL,
+                              [email_address], logged_subevent.id,
+                              domain=logged_event.domain)
 
         email = Email(
             domain=logged_event.domain,

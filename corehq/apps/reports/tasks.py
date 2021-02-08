@@ -105,7 +105,7 @@ def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
     for domain, user_count in commcare_users_by_domain.items():
         metrics_gauge(metric_name, user_count, tags={
-            'domain': '_other' if domain is () else domain
+            'domain': '_other' if domain == () else domain
         }, multiprocess_mode='max')
 
 
@@ -142,7 +142,7 @@ def get_domains_to_update_es_filter():
     less_than_a_week_ago = filters.date_range('cp_last_updated', gte=last_week)
     not_updated = filters.missing('cp_last_updated')
     domains_submitted_today = (FormES().submitted(gte=datetime.utcnow() - timedelta(days=1))
-        .terms_aggregation('domain', 'domain').size(0).run().aggregations.domain.keys)
+        .terms_aggregation('domain.exact', 'domain').size(0).run().aggregations.domain.keys)
     return filters.OR(
         not_updated,
         more_than_a_week_ago,
@@ -370,28 +370,38 @@ def _get_export_properties(export):
     return properties
 
 
+def find_question_id(form, value):
+    if not isinstance(form, dict):
+        # Recursive calls should always give `form` a form value.
+        # However, https://dimagi-dev.atlassian.net/browse/SAAS-11326
+        # was caused by resized repeats, where empty string tokens were
+        # inserted rather than no element.
+        # This check can be removed when repeats handle resizing.
+        return None
+
+    for k, v in form.items():
+        if isinstance(v, dict):
+            ret = find_question_id(v, value)
+            if ret:
+                return [k] + ret
+        elif isinstance(v, list):
+            for repeat in v:
+                ret = find_question_id(repeat, value)
+                if ret:
+                    return [k] + ret
+        else:
+            if v == value:
+                return [k]
+
+    return None
+
+
 def _extract_form_attachment_info(form, properties):
     """
     This is a helper function for build_form_multimedia_zip.
     Return a dict containing information about the given form and its relevant
     attachments
     """
-    def find_question_id(form, value):
-        for k, v in form.items():
-            if isinstance(v, dict):
-                ret = find_question_id(v, value)
-                if ret:
-                    return [k] + ret
-            elif isinstance(v, list):
-                for repeat in v:
-                    ret = find_question_id(repeat, value)
-                    if ret:
-                        return [k] + ret
-            else:
-                if v == value:
-                    return [k]
-
-        return None
 
     unknown_number = 0
 

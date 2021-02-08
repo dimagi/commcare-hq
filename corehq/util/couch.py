@@ -305,7 +305,7 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
 
     def _iter_update(doc_ids, try_num):
         with IterDB(db, chunksize=chunksize) as iter_db:
-            for chunk in chunked(set(doc_ids), chunksize):
+            for chunk in chunked(doc_ids, chunksize):
                 for res in send_keys_to_couch(db, keys=chunk):
                     raw_doc = res.get('doc')
                     doc_id = res.get('id', None)

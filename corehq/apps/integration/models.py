@@ -1,4 +1,7 @@
 from django.db import models
+from django.utils.translation import ugettext_lazy
+from uuid import uuid4
+import json
 
 from memoized import memoized
 
@@ -14,10 +17,49 @@ class DialerSettings(models.Model):
 
 
 class GaenOtpServerSettings(models.Model):
+    SERVER_OPTIONS = (('NEARFORM', ugettext_lazy('NearForm OTP Server')),
+                      ('APHL', ugettext_lazy('APHL Exposure Notifications')),)
     domain = models.CharField(max_length=128, unique=True)
     is_enabled = models.BooleanField(default=False)
+    server_type = models.CharField(max_length=255, default='NEARFORM', choices=SERVER_OPTIONS)
     server_url = models.CharField(max_length=255)
     auth_token = models.CharField(max_length=255)
+
+    def get_property_map(self):
+        property_map = {
+            'test_date': 'testDate',
+            'test_type': 'testType',
+        }
+        if self.server_type == "NEARFORM":
+            property_map['phone_number'] = 'mobile'
+            property_map['onset_date'] = 'onsetDate'
+
+        elif self.server_type == "APHL":
+            property_map['phone_number'] = 'phone'
+            property_map['onset_date'] = 'symptomDate'
+            property_map['tz_offset'] = 'tzOffset'
+        return property_map
+
+    def get_post_params(self):
+        if self.server_type == "NEARFORM":
+            return {'jobId': str(uuid4()), }
+        return {}
+
+    def change_post_data_type(self, post_data):
+        if self.server_type == "APHL":
+            return json.dumps(post_data)
+        return post_data
+
+    def get_otp_request_headers(self):
+        headers = {}
+        if self.server_type == "NEARFORM":
+            headers = {"Authorization": "Bearer %s" % self.auth_token}
+
+        elif self.server_type == "APHL":
+            headers = {"x-api-key": "%s" % self.auth_token,
+                       "content-type": "application/json",
+                       "accept": "application/json"}
+        return headers
 
 
 class HmacCalloutSettings(models.Model):

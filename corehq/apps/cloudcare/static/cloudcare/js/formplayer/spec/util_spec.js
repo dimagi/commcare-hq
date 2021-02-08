@@ -1,7 +1,8 @@
-/* global Util */
 /* eslint-env mocha */
 
 describe('Util', function () {
+    var Util = hqImport("cloudcare/js/formplayer/utils/util");
+
     describe('#displayOptions', function () {
         beforeEach(function () {
             sinon.stub(Util, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });

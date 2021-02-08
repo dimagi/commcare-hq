@@ -11,7 +11,6 @@ hqDefine('users/js/edit_commcare_user', [
     'hqwebapp/js/knockout_bindings.ko',
     'hqwebapp/js/widgets',
     'registration/js/password',
-    'nic_compliance/js/encoder',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
@@ -42,16 +41,12 @@ hqDefine('users/js/edit_commcare_user', [
             type: 'POST',
             dataType: 'json',
             success: function (response, status, xhr, form) {
-                form.find('#user-password').html(response.formHTML);
+                $('#reset-password-form-container').html(response.formHTML);
                 if (response.status === "OK") {
                     alertUser.alert_user(gettext("Password changed successfully"), 'success');
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
                 } else {
                     var message = gettext('Password was not changed ');
-                    if (initialPageData.get('hide_password_feedback')) {
-                        message += gettext("Password Requirements: 1 special character, " +
-                            "1 number, 1 capital letter, minimum length of 8 characters.");
-                    }
                     alertUser.alert_user(message, 'danger');
                 }
             },

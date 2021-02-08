@@ -1,36 +1,3 @@
-"""
-    Toggles
-
-    Toggles, also known as feature flags, allow limiting access to a set of functionality.
-
-    Most toggles are configured by manually adding individual users or domains in the Feature Flags
-    admin UI. These are defined by adding a new `StaticToggle` in this file. See `PredictablyRandomToggle`
-    and `DynamicallyPredictablyRandomToggle` if you need a toggle to be defined for a random subset
-    of users.
-
-    Namespaces define the type of access granted. NAMESPACE_DOMAIN allows the toggle to be enabled
-    for individual project spaces. NAMESPACE_USER allows the toggle to be enabled for individual users,
-    with the functionality visible to only that user but on any project space they visit.
-    NAMESPACE_DOMAIN is preferred for most flags, because it can be confusing for different users
-    to experience different behavior. Domain-based flags are like a lightweight privilege that's
-    independent of a software plan. User-based flags are more like a lightweight permission that's
-    independent of user roles (and therefore also independent of domain).
-
-    Tags document the feature's expected audience, particularly services projects versus SaaS projects.
-    See descriptions below. Tags have no technical effect. When in doubt, use TAG_CUSTOM to limit
-    your toggle's support burden.
-
-    When adding a new toggle, define it near related toggles - this file is frequently edited,
-    so appending it to the end of the file invites merge conflicts.
-
-    To access your toggle:
-    - In python, StaticToggle has `enabled_for_request`, which takes care of detecting which namespace(s) to check,
-      and `enabled`, which requires the caller to specify the namespace.
-    - For python views, the `required_decorator` is useful.
-    - For python tests, the `flag_enabled` decorator is useful.
-    - In HTML, there's a `toggle_enabled` template tag.
-    - In JavaScript, the `hqwebapp/js/toggles` modules provides as `toggleEnabled` method.
-"""
 import hashlib
 import inspect
 import math
@@ -216,13 +183,20 @@ class StaticToggle(object):
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
             and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
+        ) or (
+            NAMESPACE_EMAIL_DOMAIN in self.namespaces
+            and hasattr(request, 'user')
+            and self.enabled(
+                request.user.email or request.user.username,
+                namespace=NAMESPACE_EMAIL_DOMAIN
+            )
         )
 
     def set(self, item, enabled, namespace=None):
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
-        set_toggle(self.slug, item, enabled, namespace)
+        return set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
         """
@@ -348,7 +322,7 @@ class PredictablyRandomToggle(StaticToggle):
             namespace = None  # because:
             # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
 
-        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_RANDOM_NAMESPACES}
         if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
             raise ValueError(
                 'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
@@ -413,8 +387,10 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_EMAIL_DOMAIN = 'email_domain'
 NAMESPACE_OTHER = 'other'
-ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN]
+ALL_RANDOM_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def any_toggle_enabled(*toggles):
@@ -714,6 +690,8 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+        "Feature still being fine tuned so should be used cautiously. "
+        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
@@ -762,6 +740,17 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
+    'ush_dont_close_patient_extensions',
+    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
+    Enabling this results in 'closing patient type cases will not close its contact type
+    extension cases'. Designed for specific USH domain use-case
+    """
+)
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
@@ -776,6 +765,17 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'Enable synchronous mobile searching and case claiming',
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+    'case_claim_autolaunch',
+    '''
+        Support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results"
+    ''',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -884,6 +884,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
     'Form linking workflow available on forms',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Form+Link+Workflow+Feature+Flag',
 )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
@@ -921,6 +922,16 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
     [NAMESPACE_DOMAIN],
     description="This allows referencing other questions in the form in a setvalue. "
                 "This may still cause issues if the other questions have not been calculated yet",
+)
+
+VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
+    'allow_bulk_form_actions',
+    "Allow bulk form actions in the Form Builder",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+    description="This shows Bulk Form Actions (mark all questions required, "
+                "set default values to matching case properties) in "
+                "the Form Builder's main dropdown menu.",
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -1109,6 +1120,16 @@ LEGACY_CHILD_MODULES = StaticToggle(
     )
 )
 
+NON_PARENT_MENU_SELECTION = StaticToggle(
+    'non_parent_menu_selection',
+    'Allow selecting of module of any case-type in select-parent workflow',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allow selecting of module of any case-type in select-parent workflow
+    """,
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1138,14 +1159,6 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
-    'mobile_worker_self_registration',
-    'UW: Allow mobile workers to self register. Only works in CommCare 2.44 and lower.',
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 MESSAGE_LOG_METADATA = StaticToggle(
@@ -1379,12 +1392,21 @@ VIEW_APP_CHANGES = StaticToggle(
     'Improved app changes view',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Viewing+App+Changes+between+versions",
 )
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
     "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
     "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+ACTIVE_COUCH_DOMAINS = StaticToggle(
+    'active_couch_domains',
+    "Domains that are still on the Couch DB backend which we consider most "
+    "active / important to ensure that data in ES is never stale.",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
 )
@@ -1487,16 +1509,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
                 "(regex) to validate custom user data, custom location data, "
                 "and/or custom product data fields.",
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
-)
-
-CUSTOM_DATA_FIELDS_PROFILES = StaticToggle(
-    "custom_data_fields_profiles",
-    "User field profiles",
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds support for saving a set of user fields and their values, "
-                "and applying that profile to individual users instead of specifying every field.",
-    help_link="https://confluence.dimagi.com/display/ccinternal/User+field+profiles",
 )
 
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
@@ -1942,4 +1954,70 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
+)
+
+CHANGE_FORM_LANGUAGE = StaticToggle(
+    'change_form_language',
+    'Allow user to change form language in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows the user to change the language of the form content while in the form itself in Web Apps
+    """
+)
+
+APP_ANALYTICS = StaticToggle(
+    'app_analytics',
+    'Allow user to use app analytics in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
+)
+
+DEFAULT_EXPORT_SETTINGS = StaticToggle(
+    'default_export_settings',
+    'Allow enterprise admin to set default export settings',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
+    """
+)
+
+ENTERPRISE_SSO = StaticToggle(
+    'enterprise_sso',
+    'Enable Enterprise SSO options for the users specified in this list.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+)
+
+BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
+    'blocked_email_domain_recipients',
+    'Block any outgoing email addresses that have an email domain which '
+    'match a domain in this list.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_EMAIL_DOMAIN],
+)
+
+BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
+    'blocked_domain_email_senders',
+    'Domains in this list are blocked from sending emails through our '
+    'messaging feature',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
+    'clean_old_formplayer_syncs',
+    'Delete old formplayer syncs during submission processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001
+)
+
+PRIME_FORMPLAYER_DBS = StaticToggle(
+    'prime_formplayer_dbs',
+    'COVID: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

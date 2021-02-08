@@ -50,7 +50,7 @@ fi
 status=0
 git diff-index --check --cached $against --
 if [ $? != 0 ]; then status=1; fi
-git diff --cached | flake8 --diff --show-source --config=.flake8
+git diff --cached -U0 | flake8 --diff --show-source --config=.flake8
 if [ $? != 0 ]; then status=1; fi
 
 if [ $status != 0 ]

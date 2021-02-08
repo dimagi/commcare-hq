@@ -18,6 +18,10 @@ DEBUG = True
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+
+# For Single Sign On (SSO) Implementations
+SAML2_DEBUG = False
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -62,6 +66,7 @@ LANGUAGES = (
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
     ('sw', 'Swahili'),
+    ('por', 'Portuguese'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -123,7 +128,6 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
-ES_INTERFACE_LOG_FILE = "%s/%s" % (FILEPATH, "es_interface.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -164,12 +168,17 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
+X_FRAME_OPTIONS = 'DENY'
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
+ADD_CAPTCHA_FIELD_TO_FORMS = False
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -244,6 +253,8 @@ HQ_APPS = (
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
+    'corehq.apps.enterprise',
+    'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
@@ -288,6 +299,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.smsforms',
+    'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.messaging',
     'corehq.messaging.scheduling',
@@ -313,7 +325,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
-    'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
@@ -346,6 +357,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.motech',
     'corehq.motech.dhis2',
+    'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
@@ -371,8 +383,10 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
+    'custom.covid',
     'custom.aaa',
     'custom.inddex',
+    'custom.onse',
 
     'custom.ccqa',
 
@@ -834,6 +848,10 @@ ES_SEARCH_TIMEOUT = 30
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER = {
+    # until we have clearer project-level checks on this, just expire the token every
+    # 15 minutes to match HIPAA constraints.
+    # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
     },
@@ -999,17 +1017,16 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+RULE_UPDATE_HOUR = 0
 
 DEFAULT_ODATA_FEED_LIMIT = 25
 
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
-    # "icds-cas.gov.in": 'icds/login.html',
     # "default": 'login_and_password/login.html',
 }
 
-ENABLE_ES_INTERFACE_LOGGING = False
 ES_SETTINGS = None
 ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
 ES_XFORM_DISABLE_ALL = False
@@ -1061,6 +1078,12 @@ DEFAULT_COMMCARE_EXTENSIONS = [
 ]
 COMMCARE_EXTENSIONS = []
 
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
+
+# to help in performance, avoid use of phone entries in an environment that does not need them
+# so HQ does not try to keep them up to date
+USE_PHONE_ENTRIES = True
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1103,7 +1126,7 @@ if callable(COMPRESS_OFFLINE):
 
 # These default values can't be overridden.
 # Should you someday need to do so, use the lambda/if callable pattern above
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 
@@ -1244,14 +1267,6 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'es_interface-handler': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': ES_INTERFACE_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1414,11 +1429,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        'es_interface': {
-            'handlers': ['es_interface-handler'],
-            'level': 'DEBUG',
+        'commcare_auth': {
+            'handlers': ['file'],
+            'level': 'ERROR',
             'propagate': False,
-        },
+        }
     }
 }
 
@@ -1453,8 +1468,7 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
 
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
 CUSTOM_DB_ROUTING = {
-    "aaa": "aaa-data",
-    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
+    "aaa": "aaa-data"
 }
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
@@ -1625,7 +1639,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
-    'corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
@@ -1852,6 +1865,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2020.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
@@ -1866,6 +1880,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2020.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
@@ -1950,6 +1965,7 @@ DOMAIN_MODULE_MAP = {
 
     'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
+    'onse-iss': 'custom.onse',
 
     # From DOMAIN_MODULE_CONFIG on production
     'test-pna': 'custom.intrahealth',
@@ -2074,3 +2090,7 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+# Disable Datadog trace startup logs by default
+# https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
+os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')

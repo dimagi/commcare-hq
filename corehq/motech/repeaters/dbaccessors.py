@@ -29,14 +29,14 @@ def get_cancelled_repeat_record_count(domain, repeater_id):
     return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
 
 
-def get_repeat_record_count(domain, repeater_id=None, state=None, last_checked_after=None):
+def get_repeat_record_count(domain, repeater_id=None, state=None):
     from .models import RepeatRecord
     kwargs = dict(
         include_docs=False,
         reduce=True,
         descending=True,
     )
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, last_checked_after))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
     result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
 
@@ -55,7 +55,7 @@ def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes
     return results['value'] if results else 0
 
 
-def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None, last_checked_after=None):
+def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
     kwargs = {}
 
     if repeater_id and not state:
@@ -70,10 +70,6 @@ def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None, last_
     elif not repeater_id and not state:
         kwargs['endkey'] = [domain, None]
         kwargs['startkey'] = [domain, None, {}]
-
-    if last_checked_after:
-        assert state, 'You must choose a state in order to query by last_checked'
-        kwargs['endkey'].append(json_format_datetime(last_checked_after))
 
     return kwargs
 
@@ -94,16 +90,31 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
 
-def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=None, chunk_size=1000):
+def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
     from .models import RepeatRecord
     kwargs = {
         'include_docs': True,
         'reduce': False,
         'descending': True,
     }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state,
-                                                   last_checked_after=since))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
+    for doc in paginate_view(
+            RepeatRecord.get_db(),
+            'repeaters/repeat_records',
+            chunk_size,
+            **kwargs):
+        yield RepeatRecord.wrap(doc['doc'])
+
+
+def iter_repeat_records_by_repeater(domain, repeater_id, chunk_size=1000):
+    from corehq.motech.repeaters.models import RepeatRecord
+    kwargs = {
+        'include_docs': True,
+        'reduce': False,
+        'descending': True,
+    }
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id))
     for doc in paginate_view(
             RepeatRecord.get_db(),
             'repeaters/repeat_records',

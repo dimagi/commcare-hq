@@ -30,7 +30,7 @@ class SupplyPointTest(TestCase):
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, sp.type)
         self.assertEqual(self.loc.location_id, sp.location_id)
         self.assertEqual(const.get_commtrack_user_id(TEST_DOMAIN), sp.user_id)
-        self.assertEqual(self.loc.group_id, sp.owner_id)
+        self.assertEqual(self.loc.location_id, sp.owner_id)
         self.assertFalse(sp.closed)
         self.assertTrue(len(sp.actions) > 0)
         for dateprop in ('opened_on', 'modified_on', 'server_modified_on'):

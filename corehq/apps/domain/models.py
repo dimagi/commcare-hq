@@ -1,10 +1,7 @@
-import time
 import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
-from importlib import import_module
-from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -32,7 +29,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     TimeProperty,
 )
-from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     get_safe_write_kwargs,
     iter_bulk_delete,
@@ -397,6 +393,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # Allowed number of case updates or closes from automatic update rules in the daily rule run.
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
+
+    # Time to run auto case update rules. Expected values are 0-23.
+    # If this value is None, the value in settings.RULE_UPDATE_HOUR is used.
+    auto_case_update_hour = IntegerProperty()
 
     # Allowed number of max OData feeds that this domain can create.
     # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used

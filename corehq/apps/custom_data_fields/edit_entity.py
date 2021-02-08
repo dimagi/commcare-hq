@@ -7,12 +7,13 @@ from django.core.validators import RegexValidator
 from django.forms.widgets import Select
 from django.urls import reverse
 from django.utils.translation import ugettext as _
+from corehq.apps.accounting.utils import domain_has_privilege
 
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from corehq import toggles
+from corehq import privileges
 
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
@@ -134,7 +135,7 @@ class CustomDataEditor(object):
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
-        if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
             profiles = self.model.get_profiles()
             if profiles:
                 attrs = {

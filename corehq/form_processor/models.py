@@ -98,6 +98,12 @@ class Attachment(IsImageMixin):
                 except IOError:
                     self.content_type = 'application/octet-stream'
 
+    def has_size(self):
+        if not hasattr(self.raw_content, 'size'):
+            return False
+
+        return self.raw_content.size is not None
+
     @property
     @memoized
     def content_length(self):
@@ -1602,6 +1608,19 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     def location(self):
         from corehq.apps.locations.models import SQLLocation
         return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
+
+    @property
+    def sql_location(self):
+        return self.location
+
+    @property
+    @memoized
+    def sql_product(self):
+        from corehq.apps.products.models import SQLProduct
+        try:
+            return SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
+        except SQLProduct.DoesNotExist:
+            return None
 
     @property
     def location_id(self):

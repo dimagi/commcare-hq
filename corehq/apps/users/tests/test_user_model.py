@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
+from unittest.mock import patch
 
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -20,6 +21,8 @@ from corehq.form_processor.utils import (
     get_simple_wrapped_form,
 )
 from corehq.util.test_utils import softer_assert
+
+from corehq.apps.users.models import MAX_LOGIN_ATTEMPTS
 
 
 class UserModelTest(TestCase):
@@ -48,6 +51,15 @@ class UserModelTest(TestCase):
         self.domain_obj.delete()
         super(UserModelTest, self).tearDown()
 
+    def create_commcare_user(self, username):
+        return CommCareUser.create(
+            domain=self.domain,
+            username=username,
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
+
     @run_with_all_backends
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
@@ -71,6 +83,11 @@ class UserModelTest(TestCase):
         CommCareUser.bulk_save([self.user])
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
+
+    def test_user_data_not_allowed_in_create(self):
+        message = "Do not access user_data directly, pass metadata argument to create."
+        with self.assertRaisesMessage(ValueError, message):
+            CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
 
     def test_metadata(self):
         metadata = self.user.metadata
@@ -160,6 +177,26 @@ class UserModelTest(TestCase):
 
         definition.delete()
         web_user.delete(deleted_by=None)
+
+    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
+    def test_commcare_user_is_locked_only_with_toggle(self, mock_lockout_enabled_for_domain):
+        # Web Users should always be locked out when they go beyond
+        # the the max login attempts,
+        # but Commcare Users need an additional domain toggle
+        commcare_user = self.create_commcare_user('test_user')
+        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
+        mock_lockout_enabled_for_domain.return_value = False
+
+        self.assertFalse(commcare_user.is_locked_out())
+
+    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
+    def test_commcare_user_should_be_locked_out(self, mock_lockout_enabled_for_domain):
+        # Make sure the we know the user should be locked, if not for the toggle
+        commcare_user = self.create_commcare_user('test_user')
+        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
+        mock_lockout_enabled_for_domain.return_value = False
+
+        self.assertTrue(commcare_user.should_be_locked_out())
 
 
 class UserDeviceTest(SimpleTestCase):

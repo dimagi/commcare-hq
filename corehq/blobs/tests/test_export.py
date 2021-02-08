@@ -135,8 +135,8 @@ class TestExtendingExport(TestCase):
             exporter = EXPORTERS['all_blobs'](self.domain_name)
             exporter.migrate(file_one.name, force=True)
             with tarfile.open(file_one.name, 'r:gz') as tgzfile:
-                last_three = set(m.key for m in self.blob_metas[-3:])
-                self.assertEqual(set(tgzfile.getnames()), last_three)
+                keys_in_file_one = set(m.key for m in self.blob_metas[-3:])
+                self.assertEqual(set(tgzfile.getnames()), keys_in_file_one)
 
             # Second export file extends first ...
             for blob in (b'foo', b'bar', b'baz'):
@@ -150,11 +150,11 @@ class TestExtendingExport(TestCase):
                 exporter = EXPORTERS['all_blobs'](self.domain_name)
                 exporter.migrate(
                     file_two.name,
-                    extends=[file_one.name], force=True,
+                    already_exported=keys_in_file_one, force=True,
                 )
                 with tarfile.open(file_two.name, 'r:gz') as tgzfile:
-                    last_three = set(m.key for m in self.blob_metas[-3:])
-                    self.assertEqual(set(tgzfile.getnames()), last_three)
+                    keys_in_file_two = set(m.key for m in self.blob_metas[-3:])
+                    self.assertEqual(set(tgzfile.getnames()), keys_in_file_two)
 
                 # Third export file extends first and second ...
                 for blob in (b'wibble', b'wobble', b'wubble'):
@@ -168,11 +168,11 @@ class TestExtendingExport(TestCase):
                     exporter = EXPORTERS['all_blobs'](self.domain_name)
                     exporter.migrate(
                         file_three.name,
-                        extends=[file_one.name, file_two.name], force=True,
+                        already_exported=keys_in_file_one | keys_in_file_two, force=True,
                     )
                     with tarfile.open(file_three.name, 'r:gz') as tgzfile:
-                        last_three = set(m.key for m in self.blob_metas[-3:])
-                        self.assertEqual(set(tgzfile.getnames()), last_three)
+                        keys_in_file_three = set(m.key for m in self.blob_metas[-3:])
+                        self.assertEqual(set(tgzfile.getnames()), keys_in_file_three)
 
 
 @skip('Takes a while, and uses as much drive space as there is RAM')

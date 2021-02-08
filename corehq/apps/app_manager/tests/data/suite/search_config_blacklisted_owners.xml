@@ -13,14 +13,15 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="item-list:moons" src="jr://fixture/item-list:moons"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
+             default_search="false"
              storage-instance="results"
              template="case">
         <data key="case_type" ref="'case'"/>
-        <data key="include_closed" ref="'False'"/>
         <data key="commcare_blacklisted_owner_ids" ref="instance('commcaresession')/session/context/userid"/>
         <prompt key="name">
           <display>

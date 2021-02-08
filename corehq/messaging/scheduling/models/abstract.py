@@ -1,6 +1,7 @@
 import jsonfield
 import uuid
 from memoized import memoized
+from django.conf import settings
 from django.db import models, transaction
 
 from corehq import toggles
@@ -32,7 +33,6 @@ from corehq.messaging.templating import (
     SimpleDictTemplateParam,
     CaseMessagingTemplateParam,
 )
-from corehq.messaging.util import use_phone_entries
 from django.utils.functional import cached_property
 
 
@@ -400,7 +400,7 @@ class Content(models.Model):
         two-way or one-way phone number, then it will try to get the two-way or
         one-way number from the user's user case if one exists.
         """
-        if use_phone_entries():
+        if settings.USE_PHONE_ENTRIES:
             phone_entry = get_two_way_number_for_recipient(recipient)
             if phone_entry:
                 return phone_entry

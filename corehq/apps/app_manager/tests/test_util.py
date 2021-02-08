@@ -176,6 +176,20 @@ class TestGlobalAppConfig(TestCase):
         with self.assertRaises(Http404):
             config.get_latest_app_version(build_profile_id='')
 
+    def test_latest_profile_serialize(self):
+        self.assertEqual(
+            self.latest_profile.to_json({self.app.get_id: self.app.name}),
+            {
+                'id': self.latest_profile.id,
+                'app_id': self.app.get_id,
+                'active': True,
+                'version': self.v2_build.version,
+                'build_profile_id': self.build_profile_id,
+                'app_name': 'foo',
+                'profile_name': 'English only'
+            }
+        )
+
     def _fresh_config(self, app_id):
         config = GlobalAppConfig.by_app_id(self.domain, app_id)
         config.app_prompt = 'on'

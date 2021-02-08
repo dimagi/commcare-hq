@@ -1,13 +1,17 @@
 from abc import ABCMeta, abstractmethod
 from functools import partial
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.translation import ugettext
 
 import mock
 
+from pillowtop.es_utils import initialize_index_and_mapping
+
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.filters import Choice
@@ -21,10 +25,16 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     StaticChoiceProvider,
     UserChoiceProvider,
 )
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 from corehq.apps.users.util import normalize_username
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.testing import sync_users_to_es
+from corehq.util.test_utils import flag_disabled, flag_enabled
+
 
 class StaticChoiceProviderTest(SimpleTestCase):
 
@@ -398,5 +408,101 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         self._test_get_choices_for_values(
             ['unknown', self.group._id, self.web_user._id, self.location.location_id,
              self.mobile_worker._id],
+            self.web_user,
+        )
+
+
+@es_test
+class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+    domain = 'user-meta-choice-provider'
+
+    @classmethod
+    def make_web_user(cls, email, domain=None, metadata=None):
+        domain = domain or cls.domain
+        user = WebUser.create(
+            domain=domain,
+            username=email,
+            password="*****",
+            created_by=None,
+            created_via=None,
+            metadata=metadata,
+        )
+        return user
+
+    @classmethod
+    def setUpClass(cls):
+        super(UserMetadataChoiceProviderTest, cls).setUpClass()
+        cls.elasticsearch = get_es_new()
+        initialize_index_and_mapping(cls.elasticsearch, USER_INDEX_INFO)
+        report = ReportConfiguration(domain=cls.domain)
+        cls.domain_obj = create_domain(cls.domain)
+
+        with sync_users_to_es():
+            cls.web_user = cls.make_web_user('ned@stark.com')
+            cls.users = [
+                cls.make_mobile_worker('stark',
+                    metadata={'sigil': 'direwolf', 'seat': 'Winterfell', 'login_as_user': 'arya@faceless.com'}),
+                cls.web_user,
+                cls.make_mobile_worker('lannister', metadata={'sigil': 'lion', 'seat': 'Casterly Rock'}),
+                cls.make_mobile_worker('targaryen', metadata={'sigil': 'dragon', 'false_sigil': 'direwolf'}),
+                # test that docs in other domains are filtered out
+                cls.make_mobile_worker('Sauron', metadata={'sigil': 'eye',
+                                       'seat': 'Mordor'}, domain='some-other-domain-lotr'),
+            ]
+        cls.elasticsearch.indices.refresh(USER_INDEX)
+
+        choices = [
+            SearchableChoice(
+                user.get_id, user.raw_username,
+                searchable_text=[
+                    user.username, user.last_name, user.first_name, user.metadata.get('login_as_user')])
+            for user in cls.users if user.is_member_of(cls.domain)
+        ]
+        choices.sort(key=lambda choice: choice.display)
+        cls.choice_provider = UserChoiceProvider(report, None)
+        cls.static_choice_provider = StaticChoiceProvider(choices)
+
+    @classmethod
+    def make_mobile_worker(cls, username, domain=None, metadata=None):
+        user = CommCareUser.create(
+            domain=domain or cls.domain,
+            username=normalize_username(username),
+            password="*****",
+            created_by=None,
+            created_via=None,
+            metadata=metadata,
+        )
+        return user
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.domain_obj.delete()
+        ensure_index_deleted(USER_INDEX)
+        super().tearDownClass()
+
+    @flag_enabled('RESTRICT_LOGIN_AS')
+    def test_query_search(self):
+        self._test_query(ChoiceQueryContext(query='ni', limit=10, page=0))
+
+    @flag_enabled('RESTRICT_LOGIN_AS')
+    def test_login_as_user(self):
+        self._test_query(ChoiceQueryContext(query='arya@faceless.com', offset=0))
+
+    @flag_disabled('RESTRICT_LOGIN_AS')
+    def test_not_login_as_user(self):
+        query_context = ChoiceQueryContext(query='arya@faceless.com', offset=0)
+        self.assertNotEqual(
+            self.choice_provider.query(query_context),
+            self.static_choice_provider.query(query_context)
+        )
+
+    @flag_disabled('RESTRICT_LOGIN_AS')
+    def test_disabled_query_search(self):
+        self._test_query(ChoiceQueryContext(query='targaryen', limit=10, page=0))
+
+    def test_get_choices_for_values(self):
+        self._test_get_choices_for_values(
+            ['unknown-user'] + [user._id for user in self.users],
             self.web_user,
         )

@@ -33,7 +33,7 @@ CASE_MAPPING_FRAGMENT = {
         "create": {
             'type': 'object',
             'dynamic': True,
-            'properties:': {
+            'properties': {
                 'case_type': {"type": "string", "index": "not_analyzed"},
                 'owner_id': {"type": "string", "index": "not_analyzed"},
                 'case_name': {"type": "string", "index": "not_analyzed"},
@@ -43,7 +43,7 @@ CASE_MAPPING_FRAGMENT = {
         "update": {
             'type': 'object',
             'dynamic': True,
-            'properties:': {
+            'properties': {
                 'case_type': {"type": "string", "index": "not_analyzed"},
                 'owner_id': {"type": "string", "index": "not_analyzed"},
                 'case_name': {"type": "string", "index": "not_analyzed"},

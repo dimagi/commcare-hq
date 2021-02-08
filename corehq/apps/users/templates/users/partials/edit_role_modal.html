@@ -262,13 +262,37 @@
                 </div>
               </div>
             {% endif %}
+            <div class="form-group">
+              <label class="col-sm-4 control-label">
+                {% trans "Login-As All Users" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="login-as-all-users-checkbox"
+                         data-bind="checked: permissions.login_as_all_users,
+                                    disable: !$root.allowEdit" />
+                  <label for="login-as-all-users-checkbox">
+                    {% trans "Allow the user to login as any mobile worker in Web Apps." %}
+                  </label>
+                </div>
+              </div>
+            </div>
             {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
               <div class="form-group">
               <label class="col-sm-4 control-label">
                 {% trans "Limit Login-As" %}
               </label>
               <div class="col-sm-8 controls">
-                <div class="form-check">
+                {# PLACEHOLDER WHEN login_as_all_users IS TRUE #}
+                <div class="form-check" data-bind="visible: permissions.login_as_all_users()">
+                  <input type="checkbox" disabled="disabled" />
+                  <label for="limited-login-as-checkbox">
+                    {% trans "Allow the user to login as only specified users in Web Apps." %}
+                  </label>
+                </div>
+                {# REAL CHECKBOX WHEN login_as_all_users IS FALSE #}
+                <div class="form-check" data-bind="visible: !permissions.login_as_all_users()">
                   <input type="checkbox"
                          id="limited-login-as-checkbox"
                          data-bind="checked: permissions.limited_login_as,

@@ -316,6 +316,10 @@ class ESQuery(object):
         es.es_query['query']['bool']['must'] = query
         return es
 
+    def enable_profiling(self):
+        self.es_query['profile'] = True
+        return self
+
     def add_query(self, new_query, clause):
         """
         Add a query to the current list of queries
@@ -368,6 +372,11 @@ class ESQuery(object):
             """
         self._legacy_fields = True
         return self.source(fields)
+
+    def ids_query(self, doc_ids):
+        return self.set_query(
+            queries.ids_query(doc_ids)
+        )
 
     def source(self, include, exclude=None):
         """

@@ -89,6 +89,10 @@ def search_string_query(search_string, default_fields=None):
     }
 
 
+def ids_query(doc_ids):
+    return {"ids": {"values": doc_ids}}
+
+
 def match(search_string, field, fuzziness="AUTO"):
     return {
         "match": {

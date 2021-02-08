@@ -510,7 +510,7 @@ query_param_consumers = [
     DateRangeParams('server_modified_on'),
     DateRangeParams('date_modified', 'modified_on'),
     DateRangeParams('server_date_modified', 'server_modified_on'),
-    DateRangeParams('indexed_on'),
+    DateRangeParams('indexed_on', 'inserted_at'),
 ]
 
 

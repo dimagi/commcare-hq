@@ -27,6 +27,10 @@ from .views import (
     test_httpdigest,
     undo_remove_web_user,
     verify_phone_number,
+    delete_domain_permission_mirror,
+    create_domain_permission_mirror,
+    download_web_users,
+    DownloadWebUsersStatusView,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -36,7 +40,6 @@ from .views.mobile.groups import (
 )
 from .views.mobile.users import (
     CommCareUsersLookup,
-    CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
     CreateCommCareUserModal,
@@ -91,7 +94,14 @@ urlpatterns = [
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
+    url(r'^web/download/$', download_web_users, name='download_web_users'),
+    url(r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        DownloadWebUsersStatusView.as_view(), name='download_web_users_status'),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
+    url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
+        name='delete_domain_permission_mirror'),
+    url(r'^enterprise/create_domain_permission_mirror/$', create_domain_permission_mirror,
+        name='create_domain_permission_mirror'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
@@ -146,8 +156,6 @@ urlpatterns = [
         name=CreateCommCareUserModal.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
-    url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
-        name=CommCareUserSelfRegistrationView.urlname),
     url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname),
 ] + [

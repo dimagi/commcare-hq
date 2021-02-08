@@ -15,6 +15,11 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
     CaseProperty
 )
+from corehq.apps.integration.models import (
+    DialerSettings,
+    GaenOtpServerSettings,
+    HmacCalloutSettings,
+)
 from corehq.apps.fixtures.dbaccessors import (
     delete_fixture_items_for_data_type,
     get_fixture_data_type_by_tag,
@@ -26,12 +31,16 @@ from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
+    MODEL_KEYWORD,
     MODEL_LOCATION_DATA,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
     MODEL_REPORT,
     MODEL_ROLES,
     MODEL_DATA_DICTIONARY,
+    MODEL_DIALER_SETTINGS,
+    MODEL_OTP_SETTINGS,
+    MODEL_HMAC_CALLOUT_SETTINGS,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
@@ -44,6 +53,12 @@ from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
 from corehq.apps.linked_domain.local_accessors import \
     get_data_dictionary as local_get_data_dictionary
+from corehq.apps.linked_domain.local_accessors import \
+    get_dialer_settings as local_get_dialer_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_otp_settings as local_get_otp_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_hmac_callout_settings as local_get_hmac_callout_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -56,7 +71,14 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
 from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
+from corehq.apps.linked_domain.remote_accessors import \
+    get_dialer_settings as remote_get_dialer_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_otp_settings as remote_get_otp_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_hmac_callout_settings as remote_get_hmac_callout_settings
 from corehq.apps.linked_domain.ucr import update_linked_ucr
+from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.util import (
@@ -79,6 +101,10 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_CASE_SEARCH: update_case_search_config,
         MODEL_REPORT: update_linked_ucr,
         MODEL_DATA_DICTIONARY: update_data_dictionary,
+        MODEL_DIALER_SETTINGS: update_dialer_settings,
+        MODEL_OTP_SETTINGS: update_otp_settings,
+        MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
+        MODEL_KEYWORD: update_keyword,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -268,6 +294,53 @@ def update_data_dictionary(domain_link):
             case_property_obj.data_type = case_property_desc['data_type']
             case_property_obj.group = case_property_desc['group']
             case_property_obj.save()
+
+
+def update_dialer_settings(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_dialer_settings(domain_link)
+    else:
+        master_results = local_get_dialer_settings(domain_link.master_domain)
+
+    model, created = DialerSettings.objects.get_or_create(domain=domain_link.linked_domain)
+
+    model.domain = domain_link.linked_domain
+    model.aws_instance_id = master_results['aws_instance_id']
+    model.is_enabled = master_results['is_enabled']
+    model.dialer_page_header = master_results['dialer_page_header']
+    model.dialer_page_subheader = master_results['dialer_page_subheader']
+    model.save()
+
+
+def update_otp_settings(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_otp_settings(domain_link)
+    else:
+        master_results = local_get_otp_settings(domain_link.master_domain)
+
+    model, created = GaenOtpServerSettings.objects.get_or_create(domain=domain_link.linked_domain)
+
+    model.domain = domain_link.linked_domain
+    model.is_enabled = master_results['is_enabled']
+    model.server_url = master_results['server_url']
+    model.auth_token = master_results['auth_token']
+    model.save()
+
+
+def update_hmac_callout_settings(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_hmac_callout_settings(domain_link)
+    else:
+        master_results = local_get_hmac_callout_settings(domain_link.master_domain)
+
+    model, created = HmacCalloutSettings.objects.get_or_create(domain=domain_link.linked_domain)
+
+    model.domain = domain_link.linked_domain
+    model.destination_url = master_results['destination_url']
+    model.is_enabled = master_results['is_enabled']
+    model.api_key = master_results['api_key']
+    model.api_secret = master_results['api_secret']
+    model.save()
 
 
 def _convert_reports_permissions(domain_link, master_results):

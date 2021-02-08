@@ -23,6 +23,5 @@ from .repeaters import (
     drop_repeater,
     pause_repeater,
     resume_repeater,
-    test_repeater,
 )
 # pylint: enable=unused-import,F401

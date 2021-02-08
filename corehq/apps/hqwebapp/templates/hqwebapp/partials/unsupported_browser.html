@@ -1,0 +1,18 @@
+{% load i18n %}
+
+<div id="unsupported-browser"
+        class="alert alert-danger hide">
+    <p>
+    <i class="fa fa-warning-sign"></i>
+    <strong>
+        {% trans 'Your browser is unsupported, please consider another option'%}
+    </strong>
+    </p>
+    <p>
+    {% blocktrans %}
+        We recommend
+        <a href="https://www.google.com/chrome">Chrome</a>
+        or <a href="http://www.mozilla.org/">Firefox</a>.
+    {% endblocktrans %}
+    </p>
+</div>

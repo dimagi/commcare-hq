@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.blobs import get_blob_db
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
     FixtureDataType, FixtureTypeField,
@@ -74,6 +75,13 @@ class OtaFixtureTest(TestCase):
 
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
+
+    def test_skip_fixture(self):
+        device = MockDevice(self.domain, self.restore_user)
+        restore = device.sync().payload.decode('utf-8')
+        self.assertIn('<fixture ', restore)
+        restore_without_fixture = device.sync(skip_fixtures=True).payload.decode('utf-8')
+        self.assertNotIn('<fixture ', restore_without_fixture)
 
 
 @use_sql_backend

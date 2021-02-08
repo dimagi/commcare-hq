@@ -151,6 +151,7 @@ class Permissions(DocumentSchema):
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
+    login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
 
@@ -1111,6 +1112,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.username.endswith('@dimagi.com')
 
     def is_locked_out(self):
+        return self.supports_lockout() and self.should_be_locked_out()
+
+    def should_be_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
@@ -1504,6 +1508,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
+        if 'user_data' in kwargs:
+            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         metadata = metadata or {}
         metadata.update({'commcare_project': domain})
         couch_user.update_metadata(metadata)
@@ -1612,7 +1618,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def can_login_as(self, domain):
         return (
-            self.has_permission(domain, 'edit_commcare_users')
+            self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
 
@@ -1825,6 +1831,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
         # metadata can't be set until domain is present
+        if 'user_data' in kwargs:
+            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         commcare_user.update_metadata(metadata or {})
 
         if location:
@@ -1850,11 +1858,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_ota_restore_user(self):
+    def to_ota_restore_user(self, request_user=None):
         return OTARestoreCommCareUser(
             self.domain,
             self,
             loadtest_factor=self.loadtest_factor or 1,
+            request_user=request_user,
         )
 
     def _get_form_ids(self):
@@ -2088,7 +2097,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.update_metadata({
             'commcare_primary_case_sharing_id':
-            location.group_id
+            location.location_id
         })
 
         self.update_fixture_status(UserFixtureType.LOCATION)
@@ -2462,10 +2471,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_web_user(self):
         return True
 
-    def to_ota_restore_user(self, domain):
+    def to_ota_restore_user(self, domain, request_user=None):
         return OTARestoreWebUser(
             domain,
             self,
+            request_user=request_user
         )
 
     def get_email(self):
@@ -2748,6 +2758,19 @@ class Invitation(models.Model):
                                     cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL,
                                     messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
+
+    def get_role_name(self):
+        if self.role:
+            if self.role == 'admin':
+                return self.role
+            else:
+                role_id = self.role[len('user-role:'):]
+                try:
+                    return UserRole.get(role_id).name
+                except ResourceNotFound:
+                    return _('Unknown Role')
+        else:
+            return None
 
 
 class DomainRemovalRecord(DeleteRecord):
@@ -3055,6 +3078,7 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+    domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
 
     class Meta(object):
@@ -3079,4 +3103,6 @@ class HQApiKey(models.Model):
                 return UserRole.get(self.role_id)
             except ResourceNotFound:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+        elif self.domain:
+            return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
         return None

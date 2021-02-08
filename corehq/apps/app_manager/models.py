@@ -139,7 +139,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xform import validate_xform
-from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath
+from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath, CaseClaimXpath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
@@ -2033,6 +2033,28 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
 
+    def overwrite_from_module_detail(self, src_module_detail_type, attr_dict):
+        """
+        This method is used to overwrite configurations present
+        in attr_dict(column, filter, and other_configurations)
+        from source module to current object.
+        """
+        case_tile_configuration_list = [
+            'use_case_tiles',
+            'persist_tile_on_forms',
+            'persistent_case_tile_from_module',
+            'pull_down_tile',
+            'persist_case_context',
+            'persistent_case_context_xml',
+        ]
+        for k, v in attr_dict.items():
+            if v:
+                if k == "case_tile_configuration":
+                    for ele in case_tile_configuration_list:
+                        setattr(self, ele, getattr(src_module_detail_type, ele))
+                else:
+                    setattr(self, k, getattr(src_module_detail_type, k))
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
@@ -2065,6 +2087,7 @@ class CaseSearchProperty(DocumentSchema):
     label = DictProperty()
     appearance = StringProperty()
     input_ = StringProperty()
+    default_value = StringProperty()
 
     itemset = SchemaProperty(Itemset)
 
@@ -2079,13 +2102,28 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
+    session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
+    again_label = DictProperty(default={'en': 'Search Again'})
     properties = SchemaListProperty(CaseSearchProperty)
-    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
+    default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
+    default_relevant = BooleanProperty(default=True)
+    additional_relevant = StringProperty()
+    search_filter = StringProperty()
     search_button_display_condition = StringProperty()
-    include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+
+    def get_relevant(self):
+        relevant = self.additional_relevant or ""
+        if self.default_relevant:
+            default_condition = CaseClaimXpath(self.session_var).default_relevant()
+            if relevant:
+                relevant = f"({default_condition}) and ({relevant})"
+            else:
+                relevant = default_condition
+        return relevant
 
 
 class ParentSelect(DocumentSchema):
@@ -2421,7 +2459,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
             )]
         )
         module = cls(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -2924,7 +2962,7 @@ class AdvancedModule(ModuleBase):
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -3716,7 +3754,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             )]
         )
         module = ShadowModule(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
@@ -4557,12 +4595,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             return self.langs
 
     def convert_to_application(self):
-        self.doc_type = 'Application'
-        del self.upstream_app_id
-        del self.upstream_version
-        del self.linked_app_translations
-        del self.linked_app_logo_refs
-        del self.linked_app_attrs
+        doc = self.to_json()
+        doc['doc_type'] = 'Application'
+        del doc['upstream_app_id']
+        del doc['upstream_version']
+        del doc['linked_app_translations']
+        del doc['linked_app_logo_refs']
+        del doc['linked_app_attrs']
+        return Application.wrap(doc)
 
     @property
     def commcare_flavor(self):

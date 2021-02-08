@@ -1,15 +1,26 @@
+from collections import namedtuple
+
+from django.contrib import messages
 from django.db import transaction
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_noop
 
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.apps.linked_domain.keywords import create_linked_keyword
+from corehq.apps.linked_domain.models import DomainLink, KeywordLinkDetail
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
@@ -245,6 +256,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     empty_notification = ugettext_noop("You have no keywords. Please add one!")
     loading_message = ugettext_noop("Loading keywords...")
 
+    @use_multiselect
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(KeywordsListView, self).dispatch(*args, **kwargs)
@@ -268,15 +280,34 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        return self.pagination_context
+        context = self.pagination_context
+        context['linked_domains'] = [
+            domain_link.linked_domain
+            for domain_link in get_linked_domains(self.domain)
+        ]
+        context['linkable_keywords'] = self._linkable_keywords()
+        return context
+
+    def _linkable_keywords(self):
+        LinkableKeyword = namedtuple('LinkableKeyword', 'keyword can_be_linked')
+        linkable_keywords = []
+        for keyword in self._all_keywords():
+            sends_to_usergroup = keyword.keywordaction_set.filter(
+                recipient=KeywordAction.RECIPIENT_USER_GROUP
+            ).count()
+            if sends_to_usergroup:
+                linkable_keywords.append(LinkableKeyword(keyword, False))
+            else:
+                linkable_keywords.append(LinkableKeyword(keyword, True))
+        return linkable_keywords
+
+    @memoized
+    def _all_keywords(self):
+        return Keyword.get_by_domain(self.domain)
 
     @property
     def paginated_list(self):
-        for keyword in Keyword.get_by_domain(
-            self.domain,
-            limit=self.limit,
-            skip=self.skip,
-        ):
+        for keyword in self._all_keywords()[self.skip:self.skip + self.limit]:
             yield {
                 'itemData': self._fmt_keyword_data(keyword),
                 'template': 'keyword-row-template',
@@ -321,3 +352,40 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+@domain_admin_required
+def link_keywords(request, domain):
+    from_domain = domain
+    to_domains = request.POST.getlist("to_domains")
+    keyword_ids = request.POST.getlist("keyword_ids")
+    successes = set()
+    failures = set()
+    for to_domain in to_domains:
+        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+        for keyword_id in keyword_ids:
+            try:
+                linked_keyword_id = create_linked_keyword(domain_link, keyword_id)
+                domain_link.update_last_pull(
+                    'keyword',
+                    request.couch_user._id,
+                    model_detail=KeywordLinkDetail(linked_keyword_id=str(linked_keyword_id)).to_json(),
+                )
+                successes.add(to_domain)
+            except DomainLinkError as err:
+                failures.add(f"{to_domain}: {err}")
+                notify_exception(request, message=str(err))
+            except Exception as err:
+                failures.add(to_domain)
+                notify_exception(request, message=str(err))
+
+    if successes:
+        messages.success(
+            request,
+            _(f"Successfully linked and copied to {', '.join(successes)}. "))
+    if failures:
+        messages.error(request, _(f"Errors occurred for {', '.join(failures)}."))
+
+    return HttpResponseRedirect(
+        reverse(KeywordsListView.urlname, args=[from_domain])
+    )

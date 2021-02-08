@@ -21,8 +21,11 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.builder.columns import (
     MultiselectQuestionColumnOption,
 )
-from corehq.apps.userreports.reports.builder.const import COMPUTED_OWNER_LOCATION_PROPERTY_ID
-from corehq.apps.userreports.reports.builder.const import COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID
+from corehq.apps.userreports.reports.builder.const import (
+    COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+)
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
@@ -118,11 +121,11 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             "property_value": self.case_type,
         }
         self.assertEqual(expected_filter, builder.filter)
-        expected_property_names = [
+        expected_property_names = {
             "closed", "closed_on", "first_name", "last_name", "modified_on", "name", "opened_on",
-            "owner_id", "user_id", "computed/owner_name", "computed/user_name",
-        ]
-        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
+            "@owner_id", "user_id", "computed/owner_name", "computed/user_name",
+        }
+        self.assertSetEqual(expected_property_names, set(builder.data_source_properties.keys()))
         owner_name_prop = builder.data_source_properties['computed/owner_name']
         self.assertEqual('computed/owner_name', owner_name_prop.get_id())
         self.assertEqual('Case Owner', owner_name_prop.get_text())
@@ -133,16 +136,29 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
     @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
     def test_owner_as_location(self):
         builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
+        self.assertTrue(COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID in builder.data_source_properties)
+
         owner_location_prop = builder.data_source_properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID]
         self.assertEqual(COMPUTED_OWNER_LOCATION_PROPERTY_ID, owner_location_prop.get_id())
         self.assertEqual('Case Owner (Location)', owner_location_prop.get_text())
+
         owner_location_prop_w_descendants = \
             builder.data_source_properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID]
         self.assertEqual(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
                          owner_location_prop_w_descendants.get_id())
         self.assertEqual('Case Owner (Location w/ Descendants)', owner_location_prop_w_descendants.get_text())
+
+        owner_location_prop_archived_w_descendants = \
+            builder.data_source_properties[COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID]
+        self.assertEqual(COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+                         owner_location_prop_archived_w_descendants.get_id())
+        self.assertEqual(
+            'Case Owner (Location w/ Descendants and Archived Locations)',
+            owner_location_prop_archived_w_descendants.get_text()
+        )
 
 
 class DataSourceReferenceTest(ReportBuilderDBTest):
@@ -160,7 +176,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             "partial_submission", "received_on", "edited_on", "submit_ip",
             "form.first_name", "form.last_name", "form.children", "form.dob", "form.state",
             "form.case.@date_modified", 'form.case.@user_id', 'form.case.@case_id', 'form.case.update.first_name',
-            'form.case.update.last_name', "count",
+            'form.case.update.last_name', "count", "hq_user",
         ]
 
         self.assertItemsEqual(expected_property_names, list(reference.data_source_properties))

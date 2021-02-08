@@ -18,8 +18,6 @@ DATABASES = {
     }
 }
 
-SYNCLOGS_SQL_DB_ALIAS = 'default'
-
 USE_PARTITIONED_DATABASE = False
 
 if USE_PARTITIONED_DATABASE:
@@ -134,15 +132,6 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #     'key_pass': "*******",
 # }
 
-####### Touchforms config - for CloudCare #######
-
-XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
-
-# email and password for an admin django user, such as one created with
-# ./manage.py make_superuser <email>
-TOUCHFORMS_API_USER = 'admin@example.com'
-TOUCHFORMS_API_PASSWORD = 'password'
-
 
 ####### Misc / HQ-specific Config ########
 
@@ -218,18 +207,6 @@ REPORT_CACHE = 'default'  # or e.g. 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
-}
-# example redis cluster setting
-redis_cluster_cache = {
-    'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': 'redis://127.0.0.1:6379/0',
-    'OPTIONS': {
-        'REDIS_CLIENT_CLASS': 'rediscluster.RedisCluster',
-        'CONNECTION_POOL_CLASS': 'rediscluster.connection.ClusterConnectionPool',
-        'CONNECTION_POOL_KWARGS': {
-            'skip_full_coverage_check': True
-        },
-    }
 }
 CACHES = {
     'default': redis_cache,

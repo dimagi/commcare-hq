@@ -98,16 +98,26 @@ class DialerSettingsForm(forms.ModelForm):
 
 class GaenOtpServerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable GAEN OTP Server Integration"),
+        label=_("Enable GAEN OTP server integration"),
         required=False
     )
+
+    server_type = forms.CharField(
+        label=_('GAEN Server Type'),
+        widget=forms.Select(choices=[
+            ("", ugettext_lazy("Select server type")),
+            ('NEARFORM', ugettext_lazy('NearForm OTP Server')),
+            ('APHL', ugettext_lazy('APHL Exposure Notifications')),
+        ]),
+    )
+
     server_url = forms.CharField(
         label=_('Server Endpoint')
     )
 
     auth_token = forms.CharField(
         label=_('Server Auth Token'),
-        widget=forms.PasswordInput
+        widget=forms.PasswordInput(render_value=True)
     )
 
     class Meta:
@@ -129,6 +139,9 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
             hqcrispy.B3MultiField(
                 _("OTP Callouts"),
                 hqcrispy.InlineField('is_enabled'),
+            ),
+            crispy.Div(
+                crispy.Field('server_type'),
             ),
             crispy.Div(
                 crispy.Field('server_url'),
@@ -155,12 +168,14 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
     def initial_data(self):
         return {
             'is_enabled': self._existing_config.is_enabled,
+            'server_type': self._existing_config.server_type,
             'server_url': self._existing_config.server_url,
             'auth_token': self._existing_config.auth_token,
         }
 
     def save(self):
         self._existing_config.is_enabled = self.cleaned_data['is_enabled']
+        self._existing_config.server_type = self.cleaned_data['server_type']
         self._existing_config.server_url = self.cleaned_data['server_url']
         self._existing_config.auth_token = self.cleaned_data['auth_token']
         self._existing_config.save()

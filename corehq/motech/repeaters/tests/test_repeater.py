@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 import attr
 from mock import Mock, patch
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -641,15 +642,25 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_failure(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
+        with patch('corehq.motech.repeaters.models.simple_post', side_effect=RequestException('Boom!')):
             repeat_record.fire()
 
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
     @run_with_all_backends
+    def test_unexpected_failure(self):
+        repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
+            repeat_record.fire()
+
+        self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
+        self.assertFalse(repeat_record.succeeded)
+
+    @run_with_all_backends
     def test_success(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_post') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
@@ -1170,54 +1181,13 @@ class FormatResponseTests(SimpleTestCase):
         self.assertEqual(formatted, '500: The core is exposed.\n')
 
 
-class NotifyAddressesTests(SimpleTestCase):
-
-    def test_default(self):
-        repeater = DummyRepeater.wrap({})
-        self.assertEqual(repeater.notify_addresses, [])
-
-    def test_empty(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "",
-        })
-        self.assertEqual(repeater.notify_addresses, [])
-
-    def test_one(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com"])
-
-    def test_comma(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com,user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_space(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_commaspace(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com, user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_mess(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com,,, ,  user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-
 class TestGetRetryInterval(SimpleTestCase):
+
+    def test_no_last_checked(self):
+        last_checked = None
+        now = fromisoformat("2020-01-01 00:05:00")
+        interval = _get_retry_interval(last_checked, now)
+        self.assertEqual(interval, MIN_RETRY_WAIT)
 
     def test_min_interval(self):
         last_checked = fromisoformat("2020-01-01 00:00:00")

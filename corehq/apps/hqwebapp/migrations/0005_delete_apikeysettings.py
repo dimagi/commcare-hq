@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('hqwebapp', '0004_apikeysettings'),
+        ('users', '0016_hqapikey'),
     ]
 
     operations = [

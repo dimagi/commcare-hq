@@ -168,7 +168,6 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
             'compress_zip': compress_zip,
             'filename': filename,
             'download_targeted_version': download_targeted_version,
-            'app': build.to_json(),
         }, indent=4)
         manifest_filename = '{} - {} - v{} manifest.json'.format(
             build.domain,

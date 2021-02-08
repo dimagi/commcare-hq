@@ -778,10 +778,10 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.accounting.views import _get_account_or_404
+        from corehq.apps.accounting.utils.subscription import get_account_or_404
         emails = request.POST.get('emails', []).split()
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        account = _get_account_or_404(request, request.domain)
+        account = get_account_or_404(request, request.domain)
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails, account=account)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
@@ -828,8 +828,8 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         if invoice.is_customer_invoice:
-            from corehq.apps.accounting.views import _get_account_or_404
-            account = _get_account_or_404(request, domain)
+            from corehq.apps.accounting.utils.subscription import get_account_or_404
+            account = get_account_or_404(request, domain)
             filename = "%(pdf_id)s_%(account)s_%(filename)s" % {
                 'pdf_id': invoice_pdf._id,
                 'account': account,

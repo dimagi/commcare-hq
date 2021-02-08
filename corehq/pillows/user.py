@@ -45,7 +45,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        ElasticsearchInterface(es).create_doc(USER_INDEX_INFO.alias, ES_META['users'].type, doc=doc, doc_id=user_id)
+        ElasticsearchInterface(es).index_doc(USER_INDEX_INFO.alias, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):
@@ -145,7 +145,7 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
     )
 
 
-def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
+def get_user_pillow(pillow_id='user-pillow', num_processes=1, dedicated_migration_process=False, process_num=0,
         skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     """Processes users and sends them to ES and UCRs.
 
@@ -162,7 +162,8 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
     change_feed = KafkaChangeFeed(
-        topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
+        topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num,
+        dedicated_migration_process=dedicated_migration_process
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -172,7 +173,9 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
-        processor_chunk_size=processor_chunk_size
+        processor_chunk_size=processor_chunk_size,
+        process_num=process_num,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0)
     )
 
 

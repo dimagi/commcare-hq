@@ -36,6 +36,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
@@ -234,9 +235,6 @@ def download_file(request, domain, app_id, path):
         assert target != 'none'
         path = parts[0] + '-' + target + '.' + parts[1]
 
-    if path == "app.json":
-        return JsonResponse(request.app.to_json())
-
     content_type_map = {
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
@@ -388,6 +386,7 @@ def download_practice_user_restore(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_download
 def download_index(request, domain, app_id):
     """
@@ -518,8 +517,5 @@ def source_files(app):
     files = download_index_files(app)
     app_json = json.dumps(
         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-    )
-    files.append(
-        ("app.json", app_json)
     )
     return sorted(files)

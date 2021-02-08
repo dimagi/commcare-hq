@@ -49,12 +49,14 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
@@ -70,7 +72,6 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
-from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -96,7 +97,6 @@ from corehq.apps.users.forms import (
     ConfirmExtraUserChargesForm,
     MultipleSelectionForm,
     NewMobileWorkerForm,
-    SelfRegistrationForm,
     SetUserPasswordForm,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -117,13 +117,11 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.const import (
-    GOOGLE_PLAY_STORE_COMMCARE_URL,
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
 from corehq.toggles import (
-    CUSTOM_DATA_FIELDS_PROFILES,
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
 )
@@ -189,7 +187,6 @@ class EditCommCareUserView(BaseEditUserView):
             'custom_fields_profile_slug': PROFILE_SLUG,
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
             'token': self.backup_token,
         })
@@ -296,7 +293,6 @@ class EditCommCareUserView(BaseEditUserView):
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'group_names': [g.name for g in self.groups],
         }
         if self.commtrack_form.errors:
@@ -327,7 +323,7 @@ class EditCommCareUserView(BaseEditUserView):
         else:
             data = None
         form = CommCareUserFormSet(data=data, domain=self.domain,
-            editable_user=self.editable_user, request_user=self.request.couch_user)
+            editable_user=self.editable_user, request_user=self.request.couch_user, request=self.request)
 
         form.user_form.load_language(language_choices=get_domain_languages(self.domain))
 
@@ -683,12 +679,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
-            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'skip_standard_password_validations': has_custom_clean_password(),
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'bulk_download_url': bulk_download_url,
         }
 
@@ -940,7 +935,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        if CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
             return self.render_json_response({
                 "status": "failure",
                 "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
@@ -1207,6 +1202,8 @@ class FilteredUserDownload(BaseManageCommCareUserView):
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
         form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
+        # To avoid errors on first page load
+        form.empty_permitted = True
         context = self.main_context
         context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
         return render(
@@ -1384,9 +1381,11 @@ def count_users(request, domain):
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
-
+    user_count = 0
+    for domain in user_filters['domains']:
+        user_count += get_commcare_users_by_filters(domain, user_filters, count_only=True)
     return json_response({
-        'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
+        'count': user_count
     })
 
 
@@ -1399,96 +1398,17 @@ def download_commcare_users(request, domain):
         return HttpResponseRedirect(
             reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
+    if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
+        track_workflow(request.couch_user.username, 'Domain filter used for mobile download')
+    is_web_download = False
     if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
-        res = bulk_download_usernames_async.delay(domain, download.download_id,
-                                                  user_filters, owner_id=request.couch_user.get_id)
+        res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,
+                                                  owner_id=request.couch_user.get_id)
     else:
-        res = bulk_download_users_async.delay(domain, download.download_id,
-                                              user_filters, owner_id=request.couch_user.get_id)
+        res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
+                                              is_web_download, owner_id=request.couch_user.get_id)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
-
-
-class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
-    template_name = "users/mobile/commcare_user_self_register.html"
-    urlname = "commcare_user_self_register"
-    strict_domain_fetching = True
-
-    @property
-    @memoized
-    def token(self):
-        return self.kwargs.get('token')
-
-    @property
-    @memoized
-    def invitation(self):
-        return SelfRegistrationInvitation.by_token(self.token)
-
-    @property
-    @memoized
-    def form(self):
-        if self.request.method == 'POST':
-            return SelfRegistrationForm(self.request.POST, domain=self.domain,
-                require_email=self.invitation.require_email)
-        else:
-            return SelfRegistrationForm(domain=self.domain,
-                require_email=self.invitation.require_email)
-
-    def get_context_data(self, **kwargs):
-        context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
-        context.update({
-            'hr_name': self.domain_object.display_name(),
-            'form': self.form,
-            'invitation': self.invitation,
-            'can_add_extra_mobile_workers': can_add_extra_mobile_workers(self.request),
-            'google_play_store_url': GOOGLE_PLAY_STORE_COMMCARE_URL,
-        })
-        return context
-
-    def validate_request(self):
-        if (
-            not self.invitation or
-            self.invitation.domain != self.domain or
-            not self.domain_object.sms_mobile_worker_registration_enabled
-        ):
-            raise Http404()
-
-    def get(self, request, *args, **kwargs):
-        self.validate_request()
-        return super(CommCareUserSelfRegistrationView, self).get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        self.validate_request()
-        if (
-            not self.invitation.expired and
-            not self.invitation.already_registered and
-            self.form.is_valid()
-        ):
-            email = self.form.cleaned_data.get('email')
-            if email:
-                email = email.lower()
-
-            user = CommCareUser.create(
-                self.domain,
-                self.form.cleaned_data.get('username'),
-                self.form.cleaned_data.get('password'),
-                created_by=None,
-                created_via=USER_CHANGE_VIA_WEB,
-                email=email,
-                phone_number=self.invitation.phone_number,
-                device_id='Generated from HQ',
-                metadata=self.invitation.custom_user_data,
-            )
-            # Since the user is being created by following the link and token
-            # we sent to their phone by SMS, we can verify their phone number
-            entry = user.get_or_create_phone_entry(self.invitation.phone_number)
-            entry.set_two_way()
-            entry.set_verified()
-            entry.save()
-
-            self.invitation.registered_date = datetime.utcnow()
-            self.invitation.save()
-        return self.get(request, *args, **kwargs)
 
 
 @location_safe

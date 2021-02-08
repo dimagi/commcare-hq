@@ -8,7 +8,8 @@ from io import StringIO
 from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
-from mock import Mock
+from mock import patch
+from nose.tools import nottest
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
@@ -49,12 +50,7 @@ class CouchDumpLoadTest(TestCase):
         self._delete_couch_data()
 
     def _delete_couch_data(self):
-        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain_name):
-            db = doc_class.get_db()
-            for docs in chunked(iter_docs(db, doc_ids), 100):
-                db.bulk_delete(docs)
-
-            self.assertEqual(0, len(get_docs(db, doc_ids)))
+        delete_doain_couch_data_for_dump_load_test(self.domain_name)
 
     def _dump_and_load(self, expected_objects, not_expected_objects=None, doc_to_doc_class=None):
         output_stream = StringIO()
@@ -70,7 +66,7 @@ class CouchDumpLoadTest(TestCase):
         dump_lines = [line.strip() for line in dump_output if line.strip()]
 
         with mock_out_couch() as fake_db:
-            total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
+            loaded_object_count = CouchDataLoader().load_objects(dump_lines)
 
         def _dump_line_to_doc_class(line):
             doc = json.loads(line)
@@ -83,10 +79,8 @@ class CouchDumpLoadTest(TestCase):
         expected_object_counts = Counter(
             object.__class__ for object in expected_objects
         )
-        expected_total_objects = len(expected_objects)
         self.assertDictEqual(dict(expected_object_counts), dict(actual_model_counts))
-        self.assertEqual(expected_total_objects, sum(loaded_object_count.values()))
-        self.assertEqual(expected_total_objects, total_object_count)
+        self.assertEqual(len(expected_objects), sum(loaded_object_count.values()))
 
         counts_in_fake_db = _get_doc_counts_from_fake_db(fake_db, doc_to_doc_class)
         self.assertDictEqual(dict(expected_object_counts), counts_in_fake_db)
@@ -112,7 +106,7 @@ class CouchDumpLoadTest(TestCase):
         }
         for provider in DOC_PROVIDERS:
             if isinstance(provider, DocTypeIDProvider):
-                doc_types.extend(provider.doc_types)
+                doc_types.append(provider.doc_type)
 
         def _make_doc(doc_type, domain):
             doc_class = get_document_class_by_doc_type(doc_type)
@@ -199,6 +193,16 @@ class CouchDumpLoadTest(TestCase):
         self._dump_and_load([web_user], [other_user])
 
 
+@nottest
+def delete_doain_couch_data_for_dump_load_test(domain_name):
+    for doc_class, doc_ids in get_doc_ids_to_dump(domain_name):
+        db = doc_class.get_db()
+        for docs in chunked(iter_docs(db, doc_ids), 100):
+            db.bulk_delete(docs)
+
+        assert 0 == len(get_docs(db, doc_ids)), f"Some docs not deleted: {doc_class}"
+
+
 class TestDumpLoadToggles(SimpleTestCase):
 
     @classmethod
@@ -217,11 +221,12 @@ class TestDumpLoadToggles(SimpleTestCase):
 
     def test_dump_toggles(self):
         dumper = ToggleDumper(self.domain_name, [])
-        dumper._user_ids_in_domain = Mock(return_value={'user1', 'user2', 'user3'})
+        users = {'user1', 'user2', 'user3'}
 
         output_stream = StringIO()
 
-        with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]):
+        with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]), \
+             patch("corehq.apps.dump_reload.couch.dump.get_all_usernames_by_domain", return_value=users):
             dumper.dump(output_stream)
         output_stream.seek(0)
         lines = output_stream.readlines()
