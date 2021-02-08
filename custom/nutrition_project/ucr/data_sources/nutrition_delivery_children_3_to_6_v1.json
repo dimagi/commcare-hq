@@ -148,16 +148,13 @@
         "type": "related_doc",
         "related_doc_type": "CommCareUser",
         "doc_id_expression": {
-          "type": "root_doc",
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "meta",
-              "userID"
-            ]
-          }
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
         }
       }
     },
