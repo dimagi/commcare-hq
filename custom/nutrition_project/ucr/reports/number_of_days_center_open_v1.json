@@ -53,20 +53,14 @@
         "format": "%Y-%m"
       },
       {
-        "display": {
-          "en": "Supervisor ID",
-          "hin": "Supervisor ID"
-        },
+        "display": "Supervisor ID",
         "column_id": "supervisor_id",
         "type": "field",
         "field": "supervisor_id",
         "aggregation": "simple"
       },
       {
-        "display": {
-          "en": "FLW ID",
-          "hin": "FLW ID"
-        },
+        "display": "FLW ID",
         "column_id": "flw_id",
         "type": "field",
         "field": "flw_id",
