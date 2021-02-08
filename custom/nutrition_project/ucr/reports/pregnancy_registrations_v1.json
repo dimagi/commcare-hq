@@ -8,7 +8,7 @@
   "report_id": "static-pregnancy_registrations_v1",
   "data_source_table": "static-pregnancy_registrations_v1",
   "config": {
-    "title": "Pregnancy Registrations",
+    "title": "Pregnancy Registrations V1 (Static)",
     "description": "Pregnancy Registrations per flw per month",
     "visible": true,
     "aggregation_columns": [

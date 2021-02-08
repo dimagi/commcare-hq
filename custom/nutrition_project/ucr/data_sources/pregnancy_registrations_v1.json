@@ -7,7 +7,7 @@
   ],
   "config": {
     "table_id": "static-pregnancy_registrations_v1",
-    "display_name": "Pregnancy Registrations V1",
+    "display_name": "Pregnancy Registrations V1 (Static)",
     "referenced_doc_type": "XFormInstance",
     "configured_filter": {
       "type": "and",
