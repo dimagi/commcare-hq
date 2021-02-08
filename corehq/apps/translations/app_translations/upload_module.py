@@ -31,6 +31,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
         self.search_command_label = None
+        self.search_again_label = None
         self.tab_headers = None
 
     def update(self, rows):
@@ -93,6 +94,9 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if self.search_command_label:
             self._update_translation(self.search_command_label, self.module.search_config.command_label)
 
+        if self.search_again_label:
+            self._update_translation(self.search_again_label, self.module.search_config.again_label)
+
         return self.msgs
 
     def _update_report_module_rows(self, rows):
@@ -147,12 +151,13 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         which will be processed separately from the case proeprty rows.
 
         Populates class attributes condensed_rows, case_list_form_label, case_list_menu_item_label,
-        search_command_label, and tab_headers.
+        case search button labels, and tab_headers.
         '''
         self.condensed_rows = []
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
         self.search_command_label = None
+        self.search_again_label = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
         index_of_last_graph_in_condensed = -1
@@ -203,9 +208,11 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             elif row['case_property'] == 'case_list_menu_item_label':
                 self.case_list_menu_item_label = row
 
-            # It's the case search label. Don't add it to condensed rows
+            # It's a case search label. Don't add it to condensed rows
             elif row['case_property'] == 'search_command_label':
                 self.search_command_label = row
+            elif row['case_property'] == 'search_again_label':
+                self.search_again_label = row
 
             # If it's a tab header, don't add it to condensed rows
             elif re.search(r'^Tab \d+$', row['case_property']):

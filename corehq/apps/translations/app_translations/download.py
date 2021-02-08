@@ -219,7 +219,9 @@ def get_module_search_command_rows(langs, module):
 
     return [
         ('search_command_label', 'list')
-        + tuple(module.search_config.command_label.get(lang, '') for lang in langs)
+        + tuple(module.search_config.command_label.get(lang, '') for lang in langs),
+        ('search_again_label', 'list')
+        + tuple(module.search_config.again_label.get(lang, '') for lang in langs),
     ]
 
 
