@@ -7,7 +7,7 @@
   ],
   "config": {
     "table_id": "static-nutrition_delivery_3_6_v1",
-    "display_name": "Nutrition Delivery (3 to 6 years) V1",
+    "display_name": "Nutrition Delivery Children (3-6 yrs) V1 (Static)",
     "referenced_doc_type": "XFormInstance",
     "configured_filter": {
       "type": "and",

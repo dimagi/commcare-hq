@@ -8,7 +8,7 @@
   "report_id": "static-number_of_days_open_v1",
   "data_source_table": "static-nutrition_delivery_3_6_v1",
   "config": {
-    "title": "Number of days center open",
+    "title": "No. of days center open (Static)",
     "description": "Number of days center was open per flw per month",
     "visible": true,
     "aggregation_columns": [
