@@ -2112,7 +2112,6 @@ class CaseSearch(DocumentSchema):
     additional_relevant = StringProperty()
     search_filter = StringProperty()
     search_button_display_condition = StringProperty()
-    include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
 
