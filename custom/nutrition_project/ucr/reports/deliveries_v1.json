@@ -8,7 +8,7 @@
   "report_id": "static-deliveries_v1",
   "data_source_table": "static-deliveries_v1",
   "config": {
-    "title": "Deliveries",
+    "title": "Deliveries V1 (Static)",
     "description": "Deliveries per flw per month",
     "visible": true,
     "aggregation_columns": [

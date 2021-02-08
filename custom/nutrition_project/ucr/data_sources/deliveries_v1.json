@@ -6,8 +6,8 @@
     "india"
   ],
   "config": {
-    "table_id": "static-deliveries_v1",
-    "display_name": "Deliveries V1",
+    "table_id": "static-record_a_delivery_v1",
+    "display_name": "Record a Delivery V1 (Static)",
     "referenced_doc_type": "XFormInstance",
     "base_item_expression": {
       "type": "property_path",
