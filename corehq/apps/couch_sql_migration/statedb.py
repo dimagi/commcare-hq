@@ -46,7 +46,7 @@ def open_state_db(domain, state_dir, *, readonly=True):
     """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
     if not os.path.exists(db_filepath):
-        raise Error(f"not found: {db_filepath}")
+        raise NotFoundError(db_filepath)
     return StateDB.open(domain, db_filepath, readonly=readonly)
 
 
@@ -635,7 +635,7 @@ class StateDB(DiffDB):
             session.execute("VACUUM")
 
 
-class Error(Exception):
+class NotFoundError(Exception):
     pass
 
 

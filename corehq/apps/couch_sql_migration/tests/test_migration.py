@@ -6,6 +6,7 @@ import uuid
 from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
 from functools import wraps
+from io import BytesIO
 from signal import SIGINT
 
 from django.conf import settings
@@ -473,6 +474,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         XFormInstance.wrap(form_json).save()
         self.do_migration()
         self.assertEqual(self._get_form_ids('XFormError'), {'im-a-bad-form'})
+
+    def test_form_migration_integrity_error_resulting_in_missing_form(self):
+        self.submit_form(SIMPLE_FORM_XML)
+        with mock.patch.object(mod, "save_migrated_models", side_effect=mod.IntegrityError):
+            self.do_migration(diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
+
+    def test_form_migration_exception_resulting_in_missing_form(self):
+        self.submit_form(SIMPLE_FORM_XML)
+        with mock.patch.object(mod, "save_migrated_models", side_effect=Exception):
+            self.do_migration(diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
 
     def test_duplicate_form_migration(self):
         with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml', encoding='utf-8') as f:
@@ -1669,6 +1682,69 @@ class LedgerMigrationTests(BaseMigrationTestCase):
             Diff(kind="stock state", path=['last_modified_form_id'], old=form2, new=form1),
         ])
 
+    def test_noop_ledger_transfer(self):
+        received = timedelta(days=-5)
+        form = self.submit_form(TEST_FORM, received)
+        # Patch ledger transfer into form data and XML since it produces
+        # an error that causes the form to saved as XFormError.
+        form.form_data["stock"] = {
+            "transfer": {
+                "@date": "",
+                "@dest": "",
+                "@section-id": "kits-received",
+                "@xmlns": "http://commcarehq.org/ledger/v1",
+                "entry": {
+                    "@id": "7db0c357720ff00ad17597f941a0e900",
+                    "@quantity": "8"
+                }
+            }
+        }
+        form.save()
+        replace_form_xml(form, TEST_FORM.replace(
+            "<n0:case\n",
+            """<stock>
+                <n0:transfer date="" dest=""
+                    section-id="kits-received"
+                    xmlns:n0="http://commcarehq.org/ledger/v1">
+                    <n0:entry id="7db0c357720ff00ad17597f941a0e900" quantity="8"/>
+                </n0:transfer>
+            </stock>
+            <n0:case\n"""
+        ))
+        self.do_migration()
+        self.assertEqual(self._get_form_ids(), {form.form_id})
+
+    def test_ledger_balance_without_product(self):
+        received = timedelta(days=-5)
+        form = self.submit_form(TEST_FORM, received)
+        # Patch ledger transfer into form data and XML since it produces
+        # an error that causes the form to saved as XFormError.
+        form.form_data["stock"] = {
+            "balance": {
+                "@date": "",
+                "@entity-id": "410a1240",
+                "@section-id": "stock",
+                "@xmlns": "http://commcarehq.org/ledger/v1",
+                "entry": {
+                    "@id": "",
+                    "@quantity": "147"
+                }
+            }
+        }
+        form.save()
+        replace_form_xml(form, TEST_FORM.replace(
+            "<n0:case\n",
+            """<stock>
+                <n0:balance date=""
+                    entity-id="410a1240"
+                    section-id="stock" xmlns:n0="http://commcarehq.org/ledger/v1">
+                    <n0:entry id="" quantity="147"/>
+                </n0:balance>
+            </stock><n0:case\n"""
+        ))
+        self.do_migration()
+        self.assertEqual(self._get_form_ids(), {form.form_id})
+
     def fix_missing_ledger_diffs(self, form1, form2, diffs):
         self.assert_backend("sql")
         self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
@@ -1776,6 +1852,12 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
     ]}
     get_blob_db().metadb.new(key=uuid.uuid4().hex, **args).save()
     return form
+
+
+def replace_form_xml(form, xml):
+    blobs = get_blob_db()
+    meta = blobs.metadb.get(parent_id=form.form_id, key=form.blobs["form.xml"].key)
+    blobs.put(BytesIO(xml.encode('utf-8')), meta=meta)
 
 
 @nottest

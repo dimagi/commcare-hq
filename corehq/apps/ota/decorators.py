@@ -1,3 +1,5 @@
+import logging
+
 from corehq import toggles
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -7,6 +9,8 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from functools import wraps
 
 from django.http import HttpResponseForbidden
+
+auth_logger = logging.getLogger("commcare_auth")
 
 ORIGIN_TOKEN_HEADER = 'HTTP_X_COMMCAREHQ_ORIGIN_TOKEN'
 ORIGIN_TOKEN_SLUG = 'OriginToken'
@@ -21,6 +25,10 @@ def require_mobile_access(fn):
                 if _test_token_valid(origin_token):
                     return fn(request, domain, *args, **kwargs)
                 else:
+                    auth_logger.info(
+                        "Request rejected domain=%s reason=%s request=%s",
+                        domain, "flag:mobile_access_restricted", request.path
+                    )
                     return HttpResponseForbidden()
 
             return require_permission(Permissions.access_mobile_endpoints)(fn)(request, domain, *args, **kwargs)

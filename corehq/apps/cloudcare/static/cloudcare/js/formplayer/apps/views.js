@@ -9,19 +9,11 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
         events: {
             "click": "rowClick",
-            "keydown": "rowKeyAction",
         },
 
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("app:select", this.model.get('_id'));
-        },
-
-        rowKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                // Select application on Enter keydown event.
-                this.rowClick(e);
-            }
         },
 
         templateContext: function () {
@@ -39,10 +31,6 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             'click .js-sync-item': 'syncClick',
             'click .js-restore-as-item': 'onClickRestoreAs',
             'click .js-settings': 'onClickSettings',
-            'keydown .js-incomplete-sessions-item': 'incompleteSessionsKeyAction',
-            'keydown .js-sync-item': 'syncKeyAction',
-            'keydown .js-restore-as-item': 'restoreAsKeyAction',
-            'keydown .js-settings': 'settingsKeyAction',
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
@@ -60,26 +48,6 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             e.preventDefault();
             FormplayerFrontend.trigger("settings:list");
         },
-        incompleteSessionsKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.incompleteSessionsClick(e);
-            }
-        },
-        syncKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.syncClick(e);
-            }
-        },
-        restoreAsKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.onClickRestoreAs(e);
-            }
-        },
-        settingsKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.onClickSettings(e);
-            }
-        },
     };
 
     var GridView = Marionette.CollectionView.extend({
@@ -92,10 +60,6 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         syncClick: _.extend(BaseAppView.syncClick),
         onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
         onClickSettings: _.extend(BaseAppView.onClickSettings),
-        incompleteSessionsKeyAction: _.extend(BaseAppView.incompleteSessionsKeyAction),
-        syncKeyAction: _.extend(BaseAppView.syncKeyAction),
-        restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
-        settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
     });
 
     /**
@@ -111,16 +75,11 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-            'keydown .js-start-app': 'keyAction',
         }, BaseAppView.events),
         incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(BaseAppView.syncClick),
         onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
         onClickSettings: _.extend(BaseAppView.onClickSettings),
-        incompleteSessionsKeyAction: _.extend(BaseAppView.incompleteSessionsKeyAction),
-        syncKeyAction: _.extend(BaseAppView.syncKeyAction),
-        restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
-        settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
 
         initialize: function (options) {
             this.appId = options.appId;
@@ -143,11 +102,6 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             hqImport('analytix/js/google').track.event("App Preview", "User clicked Start App");
             FormplayerFrontend.trigger("app:select", this.appId);
         },
-        keyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.startApp(e);
-            }
-        },
     });
 
     var LandingPageAppView = Marionette.View.extend({
@@ -156,16 +110,11 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-            'keydown .js-start-app': 'keyAction',
         }, BaseAppView.events),
         incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(BaseAppView.syncClick),
         onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
         onClickSettings: _.extend(BaseAppView.onClickSettings),
-        incompleteSessionsKeyAction: _.extend(BaseAppView.incompleteSessionsKeyAction),
-        syncKeyAction: _.extend(BaseAppView.syncKeyAction),
-        restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
-        settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
 
         initialize: function (options) {
             this.appId = options.appId;
@@ -181,11 +130,6 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         },
         startApp: function () {
             FormplayerFrontend.trigger("app:select", this.appId);
-        },
-        keyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.startApp();
-            }
         },
     });
 

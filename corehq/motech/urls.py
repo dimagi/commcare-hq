@@ -22,7 +22,6 @@ from corehq.motech.repeaters.views import (
     drop_repeater,
     pause_repeater,
     resume_repeater,
-    test_repeater,
 )
 from corehq.motech.views import (
     ConnectionSettingsDetailView,
@@ -83,7 +82,6 @@ urlpatterns = [
     url(r'^forwarding/config/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', lambda: None,
         name='config_repeater'),
 
-    url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/drop/(?P<repeater_id>[\w-]+)/$', drop_repeater, name='drop_repeater'),
     url(r'^forwarding/pause/(?P<repeater_id>[\w-]+)/$', pause_repeater, name='pause_repeater'),
     url(r'^forwarding/resume/(?P<repeater_id>[\w-]+)/$', resume_repeater, name='resume_repeater'),

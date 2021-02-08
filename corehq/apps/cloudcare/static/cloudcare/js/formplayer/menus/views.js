@@ -13,19 +13,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         className: "formplayer-request",
-        attributes: function () {
-            var displayText = this.options.model.attributes.displayText;
-            return {
-                "role": "link",
-                "tabindex": "0",
-                "aria-label": displayText,
-            };
-        },
         events: {
             "click": "rowClick",
             "click .js-module-audio-play": "audioPlay",
             "click .js-module-audio-pause": "audioPause",
-            "keydown": "rowKeyAction",
         },
 
         initialize: function (options) {
@@ -75,11 +66,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
-        },
-        rowKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.rowClick(e);
-            }
         },
         templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -227,29 +213,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click": "rowClick",
-            "keydown": "rowKeyAction",
         },
 
         className: "formplayer-request",
 
-        attributes: function () {
-            var labelId = "case-view-item-".concat(this.options.model.attributes.id);
-            return {
-                "role": "link",
-                "tabindex": "0",
-                "aria-labelledby": labelId,
-            };
-        },
-
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
-        },
-
-        rowKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.rowClick(e);
-            }
         },
 
         templateContext: function () {
@@ -260,7 +230,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
-                labelId: "case-view-item-".concat(this.options.model.attributes.id),
             };
         },
     });
@@ -304,11 +273,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
+            this.redoLast = options.redoLast;
         },
 
         ui: {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
+            searchTextBox: '.module-search-container',
             paginators: '.page-link',
             columnHeader: '.header-clickable',
         },
@@ -318,12 +289,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.columnHeader': 'columnSortAction',
-            'keypress': 'keyAction',
+            'keypress @ui.searchTextBox': 'searchTextKeyAction',
+            'keypress @ui.paginators': 'paginateKeyAction',
         },
 
         caseListAction: function (e) {
-            var index = $(e.currentTarget).data().index;
-            FormplayerFrontend.trigger("menu:select", "action " + index);
+            var index = $(e.currentTarget).data().index,
+                step = "action " + index;
+            if (step === this.redoLast) {
+                FormplayerFrontend.trigger("menu:select");
+            } else {
+                FormplayerFrontend.trigger("menu:select", step);
+            }
         },
 
         caseListSearch: function (e) {
@@ -332,7 +309,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:search", searchText);
         },
 
-        keyAction: function (event) {
+        searchTextKeyAction: function (event) {
+            // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
                 this.caseListSearch(event);
             }
@@ -341,6 +319,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
+        },
+
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginateAction(e);
+            }
         },
 
         columnSortAction: function (e) {
@@ -369,6 +355,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
+                pageNumLabel: _.template(gettext("Page <%=num%>")),
             };
         },
     });
@@ -453,26 +440,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
-        attributes: function () {
-            return {
-                "role": "link",
-                "tabindex": "0",
-            };
-        },
         events: {
             "click": "crumbClick",
-            "keydown": "crumbKeyAction",
         },
 
         crumbClick: function (e) {
             e.preventDefault();
             var crumbId = this.options.model.get('id');
             FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
-        },
-        crumbKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.crumbClick(e);
-            }
         },
     });
 
@@ -483,15 +458,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
-            'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
             FormplayerFrontend.trigger('navigateHome');
-        },
-        onKeyActionHome: function (e) {
-            if (e.keyCode === 13) {
-                this.onClickHome();
-            }
         },
 
     });
