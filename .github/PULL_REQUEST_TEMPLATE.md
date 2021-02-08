@@ -16,7 +16,7 @@
 - [ ] All migrations are backwards compatible and won't block deploy
 - [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
 - [ ] If QA is part of the safety story, the "Awaiting QA" label is used
-- [ ] I am certain that this PR will not introduce a regression for the reasons below
+- [ ] I have confidence that this PR will not introduce a regression for the reasons below
 
 ### Automated test coverage
 
