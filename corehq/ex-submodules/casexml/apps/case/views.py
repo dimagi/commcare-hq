@@ -62,7 +62,7 @@ class CaseDisplayWrapper(object):
                         },
                         {
                             "expr": "user_id",
-                            "name": _("Last Submitter"),
+                            "name": _("Modified By"),
                             "process": 'doc_info',
                         },
                         {

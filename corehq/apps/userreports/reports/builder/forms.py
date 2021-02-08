@@ -561,10 +561,11 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
     def _get_data_source_properties_from_case(self, case_properties):
         property_map = {
-            'owner_name': 'owner_name',
-            'case_id': 'case_id',
-            'user_id': 'user_id_last_updating_case',
-            'mobile worker': 'mobile_worker_last_updating_case',
+            'closed': _('Case Closed'),
+            'user_id': _('User ID Last Updating Case'),
+            'owner_name': _('Case Owner'),
+            'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
         }
 
         properties = OrderedDict()
@@ -721,7 +722,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
         # the options are currently static, after loading the report builder a user can switch to an aggregated
         # report.
-        count_col = CountColumn("number_of_cases" if self.source_type == "case" else "number_of_forms")
+        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
         options[count_col.get_property()] = count_col
 
         return options
