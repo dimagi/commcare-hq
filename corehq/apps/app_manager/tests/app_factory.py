@@ -198,6 +198,20 @@ class AppFactory(object):
         case_module.case_list_form.label = {
             'en': 'New Case',
         }
+        return factory
+
+    @classmethod
+    def case_claim_app_factory(cls):
+        factory = cls(build_version='2.51.0')
+
+        case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
+
+        register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'New Case',
+        }
         case_module.search_config.command_label = {
             'en': 'Find a Mother',
         }

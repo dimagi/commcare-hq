@@ -1209,7 +1209,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                          [('case_list_menu_item_label', 'list', 'Steth List')])
 
     def test_module_search_command_rows(self):
-        app = AppFactory.case_list_form_app_factory().app
+        app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0]),
                          [('search_command_label', 'list', 'Find a Mother'),
                           ('search_again_label', 'list', 'Find Another Mother')])
