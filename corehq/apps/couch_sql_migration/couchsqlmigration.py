@@ -301,7 +301,7 @@ class CouchSqlDomainMigrator:
             sql_json = sql_form_to_json(sql_form)
             self.statedb.save_form_diffs(couch_json, sql_json)
         else:
-            self.statedb.add_missing_docs("XFormInstance", [couch_form.form_id])
+            self.statedb.add_missing_docs(couch_form.doc_type, [couch_form.form_id])
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
