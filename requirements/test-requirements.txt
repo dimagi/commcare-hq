@@ -63,8 +63,6 @@ concurrent-log-handler==0.9.12
     # via -r requirements.in
 contextlib2==0.6.0.post1
     # via schema
-coverage==4.5.1
-    # via -r test-requirements.in
 cryptography==3.3.1
     # via pyopenssl
 csiphash==0.0.5
@@ -89,7 +87,7 @@ defusedxml==0.5.0
     #   python3-saml
 deprecated==1.2.10
     # via pygithub
-diff-match-patch==20120106
+diff-match-patch==20200713
     # via -r requirements.in
 dimagi-memoized==1.1.3
     # via -r requirements.in
@@ -338,7 +336,7 @@ pycparser==2.20
     # via cffi
 pycryptodome==3.9.9
     # via -r requirements.in
-pygithub==1.54
+pygithub==1.54.1
     # via -r requirements.in
 pygments==2.7.1
     # via

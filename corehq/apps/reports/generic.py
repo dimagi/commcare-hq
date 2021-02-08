@@ -649,6 +649,7 @@ class GenericReportView(object):
         return json_response(self.json_dict)
 
     @property
+    @request_cache()
     def export_response(self):
         """
         Intention: Not to be overridden in general.

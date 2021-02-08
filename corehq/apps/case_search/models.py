@@ -18,6 +18,7 @@ CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
+    'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
 )
 
 
