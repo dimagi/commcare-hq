@@ -77,9 +77,9 @@ class CreateIdentityProviderForm(forms.Form):
 
     @transaction.atomic
     def create_identity_provider(self, admin_user):
-        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
+        owner = BillingAccount.objects.get(id=self.cleaned_data['owner'])
         idp = IdentityProvider.objects.create(
-            account=account,
+            owner=owner,
             slug=self.cleaned_data['slug'],
             name=self.cleaned_data['name'],
             created_by=admin_user.username,
