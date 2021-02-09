@@ -1,7 +1,11 @@
-from django.contrib import messages
-from django.utils.decorators import method_decorator
 from memoized import memoized
+
+from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils.decorators import method_decorator
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import (
@@ -12,12 +16,18 @@ from corehq.apps.accounting.interface import AddItemInterface
 from corehq.apps.accounting.views import AccountingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.sso.certificates import get_certificate_response
 from corehq.toggles import ENTERPRISE_SSO
 
 from corehq.apps.sso.forms import (
     CreateIdentityProviderForm,
+    EditIdentityProviderAdminForm,
 )
-from corehq.apps.sso.aync_handlers import Select2IdentityProviderHandler
+from corehq.apps.sso.aync_handlers import (
+    Select2IdentityProviderHandler,
+    IdentityProviderAdminAsyncHandler,
+    SSOExemptUsersAdminAsyncHandler,
+)
 from corehq.apps.sso.models import IdentityProvider
 
 
@@ -56,8 +66,7 @@ class IdentityProviderInterface(AddItemInterface):
     @property
     def rows(self):
         def _idp_to_row(idp):
-            edit_url = ''
-            #edit_url = reverse(EditIdentityProviderAdminView.urlname, args=(idp.id,))
+            edit_url = reverse(EditIdentityProviderAdminView.urlname, args=(idp.id,))
             return [
                 f'<a href="{edit_url}">{idp.name}</a>',
                 idp.slug,
@@ -126,8 +135,79 @@ class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMi
         if self.async_response is not None:
             return self.async_response
         if self.create_idp_form.is_valid():
-            self.create_idp_form.create_identity_provider(self.request.user)
+            idp = self.create_idp_form.create_identity_provider(self.request.user)
             messages.success(request, "New Identity Provider created!")
+            return HttpResponseRedirect(
+                reverse(EditIdentityProviderAdminView.urlname, args=(idp.id,))
+            )
         return self.get(request, *args, **kwargs)
 
 
+class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMixin):
+    page_title = ugettext_lazy('Edit Identity Provider')
+    template_name = 'sso/accounting_admin/edit_identity_provider.html'
+    urlname = 'edit_identity_provider'
+    async_handlers = [
+        IdentityProviderAdminAsyncHandler,
+        SSOExemptUsersAdminAsyncHandler,
+    ]
+
+    @property
+    @memoized
+    def is_deletion_request(self):
+        return self.request.POST.get('delete_identity_provider')
+
+    @property
+    @memoized
+    def edit_idp_form(self):
+        if self.request.method == 'POST' and not self.is_deletion_request:
+            return EditIdentityProviderAdminForm(self.identity_provider, self.request.POST)
+        return EditIdentityProviderAdminForm(self.identity_provider)
+
+    @property
+    def page_context(self):
+        return {
+            'edit_idp_form': self.edit_idp_form,
+            'idp_slug': self.identity_provider.slug,
+            'idp_is_active': self.identity_provider.is_active,
+        }
+
+    @property
+    @memoized
+    def identity_provider(self):
+        try:
+            return IdentityProvider.objects.get(id=self.args[0])
+        except ObjectDoesNotExist:
+            raise Http404()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.identity_provider.id,))
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.is_deletion_request and self.identity_provider.is_active:
+            messages.error(
+                request,
+                _("Identity Provider {} cannot be deleted because "
+                  "it is still active.").format(
+                    self.identity_provider.name
+                )
+            )
+        elif self.is_deletion_request:
+            self.identity_provider.delete()
+            messages.success(
+                request,
+                _("Identity Provider {} successfully deleted.").format(
+                    self.identity_provider.name
+                )
+            )
+            return HttpResponseRedirect(IdentityProviderInterface.get_url())
+        elif self.edit_idp_form.is_valid():
+            self.edit_idp_form.update_identity_provider(self.request.user)
+            messages.success(request, _("Identity Provider updated!"))
+            # we redirect here to force the memoized identity_provider property
+            # to re-fetch its data.
+            return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)
