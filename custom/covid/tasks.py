@@ -76,7 +76,7 @@ def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
     - user has not synced since ``sync_cutoff``
     - user has a case load > ``min_case_load``
     """
-    assert sync_window > sync_cutoff
+    assert sync_window < sync_cutoff, "Sync cutoff time must be within the sync window"
 
     base_query = (
         SyncLogSQL.objects.values("request_user_id", "user_id")
