@@ -83,4 +83,5 @@ branches:
   - dependabot/pip/requirements/sentry-sdk-0.19.5 # Amit Feb 8
   - jls/shadow-eof-nav # Jenny Feb 8
   - jls/remove-autolaunch # Jenny Feb 9
+  - gh/export-settings-ui # Graham Feb 9
 submodules: {}
