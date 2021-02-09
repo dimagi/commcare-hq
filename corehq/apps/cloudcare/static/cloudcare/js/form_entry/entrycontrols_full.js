@@ -853,6 +853,11 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         if (calendarLanguage === 'en') {
             $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions['']);
         }
+
+        self._formatDateForAnswer = function (newDate) {
+            return moment(newDate).format('YYYY-MM-DD');
+        };
+
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
             self.$picker.calendarsPicker({
@@ -861,7 +866,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 onSelect: function (dates) {
                     // transform date to gregorian to store as the answer
                     if (dates.length) {
-                        self.answer(moment(dates[0].toJSDate()).format('YYYY-MM-DD'));
+                        self.answer(self._formatDateForAnswer(dates[0].toJSDate()));
                     } else {
                         self.answer(Const.NO_ANSWER);
                     }
@@ -870,8 +875,13 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
             self.$picker.blur(function (change) {
                 // calendarsPicker doesn't pick up changes if you don't actively select them in the widget
-                var changedPicker = $(change.target)[0];
-                if (changedPicker.value) {
+                var changedPicker = $(change.target)[0],
+                    newDate = self._calendarInstance.parseDate(
+                        self._calendarInstance.local.dateFormat,
+                        changedPicker.value
+                    );
+
+                if (self.answer() !== self._formatDateForAnswer(newDate.toJSDate())) {
                     self.$picker.calendarsPicker('setDate', changedPicker.value);
                 }
             });
