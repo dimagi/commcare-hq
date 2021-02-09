@@ -82,5 +82,5 @@ branches:
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - dependabot/pip/requirements/sentry-sdk-0.19.5 # Amit Feb 8
   - jls/shadow-eof-nav # Jenny Feb 8
-  - jls/do-not-include-closed # Jenny Feb 8
+  - jls/remove-autolaunch # Jenny Feb 9
 submodules: {}
