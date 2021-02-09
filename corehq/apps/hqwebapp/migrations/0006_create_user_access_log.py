@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import django.utils.timezone
+from datetime import datetime
 
 
 class Migration(migrations.Migration):
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                     ('failure', 'Login Failure')], max_length=20)),
                 ('ip', models.GenericIPAddressField(blank=True, null=True)),
                 ('path', models.CharField(blank=True, max_length=255)),
-                ('timestamp', models.DateTimeField(default=django.utils.timezone.now)),
+                ('timestamp', models.DateTimeField(default=datetime.utcnow)),
                 ('user_agent', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT,
                     to='hqwebapp.UserAgent')),
             ],

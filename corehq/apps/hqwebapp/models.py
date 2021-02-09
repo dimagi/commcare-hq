@@ -3,7 +3,7 @@ import architect
 from collections import namedtuple
 
 from django.contrib.postgres.fields import ArrayField
-from django.utils import timezone
+from datetime import datetime
 from django.db import models
 
 from corehq.util.markup import mark_up_urls
@@ -88,7 +88,7 @@ class UserAccessLog(models.Model):
     ip = models.GenericIPAddressField(blank=True, null=True)
     user_agent = models.ForeignKey(UserAgent, null=True, on_delete=models.PROTECT)
     path = models.CharField(max_length=255, blank=True)
-    timestamp = models.DateTimeField(default=timezone.now)
+    timestamp = models.DateTimeField(default=datetime.utcnow)
 
     objects = UserAccessLogManager()
 
