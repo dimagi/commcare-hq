@@ -58,6 +58,6 @@ class Command(BaseCommand):
         for job in jobs:
             success, command, args, exception = job.get()
             if success:
-                print("SUCCESS: {} command for {}".format(command, args[0]))
+                print("SUCCESS: {} command for {}".format(command, args))
             else:
-                print("COMMAND FAILED: {} while running {} for {}".format(exception, command, args[0]))
+                print("COMMAND FAILED: {} while running {} for {})".format(exception, command, args))
