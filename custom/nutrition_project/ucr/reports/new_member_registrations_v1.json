@@ -94,7 +94,7 @@
       },
       {
         "display": "Population",
-        "column_id": "count",
+        "column_id": "open_count",
         "type": "field",
         "field": "doc_id",
         "aggregation": "count"
