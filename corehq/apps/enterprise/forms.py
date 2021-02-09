@@ -100,19 +100,8 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_signup_message": self.account.restrict_signup_message,
         }
 
-        if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
-            export_settings_args = {
-                "forms_filetype": self.export_settings.forms_filetype,
-                "forms_auto_convert": self.export_settings.forms_auto_convert,
-                "forms_auto_format_cells": self.export_settings.forms_auto_format_cells,
-                "forms_include_duplicates": self.export_settings.forms_include_duplicates,
-                "forms_expand_checkbox": self.export_settings.forms_expand_checkbox,
-                "cases_filetype": self.export_settings.cases_filetype,
-                "cases_auto_convert": self.export_settings.cases_auto_convert,
-                "odata_include_duplicates": self.export_settings.odata_include_duplicates,
-                "odata_expand_checkbox": self.export_settings.odata_expand_checkbox
-            }
-            kwargs.update(export_settings_args)
+        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+            kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -137,43 +126,42 @@ class EnterpriseSettingsForm(forms.Form):
 
         if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
             self.helper.layout.append(
-                crispy.Fieldset(
-                    _("Edit Default Export Settings"),
-                    crispy.Div(
-                        crispy.HTML('<h4 style="font-weight: bold;">Form Data Exports</h4>')
+                crispy.Div(
+                    crispy.Fieldset(
+                        _("Edit Default Form Export Settings"),
+                        crispy.Div(
+                            crispy.Field('forms_filetype'),
+                        ),
+                        crispy.Div(
+                            crispy.Field('forms_auto_convert'),
+                        ),
+                        crispy.Div(
+                            crispy.Field('forms_auto_format_cells')
+                        ),
+                        crispy.Div(
+                            crispy.Field('forms_include_duplicates')
+                        ),
+                        crispy.Div(
+                            crispy.Field('forms_expand_checkbox')
+                        ),
                     ),
-                    crispy.Div(
-                        crispy.Field('forms_filetype'),
+                    crispy.Fieldset(
+                        _("Edit Default Case Export Settings"),
+                        crispy.Div(
+                            crispy.Field('cases_filetype')
+                        ),
+                        crispy.Div(
+                            crispy.Field('cases_auto_convert'),
+                        ),
                     ),
-                    crispy.Div(
-                        crispy.Field('forms_auto_convert'),
-                    ),
-                    crispy.Div(
-                        crispy.Field('forms_auto_format_cells')
-                    ),
-                    crispy.Div(
-                        crispy.Field('forms_include_duplicates')
-                    ),
-                    crispy.Div(
-                        crispy.Field('forms_expand_checkbox')
-                    ),
-                    crispy.Div(
-                        crispy.HTML('<h4 style="font-weight: bold;">Case Data Exports</h4>')
-                    ),
-                    crispy.Div(
-                        crispy.Field('cases_filetype')
-                    ),
-                    crispy.Div(
-                        crispy.Field('cases_auto_convert'),
-                    ),
-                    crispy.Div(
-                        crispy.HTML('<h4 style="font-weight: bold;">OData Feeds</h4>')
-                    ),
-                    crispy.Div(
-                        crispy.Field('odata_include_duplicates')
-                    ),
-                    crispy.Div(
-                        crispy.Field('odata_expand_checkbox'),
+                    crispy.Fieldset(
+                        _("Edit Default OData Export Settings"),
+                        crispy.Div(
+                            crispy.Field('odata_include_duplicates')
+                        ),
+                        crispy.Div(
+                            crispy.Field('odata_expand_checkbox'),
+                        ),
                     ),
                 )
             )
@@ -200,7 +188,7 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
 
-        if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
             # forms
             self.export_settings.forms_filetype = self.cleaned_data.get(
                 'forms_filetype',
