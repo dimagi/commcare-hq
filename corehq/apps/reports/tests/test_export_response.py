@@ -31,7 +31,7 @@ class ExportResponseTest(TestCase):
         super().tearDownClass()
 
     def test_export_response_returns_200(self):
-        request = self.request_factory.post(f'/{self.domain}/reports/export/worker_activity')
+        request = self.request_factory.post('/some/url')
         request.couch_user = self.couch_user
         request.domain = self.domain
         request.datespan = DateSpan(
@@ -48,7 +48,7 @@ class ExportResponseTest(TestCase):
 
     @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', MagicMock(return_value=[]))
     def test_export_response_returns_200_with_file(self):
-        request = self.request_factory.post(f'/{self.domain}/reports/expt/worker_activity')
+        request = self.request_factory.post('/some/url')
         request.couch_user = self.couch_user
         request.domain = self.domain
         request.datespan = DateSpan(
