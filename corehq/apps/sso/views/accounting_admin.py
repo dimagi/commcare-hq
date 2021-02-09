@@ -184,6 +184,19 @@ class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerM
     def page_url(self):
         return reverse(self.urlname, args=(self.identity_provider.id,))
 
+    def get(self, request, *args, **kwargs):
+        if 'sp_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.sp_cert_public,
+                f"{self.identity_provider.slug}_sp_public.cert"
+            )
+        if 'sp_rollover_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.sp_rollover_cert_public,
+                f"{self.identity_provider.slug}_sp_rollover_public.cert"
+            )
+        return super().get(request, args, kwargs)
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
