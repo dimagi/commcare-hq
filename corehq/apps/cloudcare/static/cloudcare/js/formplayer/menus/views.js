@@ -314,10 +314,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         searchTextKeyAction: function (event) {
             // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
-                if (event.target.id == 'goText') {
-                this.caseListGo(event);
+                    if (event.target.id === 'goText') {
+                    this.caseListGo(event);
                 } else {
-                this.caseListSearch(event);
+                    this.caseListSearch(event);
                 }
             }
         },
@@ -331,9 +331,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             var goText = Number($('#goText').val());
             if (goText && goText <= this.options.pageCount) {
-                FormplayerFrontend.trigger("menu:paginate", goText-1);
+                FormplayerFrontend.trigger("menu:paginate", goText - 1);
             } else {
-                FormplayerFrontend.trigger('showError', 'Enter valid Page number');
+                FormplayerFrontend.trigger(
+                    "showError",
+                    "Enter valid Page number"
+                );
             }
          },
 

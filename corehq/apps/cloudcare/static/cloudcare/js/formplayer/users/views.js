@@ -92,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             query: '.js-user-query',
             page: '.js-page',
             goPage: '.js-page-go-search',
-            perPage: '.js-page-series'
+            perPage: '.js-page-series',
         },
         events: {
             'click @ui.next': 'onClickNext',
@@ -168,10 +168,13 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         onSubmitPageSearch: function (e) {
             e.preventDefault();
             var page = Number($('#goText').val());
-            if (page && page<=this.totalPages()) {
+            if (page && page <= this.totalPages()) {
                 this.model.set('page', page);
             } else {
-                FormplayerFrontend.trigger('showError', 'Enter valid Page number');
+                FormplayerFrontend.trigger(
+                    'showError',
+                    'Enter valid Page number'
+                );
             }
         },
         onClickPagelimit: function (e) {
