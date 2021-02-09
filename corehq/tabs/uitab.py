@@ -234,7 +234,7 @@ class UITab(object):
     def clear_dropdown_cache(cls, domain, user):
         user_id = user.get_id
         try:
-            user_role = user.get_role(domain)
+            user_role = user.get_role(domain, allow_mirroring=True)
             role_rev = user_role._rev if user_role else None
         except DomainMembershipError:
             role_rev = None
