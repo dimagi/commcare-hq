@@ -46,7 +46,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 locale: {
                     format: 'YYYY-MM-DD',
                     separator: separator,
+                    cancelLabel: 'Clear',
                 }
+            });
+            var self = this;
+            this.ui.dateRange.on('cancel.daterangepicker', function () {
+                self.ui.dateRange.val('');
             });
         },
     });
