@@ -175,6 +175,12 @@ class CaseCommandsTest(TestCase):
                                          "is_assigned_primary": 'yes',
                                          "assigned_to_primary_checkin_case_id": checkin_case_id},
         )
+        patient_case_not_real_assigned_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient_case_not_real_assigned_case_id, user_id=self.user_id, owner_id='active-location',
+            case_type='patient', update={"is_assigned_temp": 'yes',
+                                         "assigned_to_primary_checkin_case_id": None},
+        )
         patient_case_not_primary_or_temp_id = uuid.uuid4().hex
         self.submit_case_block(
             True, patient_case_not_primary_or_temp_id, user_id=self.user_id, owner_id='active-location',
