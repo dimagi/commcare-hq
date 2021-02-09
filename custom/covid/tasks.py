@@ -79,7 +79,7 @@ def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
     assert sync_window < sync_cutoff, "Sync cutoff time must be within the sync window"
 
     base_query = (
-        SyncLogSQL.objects.values("request_user_id", "user_id")
+        SyncLogSQL.objects.values_list("request_user_id", "user_id")
         .filter(
             domain=domain,
             is_formplayer=True,
