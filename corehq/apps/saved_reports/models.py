@@ -719,7 +719,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                     }
                 )
                 if excel_files:
-                    message = "Unable to generate email report. Excel files are attached."
+                    message = _("Unable to generate email report. Excel files are attached.")
                     send_html_email_async(title, email, message,
                                           email_from=settings.DEFAULT_FROM_EMAIL,
                                           file_attachments=excel_files,
