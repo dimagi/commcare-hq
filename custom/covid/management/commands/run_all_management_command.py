@@ -7,14 +7,25 @@ from django.core.management import call_command
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 
 
-DEVICE_ID = __name__ + ".run_all_management_commands"
+DEVICE_ID = __name__ + ".run_all_management_command"
+
+
+def run_command(command, *args, location=None):
+    try:
+        if location is None:
+            call_command(command, *args)
+        else:
+            call_command(command, *args, location=location)
+    except Exception as e:
+        return False, command, args, e
+    return True, command, args, None
 
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('location-csv')
+        parser.add_argument('location_csv')
         parser.add_argument('--and-linked', action='store_true', default=False)
 
     def handle(self, domain, location_csv, **options):
@@ -36,13 +47,17 @@ class Command(BaseCommand):
         jobs = []
         pool = Pool(50)
         for domain in domains:
-            jobs.append(pool.spawn(call_command, 'update_case_index_relationship', domain, 'contacts'))
-            jobs.append(pool.spawn(call_command, 'add_hq_user_id_to_case', domain, 'checkin'))
-            jobs.append(pool.spawn(call_command, 'update_owner_ids', domain, 'investigation'))
-            jobs.append(pool.spawn(call_command, 'update_owner_ids', domain, 'checkin'))
+            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contacts'))
+            jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
+            jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
+            jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
             for location in location_ids[domain]:
-                jobs.append(pool.spawn(call_command, 'add_assignment_cases', domain, 'patient', location=location))
-                jobs.append(pool.spawn(call_command, 'add_assignment_cases', domain, 'contact', location=location))
+                jobs.append(pool.spawn(run_command, 'add_assignment_cases', domain, 'patient', location=location))
+                jobs.append(pool.spawn(run_command, 'add_assignment_cases', domain, 'contact', location=location))
         pool.join()
         for job in jobs:
-            job.get()
+            success, command, args, exception = job.get()
+            if success:
+                print("SUCCESS: {} command for {}".format(command, args[0]))
+            else:
+                print("COMMAND FAILED: {} while running {} for {}".format(exception, command, args[0]))
