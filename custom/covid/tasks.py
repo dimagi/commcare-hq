@@ -86,12 +86,10 @@ def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
         ).exclude(auth_type=FORMPLAYER)  # ignore syncs that were done by SMS or by this task
     )
 
-    users_synced_in_window = set(
-        base_query.filter(
-            date__gt=sync_window,
-            case_count__gt=min_case_load
-        ).distinct()
-    )
+    query = base_query.filter(date__gt=sync_window)
+    if min_case_load:
+        query = query.filter(case_count__gt=min_case_load)
+    users_synced_in_window = set(query.distinct())
 
     users_synced_since_cutoff = set(base_query.filter(date__gt=sync_cutoff).distinct())
 
