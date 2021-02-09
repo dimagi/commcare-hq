@@ -2001,6 +2001,7 @@ DOMAIN_MODULE_MAP = {
     'inddex-multilingual': 'custom.inddex',
     'inddex-multi-vn': 'custom.inddex',
     'iita-fcms-nigeria': 'custom.inddex',
+    'cambodia-arch-3-study': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }
