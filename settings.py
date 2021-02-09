@@ -2000,6 +2000,7 @@ DOMAIN_MODULE_MAP = {
     'inddex-reports': 'custom.inddex',
     'inddex-multilingual': 'custom.inddex',
     'inddex-multi-vn': 'custom.inddex',
+    'iita-fcms-nigeria': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }
