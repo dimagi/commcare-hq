@@ -20,7 +20,7 @@ def needs_update(case):
 
 
 def find_owner_id(case, accessor):
-    checkin_case = accessor.get_case(case.assigned_to_primary_checkin_case_id)
+    checkin_case = accessor.get_case(case.get_case_property('assigned_to_primary_checkin_case_id'))
     return checkin_case.get_case_property('hq_user_id')
 
 
