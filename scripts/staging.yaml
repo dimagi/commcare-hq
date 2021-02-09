@@ -64,7 +64,6 @@ branches:
   - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - jls/web-apps-sticky-search-again # Jenny Jan 26
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
-  - mk/remove-aaa # MK Jan 18
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
   - nh/reminders  # Norman Jan 26
   - ap/fix-deactivated-users-not-showing-in-reports # Amit Jan 28
@@ -74,7 +73,6 @@ branches:
   - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
   - jls/fix-case-claim-session-var # Jenny Feb 2
   - smh/bulk-upload-web-users # Steph Feb 2
-  - null-date-prefilter # MK Feb 3
   #- ap/fix-header-tab-caching # Amit Feb 3
   - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
   - sr/cs-help2  # Sravan Feb 4
