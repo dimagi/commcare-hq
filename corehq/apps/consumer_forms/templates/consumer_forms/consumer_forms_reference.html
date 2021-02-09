@@ -1,22 +1,46 @@
 <html>
 <head>
-
+  <style>
+    #body {
+      margin: 1em auto;
+      max-width: 1080px;
+    }
+  </style>
 </head>
 <body>
-<h1>Example Consumer Form</h1>
-<p>This page is intentionally unstyled.</p>
-<h2>Case List</h2>
-<ul id="data-display"></ul>
+<div id="body">
+  <h1>Example Consumer Form</h1>
+  <p>This page is intentionally unstyled since the goal is for end-users to customize their own forms.</p>
+  <h2>Case List</h2>
+  <ul id="data-display"></ul>
+</div>
 </body>
-{{ link_data|json_script:'commcare-data' }}
+{{ link_url|json_script:'commcare-data-url' }}
+{{ domain|json_script:'domain' }}
 <script>
-  const linkData = JSON.parse(document.getElementById('commcare-data').textContent);
-  console.log(linkData);
-  const dataDiv = document.getElementById('data-display');
-  for (let i = 0; i < linkData.length; i++) {
-    let dataElt = document.createElement('li');
-    dataElt.innerText = linkData[i].name + ': ' + linkData[i].case_id;
-    dataDiv.appendChild(dataElt)
-  }
+  // or you could fetch this from the API
+  const linkUrl= JSON.parse(document.getElementById('commcare-data-url').textContent);
+
+  const renderData = function (commcareData) {
+    console.log(commcareData);
+    const dataDiv = document.getElementById('data-display');
+    for (let i = 0; i < commcareData.length; i++) {
+      let dataElt = document.createElement('li');
+      dataElt.innerText = commcareData[i].name + ': ' + commcareData[i].case_id;
+      dataDiv.appendChild(dataElt)
+    }
+  };
+
+  fetch(linkUrl)
+    .then(res => res.json())
+    .then(
+      (result) => {
+        renderData(result.data);
+      },
+      (error) => {
+        console.error(error);
+      }
+    );
+
 </script>
 </html>

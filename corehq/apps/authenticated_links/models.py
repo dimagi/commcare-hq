@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -31,6 +32,9 @@ class AuthenticatedLink(models.Model):
         # most of HQ that uses case ids expects them to be a list of of strings and not a
         # queryset of uuids...
         return [str(case_id) for case_id in self.case_data.values_list('case_id', flat=True)]
+
+    def get_url(self):
+        return reverse('authenticated_links:access_authenticated_link', args=[self.domain, self.link_id])
 
     def get_data(self):
         return [

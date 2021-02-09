@@ -9,9 +9,9 @@ def consumer_form_reference(request, domain, link_id):
     Reference / proof-of-concept hard-coded implementation of consumer forms.
     """
     link = get_object_or_404(AuthenticatedLink, domain=domain, link_id=link_id)
-    # print(link.get_data())
     return render(request, template_name='consumer_forms/consumer_forms_reference.html', context={
-        'link_data': link.get_data()
+        'domain': domain,
+        'link_url': link.get_url(),
     })
 
 
