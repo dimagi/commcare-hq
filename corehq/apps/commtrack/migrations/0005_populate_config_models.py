@@ -8,7 +8,7 @@ from corehq.apps.commtrack.management.commands.populate_commtrackconfig import C
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('commtrack', '0003_create_config_models'),
+        ('commtrack', '0004_update_overstock_threshold'),
     ]
 
     operations = [
