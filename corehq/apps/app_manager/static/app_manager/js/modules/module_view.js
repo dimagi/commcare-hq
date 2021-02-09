@@ -44,7 +44,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     searchProperties: options.search_properties || [],
                     searchDefaultRelevant: options.search_default_relevant,
                     searchAdditionalRelevant: options.search_additional_relevant,
-                    sessionVar: options.search_session_var,
                     autoLaunch: options.auto_launch,
                     defaultSearch: options.default_search,
                     defaultProperties: options.default_properties || [],
