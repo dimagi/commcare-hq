@@ -51,11 +51,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     format: 'YYYY-MM-DD',
                     separator: separator,
                     cancelLabel: 'Clear',
-                }
+                },
+                autoUpdateInput: false,
             });
             var self = this;
             this.ui.dateRange.on('cancel.daterangepicker', function () {
-                self.ui.dateRange.val('');
+                $(this).val('');
+            });
+            this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD'));
             });
         },
     });
