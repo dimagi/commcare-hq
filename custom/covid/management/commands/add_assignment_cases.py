@@ -15,8 +15,8 @@ DEVICE_ID = __name__ + ".add_assignment_cases"
 
 
 def needs_update(case):
-    return case.get_case_property('is_assigned_primary') != 'yes' or \
-        case.get_case_property('is_assigned_temp') != 'yes'
+    return case.get_case_property('is_assigned_primary') == 'yes' or \
+        case.get_case_property('is_assigned_temp') == 'yes'
 
 
 def find_owner_id(case, accessor):
@@ -53,9 +53,9 @@ class Command(CaseUpdateCommand):
                 skip_count += 1
             elif needs_update(case):
                 new_owner_id = find_owner_id(case, accessor)
-                if case.get_case_property('is_assigned_primary') != 'yes':
+                if case.get_case_property('is_assigned_primary') == 'yes':
                     case_blocks.append(self.case_block(case, new_owner_id, 'primary'))
-                elif case.get_case_property('is_assigned_temp') != 'yes':
+                elif case.get_case_property('is_assigned_temp') == 'yes':
                     case_blocks.append(self.case_block(case, new_owner_id, 'temp'))
         print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped because they're closed"
               f" or in an inactive location")
