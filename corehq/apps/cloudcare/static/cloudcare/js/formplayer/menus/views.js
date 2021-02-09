@@ -273,11 +273,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
+            this.redoLast = options.redoLast;
         },
 
         ui: {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
+            searchTextBox: '.module-search-container',
             paginators: '.page-link',
             goButton: '#case-list-go-button',
             columnHeader: '.header-clickable',
@@ -289,12 +291,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.goButton': 'caseListGo',
             'click @ui.columnHeader': 'columnSortAction',
-            'keypress': 'keyAction',
+            'keypress @ui.searchTextBox': 'searchTextKeyAction',
+            'keypress @ui.paginators': 'paginateKeyAction',
         },
 
         caseListAction: function (e) {
-            var index = $(e.currentTarget).data().index;
-            FormplayerFrontend.trigger("menu:select", "action " + index);
+            var index = $(e.currentTarget).data().index,
+                step = "action " + index;
+            if (step === this.redoLast) {
+                FormplayerFrontend.trigger("menu:select");
+            } else {
+                FormplayerFrontend.trigger("menu:select", step);
+            }
         },
 
         caseListSearch: function (e) {
@@ -303,7 +311,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:search", searchText);
         },
 
-        keyAction: function (event) {
+        searchTextKeyAction: function (event) {
+            // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
                 if (event.target.id == 'goText') {
                 this.caseListGo(event);
@@ -357,6 +366,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
+                pageNumLabel: _.template(gettext("Page <%=num%>")),
             };
         },
     });
