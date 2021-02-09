@@ -717,7 +717,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         return False
 
     @memoized
-    def get_role(self, domain=None, checking_global_admin=True):
+    def get_role(self, domain=None, checking_global_admin=True, allow_mirroring=False):
         """
         Get the role object for this user
         """
@@ -730,8 +730,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
-        if self.is_member_of(domain):
-            return self.get_domain_membership(domain).role
+        if self.is_member_of(domain, allow_mirroring):
+            return self.get_domain_membership(domain, allow_mirroring).role
         else:
             raise DomainMembershipError()
 
