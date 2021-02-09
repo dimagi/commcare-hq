@@ -15,6 +15,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
@@ -82,6 +83,8 @@ def update_facility_cases_from_dhis2_data_elements(
         otherwise they are emailed.
 
     """
+    if not domain_exists(DOMAIN):
+        return
     dhis2_server = get_dhis2_server(print_notifications)
     try:
         clays = get_clays()

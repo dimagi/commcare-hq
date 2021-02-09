@@ -139,6 +139,12 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeaterStub', SimpleFilter('domain')),
+    # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
+    # RepeatRecord, but this does not seem like a good idea.
+    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),

@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 
@@ -27,7 +26,6 @@ from corehq.apps.reports.standard.cases.filters import (
 )
 from corehq.elastic import iter_es_docs_from_query
 from corehq.util.metrics import metrics_histogram_timer
-from corehq.util.soft_assert import soft_assert
 
 
 @location_safe
@@ -158,12 +156,6 @@ class CaseListExplorer(CaseListReport):
     @property
     def rows(self):
         track_workflow(self.request.couch_user.username, "Case List Explorer: Search Performed")
-        send_email_to_dev_more(
-            self.domain,
-            self.request.couch_user.username,
-            XpathCaseSearchFilter.get_value(self.request, self.domain),
-            self.es_results['hits'].get('total', 0)
-        )
         data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
 
@@ -190,19 +182,3 @@ class CaseListExplorer(CaseListReport):
         self._is_exporting = True
         track_workflow(self.request.couch_user.username, "Case List Explorer: Export button clicked")
         return super(CaseListExplorer, self).export_table
-
-
-def send_email_to_dev_more(domain, user, query, total_results):
-    """Dev wanted an email with every query that is performed on the CLE.
-
-    ¯\_(ツ)_/¯
-    """
-    _assert = soft_assert(["@".join(['dmore', 'dimagi.com'])],
-                          exponential_backoff=False, send_to_ops=False)
-    _assert(False, "Case List Explorer Query Performed", {
-        'Note': "Hi Dev! Someone just performed a query with the case list explorer. Cool!  -CLEBOT",
-        'Domain': domain,
-        'User': user,
-        'Query': query if query else "Empty Query",
-        'Total Results': total_results,
-    })

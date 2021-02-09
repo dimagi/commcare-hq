@@ -14,7 +14,7 @@ class TurnIncomingSMSView(IncomingBackendView):
 
     def post(self, request, api_key, *args, **kwargs):
         request_body = json.loads(request.body)
-        for message in request_body.get('messages'):
+        for message in request_body.get('messages', []):
             message_id = message.get('id')
             from_ = message.get('from')
             if message.get('type') == 'text':

@@ -98,6 +98,12 @@ class Attachment(IsImageMixin):
                 except IOError:
                     self.content_type = 'application/octet-stream'
 
+    def has_size(self):
+        if not hasattr(self.raw_content, 'size'):
+            return False
+
+        return self.raw_content.size is not None
+
     @property
     @memoized
     def content_length(self):

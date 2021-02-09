@@ -127,6 +127,8 @@ class PatchCase:
     def indices(self):
         diffs = [d for d in self.diffs if d.path[0] == "indices"]
         if not diffs:
+            if is_missing_in_sql(self.diffs):
+                yield from self.case.indices
             return
         for diff in diffs:
             if diff.path != ["indices", "[*]"]:

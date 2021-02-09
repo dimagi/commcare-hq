@@ -233,9 +233,9 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_modified_with_owner_since(domain, owner_id, reference_date)
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids, include_closed=True):
+    def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
         # include_closed ignored for couch
-        return get_extension_case_ids(domain, case_ids)
+        return get_extension_case_ids(domain, case_ids, exclude_for_case_type)
 
     @staticmethod
     def get_indexed_case_ids(domain, case_ids):
