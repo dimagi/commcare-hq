@@ -488,8 +488,7 @@ class HQLoginView(LoginView):
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
-        if 'request' not in kwargs:
-            kwargs['request'] = self.request
+        kwargs.setdefault('request', self.request)
         return kwargs
 
     def get_context_data(self, **kwargs):
