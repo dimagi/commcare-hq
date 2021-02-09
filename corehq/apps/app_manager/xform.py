@@ -254,7 +254,7 @@ class WrappedNode(object):
         return self.xml is not None
 
     def render(self):
-        return ET.tostring(self.xml)
+        return ET.tostring(self.xml, encoding='utf-8')
 
 
 class ItextNodeGroup(object):
@@ -296,7 +296,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([bytes.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
+        return sorted([bytes.strip(ET.tostring(v.xml, encoding='utf-8')) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -597,7 +597,7 @@ def validate_xform(domain, source):
     if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
-    source = ET.tostring(parse_xml(source))
+    source = ET.tostring(parse_xml(source), encoding='utf-8')
     try:
         validation_results = formplayer_api.validate_form(source)
     except FormplayerAPIException:
@@ -634,7 +634,7 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        return ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
+        return ET.tostring(self.xml, encoding='utf-8').decode('utf-8') if self.xml is not None else ''
 
     @property
     @raise_if_none("Can't find <model>")
@@ -790,8 +790,8 @@ class XForm(WrappedNode):
                     translation.remove(node.xml)
 
         def replace_ref_s(xmlstring, find, replace):
-            find = find.encode('ascii', 'xmlcharrefreplace')
-            replace = replace.encode('ascii', 'xmlcharrefreplace')
+            find = find.encode('utf-8', 'xmlcharrefreplace')
+            replace = replace.encode('utf-8', 'xmlcharrefreplace')
             return xmlstring.replace(find, replace)
 
         xf_string = self.render()
