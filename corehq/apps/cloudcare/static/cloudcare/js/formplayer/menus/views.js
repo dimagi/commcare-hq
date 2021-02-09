@@ -334,13 +334,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
+            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             return {
+                startPage: paginateItems.startPage,
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                pageCount: this.options.pageCount,
+                endPage: paginateItems.endPage,
+                pageCount: paginateItems.pageCount,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
@@ -357,6 +360,43 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
+    var paginateOptions = function (currentPage, totalPages) {
+        var maxPages = 5;
+        // ensure current page isn't out of range
+        if (currentPage < 1) {
+            currentPage = 1;
+        } else if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        var startPage, endPage;
+        if (totalPages <= maxPages) {
+            // total pages less than max so show all pages
+            startPage = 1;
+            endPage = totalPages;
+        } else {
+            // total pages more than max so calculate start and end pages
+            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
+            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
+            if (currentPage <= maxPagesBeforeCurrentPage) {
+                // current page near the start
+                startPage = 1;
+                endPage = maxPages;
+            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
+                // current page near the end
+                startPage = totalPages - maxPages + 1;
+                endPage = totalPages;
+            } else {
+                // current page somewhere in the middle
+                startPage = currentPage - maxPagesBeforeCurrentPage;
+                endPage = currentPage + maxPagesAfterCurrentPage;
+            }
+        }
+        return {
+            startPage: startPage,
+            endPage: endPage,
+            pageCount: totalPages,
+        };
+    };
 
     // Return a two- or three-length array of case tile CSS styles
     //
@@ -567,6 +607,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
+        paginateOptions: paginateOptions,
     };
 })
 ;

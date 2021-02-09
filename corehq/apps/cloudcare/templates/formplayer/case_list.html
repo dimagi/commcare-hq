@@ -62,89 +62,106 @@
     </div>
     <% } %>
 
-    <% if (pageCount) { %>
-    <div>
-      <nav class="module-caselist-pagination-container">
-        <ul class="pagination">
-          <% if (currentPage > 0) { %>
-          <li class="page-item" id="prev-page">
-            <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
-              <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
-              <span class="sr-only">{% trans "Previous" %}</span>
-            </a>
-          </li>
-          <% } else { %>
-          <li class="paginate-disabled">
-            <a class="paginate-disabled">
-              <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
-              <span class="sr-only">{% trans "Previous (none)" %}</span>
-            </a>
-          </li>
-          <% } %>
-          <% if (pageCount <= 5) { %>
-            <% for (i = startPage-1; i < endPage; i++) { %>
-              <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
-            <% } %>
-          <% } else { %>
-            <% if (startPage <= 3) { %>
-              <% for (i = 0; i < startPage; i++) { %>
-                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i+1 %></a></li>
-              <% } %>
-            <% } else { %>
-                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="0">{% trans "1" %}</a></li>
-                <li class="page-item"><a class="paginate-disabled">{% trans "..." %}</a></li>
-            <% } %>
-            <% for (i = startPage; i < endPage; i++) { %>
-              <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i+1 %></a></li>
-            <% } %>
-            <% if (endPage >= pageCount - 2) { %>
-              <% for (i = endPage + 1; i <= pageCount; i++) { %>
-                <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i-1 %>"><%= i %></a></li>
-              <% } %>
-            <% } else { %>
-              <li class="page-item"><a class="paginate-disabled">{% trans "..." %}</a></li>
-              <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= pageCount-1 %>"><%= pageCount %></a></li>
-            <% } %>
-          <% } %>
-          <% if (currentPage < pageCount - 1) { %>
-          <li class="page-item" id="next-page">
-            <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
-              <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
-              <span class="sr-only">{% trans "Next" %}</span>
-            </a>
-          </li>
-          <% } else { %>
-          <li class="paginate-disabled">
-            <a class="paginate-disabled">
-              <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
-              <span class="sr-only">{% trans "Next (none)" %}</span>
-            </a>
-          </li>
-          <% } %>
-          <% if (currentPage < endPage - 1) { %>
-            <li class="page-item" id="last-page">
-              <a class="page-link" aria-label="{% trans_html_attr "Last page" %}" data-id="<%= pageCount-1 %>">
-                <span aria-hidden="true"><i class="fa fa-fast-forward"></i></span>
-                <span class="sr-only">{% trans "Last page" %}</span>
-              </a>
-            </li>
-            <% } else { %>
-            <li class="paginate-disabled">
-              <a class="paginate-disabled">
-                <span aria-hidden="true"><i class="fa fa-fast-forward"></i></span>
-                <span class="sr-only">{% trans "Last page (none)" %}</span>
-              </a>
-            </li>
-            <% } %>
-            <span>{% trans "Go to page" %}</span>
-            <li>
-              <input type="text" size="4" class="page-item form-control pagination-form" placeholder="Page" id="goText">
-            </li>
-            <li>
-              <input type="button" class="btn btn-primary pagination-form" id="case-list-go-button" value="Go">
-            </li>
-        </ul>
-      </nav>
+    <% if (endPage) { %>
+    <div class="container">
+        <div class="row">
+          <div class="col-sm-9 user-pagination-container">
+            <nav class="module-caselist-pagination-container">
+              <ul class="pagination">
+                <% if (currentPage > 0) { %>
+                <li class="page-item">
+                  <a class="page-link" data-id="0">
+                    <span aria-hidden="true"><i class='fa fa-fast-backward'></i></span>
+                    <span class="sr-only">{% trans "First page" %}</span>
+                  </a>
+                </li>
+                <% } else { %>
+                  <li class="paginate-disabled">
+                    <a class="paginate-disabled">
+                      <span aria-hidden="true"><i class='fa fa-fast-backward'></i></span>
+                      <span class="sr-only">{% trans "First page (none)" %}</span>
+                    </a>
+                  </li>
+                  <% } %>
+                <% if (currentPage > 0) { %>
+                <li class="page-item" id="prev-page">
+                  <a class="page-link" aria-label="{% trans_html_attr 'Previous' %}" data-id="<%= currentPage - 1 %>">
+                    <span aria-hidden="true"><i class="fa fa-caret-left"></i></span>
+                    <span class="sr-only">{% trans "Previous" %}</span>
+                  </a>
+                </li>
+                <% } else { %>
+                <li class="paginate-disabled">
+                  <a class="paginate-disabled">
+                    <span aria-hidden="true"><i class="fa fa-caret-left"></i></span>
+                    <span class="sr-only">{% trans "Previous (none)" %}</span>
+                  </a>
+                </li>
+                <% } %>
+                <% if (pageCount <= 5) { %>
+                  <% for (i = startPage-1; i < endPage; i++) { %>
+                    <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
+                  <% } %>
+                <% } else { %>
+                  <% if (startPage <= 3) { %>
+                    <% for (i = 0; i < startPage; i++) { %>
+                      <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i+1 %></a></li>
+                    <% } %>
+                  <% } else { %>
+                      <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="0">{% trans "1" %}</a></li>
+                      <li class="page-item"><a class="paginate-disabled">{% trans "..." %}</a></li>
+                  <% } %>
+                  <% for (i = startPage; i < endPage; i++) { %>
+                    <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i %>"><%= i+1 %></a></li>
+                  <% } %>
+                  <% if (endPage >= pageCount - 2) { %>
+                    <% for (i = endPage + 1; i <= pageCount; i++) { %>
+                      <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= i-1 %>"><%= i %></a></li>
+                    <% } %>
+                  <% } else { %>
+                    <li class="page-item"><a class="paginate-disabled">{% trans "..." %}</a></li>
+                    <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" data-id="<%= pageCount-1 %>"><%= pageCount %></a></li>
+                  <% } %>
+                <% } %>
+                <% if (currentPage < endPage - 1) { %>
+                <li class="page-item" id="next-page">
+                  <a class="page-link" aria-label="{% trans_html_attr 'Next' %}" data-id="<%= currentPage + 1 %>">
+                    <span aria-hidden="true"><i class="fa fa-caret-right"></i></span>
+                    <span class="sr-only">{% trans "Next" %}</span>
+                  </a>
+                </li>
+                <% } else { %>
+                <li class="paginate-disabled">
+                  <a class="paginate-disabled">
+                    <span aria-hidden="true"><i class="fa fa-caret-right"></i></span>
+                    <span class="sr-only">{% trans "Next (none)" %}</span>
+                  </a>
+                </li>
+                <% } %>
+                <% if (currentPage < endPage - 1) { %>
+                  <li class="page-item" id="last-page">
+                    <a class="page-link" aria-label="{% trans_html_attr 'Last page' %}" data-id="<%= pageCount-1 %>">
+                      <span aria-hidden="true"><i class="fa fa-fast-forward"></i></span>
+                      <span class="sr-only">{% trans "Last page" %}</span>
+                    </a>
+                  </li>
+                  <% } else { %>
+                  <li class="paginate-disabled">
+                    <a class="paginate-disabled">
+                      <span aria-hidden="true"><i class="fa fa-fast-forward"></i></span>
+                      <span class="sr-only">{% trans "Last page (none)" %}</span>
+                    </a>
+                  </li>
+                  <% } %>
+              </ul>
+            </nav>
+            </div>
+      <div class="col-sm-3 paginate-goto">
+        <span class="paginate-goto-text">{% trans "Go to page" %}</span>
+        <input type="text" class="page-item form-control case-list-go-input" placeholder="Page" id="goText">
+        <input type="button" class="btn btn-primary case-list-go-button" id="case-list-go-button" value="Go">
+      </div>
+        </div>
     </div>
     <% } %>
   </div>
