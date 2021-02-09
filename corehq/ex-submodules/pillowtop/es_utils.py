@@ -14,7 +14,7 @@ def _get_analysis(*names):
         "tokenizer": {
             "ngram_tokenizer": {
                 "type": "nGram",
-                "min_gram": "1",
+                "min_gram": "3",
                 "max_gram": "10",
             }
         }

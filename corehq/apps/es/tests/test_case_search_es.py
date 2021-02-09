@@ -264,10 +264,10 @@ CASE_SEARCH_DATA = [
     {"_id": "2nd_street", "foo": "2nd Street"},
     {"_id": "2nd_star_road", "foo": "2nd Star Road"},
     # uuids
-    {"_id": "p1033515_01", "foo": "P1033515-01"},
-    {"_id": "p1033515_02", "foo": "P1033515-022"},
-    {"_id": "p1033515_03", "foo": "P1033515-0333"},
-    {"_id": "p1033515_04", "foo": "P1033515-04444"},
+    {"_id": "p1033516_01", "foo": "P1033516-01"},
+    {"_id": "p1033516_02", "foo": "P1033516-022"},
+    {"_id": "p1033516_03", "foo": "P1033516-0333"},
+    {"_id": "p1033516_04", "foo": "P1033516-04444"},
 ]
 
 
@@ -369,7 +369,7 @@ class TestCaseSearchLookups(TestCase):
             ({'foo': '159 Deer Trail'}, []),
             ({'foo': '149'}, []),
             ({'foo': '2nd St'}, []),
-            ({'foo': 'P1033515-'}, []),
+            ({'foo': 'P1033516-'}, []),
         ]
         self._assert_queries_run_correctly(
             self.domain,
@@ -393,14 +393,15 @@ class TestCaseSearchLookups(TestCase):
         fuzzy_property.save()
         config.fuzzy_properties.add(fuzzy_property)
         query_matches = [
-            ({'foo': 'kat'}, ["kat"]),
-            ({'foo': 'jen'}, ["jen"]),
-            ({'foo': '970'}, []),
-            ({'foo': '159 Deer Trail'}, ["159_deer_trail_street", "159_deer_trail_court",
+            # (query, doc_ids)
+            ({'foo': 'kat'}, ['meerkat', 'kat', 'kathy', 'katrina', 'katherine']),
+            ({'foo': 'jen'}, ['jen', 'jenny', 'jenson', 'jennifer']),
+            ({'foo': '970'}, ['p930', 'p304', 'p970', 'p900']),
+            ({'foo': '159 Deer Trail'}, ["meerkat", "159_deer_trail_street", "159_deer_trail_court",
                 "159_deer_trail_ct", "149_castle_court", "149_tomas_road", "149_black_street"]),
             ({'foo': '289'}, ["289_2nd_street"]),  # fuzzy distance away, so doesn't include 159, 149
             ({'foo': '2nd St'}, ["289_2nd_street", "193_2nd_st.", "2nd_street", "2nd_star_road"]),
-            ({'foo': 'P1033515-'}, ["p1033515_01"]),
+            ({'foo': 'P1033516-'}, ['p1033516_03', 'p1033516_01', 'p1033516_02', 'p1033516_04']),
         ]
         self._assert_queries_run_correctly(
             self.domain,
