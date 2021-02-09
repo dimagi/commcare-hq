@@ -69,7 +69,7 @@ def get_prime_restore_user_params(request_user_id, sync_user_id):
     return request_user, as_username
 
 
-def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
+def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load=None):
     """Return a list of (request_user_id, user_id) tuples that match the criteria:
 
     - user has synced since ``since_window``
