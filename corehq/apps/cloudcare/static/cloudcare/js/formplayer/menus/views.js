@@ -314,7 +314,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         searchTextKeyAction: function (event) {
             // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
-                    if (event.target.id === 'goText') {
+                if (event.target.id === 'goText') {
                     this.caseListGo(event);
                 } else {
                     this.caseListSearch(event);
