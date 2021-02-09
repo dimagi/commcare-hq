@@ -7,7 +7,7 @@ from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
@@ -235,6 +235,42 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, expected, validate_query=False)
 
 
+CASE_SEARCH_DATA = [
+    #names
+    {"_id": "kat", "foo": "Kat"},
+    {"_id": "kathy", "foo": "Kati"},
+    {"_id": "kathy", "foo": "Kathy"},
+    {"_id": "katherine", "foo": "Katherine"},
+    {"_id": "katrina", "foo": "Katrina"},
+    {"_id": "meerkat", "foo": "Meerkat"},
+    {"_id": "jen", "foo": "Jen"},
+    {"_id": "jenny", "foo": "Jenny"},
+    {"_id": "jenson", "foo": "Jenson"},
+    {"_id": "jennifer", "foo": "Jennifer"},
+    # phone numbers
+    {"_id": "p970", "foo": "970-390-6762"},
+    {"_id": "p304", "foo": "304-970-9483"},
+    {"_id": "p930", "foo": "930-493-1970"},
+    {"_id": "p900", "foo": "900-493-1910"},
+    # addresses
+    {"_id": "159_deer_trail_court", "foo": "159 Deer Trail Court"},
+    {"_id": "159_deer_trail_ct", "foo": "159 Deer Trail Ct."},
+    {"_id": "159_deer_trail_street", "foo": "159 Deer Trail Street"},
+    {"_id": "149_black_street", "foo": "149 Black Street"},
+    {"_id": "149_tomas_road", "foo": "149 Tomas Road"},
+    {"_id": "149_castle_court", "foo": "149 Castle Court"},
+    {"_id": "289_2nd_street", "foo": "289 2nd Street"},
+    {"_id": "193_2nd_st.", "foo": "193 2nd St."},
+    {"_id": "2nd_street", "foo": "2nd Street"},
+    {"_id": "2nd_star_road", "foo": "2nd Star Road"},
+    # uuids
+    {"_id": "p1033515_01", "foo": "P1033515-01"},
+    {"_id": "p1033515_02", "foo": "P1033515-022"},
+    {"_id": "p1033515_03", "foo": "P1033515-0333"},
+    {"_id": "p1033515_04", "foo": "P1033515-04444"},
+]
+
+
 @es_test
 class TestCaseSearchLookups(TestCase):
 
@@ -326,26 +362,49 @@ class TestCaseSearchLookups(TestCase):
 
     def test_casesearch_criteria_standard(self):
         config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
-        data = [
-            {'_id': 'rr', 'foo': 'red'},
-            {'_id': 'rb', 'foo': 'red beard'},
-            {'_id': 'crb', 'foo': 'Red Beard'},
-            {'_id': 'bb', 'foo': 'black beard'},
-            {'_id': 'rc', 'foo': 'red color'},
-            {'_id': 'an', 'foo': 'Alfred Nemo'},
-            {'_id': 'wb', 'foo': 'White bear'},
-            {'_id': 'hr', 'foo': 'Harris'},
-        ]
         query_matches = [
-            ({'foo': 'red'}, ['rr']),
-            ({'foo': 'red beard'}, ['rb']),
-            ({'foo': 'red bear'}, []),
-            ({'foo': 'beard'}, []),
-            ({'foo': 'bear'}, []),
+            ({'foo': 'Kat'}, ["kat"]),
+            ({'foo': 'jen'}, []),  # no result since lowercase
+            ({'foo': '970'}, []),
+            ({'foo': '159 Deer Trail'}, []),
+            ({'foo': '149'}, []),
+            ({'foo': '2nd St'}, []),
+            ({'foo': 'P1033515-'}, []),
         ]
         self._assert_queries_run_correctly(
             self.domain,
-            data,
+            CASE_SEARCH_DATA,
+            None,
+            [
+                (
+                    CaseSearchCriteria(self.domain, self.case_type, criteria).search_es,
+                    output
+                )
+                for criteria, output in query_matches
+            ]
+        )
+        config.delete()
+
+    def test_casesearch_criteria_fuzzy(self):
+        # the data is all lumped together intentionally
+        #   to validate amount of false matches
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        fuzzy_property = FuzzyProperties(domain=self.domain, case_type=self.case_type, properties=["foo"])
+        fuzzy_property.save()
+        config.fuzzy_properties.add(fuzzy_property)
+        query_matches = [
+            ({'foo': 'kat'}, ["kat"]),
+            ({'foo': 'jen'}, ["jen"]),
+            ({'foo': '970'}, []),
+            ({'foo': '159 Deer Trail'}, ["159_deer_trail_street", "159_deer_trail_court",
+                "159_deer_trail_ct", "149_castle_court", "149_tomas_road", "149_black_street"]),
+            ({'foo': '289'}, ["289_2nd_street"]),  # fuzzy distance away, so doesn't include 159, 149
+            ({'foo': '2nd St'}, ["289_2nd_street", "193_2nd_st.", "2nd_street", "2nd_star_road"]),
+            ({'foo': 'P1033515-'}, ["p1033515_01"]),
+        ]
+        self._assert_queries_run_correctly(
+            self.domain,
+            CASE_SEARCH_DATA,
             None,
             [
                 (
