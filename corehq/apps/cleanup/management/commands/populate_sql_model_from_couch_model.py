@@ -59,9 +59,9 @@ class PopulateSQLCommand(BaseCommand):
         couch = doc.get(name, None)
         sql = getattr(obj, name, None)
         if wrap_couch:
-            couch = wrap_couch(couch)
+            couch = wrap_couch(couch) if couch is not None else None
         if wrap_sql:
-            sql = wrap_sql(sql)
+            sql = wrap_sql(sql) if sql is not None else None
         if couch != sql:
             return f"{name}: couch value {couch!r} != sql value {sql!r}"
 
