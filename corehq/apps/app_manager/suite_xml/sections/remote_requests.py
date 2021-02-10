@@ -43,10 +43,11 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, domain, app, module):
+    def __init__(self, domain, app, module, detail_section_elements):
         self.domain = domain
         self.app = app
         self.module = module
+        self.detail_section_elements = detail_section_elements
 
     def build_remote_request(self):
         return RemoteRequest(
@@ -94,7 +95,7 @@ class RemoteRequestFactory(object):
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
-        instances |= get_instances_for_module(self.app, self.module)
+        instances |= get_instances_for_module(self.app, self.module, self.detail_section_elements)
 
         # sorted list to prevent intermittent test failures
         return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
@@ -204,7 +205,9 @@ class RemoteRequestContributor(SuiteContributorByModule):
     .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#remote-request
 
     """
-    def get_module_contributions(self, module):
+
+    def get_module_contributions(self, module, detail_section_elements):
         if module_offers_search(module):
-            return [RemoteRequestFactory(self.app.domain, self.app, module).build_remote_request()]
+            return [RemoteRequestFactory(
+                self.app.domain, self.app, module, detail_section_elements).build_remote_request()]
         return []

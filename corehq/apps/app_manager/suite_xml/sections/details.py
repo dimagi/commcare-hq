@@ -507,13 +507,14 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     return columns
 
 
-def get_instances_for_module(app, module, additional_xpaths=None):
+def get_instances_for_module(app, module, detail_section_elements):
     """
     This method is used by CloudCare when filtering cases.
     """
+    print("get_instances_for_module ", module.id)
     modules = list(app.get_modules())
     helper = DetailsHelper(app, modules)
-    details = DetailContributor(None, app, modules).get_section_elements()
+    details = detail_section_elements
     detail_mapping = {detail.id: detail for detail in details}
     details_by_id = detail_mapping
     detail_ids = [helper.get_detail_id_safe(module, detail_type)
@@ -521,9 +522,6 @@ def get_instances_for_module(app, module, additional_xpaths=None):
                   if enabled]
     detail_ids = [_f for _f in detail_ids if _f]
     xpaths = set()
-
-    if additional_xpaths:
-        xpaths.update(additional_xpaths)
 
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
