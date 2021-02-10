@@ -740,6 +740,17 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
+    'ush_dont_close_patient_extensions',
+    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
+    Enabling this results in 'closing patient type cases will not close its contact type
+    extension cases'. Designed for specific USH domain use-case
+    """
+)
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
@@ -760,7 +771,10 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
-    'Allow case claim to be automatically launched in web apps',
+    '''
+        Support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results"
+    ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -1104,6 +1118,16 @@ LEGACY_CHILD_MODULES = StaticToggle(
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
     )
+)
+
+NON_PARENT_MENU_SELECTION = StaticToggle(
+    'non_parent_menu_selection',
+    'Allow selecting of module of any case-type in select-parent workflow',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allow selecting of module of any case-type in select-parent workflow
+    """,
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1960,6 +1984,13 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     """
 )
 
+ENTERPRISE_SSO = StaticToggle(
+    'enterprise_sso',
+    'Enable Enterprise SSO options for the users specified in this list.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+)
+
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -1974,4 +2005,19 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     'messaging feature',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
+    'clean_old_formplayer_syncs',
+    'Delete old formplayer syncs during submission processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001
+)
+
+PRIME_FORMPLAYER_DBS = StaticToggle(
+    'prime_formplayer_dbs',
+    'COVID: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

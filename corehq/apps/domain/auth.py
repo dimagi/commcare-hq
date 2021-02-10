@@ -189,9 +189,7 @@ def formplayer_as_user_auth(view):
     @wraps(view)
     def _inner(request, *args, **kwargs):
         with mutable_querydict(request.GET):
-            request_user = request.GET.pop('for', None)
-            if not request_user:
-                request_user = request.GET.pop('as', None)
+            request_user = request.GET.pop('as', None)
 
         if not request_user:
             auth_logger.info(
