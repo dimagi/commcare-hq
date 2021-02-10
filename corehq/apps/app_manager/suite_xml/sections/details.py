@@ -511,7 +511,6 @@ def get_instances_for_module(app, module, detail_section_elements):
     """
     This method is used by CloudCare when filtering cases.
     """
-    print("get_instances_for_module ", module.id)
     modules = list(app.get_modules())
     helper = DetailsHelper(app, modules)
     details = detail_section_elements
