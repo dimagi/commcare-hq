@@ -27,7 +27,7 @@ django.setup()
 
 # mock out stubborn modules that are hard to pip install
 # https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-MOCK_MODULES = ["PIL.Image", "PIL"]
+MOCK_MODULES = ["PIL.Image", "PIL", "OpenSSL"]
 sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 
