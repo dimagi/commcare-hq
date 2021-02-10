@@ -27,9 +27,7 @@ django.setup()
 
 # mock out stubborn modules that are hard to pip install
 # https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-MOCK_MODULES = ["PIL.Image", "PIL", "OpenSSL"]
-sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
-
+autodoc_mock_imports = ["OpenSSL"]
 
 # Support including markdown files in the documentation
 source_parsers = {
