@@ -59,6 +59,9 @@
                       </label>
                       <div class="col-xs-12 col-sm-9">
                         <input class="form-control" type="text" data-bind="value: property.defaultValue"/>
+                        <p class="help-block" data-bind="visible: property.appearance() == 'daterange'">
+                          {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
+                        </p>
                       </div>
                     </div>
                     {% endif %}
