@@ -82,4 +82,5 @@ branches:
   - jls/shadow-eof-nav # Jenny Feb 8
   - jls/remove-autolaunch # Jenny Feb 9
   - gh/export-settings-ui # Graham Feb 9
+  - bmb/sso-admin-ui  # Biyeun Feb 9
 submodules: {}
