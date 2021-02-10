@@ -27,10 +27,12 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.util.timer import time_method
 
 
 class MenuContributor(SuiteContributorByModule):
 
+    @time_method()
     def get_module_contributions(self, module, training_menu):
         menus = []
         if hasattr(module, 'get_menus'):
