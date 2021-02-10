@@ -62,7 +62,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             report = E.restore()
             report.extend(fixtures)
             self.assertXMLEqual(
-                etree.tostring(report, pretty_print=True).decode('utf-8'),
+                etree.tostring(report, pretty_print=True, encoding='utf-8').decode('utf-8'),
                 self.get_xml(expected_filename).decode('utf-8')
             )
 
@@ -103,7 +103,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             report = E.restore()
             report.extend(fixtures)
             self.assertXMLEqual(
-                etree.tostring(report, pretty_print=True).decode('utf-8'),
+                etree.tostring(report, pretty_print=True, encoding='utf-8').decode('utf-8'),
                 self.get_xml('expected_v2_report_total').decode('utf-8')
             )
 
