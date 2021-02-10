@@ -2089,6 +2089,7 @@ class CaseSearchProperty(DocumentSchema):
     appearance = StringProperty()
     input_ = StringProperty()
     default_value = StringProperty()
+    hint = DictProperty()
 
     itemset = SchemaProperty(Itemset)
 
