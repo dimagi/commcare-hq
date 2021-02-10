@@ -312,3 +312,117 @@ class EditIdentityProviderAdminForm(forms.Form):
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp
+
+
+class SSOEnterpriseSettingsForm(forms.Form):
+    """This form manages fields that enterprise admins can update.
+    """
+    name = forms.CharField(
+        label=ugettext_lazy("Name"),
+        required=False,
+    )
+    is_active = forms.BooleanField(
+        label=ugettext_lazy("Status"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Single Sign On is active"
+            ),
+        ),
+        help_text=ugettext_lazy(
+            "This will also force users with matching linked email domains "
+            "to log in with SSO."
+        ),
+    )
+    linked_email_domains = forms.CharField(
+        label=ugettext_lazy("Linked Email Domains"),
+        required=False,
+    )
+    entity_id = forms.CharField(
+        label=ugettext_lazy("Issuer/Entity ID"),
+        required=False,
+    )
+    login_url = forms.CharField(
+        label=ugettext_lazy("Login URL"),
+        required=False,
+    )
+    logout_url = forms.CharField(
+        label=ugettext_lazy("Logout URL"),
+        required=False,
+    )
+    idp_cert_public = forms.CharField(
+        label=ugettext_lazy("Public Signing Certificate"),
+        widget=forms.Textarea,
+        required=False,
+    )
+    date_idp_cert_expiration = forms.DateField(
+        label=ugettext_lazy("Date Certificate Expires"),
+        widget=forms.DateInput(),
+        required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.idp = identity_provider
+        kwargs['initial'] = {
+            'is_active': identity_provider.is_active,
+        }
+        super().__init__(*args, **kwargs)
+
+        sp_details_form = ServiceProviderDetailsForm(identity_provider)
+        self.fields.update(sp_details_form.fields)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Service Provider Details'),
+                        *sp_details_form.service_provider_fields
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Single Sign-On Details'),
+                        hqcrispy.B3TextField(
+                            'name',
+                            identity_provider.name,
+                        ),
+                        hqcrispy.B3TextField(
+                            'linked_email_domains',
+                            ", ".join(identity_provider.email_domains),
+                        ),
+                        twbscrispy.PrependedText('is_active', ''),
+                        'sso_exempt_users',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Identity Provider Details'),
+                        'entity_id',
+                        'login_url',
+                        'logout_url',
+                        'idp_cert_public',
+                        'date_idp_cert_expiration',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Update Configuration"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                )
+            )
+        )

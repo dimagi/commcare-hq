@@ -11,6 +11,7 @@ from corehq.apps.enterprise.views import (
 from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
 from corehq.apps.sso.views.enterprise_admin import (
     ManageSSOEnterpriseView,
+    EditIdentityProviderEnterpriseView,
 )
 
 domain_specific = [
@@ -27,4 +28,6 @@ domain_specific = [
         name=EnterpriseBillingStatementsView.urlname),
     url(r'^sso/$', ManageSSOEnterpriseView.as_view(),
         name=ManageSSOEnterpriseView.urlname),
+    url(r'^sso/(?P<idp_slug>[^/]*)/$', EditIdentityProviderEnterpriseView.as_view(),
+        name=EditIdentityProviderEnterpriseView.urlname),
 ]
