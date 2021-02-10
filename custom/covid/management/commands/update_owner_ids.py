@@ -10,7 +10,7 @@ from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 BATCH_SIZE = 100
 DEVICE_ID = __name__ + ".update_owner_ids"
-CHILD_LOCATION_TYPE = 'investigators'
+CHILD_LOCATION_TYPE = 'Investigators'
 
 
 class Command(CaseUpdateCommand):
