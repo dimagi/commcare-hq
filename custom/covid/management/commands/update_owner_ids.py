@@ -10,7 +10,7 @@ from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 BATCH_SIZE = 100
 DEVICE_ID = __name__ + ".update_owner_ids"
-CHILD_LOCATION_TYPE = 'Investigators'
+CHILD_LOCATION_TYPE = 'investigators'
 
 
 class Command(CaseUpdateCommand):
@@ -42,7 +42,7 @@ class Command(CaseUpdateCommand):
                 children = location_obj.get_children()
                 has_correct_child_location_type = False
                 for child_location in children:
-                    if child_location.location_type.name == CHILD_LOCATION_TYPE:
+                    if child_location.location_type.code == CHILD_LOCATION_TYPE:
                         case_blocks.append(self.case_block(case, child_location))
                         has_correct_child_location_type = True
                         break
