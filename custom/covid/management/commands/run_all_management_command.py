@@ -24,19 +24,15 @@ def run_command(command, *args, location=None):
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('location_csv')
-        parser.add_argument('--and-linked', action='store_true', default=False)
+        parser.add_argument('csv_file')
 
-    def handle(self, domain, location_csv, **options):
-        domains = {domain}
-        if options["and_linked"]:
-            domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
-
+    def handle(self, csv_file, **options):
+        domains = set()
         location_ids = {}
-        with open(location_csv, newline='') as locfile:
-            reader = csv.DictReader(locfile)
+        with open(csv_file, newline='') as file:
+            reader = csv.DictReader(file)
             for row in reader:
+                domains.add(row['domain'])
                 locations = []
                 if row['location1'] != '':
                     locations.append(row['location1'])
