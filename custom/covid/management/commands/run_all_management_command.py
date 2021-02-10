@@ -4,8 +4,6 @@ from gevent.pool import Pool
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
 
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-
 
 DEVICE_ID = __name__ + ".run_all_management_command"
 
