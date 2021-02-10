@@ -17,10 +17,17 @@ from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
+# Include users that have synced in the last 48 hours
 SYNC_WINDOW_HOURS = 48
+
+# Exclude users that have synced in the last 8 hours
 SYNC_CUTOFF_HOURS = 8
 
+# Exclude users whose case load is less than this
 MIN_CASE_COUNT = 20000
+
+# Don't allow tasks to run beyond 11am UTC
+TASK_WINDOW_CUTOFF_HOUR = 11
 
 
 @periodic_task(run_every=crontab(minute=0, hour=8), queue=settings.CELERY_PERIODIC_QUEUE)
@@ -36,6 +43,9 @@ def prime_formplayer_dbs():
 
 @no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=50)
 def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
+    if datetime.utcnow().hour >= TASK_WINDOW_CUTOFF_HOUR:
+        return
+
     request_user, as_username = get_prime_restore_user_params(request_user_id, sync_user_id)
 
     metric_tags = {"domain": domain}
@@ -69,29 +79,27 @@ def get_prime_restore_user_params(request_user_id, sync_user_id):
     return request_user, as_username
 
 
-def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load):
+def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load=None):
     """Return a list of (request_user_id, user_id) tuples that match the criteria:
 
     - user has synced since ``since_window``
     - user has not synced since ``sync_cutoff``
     - user has a case load > ``min_case_load``
     """
-    assert sync_window > sync_cutoff
+    assert sync_window < sync_cutoff, "Sync cutoff time must be within the sync window"
 
     base_query = (
-        SyncLogSQL.objects.values("request_user_id", "user_id")
+        SyncLogSQL.objects.values_list("request_user_id", "user_id")
         .filter(
             domain=domain,
             is_formplayer=True,
         ).exclude(auth_type=FORMPLAYER)  # ignore syncs that were done by SMS or by this task
     )
 
-    users_synced_in_window = set(
-        base_query.filter(
-            date__gt=sync_window,
-            case_count__gt=min_case_load
-        ).distinct()
-    )
+    query = base_query.filter(date__gt=sync_window)
+    if min_case_load:
+        query = query.filter(case_count__gt=min_case_load)
+    users_synced_in_window = set(query.distinct())
 
     users_synced_since_cutoff = set(base_query.filter(date__gt=sync_cutoff).distinct())
 

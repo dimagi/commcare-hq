@@ -89,8 +89,8 @@ class Command(BaseCommand):
                 return
         else:
             domains = [domain.strip() for domain in domains if domain.strip()]
-            synced_since = datetime.utcnow().date() - relativedelta(hours=last_synced_hours)
-            not_synced_since = datetime.utcnow().date() - relativedelta(hours=not_synced_hours)
+            synced_since = datetime.utcnow() - relativedelta(hours=last_synced_hours)
+            not_synced_since = datetime.utcnow() - relativedelta(hours=not_synced_hours)
             if dry_run_count:
                 users = list(_get_user_rows(domains, synced_since, not_synced_since, min_cases, limit))
                 sys.stderr.write(f"\nMatched {len(users)} users for filters:\n")
@@ -175,11 +175,12 @@ def _get_users_from_csv(path):
 def _get_user_rows(domains, synced_since, not_synced_since, min_cases, limit):
     remaining_limit = limit
     for domain in domains:
-        if remaining_limit <= 0:
+        if remaining_limit is not None and remaining_limit <= 0:
             break
         users = get_users_for_priming(domain, synced_since, not_synced_since, min_cases)
-        users = users[:remaining_limit]
-        remaining_limit -= len(users)
+        if remaining_limit:
+            users = users[:remaining_limit]
+            remaining_limit -= len(users)
         for row in users:
             yield (domain, *row)
 
