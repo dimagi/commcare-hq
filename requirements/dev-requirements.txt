@@ -318,7 +318,7 @@ jsonobject==0.9.9
     #   -r requirements.in
     #   git-build-branch
     #   jsonobject-couchdbkit
-git+git://github.com/kaapstorm/python-jsonpath-rw@wherenot+update_create#egg=jsonpath-ng
+https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot%2Bupdate_create/wheel/jsonpath_ng-1.5.2.1-py3-none-any.whl
     # via -r requirements.in
 kafka-python==1.4.7
     # via -r requirements.in
