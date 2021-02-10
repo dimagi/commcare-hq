@@ -10,6 +10,7 @@ from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.sso.aync_handlers import SSOExemptUsersAdminAsyncHandler
+from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import SSOEnterpriseSettingsForm
 from corehq.apps.sso.models import IdentityProvider
 from corehq.toggles import ENTERPRISE_SSO
@@ -78,6 +79,19 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             )
         except ObjectDoesNotExist:
             raise Http404()
+
+    def get(self, request, *args, **kwargs):
+        if 'sp_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.sp_cert_public,
+                f"{self.identity_provider.slug}_sp_public.cert"
+            )
+        if 'sp_rollover_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.sp_rollover_cert_public,
+                f"{self.identity_provider.slug}_sp_rollover_public.cert"
+            )
+        return super().get(request, args, kwargs)
 
     @property
     @memoized
