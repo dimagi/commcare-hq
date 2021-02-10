@@ -82,4 +82,5 @@ branches:
   - gh/export-settings-ui # Graham Feb 9
   - bmb/sso-admin-ui  # Biyeun Feb 9
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
+  - jls/just-click-once # Jenny Feb 10
 submodules: {}
