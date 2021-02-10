@@ -8,16 +8,21 @@ from corehq.apps.cloudcare.touchforms_api import (
     get_user_contributions_to_touchforms_session,
 )
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
 class SessionUtilsTest(TestCase):
+
+    def tearDown(self):
+        delete_all_users()
+        super(SessionUtilsTest, self).tearDown()
 
     def test_load_session_data_for_mobile_worker(self):
         user = CommCareUser(
