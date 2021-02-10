@@ -1,6 +1,6 @@
 -r base-requirements.in
 
-# documentation
+django-extensions
 Sphinx~=1.8
 sphinx-rtd-theme~=0.3
 docutils==0.14
