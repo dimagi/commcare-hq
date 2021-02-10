@@ -19,5 +19,4 @@ class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
                 owner=self.request.account, is_editable=True
             ).all(),
             'account': self.request.account,
-            'domain': self.domain
         }
