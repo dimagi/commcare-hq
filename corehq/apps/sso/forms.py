@@ -95,14 +95,10 @@ class CreateIdentityProviderForm(forms.Form):
         return idp
 
 
-class EditIdentityProviderAdminForm(forms.Form):
-    """This is the form used by Accounting admins to modify the IdentityProvider
-    configuration
-    """
-    owner = forms.CharField(
-        label=ugettext_lazy("Billing Account Owner"),
-        required=False,
-    )
+class ServiceProviderDetailsForm(forms.Form):
+    """This form is for display purposes and lists all the
+    required service provider information that's needed to link with an
+    identity provider."""
     sp_entity_id = forms.CharField(
         label=ugettext_lazy("Entity ID"),
         required=False,
@@ -115,14 +111,6 @@ class EditIdentityProviderAdminForm(forms.Form):
         label=ugettext_lazy("Logout URL"),
         required=False,
     )
-    slug = forms.CharField(
-        label=ugettext_lazy("Slug"),
-        required=False,
-        help_text=ugettext_lazy(
-            "CAUTION: Changing this value will alter the SAML endpoint URLs "
-            "below and affect active SSO setups for the client!"
-        ),
-    )
     sp_public_cert = forms.CharField(
         label=ugettext_lazy("Public x509 Cert"),
         required=False,
@@ -134,6 +122,86 @@ class EditIdentityProviderAdminForm(forms.Form):
     sp_rollover_cert = forms.CharField(
         label=ugettext_lazy("Rollover x509 Cert"),
         required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.idp = identity_provider
+        # todo eventually have a setting for IdentityProvider toggles based on
+        #  whether SP signing is enforced (dependent on client's Azure tier)
+        self.show_public_cert = kwargs.pop('show_public_cert', True)
+        self.show_rollover_cert = kwargs.pop('show_rollover_cert', True)
+        self.show_help_block = kwargs.pop('show_help_block', True)
+
+        super().__init__(*args, **kwargs)
+
+    @property
+    def service_provider_help_block(self):
+        help_link = "#"  # todo
+        help_text = _('<a href="{}">Please read this guide</a> on how to set up '
+                      'CommCare HQ with Azure AD.<br />You will need the following '
+                      'information:').format(help_link)
+        return crispy.HTML(
+            f'<p class="help-block">{help_text}</p>'
+        )
+
+    @property
+    def service_provider_fields(self):
+        download = _("Download")
+        shown_fields = []
+        if self.show_help_block:
+            shown_fields.append(self.service_provider_help_block)
+        shown_fields.extend([
+            hqcrispy.B3TextField(
+                'sp_entity_id',
+                utils.get_saml_entity_id(self.idp),
+            ),
+            hqcrispy.B3TextField(
+                'sp_acs_url',
+                utils.get_saml_acs_url(self.idp),
+            ),
+            hqcrispy.B3TextField(
+                'sp_logout_url',
+                utils.get_saml_sls_url(self.idp),
+            ),
+        ])
+        if self.show_public_cert:
+            shown_fields.extend([
+                hqcrispy.B3TextField(
+                    'sp_public_cert',
+                    f'<a href="?sp_cert_public" target="_blank">{download}</a>',
+                ),
+                hqcrispy.B3TextField(
+                    'sp_public_cert_expiration',
+                    self.idp.date_sp_cert_expiration.strftime(
+                        '%d %B %Y at %H:%M UTC'
+                    ),
+                ),
+            ])
+        if self.show_rollover_cert:
+            shown_fields.append(hqcrispy.B3TextField(
+                'sp_rollover_cert',
+                (f'<a href="?sp_rollover_cert_public" target="_blank">{download}</a>'
+                    if self.idp.sp_rollover_cert_public
+                    else _("Not needed/generated yet.")),
+            ))
+        return shown_fields
+
+
+class EditIdentityProviderAdminForm(forms.Form):
+    """This is the form used by Accounting admins to modify the IdentityProvider
+    configuration
+    """
+    owner = forms.CharField(
+        label=ugettext_lazy("Billing Account Owner"),
+        required=False,
+    )
+    slug = forms.CharField(
+        label=ugettext_lazy("Slug"),
+        required=False,
+        help_text=ugettext_lazy(
+            "CAUTION: Changing this value will alter the SAML endpoint URLs "
+            "below and affect active SSO setups for the client!"
+        ),
     )
     name = forms.CharField(
         label=ugettext_lazy("Public Name"),
@@ -174,66 +242,53 @@ class EditIdentityProviderAdminForm(forms.Form):
         }
         super().__init__(*args, **kwargs)
 
+        sp_details_form = ServiceProviderDetailsForm(
+            identity_provider, show_help_block=False
+        )
+        self.fields.update(sp_details_form.fields)
+
         from corehq.apps.accounting.views import ManageBillingAccountView
         account_link = reverse(
             ManageBillingAccountView.urlname,
             args=(identity_provider.owner.id,)
         )
-        sp_entity_id = utils.get_saml_entity_id(identity_provider)
-        sp_acs_url = utils.get_saml_acs_url(identity_provider)
-        sp_sls_url = utils.get_saml_sls_url(identity_provider)
-        download = _("Download")
 
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Primary Configuration'),
-                hqcrispy.B3TextField(
-                    'owner',
-                    f'<a href="{account_link}">'
-                    f'{identity_provider.owner.name}</a>'
-                ),
-                'name',
-                twbscrispy.PrependedText('is_editable', ''),
-                twbscrispy.PrependedText('is_active', ''),
-            ),
-            crispy.Fieldset(
-                _('Service Provider Settings'),
-                'slug',
-                hqcrispy.B3TextField(
-                    'sp_entity_id',
-                    f'<a href="{sp_entity_id}">{sp_entity_id}</a>',
-                ),
-                hqcrispy.B3TextField(
-                    'sp_acs_url',
-                    f'<a href="{sp_acs_url}">{sp_acs_url}</a>',
-                ),
-                hqcrispy.B3TextField(
-                    'sp_logout_url',
-                    f'<a href="{sp_sls_url}">{sp_sls_url}</a>',
-                ),
-                hqcrispy.B3TextField(
-                    'sp_public_cert',
-                    f'<a href="?sp_cert_public" target="_blank">{download}</a>',
-                ),
-                hqcrispy.B3TextField(
-                    'sp_public_cert_expiration',
-                    identity_provider.date_sp_cert_expiration.strftime(
-                        '%d %B %Y at %H:%M UTC'
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Primary Configuration'),
+                        hqcrispy.B3TextField(
+                            'owner',
+                            f'<a href="{account_link}">'
+                            f'{identity_provider.owner.name}</a>'
+                        ),
+                        'name',
+                        twbscrispy.PrependedText('is_editable', ''),
+                        twbscrispy.PrependedText('is_active', ''),
                     ),
+                    css_class="panel-body"
                 ),
-                hqcrispy.B3TextField(
-                    'sp_rollover_cert',
-                    (f'<a href="?sp_rollover_cert_public" target="_blank">{download}</a>'
-                     if identity_provider.sp_rollover_cert_public
-                     else _("Not needed/generated yet.")),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Service Provider Settings'),
+                        'slug',
+                        *sp_details_form.service_provider_fields
+                    ),
+                    css_class="panel-body"
                 ),
+                css_class="panel panel-modern-gray panel-form-only"
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Update Primary Configuration"),
+                    ugettext_lazy("Update Configuration"),
                     type="submit",
                     css_class="btn btn-primary",
                 )
