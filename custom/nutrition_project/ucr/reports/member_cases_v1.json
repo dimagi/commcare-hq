@@ -5,11 +5,11 @@
   "server_environment": [
     "india"
   ],
-  "report_id": "static-new_member_registrations_v1",
+  "report_id": "static-member_cases_v1",
   "data_source_table": "static-member_cases_v1",
   "config": {
-    "title": "New member registrations per month (Static)",
-    "description": "New member registrations per flw per month",
+    "title": "New member cases opened per month (Static)",
+    "description": "New member cases opened per flw per month",
     "visible": true,
     "aggregation_columns": [
       "supervisor_id",
@@ -93,7 +93,7 @@
         }
       },
       {
-        "display": "Population",
+        "display": "Count",
         "column_id": "count",
         "type": "field",
         "field": "doc_id",
