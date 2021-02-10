@@ -375,6 +375,24 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.compare_diffs()
         self.assert_patched_cases(["case-1"])
 
+    def test_patch_case_closed_in_couch_missing_sql(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        case = CaseAccessorCouch.get_case("case-1")
+        case.closed = True
+        case.closed_by = "3fae4ea4af440efaa53441b5"
+        case.closed_on = datetime(2010, 9, 8, 7, 6, 5)
+        case.user_id = "3fae4ea4af440efaa53441b5"
+        case.save()
+        FormAccessors(self.domain_name).soft_delete_forms(
+            ["form-1"], datetime.utcnow(), 'test-deletion')
+        self.do_migration(diffs=IGNORE)
+        self.compare_diffs(changes=[
+            Diff('case-1', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
+        self.do_case_patch()
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
     def test_patch_case_index(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self.do_migration(case_diff="none")
