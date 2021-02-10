@@ -24,6 +24,9 @@
             data-bind="value: property.defaultValue"
             spellcheck="false"
           ></textarea>
+          <p class="help-block" data-bind="visible: property.appearance() == 'daterange'">
+          {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
+        </p>
         </td>
       {% endif %}
       {% if js_options.search_prompt_appearance_enabled %}
