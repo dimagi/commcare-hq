@@ -169,10 +169,9 @@ def build_fhir_resource(case, version=FHIR_VERSION_4_0_1):
         name=case.type,
     )
     info = get_case_trigger_info(case, case_type)
-    resource_type = FHIRResourceType.objects.get(
-        case_type=case_type,
-        fhir_version=version,
-    )
+    resource_type = (FHIRResourceType.objects
+                     .prefetch_related('properties__case_property')
+                     .get(case_type=case_type, fhir_version=version))
     fhir_resource = resource_type.template or {}
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()

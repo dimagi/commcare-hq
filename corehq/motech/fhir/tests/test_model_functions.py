@@ -44,19 +44,26 @@ class TestGetCaseTriggerInfo(TestCase):
 
 class TestBuildFHIRResource(TestCase):
 
-    def setUp(self):
-        self.case_type = CaseType.objects.create(domain=DOMAIN, name='mother')
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.set_up_case_type()
+        cls.set_up_resource_type()
 
-        self.name = CaseProperty.objects.create(
-            case_type=self.case_type, name='name')
-        self.first_name = CaseProperty.objects.create(
-            case_type=self.case_type, name='first_name')
-        self.honorific = CaseProperty.objects.create(
-            case_type=self.case_type, name='honorific')
-        self.date_of_birth = CaseProperty.objects.create(
-            case_type=self.case_type, name='date_of_birth')
+    @classmethod
+    def set_up_case_type(cls):
+        cls.case_type = CaseType.objects.create(domain=DOMAIN, name='mother')
 
-        self.case = CommCareCaseSQL(
+        cls.name = CaseProperty.objects.create(
+            case_type=cls.case_type, name='name')
+        cls.first_name = CaseProperty.objects.create(
+            case_type=cls.case_type, name='first_name')
+        cls.honorific = CaseProperty.objects.create(
+            case_type=cls.case_type, name='honorific')
+        cls.date_of_birth = CaseProperty.objects.create(
+            case_type=cls.case_type, name='date_of_birth')
+
+        cls.case = CommCareCaseSQL(
             case_id=str(uuid4()),
             domain=DOMAIN,
             type='mother',
@@ -69,34 +76,39 @@ class TestBuildFHIRResource(TestCase):
             }
         )
 
-    def tearDown(self):
-        self.case_type.delete()
-
-    def test_build_fhir_resource(self):
+    @classmethod
+    def set_up_resource_type(cls):
         resource_type = FHIRResourceType.objects.create(
-            case_type=self.case_type,
+            case_type=cls.case_type,
             fhirclient_class='UNUSED',
         )
         FHIRResourceProperty.objects.create(
             resource_type=resource_type,
-            case_property=self.name,
+            case_property=cls.name,
             jsonpath='$.name[0].text',
         )
         FHIRResourceProperty.objects.create(
             resource_type=resource_type,
-            case_property=self.first_name,
+            case_property=cls.first_name,
             jsonpath='$.name[0].given[0]',
         )
         FHIRResourceProperty.objects.create(
             resource_type=resource_type,
-            case_property=self.honorific,
+            case_property=cls.honorific,
             jsonpath='$.name[0].prefix[0]',
         )
         FHIRResourceProperty.objects.create(
             resource_type=resource_type,
-            case_property=self.date_of_birth,
+            case_property=cls.date_of_birth,
             jsonpath='$.birthDate',
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type.delete()
+        super().tearDownClass()
+
+    def test_build_fhir_resource(self):
         resource = build_fhir_resource(self.case)
         self.assertEqual(resource, {
             'name': [{
@@ -106,3 +118,7 @@ class TestBuildFHIRResource(TestCase):
             }],
             'birthDate': '1970-01-01',
         })
+
+    def test_num_queries(self):
+        with self.assertNumQueries(5):
+            build_fhir_resource(self.case)
