@@ -4983,6 +4983,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
+    @time_method()
     def create_suite(self, build_profile_id=None):
         self.assert_app_v2()
         return SuiteGenerator(self, build_profile_id).generate_suite()
