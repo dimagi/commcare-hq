@@ -31,8 +31,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
         var $confirmationButton = $modal.find('#js-confirmation-confirm');
-        $confirmationButton.off('click');
-        $confirmationButton.click(function (e) {
+        $confirmationButton.off('.confirmationModal');
+        $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
         $modal.modal('show');
