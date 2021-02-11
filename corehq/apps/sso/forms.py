@@ -412,8 +412,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
         widget=forms.Textarea,
         required=False,
     )
-    date_idp_cert_expiration = forms.DateField(
-        widget=forms.DateInput(),
+    date_idp_cert_expiration = forms.CharField(
         label=ugettext_lazy("Certificate Expiration"),
         required=False,
     )
