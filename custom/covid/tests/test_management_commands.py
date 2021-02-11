@@ -110,7 +110,7 @@ class CaseCommandsTest(TestCase):
         )
         investigators = LocationType.objects.create(
             domain=self.domain,
-            name='investigators',
+            name='Investigators',
         )
 
         parent_loc = SQLLocation.objects.create(
