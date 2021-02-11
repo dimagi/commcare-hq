@@ -22,8 +22,8 @@ class FHIRResourceType(models.Model):
     # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
     name = models.CharField(max_length=255)
 
-    # `template` is used for defining a JSON document structure if it
-    # cannot be built using only FHIRResourceAttributes
+    # `template` offers a way to define a FHIR resource if it cannot be
+    # built using only mapped case properties.
     template = JSONField(null=True, blank=True, default=None)
 
     def __str__(self):
