@@ -53,12 +53,9 @@ class CaseSearchView(BaseDomainView):
         case_type = query.get('type')
         owner_id = query.get('owner_id')
         search_params = query.get('parameters', [])
-        include_closed = query.get("includeClosed", False)
         xpath = query.get("xpath")
         search = CaseSearchES()
         search = search.domain(self.domain).size(10)
-        if not include_closed:
-            search = search.is_closed(False)
         if case_type:
             search = search.case_type(case_type)
         if owner_id:

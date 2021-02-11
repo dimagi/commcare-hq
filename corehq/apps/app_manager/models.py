@@ -2102,7 +2102,6 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
     again_label = DictProperty(default={'en': 'Search Again'})
     properties = SchemaListProperty(CaseSearchProperty)
@@ -2112,14 +2111,17 @@ class CaseSearch(DocumentSchema):
     additional_relevant = StringProperty()
     search_filter = StringProperty()
     search_button_display_condition = StringProperty()
-    include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+
+    @property
+    def case_session_var(self):
+        return "search_case_id"
 
     def get_relevant(self):
         relevant = self.additional_relevant or ""
         if self.default_relevant:
-            default_condition = CaseClaimXpath(self.session_var).default_relevant()
+            default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
             if relevant:
                 relevant = f"({default_condition}) and ({relevant})"
             else:
@@ -4981,6 +4983,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
+    @time_method()
     def create_suite(self, build_profile_id=None):
         self.assert_app_v2()
         return SuiteGenerator(self, build_profile_id).generate_suite()

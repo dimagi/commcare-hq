@@ -109,7 +109,6 @@ class PillowBase(metaclass=ABCMeta):
             scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
             for processor in self.processors:
-                print(processor)
                 processor.bootstrap_if_needed()
             time.sleep(10)
         else:
