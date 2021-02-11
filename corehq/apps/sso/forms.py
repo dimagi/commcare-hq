@@ -422,6 +422,14 @@ class SSOEnterpriseSettingsForm(forms.Form):
         self.idp = identity_provider
         kwargs['initial'] = {
             'is_active': identity_provider.is_active,
+            'entity_id': identity_provider.entity_id,
+            'login_url': identity_provider.login_url,
+            'logout_url': identity_provider.logout_url,
+            'idp_cert_public': identity_provider.idp_cert_public,
+            'date_idp_cert_expiration': (
+                identity_provider.date_idp_cert_expiration.strftime("%Y/%m/%d %H:%M")
+                if identity_provider.date_idp_cert_expiration else ''
+            ),
         }
         super().__init__(*args, **kwargs)
 
