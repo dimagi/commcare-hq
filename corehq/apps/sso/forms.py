@@ -25,6 +25,24 @@ def _validate_or_raise_slugify_error(slug):
         )
 
 
+def _check_is_editable_requirements(identity_provider):
+    if not identity_provider.email_domains:
+        raise forms.ValidationError(
+            _("Please make sure you specify at "
+              "least one Authenticated Email Domain.")
+        )
+    if not identity_provider.sso_exempt_users:
+        raise _("Please make sure you have specified at least one "
+                "enterprise admin that is exempt from SSO.")
+
+
+def _check_required_when_active(is_active, value):
+    if is_active and not value:
+        raise forms.ValidationError(
+            _("This is required when Single Sign On is active.")
+        )
+
+
 class CreateIdentityProviderForm(forms.Form):
     """This form initializes the essential fields of an IdentityProvider
     """
@@ -304,6 +322,36 @@ class EditIdentityProviderAdminForm(forms.Form):
             )
         return slug
 
+    def clean_is_editable(self):
+        is_editable = self.cleaned_data['is_editable']
+        if is_editable:
+            _check_is_editable_requirements(self.idp)
+        return is_editable
+
+    def clean_is_active(self):
+        is_active = self.cleaned_data['is_active']
+        if is_active:
+            _check_is_editable_requirements(self.idp)
+            required_for_activation = [
+                (self.idp.entity_id, _('Entity ID')),
+                (self.idp.login_url, _('Login URL')),
+                (self.idp.logout_url, _('Logout URL')),
+                (self.idp.idp_cert_public
+                 and self.idp.date_idp_cert_expiration,
+                 _('Public IdP Signing Certificate')),
+            ]
+            not_filled_out = []
+            for requirement, name in required_for_activation:
+                if not requirement:
+                    not_filled_out.append(name)
+            if not_filled_out:
+                raise forms.ValidationError(
+                    _("Please make sure an enterprise admin has filled out "
+                      "the following details before activating SSO globally: "
+                      "{}").format(", ".join(not_filled_out))
+                )
+        return is_active
+
     @transaction.atomic
     def update_identity_provider(self, admin_user):
         self.idp.slug = self.cleaned_data['slug']
@@ -426,3 +474,42 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 )
             )
         )
+
+    def clean_is_active(self):
+        is_active = self.cleaned_data['is_active']
+        if is_active:
+            _check_is_editable_requirements(self.idp)
+        return is_active
+
+    def clean_entity_id(self):
+        entity_id = self.cleaned_data['entity_id']
+        _check_required_when_active(self.cleaned_data['is_active'], entity_id)
+        return entity_id
+
+    def clean_login_url(self):
+        login_url = self.cleaned_data['login_url']
+        _check_required_when_active(self.cleaned_data['is_active'], login_url)
+        return login_url
+
+    def clean_logout_url(self):
+        logout_url = self.cleaned_data['logout_url']
+        _check_required_when_active(self.cleaned_data['is_active'], logout_url)
+        return logout_url
+
+    def clean_idp_cert_public(self):
+        idp_cert_public = self.cleaned_data['idp_cert_public']
+        _check_required_when_active(self.cleaned_data['is_active'], idp_cert_public)
+        return idp_cert_public
+
+    def clean_date_idp_cert_expiration(self):
+        date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
+        _check_required_when_active(self.cleaned_data['is_active'], date_idp_cert_expiration)
+        if date_idp_cert_expiration:
+            try:
+                date_idp_cert_expiration = dateutil.parser.parse(date_idp_cert_expiration)
+            except dateutil.parser.ParserError:
+                raise forms.ValidationError(
+                    _("This is not a valid Date and Time. "
+                      "It should be YYYY/MM/DD HH:MM.")
+                )
+        return date_idp_cert_expiration
