@@ -63,7 +63,7 @@ class CallcenterFixtureTests(SimpleTestCase):
                 </case>
             </indicators>
         </fixture>
-        """.format(userid=user.user_id), ElementTree.tostring(fixture))
+        """.format(userid=user.user_id), ElementTree.tostring(fixture, encoding='utf-8'))
 
     def test_callcenter_fixture_commcare_user(self):
         user = CommCareUser(_id='123', username="test@test")
@@ -78,8 +78,8 @@ class CallcenterFixtureTests(SimpleTestCase):
 
         fixture, = call_fixture_generator(mock_indicators_fixture_generator, restore_user)
         check_xml_line_by_line(
-            self, ElementTree.tostring(fixture),
-            ElementTree.tostring(gen_fixture(restore_user, indicator_set)))
+            self, ElementTree.tostring(fixture, encoding='utf-8'),
+            ElementTree.tostring(gen_fixture(restore_user, indicator_set), encoding='utf-8'))
 
     def test_callcenter_fixture_web_user(self):
         user = WebUser(_id='123')
