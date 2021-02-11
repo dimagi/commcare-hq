@@ -138,6 +138,11 @@ class SSOExemptUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
         )
 
     def remove_object(self):
+        if len(self.get_linked_objects()) == 1 and self.identity_provider.is_editable:
+            raise AsyncHandlerError(
+                "At least one admin must be exempt from SSO in case of "
+                "failure connecting with an Identity Provider."
+            )
         existing_exempt_user = UserExemptFromSingleSignOn.objects.filter(
             username=self.username,
             email_domain__identity_provider__slug=self.idp_slug
