@@ -90,9 +90,11 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
+        role_rev = None
         try:
-            user_role = couch_user.get_role(domain, allow_mirroring=True)
-            role_rev = user_role._rev if user_role else None
+            if couch_user:
+                user_role = couch_user.get_role(domain, allow_mirroring=True)
+                role_rev = user_role._rev if user_role else None
         except DomainMembershipError:
             role_rev = None
 
