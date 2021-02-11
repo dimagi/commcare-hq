@@ -1,7 +1,8 @@
 from memoized import memoized
 
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -96,7 +97,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     @property
     @memoized
     def edit_enterprise_idp_form(self):
-        if self.request.method == 'POST' and not self.is_deletion_request:
+        if self.request.method == 'POST':
             return SSOEnterpriseSettingsForm(self.identity_provider, self.request.POST)
         return SSOEnterpriseSettingsForm(self.identity_provider)
 
@@ -104,7 +105,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         if self.async_response is not None:
             return self.async_response
         if self.edit_enterprise_idp_form.is_valid():
-            pass
-            # todo
+            self.edit_enterprise_idp_form.update_identity_provider(self.request.user)
+            messages.success(request, _("Identity Provider updated!"))
+            # we redirect here to force the memoized identity_provider property
+            # to re-fetch its data.
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
-
