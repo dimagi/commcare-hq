@@ -742,10 +742,12 @@ class ReportPreview(BaseDomainView):
                     return json_response(response_data)
                 else:
                     default_filters = bound_form.cleaned_data['default_filters']
+                    filter_name = {const.PRE_FILTER_VALUE_LESS_THAN, const.PRE_FILTER_VALUE_GREATER_THAN}
+
                     for default_filter in default_filters:
                         filter_format = default_filter.get('format')
 
-                        if (filter_format == const.PRE_FILTER_VALUE_LESS_THAN) or (filter_format == const.PRE_FILTER_VALUE_GREATER_THAN):
+                        if filter_format in filter_name:
                             msg = f'Expected a numeric value for filter "{filter_format}", got string.'
                             return json_response({
                                 'status': 'filter_error',
