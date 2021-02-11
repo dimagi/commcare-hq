@@ -257,7 +257,7 @@ HQ_APPS = (
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
-    'corehq.apps.hqwebapp',
+    'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
     'corehq.apps.linked_domain',
