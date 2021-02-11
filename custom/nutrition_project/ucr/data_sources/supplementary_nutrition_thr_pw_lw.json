@@ -201,7 +201,7 @@
           },
           "argument_expression": {
             "type": "named",
-            "name": "member_case"
+            "name": "maternal_care_case"
           }
         }
       },
@@ -218,7 +218,7 @@
           },
           "argument_expression": {
             "type": "named",
-            "name": "member_case"
+            "name": "maternal_care_case"
           }
         }
       },
@@ -313,20 +313,24 @@
           }
         }
       },
+      "maternal_care_case": {
+        "value_expression": {
+          "type": "identity"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "property_path",
+          "property_path": [
+            "women_case_id"
+          ]
+        }
+      },
       "member_case": {
         "type": "indexed_case",
         "case_expression": {
-          "type": "related_doc",
-          "related_doc_type": "CommCareCase",
-          "doc_id_expression": {
-            "type": "property_path",
-            "property_path": [
-              "women_case_id"
-            ]
-          },
-          "value_expression": {
-            "type": "identity"
-          }
+          "type": "named",
+          "name": "maternal_care_case"
         },
         "index": "parent"
       }
