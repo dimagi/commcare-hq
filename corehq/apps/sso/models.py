@@ -124,6 +124,12 @@ class IdentityProvider(models.Model):
             identity_provider=self
         ).values_list('email_domain', flat=True).all()
 
+    @property
+    def sso_exempt_users(self):
+        return UserExemptFromSingleSignOn.objects.filter(
+            email_domain__identity_provider=self,
+        ).values_list('username', flat=True)
+
     @classmethod
     def domain_has_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)
