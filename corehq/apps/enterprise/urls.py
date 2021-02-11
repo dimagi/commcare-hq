@@ -9,6 +9,10 @@ from corehq.apps.enterprise.views import (
     enterprise_settings,
 )
 from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
+from corehq.apps.sso.views.enterprise_admin import (
+    ManageSSOEnterpriseView,
+    EditIdentityProviderEnterpriseView,
+)
 
 domain_specific = [
     url(r'^dashboard/$', enterprise_dashboard, name='enterprise_dashboard'),
@@ -22,4 +26,8 @@ domain_specific = [
     url(r'^settings/edit/$', edit_enterprise_settings, name='edit_enterprise_settings'),
     url(r'^billing_statements/$', EnterpriseBillingStatementsView.as_view(),
         name=EnterpriseBillingStatementsView.urlname),
+    url(r'^sso/$', ManageSSOEnterpriseView.as_view(),
+        name=ManageSSOEnterpriseView.urlname),
+    url(r'^sso/(?P<idp_slug>[^/]*)/$', EditIdentityProviderEnterpriseView.as_view(),
+        name=EditIdentityProviderEnterpriseView.urlname),
 ]
