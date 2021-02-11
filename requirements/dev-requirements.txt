@@ -228,8 +228,6 @@ faker==5.0.2
     # via -r requirements.in
 fancycompleter==0.9.1
     # via pdbpp
-fhirclient==3.2.0
-    # via -r requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
 flake8==3.8.4
@@ -288,9 +286,7 @@ ipython==7.16.1
 iso8601==0.1.13
     # via -r requirements.in
 isodate==0.6.0
-    # via
-    #   fhirclient
-    #   python3-saml
+    # via python3-saml
 jdcal==1.4.1
     # via openpyxl
 jedi==0.17.2
@@ -515,7 +511,6 @@ requests==2.24.0
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
-    #   fhirclient
     #   jenkinsapi
     #   pygithub
     #   requests-mock
