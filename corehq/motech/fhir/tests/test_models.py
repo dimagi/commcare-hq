@@ -37,15 +37,7 @@ class TestConfigurationErrors(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.resource_type.fhirclient_class = 'patient.Patient'
-
-    def test_fhirclient_class(self):
-        self.resource_type.fhirclient_class = 'patient.Person'
-        with self.assertRaisesRegex(
-                ConfigurationError,
-                "^Unknown FHIR resource type 'patient.Person'$"
-        ):
-            self.resource_type.get_fhirclient_class()
+        self.resource_type.name = 'Patient'
 
     def test_case_types_dont_match(self):
         with case_type_context('child') as child:

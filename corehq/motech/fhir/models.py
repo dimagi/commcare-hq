@@ -1,24 +1,16 @@
-from importlib import import_module
-from typing import List, Optional
+import json
+import os
+from typing import Optional
 
-import attr
+from django.conf import settings
 from django.db import models
+
 from jsonfield import JSONField
 
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir.const import FHIR_VERSIONS, FHIR_VERSION_4_0_1
+from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from corehq.motech.value_source import ValueSource, as_value_source
-
-
-@attr.s(auto_attribs=True)
-class PropertyInfo:
-    name: str
-    json_name: str
-    type_: type
-    is_list: bool
-    of_many: Optional[str]
-    is_required: bool
 
 
 class FHIRResourceType(models.Model):
@@ -27,60 +19,15 @@ class FHIRResourceType(models.Model):
                                     default=FHIR_VERSION_4_0_1)
     case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
 
-    # `fhirclient_class` values look like `module_name.ClassName`, and
-    # can be imported from fhirclient.models.*module_name.ClassName*
-    fhirclient_class = models.CharField(max_length=255)
+    # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
+    name = models.CharField(max_length=255)
 
     # `template` is used for defining a JSON document structure if it
     # cannot be built using only FHIRResourceAttributes
     template = JSONField(null=True, blank=True, default=None)
 
     def __str__(self):
-        return self.fhirclient_class
-
-    def get_fhirclient_class(self) -> type:
-        """
-        Returns a FHIR resource class from the fhirclient library.
-
-        >>> resource_type = FHIRResourceType(
-        ...     case_type=CaseType(name='contact'),
-        ...     fhirclient_class='patient.PatientContact',
-        ... )
-        >>> class_type = resource_type.get_fhirclient_class()
-        >>> class_type.__name__
-        'PatientContact'
-
-        """
-        try:
-            module_name, class_name = self.fhirclient_class.split('.')
-            module = import_module(f'fhirclient.models.{module_name}')
-            return getattr(module, class_name)
-        except (ValueError, ImportError, AttributeError) as err:
-            raise ConfigurationError('Unknown FHIR resource type '
-                                     f'{self.fhirclient_class!r}') from err
-
-    def get_properties_info(self) -> List[PropertyInfo]:
-        """
-        Returns a list of info about each resource property.
-
-        >>> resource_type = FHIRResourceType(
-        ...     case_type=CaseType(name='contact'),
-        ...     fhirclient_class='patient.Patient',
-        ... )
-        >>> for pi in resource_type.get_properties_info():
-        ...    if pi.of_many == 'multipleBirth':
-        ...        print(pi.json_name, pi.type_)
-        multipleBirthBoolean <class 'bool'>
-        multipleBirthInteger <class 'int'>
-
-        (For more information about how FHIR represents multiple births,
-        see FHIR `Patient`_ documentation.)
-
-        .. _Patient: https://www.hl7.org/fhir/patient.html
-
-        """
-        class_type = self.get_fhirclient_class()
-        return [PropertyInfo(*p) for p in class_type().elementProperties()]
+        return self.name
 
 
 class FHIRResourceProperty(models.Model):

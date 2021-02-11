@@ -6,7 +6,7 @@ from corehq.motech.fhir.models import FHIRResourceType, FHIRResourceProperty
 class FHIRResourceTypeAdmin(admin.ModelAdmin):
     model = FHIRResourceType
     list_display = (
-        'fhirclient_class',
+        'name',
         'case_type',
         'domain',
     )
