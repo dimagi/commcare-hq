@@ -29,6 +29,40 @@ class FHIRResourceType(models.Model):
     def __str__(self):
         return self.name
 
+    def get_json_schema(self) -> dict:
+        """
+        Returns the JSON schema of this resource type.
+
+        >>> resource_type = FHIRResourceType(
+        ...     case_type=CaseType(name='mother'),
+        ...     name='Patient',
+        ... )
+        >>> schema = resource_type.get_json_schema()
+        >>> schema['$ref']
+        '#/definitions/Patient'
+
+        """
+        ver = dict(FHIR_VERSIONS)[self.fhir_version].lower()
+        schema_file = f'{self.name}.schema.json'
+        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                            'json-schema', ver, schema_file)
+        try:
+            with open(path, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            raise ConfigurationError(
+                f'Unknown resource type {self.name!r} for FHIR version '
+                f'{self.fhir_version}'
+            )
+
+    @classmethod
+    def get_names(cls, version=FHIR_VERSION_4_0_1):
+        ver = dict(FHIR_VERSIONS)[version].lower()
+        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                            'json-schema', ver)
+        ext = len('.schema.json')
+        return [n[:-ext] for n in os.listdir(path)]
+
 
 class FHIRResourceProperty(models.Model):
     resource_type = models.ForeignKey(FHIRResourceType,

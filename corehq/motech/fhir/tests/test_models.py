@@ -3,10 +3,12 @@ from contextlib import contextmanager
 
 from django.test import TestCase
 
+from nose.tools import assert_in
+
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
-from corehq.motech.fhir.models import FHIRResourceProperty
+from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 
 DOMAIN = 'test-domain'
 
@@ -38,6 +40,14 @@ class TestConfigurationErrors(TestCase):
 
     def setUp(self):
         self.resource_type.name = 'Patient'
+
+    def test_resource_type_name(self):
+        self.resource_type.name = 'Patinet'
+        with self.assertRaisesRegex(
+                ConfigurationError,
+                "^Unknown resource type 'Patinet' for FHIR version 4.0.1$"
+        ):
+            self.resource_type.get_json_schema()
 
     def test_case_types_dont_match(self):
         with case_type_context('child') as child:
@@ -97,6 +107,11 @@ class TestConfigurationErrors(TestCase):
         self.assertEqual(value_source.__class__.__name__, 'CaseProperty')
         self.assertEqual(value_source.case_property, 'name')
         self.assertEqual(value_source.jsonpath, 'name[0].text')
+
+
+def test_names():
+    names = FHIRResourceType.get_names()
+    assert_in('Patient', names)
 
 
 def test_doctests():
