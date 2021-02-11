@@ -1,7 +1,10 @@
 /*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
+    // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var separator = " to ";
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
@@ -35,6 +38,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         ui: {
             valueDropdown: 'select.query-field',
+            hqHelp: '.hq-help',
+            dateRange: 'input.daterange',
         },
 
         modelEvents: {
@@ -46,6 +51,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 allowClear: true,
                 placeholder: " ",   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+            });
+            this.ui.hqHelp.hqHelp();
+            this.ui.dateRange.daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    separator: separator,
+                    cancelLabel: 'Clear',
+                },
+                autoUpdateInput: false,
+            });
+            var self = this;
+            this.ui.dateRange.on('cancel.daterangepicker', function () {
+                $(this).val('');
+            });
+            this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD'));
             });
         },
     });
@@ -85,8 +106,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 answers = {},
                 model = this.parentModel;
             $fields.each(function (index) {
+                var answer = null;
                 if (this.value !== '') {
-                    answers[model[index].get('id')] = this.value;
+                    if (model[index].get('input') === 'daterange') {
+                        // special format handled by CaseSearch API
+                        answer = "__range__" + this.value.replace(separator, "__");
+                    } else {
+                        answer = this.value;
+                    }
+                    answers[model[index].get('id')] = answer;
                 }
             });
             return answers;
