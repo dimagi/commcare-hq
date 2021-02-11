@@ -45,3 +45,18 @@ def get_saml_acs_url(identity_provider):
 
 def get_saml_sls_url(identity_provider):
     return _get_full_sso_url("sso_saml_sls", identity_provider)
+
+
+def get_dashboard_link(identity_provider):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.sso.views.enterprise_admin import EditIdentityProviderEnterpriseView
+    linked_subscription = Subscription.visible_objects.filter(
+        account=identity_provider.owner,
+        is_active=True,
+        account__is_active=True,
+    ).first()
+    return reverse(
+        EditIdentityProviderEnterpriseView.urlname,
+        args=(linked_subscription.subscriber.domain, identity_provider.slug,)
+    )
+
