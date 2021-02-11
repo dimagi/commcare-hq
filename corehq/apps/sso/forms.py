@@ -533,3 +533,14 @@ class SSOEnterpriseSettingsForm(forms.Form):
                       "It should be YYYY/MM/DD HH:MM.")
                 )
         return date_idp_cert_expiration
+
+    def update_identity_provider(self, admin_user):
+        self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.entity_id = self.cleaned_data['entity_id']
+        self.idp.login_url = self.cleaned_data['login_url']
+        self.idp.logout_url = self.cleaned_data['logout_url']
+        self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
+        self.idp.date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
+        self.idp.last_modified_by = admin_user.username
+        self.idp.save()
+        return self.idp
