@@ -151,6 +151,7 @@ from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.apps.userreports.reports.builder import const
 
 TEMP_REPORT_PREFIX = '__tmp'
 
@@ -739,6 +740,19 @@ class ReportPreview(BaseDomainView):
                 response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
                 if response_data:
                     return json_response(response_data)
+                else:
+                    default_filters = bound_form.cleaned_data['default_filters']
+                    for default_filter in default_filters:
+                        filter_format = default_filter.get('format')
+
+                        if (filter_format == const.PRE_FILTER_VALUE_LESS_THAN) \
+                        or (filter_format == const.PRE_FILTER_VALUE_GREATER_THAN):
+                            msg = f'Expected a numeric value for filter "{filter_format}", got string.'
+                            return json_response({
+                                'status': 'filter_error',
+                                'message': _(msg),
+                            }, status_code=500)
+
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
 
