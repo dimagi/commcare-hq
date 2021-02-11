@@ -413,8 +413,8 @@ class SSOEnterpriseSettingsForm(forms.Form):
         required=False,
     )
     date_idp_cert_expiration = forms.DateField(
-        label=ugettext_lazy("Date Certificate Expires"),
         widget=forms.DateInput(),
+        label=ugettext_lazy("Certificate Expiration"),
         required=False,
     )
 
@@ -435,7 +435,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Service Provider Details'),
+                        _('Service Provider Details for Azure AD'),
                         *sp_details_form.service_provider_fields
                     ),
                     css_class="panel-body"
@@ -445,7 +445,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Single Sign-On Details'),
+                        _('Single Sign-On Settings'),
                         hqcrispy.B3TextField(
                             'name',
                             identity_provider.name,
@@ -464,12 +464,15 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Identity Provider Details'),
+                        _('Connection Details from Azure AD'),
                         'entity_id',
                         'login_url',
                         'logout_url',
                         'idp_cert_public',
-                        'date_idp_cert_expiration',
+                        crispy.Field(
+                            'date_idp_cert_expiration',
+                            placeholder="YYYY/MM/DD HH:MM",
+                        ),
                     ),
                     css_class="panel-body"
                 ),
