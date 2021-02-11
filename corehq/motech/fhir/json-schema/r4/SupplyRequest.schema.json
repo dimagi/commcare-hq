@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/SupplyRequest",
+  "$ref": "#/definitions/SupplyRequest",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "SupplyRequest": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of a request for a medication, substance or device used in the healthcare setting.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a SupplyRequest resource",
+              "type": "string",
+              "enum": [
+                "SupplyRequest"
+              ]
+            },
+            "identifier": {
+              "description": "Unique identifier for this supply request.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "Status of the supply request.",
+              "enum": [
+                "draft",
+                "active",
+                "suspended",
+                "cancelled",
+                "completed",
+                "entered-in-error",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "Category of supply, e.g.  central, non-stock, etc. This is used to support work flows associated with the supply process.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "priority": {
+              "description": "Indicates how quickly this SupplyRequest should be addressed with respect to other requests.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_priority": {
+              "description": "Extensions for priority",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "orderedItem": {
+              "description": "The item being requested.",
+              "$ref": "#/definitions/SupplyRequest_OrderedItem"
+            },
+            "occurrenceDateTime": {
+              "description": "When the request should be fulfilled.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_occurrenceDateTime": {
+              "description": "Extensions for occurrenceDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "occurrencePeriod": {
+              "description": "When the request should be fulfilled.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "occurrenceTiming": {
+              "description": "When the request should be fulfilled.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "authoredOn": {
+              "description": "When the request was made.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_authoredOn": {
+              "description": "Extensions for authoredOn",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requester": {
+              "description": "The individual who initiated the request and has responsibility for its activation.",
+              "$ref": "#/definitions/SupplyRequest_Requester"
+            },
+            "supplier": {
+              "description": "Who is intended to fulfill the request.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "reasonCodeableConcept": {
+              "description": "Why the supply item was requested.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reasonReference": {
+              "description": "Why the supply item was requested.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "deliverFrom": {
+              "description": "Where the supply is expected to come from.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "deliverTo": {
+              "description": "Where the supply is destined to go.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "SupplyRequest_OrderedItem": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a request for a medication, substance or device used in the healthcare setting.",
+          "properties": {
+            "quantity": {
+              "description": "The amount that is being ordered of the indicated item.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "itemCodeableConcept": {
+              "description": "The item that is requested to be supplied. This is either a link to a resource representing the details of the item or a code that identifies the item from a known list.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "itemReference": {
+              "description": "The item that is requested to be supplied. This is either a link to a resource representing the details of the item or a code that identifies the item from a known list.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "quantity"
+          ]
+        }
+      ]
+    },
+    "SupplyRequest_Requester": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a request for a medication, substance or device used in the healthcare setting.",
+          "properties": {
+            "agent": {
+              "description": "The device, practitioner, etc. who initiated the request.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOf": {
+              "description": "The organization the device or practitioner was acting on behalf of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "agent"
+          ]
+        }
+      ]
+    }
+  }
+}

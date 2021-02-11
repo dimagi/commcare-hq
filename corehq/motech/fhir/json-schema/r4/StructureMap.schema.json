@@ -1,0 +1,998 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/StructureMap",
+  "$ref": "#/definitions/StructureMap",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "StructureMap": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a StructureMap resource",
+              "type": "string",
+              "enum": [
+                "StructureMap"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this structure map when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this structure map is (or will be) published. The URL SHOULD include the major version of the structure map. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this structure map when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the structure map when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the structure map author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the structure map. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the structure map.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this structure map. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this structure map is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the structure map was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the structure map changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the structure map.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the structure map from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate structure map instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the structure map is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this structure map is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the structure map and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the structure map.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "structure": {
+              "description": "A structure definition used by this map. The structure definition may describe instances that are converted, or the instances that are produced.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Structure"
+              }
+            },
+            "import": {
+              "description": "Other maps used by this map (canonical URLs).",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_import": {
+              "description": "Extensions for import",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "group": {
+              "description": "Organizes the mapping into managable chunks for human review/ease of maintenance.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Group"
+              }
+            }
+          },
+          "required": [
+            "resourceType",
+            "group"
+          ]
+        }
+      ]
+    },
+    "StructureMap_Structure": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "url": {
+              "description": "The canonical URL that identifies the structure.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "mode": {
+              "description": "How the referenced structure is used in this mapping.",
+              "enum": [
+                "source",
+                "queried",
+                "target",
+                "produced"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "alias": {
+              "description": "The name used for this type in the map.",
+              "type": "string"
+            },
+            "_alias": {
+              "description": "Extensions for alias",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Documentation that describes how the structure is used in the mapping.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "StructureMap_Group": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "name": {
+              "description": "A unique name for the group for the convenience of human readers.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "extends": {
+              "description": "Another group that this group adds rules to.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_extends": {
+              "description": "Extensions for extends",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "typeMode": {
+              "description": "If this is the default rule set to apply for thie source type, or this combination of types.",
+              "enum": [
+                "none",
+                "types",
+                "type-and-types"
+              ],
+              "type": "string"
+            },
+            "_typeMode": {
+              "description": "Extensions for typeMode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Additional supporting documentation that explains the purpose of the group and the types of mappings within it.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "input": {
+              "description": "A name assigned to an instance of data. The instance must be provided when the mapping is invoked.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Input"
+              }
+            },
+            "rule": {
+              "description": "Transform Rule from source to target.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Rule"
+              }
+            }
+          },
+          "required": [
+            "input",
+            "rule"
+          ]
+        }
+      ]
+    },
+    "StructureMap_Input": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "name": {
+              "description": "Name for this instance of data.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Type for this instance of data.",
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "mode": {
+              "description": "Mode for this instance of data.",
+              "enum": [
+                "source",
+                "target"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Documentation for this instance of data.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "StructureMap_Rule": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "name": {
+              "description": "Name of the rule for internal references.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "source": {
+              "description": "Source inputs to the mapping.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Source"
+              }
+            },
+            "target": {
+              "description": "Content to create because of this mapping rule.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Target"
+              }
+            },
+            "rule": {
+              "description": "Rules contained in this rule.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Rule"
+              }
+            },
+            "dependent": {
+              "description": "Which other rules to apply in the context of this rule.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Dependent"
+              }
+            },
+            "documentation": {
+              "description": "Documentation for this instance of data.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "source"
+          ]
+        }
+      ]
+    },
+    "StructureMap_Source": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "context": {
+              "description": "Type or variable this rule applies to.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_context": {
+              "description": "Extensions for context",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "min": {
+              "description": "Specified minimum cardinality for the element. This is optional; if present, it acts an implicit check on the input content.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_min": {
+              "description": "Extensions for min",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "max": {
+              "description": "Specified maximum cardinality for the element - a number or a \"*\". This is optional; if present, it acts an implicit check on the input content (* just serves as documentation; it\u0027s the default value).",
+              "type": "string"
+            },
+            "_max": {
+              "description": "Extensions for max",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Specified type for the element. This works as a condition on the mapping - use for polymorphic elements.",
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueBoolean": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "type": "boolean"
+            },
+            "_defaultValueBoolean": {
+              "description": "Extensions for defaultValueBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueInteger": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_defaultValueInteger": {
+              "description": "Extensions for defaultValueInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueDecimal": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?",
+              "type": "number"
+            },
+            "_defaultValueDecimal": {
+              "description": "Extensions for defaultValueDecimal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueBase64Binary": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "type": "string"
+            },
+            "_defaultValueBase64Binary": {
+              "description": "Extensions for defaultValueBase64Binary",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueInstant": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "type": "string"
+            },
+            "_defaultValueInstant": {
+              "description": "Extensions for defaultValueInstant",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueString": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "type": "string"
+            },
+            "_defaultValueString": {
+              "description": "Extensions for defaultValueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueUri": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "type": "string"
+            },
+            "_defaultValueUri": {
+              "description": "Extensions for defaultValueUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueDate": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_defaultValueDate": {
+              "description": "Extensions for defaultValueDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueDateTime": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_defaultValueDateTime": {
+              "description": "Extensions for defaultValueDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueTime": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?",
+              "type": "string"
+            },
+            "_defaultValueTime": {
+              "description": "Extensions for defaultValueTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueCode": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*",
+              "type": "string"
+            },
+            "_defaultValueCode": {
+              "description": "Extensions for defaultValueCode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueOid": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*",
+              "type": "string"
+            },
+            "_defaultValueOid": {
+              "description": "Extensions for defaultValueOid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueUuid": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+              "type": "string"
+            },
+            "_defaultValueUuid": {
+              "description": "Extensions for defaultValueUuid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueId": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+              "type": "string"
+            },
+            "_defaultValueId": {
+              "description": "Extensions for defaultValueId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueUnsignedInt": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "[0]|([1-9][0-9]*)",
+              "type": "number"
+            },
+            "_defaultValueUnsignedInt": {
+              "description": "Extensions for defaultValueUnsignedInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValuePositiveInt": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "pattern": "[1-9][0-9]*",
+              "type": "number"
+            },
+            "_defaultValuePositiveInt": {
+              "description": "Extensions for defaultValuePositiveInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueMarkdown": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "type": "string"
+            },
+            "_defaultValueMarkdown": {
+              "description": "Extensions for defaultValueMarkdown",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueElement": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValueExtension": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Extension.schema.json#/definitions/Extension"
+            },
+            "defaultValueBackboneElement": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
+            },
+            "defaultValueNarrative": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Narrative.schema.json#/definitions/Narrative"
+            },
+            "defaultValueAnnotation": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Annotation.schema.json#/definitions/Annotation"
+            },
+            "defaultValueAttachment": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "defaultValueIdentifier": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "defaultValueCodeableConcept": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "defaultValueCoding": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "defaultValueQuantity": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "defaultValueDuration": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "defaultValueSimpleQuantity": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "defaultValueDistance": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Distance.schema.json#/definitions/Distance"
+            },
+            "defaultValueCount": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Count.schema.json#/definitions/Count"
+            },
+            "defaultValueMoney": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "defaultValueAge": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Age.schema.json#/definitions/Age"
+            },
+            "defaultValueRange": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "defaultValuePeriod": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "defaultValueRatio": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Ratio.schema.json#/definitions/Ratio"
+            },
+            "defaultValueReference": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "defaultValueSampledData": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "SampledData.schema.json#/definitions/SampledData"
+            },
+            "defaultValueSignature": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Signature.schema.json#/definitions/Signature"
+            },
+            "defaultValueHumanName": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "HumanName.schema.json#/definitions/HumanName"
+            },
+            "defaultValueAddress": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "defaultValueContactPoint": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+            },
+            "defaultValueTiming": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "defaultValueMeta": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Meta.schema.json#/definitions/Meta"
+            },
+            "defaultValueElementDefinition": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "ElementDefinition.schema.json#/definitions/ElementDefinition"
+            },
+            "defaultValueContactDetail": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+            },
+            "defaultValueContributor": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Contributor.schema.json#/definitions/Contributor"
+            },
+            "defaultValueDosage": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "Dosage.schema.json#/definitions/Dosage"
+            },
+            "defaultValueRelatedArtifact": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+            },
+            "defaultValueUsageContext": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+            },
+            "defaultValueDataRequirement": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "DataRequirement.schema.json#/definitions/DataRequirement"
+            },
+            "defaultValueParameterDefinition": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "ParameterDefinition.schema.json#/definitions/ParameterDefinition"
+            },
+            "defaultValueTriggerDefinition": {
+              "description": "A value to use if there is no existing value in the source object.",
+              "$ref": "TriggerDefinition.schema.json#/definitions/TriggerDefinition"
+            },
+            "element": {
+              "description": "Optional field for this source.",
+              "type": "string"
+            },
+            "_element": {
+              "description": "Extensions for element",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "listMode": {
+              "description": "How to handle the list mode for this element.",
+              "enum": [
+                "first",
+                "not_first",
+                "last",
+                "not_last",
+                "only_one"
+              ],
+              "type": "string"
+            },
+            "_listMode": {
+              "description": "Extensions for listMode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "variable": {
+              "description": "Named context for field, if a field is specified.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_variable": {
+              "description": "Extensions for variable",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "condition": {
+              "description": "FHIRPath expression  - must be true or the rule does not apply.",
+              "type": "string"
+            },
+            "_condition": {
+              "description": "Extensions for condition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "check": {
+              "description": "FHIRPath expression  - must be true or the mapping engine throws an error instead of completing.",
+              "type": "string"
+            },
+            "_check": {
+              "description": "Extensions for check",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "StructureMap_Target": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "context": {
+              "description": "Type or variable this rule applies to.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_context": {
+              "description": "Extensions for context",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contextType": {
+              "description": "How to interpret the context.",
+              "enum": [
+                "type",
+                "variable"
+              ],
+              "type": "string"
+            },
+            "_contextType": {
+              "description": "Extensions for contextType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "element": {
+              "description": "Field to create in the context.",
+              "type": "string"
+            },
+            "_element": {
+              "description": "Extensions for element",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "variable": {
+              "description": "Named context for field, if desired, and a field is specified.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_variable": {
+              "description": "Extensions for variable",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "listMode": {
+              "description": "If field is a list, how to manage the list.",
+              "enum": [
+                "first",
+                "share",
+                "last",
+                "collate"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_listMode": {
+              "description": "Extensions for listMode",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "listRuleId": {
+              "description": "Internal rule reference for shared list items.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_listRuleId": {
+              "description": "Extensions for listRuleId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "transform": {
+              "description": "How the data is copied / created.",
+              "enum": [
+                "create",
+                "copy",
+                "truncate",
+                "escape",
+                "cast",
+                "append",
+                "translate",
+                "reference",
+                "dateOp",
+                "uuid",
+                "pointer",
+                "evaluate",
+                "cc",
+                "c",
+                "qty",
+                "id",
+                "cp"
+              ],
+              "type": "string"
+            },
+            "_transform": {
+              "description": "Extensions for transform",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "parameter": {
+              "description": "Parameters to the transform.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureMap_Parameter"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "StructureMap_Parameter": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "valueId": {
+              "description": "Parameter value - variable or literal.",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+              "type": "string"
+            },
+            "_valueId": {
+              "description": "Extensions for valueId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueString": {
+              "description": "Parameter value - variable or literal.",
+              "type": "string"
+            },
+            "_valueString": {
+              "description": "Extensions for valueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueBoolean": {
+              "description": "Parameter value - variable or literal.",
+              "type": "boolean"
+            },
+            "_valueBoolean": {
+              "description": "Extensions for valueBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueInteger": {
+              "description": "Parameter value - variable or literal.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_valueInteger": {
+              "description": "Extensions for valueInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDecimal": {
+              "description": "Parameter value - variable or literal.",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?",
+              "type": "number"
+            },
+            "_valueDecimal": {
+              "description": "Extensions for valueDecimal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "StructureMap_Dependent": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Map of relationships between 2 structures that can be used to transform data.",
+          "properties": {
+            "name": {
+              "description": "Name of a rule or group to apply.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "variable": {
+              "description": "Variable to pass to the rule or group.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_variable": {
+              "description": "Extensions for variable",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
