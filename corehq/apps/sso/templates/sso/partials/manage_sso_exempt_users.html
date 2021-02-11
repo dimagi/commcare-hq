@@ -43,12 +43,10 @@
 
   <div class="panel panel-modern-gray panel-form-only">
     <div class="panel-body">
-      <div class="input-group">
-        <div class="input-group-addon">@</div>
-        <input data-bind="textInput: newObject"
-               type="text"
-               class="form-control" />
-      </div>
+      <input data-bind="textInput: newObject"
+             placeholder="jsmith@example.org"
+             type="email"
+             class="form-control" />
       <button type="button"
               data-bind="click: addObject,
                          css: {
