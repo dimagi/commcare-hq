@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_datetimepicker
 from corehq.apps.sso.aync_handlers import SSOExemptUsersAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import SSOEnterpriseSettingsForm
@@ -41,7 +41,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         SSOExemptUsersAdminAsyncHandler,
     ]
 
-    @use_jquery_ui  # for datepicker
+    @use_datetimepicker
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
