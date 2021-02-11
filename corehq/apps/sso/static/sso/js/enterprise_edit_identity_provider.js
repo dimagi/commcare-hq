@@ -4,7 +4,8 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     'underscore',
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
-    'jquery-ui/ui/widgets/datepicker',
+    'jquery-mousewheel',
+    'datetimepicker',
 ], function (
     $,
     ko,
@@ -29,8 +30,6 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         $('#sso-exempt-user-manager').koApplyBindings(ssoExemptUserManager);
         ssoExemptUserManager.init();
 
-        $("#id_date_idp_cert_expiration").datepicker({
-            dateFormat: "yy-mm-dd",
-        });
+        $("#id_date_idp_cert_expiration").datetimepicker();
     });
 });
