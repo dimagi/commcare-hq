@@ -89,7 +89,7 @@
         "underscore": "1.8.3",
         "url-polyfill": "1.1.10",
         "xpath": "dimagi/js-xpath#v0.0.3",
-        "zxcvbn": "4.2.0"
+        "zxcvbn": "4.4.2"
     },
     "devDependencies": {
         "angular-mocks": "1.7.9",
