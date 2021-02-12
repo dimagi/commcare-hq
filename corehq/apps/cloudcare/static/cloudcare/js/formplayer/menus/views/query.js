@@ -12,18 +12,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var imageUri = this.options.model.get('imageUri'),
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
-                initialValue = this.options.model.get('value');
+                value = this.options.model.get('value');
 
             // Initial values are sent from formplayer as strings, but dropdowns expect an integer
-            if (initialValue && this.options.model.get('input') === "select1") {
-                initialValue = parseInt(initialValue);
+            if (value && this.options.model.get('input') === "select1") {
+                value = parseInt(value);
             }
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
-                value: initialValue,
+                value: value,
             };
+        },
+
+        initialize: function () {
+            // If input doesn't have a default value, check to see if there's a sticky value from user's last search
+            if (!this.options.model.get('value')) {
+                this.options.model.set('value', hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')]);
+            }
         },
 
         ui: {
@@ -60,12 +67,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         ui: {
+            clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
+            valueInput: 'input.query-field',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
+            'change @ui.valueInput': 'setStickyQueryInputs',
+            'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
 
@@ -100,7 +111,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = parseInt($field.val());
+                            value = parseInt(response.models[i].get('value'));
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
                         self.collection.models[i].set({
                             itemsetChoices: choices,
@@ -109,12 +120,28 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         $field.trigger('change.select2');
                     }
                 }
+                self.setStickyQueryInputs();
             });
+        },
+
+        clearAction: function () {
+            var self = this,
+                fields = $(".query-field");
+            fields.each(function () {
+                this.value = '';
+                $(this).trigger('change.select2');
+            });
+            self.setStickyQueryInputs();
         },
 
         submitAction: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
+        },
+
+        setStickyQueryInputs: function () {
+            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            Util.setStickyQueryInputs(this.getAnswers());
         },
     });
 

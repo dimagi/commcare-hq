@@ -718,7 +718,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         'error': er,
                     }
                 )
-                if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+                if excel_files:
+                    message = _("Unable to generate email report. Excel files are attached.")
+                    send_html_email_async(title, email, message,
+                                          email_from=settings.DEFAULT_FROM_EMAIL,
+                                          file_attachments=excel_files,
+                                          smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+
+                elif getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
                     # If the email doesn't work because it is too large to fit in the HTML body,
                     # send it as an excel attachment, by creating a mock request with the right data.
 

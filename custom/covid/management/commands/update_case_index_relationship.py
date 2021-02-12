@@ -30,7 +30,6 @@ class Command(CaseUpdateCommand):
         return ElementTree.tostring(CaseBlock.deprecated_init(
             create=False,
             case_id=case.case_id,
-            owner_id='-',
             index={index.identifier: (index.referenced_type, index.referenced_id, "extension")},
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
