@@ -41,7 +41,7 @@ class Command(BaseCommand):
         jobs = []
         pool = Pool(20)
         for domain in domains:
-            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contacts'))
+            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact'))
             jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))

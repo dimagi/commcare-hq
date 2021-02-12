@@ -17,8 +17,8 @@ from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
-# Include users that have synced in the last 48 hours
-SYNC_WINDOW_HOURS = 48
+# Include users that have synced in the last 7 days
+SYNC_WINDOW_HOURS = 168
 
 # Exclude users that have synced in the last 8 hours
 SYNC_CUTOFF_HOURS = 8

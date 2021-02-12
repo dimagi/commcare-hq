@@ -71,7 +71,7 @@ laboratory==0.2.0
 lxml~=4.3.0
 markdown==2.2.1
 mock==2.0.0
-openpyxl~=2.6
+openpyxl~=3.0
 phonenumberslite~=8.12
 Pillow>=7.1.0
 polib==1.1.0
@@ -98,7 +98,7 @@ reportlab==3.5.53
 requests_oauthlib
 requests~=2.20
 schema
-sentry-sdk==0.19.4
+sentry-sdk==0.19.5
 sh==1.14.1
 simpleeval~=0.9
 simplejson~=3.11

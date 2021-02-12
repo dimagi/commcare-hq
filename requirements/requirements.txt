@@ -273,7 +273,7 @@ oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
     #   requests-oauthlib
-openpyxl==2.6.4
+openpyxl==3.0.6
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
@@ -395,7 +395,7 @@ s3transfer==0.3.3
     # via boto3
 schema==0.7.2
     # via -r base-requirements.in
-sentry-sdk==0.19.4
+sentry-sdk==0.19.5
     # via -r base-requirements.in
 sh==1.14.1
     # via -r base-requirements.in

@@ -1,6 +1,7 @@
 import uuid
 from xml.etree import cElementTree as ElementTree
 
+from corehq.form_processor.exceptions import CaseNotFound
 from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 from casexml.apps.case.mock import CaseBlock
@@ -15,13 +16,18 @@ DEVICE_ID = __name__ + ".add_assignment_cases"
 
 
 def needs_update(case):
-    return case.get_case_property('is_assigned_primary') != 'yes' or \
-        case.get_case_property('is_assigned_temp') != 'yes'
+    return case.get_case_property('is_assigned_primary') == 'yes' or \
+        case.get_case_property('is_assigned_temp') == 'yes'
 
 
 def find_owner_id(case, accessor):
-    checkin_case = accessor.get_case(case.get_case_property('assigned_to_primary_checkin_case_id'))
-    return checkin_case.get_case_property('hq_user_id')
+    try:
+        checkin_case = accessor.get_case(case.get_case_property('assigned_to_primary_checkin_case_id'))
+        return checkin_case.get_case_property('hq_user_id')
+    except CaseNotFound:
+        print("CaseNotFound: case:{} no matching case for this case's "
+              "assigned_to_primary_checkin_case_id".format(case.case_id))
+        return None
 
 
 class Command(CaseUpdateCommand):
@@ -53,10 +59,13 @@ class Command(CaseUpdateCommand):
                 skip_count += 1
             elif needs_update(case):
                 new_owner_id = find_owner_id(case, accessor)
-                if case.get_case_property('is_assigned_primary') != 'yes':
-                    case_blocks.append(self.case_block(case, new_owner_id, 'primary'))
-                elif case.get_case_property('is_assigned_temp') != 'yes':
-                    case_blocks.append(self.case_block(case, new_owner_id, 'temp'))
+                if new_owner_id is None:
+                    skip_count += 1
+                else:
+                    if case.get_case_property('is_assigned_primary') == 'yes':
+                        case_blocks.append(self.case_block(case, new_owner_id, 'primary'))
+                    elif case.get_case_property('is_assigned_temp') == 'yes':
+                        case_blocks.append(self.case_block(case, new_owner_id, 'temp'))
         print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped because they're closed"
               f" or in an inactive location")
 

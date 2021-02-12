@@ -71,16 +71,17 @@ branches:
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - dependabot/pip/requirements/openpyxl-3.0.6  # Daniel Feb 2
-  - jls/fix-case-claim-session-var # Jenny Feb 2
   - smh/bulk-upload-web-users # Steph Feb 2
-  #- ap/fix-header-tab-caching # Amit Feb 3
+  - ap/fix-header-tab-caching # Amit Feb 3
   - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
   - sr/cs-help2  # Sravan Feb 4
   - sr/daterange-webapps # Sravan Feb 4
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
-  - dependabot/pip/requirements/sentry-sdk-0.19.5 # Amit Feb 8
-  - jls/shadow-eof-nav # Jenny Feb 8
   - jls/remove-autolaunch # Jenny Feb 9
   - gh/export-settings-ui # Graham Feb 9
   - bmb/sso-admin-ui  # Biyeun Feb 9
+  # - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
+  - jls/just-click-once # Jenny Feb 10
+  - ap/fix-submission-time-in-worker-activity # Amit Feb 11
+  - dependabot/npm_and_yarn/zxcvbn-4.4.2 # Amit Feb 11
 submodules: {}
