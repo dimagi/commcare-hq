@@ -32,16 +32,17 @@ class Command(BaseCommand):
             for row in reader:
                 domains.add(row['domain'])
                 locations = []
-                if row['location1'] != '':
-                    locations.append(row['location1'])
-                if row['location2'] != '':
-                    locations.append(row['location2'])
+                if row['non_traveler_active_location_id'] != '':
+                    locations.append(row['non_traveler_active_location_id'])
+                if row['traveler_active_location_id'] != '':
+                    locations.append(row['traveler_active_location_id'])
                 location_ids[row['domain']] = locations
 
         jobs = []
         pool = Pool(20)
         for domain in domains:
-            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact'))
+            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
+                                   location=location_ids[domain][1]))
             jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
