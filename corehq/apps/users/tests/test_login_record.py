@@ -85,3 +85,14 @@ class TestLoginRecord(TestCase):
 
         record_two.add_failure(datetime.utcnow())
         self.assertEqual(record_two.failures, 4)
+
+    def test_failure_count_resets_on_new_day(self):
+        record = LoginRecord('test_user')
+        YESTERDAY_11_PM = datetime(2020, 12, 5, 23)
+        TODAY_1_AM = datetime(2020, 12, 6, 1)
+
+        record.add_failure(YESTERDAY_11_PM)
+        record.add_failure(TODAY_1_AM)
+
+        self.assertEqual(record.failures, 1)
+        self.assertEqual(record.last_attempt_date, TODAY_1_AM)

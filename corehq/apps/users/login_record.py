@@ -51,10 +51,7 @@ class LoginRecord:
         transaction_results = redis_client.transaction(
             self._create_failure_handler(current_time),
             self.key)
-        num_failures = transaction_results[0]
-
-        if num_failures is True:
-            num_failures = 1
+        num_failures = transaction_results[0] or 1
 
         self._reset_values(failures=num_failures, last_attempt_date=current_time)
 
