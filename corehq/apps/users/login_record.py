@@ -17,9 +17,9 @@ class LoginRecord:
         attempts_ts = float(raw_ts or 0)
         num_failures = int(raw_failures or 0)
 
-        last_attempt_date = datetime.utcfromtimestamp(attempts_ts or 0)
+        last_attempt_date = datetime.utcfromtimestamp(attempts_ts)
 
-        return LoginRecord(username, num_failures, last_attempt_date)
+        return cls(username, num_failures, last_attempt_date)
 
     @classmethod
     def _get_raw_fields(cls, username):
@@ -30,15 +30,15 @@ class LoginRecord:
     def _get_key(username):
         return f'attempts_{username}'
 
-    def __init__(self, username, failures=0, last_attempt_date=None):
+    def __init__(self, username, failures=0, last_attempt_date=EPOCH):
         self.username = username
         self._reset_values(failures, last_attempt_date)
 
         self.key = self._get_key(self.username)
 
-    def _reset_values(self, failures=0, last_attempt_date=None):
+    def _reset_values(self, failures=0, last_attempt_date=EPOCH):
         self.failures = failures
-        self.last_attempt_date = last_attempt_date or EPOCH
+        self.last_attempt_date = last_attempt_date
 
     def clear(self):
         redis_client = get_redis_connection()
