@@ -67,11 +67,10 @@ class FailedLoginTotal:
             previous_attempt_ts = self._to_timestamp(pipe.hget(self.key, self.FIELD_TS))
             previous_attempt_date = datetime.utcfromtimestamp(previous_attempt_ts).date()
 
-            time_between_attempts = current_time.date() - previous_attempt_date
-
             pipe.multi()
 
-            if time_between_attempts.days >= 1:
+            if previous_attempt_date != current_time.date():
+                # Reset failures when a new day begins
                 pipe.hset(self.key, self.FIELD_FAILURES, 1)
             else:
                 pipe.hincrby(self.key, self.FIELD_FAILURES, 1)

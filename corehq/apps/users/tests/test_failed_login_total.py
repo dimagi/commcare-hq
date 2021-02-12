@@ -18,7 +18,7 @@ class TestFailedLoginTotal_Constructor(SimpleTestCase):
         self.assertEqual(record.last_attempt_date, EPOCH)
 
 
-class TestFailedLoginTotal(TestCase):
+class TestFailedLoginTotal(SimpleTestCase):
     def setUp(self):
         # ensure 'test_user' doesn't exist already
         record = FailedLoginTotal('test_user')
