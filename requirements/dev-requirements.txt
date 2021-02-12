@@ -435,7 +435,7 @@ pyjwt==1.7.1
     #   pygithub
     #   twilio
 pyopenssl==20.0.1
-    # via -r annoying-requirements.in
+    # via -r sso-requirements.in
 pyparsing==2.4.7
     # via packaging
 pyphen==0.9.5
@@ -467,7 +467,7 @@ python-mimeparse==1.6.0
 python-termstyle==0.1.10
     # via sniffer
 python3-saml==1.9.0
-    # via -r annoying-requirements.in
+    # via -r sso-requirements.in
 pytz==2020.1
     # via
     #   -r base-requirements.in
