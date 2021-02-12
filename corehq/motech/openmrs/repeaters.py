@@ -206,8 +206,6 @@ class OpenmrsRepeater(CaseRepeater):
         try:
             response = send_openmrs_data(
                 requests,
-                self.domain,
-                payload,
                 self.openmrs_config,
                 case_trigger_infos,
             )
@@ -217,7 +215,7 @@ class OpenmrsRepeater(CaseRepeater):
         return response
 
 
-def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
+def send_openmrs_data(requests, openmrs_config, case_trigger_infos):
     """
     Updates an OpenMRS patient and (optionally) creates visits.
 
@@ -277,7 +275,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             )
         workflow.append(
             CreateVisitsEncountersObsTask(
-                requests, info, form_json, openmrs_config, patient['person']['uuid']
+                requests, info, openmrs_config, patient['person']['uuid']
             ),
         )
 

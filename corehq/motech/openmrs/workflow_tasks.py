@@ -125,11 +125,9 @@ class SyncPatientIdentifiersTask(WorkflowTask):
 
 class CreateVisitsEncountersObsTask(WorkflowTask):
 
-    def __init__(self, requests, domain, info, form_json, openmrs_config, person_uuid):
+    def __init__(self, requests, info, openmrs_config, person_uuid):
         self.requests = requests
-        self.domain = domain
         self.info = info
-        self.form_json = form_json
         self.openmrs_config = openmrs_config
         self.person_uuid = person_uuid
 
@@ -162,7 +160,8 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                 start_datetime = value_source.serialize(cc_start_datetime)
                 stop_datetime = value_source.serialize(cc_stop_datetime)
                 return start_datetime, stop_datetime
-        cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
+        cc_start_datetime = string_to_utc_datetime(
+            self.info.form_question_values['/metadata/timeEnd'])
         cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
         start_datetime = to_omrs_datetime(cc_start_datetime)
         stop_datetime = to_omrs_datetime(cc_stop_datetime)
@@ -182,7 +181,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             # Location". Use that, if it exists.
         )
         for form_config in self.openmrs_config.form_configs:
-            if form_config.xmlns == self.form_json['form']['@xmlns']:
+            if form_config.xmlns == self.info.form_question_values['/metadata/xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
                     CreateOptionalVisitTask(
