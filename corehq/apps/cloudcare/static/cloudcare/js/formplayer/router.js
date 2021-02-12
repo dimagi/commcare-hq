@@ -47,7 +47,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            if (!urlObject.appId && !urlObject.installReference) {
+            if (!urlObject.appId) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
