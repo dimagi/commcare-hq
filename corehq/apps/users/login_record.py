@@ -2,7 +2,8 @@ from datetime import datetime
 from django_redis import get_redis_connection
 
 ONE_DAY = 60 * 60 * 24
-EPOCH = datetime.utcfromtimestamp(0)
+EPOCH_TS = 0
+EPOCH = datetime.utcfromtimestamp(EPOCH_TS)
 
 
 class LoginRecord:
@@ -14,7 +15,7 @@ class LoginRecord:
     @classmethod
     def get(cls, username):
         raw_failures, raw_ts = cls._get_raw_fields(username)
-        attempts_ts = float(raw_ts or 0)
+        attempts_ts = cls._to_timestamp(raw_ts)
         num_failures = int(raw_failures or 0)
 
         last_attempt_date = datetime.utcfromtimestamp(attempts_ts)
@@ -29,6 +30,10 @@ class LoginRecord:
     @staticmethod
     def _get_key(username):
         return f'attempts_{username}'
+
+    @staticmethod
+    def _to_timestamp(raw_ts):
+        return float(raw_ts or EPOCH_TS)
 
     def __init__(self, username, failures=0, last_attempt_date=EPOCH):
         self.username = username
@@ -59,7 +64,7 @@ class LoginRecord:
 
     def _create_failure_handler(self, current_time):
         def add_failure(pipe):
-            previous_attempt_ts = float(pipe.hget(self.key, self.FIELD_TS) or 0)
+            previous_attempt_ts = self._to_timestamp(pipe.hget(self.key, self.FIELD_TS))
             previous_attempt_date = datetime.utcfromtimestamp(previous_attempt_ts).date()
 
             time_between_attempts = current_time.date() - previous_attempt_date
