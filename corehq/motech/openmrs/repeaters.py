@@ -277,7 +277,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             )
         workflow.append(
             CreateVisitsEncountersObsTask(
-                requests, domain, info, form_json, openmrs_config, patient['person']['uuid']
+                requests, info, form_json, openmrs_config, patient['person']['uuid']
             ),
         )
 

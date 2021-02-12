@@ -237,7 +237,6 @@ def get_form_config_dict():
 def get_task(info, form_json, form_config_dict):
     return CreateVisitsEncountersObsTask(
         requests=None,
-        domain="test-domain",
         info=info,
         form_json=form_json,
         openmrs_config=OpenmrsConfig.wrap({
