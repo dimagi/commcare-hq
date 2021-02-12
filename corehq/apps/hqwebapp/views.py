@@ -485,12 +485,6 @@ class HQLoginView(LoginView):
     ]
     extra_context = {}
 
-    def get_form_kwargs(self, step=None):
-        kwargs = super().get_form_kwargs(step)
-        # The forms need the request to properly log authentication failures
-        kwargs.setdefault('request', self.request)
-        return kwargs
-
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
