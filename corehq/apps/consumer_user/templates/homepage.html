@@ -1,0 +1,4 @@
+{% block content %}
+  <h2>Login Success.Username: {{ request.user.username }}</h2>
+  <a href="{% url 'consumer_user:patient_logout' %}">Logout</a>
+{% endblock %}
