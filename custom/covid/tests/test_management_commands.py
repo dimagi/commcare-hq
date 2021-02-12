@@ -102,6 +102,46 @@ class CaseCommandsTest(TestCase):
 
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
+        self.assertEqual(lab_result_case.get_case_property('owner_id'), '-')
+
+    def test_update_case_index_relationship_with_location(self):
+        location_type = LocationType.objects.create(
+            domain=self.domain,
+            name="Location",
+        )
+        SQLLocation.objects.create(
+            domain=self.domain, name='traveler_loc', location_id='traveler_loc_id', location_type=location_type,
+        )
+        SQLLocation.objects.create(
+            domain=self.domain, name='non_traveler_loc', location_id='non_traveler_loc_id',
+            location_type=location_type,
+        )
+        patient_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient_case_id, user_id=self.user_id, owner_id='owner1', case_type='patient',
+        )
+        traveler_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, traveler_case_id, user_id=self.user_id, owner_id='traveler_loc_id', case_type='contact',
+            index={'patient': ('patient', patient_case_id, 'child')}
+        )
+
+        non_traveler_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, non_traveler_case_id, user_id=self.user_id, owner_id='non_traveler_loc_id', case_type='contact',
+            index={'patient': ('patient', patient_case_id, 'child')}
+        )
+
+        traveler_case = self.case_accessor.get_case(traveler_case_id)
+        self.assertEqual(traveler_case.indices[0].referenced_type, 'patient')
+        self.assertEqual(traveler_case.indices[0].relationship, 'child')
+
+        call_command('update_case_index_relationship', self.domain, 'contact', '--location=traveler_loc_id')
+
+        traveler_case = self.case_accessor.get_case(traveler_case_id)
+        self.assertEqual(traveler_case.indices[0].relationship, 'child')
+        non_traveler_case = self.case_accessor.get_case(non_traveler_case_id)
+        self.assertEqual(non_traveler_case.indices[0].relationship, 'extension')
 
     def test_update_owner_ids(self):
         parent_loc_type = LocationType.objects.create(
