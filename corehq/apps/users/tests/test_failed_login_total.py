@@ -1,5 +1,5 @@
 from datetime import datetime
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 
 from ..failed_login_total import FailedLoginTotal, EPOCH
 
