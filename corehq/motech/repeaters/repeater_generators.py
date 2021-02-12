@@ -415,6 +415,20 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return self.get_payload(None, _get_test_form(domain))
 
 
+class FormDictPayloadGenerator(BasePayloadGenerator):
+    format_name = 'form_dict'
+    format_label = _('Python dictionary')
+
+    def get_payload(self, repeat_record, form) -> dict:
+        from corehq.apps.api.util import form_to_es_form
+        es_form = form_to_es_form(form, include_attachments=True)
+        return {'form': es_form.form_data}
+
+    @property
+    def content_type(self):
+        return 'application/x-python'
+
+
 class UserPayloadGenerator(BasePayloadGenerator):
 
     @property
