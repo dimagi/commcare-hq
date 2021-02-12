@@ -1,6 +1,7 @@
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.case.mock import CaseBlock
+from django.core.exceptions import ValidationError
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -30,8 +31,12 @@ class Command(CaseUpdateCommand):
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
             username_of_associated_mobile_workers = case.get_case_property('username')
-            user_id_of_mobile_worker = username_to_user_id(normalize_username(username_of_associated_mobile_workers,
-                                                                              domain))
+            try:
+                user_id_of_mobile_worker = username_to_user_id(normalize_username(
+                    username_of_associated_mobile_workers, domain))
+            except ValidationError:
+                skip_count += 1
+                continue
             if user_id_of_mobile_worker:
                 case_blocks.append(self.case_block(case, user_id_of_mobile_worker))
             else:
