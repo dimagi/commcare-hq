@@ -1,11 +1,15 @@
+from django.utils.translation import ugettext_lazy as _
+
+
 SEND_FREQUENCY_WEEKLY = 'weekly'
 SEND_FREQUENCY_MONTHLY = 'monthly'
 SEND_FREQUENCY_QUARTERLY = 'quarterly'
-SEND_FREQUENCIES = [
-    SEND_FREQUENCY_WEEKLY,
-    SEND_FREQUENCY_MONTHLY,
-    SEND_FREQUENCY_QUARTERLY,
+SEND_FREQUENCY_CHOICES = [
+    (SEND_FREQUENCY_WEEKLY, _('Weekly')),
+    (SEND_FREQUENCY_MONTHLY, _('Monthly')),
+    (SEND_FREQUENCY_QUARTERLY, _('Quarterly')),
 ]
+SEND_FREQUENCIES = [c[0] for c in SEND_FREQUENCY_CHOICES]
 
 # A subset of DHIS2 data types. Omitted data types:
 # * COORDINATE
@@ -33,7 +37,6 @@ DHIS2_EVENT_STATUS_VISITED = "VISITED"
 DHIS2_EVENT_STATUS_SCHEDULED = "SCHEDULED"
 DHIS2_EVENT_STATUS_OVERDUE = "OVERDUE"
 DHIS2_EVENT_STATUS_SKIPPED = "SKIPPED"
-
 DHIS2_EVENT_STATUSES = (
     DHIS2_EVENT_STATUS_ACTIVE,
     DHIS2_EVENT_STATUS_COMPLETED,
@@ -53,6 +56,10 @@ DHIS2_PROGRAM_STATUSES = (
 )
 
 LOCATION_DHIS_ID = 'dhis_id'
+
+DHIS2_UID_RE = r'^[a-zA-Z][a-zA-Z0-9]{10}$'
+DHIS2_UID_MESSAGE = _('A DHIS2 "UID" is exactly 11 alpha-numeric characters '
+                      'long, and starts with a letter.')
 
 # XMLNS to indicate that a case was updated with data from DHIS2.
 # (Used for updating cases with their tracked entity instance ID.)
