@@ -32,11 +32,11 @@ class Command(CaseUpdateCommand):
         for case in accessor.iter_cases(case_ids):
             username_of_associated_mobile_workers = case.get_case_property('username')
             try:
-                user_id_of_mobile_worker = username_to_user_id(normalize_username(
-                    username_of_associated_mobile_workers, domain))
+                normalized_username = normalize_username(username_of_associated_mobile_workers, domain)
             except ValidationError:
                 skip_count += 1
                 continue
+            user_id_of_mobile_worker = username_to_user_id(normalized_username)
             if user_id_of_mobile_worker:
                 case_blocks.append(self.case_block(case, user_id_of_mobile_worker))
             else:
