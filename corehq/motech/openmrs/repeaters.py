@@ -237,7 +237,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         try:
-            patient = get_patient(requests, domain, info, openmrs_config)
+            patient = get_patient(requests, info, openmrs_config)
         except (RequestException, HTTPError) as err:
             errors.append(_(
                 "Unable to create an OpenMRS patient for case "
