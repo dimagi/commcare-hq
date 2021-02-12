@@ -16,14 +16,13 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.motech.dhis2.dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
-from corehq.motech.dhis2.forms import (
-    Dhis2ConfigForm,
-    Dhis2EntityConfigForm,
-)
+from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2EntityConfigForm
 from corehq.motech.dhis2.models import DataSetMap, DataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.forms import GenericRepeaterForm
+from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -163,3 +162,31 @@ def config_dhis2_entity_repeater(request, domain, repeater_id):
         'repeater_id': repeater_id,
         'case_configs': case_configs,
     })
+
+
+class AddDhis2RepeaterView(AddRepeaterView):
+    urlname = 'new_dhis2_repeater$'
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+
+class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
+    urlname = 'edit_dhis2_repeater'
+    page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
+
+
+class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
+    urlname = 'new_dhis2_entity_repeater$'
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+
+
+class EditDhis2EntityRepeaterView(EditRepeaterView, AddDhis2EntityRepeaterView):
+    urlname = 'edit_dhis2_entity_repeater'
+    page_title = ugettext_lazy("Edit DHIS2 Tracked Entity Repeater")
