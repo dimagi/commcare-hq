@@ -61,6 +61,12 @@ class Command(BaseCommand):
                 i = i + len(case_id_list)
                 print("Deleted", i, "cases out of", len(case_ids))
 
+        self.field_names = ['domain', 'case_id', 'form_id_deleted',
+            'form_id_skipped', 'other_cases_affected_by_form']
+        with open(self.csv_output_file, 'a', encoding='utf-8') as csv_file:
+            csv_writer = csv.writer(csv_file, self.field_names)
+            csv_writer.writerow(self.field_names)
+
         i = 0
         for form_id_list in chunked(form_ids, 50):
             self.soft_delete_forms(
@@ -99,12 +105,8 @@ class Command(BaseCommand):
                 other_cases_ids = form_case_ids - set(deleted_cases)
                 skipped_forms.append((form.form_id, already_deleted, other_cases_ids))
 
-        with open(self.csv_output_file, 'w', encoding='utf-8') as csv_file:
-            field_names = ['domain', 'case_id', 'form_id_deleted',
-                'form_id_skipped', 'other_cases_affected_by_form']
-            csv_writer = csv.writer(csv_file, field_names)
-            csv_writer.writerow(field_names)
-
+        with open(self.csv_output_file, 'a', encoding='utf-8') as csv_file:
+            csv_writer = csv.writer(csv_file, self.field_names)
             for (form_id, deleted_case_ids, other_cases_ids) in skipped_forms:
                 for case_id in deleted_case_ids:
                     csv_writer.writerow([domain, case_id, None, form_id, other_cases_ids])
