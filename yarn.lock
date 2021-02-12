@@ -575,10 +575,10 @@ bl@^4.0.1:
     inherits "^2.0.4"
     readable-stream "^3.4.0"
 
-blazy@1.6.2:
-  version "1.6.2"
-  resolved "https://registry.yarnpkg.com/blazy/-/blazy-1.6.2.tgz#9b2558ded14f6726a1ca5f92dd0856d952709d45"
-  integrity sha1-myVY3tFPZyahyl+S3QhW2VJwnUU=
+blazy@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/blazy/-/blazy-1.8.2.tgz#50dfd638baaf9003efd6eb3a836aca54184ab6da"
+  integrity sha1-UN/WOLqvkAPv1us6g2rKVBhKtto=
 
 bluebird@^3.5.1, bluebird@^3.5.3, bluebird@^3.5.5:
   version "3.7.2"
@@ -6535,7 +6535,7 @@ yauzl@^2.10.0:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
 
-zxcvbn@4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/zxcvbn/-/zxcvbn-4.2.0.tgz#4025b4419c6e519b9d7df71e60af44f289640e3f"
-  integrity sha1-QCW0QZxuUZudffceYK9E8olkDj8=
+zxcvbn@4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/zxcvbn/-/zxcvbn-4.4.2.tgz#28ec17cf09743edcab056ddd8b1b06262cc73c30"
+  integrity sha1-KOwXzwl0PtyrBW3dixsGJizHPDA=
