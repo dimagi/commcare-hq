@@ -1,8 +1,13 @@
 {% block content %}
   <h2>Sign up</h2>
+  {% if existing_user %}
+      <p style="font-weight:bold">User already exists with email provided at healthcare center.
+        Please provide you existing email and password to link the case with your account</p>
+  {% endif %}
   <form method="post">
       {% csrf_token %}
-      {{ form }}
+      {{ form.as_p }}
       <input type="submit" value="Submit">
   </form>
+  <a href="{% url 'consumer_user:patient_login' %}">Login</a>
 {% endblock %}
