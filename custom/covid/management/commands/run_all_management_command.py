@@ -31,22 +31,22 @@ class Command(BaseCommand):
             reader = csv.DictReader(file)
             for row in reader:
                 domains.add(row['domain'])
-                locations = []
+                locations = {}
                 if row['non_traveler_active_location_id'] != '':
-                    locations.append(row['non_traveler_active_location_id'])
+                    locations['non_traveler'] = (row['non_traveler_active_location_id'])
                 if row['traveler_active_location_id'] != '':
-                    locations.append(row['traveler_active_location_id'])
+                    locations['traveler'] = (row['traveler_active_location_id'])
                 location_ids[row['domain']] = locations
 
         jobs = []
         pool = Pool(20)
         for domain in domains:
             jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
-                                   location=location_ids[domain][1]))
+                                   location=location_ids[domain]['traveler']))
             jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
-            for location in location_ids[domain]:
+            for location in location_ids[domain].values():
                 jobs.append(pool.spawn(run_command, 'add_assignment_cases', domain, 'patient', location=location))
                 jobs.append(pool.spawn(run_command, 'add_assignment_cases', domain, 'contact', location=location))
         pool.join()
