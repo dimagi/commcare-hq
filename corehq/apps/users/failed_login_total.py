@@ -6,7 +6,7 @@ EPOCH_TS = 0
 EPOCH = datetime.utcfromtimestamp(EPOCH_TS)
 
 
-class LoginRecord:
+class FailedLoginTotal:
     """A thread-safe class to record login failures."""
 
     FIELD_FAILURES = 'failures'
