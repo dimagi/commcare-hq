@@ -84,4 +84,5 @@ branches:
   - jls/just-click-once # Jenny Feb 10
   - ap/fix-submission-time-in-worker-activity # Amit Feb 11
   - dependabot/npm_and_yarn/zxcvbn-4.4.2 # Amit Feb 11
+  - sk/sk/local-install  # SK Feb 12
 submodules: {}
