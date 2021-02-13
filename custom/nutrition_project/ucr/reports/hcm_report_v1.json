@@ -5,11 +5,11 @@
   "server_environment": [
     "india"
   ],
-  "report_id": "static-new_member_registrations_v1",
-  "data_source_table": "static-member_cases_v1",
+  "report_id": "static-hcm_report_v1",
+  "data_source_table": "static-suppl_nutrition_hcm_v1",
   "config": {
-    "title": "New member registrations per month (Static)",
-    "description": "New member registrations per flw per month",
+    "title": "Total days HCM provided V1 (Static)",
+    "description": "Total days HCM provided per flw per month",
     "visible": true,
     "aggregation_columns": [
       "supervisor_id",
@@ -21,7 +21,7 @@
         "display": "Filter by FLW",
         "slug": "flw_id",
         "type": "dynamic_choice_list",
-        "field": "flw_id",
+        "field": "userID",
         "choice_provider": {
           "type": "location"
         },
@@ -40,30 +40,6 @@
           "type": "location"
         },
         "datatype": "string"
-      },
-      {
-        "display": "Opened On",
-        "slug": "opened_on",
-        "type": "date",
-        "field": "opened_on",
-        "datatype": "date"
-      },
-      {
-        "display": "Closed",
-        "slug": "closed",
-        "type": "choice_list",
-        "field": "closed",
-        "datatype": "string",
-        "choices": [
-          {
-            "display": "yes",
-            "value": "True"
-          },
-          {
-            "display": "no",
-            "value": "False"
-          }
-        ]
       }
     ],
     "columns": [
@@ -71,8 +47,15 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "opened_on",
+        "field": "completed_time",
         "format": "%Y-%m"
+      },
+      {
+        "display": "Supervisor ID",
+        "column_id": "supervisor_id",
+        "type": "field",
+        "field": "supervisor_id",
+        "aggregation": "simple"
       },
       {
         "display": "FLW ID",
@@ -82,22 +65,11 @@
         "aggregation": "simple"
       },
       {
-        "display": "FLW Name",
-        "column_id": "flw_name",
-        "type": "field",
-        "field": "flw_id",
-        "aggregation": "simple",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        }
-      },
-      {
-        "display": "Population",
+        "display": "Count",
         "column_id": "count",
         "type": "field",
-        "field": "doc_id",
-        "aggregation": "count"
+        "field": "day",
+        "aggregation": "count_unique"
       }
     ]
   },
