@@ -273,6 +273,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
+    def test_prompt_hint(self, *args):
+        self.module.search_config.properties[0].hint = {'en': 'Search against name'}
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+              <hint>
+                  <text>
+                    <locale id="search_property.m0.name.hint"/>
+                  </text>
+              </hint>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_default_search(self, *args):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
@@ -307,6 +328,40 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt key="name" appearance="barcode_scan">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_daterange(self, *args):
+        """Setting the appearance to "daterange"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].input_ = 'daterange'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

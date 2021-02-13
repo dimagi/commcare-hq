@@ -213,10 +213,15 @@ class PracticeUserRestoreResource(AbstractResource):
 
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_image', 'media_audio')
+    ORDER = ('text', 'media_image', 'media_audio', 'hint')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+    hint = NodeField('hint', 'self')
+
+
+class Hint(Display):
+    ROOT_NAME = 'hint'
 
 
 class Itemset(XmlObject):
