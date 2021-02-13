@@ -118,6 +118,17 @@ class IdentityProvider(models.Model):
         self.date_sp_rollover_cert_expiration = None
         self.save()
 
+    @property
+    def email_domains(self):
+        return AuthenticatedEmailDomain.objects.filter(
+            identity_provider=self
+        ).values_list('email_domain', flat=True).all()
+
+    @classmethod
+    def domain_has_identity_provider(cls, domain):
+        owner = BillingAccount.get_account_by_domain(domain)
+        return cls.objects.filter(owner=owner, is_editable=True).exists()
+
 
 class AuthenticatedEmailDomain(models.Model):
     """
