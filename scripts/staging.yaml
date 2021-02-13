@@ -78,7 +78,7 @@ branches:
   - jls/remove-autolaunch # Jenny Feb 9
   - gh/export-settings-ui # Graham Feb 9
   - bmb/sso-admin-ui  # Biyeun Feb 9
-  # - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
+   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - ap/fix-submission-time-in-worker-activity # Amit Feb 11
   - sk/local-install  # SK Feb 12
   - revert-29106-mjr/login_logging # Jenny Feb 12
