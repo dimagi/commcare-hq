@@ -31,7 +31,7 @@ class Command(CaseUpdateCommand):
             create=False,
             case_id=case.case_id,
             index={index.identifier: (index.referenced_type, index.referenced_id, "extension")},
-        ).as_xml()).decode('utf-8')
+        ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
         accessor = CaseAccessors(domain)
