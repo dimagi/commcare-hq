@@ -422,7 +422,7 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "days")
 
         self.config.save()
-        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
+        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user)
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -497,7 +497,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -724,7 +724,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 )
 
             self.report_notification.save()
-            ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
+            ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
             if self.is_new:
                 DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_saved_scheduled_reports')
                 messages.success(request, _("Scheduled report added."))
