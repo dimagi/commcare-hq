@@ -155,7 +155,7 @@ def convert_XML_To_J2ME(file, path, use_j2me_endpoint):
         for remote in tree.findall("suite/resource/location[@authority='remote']"):
             remote.text = _make_address_j2me_safe(remote.text, use_j2me_endpoint)
 
-        return etree.tostring(tree)
+        return etree.tostring(tree, encoding='utf-8')
     return file
 
 
