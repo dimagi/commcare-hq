@@ -10,11 +10,14 @@ from django.utils.encoding import force_bytes
 from mock import patch
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.consumer_user.signals import send_email_case_changed_receiver
+from django.core.signing import TimestampSigner
 
 
 def register_url(invitation):
     return reverse('consumer_user:patient_register',
-                   kwargs={'invitation': urlsafe_base64_encode(force_bytes(invitation))})
+                   kwargs={'invitation': TimestampSigner().sign(
+                       urlsafe_base64_encode(force_bytes(invitation))
+                   )})
 
 
 class RegisterTestCase(TestCase):
