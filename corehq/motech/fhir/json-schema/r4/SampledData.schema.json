@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/SampledData",
+  "$ref": "#/definitions/SampledData",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "SampledData": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A series of measurements taken by a device, with upper and lower limits. There may be more than one dimension in the data.",
+          "properties": {
+            "origin": {
+              "description": "The base quantity that a measured value of zero represents. In addition, this provides the units of the entire measurement series.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "period": {
+              "description": "The length of time between sampling times, measured in milliseconds.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_period": {
+              "description": "Extensions for period",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "factor": {
+              "description": "A correction factor that is applied to the sampled data points before they are added to the origin.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factor": {
+              "description": "Extensions for factor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lowerLimit": {
+              "description": "The lower limit of detection of the measured points. This is needed if any of the data points have the value \"L\" (lower than detection limit).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_lowerLimit": {
+              "description": "Extensions for lowerLimit",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "upperLimit": {
+              "description": "The upper limit of detection of the measured points. This is needed if any of the data points have the value \"U\" (higher than detection limit).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_upperLimit": {
+              "description": "Extensions for upperLimit",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "dimensions": {
+              "description": "The number of sample points at each time point. If this value is greater than one, then the dimensions will be interlaced - all the sample points for a point in time will be recorded at once.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_dimensions": {
+              "description": "Extensions for dimensions",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "data": {
+              "description": "A series of data points which are decimal values separated by a single space (character u20). The special values \"E\" (error), \"L\" (below detection limit) and \"U\" (above detection limit) can also be used in place of a decimal value.",
+              "type": "string"
+            },
+            "_data": {
+              "description": "Extensions for data",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "origin"
+          ]
+        }
+      ]
+    }
+  }
+}

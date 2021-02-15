@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/BackboneElement",
+  "$ref": "#/definitions/BackboneElement",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "BackboneElement": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "Base definition for all elements that are defined inside a resource - but not those in a data type.",
+          "properties": {
+            "modifierExtension": {
+              "description": "May be used to represent additional information that is not part of the basic definition of the element, and that modifies the understanding of the element that contains it. Usually modifier elements provide negation or qualification. In order to make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions.",
+              "type": "array",
+              "items": {
+                "$ref": "Extension.schema.json#/definitions/Extension"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

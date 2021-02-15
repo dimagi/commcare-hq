@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Group",
+  "$ref": "#/definitions/Group",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Group": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Represents a defined collection of entities that may be discussed or acted upon collectively but which are not expected to act collectively and are not formally or legally recognized; i.e. a collection of entities that isn\u0027t an Organization.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Group resource",
+              "type": "string",
+              "enum": [
+                "Group"
+              ]
+            },
+            "identifier": {
+              "description": "A unique business identifier for this group.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Indicates whether the record for the group is available for use or is merely being retained for historical purposes.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Identifies the broad classification of the kind of resources the group includes.",
+              "enum": [
+                "person",
+                "animal",
+                "practitioner",
+                "device",
+                "medication",
+                "substance"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "actual": {
+              "description": "If true, indicates that the resource refers to a specific group of real individuals.  If false, the group defines a set of intended individuals.",
+              "type": "boolean"
+            },
+            "_actual": {
+              "description": "Extensions for actual",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Provides a specific type of resource the group includes; e.g. \"cow\", \"syringe\", etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "name": {
+              "description": "A label assigned to the group for human identification and communication.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "quantity": {
+              "description": "A count of the number of resource instances that are part of the group.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_quantity": {
+              "description": "Extensions for quantity",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "characteristic": {
+              "description": "Identifies the traits shared by members of the group.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Group_Characteristic"
+              }
+            },
+            "member": {
+              "description": "Identifies the resource instances that are members of the group.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Group_Member"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Group_Characteristic": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Represents a defined collection of entities that may be discussed or acted upon collectively but which are not expected to act collectively and are not formally or legally recognized; i.e. a collection of entities that isn\u0027t an Organization.",
+          "properties": {
+            "code": {
+              "description": "A code that identifies the kind of trait being asserted.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueCodeableConcept": {
+              "description": "The value of the trait that holds (or does not hold - see \u0027exclude\u0027) for members of the group.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueBoolean": {
+              "description": "The value of the trait that holds (or does not hold - see \u0027exclude\u0027) for members of the group.",
+              "type": "boolean"
+            },
+            "_valueBoolean": {
+              "description": "Extensions for valueBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueQuantity": {
+              "description": "The value of the trait that holds (or does not hold - see \u0027exclude\u0027) for members of the group.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueRange": {
+              "description": "The value of the trait that holds (or does not hold - see \u0027exclude\u0027) for members of the group.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "exclude": {
+              "description": "If true, indicates the characteristic is one that is NOT held by members of the group.",
+              "type": "boolean"
+            },
+            "_exclude": {
+              "description": "Extensions for exclude",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "The period over which the characteristic is tested; e.g. the patient had an operation during the month of June.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    },
+    "Group_Member": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Represents a defined collection of entities that may be discussed or acted upon collectively but which are not expected to act collectively and are not formally or legally recognized; i.e. a collection of entities that isn\u0027t an Organization.",
+          "properties": {
+            "entity": {
+              "description": "A reference to the entity that is a member of the group. Must be consistent with Group.type.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "The period that the member was in the group, if known.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "inactive": {
+              "description": "A flag to indicate that the member is no longer in the group, but previously may have been a member.",
+              "type": "boolean"
+            },
+            "_inactive": {
+              "description": "Extensions for inactive",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "entity"
+          ]
+        }
+      ]
+    }
+  }
+}

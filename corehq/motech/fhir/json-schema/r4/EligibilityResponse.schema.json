@@ -1,0 +1,274 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/EligibilityResponse",
+  "$ref": "#/definitions/EligibilityResponse",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "EligibilityResponse": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a EligibilityResponse resource",
+              "type": "string",
+              "enum": [
+                "EligibilityResponse"
+              ]
+            },
+            "identifier": {
+              "description": "The Response business identifier.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status of the resource instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "created": {
+              "description": "The date when the enclosed suite of services were performed or completed.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requestProvider": {
+              "description": "The practitioner who is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "requestOrganization": {
+              "description": "The organization which is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "request": {
+              "description": "Original request resource reference.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "outcome": {
+              "description": "Transaction status: error, complete.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "disposition": {
+              "description": "A description of the status of the adjudication.",
+              "type": "string"
+            },
+            "_disposition": {
+              "description": "Extensions for disposition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "insurer": {
+              "description": "The Insurer who produced this adjudicated response.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "inforce": {
+              "description": "Flag indicating if the coverage provided is inforce currently  if no service date(s) specified or for the whole duration of the service dates.",
+              "type": "boolean"
+            },
+            "_inforce": {
+              "description": "Extensions for inforce",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "insurance": {
+              "description": "The insurer may provide both the details for the requested coverage as well as details for additional coverages known to the insurer.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EligibilityResponse_Insurance"
+              }
+            },
+            "form": {
+              "description": "The form to be used for printing the content.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "error": {
+              "description": "Mutually exclusive with Services Provided (Item).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EligibilityResponse_Error"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "EligibilityResponse_Insurance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
+          "properties": {
+            "coverage": {
+              "description": "A suite of updated or additional Coverages from the Insurer.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "contract": {
+              "description": "The contract resource which may provide more detailed information.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "benefitBalance": {
+              "description": "Benefits and optionally current balances by Category.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EligibilityResponse_BenefitBalance"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "EligibilityResponse_BenefitBalance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
+          "properties": {
+            "category": {
+              "description": "Dental, Vision, Medical, Pharmacy, Rehab etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subCategory": {
+              "description": "Dental: basic, major, ortho; Vision exam, glasses, contacts; etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "excluded": {
+              "description": "True if the indicated class of service is excluded from the plan, missing or False indicated the service is included in the coverage.",
+              "type": "boolean"
+            },
+            "_excluded": {
+              "description": "Extensions for excluded",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A short name or tag for the benefit, for example MED01, or DENT2.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A richer description of the benefit, for example \u0027DENT2 covers 100% of basic, 50% of major but exclused Ortho, Implants and Costmetic services\u0027.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "network": {
+              "description": "Network designation.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "unit": {
+              "description": "Unit designation: individual or family.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "term": {
+              "description": "The term or period of the values such as \u0027maximum lifetime benefit\u0027 or \u0027maximum annual vistis\u0027.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "financial": {
+              "description": "Benefits Used to date.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EligibilityResponse_Financial"
+              }
+            }
+          },
+          "required": [
+            "category"
+          ]
+        }
+      ]
+    },
+    "EligibilityResponse_Financial": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
+          "properties": {
+            "type": {
+              "description": "Deductable, visits, benefit amount.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "allowedUnsignedInt": {
+              "description": "Benefits allowed.",
+              "pattern": "[0]|([1-9][0-9]*)",
+              "type": "number"
+            },
+            "_allowedUnsignedInt": {
+              "description": "Extensions for allowedUnsignedInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "allowedString": {
+              "description": "Benefits allowed.",
+              "type": "string"
+            },
+            "_allowedString": {
+              "description": "Extensions for allowedString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "allowedMoney": {
+              "description": "Benefits allowed.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "usedUnsignedInt": {
+              "description": "Benefits used.",
+              "pattern": "[0]|([1-9][0-9]*)",
+              "type": "number"
+            },
+            "_usedUnsignedInt": {
+              "description": "Extensions for usedUnsignedInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "usedMoney": {
+              "description": "Benefits used.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "EligibilityResponse_Error": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
+          "properties": {
+            "code": {
+              "description": "An error code,from a specified code system, which details why the eligibility check could not be performed.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/RelatedArtifact",
+  "$ref": "#/definitions/RelatedArtifact",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "RelatedArtifact": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "Related artifacts such as additional documentation, justification, or bibliographic references.",
+          "properties": {
+            "type": {
+              "description": "The type of relationship to the related artifact.",
+              "enum": [
+                "documentation",
+                "justification",
+                "citation",
+                "predecessor",
+                "successor",
+                "derived-from",
+                "depends-on",
+                "composed-of"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "A brief description of the document or knowledge resource being referenced, suitable for display to a consumer.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "citation": {
+              "description": "A bibliographic citation for the related artifact. This text SHOULD be formatted according to an accepted citation format.",
+              "type": "string"
+            },
+            "_citation": {
+              "description": "Extensions for citation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "A url for the artifact that can be followed to access the actual content.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "document": {
+              "description": "The document being referenced, represented as an attachment. This is exclusive with the resource element.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "resource": {
+              "description": "The related resource, such as a library, value set, profile, or other knowledge resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

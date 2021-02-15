@@ -1,0 +1,265 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/MeasureReport",
+  "$ref": "#/definitions/MeasureReport",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "MeasureReport": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The MeasureReport resource contains the results of evaluating a measure.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a MeasureReport resource",
+              "type": "string",
+              "enum": [
+                "MeasureReport"
+              ]
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this report when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The report status. No data will be available until the report status is complete.",
+              "enum": [
+                "complete",
+                "pending",
+                "error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of measure report. This may be an individual report, which provides a single patient\u0027s score for the measure; a patient listing, which returns the list of patients that meet the various criteria in the measure; or a summary report, which returns a population count for each of the criteria in the measure.",
+              "enum": [
+                "individual",
+                "patient-list",
+                "summary"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "measure": {
+              "description": "A reference to the Measure that was evaluated to produce this report.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "patient": {
+              "description": "Optional Patient if the report was requested for a single patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "date": {
+              "description": "The date this measure report was generated.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reportingOrganization": {
+              "description": "Reporting Organization.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "The reporting period for which the report was calculated.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "group": {
+              "description": "The results of the calculation, one for each population group in the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MeasureReport_Group"
+              }
+            },
+            "evaluatedResources": {
+              "description": "A reference to a Bundle containing the Resources that were used in the evaluation of this report.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "period",
+            "measure",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "MeasureReport_Group": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The MeasureReport resource contains the results of evaluating a measure.",
+          "properties": {
+            "identifier": {
+              "description": "The identifier of the population group as defined in the measure definition.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "population": {
+              "description": "The populations that make up the population group, one for each type of population appropriate for the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MeasureReport_Population"
+              }
+            },
+            "measureScore": {
+              "description": "The measure score for this population group, calculated as appropriate for the measure type and scoring method, and based on the contents of the populations defined in the group.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_measureScore": {
+              "description": "Extensions for measureScore",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "stratifier": {
+              "description": "When a measure includes multiple stratifiers, there will be a stratifier group for each stratifier defined by the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MeasureReport_Stratifier"
+              }
+            }
+          },
+          "required": [
+            "identifier"
+          ]
+        }
+      ]
+    },
+    "MeasureReport_Population": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The MeasureReport resource contains the results of evaluating a measure.",
+          "properties": {
+            "identifier": {
+              "description": "The identifier of the population being reported, as defined by the population element of the measure.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "code": {
+              "description": "The type of the population.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "count": {
+              "description": "The number of members of the population.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_count": {
+              "description": "Extensions for count",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patients": {
+              "description": "This element refers to a List of patient level MeasureReport resources, one for each patient in this population.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "MeasureReport_Stratifier": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The MeasureReport resource contains the results of evaluating a measure.",
+          "properties": {
+            "identifier": {
+              "description": "The identifier of this stratifier, as defined in the measure definition.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "stratum": {
+              "description": "This element contains the results for a single stratum within the stratifier. For example, when stratifying on administrative gender, there will be four strata, one for each possible gender value.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MeasureReport_Stratum"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "MeasureReport_Stratum": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The MeasureReport resource contains the results of evaluating a measure.",
+          "properties": {
+            "value": {
+              "description": "The value for this stratum, expressed as a string. When defining stratifiers on complex values, the value must be rendered such that the value for each stratum within the stratifier is unique.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "population": {
+              "description": "The populations that make up the stratum, one for each type of population appropriate to the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MeasureReport_Population1"
+              }
+            },
+            "measureScore": {
+              "description": "The measure score for this stratum, calculated as appropriate for the measure type and scoring method, and based on only the members of this stratum.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_measureScore": {
+              "description": "Extensions for measureScore",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "MeasureReport_Population1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The MeasureReport resource contains the results of evaluating a measure.",
+          "properties": {
+            "identifier": {
+              "description": "The identifier of the population being reported, as defined by the population element of the measure.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "code": {
+              "description": "The type of the population.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "count": {
+              "description": "The number of members of the population in this stratum.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_count": {
+              "description": "Extensions for count",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patients": {
+              "description": "This element refers to a List of patient level MeasureReport resources, one for each patient in this population in this stratum.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
