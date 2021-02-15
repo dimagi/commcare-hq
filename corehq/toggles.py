@@ -752,6 +752,13 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+DISABLE_WEB_APPS = StaticToggle(
+    'disable_web_apps',
+    'Disable access to Web Apps UI',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
     'ICDS: Toggle which webapps to see based on role',
