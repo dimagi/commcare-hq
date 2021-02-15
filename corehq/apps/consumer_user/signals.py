@@ -18,7 +18,6 @@ def send_email_case_changed_receiver(sender, case, **kwargs):
                                                                            domain=case.domain)
         if created or invitation.email != email:
             invitation.invited_by = case.opened_by
-            invitation.invited_on = case.opened_on
             invitation.email = email
             invitation.save()
             url = 'https://%s%s' % (get_site_domain(),

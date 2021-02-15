@@ -7,6 +7,9 @@ from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from mock import patch
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.apps.consumer_user.signals import send_email_case_changed_receiver
 
 
 def register_url(invitation):
@@ -213,3 +216,20 @@ class LoginTestCase(TestCase):
         self.client.login(username=email, password=password)
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 400)
+
+
+class SignalTestCase(TestCase):
+
+    def setUp(self):
+        self.case_sql = CommCareCaseSQL(case_id="case_id", domain="domain", opened_by="in@invite.com")
+        self.invitation_count = ConsumerUserInvitation.objects.count()
+
+    def test_method_send_email(self):
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as async_task:
+            send_email_case_changed_receiver(None, self.case_sql)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), self.invitation_count + 1)
+            async_task.assert_called_once()
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as do_not_send_email:
+            send_email_case_changed_receiver(None, self.case_sql)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), self.invitation_count + 1)
+            do_not_send_email.assert_not_called()
