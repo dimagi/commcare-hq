@@ -86,24 +86,32 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.fetchUsers();
         },
         ui: {
-            next: '.js-user-next',
-            prev: '.js-user-previous',
             search: '.js-user-search',
             query: '.js-user-query',
             page: '.js-page',
+            paginationGoButton: '#pagination-go-button',
+            paginationGoText: '#goText',
+            perPage: '.js-page-limit',
         },
         events: {
-            'click @ui.next': 'onClickNext',
-            'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
+            'click @ui.paginationGoButton': 'paginationGoAction',
+            'click @ui.perPage': 'onClickPageLimit',
         },
         templateContext: function () {
+            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
+            var paginationOptions = paginateItems.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
-                // Subtract 1 from page so that it is 0 indexed
-                pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
+                limit: this.limit,
+                rowRange: [10, 25, 50, 100],
+                startPage: paginationOptions.startPage,
+                endPage: paginationOptions.endPage,
+                pageCount: paginationOptions.pageCount,
+                currentPage: this.model.get('page') - 1,
+                perPageOptionsText: '15 per page',
             };
         },
         navigate: function () {
@@ -130,26 +138,10 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                     FormplayerFrontend.trigger('showError', xhr.responseText);
                 });
         },
-        onClickNext: function (e) {
-            e.preventDefault();
-            if (this.model.get('page') === this.totalPages()) {
-                window.console.warn('Attempted to non existant page');
-                return;
-            }
-            this.model.set('page', this.model.get('page') + 1);
-        },
-        onClickPrev: function (e) {
-            e.preventDefault();
-            if (this.model.get('page') === 1) {
-                window.console.warn('Attempted to non existant page');
-                return;
-            }
-            this.model.set('page', this.model.get('page') - 1);
-        },
         onClickPage: function (e) {
             e.preventDefault();
-            var page = $(e.currentTarget).data().page;
-            this.model.set('page', page);
+            var page = $(e.currentTarget).data().id;
+            this.model.set('page', page + 1);
         },
         onSubmitUserSearch: function (e) {
             e.preventDefault();
@@ -157,6 +149,20 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 'query': this.ui.query.val(),
                 'page': 1,  // Reset page to one when doing a query
             });
+        },
+        paginationGoAction: function (e) {
+            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
+            e.preventDefault();
+            var page = Number(this.ui.paginationGoText.val());
+            var pageNo = paginateItems.paginationGoPageNumber(page, this.totalPages());
+            this.model.set('page', pageNo);
+        },
+        onClickPageLimit: function (e) {
+            e.preventDefault();
+            var rowCount = this.ui.perPage.val();
+            this.limit = Number(rowCount);
+            this.fetchUsers();
+            this.model.set('page', 1);
         },
     });
 

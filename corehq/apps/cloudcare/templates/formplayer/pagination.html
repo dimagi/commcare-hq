@@ -1,0 +1,61 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+
+
+{% block pagination_templates %}
+<ul class="pagination">
+  <!-- Render Previous button -->
+  <% if (currentPage > 0) { %>
+    <li>
+  <% } else { %>
+    <li class="paginate-disabled">
+  <% } %>
+    <a class="js-page" data-id="0">
+      <span><i class="fa fa-fast-backward"></i></span>
+    </a>
+    <a class="js-page" data-id="<%= currentPage - 1 %>">
+      <span><i class="fa fa-caret-left"></i></span>
+    </a>
+    </li>
+    <!-- Render page buttons -->
+    <% if (pageCount <= 5) { %>
+        <% for (i = startPage-1; i < endPage; i++) { %>
+          <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i %>"><a><%= i + 1 %></a></li>
+        <% } %>
+    <% } else { %>
+      <% if (startPage <= 3) { %>
+        <% for (i = 0; i < startPage; i++) { %>
+          <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i %>"><a><%= i+1 %></a></li>
+        <% } %>
+      <% } else { %>
+          <li class="js-page" data-id="0"><a>{% trans "1" %}</a></li>
+          <li class="js-page"><a class="paginate-disabled">{% trans "..." %}</a></li>
+      <% } %>
+      <% for (i = startPage; i < endPage; i++) { %>
+        <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i %>"><a><%= i+1 %></a></li>
+      <% } %>
+      <% if (endPage >= pageCount - 2) { %>
+        <% for (i = endPage+1; i <= pageCount; i++) { %>
+          <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i-1 %>"><a><%= i %></a></li>
+        <% } %>
+      <% } else { %>
+        <li class="js-page"><a class="paginate-disabled">{% trans "..." %}</a></li>
+        <li class="js-page" data-id="<%= pageCount-1 %>"><a><%= pageCount %></a></li>
+      <% } %>
+    <% } %>
+    <!-- Render Next buttons -->
+    <% if (currentPage >= pageCount-1) { %>
+      <li class="paginate-disabled">
+    <% } else { %>
+      <li>
+    <% } %>
+      <a class="js-page" data-id="<%= currentPage + 1 %>">
+        <span><i class="fa fa-caret-right"></i></span>
+      </a>
+      <a class="js-page" data-id="<%= pageCount-1 %>">
+        <span><i class="fa fa-fast-forward"></i></span>
+      </a>
+      </li>
+  </ul>
+{% endblock %}
