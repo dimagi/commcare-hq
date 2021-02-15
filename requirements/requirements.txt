@@ -57,7 +57,7 @@ concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
-cryptography==3.3.1
+cryptography==3.4.5
     # via pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
@@ -408,7 +408,6 @@ simplejson==3.17.2
 six==1.15.0
     # via
     #   -r base-requirements.in
-    #   cryptography
     #   django-braces
     #   django-simple-captcha
     #   django-statici18n
