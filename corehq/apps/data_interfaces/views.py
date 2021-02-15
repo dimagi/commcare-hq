@@ -46,6 +46,7 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
     bulk_upload_cases_to_group,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -629,7 +630,11 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     def page_context(self):
         context = self.pagination_context
-        context['help_site_url'] = 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases'
+        domain_obj = Domain.get_by_name(self.domain)
+        context.update({
+            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'time': f"{domain_obj.auto_case_update_hour}:00" if domain_obj.auto_case_update_hour else _('midnight'),
+        })
         return context
 
     @property

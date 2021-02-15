@@ -273,6 +273,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
+            this.redoLast = options.redoLast;
         },
 
         ui: {
@@ -297,8 +298,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         caseListAction: function (e) {
-            var index = $(e.currentTarget).data().index;
-            FormplayerFrontend.trigger("menu:select", "action " + index);
+            var index = $(e.currentTarget).data().index,
+                step = "action " + index;
+            if (step === this.redoLast) {
+                FormplayerFrontend.trigger("menu:select");
+            } else {
+                FormplayerFrontend.trigger("menu:select", step);
+            }
         },
 
         caseListSearch: function (e) {
@@ -363,6 +369,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
+                pageNumLabel: _.template(gettext("Page <%=num%>")),
             };
         },
     });
@@ -405,11 +412,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     };
 
     var paginationGoPageNumber = function (pageNumber, pageCount) {
-            if (pageNumber >= 1 && pageNumber <= pageCount) {
-                return pageNumber;
-            } else {
-                return pageCount;
-            }
+        if (pageNumber >= 1 && pageNumber <= pageCount) {
+            return pageNumber;
+        } else {
+            return pageCount;
+        }
     };
 
     // Return a two- or three-length array of case tile CSS styles
