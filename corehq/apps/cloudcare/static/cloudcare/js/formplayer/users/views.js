@@ -101,7 +101,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         templateContext: function () {
             var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
-            var paginationOptions = paginateItems.paginateOptions(this.model.get('page')-1, this.totalPages());
+            var paginationOptions = paginateItems.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
@@ -155,7 +155,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             e.preventDefault();
             var page = Number(this.ui.paginationGoText.val());
             var pageNo = paginateItems.paginationGoPageNumber(page, this.totalPages());
-            this.model.set('page', pageNo)
+            this.model.set('page', pageNo);
         },
         onClickPageLimit: function (e) {
             e.preventDefault();

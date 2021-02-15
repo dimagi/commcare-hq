@@ -328,16 +328,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
-            var pageNo = paginationGoPageNumber(goText, this.options.pageCount)
+            var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
         },
 
         paginationGoKeyAction: function (e) {
-           // Pressing Enter in the go box activates it.
-           if (event.which === 13 || event.keyCode === 13) {
-               e.stopImmediatePropagation();
-               this.paginationGoAction(e);
-           }
+            // Pressing Enter in the go box activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginationGoAction(e);
+            }
         },
 
         columnSortAction: function (e) {
