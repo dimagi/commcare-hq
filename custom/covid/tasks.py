@@ -7,8 +7,8 @@ from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
+from corehq.apps.formplayer_api import clear_user_data, sync_db
 from corehq.apps.formplayer_api.exceptions import FormplayerResponseException
-from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from corehq.toggles import PRIME_FORMPLAYER_DBS
@@ -44,7 +44,7 @@ def prime_formplayer_dbs():
 
 
 @no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=RATE_LIMIT)
-def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
+def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id, clear_data=False):
     if datetime.utcnow().hour >= TASK_WINDOW_CUTOFF_HOUR:
         return
 
@@ -52,12 +52,15 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
 
     metric_tags = {"domain": domain}
     try:
+        if clear_data:
+            clear_user_data(domain, request_user, as_username)
         sync_db(domain, request_user, as_username)
     except FormplayerResponseException:
         notify_exception(None, "Error while priming formplayer user DB", details={
             'domain': domain,
             'username': request_user,
-            'as_user': as_username
+            'as_user': as_username,
+            'clear_user_data': clear_data
         })
         metrics_counter("commcare.prime_formplayer_db.error", tags=metric_tags)
     except Exception as e:
