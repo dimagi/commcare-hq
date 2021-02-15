@@ -16,5 +16,5 @@ def clear_user_data(domain, username, restore_as=None):
         'restoreAs': restore_as,
     }
     response_json = _post_data(data, user.user_id)
-    if not response_json.get("status") == "success":
+    if not response_json.get("type") == "success":
         raise FormplayerResponseException(response_json)

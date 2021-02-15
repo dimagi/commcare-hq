@@ -58,6 +58,7 @@ class Command(BaseCommand):
         parser.add_argument('--limit', action=validate_integer(gt=0), help='Limit the number of users matched.')
         parser.add_argument('--dry-run', action='store_true', help='Only print the list of users.')
         parser.add_argument('--dry-run-count', action='store_true', help='Only print the count of matched users.')
+        parser.add_argument('--clear-user-data', action='store_true', help='Clear user data prior to performing sync.')
 
     def handle(self,
                from_csv=None,
@@ -70,6 +71,7 @@ class Command(BaseCommand):
                ):
         dry_run = options['dry_run']
         dry_run_count = options['dry_run_count']
+        clear_user_data = options['clear_user_data']
 
         if from_csv:
             users = _get_users_from_csv(from_csv)
@@ -84,7 +86,9 @@ class Command(BaseCommand):
                     as_user_id = CouchUser.get_by_username(as_username).user_id
                 sys.stdout.write(f"{domain},{request_user},{request_user_id},{as_username},{as_user_id}")
                 if not dry_run:
-                    prime_formplayer_db_for_user.delay(domain, request_user_id, as_user_id)
+                    prime_formplayer_db_for_user.delay(
+                        domain, request_user_id, as_user_id, clear_data=clear_user_data
+                    )
         else:
             domains = [domain.strip() for domain in domains if domain.strip()]
             synced_since = datetime.utcnow() - relativedelta(hours=last_synced_hours)
@@ -105,7 +109,9 @@ class Command(BaseCommand):
                 request_user, as_username = get_prime_restore_user_params(request_user_id, as_user_id)
                 sys.stdout.write(f"{domain},{request_user},{request_user_id},{as_username},{as_user_id}")
                 if not dry_run:
-                    prime_formplayer_db_for_user.delay(domain, request_user_id, as_user_id)
+                    prime_formplayer_db_for_user.delay(
+                        domain, request_user_id, as_user_id, clear_data=clear_user_data
+                    )
 
 
 def _get_users_from_csv(path):
