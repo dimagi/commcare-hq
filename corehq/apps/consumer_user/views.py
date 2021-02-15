@@ -2,7 +2,10 @@ import json
 
 from django.contrib.auth import logout
 from django.contrib.auth.models import User
-from django.http import HttpResponse
+from django.core.signing import TimestampSigner
+from django.core.signing import BadSignature
+from django.core.signing import SignatureExpired
+from datetime import timedelta
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.urls import reverse
@@ -35,14 +38,17 @@ def list_view(request):
 
 @two_factor_exempt
 def register_view(request, invitation):
-    invitation = urlsafe_base64_decode(invitation)
     try:
+        invitation = urlsafe_base64_decode(TimestampSigner().unsign(invitation,
+                                                                    max_age=timedelta(days=30)))
         invitation_obj = ConsumerUserInvitation.objects.get(id=invitation)
         if invitation_obj.accepted:
             url = reverse('consumer_user:patient_login')
             return HttpResponseRedirect(url)
-    except ConsumerUserInvitation.DoesNotExist:
+    except (BadSignature, ConsumerUserInvitation.DoesNotExist):
         return JsonResponse({'message': "Invalid invitation"}, status=400)
+    except SignatureExpired:
+        return JsonResponse({'message': "Invitation is expired"}, status=400)
     email = invitation_obj.email
     if request.method == "POST":
         body = request.POST
@@ -53,7 +59,7 @@ def register_view(request, invitation):
             if email != entered_email:
                 return JsonResponse({'message': "Email is not same as the one that the invitation has been sent"},
                                     status=400)
-            user = User.objects.get(username=email, email=email)
+            user = User.objects.get(username=email)
             if not user.check_password(password):
                 return JsonResponse({'message': "Existing user but password is different"}, status=400)
             consumer_user = ConsumerUser.objects.get(user=user)
@@ -76,7 +82,7 @@ def register_view(request, invitation):
     else:
         existing_user = False
         try:
-            user = User.objects.get(username=email, email=email)
+            user = User.objects.get(username=email)
             form = PatientSignUpForm(model_to_dict(user, exclude=['email']))
             existing_user = True
         except User.DoesNotExist:
