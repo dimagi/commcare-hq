@@ -1,6 +1,8 @@
 import logging
 import os
 
+import attr
+
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.form_processor.utils import should_use_sql_backend
@@ -43,7 +45,8 @@ class Command(BaseCommand):
         parser.add_argument('--strict', action='store_true', default=False,
             help="Abort domain migration even for diffs in deleted doc types")
         parser.add_argument('--live', action='store_true', default=False,
-            help="Do live migration, leave in live/unfinished state.")
+            help="Do live migration. Leave in unfinished state if there are "
+                 "unpatchable diffs, otherwise patch, finish and commit.")
 
     def handle(self, path, state_dir, **options):
         self.strict = options['strict']
@@ -101,10 +104,9 @@ class Command(BaseCommand):
             set_couch_sql_migration_not_started(domain)
             raise Incomplete(str(err))
 
-        has_diffs = self.check_diffs(domain, state_dir)
         if self.live_migrate:
-            return
-        if has_diffs:
+            self.finish_live_migration_if_possible(domain, state_dir)
+        elif self.has_diffs(domain, state_dir):
             self.abort(domain, state_dir)
             raise Incomplete("has diffs")
 
@@ -112,8 +114,29 @@ class Command(BaseCommand):
         set_couch_sql_migration_complete(domain)
         log.info(f"Domain migrated: {domain}\n")
 
-    def check_diffs(self, domain, state_dir):
+    def finish_live_migration_if_possible(self, domain, state_dir):
         stats = get_diff_stats(domain, state_dir, self.strict)
+        if stats:
+            if any(s.pending for s in stats.values()):
+                raise Incomplete("has pending diffs")
+            assert any(s.patchable for s in stats.values()), stats
+            log.info(f"Patching {domain} migration")
+            do_couch_to_sql_migration(
+                domain,
+                state_dir,
+                live_migrate=True,
+                case_diff="patch",
+            )
+            if self.has_diffs(domain, state_dir, resume=True):
+                raise Incomplete("has unpatchable or pending diffs")
+        log.info(f"Finishing {domain} migration")
+        set_couch_sql_migration_started(domain)
+        do_couch_to_sql_migration(domain, state_dir)
+        if self.has_diffs(domain, state_dir, resume=True):
+            raise Incomplete("has diffs (WARNING: NOT LIVE!)")
+
+    def has_diffs(self, domain, state_dir, resume=False):
+        stats = get_diff_stats(domain, state_dir, self.strict, resume)
         if stats:
             header = "Migration has diffs: {}".format(domain)
             log.error(format_diff_stats(stats, header))
@@ -125,21 +148,22 @@ class Command(BaseCommand):
         blow_away_migration(domain, state_dir)
 
 
-def get_diff_stats(domain, state_dir, strict=True):
-    find_missing_docs(domain, state_dir, resume=False, progress=False)
-    statedb = open_state_db(domain, state_dir)
+def get_diff_stats(domain, state_dir, strict, resume=False):
+    DELETED_CASE = "CommCareCase-Deleted"
+    find_missing_docs(domain, state_dir, resume=resume, progress=False)
     stats = {}
-    for doc_type, counts in sorted(statedb.get_doc_counts().items()):
-        if not strict and doc_type == "CommCareCase-Deleted":
-            continue
-        if counts.diffs or counts.changes or counts.missing:
-            couch_count = counts.total
-            sql_count = counts.total - counts.missing
-            stats[doc_type] = (couch_count, sql_count, counts.diffs + counts.changes)
-    if "CommCareCase" not in stats:
+    with open_state_db(domain, state_dir) as statedb:
+        for doc_type, counts in sorted(statedb.get_doc_counts().items()):
+            if not strict and doc_type == DELETED_CASE and not counts.missing:
+                continue
+            if counts.diffs or counts.changes or counts.missing:
+                stats[doc_type] = DiffStats(counts)
         pending = statedb.count_undiffed_cases()
         if pending:
-            stats["CommCareCase"] = ("?", "?", f"{pending} diffs pending")
+            if "CommCareCase" not in stats:
+                stats["CommCareCase"] = DiffStats(pending=pending)
+            else:
+                stats["CommCareCase"].pending = pending
     return stats
 
 
@@ -155,9 +179,31 @@ def format_diff_stats(stats, header=None):
         writer = SimpleTableWriter(stream, TableRowFormatter([30, 10, 10, 10]))
         writer.write_table(
             ['Doc Type', '# Couch', '# SQL', '# Docs with Diffs'],
-            [(doc_type,) + stat for doc_type, stat in stats.items()],
+            [(doc_type,) + stat.columns for doc_type, stat in stats.items()],
         )
     return "\n".join(lines)
+
+
+@attr.s
+class DiffStats:
+    counts = attr.ib(default=None)
+    pending = attr.ib(default=0)
+
+    @property
+    def columns(self):
+        pending = f"{self.pending} pending" if self.pending else ""
+        counts = self.counts
+        if not counts:
+            return "?", "?", pending
+        diffs = counts.diffs + counts.changes
+        if pending:
+            diffs = f"{diffs} + {pending}" if diffs else pending
+        return counts.total, counts.total + counts.missing, diffs
+
+    @property
+    def patchable(self):
+        counts = self.counts
+        return counts and (counts.missing + counts.diffs + counts.changes)
 
 
 class Incomplete(Exception):
