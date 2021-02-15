@@ -20,6 +20,7 @@ from ...couchsqlmigration import (
 from ...missingdocs import find_missing_docs
 from ...progress import (
     couch_sql_migration_in_progress,
+    get_couch_sql_migration_status,
     set_couch_sql_migration_complete,
     set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
@@ -118,8 +119,12 @@ class Command(BaseCommand):
         stats = get_diff_stats(domain, state_dir, self.strict)
         if stats:
             if any(s.pending for s in stats.values()):
-                raise Incomplete("has pending diffs")
-            assert any(s.patchable for s in stats.values()), stats
+                log_stats(domain, stats)
+                raise Incomplete("has pending diffs or missing docs")
+            if "CommCareCase" not in stats:
+                log_stats(domain, stats)
+                raise Incomplete("has unpatchable diffs")
+            assert stats["CommCareCase"].patchable, stats
             log.info(f"Patching {domain} migration")
             do_couch_to_sql_migration(
                 domain,
@@ -138,8 +143,7 @@ class Command(BaseCommand):
     def has_diffs(self, domain, state_dir, resume=False):
         stats = get_diff_stats(domain, state_dir, self.strict, resume)
         if stats:
-            header = "Migration has diffs: {}".format(domain)
-            log.error(format_diff_stats(stats, header))
+            log_stats(domain, stats)
         return bool(stats)
 
     def abort(self, domain, state_dir):
@@ -165,6 +169,12 @@ def get_diff_stats(domain, state_dir, strict, resume=False):
             else:
                 stats["CommCareCase"].pending = pending
     return stats
+
+
+def log_stats(domain, stats):
+    status = get_couch_sql_migration_status(domain)
+    header = f"Couch to SQL migration status for {domain}: {status}"
+    log.info(format_diff_stats(stats, header))
 
 
 def format_diff_stats(stats, header=None):
