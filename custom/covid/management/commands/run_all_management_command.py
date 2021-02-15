@@ -57,7 +57,7 @@ class Command(BaseCommand):
                                               location=location))
                 jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
                                               location=location))
-        pool.join()
+        second_pool.join()
         total_jobs.extend(jobs)
 
         for job in total_jobs:
