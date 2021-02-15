@@ -15,12 +15,10 @@ class FailedLoginTotal:
     @classmethod
     def get(cls, username):
         raw_failures, raw_ts = cls._get_raw_fields(username)
-        attempts_ts = cls._to_timestamp(raw_ts)
+        last_attempt_time = cls._to_time(raw_ts)
         num_failures = int(raw_failures or 0)
 
-        last_attempt_date = datetime.utcfromtimestamp(attempts_ts)
-
-        return cls(username, num_failures, last_attempt_date)
+        return cls(username, num_failures, last_attempt_time)
 
     @classmethod
     def _get_raw_fields(cls, username):
@@ -32,18 +30,19 @@ class FailedLoginTotal:
         return f'attempts_{username}'
 
     @staticmethod
-    def _to_timestamp(raw_ts):
-        return float(raw_ts or EPOCH_TS)
+    def _to_time(raw_ts):
+        timestamp = float(raw_ts or EPOCH_TS)
+        return datetime.utcfromtimestamp(timestamp)
 
-    def __init__(self, username, failures=0, last_attempt_date=EPOCH):
+    def __init__(self, username, failures=0, last_attempt_time=EPOCH):
         self.username = username
-        self._reset_values(failures, last_attempt_date)
+        self._reset_values(failures, last_attempt_time)
 
         self.key = self._get_key(self.username)
 
-    def _reset_values(self, failures=0, last_attempt_date=EPOCH):
+    def _reset_values(self, failures=0, last_attempt_time=EPOCH):
         self.failures = failures
-        self.last_attempt_date = last_attempt_date
+        self.last_attempt_time = last_attempt_time
 
     def clear(self):
         redis_client = get_redis_connection()
@@ -58,18 +57,23 @@ class FailedLoginTotal:
             self.key)
         num_failures = transaction_results[0] or 1
 
-        self._reset_values(failures=num_failures, last_attempt_date=current_time)
+        self._reset_values(failures=num_failures, last_attempt_time=current_time)
 
         return num_failures
 
     def _create_failure_handler(self, current_time):
         def add_failure(pipe):
-            previous_attempt_ts = self._to_timestamp(pipe.hget(self.key, self.FIELD_TS))
-            previous_attempt_date = datetime.utcfromtimestamp(previous_attempt_ts).date()
+            previous_attempt_time = self._to_time(pipe.hget(self.key, self.FIELD_TS))
 
             pipe.multi()
 
-            if previous_attempt_date != current_time.date():
+            # NOTE: there is a race condition here, where we could receive the current date first,
+            # then a previous date. The database would get updated with the previous date,
+            # and the user is likely to have his login failures reset multiple times.
+            # Viewing this as an acceptable risk for now.
+            # It would be hard for anyone to game this, and the worst that would happen is they'd
+            # be able to achieve 2-3x the maximum allowable failures.
+            if previous_attempt_time.date() != current_time.date():
                 # Reset failures when a new day begins
                 pipe.hset(self.key, self.FIELD_FAILURES, 1)
             else:
@@ -81,4 +85,4 @@ class FailedLoginTotal:
         return add_failure
 
     def __repr__(self):
-        return f'{self.username}: {self.attempts} failures, last at: {self.last_attempt_date}'
+        return f'{self.username}: {self.failures} failures, last at {self.last_attempt_time}'

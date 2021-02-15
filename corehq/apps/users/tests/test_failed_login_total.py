@@ -7,15 +7,20 @@ from ..failed_login_total import FailedLoginTotal, EPOCH
 class TestFailedLoginTotal_Constructor(SimpleTestCase):
     def test_creates_valid_object(self):
         current_time = datetime(2020, 12, 5)
-        record = FailedLoginTotal('test_user', failures=4, last_attempt_date=current_time)
+        record = FailedLoginTotal('test_user', failures=4, last_attempt_time=current_time)
         self.assertEqual(record.username, 'test_user')
         self.assertEqual(record.failures, 4)
-        self.assertEqual(record.last_attempt_date, current_time)
+        self.assertEqual(record.last_attempt_time, current_time)
 
     def test_handles_default_arguments(self):
         record = FailedLoginTotal('test_user')
         self.assertEqual(record.failures, 0)
-        self.assertEqual(record.last_attempt_date, EPOCH)
+        self.assertEqual(record.last_attempt_time, EPOCH)
+
+    def test_repr(self):
+        current_time = datetime(2020, 12, 5)
+        record = FailedLoginTotal('test_user', failures=4, last_attempt_time=current_time)
+        self.assertEqual(repr(record), 'test_user: 4 failures, last at 2020-12-05 00:00:00')
 
 
 class TestFailedLoginTotal(SimpleTestCase):
@@ -31,14 +36,14 @@ class TestFailedLoginTotal(SimpleTestCase):
     def test_get_populates_empty_user(self):
         record = FailedLoginTotal.get('test_user')
         self.assertEqual(record.failures, 0)
-        self.assertEqual(record.last_attempt_date, EPOCH)
+        self.assertEqual(record.last_attempt_time, EPOCH)
 
     def test_clear_handles_missing_user(self):
         record = FailedLoginTotal('missing_user')
         record.clear()
 
         self.assertEqual(record.failures, 0)
-        self.assertEqual(record.last_attempt_date, EPOCH)
+        self.assertEqual(record.last_attempt_time, EPOCH)
 
     def test_inserts_add_failure_increments_failure_count(self):
         record = FailedLoginTotal.get('test_user')
@@ -47,12 +52,12 @@ class TestFailedLoginTotal(SimpleTestCase):
 
         # ensure the record fields were updated after insert
         self.assertEqual(record.failures, 1)
-        self.assertEqual(record.last_attempt_date, current_time)
+        self.assertEqual(record.last_attempt_time, current_time)
 
         # ensure the database roundtrip
         inserted_record = FailedLoginTotal.get('test_user')
         self.assertEqual(inserted_record.failures, 1)
-        self.assertEqual(inserted_record.last_attempt_date, current_time)
+        self.assertEqual(inserted_record.last_attempt_time, current_time)
 
     def test_clear_resets_user(self):
         record = FailedLoginTotal.get('test_user')
@@ -62,11 +67,11 @@ class TestFailedLoginTotal(SimpleTestCase):
 
         # ensure the record fields were updated after clear
         self.assertEqual(record.failures, 0)
-        self.assertEqual(record.last_attempt_date, EPOCH)
+        self.assertEqual(record.last_attempt_time, EPOCH)
 
         cleared_record = FailedLoginTotal.get('test_user')
         self.assertEqual(cleared_record.failures, 0)
-        self.assertEqual(cleared_record.last_attempt_date, EPOCH)
+        self.assertEqual(cleared_record.last_attempt_time, EPOCH)
 
     def test_multiple_failures_increment_failure_counter(self):
         record = FailedLoginTotal.get('test_user')
@@ -95,4 +100,4 @@ class TestFailedLoginTotal(SimpleTestCase):
         record.add_failure(TODAY_1_AM)
 
         self.assertEqual(record.failures, 1)
-        self.assertEqual(record.last_attempt_date, TODAY_1_AM)
+        self.assertEqual(record.last_attempt_time, TODAY_1_AM)
