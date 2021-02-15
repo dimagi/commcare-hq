@@ -24,90 +24,42 @@
       <tbody>
       </tbody>
     </table>
-    <% if (pagesToShow.endPage) { %>
-      <div class="container">
-        <div class="row">
-          <div class="col-sm-3">
-          <div class="form-inline user-rows-perpage">
-            <span class="page-text">Rows per page</span>
-            <select class="form-control js-page-series user-page-options" id="itemsText">
-              <option value="<%= limit %>"><%= limit %> per page</option>
-              <% for(var i = 0; i < rowRange.length; i++) { %>
-                <% if (rowRange[i] != limit) { %>
-                  <option value="<%= rowRange[i] %>"><%= rowRange[i] %> per page</option>
-                <% } %>
-              <% } %>
-            </select>
-          </div>
-        </div>
-          <div class="col-sm-6">
-            <nav class="module-pagination-container text-centre pagination-align">
-            <ul class="pagination">
-
-              <!-- Render Previous button -->
-              <% if (page === 1) { %>
-              <li class="disabled">
-                <% } else { %>
-              <li>
-                <% } %>
-                <a class="js-page" data-page="1">
-                  <span><i class="fa fa-fast-backward"></i></span>
-                </a>
-                <a class="js-user-previous">
-                  <span><i class="fa fa-caret-left"></i></span>
-                </a>
-              </li>
-              <!-- Render page buttons -->
-              <% if (pagesToShow.pageCount <= 5) { %>
-                  <% for (i = pagesToShow.startPage-1; i < pagesToShow.endPage; i++) { %>
-                    <li class="js-page<% if (i+1 === page) { %> active<% } %>" data-page="<%= i+1 %>"><a><%= i + 1 %></a></li>
+    <% if (endPage) { %>
+      <% if (!(pageCount === 1 && limit === 10)) { %>
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-3">
+              <div class="form-inline per-pagination-text">
+                <select class="form-control js-page-limit" id="itemsText">
+                  <option value="<%= limit %>">{% trans "<%= limit %> per page" %}</option>
+                  <% for(var i = 0; i < rowRange.length; i++) { %>
+                    <% if (rowRange[i] != limit) { %>
+                      <option value="<%= rowRange[i] %>">{% trans "<%= rowRange[i] %> per page" %}</option>
+                    <% } %>
                   <% } %>
-              <% } else { %>
-                <% if (pagesToShow.startPage <= 3) { %>
-                  <% for (i = 1; i < pagesToShow.startPage; i++) { %>
-                    <li class="js-page<% if (i === page) { %> active<% } %>" data-page="<%= i %>"><a><%= i %></a></li>
-                  <% } %>
-                <% } else { %>
-                    <li class="js-page<% if (i === page) { %> active<% } %>" data-page="1"><a>{% trans "1" %}</a></li>
-                    <li class="js-page"><a class="paginate-disabled">{% trans "..." %}</a></li>
-                <% } %>
-                <% for (i = pagesToShow.startPage; i <= pagesToShow.endPage; i++) { %>
-                  <li class="js-page<% if (i === page) { %> active<% } %>" data-page="<%= i %>"><a><%= i %></a></li>
-                <% } %>
-                <% if (pagesToShow.endPage >= pagesToShow.pageCount - 2) { %>
-                  <% for (i = pagesToShow.endPage+1; i <= pagesToShow.pageCount; i++) { %>
-                    <li class="js-page<% if (i === page) { %> active<% } %>" data-page="<%= i %>"><a><%= i %></a></li>
-                  <% } %>
-                <% } else { %>
-                  <li class="js-page"><a class="paginate-disabled">{% trans "..." %}</a></li>
-                  <li class="js-page<% if (i === page) { %> active<% } %>" data-page="<%= pagesToShow.pageCount %>"><a><%= pagesToShow.pageCount %></a></li>
-                <% } %>
-              <% } %>
-              <!-- Render Next buttons -->
-              <% if (page === totalPages) { %>
-              <li class="disabled">
-                <% } else { %>
-              <li>
-                <% } %>
-                <a class="js-user-next">
-                  <span><i class="fa fa-caret-right"></i></span>
-                </a>
-                <a class="js-page" data-page="<%= pagesToShow.pageCount %>">
-                  <span><i class="fa fa-fast-forward"></i></span>
-                </a>
-              </li>
-            </ul>
-            </nav>
-          </div>
-          <div class="col-sm-3">
-            <div class="form-inline paginate-goto">
-                <span class="page-text">{% trans "Go to page" %}</span>
-                <input type="text" class="form-control pagination-user-form" style="width: 60px;" placeholder="Page" id="goText">
-                <input type="button" class="btn btn-primary js-page-go-search pagination-user-form" value="Go">
+                </select>
+              </div>
             </div>
+          <% if (pageCount > 1) { %>
+            <div class="col-sm-6">
+              <nav class="module-pagination-container">
+                {% block pagination_templates %}
+                  {% include 'formplayer/pagination.html' %}
+                {% endblock %}
+              </nav>
+            </div>
+            <div class="col-sm-3 module-go-container">
+              <div class="input-group input-group-sm module-pagination-container">
+                <input type="text" class="form-control" placeholder="Go to page" id="goText">
+                <div class="input-group-btn">
+                  <button class="btn btn-default" type="button" id="pagination-go-button">{% trans "Go" %}</button>
+                </div>
+              </div>
+            </div>
+          <% } %>
           </div>
         </div>
-      </div>
+      <% } %>
     <% } %>
   </div>
 </script>
