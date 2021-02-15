@@ -17,6 +17,8 @@ from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
+RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 100)
+
 # Include users that have synced in the last 7 days
 SYNC_WINDOW_HOURS = 168
 
@@ -41,7 +43,7 @@ def prime_formplayer_dbs():
             prime_formplayer_db_for_user.delay(domain, row[0], row[1])
 
 
-@no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=50)
+@no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=RATE_LIMIT)
 def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
     if datetime.utcnow().hour >= TASK_WINDOW_CUTOFF_HOUR:
         return
