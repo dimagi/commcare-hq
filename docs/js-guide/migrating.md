@@ -1,16 +1,14 @@
-# Migrating
+# RequireJS Migration Guide
 
-Modernizing our JavaScript code base often means doing migrations. Migrations currently in progress:
-1. [Migrating to RequireJS](#migrating-to-requirejs)
-1. [Moving away from classical inheritance](#moving-away-from-classical-inheritance)
-
-## Migrating to RequireJS
+This page is a guide to upgrading legacy code in HQ to use RequireJS.
+For information on how to work within existing code, see [Managing Dependencies](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/dependencies.md).
+Both that page and [Historical Background on Module Patterns](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.md) are useful background for this guide.
 
 - [Background: modules and pages](#background-modules-and-pages)
 - [Basic Migration Process](#basic-migration-process)
 - [Troubleshooting](#troubleshooting)
 
-### Background: modules and pages
+## Background: modules and pages
 
 The RequireJS migration deals with both **pages** (HTML) and **modules** (JavaScript). Any individual page is either migrated or not. Individual modules are also migrated or not, but a "migrated" module may be used on both RequireJS and non-RequireJS pages.
 
@@ -18,33 +16,12 @@ Logic in `hqModules.js` determines whether or not we're in a RequireJS environme
 
 These docs walk through the process of migrating a single page to RequireJS.
 
-#### Note on editing unmigrated javascript
+## Basic Migration Process
 
-You can tell whether or not a JavaScript module is compatible with RequireJS by looking at its `hqDefine` call.
-
-RequireJS modules look like this, with all dependencies loaded as part of `hqDefine`:
-
-```
-hqDefine("my_app/js/my_file", ["knockout", "hqwebapp/js/initial_page_data"], function (ko, initialPageData) {
-    var myObservable = ko.observable(initialPageData.get("thing"));
-    ...
-});
-```
-
-Non-RequireJS modules look like this, with no list and no function parameters. HQ modules are loaded using `hqImport` in the body, and third party libraries aren't declared at all, instead relying on globals:
-
-```
-hqDefine("my_app/js/my_file", function () {
-    var myObservable = ko.observable(hqImport("hqwebapp/js/initial_page_data").get("thing"));
-    ...
-});
-```
-
-If you're working in a non-RequireJS js file, **do not** add that list and parameters unless you are intending to migrate the module. It's easy to introduce bugs that won't be visible until the module is used on a RequireJS page, and modules are harder to migrate when they have pre-existing bugs. See "troubleshooting" below if you're curious about the kinds of issues that crop up.
-
-### Basic Migration Process
-
-Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`. See above for details on moving inline script blocks to files, and see [module patterns](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-organization.md#module-patterns) for details on `hqDefine`. Also, pages that are not descendants of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html) cannot yet be migrated.
+Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`.
+This is already true for the vast majority of code in HQ.  Pages that are not descendants of
+[hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html),
+which are rare, cannot yet be migrated.
 
 Once these conditions are met, migrating to RequireJS is essentially the process of explicitly adding each module's dependencies to the module's definition, and also updating each HTML page to reference a single "main" module rather than including a bunch of `<script>` tags:
 1. Add `requirejs_main` tag and remove `<script>` tags
@@ -55,7 +32,7 @@ Sample PRs:
 - [RequireJS migration: dashboard](https://github.com/dimagi/commcare-hq/pull/19182/) is an example of an easy migration, where all dependencies are already migrated
 - [RequireJS proof of concept](https://github.com/dimagi/commcare-hq/pull/18116) migrates a few pages (lookup tables, data dictionary) and many of our commonly-used modules (analytics, `hq.helpers.js`, etc.). This also contains the changes to `hqModules.js` that make `hqDefine` support both migrated and unmigrated pages.
 
-#### Add `requirejs_main` tag and remove `<script>` tags
+### Add `requirejs_main` tag and remove `<script>` tags
 
 The `requirejs_main` tag is what indicates that a page should use RequireJS. The page should have one "main" module. Most of our pages are already set up like this: they might include a bunch of scripts, but there's one in particular that handles the event handlers, bindings, etc. that are specific to that page.
 
@@ -76,7 +53,7 @@ Add `{% requirejs_main 'myApp/js/myModule' %}` near the top of the template: it 
 
 Remove other `<script>` tags from the file. You'll be adding these as dependencies to the main module.
 
-#### Add dependencies
+### Add dependencies
 
 In your main module, add any dependent modules. Pre-RequireJS, a module definition looks like this:
 ```
@@ -114,7 +91,7 @@ To declare dependencies:
 
 Dependencies that aren't directly referenced as modules **don't** need to be added as function parameters, but they **do** need to be in the dependency list, so just put them at the end of the list. This tends to happen for custom knockout bindings, which are referenced only in the HTML, or jQuery plugins, which are referenced via the jQuery object rather than by the module's name.
 
-#### Test
+### Test
 
 It's often prohibitively time-consuming to test every JavaScript interaction on a page. However, it's always important to at least load the page to check for major errors. Beyond that, test for weak spots based on the changes you made:
 - If you replaced any `hqImport` calls that were inside of event handlers or other callbacks, verify that those areas still work correctly. When a migrated module is used on an unmigrated page, its dependencies need to be available at the time the module is defined. This is a change from previous behavior, where the dependencies didn't need to be defined until `hqImport` first called them. We do not currently have a construct to require dependencies after a module is defined.
@@ -123,9 +100,9 @@ It's often prohibitively time-consuming to test every JavaScript interaction on 
 - If your page touched any javascript modules that are used by pages that haven't yet been migrated, test at least one of those non-migrated pages.
 - Check if your base template has any descendants that should also be migrated.
 
-### Troubleshooting
+## Troubleshooting
 
-#### Troubleshooting migration issues
+### Troubleshooting migration issues
 
 When debugging RequireJS issues, the first question is whether or not the page you're on has been migrated. You can find out by checking the value of `window.USE_REQUIREJS` in the browser console.
 
@@ -139,7 +116,7 @@ Common issues on non-RequireJS pages:
 - JS error like `something is not defined` where `something` is a third-party module: this can happen if a non-RequireJS page uses a RequireJS module which uses a third party module based on a global variable. There's some code that mimicks RequireJS in this situation, but it needs to know about all of the third party libraries. To fix, add the third party module's global to [thirdPartyMap in hqModules.js](https://github.com/dimagi/commcare-hq/commit/85286460a8b08812f82d6709c161b259e77165c4#diff-73c73327e873d0e5f5f4e17c3251a1ceR57).
 - JS error like `something is not defined` where `something` is an HQ module: this can happen when script tags are ordered so that a module appears before one of its dependencies. This can happen to migrated modules because one of the effects of the migration is to typically import all of a module's dependencies at the time the module is defined, which in a non-RequireJS context means all of the dependencies' script tags must appear before the script tags that depend on them. Previously, dependencies were not imported until `hqImport` was called, which could be later on, possibly in an event handler or some other code that would never execute until the entire page was loaded. To fix, try reordering the script tags. If you find there's a circular dependency, use `hqRequire` as described above.
 
-#### Troubleshooting the RequireJS build process
+### Troubleshooting the RequireJS build process
 
 Tactics that can help track down problems with the RequireJS build process, which usually manifest as errors that happen on staging but not locally:
 
@@ -152,17 +129,3 @@ Tactics that can help track down problems with the RequireJS build process, whic
       - This will **overwrite** your local versions of `requirejs_config.js` and `resource_versions.js`, so be cautious running it if you have uncommitted changes.
       - This will also copy the generated bundle files from `staticfiles` back into `corehq`.
       - If you don't need to test locally but just want to see the results of dependency tracing, leave off the `--local`. A list of each bundle's contents will be written to `staticfiles/build.txt`, but no files will be added to or overwritten in `corehq`.
-
-## Moving away from classical inheritance
-
-See [our approach to inheritance](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
-- In the class definition, make sure the instance is initialized to an empty object instead of `this`. There's usually a `var self = this;` line that should be switched to `var self = {};`
-- Throughout the class definition, make sure the code is consistently using `self` instead of `this`
-- Make sure the class definition returns `self` at the end (typically it won't return anything)
-- Update class name from `UpperCamelCase` to `lowerCamelCase`
-- Remove `new` operator from anywhere the class is instantiated
-- Sanity test that the pages using the class still load
-
-[Sample pull request](https://github.com/dimagi/commcare-hq/pull/19938)
-
-Code that actually manipulates the prototype needs more thought.

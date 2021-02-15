@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('fhir_version', models.CharField(choices=[('4.0.1', 'R4')],
                                                   default='4.0.1',
                                                   max_length=12)),
-                ('fhirclient_class', models.CharField(max_length=255)),
+                ('name', models.CharField(max_length=255)),
                 ('template', jsonfield.fields.JSONField(
                     blank=True, default=None, null=True)),
                 ('case_type', models.ForeignKey(

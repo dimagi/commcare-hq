@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Organization",
+  "$ref": "#/definitions/Organization",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Organization": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A formally or informally recognized grouping of people or organizations formed for the purpose of achieving some form of collective action.  Includes companies, institutions, corporations, departments, community groups, healthcare practice groups, etc.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Organization resource",
+              "type": "string",
+              "enum": [
+                "Organization"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier for the organization that is used to identify the organization across multiple disparate systems.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether the organization\u0027s record is still in active use.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The kind(s) of organization that this is.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "name": {
+              "description": "A name associated with the organization.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "alias": {
+              "description": "A list of alternate names that the organization is known as, or was known as in the past.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_alias": {
+              "description": "Extensions for alias",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "telecom": {
+              "description": "A contact detail for the organization.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "address": {
+              "description": "An address for the organization.",
+              "type": "array",
+              "items": {
+                "$ref": "Address.schema.json#/definitions/Address"
+              }
+            },
+            "partOf": {
+              "description": "The organization of which this organization forms a part.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "contact": {
+              "description": "Contact for the organization for a certain purpose.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Organization_Contact"
+              }
+            },
+            "endpoint": {
+              "description": "Technical endpoints providing access to services operated for the organization.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Organization_Contact": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formally or informally recognized grouping of people or organizations formed for the purpose of achieving some form of collective action.  Includes companies, institutions, corporations, departments, community groups, healthcare practice groups, etc.",
+          "properties": {
+            "purpose": {
+              "description": "Indicates a purpose for which the contact can be reached.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "name": {
+              "description": "A name associated with the contact.",
+              "$ref": "HumanName.schema.json#/definitions/HumanName"
+            },
+            "telecom": {
+              "description": "A contact detail (e.g. a telephone number or an email address) by which the party may be contacted.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "address": {
+              "description": "Visiting or postal addresses for the contact.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

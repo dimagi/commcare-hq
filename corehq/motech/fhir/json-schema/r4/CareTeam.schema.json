@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/CareTeam",
+  "$ref": "#/definitions/CareTeam",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "CareTeam": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The Care Team includes all the people and organizations who plan to participate in the coordination and delivery of care for a patient.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a CareTeam resource",
+              "type": "string",
+              "enum": [
+                "CareTeam"
+              ]
+            },
+            "identifier": {
+              "description": "This records identifiers associated with this care team that are defined by business processes and/or used to refer to it when a direct URL reference to the resource itself is not appropriate.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "Indicates the current state of the care team.",
+              "enum": [
+                "proposed",
+                "active",
+                "suspended",
+                "inactive",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "Identifies what kind of team.  This is to support differentiation between multiple co-existing teams, such as care plan team, episode of care team, longitudinal care team.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "name": {
+              "description": "A label for human use intended to distinguish like teams.  E.g. the \"red\" vs. \"green\" trauma teams.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "subject": {
+              "description": "Identifies the patient or group whose intended care is handled by the team.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The encounter or episode of care that establishes the context for this care team.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "Indicates when the team did (or is intended to) come into effect and end.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "participant": {
+              "description": "Identifies all people and organizations who are expected to be involved in the care team.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CareTeam_Participant"
+              }
+            },
+            "reasonCode": {
+              "description": "Describes why the care team exists.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reasonReference": {
+              "description": "Condition(s) that this care team addresses.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "managingOrganization": {
+              "description": "The organization responsible for the care team.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "note": {
+              "description": "Comments made about the CareTeam.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "CareTeam_Participant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The Care Team includes all the people and organizations who plan to participate in the coordination and delivery of care for a patient.",
+          "properties": {
+            "role": {
+              "description": "Indicates specific responsibility of an individual within the care team, such as \"Primary care physician\", \"Trained social worker counselor\", \"Caregiver\", etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "member": {
+              "description": "The specific person or organization who is participating/expected to participate in the care team.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOf": {
+              "description": "The organization of the practitioner.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "Indicates when the specific member or organization did (or is intended to) come into effect and end.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

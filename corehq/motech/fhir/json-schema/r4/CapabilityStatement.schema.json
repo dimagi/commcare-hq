@@ -1,0 +1,1033 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/CapabilityStatement",
+  "$ref": "#/definitions/CapabilityStatement",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "CapabilityStatement": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a CapabilityStatement resource",
+              "type": "string",
+              "enum": [
+                "CapabilityStatement"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this capability statement when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this capability statement is (or will be) published. The URL SHOULD include the major version of the capability statement. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the capability statement when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the capability statement author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the capability statement. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the capability statement.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this capability statement. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this capability statement is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the capability statement was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the capability statement changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the capability statement.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the capability statement from a consumer\u0027s perspective. Typically, this is used when the capability statement describes a desired rather than an actual solution, for example as a formal expression of requirements as part of an RFP.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate capability statement instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the capability statement is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this capability statement is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the capability statement and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the capability statement.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "kind": {
+              "description": "The way that this statement is intended to be used, to describe an actual running instance of software, a particular product (kind not instance of software) or a class of implementation (e.g. a desired purchase).",
+              "enum": [
+                "instance",
+                "capability",
+                "requirements"
+              ],
+              "type": "string"
+            },
+            "_kind": {
+              "description": "Extensions for kind",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "instantiates": {
+              "description": "Reference to a canonical URL of another CapabilityStatement that this software implements or uses. This capability statement is a published API description that corresponds to a business service. The rest of the capability statement does not need to repeat the details of the referenced resource, but can do so.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_instantiates": {
+              "description": "Extensions for instantiates",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "software": {
+              "description": "Software that is covered by this capability statement.  It is used when the capability statement describes the capabilities of a particular software version, independent of an installation.",
+              "$ref": "#/definitions/CapabilityStatement_Software"
+            },
+            "implementation": {
+              "description": "Identifies a specific implementation instance that is described by the capability statement - i.e. a particular installation, rather than the capabilities of a software program.",
+              "$ref": "#/definitions/CapabilityStatement_Implementation"
+            },
+            "fhirVersion": {
+              "description": "The version of the FHIR specification on which this capability statement is based.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_fhirVersion": {
+              "description": "Extensions for fhirVersion",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "acceptUnknown": {
+              "description": "A code that indicates whether the application accepts unknown elements or extensions when reading resources.",
+              "enum": [
+                "no",
+                "extensions",
+                "elements",
+                "both"
+              ],
+              "type": "string"
+            },
+            "_acceptUnknown": {
+              "description": "Extensions for acceptUnknown",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "format": {
+              "description": "A list of the formats supported by this implementation using their content types.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_format": {
+              "description": "Extensions for format",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "patchFormat": {
+              "description": "A list of the patch formats supported by this implementation using their content types.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_patchFormat": {
+              "description": "Extensions for patchFormat",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "implementationGuide": {
+              "description": "A list of implementation guides that the server does (or should) support in their entirety.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_implementationGuide": {
+              "description": "Extensions for implementationGuide",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "profile": {
+              "description": "A list of profiles that represent different use cases supported by the system. For a server, \"supported by the system\" means the system hosts/produces a set of resources that are conformant to a particular profile, and allows clients that use its services to search using this profile and to find appropriate data. For a client, it means the system will search by this profile and process data according to the guidance implicit in the profile. See further discussion in [Using Profiles](profiling.html#profile-uses).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "rest": {
+              "description": "A definition of the restful capabilities of the solution, if any.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Rest"
+              }
+            },
+            "messaging": {
+              "description": "A description of the messaging capabilities of the solution.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Messaging"
+              }
+            },
+            "document": {
+              "description": "A document definition.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Document"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "CapabilityStatement_Software": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "name": {
+              "description": "Name software is known by.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The version identifier for the software covered by this statement.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "releaseDate": {
+              "description": "Date this version of the software was released.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_releaseDate": {
+              "description": "Extensions for releaseDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Implementation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "description": {
+              "description": "Information about the specific installation that this capability statement relates to.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "An absolute base URL for the implementation.  This forms the base for REST interfaces as well as the mailbox and document interfaces.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Rest": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "mode": {
+              "description": "Identifies whether this portion of the statement is describing the ability to initiate or receive restful operations.",
+              "enum": [
+                "client",
+                "server"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Information about the system\u0027s restful capabilities that apply across all applications, such as security.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "security": {
+              "description": "Information about security implementation from an interface perspective - what a client needs to know.",
+              "$ref": "#/definitions/CapabilityStatement_Security"
+            },
+            "resource": {
+              "description": "A specification of the restful capabilities of the solution for a specific resource type.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Resource"
+              }
+            },
+            "interaction": {
+              "description": "A specification of restful operations supported by the system.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Interaction1"
+              }
+            },
+            "searchParam": {
+              "description": "Search parameters that are supported for searching all resources for implementations to support and/or make use of - either references to ones defined in the specification, or additional ones defined for/by the implementation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_SearchParam"
+              }
+            },
+            "operation": {
+              "description": "Definition of an operation or a named query together with its parameters and their meaning and type.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Operation"
+              }
+            },
+            "compartment": {
+              "description": "An absolute URI which is a reference to the definition of a compartment that the system supports. The reference is to a CompartmentDefinition resource by its canonical URL .",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_compartment": {
+              "description": "Extensions for compartment",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Security": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "cors": {
+              "description": "Server adds CORS headers when responding to requests - this enables javascript applications to use the server.",
+              "type": "boolean"
+            },
+            "_cors": {
+              "description": "Extensions for cors",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "service": {
+              "description": "Types of security services that are supported/required by the system.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "description": {
+              "description": "General description of how security works.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "certificate": {
+              "description": "Certificates associated with security profiles.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Certificate"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Certificate": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "type": {
+              "description": "Mime type for a certificate.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "blob": {
+              "description": "Actual certificate.",
+              "type": "string"
+            },
+            "_blob": {
+              "description": "Extensions for blob",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Resource": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "type": {
+              "description": "A type of resource exposed via the restful interface.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "A specification of the profile that describes the solution\u0027s overall support for the resource, including any constraints on cardinality, bindings, lengths or other limitations. See further discussion in [Using Profiles](profiling.html#profile-uses).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "documentation": {
+              "description": "Additional information about the resource type used by the system.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "interaction": {
+              "description": "Identifies a restful operation supported by the solution.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Interaction"
+              }
+            },
+            "versioning": {
+              "description": "This field is set to no-version to specify that the system does not support (server) or use (client) versioning for this resource type. If this has some other value, the server must at least correctly track and populate the versionId meta-property on resources. If the value is \u0027versioned-update\u0027, then the server supports all the versioning features, including using e-tags for version integrity in the API.",
+              "enum": [
+                "no-version",
+                "versioned",
+                "versioned-update"
+              ],
+              "type": "string"
+            },
+            "_versioning": {
+              "description": "Extensions for versioning",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "readHistory": {
+              "description": "A flag for whether the server is able to return past versions as part of the vRead operation.",
+              "type": "boolean"
+            },
+            "_readHistory": {
+              "description": "Extensions for readHistory",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "updateCreate": {
+              "description": "A flag to indicate that the server allows or needs to allow the client to create new identities on the server (e.g. that is, the client PUTs to a location where there is no existing resource). Allowing this operation means that the server allows the client to create new identities on the server.",
+              "type": "boolean"
+            },
+            "_updateCreate": {
+              "description": "Extensions for updateCreate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "conditionalCreate": {
+              "description": "A flag that indicates that the server supports conditional create.",
+              "type": "boolean"
+            },
+            "_conditionalCreate": {
+              "description": "Extensions for conditionalCreate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "conditionalRead": {
+              "description": "A code that indicates how the server supports conditional read.",
+              "enum": [
+                "not-supported",
+                "modified-since",
+                "not-match",
+                "full-support"
+              ],
+              "type": "string"
+            },
+            "_conditionalRead": {
+              "description": "Extensions for conditionalRead",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "conditionalUpdate": {
+              "description": "A flag that indicates that the server supports conditional update.",
+              "type": "boolean"
+            },
+            "_conditionalUpdate": {
+              "description": "Extensions for conditionalUpdate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "conditionalDelete": {
+              "description": "A code that indicates how the server supports conditional delete.",
+              "enum": [
+                "not-supported",
+                "single",
+                "multiple"
+              ],
+              "type": "string"
+            },
+            "_conditionalDelete": {
+              "description": "Extensions for conditionalDelete",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "referencePolicy": {
+              "description": "A set of flags that defines how references are supported.",
+              "enum": [
+                "literal",
+                "logical",
+                "resolves",
+                "enforced",
+                "local"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_referencePolicy": {
+              "description": "Extensions for referencePolicy",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "searchInclude": {
+              "description": "A list of _include values supported by the server.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_searchInclude": {
+              "description": "Extensions for searchInclude",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "searchRevInclude": {
+              "description": "A list of _revinclude (reverse include) values supported by the server.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_searchRevInclude": {
+              "description": "Extensions for searchRevInclude",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "searchParam": {
+              "description": "Search parameters for implementations to support and/or make use of - either references to ones defined in the specification, or additional ones defined for/by the implementation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_SearchParam"
+              }
+            }
+          },
+          "required": [
+            "interaction"
+          ]
+        }
+      ]
+    },
+    "CapabilityStatement_Interaction": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "code": {
+              "description": "Coded identifier of the operation, supported by the system resource.",
+              "enum": [
+                "read",
+                "vread",
+                "update",
+                "patch",
+                "delete",
+                "history-instance",
+                "history-type",
+                "create",
+                "search-type"
+              ],
+              "type": "string"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Guidance specific to the implementation of this operation, such as \u0027delete is a logical delete\u0027 or \u0027updates are only allowed with version id\u0027 or \u0027creates permitted from pre-authorized certificates only\u0027.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_SearchParam": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "name": {
+              "description": "The name of the search parameter used in the interface.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "An absolute URI that is a formal reference to where this parameter was first defined, so that a client can be confident of the meaning of the search parameter (a reference to [[[SearchParameter.url]]]).",
+              "type": "string"
+            },
+            "_definition": {
+              "description": "Extensions for definition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of value a search parameter refers to, and how the content is interpreted.",
+              "enum": [
+                "number",
+                "date",
+                "string",
+                "token",
+                "reference",
+                "composite",
+                "quantity",
+                "uri"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "This allows documentation of any distinct behaviors about how the search parameter is used.  For example, text matching algorithms.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Interaction1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "code": {
+              "description": "A coded identifier of the operation, supported by the system.",
+              "enum": [
+                "transaction",
+                "batch",
+                "search-system",
+                "history-system"
+              ],
+              "type": "string"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Guidance specific to the implementation of this operation, such as limitations on the kind of transactions allowed, or information about system wide search is implemented.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Operation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "name": {
+              "description": "The name of the operation or query. For an operation, this is the name  prefixed with $ and used in the URL. For a query, this is the name used in the _query parameter when the query is called.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "Where the formal definition can be found.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "definition"
+          ]
+        }
+      ]
+    },
+    "CapabilityStatement_Messaging": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "endpoint": {
+              "description": "An endpoint (network accessible address) to which messages and/or replies are to be sent.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Endpoint"
+              }
+            },
+            "reliableCache": {
+              "description": "Length if the receiver\u0027s reliable messaging cache in minutes (if a receiver) or how long the cache length on the receiver should be (if a sender).",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_reliableCache": {
+              "description": "Extensions for reliableCache",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "Documentation about the system\u0027s messaging capabilities for this endpoint not otherwise documented by the capability statement.  For example, the process for becoming an authorized messaging exchange partner.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "supportedMessage": {
+              "description": "References to message definitions for messages this system can send or receive.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_SupportedMessage"
+              }
+            },
+            "event": {
+              "description": "A description of the solution\u0027s support for an event at this end-point.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CapabilityStatement_Event"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CapabilityStatement_Endpoint": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "protocol": {
+              "description": "A list of the messaging transport protocol(s) identifiers, supported by this endpoint.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "address": {
+              "description": "The network address of the end-point. For solutions that do not use network addresses for routing, it can be just an identifier.",
+              "type": "string"
+            },
+            "_address": {
+              "description": "Extensions for address",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "protocol"
+          ]
+        }
+      ]
+    },
+    "CapabilityStatement_SupportedMessage": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "mode": {
+              "description": "The mode of this event declaration - whether application is sender or receiver.",
+              "enum": [
+                "sender",
+                "receiver"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "Points to a message definition that identifies the messaging event, message structure, allowed responses, etc.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "definition"
+          ]
+        }
+      ]
+    },
+    "CapabilityStatement_Event": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "code": {
+              "description": "A coded identifier of a supported messaging event.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "category": {
+              "description": "The impact of the content of the message.",
+              "enum": [
+                "Consequence",
+                "Currency",
+                "Notification"
+              ],
+              "type": "string"
+            },
+            "_category": {
+              "description": "Extensions for category",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "mode": {
+              "description": "The mode of this event declaration - whether an application is a sender or receiver.",
+              "enum": [
+                "sender",
+                "receiver"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "focus": {
+              "description": "A resource associated with the event.  This is the resource that defines the event.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_focus": {
+              "description": "Extensions for focus",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "request": {
+              "description": "Information about the request for this event.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "response": {
+              "description": "Information about the response for this event.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "documentation": {
+              "description": "Guidance on how this event is handled, such as internal system trigger points, business rules, etc.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "request",
+            "code",
+            "response"
+          ]
+        }
+      ]
+    },
+    "CapabilityStatement_Document": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A Capability Statement documents a set of capabilities (behaviors) of a FHIR Server that may be used as a statement of actual server functionality or a statement of required or desired server implementation.",
+          "properties": {
+            "mode": {
+              "description": "Mode of this document declaration - whether an application is a producer or consumer.",
+              "enum": [
+                "producer",
+                "consumer"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "A description of how the application supports or uses the specified document profile.  For example, when documents are created, what action is taken with consumed documents, etc.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "A constraint on a resource used in the document.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "profile"
+          ]
+        }
+      ]
+    }
+  }
+}

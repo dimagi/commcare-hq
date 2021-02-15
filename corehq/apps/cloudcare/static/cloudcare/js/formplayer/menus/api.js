@@ -4,6 +4,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -83,6 +84,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 gettext('Unable to connect to form playing service. ' +
                                         'Please report an issue if you continue to see this message.')
                             );
+                        }
+                        var urlObject = Util.currentUrlToObject();
+                        if (urlObject.steps) {
+                            urlObject.steps.pop();
+                            Util.setUrlToObject(urlObject);
                         }
                         defer.reject();
                     },

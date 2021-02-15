@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/DocumentManifest",
+  "$ref": "#/definitions/DocumentManifest",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "DocumentManifest": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A collection of documents compiled for a purpose together with metadata that applies to the collection.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a DocumentManifest resource",
+              "type": "string",
+              "enum": [
+                "DocumentManifest"
+              ]
+            },
+            "masterIdentifier": {
+              "description": "A single identifier that uniquely identifies this manifest. Principally used to refer to the manifest in non-FHIR contexts.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "identifier": {
+              "description": "Other identifiers associated with the document manifest, including version independent  identifiers.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status of this document manifest.",
+              "enum": [
+                "current",
+                "superseded",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Specifies the kind of this set of documents (e.g. Patient Summary, Discharge Summary, Prescription, etc.). The type of a set of documents may be the same as one of the documents in it - especially if there is only one - but it may be wider.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "Who or what the set of documents is about. The documents can be about a person, (patient or healthcare practitioner), a device (i.e. machine) or even a group of subjects (such as a document about a herd of farm animals, or a set of patients that share a common exposure). If the documents cross more than one subject, then more than one subject is allowed here (unusual use case).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "created": {
+              "description": "When the document manifest was created for submission to the server (not necessarily the same thing as the actual resource last modified time, since it may be modified, replicated, etc.).",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "author": {
+              "description": "Identifies who is responsible for creating the manifest, and adding  documents to it.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "recipient": {
+              "description": "A patient, practitioner, or organization for which this set of documents is intended.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "source": {
+              "description": "Identifies the source system, application, or software that produced the document manifest.",
+              "type": "string"
+            },
+            "_source": {
+              "description": "Extensions for source",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Human-readable description of the source document. This is sometimes known as the \"title\".",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "content": {
+              "description": "The list of Documents included in the manifest.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DocumentManifest_Content"
+              }
+            },
+            "related": {
+              "description": "Related identifiers or resources associated with the DocumentManifest.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DocumentManifest_Related"
+              }
+            }
+          },
+          "required": [
+            "content",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "DocumentManifest_Content": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A collection of documents compiled for a purpose together with metadata that applies to the collection.",
+          "properties": {
+            "pAttachment": {
+              "description": "The list of references to document content, or Attachment that consist of the parts of this document manifest. Usually, these would be document references, but direct references to Media or Attachments are also allowed.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "pReference": {
+              "description": "The list of references to document content, or Attachment that consist of the parts of this document manifest. Usually, these would be document references, but direct references to Media or Attachments are also allowed.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "DocumentManifest_Related": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A collection of documents compiled for a purpose together with metadata that applies to the collection.",
+          "properties": {
+            "identifier": {
+              "description": "Related identifier to this DocumentManifest.  For example, Order numbers, accession numbers, XDW workflow numbers.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "ref": {
+              "description": "Related Resource to this DocumentManifest. For example, Order, ProcedureRequest,  Procedure, EligibilityRequest, etc.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

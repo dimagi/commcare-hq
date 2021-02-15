@@ -661,7 +661,7 @@ class GenericReportView(object):
         else:
             # We only want to cache the responses which serve files directly
             # The response which return 200 and emails the reports should not be cached
-            self._export_response_direct()
+            return self._export_response_direct()
 
     @request_cache()
     def _export_response_direct(self):

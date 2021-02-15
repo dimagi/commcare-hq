@@ -32,6 +32,11 @@ from corehq.apps.reports.util import (
     get_null_empty_value_bindparam)
 
 # todo: if someone wants to name an actual choice any of these values, it will break
+from corehq.apps.userreports.datatypes import (
+    DATA_TYPE_DATE,
+    DATA_TYPE_DATETIME
+)
+
 SHOW_ALL_CHOICE = '_all'
 NONE_CHOICE = "\u2400"
 
@@ -258,13 +263,19 @@ class PreFilterValue(FilterValue):
                 get_INFilter_bindparams(self.filter['slug'], ['start_date', 'end_date'])
             )
         elif self._is_empty():
-            return ORFilter([
-                EQFilter(self.filter['field'], self.filter['slug']),
-                ISNULLFilter(self.filter['field']),
-            ])
+            if self.filter.get('datatype') in [DATA_TYPE_DATE, DATA_TYPE_DATETIME]:
+                return ISNULLFilter(self.filter['field'])
+            else:
+                return ORFilter([
+                    EQFilter(self.filter['field'], self.filter['slug']),
+                    ISNULLFilter(self.filter['field']),
+                ])
         elif self._is_exists():
-            # this resolves to != '', which also filters out null data in postgres
-            return NOTEQFilter(self.filter['field'], self.filter['slug'])
+            if self.filter.get('datatype') in [DATA_TYPE_DATE, DATA_TYPE_DATETIME]:
+                return NOTNULLFilter(self.filter['field'])
+            else:
+                # this resolves to != '', which also filters out null data in postgres
+                return NOTEQFilter(self.filter['field'], self.filter['slug'])
         elif self._is_list():
             return self._array_filter(
                 self.filter['field'],
@@ -281,9 +292,14 @@ class PreFilterValue(FilterValue):
                 for i, v in enumerate([start_date, end_date])
             }
         elif self._is_empty() or self._is_exists():
-            return {
-                self.filter['slug']: '',
-            }
+            if self.filter.get('datatype') in [DATA_TYPE_DATE, DATA_TYPE_DATETIME]:
+                # Both == '' and != '' do not work for dates in postgres so the expression should only be for NULL
+                # checks that get added later. Hence don't return any comparison for value here
+                return {}
+            else:
+                return {
+                    self.filter['slug']: '',
+                }
         elif self._is_list():
             # Array params work like IN bind params
             return {

@@ -12,7 +12,19 @@ class AnyType:
     __hash__ = None
 
 
+class NotDeletedType:
+
+    def __eq__(self, other):
+        return not other.endswith("-Deleted")
+
+    def __repr__(self):
+        return "NOT_DELETED"
+
+    __hash__ = None
+
+
 ANY = AnyType()
+NOT_DELETED = NotDeletedType()
 
 
 @attr.s

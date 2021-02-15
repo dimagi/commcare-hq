@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/BodySite",
+  "$ref": "#/definitions/BodySite",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "BodySite": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Record details about the anatomical location of a specimen or body part.  This resource may be used when a coded concept does not provide the necessary detail needed for the use case.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a BodySite resource",
+              "type": "string",
+              "enum": [
+                "BodySite"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier for this instance of the anatomical location.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether this body site is in active use.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Named anatomical location - ideally coded where possible.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "qualifier": {
+              "description": "Qualifier to refine the anatomical location.  These include qualifiers for laterality, relative location, directionality, number, and plane.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "description": {
+              "description": "A summary, charactarization or explanation of the anatomic location.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "image": {
+              "description": "Image or images used to identify a location.",
+              "type": "array",
+              "items": {
+                "$ref": "Attachment.schema.json#/definitions/Attachment"
+              }
+            },
+            "patient": {
+              "description": "The person to which the body site belongs.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,9 +1,10 @@
-from importlib import import_module
-from typing import List, Optional, Union
+import json
+import os
+from typing import Optional, Union
 
+from django.conf import settings
 from django.db import models
 
-import attr
 from jsonfield import JSONField
 
 from casexml.apps.case.models import CommCareCase
@@ -19,76 +20,55 @@ from corehq.motech.value_source import (
 )
 
 
-@attr.s(auto_attribs=True)
-class PropertyInfo:
-    name: str
-    json_name: str
-    type_: type
-    is_list: bool
-    of_many: Optional[str]
-    is_required: bool
-
-
 class FHIRResourceType(models.Model):
     domain = models.CharField(max_length=127, db_index=True)
     fhir_version = models.CharField(max_length=12, choices=FHIR_VERSIONS,
                                     default=FHIR_VERSION_4_0_1)
     case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
 
-    # `fhirclient_class` values look like `module_name.ClassName`, and
-    # can be imported from fhirclient.models.*module_name.ClassName*
-    fhirclient_class = models.CharField(max_length=255)
+    # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
+    name = models.CharField(max_length=255)
 
-    # `template` is used for defining a JSON document structure if it
-    # cannot be built using only FHIRResourceAttributes
+    # `template` offers a way to define a FHIR resource if it cannot be
+    # built using only mapped case properties.
     template = JSONField(null=True, blank=True, default=None)
 
     def __str__(self):
-        return self.fhirclient_class
+        return self.name
 
-    def get_fhirclient_class(self) -> type:
+    def get_json_schema(self) -> dict:
         """
-        Returns a FHIR resource class from the fhirclient library.
+        Returns the JSON schema of this resource type.
 
         >>> resource_type = FHIRResourceType(
-        ...     case_type=CaseType(name='contact'),
-        ...     fhirclient_class='patient.PatientContact',
+        ...     case_type=CaseType(name='mother'),
+        ...     name='Patient',
         ... )
-        >>> class_type = resource_type.get_fhirclient_class()
-        >>> class_type.__name__
-        'PatientContact'
+        >>> schema = resource_type.get_json_schema()
+        >>> schema['$ref']
+        '#/definitions/Patient'
 
         """
+        ver = dict(FHIR_VERSIONS)[self.fhir_version].lower()
+        schema_file = f'{self.name}.schema.json'
+        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                            'json-schema', ver, schema_file)
         try:
-            module_name, class_name = self.fhirclient_class.split('.')
-            module = import_module(f'fhirclient.models.{module_name}')
-            return getattr(module, class_name)
-        except (ValueError, ImportError, AttributeError) as err:
-            raise ConfigurationError('Unknown FHIR resource type '
-                                     f'{self.fhirclient_class!r}') from err
+            with open(path, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            raise ConfigurationError(
+                f'Unknown resource type {self.name!r} for FHIR version '
+                f'{self.fhir_version}'
+            )
 
-    def get_properties_info(self) -> List[PropertyInfo]:
-        """
-        Returns a list of info about each resource property.
-
-        >>> resource_type = FHIRResourceType(
-        ...     case_type=CaseType(name='contact'),
-        ...     fhirclient_class='patient.Patient',
-        ... )
-        >>> for pi in resource_type.get_properties_info():
-        ...    if pi.of_many == 'multipleBirth':
-        ...        print(pi.json_name, pi.type_)
-        multipleBirthBoolean <class 'bool'>
-        multipleBirthInteger <class 'int'>
-
-        (For more information about how FHIR represents multiple births,
-        see FHIR `Patient`_ documentation.)
-
-        .. _Patient: https://www.hl7.org/fhir/patient.html
-
-        """
-        class_type = self.get_fhirclient_class()
-        return [PropertyInfo(*p) for p in class_type().elementProperties()]
+    @classmethod
+    def get_names(cls, version=FHIR_VERSION_4_0_1):
+        ver = dict(FHIR_VERSIONS)[version].lower()
+        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                            'json-schema', ver)
+        ext = len('.schema.json')
+        return [n[:-ext] for n in os.listdir(path)]
 
 
 class FHIRResourceProperty(models.Model):

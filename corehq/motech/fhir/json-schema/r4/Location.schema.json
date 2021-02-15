@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Location",
+  "$ref": "#/definitions/Location",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Location": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Details and position information for a physical place where services are provided  and resources and participants may be stored, found, contained or accommodated.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Location resource",
+              "type": "string",
+              "enum": [
+                "Location"
+              ]
+            },
+            "identifier": {
+              "description": "Unique code or number identifying the location to its users.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status property covers the general availability of the resource, not the current value which may be covered by the operationStatus, or by a schedule/slots if they are configured for the location.",
+              "enum": [
+                "active",
+                "suspended",
+                "inactive"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "operationalStatus": {
+              "description": "The Operational status covers operation values most relevant to beds (but can also apply to rooms/units/chair/etc such as an isolation unit/dialisys chair). This typically covers concepts such as contamination, housekeeping and other activities like maintenance.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "name": {
+              "description": "Name of the location as used by humans. Does not need to be unique.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "alias": {
+              "description": "A list of alternate names that the location is known as, or was known as in the past.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_alias": {
+              "description": "Extensions for alias",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "description": {
+              "description": "Description of the Location, which helps in finding or referencing the place.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "mode": {
+              "description": "Indicates whether a resource instance represents a specific location or a class of locations.",
+              "enum": [
+                "instance",
+                "kind"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Indicates the type of function performed at the location.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "telecom": {
+              "description": "The contact details of communication devices available at the location. This can include phone numbers, fax numbers, mobile numbers, email addresses and web sites.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "address": {
+              "description": "Physical location.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "physicalType": {
+              "description": "Physical form of the location, e.g. building, room, vehicle, road.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "position": {
+              "description": "The absolute geographic location of the Location, expressed using the WGS84 datum (This is the same co-ordinate system used in KML).",
+              "$ref": "#/definitions/Location_Position"
+            },
+            "managingOrganization": {
+              "description": "The organization responsible for the provisioning and upkeep of the location.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "partOf": {
+              "description": "Another Location which this Location is physically part of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "endpoint": {
+              "description": "Technical endpoints providing access to services operated for the location.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Location_Position": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Details and position information for a physical place where services are provided  and resources and participants may be stored, found, contained or accommodated.",
+          "properties": {
+            "longitude": {
+              "description": "Longitude. The value domain and the interpretation are the same as for the text of the longitude element in KML (see notes below).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_longitude": {
+              "description": "Extensions for longitude",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "latitude": {
+              "description": "Latitude. The value domain and the interpretation are the same as for the text of the latitude element in KML (see notes below).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_latitude": {
+              "description": "Extensions for latitude",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "altitude": {
+              "description": "Altitude. The value domain and the interpretation are the same as for the text of the altitude element in KML (see notes below).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_altitude": {
+              "description": "Extensions for altitude",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
