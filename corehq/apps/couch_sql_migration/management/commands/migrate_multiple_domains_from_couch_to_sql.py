@@ -60,12 +60,13 @@ class Command(BaseCommand):
         for domain in domains:
             setup_logging(state_dir, f"migrate-{domain}")
             try:
-                success, reason = self.migrate_domain(domain, state_dir)
-                if not success:
-                    failed.append((domain, reason))
+                self.migrate_domain(domain, state_dir)
             except CleanBreak:
                 failed.append((domain, "stopped by operator"))
                 break
+            except Incomplete as err:
+                log.info("Incomplete migration: %s %s", domain, err)
+                failed.append((domain, str(err)))
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
                 if not self.live_migrate:
@@ -81,11 +82,11 @@ class Command(BaseCommand):
     def migrate_domain(self, domain, state_dir):
         if should_use_sql_backend(domain):
             log.info("{} already on the SQL backend\n".format(domain))
-            return True, None
+            return
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
             log.error("{} migration is in progress\n".format(domain))
-            return False, "in progress"
+            raise Incomplete("in progress")
 
         set_couch_sql_migration_started(domain, self.live_migrate)
         try:
@@ -98,19 +99,18 @@ class Command(BaseCommand):
         except MigrationRestricted as err:
             log.error("migration restricted: %s", err)
             set_couch_sql_migration_not_started(domain)
-            return False, str(err)
+            raise Incomplete(str(err))
 
         has_diffs = self.check_diffs(domain, state_dir)
         if self.live_migrate:
-            return True, None
+            return
         if has_diffs:
             self.abort(domain, state_dir)
-            return False, "has diffs"
+            raise Incomplete("has diffs")
 
         assert couch_sql_migration_in_progress(domain)
         set_couch_sql_migration_complete(domain)
-        log.info("Domain migrated: {}\n".format(domain))
-        return True, None
+        log.info(f"Domain migrated: {domain}\n")
 
     def check_diffs(self, domain, state_dir):
         stats = get_diff_stats(domain, state_dir, self.strict)
@@ -158,3 +158,7 @@ def format_diff_stats(stats, header=None):
             [(doc_type,) + stat for doc_type, stat in stats.items()],
         )
     return "\n".join(lines)
+
+
+class Incomplete(Exception):
+    pass
