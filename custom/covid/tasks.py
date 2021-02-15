@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.formplayer_api import clear_user_data, sync_db
-from corehq.apps.formplayer_api.exceptions import FormplayerResponseException
+from corehq.apps.formplayer_api.exceptions import FormplayerResponseException, FormplayerAPIException
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from corehq.toggles import PRIME_FORMPLAYER_DBS
@@ -55,7 +55,7 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id, cl
         if clear_data:
             clear_user_data(domain, request_user, as_username)
         sync_db(domain, request_user, as_username)
-    except FormplayerResponseException:
+    except FormplayerAPIException:
         notify_exception(None, "Error while priming formplayer user DB", details={
             'domain': domain,
             'username': request_user,
@@ -78,7 +78,7 @@ def get_prime_restore_user_params(request_user_id, sync_user_id):
     """Return username param and as_user param for performing formpalyer sync"""
     request_user = CouchUser.get_by_user_id(request_user_id).username
     as_username = None
-    if sync_user_id != request_user_id:
+    if sync_user_id and sync_user_id != request_user_id:
         as_user = CouchUser.get_by_user_id(sync_user_id)
         as_username = raw_username(as_user.username) if as_user else None
     return request_user, as_username
