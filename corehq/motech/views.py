@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 
 from django.http import Http404, JsonResponse
 from django.urls import reverse
@@ -10,6 +11,7 @@ from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from requests import RequestException
 
 from corehq import privileges, toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
@@ -20,6 +22,8 @@ from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
+
+from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 
 
 class Http409(Http400):
@@ -37,15 +41,16 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        filter_from_date = self.request.GET.get("filter_from_date")
+        filter_from_date = self.request.GET.get("filter_from_date",
+                                                _a_week_ago())
         filter_to_date = self.request.GET.get("filter_to_date")
         filter_payload = self.request.GET.get("filter_payload")
         filter_url = self.request.GET.get("filter_url")
         filter_status = self.request.GET.get("filter_status")
 
-        queryset = RequestLog.objects.filter(domain=self.domain)
-        if filter_from_date:
-            queryset = queryset.filter(timestamp__gte=filter_from_date)
+        queryset = (RequestLog.objects
+                    .filter(domain=self.domain)
+                    .filter(timestamp__gte=filter_from_date))
         if filter_to_date:
             queryset = queryset.filter(timestamp__lte=filter_to_date)
         if filter_payload:
@@ -76,7 +81,8 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
     def get_context_data(self, **kwargs):
         context = super(MotechLogListView, self).get_context_data(**kwargs)
         context.update({
-            "filter_from_date": self.request.GET.get("filter_from_date", ""),
+            "filter_from_date": self.request.GET.get("filter_from_date",
+                                                     _a_week_ago()),
             "filter_to_date": self.request.GET.get("filter_to_date", ""),
             "filter_payload": self.request.GET.get("filter_payload", ""),
             "filter_url": self.request.GET.get("filter_url", ""),
@@ -147,7 +153,8 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
     @property
     def paginated_list(self):
-        for connection_settings in self.base_query.all():
+        start, end = self.skip, self.skip + self.limit
+        for connection_settings in self.base_query.all()[start:end]:
             yield {
                 "itemData": self._get_item_data(connection_settings),
                 "template": "connection-settings-template",
@@ -265,10 +272,23 @@ def test_connection_settings(request, domain):
                     "status": response.status_code,
                     "response": response.text,
                 })
-        except Exception as err:
+        except RequestException as err:
             return JsonResponse({"success": False, "response": str(err)})
+        except PossibleSSRFAttempt:
+            return JsonResponse({"success": False, "response": "Invalid URL"})
     else:
-        return JsonResponse({
-            "success": False,
-            "response": form.errors,
-        })
+        if set(form.errors.keys()) == {'url'}:
+            return JsonResponse({
+                "success": False,
+                "response": form.errors['url'],
+            })
+        else:
+            return JsonResponse({
+                "success": False,
+                "response": "Try saving the connection first"
+            })
+
+
+def _a_week_ago() -> str:
+    last_week = datetime.today() - timedelta(days=7)
+    return last_week.strftime('%Y-%m-%d')

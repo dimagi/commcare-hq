@@ -63,12 +63,11 @@ NOSE_PLUGINS = [
 for key, value in {
     'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
     'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
-
     'NOSE_IGNORE_FILES': '^localsettings',
+    'NOSE_EXCLUDE_DIRS': 'scripts',
 
-    'NOSE_EXCLUDE_DIRS': ';'.join([
-        'scripts',
-    ]),
+    'DD_DOGSTATSD_DISABLE': 'true',
+    'DD_TRACE_ENABLED': 'false',
 }.items():
     os.environ.setdefault(key, value)
 del key, value

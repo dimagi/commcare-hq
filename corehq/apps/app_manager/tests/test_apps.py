@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
     DetailColumn,
+    LinkedApplication,
     Module,
     ReportAppConfig,
     ReportModule,
@@ -29,8 +30,11 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
+from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.linked_domain.applications import link_app
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
@@ -79,6 +83,10 @@ class AppManagerTest(TestCase, TestXmlMixin):
                 DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago")
             )
         self.app.save()
+
+    def tearDown(self):
+        DomainLink.all_objects.all().delete()
+        super().tearDown()
 
     def test_last_modified(self):
         lm = self.app.last_modified
@@ -347,6 +355,27 @@ class AppManagerTest(TestCase, TestXmlMixin):
         app = app.make_reversion_to_copy(copy)
         app.save()
         self.assertEqual(app.name, old_name)
+
+    def testConvertToApplication(self):
+        factory = AppFactory(build_version='2.40.0')
+        factory.new_basic_module('register', 'case', with_form=False)
+        factory.app.save()
+        build = factory.app.make_build()
+        build.is_released = True
+        build.save()
+
+        linked_app = LinkedApplication()
+        linked_app.domain = 'other-domain'
+        linked_app.save()
+
+        link_app(linked_app, factory.app.domain, factory.app.id)
+        update_linked_app(linked_app, factory.app.id, 'system')
+
+        unlinked_doc = linked_app.convert_to_application().to_json()
+        self.assertEqual(unlinked_doc['doc_type'], 'Application')
+        self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
+
+        linked_app.delete()
 
     def test_jad_settings(self):
         self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)

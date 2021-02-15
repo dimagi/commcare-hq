@@ -66,7 +66,7 @@ def test_db_unique_id():
 @with_setup(teardown=delete_db)
 def test_open_state_db():
     assert not os.path.exists(_get_state_db_filepath("test", state_dir))
-    with assert_raises(mod.Error):
+    with assert_raises(mod.NotFoundError):
         open_state_db("test", state_dir)
     with init_db(memory=False) as db:
         uid = db.unique_id
@@ -285,6 +285,13 @@ def test_counters():
             "abc": Counts(total=4, diffs=1, missing=3),
             "def": Counts(total=2, changes=1),
         })
+
+
+def test_add_duplicate_missing_docs():
+    with init_db() as db:
+        db.add_missing_docs("abc", ["doc1"])
+        db.add_missing_docs("abc", ["doc1"])
+        eq(list(db.iter_missing_doc_ids("abc")), ["doc1"])
 
 
 @with_setup(teardown=delete_db)

@@ -32,6 +32,10 @@ from corehq.apps.smsbillables.tests.utils import FakeMessageFactory
 
 
 class TestGatewayFee(TestCase):
+    """
+    These tests take awhile to run. Ideally we can replace these tests with simpler tests to verify
+    behavior of the gateway_charge method in test_gateway_charges.
+    """
 
     def setUp(self):
         super(TestGatewayFee, self).setUp()

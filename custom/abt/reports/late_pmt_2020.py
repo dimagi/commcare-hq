@@ -27,7 +27,7 @@ INDICATORS_FORM_XMLNS = 'http://openrosa.org/formdesigner/00CEB41B-2967-4370-9EA
 class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin):
     report_title = "Late PMT"
     slug = 'late_pmt_2020'
-    name = "Late PMT 2020"
+    name = "Late PMT"
 
     languages = (
         'en',

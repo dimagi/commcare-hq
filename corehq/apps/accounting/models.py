@@ -2841,7 +2841,7 @@ class CustomerBillingRecord(BillingRecordBase):
         return not self.invoice.is_hidden
 
     def email_context(self):
-        from corehq.apps.accounting.views import EnterpriseBillingStatementsView
+        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
         context = super(CustomerBillingRecord, self).email_context()
         is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")

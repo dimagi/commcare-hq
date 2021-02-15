@@ -409,6 +409,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
         return {
             'case_types': sorted(list(case_types)),
+            'case_search_url': reverse("case_search", args=[self.domain]),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
                 'fuzzy_properties': {

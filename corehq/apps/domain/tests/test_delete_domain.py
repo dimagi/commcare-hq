@@ -4,10 +4,11 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
 
-from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+
+from dateutil.relativedelta import relativedelta
 from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
@@ -17,6 +18,8 @@ from casexml.apps.stock.models import (
     StockReport,
     StockTransaction,
 )
+from couchforms.models import UnfinishedSubmissionStub
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -33,10 +36,12 @@ from corehq.apps.aggregate_ucrs.models import (
 )
 from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
-    LatestEnabledBuildProfiles,
     GlobalAppConfig,
+    LatestEnabledBuildProfiles,
 )
-from corehq.apps.app_manager.suite_xml.post_process.resources import ResourceOverride
+from corehq.apps.app_manager.suite_xml.post_process.resources import (
+    ResourceOverride,
+)
 from corehq.apps.case_importer.tracking.models import (
     CaseUploadFormRecord,
     CaseUploadRecord,
@@ -48,7 +53,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.models import SQLCommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
@@ -98,7 +103,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.blobs import NotFound, get_blob_db, CODES
+from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -111,7 +116,12 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
-from couchforms.models import UnfinishedSubmissionStub
+from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
+from corehq.motech.repeaters.models import (
+    RepeaterStub,
+    SQLRepeatRecord,
+    SQLRepeatRecordAttempt,
+)
 from settings import HQ_ACCOUNT_ROOT
 
 
@@ -901,6 +911,34 @@ class TestDeleteDomain(TestCase):
         self._assert_motech_count(self.domain.name, 0)
         self._assert_motech_count(self.domain2.name, 1)
 
+    def _assert_repeaters_count(self, domain_name, count):
+        self._assert_queryset_count([
+            RepeaterStub.objects.filter(domain=domain_name),
+            SQLRepeatRecord.objects.filter(domain=domain_name),
+            SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
+        ], count)
+
+    def test_repeaters_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            stub = RepeaterStub.objects.create(
+                domain=domain_name,
+                repeater_id=str(uuid.uuid4()),
+            )
+            record = stub.repeat_records.create(
+                domain=domain_name,
+                payload_id=str(uuid.uuid4()),
+                registered_at=datetime.utcnow(),
+            )
+            record.sqlrepeatrecordattempt_set.create(
+                state=RECORD_SUCCESS_STATE,
+            )
+            self._assert_repeaters_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_repeaters_count(self.domain.name, 0)
+        self._assert_repeaters_count(self.domain2.name, 1)
+
     def _assert_couchforms_counts(self, domain_name, count):
         self._assert_queryset_count([
             UnfinishedSubmissionStub.objects.filter(domain=domain_name)
@@ -921,9 +959,10 @@ class TestDeleteDomain(TestCase):
         self._assert_couchforms_counts(self.domain2.name, 1)
 
     def test_delete_commtrack_config(self):
-        CommtrackConfig(domain=self.domain.name).save()
+        SQLCommtrackConfig.for_domain(self.domain.name) or SQLCommtrackConfig(domain=self.domain.name).save()
+        self.assertIsNotNone(SQLCommtrackConfig.for_domain(self.domain.name))
         self.domain.delete()
-        self.assertEqual(len(get_docs_in_domain_by_class(self.domain.name, CommtrackConfig)), 0)
+        self.assertIsNone(SQLCommtrackConfig.for_domain(self.domain.name))
 
     def tearDown(self):
         self.domain2.delete()

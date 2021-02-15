@@ -1,3 +1,32 @@
+import uuid
+from datetime import datetime
+
+from corehq.apps.sms.models import OUTGOING, SMS
+
+short_text = "This is a test text message under 160 characters."
+
+long_text = (
+    "This is a test text message that's over 160 characters in length. "
+    "Or at least it will be. Thinking about kale. I like kale. Kale is "
+    "a fantastic thing. Also bass music. I really like dat bass."
+)
+
+
+def get_fake_sms(domain, backend_api_id, backend_couch_id, text):
+    msg = SMS(
+        domain=domain,
+        phone_number='+12223334444',
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        backend_api=backend_api_id,
+        backend_id=backend_couch_id,
+        backend_message_id=uuid.uuid4().hex,
+        text=text
+    )
+    msg.save()
+    return msg
+
+
 class FakeTwilioMessage(object):
     status = 'sent'
 

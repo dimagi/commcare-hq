@@ -18,6 +18,10 @@ DEBUG = True
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+
+# For Single Sign On (SSO) Implementations
+SAML2_DEBUG = False
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -249,9 +253,11 @@ HQ_APPS = (
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
+    'corehq.apps.enterprise',
+    'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
-    'corehq.apps.hqwebapp',
+    'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
     'corehq.apps.linked_domain',
@@ -293,6 +299,7 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.smsforms',
+    'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.messaging',
     'corehq.messaging.scheduling',
@@ -350,6 +357,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.motech',
     'corehq.motech.dhis2',
+    'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
@@ -376,9 +384,9 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.covid',
-    'custom.aaa',
     'custom.inddex',
     'custom.onse',
+    'custom.nutrition_project',
 
     'custom.ccqa',
 
@@ -1009,6 +1017,7 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+RULE_UPDATE_HOUR = 0
 
 DEFAULT_ODATA_FEED_LIMIT = 25
 
@@ -1061,11 +1070,11 @@ USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 LOCAL_CUSTOM_DB_ROUTING = {}
 
 DEFAULT_COMMCARE_EXTENSIONS = [
-    "custom.aaa.commcare_extensions",
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
     "custom.succeed.commcare_extensions",
+    "custom.nutrition_project.commcare_extensions"
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1419,6 +1428,11 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
+        },
+        'commcare_auth': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
         }
     }
 }
@@ -1453,9 +1467,7 @@ if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
     DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 # Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
-CUSTOM_DB_ROUTING = {
-    "aaa": "aaa-data"
-}
+CUSTOM_DB_ROUTING = {}
 CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
 INDICATOR_CONFIG = {
@@ -1941,11 +1953,10 @@ DOMAIN_MODULE_MAP = {
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
-    'reach-test': 'custom.aaa',
-    'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
+    'india-nutrition-project': 'custom.nutrition_project',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1989,6 +2000,8 @@ DOMAIN_MODULE_MAP = {
     'inddex-reports': 'custom.inddex',
     'inddex-multilingual': 'custom.inddex',
     'inddex-multi-vn': 'custom.inddex',
+    'iita-fcms-nigeria': 'custom.inddex',
+    'cambodia-arch-3-study': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

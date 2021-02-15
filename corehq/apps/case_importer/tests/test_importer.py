@@ -354,6 +354,14 @@ class ImporterTest(TestCase):
             [parent_case.case_id, 'name-1', 'case_id-1'],
             [parent_case.case_id, 'name-2', 'case_id-2'],
         )
+
+        # Should successfully match on `rows` cases
+        res = do_import(file, config, self.domain)
+        self.assertEqual(rows, res['created_count'])
+        # Should create child cases
+        self.assertEqual(len(self.accessor.get_reverse_indexed_cases([parent_case.case_id])), 3)
+        self.assertEqual(self.accessor.get_extension_case_ids([parent_case.case_id]), [])
+
         file_missing = make_worksheet_wrapper(
             ['parent_id', 'name', 'case_id'],
             ['parent_id-0', 'name-0', 'case_id-0'],
@@ -361,16 +369,42 @@ class ImporterTest(TestCase):
             ['parent_id-2', 'name-2', 'case_id-2'],
         )
 
-        # Should successfully match on `rows` cases
-        res = do_import(file, config, self.domain)
-        self.assertEqual(rows, res['created_count'])
-
         # Should be unable to find parent case on `rows` cases
         res = do_import(file_missing, config, self.domain)
         error_column_name = 'parent_id'
         self.assertEqual(rows,
                          len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
+
+    @run_with_all_backends
+    def testExtensionCase(self):
+        headers = ['parent_id', 'name', 'case_id', 'parent_relationship_type', 'parent_identifier']
+        config = self._config(headers, create_new_cases=True, search_column='case_id')
+        [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+
+        file = make_worksheet_wrapper(
+            headers,
+            [parent_case.case_id, 'name-0', 'case_id-0', 'extension', 'host'],
+            [parent_case.case_id, 'name-1', 'case_id-1', 'extension', 'mother'],
+            [parent_case.case_id, 'name-2', 'case_id-2', 'child', 'parent'],
+        )
+
+        # Should successfully match on `rows` cases
+        res = do_import(file, config, self.domain)
+        self.assertEqual(res['created_count'], 3)
+        # Of the 3, 2 should be extension cases
+        extension_case_ids = self.accessor.get_extension_case_ids([parent_case.case_id])
+        self.assertEqual(len(extension_case_ids), 2)
+        extension_cases = self.accessor.get_cases(extension_case_ids)
+        # Check that identifier is set correctly
+        self.assertEqual(
+            {'host', 'mother'},
+            {
+                c.indices[0].identifier
+                for c in extension_cases
+            }
+        )
 
     # This test will only run on SQL backend because of a bug in couch backend
     # that overrides current domain with the 'domain' column value from excel

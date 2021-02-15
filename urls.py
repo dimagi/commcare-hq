@@ -5,8 +5,8 @@ from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
 from corehq.extensions import extension_points
-from corehq.apps.accounting.urls import \
-    domain_specific as accounting_domain_specific
+from corehq.apps.enterprise.urls import \
+    domain_specific as enterprise_domain_specific
 from corehq.apps.api.urls import user_urlpatterns as user_api_urlpatterns
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
@@ -54,7 +54,7 @@ domain_specific = [
     url(r'^api/', include('corehq.apps.api.urls')),
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
-    url(r'^enterprise/', include(accounting_domain_specific)),
+    url(r'^enterprise/', include(enterprise_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),
     url(r'^groups/', include('corehq.apps.groups.urls')),
@@ -68,6 +68,7 @@ domain_specific = [
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
+    url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
@@ -76,7 +77,6 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
@@ -105,6 +105,7 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
+    url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
