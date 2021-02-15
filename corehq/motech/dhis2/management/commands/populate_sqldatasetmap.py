@@ -65,7 +65,8 @@ class Command(PopulateSQLCommand):
         ]:
             diffs.append(cls.diff_attr(attr, couch, sql))
         diffs.append(cls.diff_attr('complete_date', couch, sql,
-                                   wrap=as_date_or_none))
+                                   wrap_couch=as_date_or_none,
+                                   wrap_sql=as_date_or_none))
         diffs = [d for d in diffs if d]
         return "\n".join(diffs) if diffs else None
 
