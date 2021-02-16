@@ -87,5 +87,24 @@ def parallel_user_import(domain, user_specs, group_specs, upload_user):
                 subtask.get(timeout=1, disable_sync_subtasks=False)
             except TimeoutError:
                 incomplete = True
-            subtask_progress += get_task_progress(subtask).current or 0
+                subtask_progress += get_task_progress(subtask).current or 0
+            else:
+                # The task is done, just count the rows in the result
+                subtask_progress += len(subtask.result['messages']['rows'])
         DownloadBase.set_progress(task, subtask_progress, total)
+
+    # all tasks are done, collect results
+    rows = []
+    errors = []
+    for subtask in task_list:
+        rows.extend(subtask.result['messages']['rows'])
+        errors.extend(subtask.result['messages']['errors'])
+
+    messages = {
+        'rows': rows,
+        'errors': errors
+    }
+
+    return {
+        'messages': messages
+    }
