@@ -7,7 +7,8 @@ from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
-from corehq.apps.formplayer_api.exceptions import FormplayerResponseException
+from corehq.apps.formplayer_api.clear_user_data import clear_user_data
+from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
@@ -16,6 +17,8 @@ from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
+
+RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 100)
 
 # Include users that have synced in the last 7 days
 SYNC_WINDOW_HOURS = 168
@@ -41,8 +44,8 @@ def prime_formplayer_dbs():
             prime_formplayer_db_for_user.delay(domain, row[0], row[1])
 
 
-@no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=50)
-def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
+@no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=RATE_LIMIT)
+def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id, clear_data=False):
     if datetime.utcnow().hour >= TASK_WINDOW_CUTOFF_HOUR:
         return
 
@@ -50,12 +53,15 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
 
     metric_tags = {"domain": domain}
     try:
+        if clear_data:
+            clear_user_data(domain, request_user, as_username)
         sync_db(domain, request_user, as_username)
-    except FormplayerResponseException:
+    except FormplayerAPIException:
         notify_exception(None, "Error while priming formplayer user DB", details={
             'domain': domain,
             'username': request_user,
-            'as_user': as_username
+            'as_user': as_username,
+            'clear_user_data': clear_data
         })
         metrics_counter("commcare.prime_formplayer_db.error", tags=metric_tags)
     except Exception as e:
@@ -73,7 +79,7 @@ def get_prime_restore_user_params(request_user_id, sync_user_id):
     """Return username param and as_user param for performing formpalyer sync"""
     request_user = CouchUser.get_by_user_id(request_user_id).username
     as_username = None
-    if sync_user_id != request_user_id:
+    if sync_user_id and sync_user_id != request_user_id:
         as_user = CouchUser.get_by_user_id(sync_user_id)
         as_username = raw_username(as_user.username) if as_user else None
     return request_user, as_username
