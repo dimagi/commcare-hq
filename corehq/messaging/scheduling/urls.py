@@ -10,6 +10,7 @@ from corehq.messaging.scheduling.views import (
     EditScheduleView,
     MessagingDashboardView,
     UploadConditionalAlertView,
+    CountCasesBasedOnCaseTypeView,
 )
 
 urlpatterns = [
@@ -25,4 +26,5 @@ urlpatterns = [
     url(r'^conditional/download/$', DownloadConditionalAlertView.as_view(),
         name=DownloadConditionalAlertView.urlname),
     url(r'^conditional/upload/$', UploadConditionalAlertView.as_view(), name=UploadConditionalAlertView.urlname),
+    url(r'^count_cases/$', CountCasesBasedOnCaseTypeView.as_view(), name=CountCasesBasedOnCaseTypeView.urlname)
 ]
