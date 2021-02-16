@@ -62,46 +62,26 @@
     </div>
     <% } %>
 
-    <% if (pageCount) { %>
-    <div>
-      <nav class="module-caselist-pagination-container">
-        <ul class="pagination">
-          <% if (currentPage > 0) { %>
-          <li class="page-item" id="prev-page">
-            <a class="page-link" aria-label="Previous" tabindex="0" data-id="<%= currentPage - 1 %>">
-              <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
-              <span class="sr-only">{% trans "Previous" %}</span>
-            </a>
-          </li>
-          <% } else { %>
-          <li class="paginate-disabled">
-            <a class="paginate-disabled">
-              <span aria-hidden="true"><i class="fa fa-angle-double-left"></i></span>
-              <span class="sr-only">{% trans "Previous (none)" %}</span>
-            </a>
-          </li>
-          <% } %>
-          <% for (i = 0; i < pageCount; i++) { %>
-          <li class="page-item<% if (i === currentPage) { %> active<% } %>"><a class="page-link" aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0" data-id="<%= i %>"><%= i + 1 %></a></li>
-          <% } %>
-          <% if (currentPage < pageCount - 1) { %>
-          <li class="page-item" id="next-page">
-            <a class="page-link" aria-label="Next" tabindex="0" data-id="<%= currentPage + 1 %>">
-              <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
-              <span class="sr-only">{% trans "Next" %}</span>
-            </a>
-          </li>
-          <% } else { %>
-          <li class="paginate-disabled">
-            <a class="paginate-disabled">
-              <span aria-hidden="true"><i class="fa fa-angle-double-right"></i></span>
-              <span class="sr-only">{% trans "Next (none)" %}</span>
-            </a>
-          </li>
-          <% } %>
-        </ul>
-      </nav>
-    </div>
+    <% if (endPage && pageCount > 1) { %>
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-9">
+            <nav class="module-caselist-pagination-container">
+              {% block pagination_templates %}
+                {% include 'formplayer/pagination.html' %}
+              {% endblock %}
+            </nav>
+            </div>
+          <div class="col-sm-3 module-go-container">
+            <div class="input-group input-group-lg">
+              <input type="text" class="form-control" placeholder="Go to page" id="goText">
+              <div class="input-group-btn">
+                <button class="btn btn-default" type="button" id="pagination-go-button">{% trans "Go" %}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     <% } %>
   </div>
 </script>
