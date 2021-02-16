@@ -45,7 +45,8 @@ def prime_formplayer_dbs():
 
 
 @no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=RATE_LIMIT)
-def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id, clear_data=False, task_cutoff_hour=None):
+def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id,
+                                 clear_data=False, task_cutoff_hour=None):
     if task_cutoff_hour and datetime.utcnow().hour >= task_cutoff_hour:
         return
 

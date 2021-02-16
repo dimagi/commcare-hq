@@ -92,7 +92,10 @@ class Command(BaseCommand):
         else:
             domains = [domain.strip() for domain in domains if domain.strip()]
             synced_since = datetime.utcnow() - relativedelta(hours=last_synced_hours)
-            not_synced_since = datetime.utcnow() - relativedelta(hours=not_synced_hours) if not_synced_hours else None
+            not_synced_since = (
+                datetime.utcnow() - relativedelta(hours=not_synced_hours)
+                if not_synced_hours else None
+            )
             if dry_run_count:
                 users = list(_get_user_rows(domains, synced_since, not_synced_since, min_cases, limit))
                 sys.stderr.write(f"\nMatched {len(users)} users for filters:\n")

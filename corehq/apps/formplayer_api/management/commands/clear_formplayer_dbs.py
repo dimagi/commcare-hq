@@ -1,5 +1,4 @@
 import inspect
-import inspect
 import sys
 from argparse import RawTextHelpFormatter
 from datetime import datetime
@@ -7,7 +6,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 
-from corehq.apps.formplayer_api.management.commands.prime_formplayer_restores import _get_user_rows, _get_users_from_csv
+from corehq.apps.formplayer_api.management.commands.prime_formplayer_restores import (
+    _get_user_rows, _get_users_from_csv
+)
 from corehq.apps.users.models import CouchUser
 from corehq.util.argparse_types import validate_integer
 from custom.covid.tasks import get_prime_restore_user_params, clear_formplayer_db_for_user
@@ -86,7 +87,10 @@ class Command(BaseCommand):
         else:
             domains = [domain.strip() for domain in domains if domain.strip()]
             synced_since = datetime.utcnow() - relativedelta(hours=last_synced_hours)
-            not_synced_since = datetime.utcnow() - relativedelta(hours=not_synced_hours) if not_synced_hours else None
+            not_synced_since = (
+                datetime.utcnow() - relativedelta(hours=not_synced_hours)
+                if not_synced_hours else None
+            )
             if dry_run_count:
                 users = list(_get_user_rows(domains, synced_since, not_synced_since, None, limit))
                 sys.stderr.write(f"\nMatched {len(users)} users for filters:\n")
