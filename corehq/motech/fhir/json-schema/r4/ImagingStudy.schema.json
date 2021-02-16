@@ -1,0 +1,318 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ImagingStudy",
+  "$ref": "#/definitions/ImagingStudy",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ImagingStudy": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Representation of the content produced in a DICOM imaging study. A study comprises a set of series, each of which includes a set of Service-Object Pair Instances (SOP Instances - images or other data) acquired or produced in a common context.  A series is of only one modality (e.g. X-ray, CT, MR, ultrasound), but a study may have multiple series of different modalities.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ImagingStudy resource",
+              "type": "string",
+              "enum": [
+                "ImagingStudy"
+              ]
+            },
+            "uid": {
+              "description": "Formal identifier for the study.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_uid": {
+              "description": "Extensions for uid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "accession": {
+              "description": "Accession Number is an identifier related to some aspect of imaging workflow and data management. Usage may vary across different institutions.  See for instance [IHE Radiology Technical Framework Volume 1 Appendix A](http://www.ihe.net/uploadedFiles/Documents/Radiology/IHE_RAD_TF_Rev13.0_Vol1_FT_2014-07-30.pdf).",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "identifier": {
+              "description": "Other identifiers for the study.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "availability": {
+              "description": "Availability of study (online, offline, or nearline).",
+              "enum": [
+                "ONLINE",
+                "OFFLINE",
+                "NEARLINE",
+                "UNAVAILABLE"
+              ],
+              "type": "string"
+            },
+            "_availability": {
+              "description": "Extensions for availability",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "modalityList": {
+              "description": "A list of all the Series.ImageModality values that are actual acquisition modalities, i.e. those in the DICOM Context Group 29 (value set OID 1.2.840.10008.6.1.19).",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "patient": {
+              "description": "The patient imaged in the study.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The encounter or episode at which the request is initiated.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "started": {
+              "description": "Date and time the study started.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_started": {
+              "description": "Extensions for started",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "basedOn": {
+              "description": "A list of the diagnostic requests that resulted in this imaging study being performed.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "referrer": {
+              "description": "The requesting/referring physician.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "interpreter": {
+              "description": "Who read the study and interpreted the images or other content.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "endpoint": {
+              "description": "The network service providing access (e.g., query, view, or retrieval) for the study. See implementation notes for information about using DICOM endpoints. A study-level endpoint applies to each series in the study, unless overridden by a series-level endpoint with the same Endpoint.type.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "numberOfSeries": {
+              "description": "Number of Series in the Study. This value given may be larger than the number of series elements this Resource contains due to resource availability, security, or other factors. This element should be present if any series elements are present.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_numberOfSeries": {
+              "description": "Extensions for numberOfSeries",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "numberOfInstances": {
+              "description": "Number of SOP Instances in Study. This value given may be larger than the number of instance elements this resource contains due to resource availability, security, or other factors. This element should be present if any instance elements are present.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_numberOfInstances": {
+              "description": "Extensions for numberOfInstances",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "procedureReference": {
+              "description": "A reference to the performed Procedure.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "procedureCode": {
+              "description": "The code for the performed procedure type.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reason": {
+              "description": "Description of clinical condition indicating why the ImagingStudy was requested.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "description": {
+              "description": "Institution-generated description or classification of the Study performed.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "series": {
+              "description": "Each study has one or more series of images or other content.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImagingStudy_Series"
+              }
+            }
+          },
+          "required": [
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ImagingStudy_Series": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Representation of the content produced in a DICOM imaging study. A study comprises a set of series, each of which includes a set of Service-Object Pair Instances (SOP Instances - images or other data) acquired or produced in a common context.  A series is of only one modality (e.g. X-ray, CT, MR, ultrasound), but a study may have multiple series of different modalities.",
+          "properties": {
+            "uid": {
+              "description": "Formal identifier for this series.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_uid": {
+              "description": "Extensions for uid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "number": {
+              "description": "The numeric identifier of this series in the study.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_number": {
+              "description": "Extensions for number",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "modality": {
+              "description": "The modality of this series sequence.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "description": {
+              "description": "A description of the series.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "numberOfInstances": {
+              "description": "Number of SOP Instances in the Study. The value given may be larger than the number of instance elements this resource contains due to resource availability, security, or other factors. This element should be present if any instance elements are present.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_numberOfInstances": {
+              "description": "Extensions for numberOfInstances",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "availability": {
+              "description": "Availability of series (online, offline or nearline).",
+              "enum": [
+                "ONLINE",
+                "OFFLINE",
+                "NEARLINE",
+                "UNAVAILABLE"
+              ],
+              "type": "string"
+            },
+            "_availability": {
+              "description": "Extensions for availability",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "endpoint": {
+              "description": "The network service providing access (e.g., query, view, or retrieval) for this series. See implementation notes for information about using DICOM endpoints. A series-level endpoint, if present, has precedence over a study-level endpoint with the same Endpoint.type.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "bodySite": {
+              "description": "The anatomic structures examined. See DICOM Part 16 Annex L (http://dicom.nema.org/medical/dicom/current/output/chtml/part16/chapter_L.html) for DICOM to SNOMED-CT mappings. The bodySite may indicate the laterality of body part imaged; if so, it shall be consistent with any content of ImagingStudy.series.laterality.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "laterality": {
+              "description": "The laterality of the (possibly paired) anatomic structures examined. E.g., the left knee, both lungs, or unpaired abdomen. If present, shall be consistent with any laterality information indicated in ImagingStudy.series.bodySite.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "started": {
+              "description": "The date and time the series was started.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_started": {
+              "description": "Extensions for started",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "performer": {
+              "description": "The physician or operator (often the radiology technician)  who performed the series. The performer is recorded at the series level, since each series in a study may be performed by a different practitioner, at different times, and using different devices. A series may be performed by multiple practitioners.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "instance": {
+              "description": "A single SOP instance within the series, e.g. an image, or presentation state.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImagingStudy_Instance"
+              }
+            }
+          },
+          "required": [
+            "modality"
+          ]
+        }
+      ]
+    },
+    "ImagingStudy_Instance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Representation of the content produced in a DICOM imaging study. A study comprises a set of series, each of which includes a set of Service-Object Pair Instances (SOP Instances - images or other data) acquired or produced in a common context.  A series is of only one modality (e.g. X-ray, CT, MR, ultrasound), but a study may have multiple series of different modalities.",
+          "properties": {
+            "uid": {
+              "description": "Formal identifier for this image or other content.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_uid": {
+              "description": "Extensions for uid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "number": {
+              "description": "The number of instance in the series.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_number": {
+              "description": "Extensions for number",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sopClass": {
+              "description": "DICOM instance  type.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_sopClass": {
+              "description": "Extensions for sopClass",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "The description of the instance.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

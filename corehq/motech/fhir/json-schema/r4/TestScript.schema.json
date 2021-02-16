@@ -1,0 +1,1365 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/TestScript",
+  "$ref": "#/definitions/TestScript",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "TestScript": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a TestScript resource",
+              "type": "string",
+              "enum": [
+                "TestScript"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this test script when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this test script is (or will be) published. The URL SHOULD include the major version of the test script. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this test script when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the test script when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the test script author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the test script. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the test script.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this test script. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this test script is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the test script was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the test script changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the test script.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the test script from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate test script instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the test script is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this test script is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the test script and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the test script.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "origin": {
+              "description": "An abstract server used in operations within this test script in the origin element.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Origin"
+              }
+            },
+            "destination": {
+              "description": "An abstract server used in operations within this test script in the destination element.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Destination"
+              }
+            },
+            "metadata": {
+              "description": "The required capability must exist and are assumed to function correctly on the FHIR server being tested.",
+              "$ref": "#/definitions/TestScript_Metadata"
+            },
+            "fixture": {
+              "description": "Fixture in the test script - by reference (uri). All fixtures are required for the test script to execute.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Fixture"
+              }
+            },
+            "profile": {
+              "description": "Reference to the profile to be used for validation.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "variable": {
+              "description": "Variable is set based either on element value in response body or on header field value in the response headers.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Variable"
+              }
+            },
+            "rule": {
+              "description": "Assert rule to be used in one or more asserts within the test script.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Rule"
+              }
+            },
+            "ruleset": {
+              "description": "Contains one or more rules.  Offers a way to group rules so assertions could reference the group of rules and have them all applied.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Ruleset"
+              }
+            },
+            "setup": {
+              "description": "A series of required setup operations before tests are executed.",
+              "$ref": "#/definitions/TestScript_Setup"
+            },
+            "test": {
+              "description": "A test in this script.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Test"
+              }
+            },
+            "teardown": {
+              "description": "A series of operations required to clean up after the all the tests are executed (successfully or otherwise).",
+              "$ref": "#/definitions/TestScript_Teardown"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "TestScript_Origin": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "index": {
+              "description": "Abstract name given to an origin server in this test script.  The name is provided as a number starting at 1.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_index": {
+              "description": "Extensions for index",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "The type of origin profile the test system supports.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            }
+          },
+          "required": [
+            "profile"
+          ]
+        }
+      ]
+    },
+    "TestScript_Destination": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "index": {
+              "description": "Abstract name given to a destination server in this test script.  The name is provided as a number starting at 1.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_index": {
+              "description": "Extensions for index",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "The type of destination profile the test system supports.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            }
+          },
+          "required": [
+            "profile"
+          ]
+        }
+      ]
+    },
+    "TestScript_Metadata": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "link": {
+              "description": "A link to the FHIR specification that this test is covering.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Link"
+              }
+            },
+            "capability": {
+              "description": "Capabilities that must exist and are assumed to function correctly on the FHIR server being tested.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Capability"
+              }
+            }
+          },
+          "required": [
+            "capability"
+          ]
+        }
+      ]
+    },
+    "TestScript_Link": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "url": {
+              "description": "URL to a particular requirement or feature within the FHIR specification.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Short description of the link.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Capability": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "required": {
+              "description": "Whether or not the test execution will require the given capabilities of the server in order for this test script to execute.",
+              "type": "boolean"
+            },
+            "_required": {
+              "description": "Extensions for required",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "validated": {
+              "description": "Whether or not the test execution will validate the given capabilities of the server in order for this test script to execute.",
+              "type": "boolean"
+            },
+            "_validated": {
+              "description": "Extensions for validated",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Description of the capabilities that this test script is requiring the server to support.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "origin": {
+              "description": "Which origin server these requirements apply to.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "-?([0]|([1-9][0-9]*))"
+              }
+            },
+            "_origin": {
+              "description": "Extensions for origin",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "destination": {
+              "description": "Which server these requirements apply to.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_destination": {
+              "description": "Extensions for destination",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "link": {
+              "description": "Links to the FHIR specification that describes this interaction and the resources involved in more detail.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_link": {
+              "description": "Extensions for link",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "capabilities": {
+              "description": "Minimum capabilities required of server for test script to execute successfully.   If server does not meet at a minimum the referenced capability statement, then all tests in this script are skipped.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "capabilities"
+          ]
+        }
+      ]
+    },
+    "TestScript_Fixture": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "autocreate": {
+              "description": "Whether or not to implicitly create the fixture during setup. If true, the fixture is automatically created on each server being tested during setup, therefore no create operation is required for this fixture in the TestScript.setup section.",
+              "type": "boolean"
+            },
+            "_autocreate": {
+              "description": "Extensions for autocreate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "autodelete": {
+              "description": "Whether or not to implicitly delete the fixture during teardown. If true, the fixture is automatically deleted on each server being tested during teardown, therefore no delete operation is required for this fixture in the TestScript.teardown section.",
+              "type": "boolean"
+            },
+            "_autodelete": {
+              "description": "Extensions for autodelete",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "resource": {
+              "description": "Reference to the resource (containing the contents of the resource needed for operations).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Variable": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "name": {
+              "description": "Descriptive name for this variable.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "defaultValue": {
+              "description": "A default, hard-coded, or user-defined value for this variable.",
+              "type": "string"
+            },
+            "_defaultValue": {
+              "description": "Extensions for defaultValue",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A free text natural language description of the variable and its purpose.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "The fluentpath expression to evaluate against the fixture body. When variables are defined, only one of either expression, headerField or path must be specified.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "headerField": {
+              "description": "Will be used to grab the HTTP header field value from the headers that sourceId is pointing to.",
+              "type": "string"
+            },
+            "_headerField": {
+              "description": "Extensions for headerField",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "hint": {
+              "description": "Displayable text string with hint help information to the user when entering a default value.",
+              "type": "string"
+            },
+            "_hint": {
+              "description": "Extensions for hint",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "path": {
+              "description": "XPath or JSONPath to evaluate against the fixture body.  When variables are defined, only one of either expression, headerField or path must be specified.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceId": {
+              "description": "Fixture to evaluate the XPath/JSONPath expression or the headerField  against within this variable.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_sourceId": {
+              "description": "Extensions for sourceId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Rule": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "resource": {
+              "description": "Reference to the resource (containing the contents of the rule needed for assertions).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "param": {
+              "description": "Each rule template can take one or more parameters for rule evaluation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Param"
+              }
+            }
+          },
+          "required": [
+            "resource"
+          ]
+        }
+      ]
+    },
+    "TestScript_Param": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "name": {
+              "description": "Descriptive name for this parameter that matches the external assert rule parameter name.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The explicit or dynamic value for the parameter that will be passed on to the external rule template.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Ruleset": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "resource": {
+              "description": "Reference to the resource (containing the contents of the ruleset needed for assertions).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "rule": {
+              "description": "The referenced rule within the external ruleset template.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Rule1"
+              }
+            }
+          },
+          "required": [
+            "resource",
+            "rule"
+          ]
+        }
+      ]
+    },
+    "TestScript_Rule1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "ruleId": {
+              "description": "Id of the referenced rule within the external ruleset template.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_ruleId": {
+              "description": "Extensions for ruleId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "param": {
+              "description": "Each rule template can take one or more parameters for rule evaluation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Param1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Param1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "name": {
+              "description": "Descriptive name for this parameter that matches the external assert ruleset rule parameter name.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The value for the parameter that will be passed on to the external ruleset rule template.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Setup": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "action": {
+              "description": "Action would contain either an operation or an assertion.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Action"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
+    "TestScript_Action": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "operation": {
+              "description": "The operation to perform.",
+              "$ref": "#/definitions/TestScript_Operation"
+            },
+            "assert": {
+              "description": "Evaluates the results of previous operations to determine if the server under test behaves appropriately.",
+              "$ref": "#/definitions/TestScript_Assert"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Operation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "type": {
+              "description": "Server interaction or operation type.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "resource": {
+              "description": "The type of the resource.  See http://hl7.org/fhir/STU3/resourcelist.html.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_resource": {
+              "description": "Extensions for resource",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "label": {
+              "description": "The label would be used for tracking/logging purposes by test engines.",
+              "type": "string"
+            },
+            "_label": {
+              "description": "Extensions for label",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "The description would be used by test engines for tracking and reporting purposes.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "accept": {
+              "description": "The content-type or mime-type to use for RESTful operation in the \u0027Accept\u0027 header.",
+              "enum": [
+                "xml",
+                "json",
+                "ttl",
+                "none"
+              ],
+              "type": "string"
+            },
+            "_accept": {
+              "description": "Extensions for accept",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contentType": {
+              "description": "The content-type or mime-type to use for RESTful operation in the \u0027Content-Type\u0027 header.",
+              "enum": [
+                "xml",
+                "json",
+                "ttl",
+                "none"
+              ],
+              "type": "string"
+            },
+            "_contentType": {
+              "description": "Extensions for contentType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "destination": {
+              "description": "The server where the request message is destined for.  Must be one of the server numbers listed in TestScript.destination section.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_destination": {
+              "description": "Extensions for destination",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "encodeRequestUrl": {
+              "description": "Whether or not to implicitly send the request url in encoded format. The default is true to match the standard RESTful client behavior. Set to false when communicating with a server that does not support encoded url paths.",
+              "type": "boolean"
+            },
+            "_encodeRequestUrl": {
+              "description": "Extensions for encodeRequestUrl",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "origin": {
+              "description": "The server where the request message originates from.  Must be one of the server numbers listed in TestScript.origin section.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_origin": {
+              "description": "Extensions for origin",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "params": {
+              "description": "Path plus parameters after [type].  Used to set parts of the request URL explicitly.",
+              "type": "string"
+            },
+            "_params": {
+              "description": "Extensions for params",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requestHeader": {
+              "description": "Header elements would be used to set HTTP headers.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_RequestHeader"
+              }
+            },
+            "requestId": {
+              "description": "The fixture id (maybe new) to map to the request.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_requestId": {
+              "description": "Extensions for requestId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "responseId": {
+              "description": "The fixture id (maybe new) to map to the response.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_responseId": {
+              "description": "Extensions for responseId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceId": {
+              "description": "The id of the fixture used as the body of a PUT or POST request.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_sourceId": {
+              "description": "Extensions for sourceId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "targetId": {
+              "description": "Id of fixture used for extracting the [id],  [type], and [vid] for GET requests.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_targetId": {
+              "description": "Extensions for targetId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "Complete request URL.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_RequestHeader": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "field": {
+              "description": "The HTTP header field e.g. \"Accept\".",
+              "type": "string"
+            },
+            "_field": {
+              "description": "Extensions for field",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The value of the header e.g. \"application/fhir+xml\".",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Assert": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "label": {
+              "description": "The label would be used for tracking/logging purposes by test engines.",
+              "type": "string"
+            },
+            "_label": {
+              "description": "Extensions for label",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "The description would be used by test engines for tracking and reporting purposes.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "direction": {
+              "description": "The direction to use for the assertion.",
+              "enum": [
+                "response",
+                "request"
+              ],
+              "type": "string"
+            },
+            "_direction": {
+              "description": "Extensions for direction",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "compareToSourceId": {
+              "description": "Id of the source fixture used as the contents to be evaluated by either the \"source/expression\" or \"sourceId/path\" definition.",
+              "type": "string"
+            },
+            "_compareToSourceId": {
+              "description": "Extensions for compareToSourceId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "compareToSourceExpression": {
+              "description": "The fluentpath expression to evaluate against the source fixture. When compareToSourceId is defined, either compareToSourceExpression or compareToSourcePath must be defined, but not both.",
+              "type": "string"
+            },
+            "_compareToSourceExpression": {
+              "description": "Extensions for compareToSourceExpression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "compareToSourcePath": {
+              "description": "XPath or JSONPath expression to evaluate against the source fixture. When compareToSourceId is defined, either compareToSourceExpression or compareToSourcePath must be defined, but not both.",
+              "type": "string"
+            },
+            "_compareToSourcePath": {
+              "description": "Extensions for compareToSourcePath",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contentType": {
+              "description": "The content-type or mime-type to use for RESTful operation in the \u0027Content-Type\u0027 header.",
+              "enum": [
+                "xml",
+                "json",
+                "ttl",
+                "none"
+              ],
+              "type": "string"
+            },
+            "_contentType": {
+              "description": "Extensions for contentType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "The fluentpath expression to be evaluated against the request or response message contents - HTTP headers and payload.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "headerField": {
+              "description": "The HTTP header field name e.g. \u0027Location\u0027.",
+              "type": "string"
+            },
+            "_headerField": {
+              "description": "Extensions for headerField",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "minimumId": {
+              "description": "The ID of a fixture.  Asserts that the response contains at a minimum the fixture specified by minimumId.",
+              "type": "string"
+            },
+            "_minimumId": {
+              "description": "Extensions for minimumId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "navigationLinks": {
+              "description": "Whether or not the test execution performs validation on the bundle navigation links.",
+              "type": "boolean"
+            },
+            "_navigationLinks": {
+              "description": "Extensions for navigationLinks",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "operator": {
+              "description": "The operator type defines the conditional behavior of the assert. If not defined, the default is equals.",
+              "enum": [
+                "equals",
+                "notEquals",
+                "in",
+                "notIn",
+                "greaterThan",
+                "lessThan",
+                "empty",
+                "notEmpty",
+                "contains",
+                "notContains",
+                "eval"
+              ],
+              "type": "string"
+            },
+            "_operator": {
+              "description": "Extensions for operator",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "path": {
+              "description": "The XPath or JSONPath expression to be evaluated against the fixture representing the response received from server.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requestMethod": {
+              "description": "The request method or HTTP operation code to compare against that used by the client system under test.",
+              "enum": [
+                "delete",
+                "get",
+                "options",
+                "patch",
+                "post",
+                "put"
+              ],
+              "type": "string"
+            },
+            "_requestMethod": {
+              "description": "Extensions for requestMethod",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requestURL": {
+              "description": "The value to use in a comparison against the request URL path string.",
+              "type": "string"
+            },
+            "_requestURL": {
+              "description": "Extensions for requestURL",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "resource": {
+              "description": "The type of the resource.  See http://hl7.org/fhir/STU3/resourcelist.html.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_resource": {
+              "description": "Extensions for resource",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "response": {
+              "description": "okay | created | noContent | notModified | bad | forbidden | notFound | methodNotAllowed | conflict | gone | preconditionFailed | unprocessable.",
+              "enum": [
+                "okay",
+                "created",
+                "noContent",
+                "notModified",
+                "bad",
+                "forbidden",
+                "notFound",
+                "methodNotAllowed",
+                "conflict",
+                "gone",
+                "preconditionFailed",
+                "unprocessable"
+              ],
+              "type": "string"
+            },
+            "_response": {
+              "description": "Extensions for response",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "responseCode": {
+              "description": "The value of the HTTP response code to be tested.",
+              "type": "string"
+            },
+            "_responseCode": {
+              "description": "Extensions for responseCode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "rule": {
+              "description": "The TestScript.rule this assert will evaluate.",
+              "$ref": "#/definitions/TestScript_Rule2"
+            },
+            "ruleset": {
+              "description": "The TestScript.ruleset this assert will evaluate.",
+              "$ref": "#/definitions/TestScript_Ruleset1"
+            },
+            "sourceId": {
+              "description": "Fixture to evaluate the XPath/JSONPath expression or the headerField  against.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_sourceId": {
+              "description": "Extensions for sourceId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "validateProfileId": {
+              "description": "The ID of the Profile to validate against.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_validateProfileId": {
+              "description": "Extensions for validateProfileId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The value to compare to.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "warningOnly": {
+              "description": "Whether or not the test execution will produce a warning only on error for this assert.",
+              "type": "boolean"
+            },
+            "_warningOnly": {
+              "description": "Extensions for warningOnly",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Rule2": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "ruleId": {
+              "description": "The TestScript.rule id value this assert will evaluate.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_ruleId": {
+              "description": "Extensions for ruleId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "param": {
+              "description": "Each rule template can take one or more parameters for rule evaluation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Param2"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Param2": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "name": {
+              "description": "Descriptive name for this parameter that matches the external assert rule parameter name.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The value for the parameter that will be passed on to the external rule template.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Ruleset1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "rulesetId": {
+              "description": "The TestScript.ruleset id value this assert will evaluate.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_rulesetId": {
+              "description": "Extensions for rulesetId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "rule": {
+              "description": "The referenced rule within the external ruleset template.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Rule3"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Rule3": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "ruleId": {
+              "description": "Id of the referenced rule within the external ruleset template.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_ruleId": {
+              "description": "Extensions for ruleId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "param": {
+              "description": "Each rule template can take one or more parameters for rule evaluation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Param3"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Param3": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "name": {
+              "description": "Descriptive name for this parameter that matches the external assert ruleset rule parameter name.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The value for the parameter that will be passed on to the external ruleset rule template.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Test": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "name": {
+              "description": "The name of this test used for tracking/logging purposes by test engines.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A short description of the test used by test engines for tracking and reporting purposes.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "action": {
+              "description": "Action would contain either an operation or an assertion.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Action1"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
+    "TestScript_Action1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "operation": {
+              "description": "An operation would involve a REST request to a server.",
+              "$ref": "#/definitions/TestScript_Operation"
+            },
+            "assert": {
+              "description": "Evaluates the results of previous operations to determine if the server under test behaves appropriately.",
+              "$ref": "#/definitions/TestScript_Assert"
+            }
+          }
+        }
+      ]
+    },
+    "TestScript_Teardown": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "action": {
+              "description": "The teardown action will only contain an operation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestScript_Action2"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
+    "TestScript_Action2": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
+          "properties": {
+            "operation": {
+              "description": "An operation would involve a REST request to a server.",
+              "$ref": "#/definitions/TestScript_Operation"
+            }
+          },
+          "required": [
+            "operation"
+          ]
+        }
+      ]
+    }
+  }
+}

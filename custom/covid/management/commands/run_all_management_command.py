@@ -39,6 +39,7 @@ class Command(BaseCommand):
                     locations['traveler'] = (row['traveler_active_location_id'])
                 location_ids[row['domain']] = locations
 
+        total_jobs = []
         jobs = []
         pool = Pool(20)
         for domain in domains:
@@ -49,11 +50,22 @@ class Command(BaseCommand):
             jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
-            for location in location_ids[domain].values():
-                jobs.append(pool.spawn(run_command, 'add_assignment_cases', domain, 'patient', location=location))
-                jobs.append(pool.spawn(run_command, 'add_assignment_cases', domain, 'contact', location=location))
         pool.join()
-        for job in jobs:
+        total_jobs.extend(jobs)
+
+        if options["only_update_case_index"] == False:
+            jobs = []
+            second_pool = Pool(20)
+            for domain in domains:
+                for location in location_ids[domain].values():
+                    jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'patient',
+                                                  location=location))
+                    jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
+                                                  location=location))
+            second_pool.join()
+            total_jobs.extend(jobs)
+
+        for job in total_jobs:
             success, command, args, exception = job.get()
             if success:
                 print("SUCCESS: {} command for {}".format(command, args))

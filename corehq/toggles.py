@@ -752,6 +752,13 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+DISABLE_WEB_APPS = StaticToggle(
+    'disable_web_apps',
+    'Disable access to Web Apps UI',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
     'ICDS: Toggle which webapps to see based on role',
@@ -782,9 +789,10 @@ CASE_CLAIM_AUTOLAUNCH = StaticToggle(
 
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     'webapps_sticky_search',
-    'COVID: In web apps, save user\'s most recent inputs on case search & claim screen.',
+    'COVID: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 

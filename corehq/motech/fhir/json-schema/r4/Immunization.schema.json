@@ -1,0 +1,309 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Immunization",
+  "$ref": "#/definitions/Immunization",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Immunization": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Describes the event of a patient being administered a vaccination or a record of a vaccination as reported by a patient, a clinician or another party and may include vaccine reaction information and what vaccination protocol was followed.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Immunization resource",
+              "type": "string",
+              "enum": [
+                "Immunization"
+              ]
+            },
+            "identifier": {
+              "description": "A unique identifier assigned to this immunization record.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "Indicates the current status of the vaccination event.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "notGiven": {
+              "description": "Indicates if the vaccination was or was not given.",
+              "type": "boolean"
+            },
+            "_notGiven": {
+              "description": "Extensions for notGiven",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "vaccineCode": {
+              "description": "Vaccine that was administered or was to be administered.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "patient": {
+              "description": "The patient who either received or did not receive the immunization.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "encounter": {
+              "description": "The visit or admission or other contact between patient and health care provider the immunization was performed as part of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "date": {
+              "description": "Date vaccine administered or was to be administered.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "primarySource": {
+              "description": "An indication that the content of the record is based on information from the person who administered the vaccine. This reflects the context under which the data was originally recorded.",
+              "type": "boolean"
+            },
+            "_primarySource": {
+              "description": "Extensions for primarySource",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reportOrigin": {
+              "description": "The source of the data when the report of the immunization event is not based on information from the person who administered the vaccine.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "location": {
+              "description": "The service delivery location where the vaccine administration occurred.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "manufacturer": {
+              "description": "Name of vaccine manufacturer.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "lotNumber": {
+              "description": "Lot number of the  vaccine product.",
+              "type": "string"
+            },
+            "_lotNumber": {
+              "description": "Extensions for lotNumber",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expirationDate": {
+              "description": "Date vaccine batch expires.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_expirationDate": {
+              "description": "Extensions for expirationDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "site": {
+              "description": "Body site where vaccine was administered.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "route": {
+              "description": "The path by which the vaccine product is taken into the body.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "doseQuantity": {
+              "description": "The quantity of vaccine product that was administered.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "practitioner": {
+              "description": "Indicates who or what performed the event.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Immunization_Practitioner"
+              }
+            },
+            "note": {
+              "description": "Extra information about the immunization that is not conveyed by the other attributes.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "explanation": {
+              "description": "Reasons why a vaccine was or was not administered.",
+              "$ref": "#/definitions/Immunization_Explanation"
+            },
+            "reaction": {
+              "description": "Categorical data indicating that an adverse event is associated in time to an immunization.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Immunization_Reaction"
+              }
+            },
+            "vaccinationProtocol": {
+              "description": "Contains information about the protocol(s) under which the vaccine was administered.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Immunization_VaccinationProtocol"
+              }
+            }
+          },
+          "required": [
+            "patient",
+            "vaccineCode",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Immunization_Practitioner": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Describes the event of a patient being administered a vaccination or a record of a vaccination as reported by a patient, a clinician or another party and may include vaccine reaction information and what vaccination protocol was followed.",
+          "properties": {
+            "role": {
+              "description": "Describes the type of performance (e.g. ordering provider, administering provider, etc.).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "actor": {
+              "description": "The device, practitioner, etc. who performed the action.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "actor"
+          ]
+        }
+      ]
+    },
+    "Immunization_Explanation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Describes the event of a patient being administered a vaccination or a record of a vaccination as reported by a patient, a clinician or another party and may include vaccine reaction information and what vaccination protocol was followed.",
+          "properties": {
+            "reason": {
+              "description": "Reasons why a vaccine was administered.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reasonNotGiven": {
+              "description": "Reason why a vaccine was not administered.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Immunization_Reaction": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Describes the event of a patient being administered a vaccination or a record of a vaccination as reported by a patient, a clinician or another party and may include vaccine reaction information and what vaccination protocol was followed.",
+          "properties": {
+            "date": {
+              "description": "Date of reaction to the immunization.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "detail": {
+              "description": "Details of the reaction.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reported": {
+              "description": "Self-reported indicator.",
+              "type": "boolean"
+            },
+            "_reported": {
+              "description": "Extensions for reported",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Immunization_VaccinationProtocol": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Describes the event of a patient being administered a vaccination or a record of a vaccination as reported by a patient, a clinician or another party and may include vaccine reaction information and what vaccination protocol was followed.",
+          "properties": {
+            "doseSequence": {
+              "description": "Nominal position in a series.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_doseSequence": {
+              "description": "Extensions for doseSequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Contains the description about the protocol under which the vaccine was administered.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "authority": {
+              "description": "Indicates the authority who published the protocol.  E.g. ACIP.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "series": {
+              "description": "One possible path to achieve presumed immunity against a disease - within the context of an authority.",
+              "type": "string"
+            },
+            "_series": {
+              "description": "Extensions for series",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "seriesDoses": {
+              "description": "The recommended number of doses to achieve immunity.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_seriesDoses": {
+              "description": "Extensions for seriesDoses",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "targetDisease": {
+              "description": "The targeted disease.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "doseStatus": {
+              "description": "Indicates if the immunization event should \"count\" against  the protocol.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "doseStatusReason": {
+              "description": "Provides an explanation as to why an immunization event should or should not count against the protocol.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "doseStatus",
+            "targetDisease"
+          ]
+        }
+      ]
+    }
+  }
+}

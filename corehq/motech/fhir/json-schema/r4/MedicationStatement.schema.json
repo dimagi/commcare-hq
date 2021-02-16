@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/MedicationStatement",
+  "$ref": "#/definitions/MedicationStatement",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "MedicationStatement": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of a medication that is being consumed by a patient.   A MedicationStatement may indicate that the patient may be taking the medication now, or has taken the medication in the past or will be taking the medication in the future.  The source of this information can be the patient, significant other (such as a family member or spouse), or a clinician.  A common scenario where this information is captured is during the history taking process during a patient visit or stay.   The medication information may come from sources such as the patient\u0027s memory, from a prescription bottle,  or from a list of medications the patient, clinician or other party maintains \r\rThe primary difference between a medication statement and a medication administration is that the medication administration has complete administration information and is based on actual administration information from the person who administered the medication.  A medication statement is often, if not always, less specific.  There is no required date/time when the medication was administered, in fact we only know that a source has reported the patient is taking this medication, where details such as time, quantity, or rate or even medication product may be incomplete or missing or less precise.  As stated earlier, the medication statement information may come from the patient\u0027s memory, from a prescription bottle or from a list of medications the patient, clinician or other party maintains.  Medication administration is more formal and is not missing detailed information.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a MedicationStatement resource",
+              "type": "string",
+              "enum": [
+                "MedicationStatement"
+              ]
+            },
+            "identifier": {
+              "description": "External identifier - FHIR will generate its own internal identifiers (probably URLs) which do not need to be explicitly managed by the resource.  The identifier here is one that would be used by another non-FHIR system - for example an automated medication pump would provide a record each time it operated; an administration while the patient was off the ward might be made with a different system and entered after the event.  Particularly important if these records have to be updated.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "basedOn": {
+              "description": "A plan, proposal or order that is fulfilled in whole or in part by this event.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "partOf": {
+              "description": "A larger event of which this particular event is a component or step.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "context": {
+              "description": "The encounter or episode of care that establishes the context for this MedicationStatement.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "status": {
+              "description": "A code representing the patient or other source\u0027s judgment about the state of the medication used that this statement is about.  Generally this will be active or completed.",
+              "enum": [
+                "active",
+                "completed",
+                "entered-in-error",
+                "intended",
+                "stopped",
+                "on-hold"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "Indicates where type of medication statement and where the medication is expected to be consumed or administered.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "medicationCodeableConcept": {
+              "description": "Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "medicationReference": {
+              "description": "Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "effectiveDateTime": {
+              "description": "The interval of time during which it is being asserted that the patient was taking the medication (or was not taking, when the wasNotGiven element is true).",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_effectiveDateTime": {
+              "description": "Extensions for effectiveDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "effectivePeriod": {
+              "description": "The interval of time during which it is being asserted that the patient was taking the medication (or was not taking, when the wasNotGiven element is true).",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "dateAsserted": {
+              "description": "The date when the medication statement was asserted by the information source.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_dateAsserted": {
+              "description": "Extensions for dateAsserted",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "informationSource": {
+              "description": "The person or organization that provided the information about the taking of this medication. Note: Use derivedFrom when a MedicationStatement is derived from other resources, e.g Claim or MedicationRequest.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "subject": {
+              "description": "The person, animal or group who is/was taking the medication.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "derivedFrom": {
+              "description": "Allows linking the MedicationStatement to the underlying MedicationRequest, or to other information that supports or is used to derive the MedicationStatement.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "taken": {
+              "description": "Indicator of the certainty of whether the medication was taken by the patient.",
+              "enum": [
+                "y",
+                "n",
+                "unk",
+                "na"
+              ],
+              "type": "string"
+            },
+            "_taken": {
+              "description": "Extensions for taken",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reasonNotTaken": {
+              "description": "A code indicating why the medication was not taken.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reasonCode": {
+              "description": "A reason for why the medication is being/was taken.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reasonReference": {
+              "description": "Condition or observation that supports why the medication is being/was taken.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "note": {
+              "description": "Provides extra information about the medication statement that is not conveyed by the other attributes.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "dosage": {
+              "description": "Indicates how the medication is/was or should be taken by the patient.",
+              "type": "array",
+              "items": {
+                "$ref": "Dosage.schema.json#/definitions/Dosage"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

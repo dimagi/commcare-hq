@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Condition",
+  "$ref": "#/definitions/Condition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Condition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A clinical condition, problem, diagnosis, or other event, situation, issue, or clinical concept that has risen to a level of concern.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Condition resource",
+              "type": "string",
+              "enum": [
+                "Condition"
+              ]
+            },
+            "identifier": {
+              "description": "This records identifiers associated with this condition that are defined by business processes and/or used to refer to it when a direct URL reference to the resource itself is not appropriate (e.g. in CDA documents, or in written / printed documentation).",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "clinicalStatus": {
+              "description": "The clinical status of the condition.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_clinicalStatus": {
+              "description": "Extensions for clinicalStatus",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "verificationStatus": {
+              "description": "The verification status to support the clinical status of the condition.",
+              "enum": [
+                "provisional",
+                "differential",
+                "confirmed",
+                "refuted",
+                "entered-in-error",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_verificationStatus": {
+              "description": "Extensions for verificationStatus",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "A category assigned to the condition.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "severity": {
+              "description": "A subjective assessment of the severity of the condition as evaluated by the clinician.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "code": {
+              "description": "Identification of the condition, problem or diagnosis.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "bodySite": {
+              "description": "The anatomical location where this condition manifests itself.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "subject": {
+              "description": "Indicates the patient or group who the condition record is associated with.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "Encounter during which the condition was first asserted.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onsetDateTime": {
+              "description": "Estimated or actual date or date-time  the condition began, in the opinion of the clinician.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_onsetDateTime": {
+              "description": "Extensions for onsetDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "onsetAge": {
+              "description": "Estimated or actual date or date-time  the condition began, in the opinion of the clinician.",
+              "$ref": "Age.schema.json#/definitions/Age"
+            },
+            "onsetPeriod": {
+              "description": "Estimated or actual date or date-time  the condition began, in the opinion of the clinician.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "onsetRange": {
+              "description": "Estimated or actual date or date-time  the condition began, in the opinion of the clinician.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "onsetString": {
+              "description": "Estimated or actual date or date-time  the condition began, in the opinion of the clinician.",
+              "type": "string"
+            },
+            "_onsetString": {
+              "description": "Extensions for onsetString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "abatementDateTime": {
+              "description": "The date or estimated date that the condition resolved or went into remission. This is called \"abatement\" because of the many overloaded connotations associated with \"remission\" or \"resolution\" - Conditions are never really resolved, but they can abate.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_abatementDateTime": {
+              "description": "Extensions for abatementDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "abatementAge": {
+              "description": "The date or estimated date that the condition resolved or went into remission. This is called \"abatement\" because of the many overloaded connotations associated with \"remission\" or \"resolution\" - Conditions are never really resolved, but they can abate.",
+              "$ref": "Age.schema.json#/definitions/Age"
+            },
+            "abatementBoolean": {
+              "description": "The date or estimated date that the condition resolved or went into remission. This is called \"abatement\" because of the many overloaded connotations associated with \"remission\" or \"resolution\" - Conditions are never really resolved, but they can abate.",
+              "type": "boolean"
+            },
+            "_abatementBoolean": {
+              "description": "Extensions for abatementBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "abatementPeriod": {
+              "description": "The date or estimated date that the condition resolved or went into remission. This is called \"abatement\" because of the many overloaded connotations associated with \"remission\" or \"resolution\" - Conditions are never really resolved, but they can abate.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "abatementRange": {
+              "description": "The date or estimated date that the condition resolved or went into remission. This is called \"abatement\" because of the many overloaded connotations associated with \"remission\" or \"resolution\" - Conditions are never really resolved, but they can abate.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "abatementString": {
+              "description": "The date or estimated date that the condition resolved or went into remission. This is called \"abatement\" because of the many overloaded connotations associated with \"remission\" or \"resolution\" - Conditions are never really resolved, but they can abate.",
+              "type": "string"
+            },
+            "_abatementString": {
+              "description": "Extensions for abatementString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "assertedDate": {
+              "description": "The date on which the existance of the Condition was first asserted or acknowledged.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_assertedDate": {
+              "description": "Extensions for assertedDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "asserter": {
+              "description": "Individual who is making the condition statement.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "stage": {
+              "description": "Clinical stage or grade of a condition. May include formal severity assessments.",
+              "$ref": "#/definitions/Condition_Stage"
+            },
+            "evidence": {
+              "description": "Supporting Evidence / manifestations that are the basis on which this condition is suspected or confirmed.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Condition_Evidence"
+              }
+            },
+            "note": {
+              "description": "Additional information about the Condition. This is a general notes/comments entry  for description of the Condition, its diagnosis and prognosis.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Condition_Stage": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A clinical condition, problem, diagnosis, or other event, situation, issue, or clinical concept that has risen to a level of concern.",
+          "properties": {
+            "summary": {
+              "description": "A simple summary of the stage such as \"Stage 3\". The determination of the stage is disease-specific.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "assessment": {
+              "description": "Reference to a formal record of the evidence on which the staging assessment is based.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Condition_Evidence": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A clinical condition, problem, diagnosis, or other event, situation, issue, or clinical concept that has risen to a level of concern.",
+          "properties": {
+            "code": {
+              "description": "A manifestation or symptom that led to the recording of this condition.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "detail": {
+              "description": "Links to other relevant information, including pathology reports.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
