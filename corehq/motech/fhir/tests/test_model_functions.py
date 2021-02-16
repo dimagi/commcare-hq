@@ -80,7 +80,7 @@ class TestBuildFHIRResource(TestCase):
     def set_up_resource_type(cls):
         resource_type = FHIRResourceType.objects.create(
             case_type=cls.case_type,
-            fhirclient_class='UNUSED',
+            name='Patient',
         )
         FHIRResourceProperty.objects.create(
             resource_type=resource_type,
