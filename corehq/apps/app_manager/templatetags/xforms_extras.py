@@ -87,7 +87,7 @@ def html_trans_prefix_delim(name, langs=["default"]):
 
 @register.filter
 def html_name(name):
-    return mark_safe(html.strip_tags(name) or EMPTY_LABEL)
+    return html.strip_tags(name) or EMPTY_LABEL
 
 
 @register.simple_tag

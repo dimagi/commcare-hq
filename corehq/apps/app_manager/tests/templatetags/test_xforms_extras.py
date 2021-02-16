@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 from ...templatetags.xforms_extras import \
-    html_trans, html_trans_prefix, html_trans_prefix_delim, clean_trans, trans
+    html_trans, html_trans_prefix, html_trans_prefix_delim, clean_trans, trans, \
+    html_name
 
 
 class TestTransFilter(SimpleTestCase):
@@ -162,3 +163,14 @@ class TestCleanTransFilter(SimpleTestCase):
         name_dict = {'en': 'English Output'}
         result = clean_trans(name_dict)
         self.assertEqual(result, 'English Output')
+
+
+class TestHTMLNameFilter(SimpleTestCase):
+    def test_strips_tags(self):
+        result = html_name('<b>Name</b>')
+        self.assertEqual(result, 'Name')
+
+    # NOTE: Documenting existing behavior. This looks like a bug, given it strips tags otherwise
+    def test_no_name_returns_empty_label(self):
+        result = html_name('')
+        self.assertEqual(result, '<span class="label label-info">Empty</span>')
