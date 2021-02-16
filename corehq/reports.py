@@ -52,6 +52,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionAdjustmentInterface,
     CreditAdjustmentInterface,
 )
+from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -321,6 +322,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         PaymentRecordInterface,
         SubscriptionAdjustmentInterface,
         CreditAdjustmentInterface,
+        IdentityProviderInterface,
     )),
 )
 
