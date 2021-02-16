@@ -76,6 +76,10 @@ class TestCaseAPI(TestCase):
             HTTP_USER_AGENT="user agent string",
         )
 
+    def _bulk_update_cases(self, body):
+        # for the time being, the implementation is the same
+        return self._create_case(body)
+
     def test_create_case(self):
         res = self._create_case({
             # notable exclusions: case_id, date_opened, date_modified
@@ -179,7 +183,6 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.indices[0].relationship, 'child')
         self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
 
-    @skip("not yet implemented")
     def test_bulk_action(self):
         existing_case = self._make_case()
         res = self._bulk_update_cases([
@@ -211,7 +214,8 @@ class TestCaseAPI(TestCase):
         updated_case = self.case_accessor.get_case(existing_case.case_id)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case = self.case_accessor.get_case(res['@case_ids'][1])
+        new_case_id = [cid for cid in res['@case_ids'] if cid != existing_case.case_id][0]
+        new_case = self.case_accessor.get_case(new_case_id)
         self.assertEqual(new_case.name, 'Jolene')
 
     @skip("not yet implemented")

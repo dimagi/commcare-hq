@@ -85,35 +85,50 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 def case_api(request, domain, case_id=None):
     if request.method == 'POST' and not case_id:
-        return _create_or_update_case(request, domain)
+        return _handle_case_update(request)
     if request.method == 'PUT' and case_id:
-        return _create_or_update_case(request, domain, case_id)
+        return _handle_case_update(request, case_id)
     return JsonResponse({'error': "Request method not allowed"}, status=405)
 
 
-def _create_or_update_case(request, domain, case_id=None):
+def _handle_case_update(request, case_id=None):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
 
+    if isinstance(data, list):
+        return _bulk_update(request, data)
+    else:
+        return _create_or_update_case(request, data, case_id)
+
+
+def _get_case_update(data, user_id, case_id=None):
     update_class = JsonCaseCreation if case_id is None else JsonCaseUpdate
-    additonal_args = {'user_id': request.couch_user.user_id}
+    additonal_args = {'user_id': user_id}
     if case_id is not None:
         additonal_args['case_id'] = case_id
-    try:
-        update = update_class.wrap({**data, **additonal_args})
-    except BadValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+    return update_class.wrap({**data, **additonal_args})
 
-    xform, cases = submit_case_blocks(
-        case_blocks=[update.get_caseblock()],
-        domain=domain,
+
+def _submit_case_updates(updates, request):
+    return submit_case_blocks(
+        case_blocks=[update.get_caseblock() for update in updates],
+        domain=request.domain,
         username=request.couch_user.username,
         user_id=request.couch_user.user_id,
         xmlns='http://commcarehq.org/case_api',
         device_id=request.META.get('HTTP_USER_AGENT'),
     )
+
+
+def _create_or_update_case(request, data, case_id=None):
+    try:
+        update = _get_case_update(data, request.couch_user.user_id, case_id)
+    except BadValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    xform, cases = _submit_case_updates([update], request)
     if isinstance(xform, XFormError):
         return JsonResponse({
             'error': xform.problem,
@@ -122,4 +137,29 @@ def _create_or_update_case(request, domain, case_id=None):
     return JsonResponse({
         '@form_id': xform.form_id,
         '@case_id': cases[0].case_id,
+    })
+
+
+def _bulk_update(request, all_data):
+    updates = []
+    errors = []
+    for i, data in enumerate(all_data):
+        try:
+            update = _get_case_update(data, request.couch_user.user_id, data.pop('@case_id', None))
+            updates.append(update)
+        except BadValueError as e:
+            errors.append(f'Error in row {i}: {e}')
+
+    if errors:
+        return JsonResponse({'errors': errors}, status=400)
+
+    xform, cases = _submit_case_updates(updates, request)
+    if isinstance(xform, XFormError):
+        return JsonResponse({
+            'error': xform.problem,
+            '@form_id': xform.form_id,
+        }, status=400)
+    return JsonResponse({
+        '@form_id': xform.form_id,
+        '@case_ids': [case.case_id for case in cases],
     })
