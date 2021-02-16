@@ -14,6 +14,7 @@ class CaseUpdateCommand(BaseCommand):
 
     def __init__(self):
         self.location = None
+        self.inactive_location = None
 
     def case_block(self):
         raise NotImplementedError()
@@ -46,6 +47,7 @@ class CaseUpdateCommand(BaseCommand):
             user_id = SYSTEM_USER_ID
 
         self.location = options.get('location')
+        self.inactive_location = options.get('inactive_location')
 
         for domain in domains:
             print(f"Processing {domain}")

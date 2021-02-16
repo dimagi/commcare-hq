@@ -32,6 +32,12 @@ def get_owner_id(case_type):
     return None
 
 
+def get_case_ids(accessor, case_type, inactive_location):
+    if inactive_location:
+        return accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[inactive_location])
+    return accessor.get_case_ids_in_domain(case_type)
+
+
 class Command(CaseUpdateCommand):
     help = ("Updates all case indices of a specfied case type to use an extension relationship instead of parent.")
 
@@ -45,8 +51,9 @@ class Command(CaseUpdateCommand):
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
+        inactive_location = self.inactive_location
         accessor = CaseAccessors(domain)
-        case_ids = accessor.get_case_ids_in_domain(case_type)
+        case_ids = get_case_ids(accessor, case_type, inactive_location)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
         traveler_location_id = self.location
 
@@ -70,3 +77,4 @@ class Command(CaseUpdateCommand):
     def add_arguments(self, parser):
         super().add_arguments(parser)
         parser.add_argument('--location', type=str, default=None)
+        parser.add_argument('--inactive-location', type=str, default=None)
