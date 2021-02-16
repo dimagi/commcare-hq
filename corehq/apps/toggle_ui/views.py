@@ -17,7 +17,6 @@ from couchforms.analytics import get_last_form_submission_received
 from toggle.models import Toggle
 from toggle.shortcuts import parse_toggle, namespaced_item
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
@@ -119,10 +118,6 @@ class ToggleEditView(BasePageView):
         return self.request.GET.get('usage_info') == 'true'
 
     @property
-    def show_service_type(self):
-        return self.request.GET.get('show_service_type') == 'true'
-
-    @property
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
@@ -166,9 +161,6 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
 
-        if self.show_service_type:
-            context['service_type'] = _get_service_type(toggle)
-
         return context
 
     def post(self, request, *args, **kwargs):
@@ -202,8 +194,6 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
-        if self.show_service_type:
-            data['service_type'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 
     def _save_randomness(self, toggle, randomness):
@@ -277,19 +267,6 @@ def _get_usage_info(toggle):
     last_used["_latest"] = _get_most_recently_used(last_used)
     last_used["_active_domains"] = active_domains
     return last_used
-
-
-def _get_service_type(toggle):
-    """Returns subscription service type for each toggle
-    """
-    service_type = {}
-    for enabled in toggle.enabled_users:
-        name = _enabled_item_name(enabled)
-        if _namespace_domain(enabled):
-            subscription = Subscription.get_active_subscription_by_domain(name)
-            if subscription:
-                service_type[name] = subscription.service_type
-    return service_type
 
 
 def _namespace_domain(enabled_item):
