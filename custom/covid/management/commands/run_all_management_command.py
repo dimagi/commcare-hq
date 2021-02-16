@@ -53,7 +53,7 @@ class Command(BaseCommand):
         pool.join()
         total_jobs.extend(jobs)
 
-        if options["only_update_case_index"] == False:
+        if not options["only_update_case_index"]:
             jobs = []
             second_pool = Pool(20)
             for domain in domains:
