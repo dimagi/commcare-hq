@@ -165,7 +165,7 @@ def get_info_for_columns(
             'is_org_unit': False,
             'is_period': False,
         }
-        for dvm in dataset_map.datavalue_maps
+        for dvm in dataset_map.datavalue_maps.all()
     }
     if dataset_map.org_unit_column:
         info_for_columns[dataset_map.org_unit_column] = {
