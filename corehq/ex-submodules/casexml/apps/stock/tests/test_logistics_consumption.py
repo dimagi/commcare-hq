@@ -8,7 +8,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.tests.mock_consumption import ago
 from casexml.apps.stock import const
 from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
-from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
+from corehq.apps.commtrack.models import SQLCommtrackConfig, SQLConsumptionConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 
@@ -95,18 +95,22 @@ class LogisticsConsumptionTest(TestCase):
         self.assertEqual(receipts[0].quantity, 20)
 
     def test_report_with_exclude_disabled(self):
-        commtrack_config = CommtrackConfig(domain=self.domain.name)
-        commtrack_config.consumption_config = ConsumptionConfig()
-        commtrack_config.save()
+        commtrack_config = SQLCommtrackConfig(domain=self.domain.name)
+        commtrack_config.sqlconsumptionconfig = SQLConsumptionConfig()
+        commtrack_config.save(sync_to_couch=False)      # don't bother syncing in tests
+        commtrack_config.sqlconsumptionconfig.commtrack_config = commtrack_config
+        commtrack_config.sqlconsumptionconfig.save()
         self.create_transactions(self.domain.name)
         self.assertEqual(StockTransaction.objects.all().count(), 3)
         self.assertEqual(StockTransaction.objects.filter(type='receipts').count(), 1)
         commtrack_config.delete()
 
     def test_report_with_exclude_enabled(self):
-        commtrack_config = CommtrackConfig(domain=self.domain.name)
-        commtrack_config.consumption_config = ConsumptionConfig(exclude_invalid_periods=True)
-        commtrack_config.save()
+        commtrack_config = SQLCommtrackConfig(domain=self.domain.name)
+        commtrack_config.sqlconsumptionconfig = SQLConsumptionConfig(exclude_invalid_periods=True)
+        commtrack_config.save(sync_to_couch=False)      # don't bother syncing in tests
+        commtrack_config.sqlconsumptionconfig.commtrack_config = commtrack_config
+        commtrack_config.sqlconsumptionconfig.save()
         self.create_transactions(self.domain.name)
         self.assertEqual(StockTransaction.objects.all().count(), 2)
         self.assertEqual(StockTransaction.objects.filter(type='receipts').count(), 0)
