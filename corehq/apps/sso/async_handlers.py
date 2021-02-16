@@ -70,7 +70,7 @@ class IdentityProviderAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
     def get_linked_objects(self):
         return list(AuthenticatedEmailDomain.objects.filter(
             identity_provider__slug=self.idp_slug
-        ).values_list('email_domain', flat=True))
+        ).order_by('email_domain').values_list('email_domain', flat=True))
 
     def add_object(self):
         if AuthenticatedEmailDomain.objects.filter(email_domain=self.email_domain).exists():
@@ -115,7 +115,7 @@ class SSOExemptUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
     def get_linked_objects(self):
         return list(UserExemptFromSingleSignOn.objects.filter(
             email_domain__identity_provider__slug=self.idp_slug
-        ).values_list('username', flat=True))
+        ).order_by('username').values_list('username', flat=True))
 
     def add_object(self):
         if UserExemptFromSingleSignOn.objects.filter(username=self.username).exists():
