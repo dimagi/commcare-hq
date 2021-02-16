@@ -24,40 +24,43 @@
       <tbody>
       </tbody>
     </table>
-    <nav class="module-pagination-container text-right">
-      <ul class="pagination">
-        <!-- Render Previous button -->
-        <% if (page === 1) { %>
-        <li class="disabled">
-          <% } else { %>
-        <li>
+    <% if (endPage) { %>
+      <% if (!(pageCount === 1 && limit === 10)) { %>
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-3">
+              <div class="form-inline per-pagination-text">
+                <select class="form-control js-page-limit" id="itemsText">
+                  <option value="<%= limit %>">{% trans "<%= limit %> per page" %}</option>
+                  <% for(var i = 0; i < rowRange.length; i++) { %>
+                    <% if (rowRange[i] != limit) { %>
+                      <option value="<%= rowRange[i] %>">{% trans "<%= rowRange[i] %> per page" %}</option>
+                    <% } %>
+                  <% } %>
+                </select>
+              </div>
+            </div>
+          <% if (pageCount > 1) { %>
+            <div class="col-sm-6">
+              <nav class="module-pagination-container">
+                {% block pagination_templates %}
+                  {% include 'formplayer/pagination.html' %}
+                {% endblock %}
+              </nav>
+            </div>
+            <div class="col-sm-3 module-go-container">
+              <div class="input-group input-group-sm module-pagination-container">
+                <input type="text" class="form-control" placeholder="Go to page" id="goText">
+                <div class="input-group-btn">
+                  <button class="btn btn-default" type="button" id="pagination-go-button">{% trans "Go" %}</button>
+                </div>
+              </div>
+            </div>
           <% } %>
-          <a class="js-user-previous">
-            <span>&laquo;</span>
-          </a>
-        </li>
-
-        <!-- Render page buttons -->
-        <% for (var i = pagesToShow.start; i < pagesToShow.end; i++) { %>
-        <% if (i + 1 === page) { %>
-        <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
-        <% } else { %>
-        <li class="js-page" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
-        <% } %>
-        <% } %>
-
-        <!-- Render Next buttons -->
-        <% if (page === totalPages) { %>
-        <li class="disabled">
-          <% } else { %>
-        <li>
-          <% } %>
-          <a class="js-user-next">
-            <span>&raquo;</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
+          </div>
+        </div>
+      <% } %>
+    <% } %>
   </div>
 </script>
 
