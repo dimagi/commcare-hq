@@ -85,14 +85,15 @@ def get_prime_restore_user_params(request_user_id, sync_user_id):
     return request_user, as_username
 
 
-def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load=None):
+def get_users_for_priming(domain, sync_window, sync_cutoff=None, min_case_load=None):
     """Return a list of (request_user_id, user_id) tuples that match the criteria:
 
     - user has synced since ``since_window``
     - user has not synced since ``sync_cutoff``
     - user has a case load > ``min_case_load``
     """
-    assert sync_window < sync_cutoff, "Sync cutoff time must be within the sync window"
+    if sync_cutoff:
+        assert sync_window < sync_cutoff, "Sync cutoff time must be within the sync window"
 
     base_query = (
         SyncLogSQL.objects.values_list("request_user_id", "user_id")
@@ -107,6 +108,8 @@ def get_users_for_priming(domain, sync_window, sync_cutoff, min_case_load=None):
         query = query.filter(case_count__gt=min_case_load)
     users_synced_in_window = set(query.distinct())
 
-    users_synced_since_cutoff = set(base_query.filter(date__gt=sync_cutoff).distinct())
+    if sync_cutoff:
+        users_synced_since_cutoff = set(base_query.filter(date__gt=sync_cutoff).distinct())
+        return list(users_synced_in_window - users_synced_since_cutoff)
 
-    return list(users_synced_in_window - users_synced_since_cutoff)
+    return list(users_synced_in_window)

@@ -46,12 +46,12 @@ class Command(BaseCommand):
                                  'only users in this file will be synced.')
 
         parser.add_argument('--domains', nargs='+', help='Match users in these domains.')
-        parser.add_argument('--last-synced-hours', action=validate_integer(gt=0, lt=169), default=48,
+        parser.add_argument('--last-synced-hours', action=validate_integer(gt=0, lt=673), default=48,
                             help='Match users who have synced within the given window. '
-                                 'Defaults to 48 hours. Max = 168 (1 week).')
-        parser.add_argument('--not-synced-hours', action=validate_integer(gt=0, lt=169), default=8,
+                                 'Defaults to 48 hours. Max = 673 (4 weeks).')
+        parser.add_argument('--not-synced-hours', action=validate_integer(gt=-1, lt=169),
                             help='Exclude users who have synced within the given window. '
-                                 'Defaults to 8 hours. Max = 168 (1 week).')
+                                 'Max = 168 (1 week).')
         parser.add_argument('--min-cases', action=validate_integer(gt=0),
                             help='Match users with this many cases or more.')
 
@@ -92,7 +92,7 @@ class Command(BaseCommand):
         else:
             domains = [domain.strip() for domain in domains if domain.strip()]
             synced_since = datetime.utcnow() - relativedelta(hours=last_synced_hours)
-            not_synced_since = datetime.utcnow() - relativedelta(hours=not_synced_hours)
+            not_synced_since = datetime.utcnow() - relativedelta(hours=not_synced_hours) if not_synced_hours else None
             if dry_run_count:
                 users = list(_get_user_rows(domains, synced_since, not_synced_since, min_cases, limit))
                 sys.stderr.write(f"\nMatched {len(users)} users for filters:\n")
@@ -130,7 +130,7 @@ def _get_users_from_csv(path):
             yield row
 
 
-def _get_user_rows(domains, synced_since, not_synced_since, min_cases, limit):
+def _get_user_rows(domains, synced_since, not_synced_since=None, min_cases=None, limit=None):
     remaining_limit = limit
     for domain in domains:
         if remaining_limit is not None and remaining_limit <= 0:
