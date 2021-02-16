@@ -12,7 +12,7 @@
       <link type="text/css"
             rel="stylesheet"
             media="all"
-            href="{% static 'select2/dist/css/select2.min.css' %}" />
+            href="{% static 'select-woo/dist/css/selectWoo.min.css' %}" />
   {% endcompress %}
 {% endblock %}
 
@@ -82,7 +82,7 @@
 
 {% block js %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+    <script src="{% static 'select-woo/dist/js/selectWoo.full.min.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
     <script src="{% static 'cloudcare/js/preview_app/main.js' %}"></script>
