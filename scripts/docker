@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash 
 # CommCare HQ docker helper
 
 function usage() {
