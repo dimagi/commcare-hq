@@ -23,6 +23,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file')
+        parser.add_argument('--only-update-case-index', action='store_true', default=False)
 
     def handle(self, csv_file, **options):
         domains = set()
@@ -31,34 +32,38 @@ class Command(BaseCommand):
             reader = csv.DictReader(file)
             for row in reader:
                 domains.add(row['domain'])
-                locations = []
-                if row['location1'] != '':
-                    locations.append(row['location1'])
-                if row['location2'] != '':
-                    locations.append(row['location2'])
+                locations = {}
+                if row['non_traveler_active_location_id'] != '':
+                    locations['non_traveler'] = (row['non_traveler_active_location_id'])
+                if row['traveler_active_location_id'] != '':
+                    locations['traveler'] = (row['traveler_active_location_id'])
                 location_ids[row['domain']] = locations
 
         total_jobs = []
         jobs = []
         pool = Pool(20)
         for domain in domains:
-            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact'))
+            jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
+                                   location=location_ids[domain]['traveler']))
+            if options["only_update_case_index"]:
+                continue
             jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
             jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
         pool.join()
         total_jobs.extend(jobs)
 
-        jobs = []
-        second_pool = Pool(20)
-        for domain in domains:
-            for location in location_ids[domain]:
-                jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'patient',
-                                              location=location))
-                jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
-                                              location=location))
-        second_pool.join()
-        total_jobs.extend(jobs)
+        if not options["only_update_case_index"]:
+            jobs = []
+            second_pool = Pool(20)
+            for domain in domains:
+                for location in location_ids[domain].values():
+                    jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'patient',
+                                                  location=location))
+                    jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
+                                                  location=location))
+            second_pool.join()
+            total_jobs.extend(jobs)
 
         for job in total_jobs:
             success, command, args, exception = job.get()
