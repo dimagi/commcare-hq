@@ -366,6 +366,7 @@ class EditIdentityProviderAdminForm(forms.Form):
 
     @transaction.atomic
     def update_identity_provider(self, admin_user):
+        self.idp.name = self.cleaned_data['name']
         self.idp.slug = self.cleaned_data['slug']
         self.idp.is_editable = self.cleaned_data['is_editable']
         self.idp.is_active = self.cleaned_data['is_active']
