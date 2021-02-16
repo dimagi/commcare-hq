@@ -51,11 +51,11 @@ class Command(CaseUpdateCommand):
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
-        inactive_location = self.inactive_location
+        inactive_location = self.extra_options['inactive_location']
         accessor = CaseAccessors(domain)
         case_ids = get_case_ids(accessor, case_type, inactive_location)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
-        traveler_location_id = self.location
+        traveler_location_id = self.extra_options['location']
 
         case_blocks = []
         skip_count = 0

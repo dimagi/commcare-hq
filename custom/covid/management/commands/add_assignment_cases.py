@@ -46,11 +46,12 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, case_type, user_id):
         accessor = CaseAccessors(domain)
-        if self.location is None:
+        location_id = self.extra_options['location']
+        if location_id is None:
             case_ids = []
             print("Warning: no active location was entered")
         else:
-            case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[self.location])
+            case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[location_id])
 
         case_blocks = []
         skip_count = 0
