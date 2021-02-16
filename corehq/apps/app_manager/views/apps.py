@@ -350,7 +350,7 @@ def clear_app_cache(request, domain):
         startkey=[domain],
         limit=1,
     ).all()
-    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user)
 
 
 def get_apps_base_context(request, domain, app):
