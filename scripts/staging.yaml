@@ -79,4 +79,5 @@ branches:
   - sk/local-install  # SK Feb 12
   # - revert-29106-mjr/login_logging # Jenny Feb 12
   - ce/multi-upload # CE Feb 16
+  - gh/modify-export-settings-ff
 submodules: {}
