@@ -239,13 +239,6 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # invalid response to a survey question
     invalid_survey_response = models.NullBooleanField(default=False)
 
-    """ Custom properties. For the initial migration, it makes it easier
-    to put these here. Eventually they should be moved to a separate table. """
-    fri_message_bank_lookup_completed = models.NullBooleanField(default=False)
-    fri_message_bank_message_id = models.CharField(max_length=126, null=True)
-    fri_id = models.CharField(max_length=126, null=True)
-    fri_risk_profile = models.CharField(max_length=1, null=True)
-
     # Holds any custom metadata for this SMS
     custom_metadata = jsonfield.JSONField(null=True, default=None)
 

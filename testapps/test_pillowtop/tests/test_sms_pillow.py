@@ -97,10 +97,6 @@ class SqlSMSPillowTest(TestCase):
             backend_message_id='fake-backend-message-id',
             chat_user_id='fake-user-id',
             invalid_survey_response=False,
-            fri_message_bank_lookup_completed=True,
-            fri_message_bank_message_id='bank-id',
-            fri_id='12345',
-            fri_risk_profile='X',
             custom_metadata={'a': 'b'},
         )
         self.sms = SMS.objects.create(
