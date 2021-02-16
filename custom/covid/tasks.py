@@ -75,6 +75,26 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id, cl
         metrics_counter("commcare.prime_formplayer_db.success", tags=metric_tags)
 
 
+@no_result_task(queue='async_restore_queue', max_retries=3, bind=True)
+def clear_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
+    request_user, as_username = get_prime_restore_user_params(request_user_id, sync_user_id)
+
+    try:
+        clear_user_data(domain, request_user, as_username)
+    except FormplayerAPIException:
+        notify_exception(None, "Error while clearing formplayer user DB", details={
+            'domain': domain,
+            'username': request_user,
+            'as_user': as_username,
+        })
+    except Exception as e:
+        # most likely an error contacting formplayer, try again
+        try:
+            raise self.retry(exc=e)
+        except MaxRetriesExceededError:
+            raise
+
+
 def get_prime_restore_user_params(request_user_id, sync_user_id):
     """Return username param and as_user param for performing formpalyer sync"""
     request_user = CouchUser.get_by_user_id(request_user_id).username
