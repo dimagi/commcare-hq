@@ -30,7 +30,6 @@
   "vellum_case_management": true,
   "platform": "nokia\/s40",
   "use_j2me_endpoint": false,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.25.0",
@@ -1307,7 +1306,6 @@
   ],
   "created_from_template": "case_management",
   "attribution_notes": null,
-  "admin_password_charset": "n",
   "external_blobs": {
     "files\/default\/app_strings.txt": {
       "content_length": 2070,

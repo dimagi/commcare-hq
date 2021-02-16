@@ -19,14 +19,12 @@
   "media_form_errors": false,
   "application_version": "2.0",
   "is_released": false,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.17.0",
     "build_number": null,
     "latest": true
   },
-  "admin_password_charset": "n",
   "build_comment": null,
   "success_message": {
     

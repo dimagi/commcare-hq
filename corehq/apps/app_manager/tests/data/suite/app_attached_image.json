@@ -208,7 +208,6 @@
       }
     }
   ], 
-  "admin_password": null, 
   "built_with": {
     "doc_type": "BuildRecord", 
     "latest": null, 
@@ -226,8 +225,7 @@
   "case_sharing": false, 
   "translations": {}, 
   "cloudcare_enabled": false, 
-  "admin_password_charset": "n", 
-  "deployment_date": null, 
+  "deployment_date": null,
   "phone_model": null, 
   "translation_strategy": "select-known", 
   "is_released": false, 

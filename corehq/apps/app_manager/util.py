@@ -248,8 +248,6 @@ def get_settings_values(app):
         hq_settings.update({'custom_suite': getattr(app, 'custom_suite', None)})
 
     hq_settings['build_spec'] = app.build_spec.to_string()
-    # the admin_password hash shouldn't be sent to the client
-    hq_settings.pop('admin_password', None)
     # convert int to string
     hq_settings['mobile_ucr_restore_version'] = str(hq_settings.get('mobile_ucr_restore_version', '1.0'))
 

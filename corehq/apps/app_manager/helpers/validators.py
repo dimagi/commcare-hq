@@ -65,7 +65,6 @@ class ApplicationBaseValidator(object):
     def validate_app(self, existing_errors=None):
         errors = existing_errors or []
 
-        errors.extend(self._check_password_charset())
         errors.extend(self._validate_fixtures())
         errors.extend(self._validate_intents())
         errors.extend(self._validate_practice_users())
@@ -157,25 +156,6 @@ class ApplicationBaseValidator(object):
                 'build_profile_id': build_profile_id,
             }]
         return []
-
-    def _check_password_charset(self):
-        errors = []
-        if self.app.build_spec.supports_j2me() and hasattr(self.app, 'profile'):
-            password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
-            message = _(
-                'Your app requires {0} passwords but the admin password is not '
-                '{0}. To resolve, go to app settings, Advanced Settings, Java '
-                'Phone General Settings, and reset the Admin Password to '
-                'something that is {0}'
-            )
-
-            if password_format == 'n' and self.app.admin_password_charset in 'ax':
-                errors.append({'type': 'password_format',
-                               'message': message.format('numeric')})
-            if password_format == 'a' and self.app.admin_password_charset in 'x':
-                errors.append({'type': 'password_format',
-                               'message': message.format('alphanumeric')})
-        return errors
 
 
 class ApplicationValidator(ApplicationBaseValidator):

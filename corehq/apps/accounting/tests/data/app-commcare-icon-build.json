@@ -41,14 +41,12 @@
    "application_version": "2.0",
    "is_released": false,
    "version": 7,
-   "admin_password": null,
    "build_spec": {
        "doc_type": "BuildSpec",
        "version": "2.16.0",
        "build_number": null,
        "latest": true
    },
-   "admin_password_charset": "n",
    "logo_refs": {
        "hq_logo_android_home": {
            "updated": false,

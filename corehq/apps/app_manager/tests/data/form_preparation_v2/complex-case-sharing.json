@@ -2,8 +2,6 @@
     "_attachments": {
         "a4d621cbaa58eee0d9b0d4dfd83c401f263df871.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Untitled Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/A1328537-36ED-4FBA-8318-0FE01BA91125\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<name />\n\t\t\t\t\t<owner_id />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/owner_id\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"owner_id-label\">\n\t\t\t\t\t\t<value>Owner ID</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/owner_id\">\n\t\t\t<label ref=\"jr:itext('owner_id-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
     },
-    "admin_password": null,
-    "admin_password_charset": "n",
     "application_version": "2.0",
     "attribution_notes": null,
     "build_broken": false,

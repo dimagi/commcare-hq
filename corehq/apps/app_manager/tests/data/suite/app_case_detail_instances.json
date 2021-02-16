@@ -1545,7 +1545,6 @@
   "vellum_case_management": true,
   "platform": "nokia\/s40",
   "version": 18,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.36.1",
@@ -1605,7 +1604,6 @@
     
   },
   "attribution_notes": null,
-  "admin_password_charset": "n",
   "external_blobs": {
     "5780265d2e0b18ce5b79b0bc384316632e5b1b27.xml": {
       "content_length": 1018,

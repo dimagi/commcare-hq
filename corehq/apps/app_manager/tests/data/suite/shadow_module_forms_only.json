@@ -42,7 +42,6 @@
   "is_released": false,
   "use_custom_suite": false,
   "platform": "nokia\/s40",
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.20.0",
@@ -831,7 +830,6 @@
     "ffdac4c8c6544c4b0c23b93f2ef78d88f97c8e35.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/BAA9A6E2-BF46-40AA-B9BD-2A76460C9721\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<question1 \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/question1\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
   },
   "attribution_notes": null,
-  "admin_password_charset": "n",
   "translation_strategy": "select-known",
   "case_sharing": false,
   "show_user_registration": false

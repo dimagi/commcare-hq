@@ -66,7 +66,6 @@
    "is_released":false,
    "use_custom_suite":false,
    "platform":"nokia/s40",
-   "admin_password":null,
    "build_spec":{
       "doc_type":"BuildSpec",
       "version":"2.15.0",
@@ -443,7 +442,6 @@
    "multimedia_map":{
 
    },
-   "admin_password_charset":"n",
    "case_sharing":false,
    "show_user_registration":false
 }
