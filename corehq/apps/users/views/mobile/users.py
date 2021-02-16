@@ -1077,8 +1077,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             )
         else:
             upload_record = UserUploadRecord(
-                domain=domain,
-                user_id=upload_user.user_id
+                domain=self.domain,
+                user_id=request.couch_user.user_id
             )
             upload_record.save()
 
