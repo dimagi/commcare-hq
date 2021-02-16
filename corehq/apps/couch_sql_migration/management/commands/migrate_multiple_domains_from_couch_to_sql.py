@@ -139,6 +139,8 @@ class Command(BaseCommand):
         do_couch_to_sql_migration(domain, state_dir)
         if self.has_diffs(domain, state_dir, resume=True):
             raise Incomplete("has diffs (WARNING: NOT LIVE!)")
+        log_stats(domain, get_diff_stats(
+            domain, state_dir, self.strict, resume=True, verbose=True))
 
     def has_diffs(self, domain, state_dir, resume=False):
         stats = get_diff_stats(domain, state_dir, self.strict, resume)
@@ -152,15 +154,17 @@ class Command(BaseCommand):
         blow_away_migration(domain, state_dir)
 
 
-def get_diff_stats(domain, state_dir, strict, resume=False):
+def get_diff_stats(domain, state_dir, strict, resume=False, verbose=False):
     DELETED_CASE = "CommCareCase-Deleted"
     find_missing_docs(domain, state_dir, resume=resume, progress=False)
     stats = {}
     with open_state_db(domain, state_dir) as statedb:
         for doc_type, counts in sorted(statedb.get_doc_counts().items()):
-            if not strict and doc_type == DELETED_CASE and not counts.missing:
+            if doc_type == DELETED_CASE and not (
+                    strict or counts.missing or verbose):
                 continue
-            if counts.diffs or counts.changes or counts.missing:
+            if counts.diffs or counts.changes or counts.missing or (
+                    verbose and counts.total):
                 stats[doc_type] = DiffStats(counts)
         pending = statedb.count_undiffed_cases()
         if pending:
