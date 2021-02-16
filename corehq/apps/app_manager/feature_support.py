@@ -177,3 +177,10 @@ class CommCareFeatureSupportMixin(object):
     @property
     def enable_default_value_expression(self):
         return self._require_minimum_version('2.51')
+
+    @property
+    def supports_session_endpoints(self):
+        return (
+            toggles.SESSION_ENDPOINTS.enabled(self.domain)
+            # and self._require_minimum_version('2.51')  # TODO: Uncomment after release
+        )
