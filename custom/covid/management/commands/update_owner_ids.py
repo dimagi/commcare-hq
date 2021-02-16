@@ -22,7 +22,7 @@ class Command(CaseUpdateCommand):
             create=False,
             case_id=case.case_id,
             owner_id=child_location.location_id,
-        ).as_xml()).decode('utf-8')
+        ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
         case_ids = self.find_case_ids_by_type(domain, case_type)
