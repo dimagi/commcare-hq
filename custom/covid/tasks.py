@@ -7,8 +7,9 @@ from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
-from corehq.apps.formplayer_api import clear_user_data, sync_db
+from corehq.apps.formplayer_api.clear_user_data import clear_user_data
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
+from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from corehq.toggles import PRIME_FORMPLAYER_DBS
