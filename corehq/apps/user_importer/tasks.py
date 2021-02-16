@@ -87,5 +87,5 @@ def parallel_user_import(domain, user_specs, group_specs, upload_user):
                 subtask.get(timeout=1, disable_sync_subtasks=False)
             except TimeoutError:
                 incomplete = True
-            subtask_progress = get_task_progress(subtask).current or 0
-            DownloadBase.set_progress(task, subtask_progress, total)
+            subtask_progress += get_task_progress(subtask).current or 0
+        DownloadBase.set_progress(task, subtask_progress, total)
