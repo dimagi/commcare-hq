@@ -149,7 +149,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
-    case_block = ElementTree.tostring(ElementTree.XML(case_block)).decode('utf-8')
+    case_block = ElementTree.tostring(ElementTree.XML(case_block), encoding='utf-8').decode('utf-8')
 
     return submit_case_blocks(
         case_block,
@@ -188,7 +188,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
+        ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8'),
         domain,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,
