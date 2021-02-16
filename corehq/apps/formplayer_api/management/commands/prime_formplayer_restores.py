@@ -84,7 +84,7 @@ class Command(BaseCommand):
                 as_user_id = None
                 if as_username:
                     as_user_id = CouchUser.get_by_username(as_username).user_id
-                sys.stdout.write(f"{domain},{request_user},{request_user_id},{as_username},{as_user_id}")
+                sys.stdout.write(f"{domain},{request_user},{request_user_id},{as_username},{as_user_id}\n")
                 if not dry_run:
                     prime_formplayer_db_for_user.delay(
                         domain, request_user_id, as_user_id, clear_data=clear_user_data
@@ -107,7 +107,7 @@ class Command(BaseCommand):
 
             for domain, request_user_id, as_user_id in users:
                 request_user, as_username = get_prime_restore_user_params(request_user_id, as_user_id)
-                sys.stdout.write(f"{domain},{request_user},{request_user_id},{as_username},{as_user_id}")
+                sys.stdout.write(f"{domain},{request_user},{request_user_id},{as_username},{as_user_id}\n")
                 if not dry_run:
                     prime_formplayer_db_for_user.delay(
                         domain, request_user_id, as_user_id, clear_data=clear_user_data
