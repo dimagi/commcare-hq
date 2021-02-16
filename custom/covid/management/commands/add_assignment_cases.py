@@ -55,7 +55,7 @@ class Command(CaseUpdateCommand):
         case_blocks = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
-            if case.closed:
+            if case.get_case_property('current_status') == 'closed':
                 skip_count += 1
             elif needs_update(case):
                 new_owner_id = find_owner_id(case, accessor)
