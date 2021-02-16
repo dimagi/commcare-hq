@@ -23,7 +23,7 @@ from corehq.apps.sso.forms import (
     CreateIdentityProviderForm,
     EditIdentityProviderAdminForm,
 )
-from corehq.apps.sso.aync_handlers import (
+from corehq.apps.sso.async_handlers import (
     Select2IdentityProviderHandler,
     IdentityProviderAdminAsyncHandler,
     SSOExemptUsersAdminAsyncHandler,
