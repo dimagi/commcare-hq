@@ -13,6 +13,9 @@ from soil.progress import get_task_progress
 from corehq.apps.user_importer.models import UserUploadRecord
 
 
+USER_UPLOAD_CHUNK_SIZE = 1000
+
+
 @task(serializer='pickle')
 def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, task=None):
     from corehq.apps.user_importer.importer import create_or_update_users_and_groups, create_or_update_groups
@@ -63,7 +66,8 @@ def parallel_user_import(domain, user_specs, group_specs, upload_user):
     total = len(user_specs) + len(group_specs)
     DownloadBase.set_progress(task, 0, total)
     task_list = []
-    for users in chunked(user_specs, 100):
+    groups = group_specs
+    for users in chunked(user_specs, USER_UPLOAD_CHUNK_SIZE):
         upload_record = UserUploadRecord(
             domain=domain,
             user_id=upload_user.user_id
@@ -73,11 +77,14 @@ def parallel_user_import(domain, user_specs, group_specs, upload_user):
         subtask = parallel_import_task.delay(
             domain,
             list(users),
-            list(group_specs),
+            groups,
             upload_user,
             upload_record.pk
         )
         task_list.append(subtask)
+
+        # only process groups the first time
+        groups = []
     incomplete = True
     while incomplete:
         subtask_progress = 0

@@ -31,7 +31,6 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
-from celery import group
 
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
