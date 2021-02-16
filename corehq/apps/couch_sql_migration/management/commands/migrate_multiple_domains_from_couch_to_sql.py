@@ -34,7 +34,9 @@ log = logging.getLogger(__name__)
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument('path')
+        parser.add_argument('domains',
+            help="Path to file with one domain name per line OR a colon-"
+                 "delimited list of domain names.")
         parser.add_argument('--state-dir',
             default=os.environ.get("CCHQ_MIGRATION_STATE_DIR"),
             required="CCHQ_MIGRATION_STATE_DIR" not in os.environ,
@@ -49,16 +51,11 @@ class Command(BaseCommand):
             help="Do live migration. Leave in unfinished state if there are "
                  "unpatchable diffs, otherwise patch, finish and commit.")
 
-    def handle(self, path, state_dir, **options):
+    def handle(self, domains, state_dir, **options):
         self.strict = options['strict']
         self.live_migrate = options["live"]
 
-        if not os.path.isfile(path):
-            raise CommandError("Couldn't locate domain list: {}".format(path))
-
-        with open(path, 'r', encoding='utf-8') as f:
-            domains = [name.strip() for name in f.readlines() if name.strip()]
-
+        domains = list_domains(domains)
         failed = []
         log.info("Processing {} domains\n".format(len(domains)))
         for domain in domains:
@@ -152,6 +149,15 @@ class Command(BaseCommand):
         set_couch_sql_migration_not_started(domain)
         clear_local_domain_sql_backend_override(domain)
         blow_away_migration(domain, state_dir)
+
+
+def list_domains(domains):
+    if ":" in domains:
+        return [d for d in domains.split(":") if d]
+    if not os.path.isfile(domains):
+        raise CommandError(f"Couldn't locate domain list: {domains}")
+    with open(domains, 'r', encoding='utf-8') as f:
+        return [d.strip() for d in f.readlines() if d.strip()]
 
 
 def get_diff_stats(domain, state_dir, strict, resume=False, verbose=False):
