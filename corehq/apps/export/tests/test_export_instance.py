@@ -91,12 +91,13 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
             ],
         )
 
-    def _generate_instance(self, build_ids_and_versions, saved_export=None):
+    def _generate_instance(self, build_ids_and_versions, saved_export=None, export_settings=None):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
-            return FormExportInstance.generate_instance_from_schema(self.schema, saved_export=saved_export)
+            return FormExportInstance.generate_instance_from_schema(self.schema, saved_export=saved_export,
+                                                                    export_settings=export_settings)
 
     def test_generate_instance_from_schema(self, _, __):
         """Only questions that are in the main table and of the same version should be shown"""
@@ -189,9 +190,7 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
             forms_include_duplicates=True,
             forms_expand_checkbox=True
         )
-        with mock.patch('corehq.apps.export.models.new.get_default_export_settings_for_user') as m:
-            m.return_value = mock_settings
-            instance = self._generate_instance({self.app_id: 3})
+        instance = self._generate_instance({self.app_id: 3}, export_settings=mock_settings)
 
         self.assertEqual(instance.export_format, Format.CSV)
         self.assertEqual(instance.transform_dates, False)
