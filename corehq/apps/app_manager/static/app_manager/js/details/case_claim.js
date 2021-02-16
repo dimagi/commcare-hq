@@ -174,6 +174,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
+                if (searchProperties[i].input_ === "daterange") {
+                    appearance = "daterange";
+                }
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
