@@ -1,11 +1,12 @@
 from django import template
 from django.utils import html
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 register = template.Library()
 
-EMPTY_LABEL = '<span class="label label-info">Empty</span>'
+EMPTY_LABEL = mark_safe('<span class="label label-info">Empty</span>')  # nosec: no user input
 
 
 @register.simple_tag
@@ -16,18 +17,34 @@ def translate(t, lang, langs=None):
             return t[lang]
 
 
+def tag_with_brackets(lang):
+    return ' [%s] ' % lang
+
+
+def tag_with_markup(lang):
+    style = 'btn btn-xs btn-info btn-langcode-preprocessed'
+    return format_html(' <span class="{}">{}</span> ', style, lang)
+
+
+def empty_tag(lang):
+    return ''
+
+
 @register.filter
-def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, escape=False):
+def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, strip_tags=False):
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
-            tag = lambda lang: ' [%s] ' % lang
+            tag = tag_with_brackets
         else:
-            tag = lambda lang: '''
-                <span class="btn btn-xs btn-info btn-langcode-preprocessed">%(lang)s</span>
-            ''' % {"lang": html.escape(lang)}
+            tag = tag_with_markup
     else:
-        tag = lambda lang: ""
+        tag = empty_tag
+
+    translation_in_requested_langs = False
+    n = ''
+    affix = ''
+
     for lang in langs:
         # "name[lang] is not None" added to avoid empty lang tag in case of empty value for a field.
         # When a value like {'en': ''} is passed to trans it returns [en] which then gets added
@@ -35,33 +52,37 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, esc
         # Ref: https://github.com/dimagi/commcare-hq/pull/16871/commits/14453f4482f6580adc9619a8ad3efb39d5cf37a2
         if lang in name and name[lang] is not None:
             n = str(name[lang])
-            if escape:
-                n = html.escape(n)
-            affix = ("" if langs and lang == langs[0] else tag(lang))
-            return affix + n if prefix else n + affix
-        # ok, nothing yet... just return anything in name
-    for lang, n in sorted(name.items()):
+            is_currently_set_language = langs and lang == langs[0]
+            affix = ("" if is_currently_set_language else tag(lang))
+            translation_in_requested_langs = True
+            break
+
+    if not translation_in_requested_langs and len(name) > 0:
+        lang, n = sorted(name.items())[0]
         n = str(n)
-        if escape:
-            n = html.escape(n)
         affix = tag(lang)
-        return affix + n if prefix else n + affix
-    return ""
+
+    if strip_tags:
+        n = html.strip_tags(n)
+        affix = html.strip_tags(affix)
+
+    pattern = '{affix}{name}' if prefix else '{name}{affix}'
+    return format_html(pattern, affix=affix, name=n)
 
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return mark_safe(html.strip_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
+    return trans(name, langs, use_delim=False, strip_tags=True) or EMPTY_LABEL
 
 
 @register.filter
 def html_trans_prefix(name, langs=["default"]):
-    return mark_safe(trans(name, langs, use_delim=False, prefix=True, escape=True) or EMPTY_LABEL)
+    return trans(name, langs, use_delim=False, prefix=True) or EMPTY_LABEL
 
 
 @register.filter
 def html_trans_prefix_delim(name, langs=["default"]):
-    return mark_safe(trans(name, langs, use_delim=True, prefix=True, escape=True) or EMPTY_LABEL)
+    return trans(name, langs, use_delim=True, prefix=True) or EMPTY_LABEL
 
 
 @register.filter
