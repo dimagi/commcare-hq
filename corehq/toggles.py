@@ -1947,6 +1947,13 @@ GAEN_OTP_SERVER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+PARALLEL_USER_IMPORTS = StaticToggle(
+    'parallel_user_imports',
+    'COVID: Process user imports in parallel on a dedicated queue',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',
