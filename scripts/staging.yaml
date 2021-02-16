@@ -61,7 +61,6 @@ branches:
   - sr/es-alias # Sravan Nov 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-  - prem-fissionhq:dedicated_migration_process # Prem/Amit Dec 23
   - dependabot/pip/requirements/lxml-4.6.2  # Biyeun Jan 8
   - prem-fissionhq:bugfix/dedicated_migration_process # Prem/Amit Jan 21
   - nh/reminders  # Norman Jan 26
