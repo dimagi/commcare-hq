@@ -17,6 +17,8 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso import utils
 
+TIME_FORMAT = "%Y/%m/%d %H:%M"
+
 
 def _validate_or_raise_slugify_error(slug):
     slugified_test = slugify(slug)
@@ -430,7 +432,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             'logout_url': identity_provider.logout_url,
             'idp_cert_public': identity_provider.idp_cert_public,
             'date_idp_cert_expiration': (
-                identity_provider.date_idp_cert_expiration.strftime("%Y/%m/%d %H:%M")
+                identity_provider.date_idp_cert_expiration.strftime(TIME_FORMAT)
                 if identity_provider.date_idp_cert_expiration else ''
             ),
         }
