@@ -34,8 +34,10 @@ def _check_is_editable_requirements(identity_provider):
               "least one Authenticated Email Domain.")
         )
     if not identity_provider.sso_exempt_users:
-        raise _("Please make sure you have specified at least one "
-                "enterprise admin that is exempt from SSO.")
+        raise forms.ValidationError(
+            _("Please make sure you have specified at least one "
+              "enterprise admin that is exempt from SSO.")
+        )
 
 
 def _check_required_when_active(is_active, value):
