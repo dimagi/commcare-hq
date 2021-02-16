@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Distance",
+  "$ref": "#/definitions/Distance",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Distance": {
+      "allOf": [
+        {
+          "$ref": "Quantity#/definitions/Quantity"
+        },
+        {
+          "description": "A length - a value with a unit that is a physical distance.",
+          "properties": {}
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ResearchSubject",
+  "$ref": "#/definitions/ResearchSubject",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ResearchSubject": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A process where a researcher or organization plans and then executes a series of steps intended to increase the field of healthcare-related knowledge.  This includes studies of safety, efficacy, comparative effectiveness and other information about medications, devices, therapies and other interventional and investigative techniques.  A ResearchStudy involves the gathering of information about human or animal subjects.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ResearchSubject resource",
+              "type": "string",
+              "enum": [
+                "ResearchSubject"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers assigned to this research study by the sponsor or other systems.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The current state of the subject.",
+              "enum": [
+                "candidate",
+                "enrolled",
+                "active",
+                "suspended",
+                "withdrawn",
+                "completed"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "The dates the subject began and ended their participation in the study.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "study": {
+              "description": "Reference to the study the subject is participating in.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "individual": {
+              "description": "The record of the person or animal who is involved in the study.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "assignedArm": {
+              "description": "The name of the arm in the study the subject is expected to follow as part of this study.",
+              "type": "string"
+            },
+            "_assignedArm": {
+              "description": "Extensions for assignedArm",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "actualArm": {
+              "description": "The name of the arm in the study the subject actually followed as part of this study.",
+              "type": "string"
+            },
+            "_actualArm": {
+              "description": "Extensions for actualArm",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "consent": {
+              "description": "A record of the patient\u0027s informed agreement to participate in the study.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "study",
+            "individual",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

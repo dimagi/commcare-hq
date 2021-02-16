@@ -1,0 +1,313 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Patient",
+  "$ref": "#/definitions/Patient",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Patient": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Patient resource",
+              "type": "string",
+              "enum": [
+                "Patient"
+              ]
+            },
+            "identifier": {
+              "description": "An identifier for this patient.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether this patient record is in active use.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A name associated with the individual.",
+              "type": "array",
+              "items": {
+                "$ref": "HumanName.schema.json#/definitions/HumanName"
+              }
+            },
+            "telecom": {
+              "description": "A contact detail (e.g. a telephone number or an email address) by which the individual may be contacted.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "gender": {
+              "description": "Administrative Gender - the gender that the patient is considered to have for administration and record keeping purposes.",
+              "enum": [
+                "male",
+                "female",
+                "other",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_gender": {
+              "description": "Extensions for gender",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "birthDate": {
+              "description": "The date of birth for the individual.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_birthDate": {
+              "description": "Extensions for birthDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "deceasedBoolean": {
+              "description": "Indicates if the individual is deceased or not.",
+              "type": "boolean"
+            },
+            "_deceasedBoolean": {
+              "description": "Extensions for deceasedBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "deceasedDateTime": {
+              "description": "Indicates if the individual is deceased or not.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_deceasedDateTime": {
+              "description": "Extensions for deceasedDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "address": {
+              "description": "Addresses for the individual.",
+              "type": "array",
+              "items": {
+                "$ref": "Address.schema.json#/definitions/Address"
+              }
+            },
+            "maritalStatus": {
+              "description": "This field contains a patient\u0027s most recent marital (civil) status.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "multipleBirthBoolean": {
+              "description": "Indicates whether the patient is part of a multiple (bool) or indicates the actual birth order (integer).",
+              "type": "boolean"
+            },
+            "_multipleBirthBoolean": {
+              "description": "Extensions for multipleBirthBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "multipleBirthInteger": {
+              "description": "Indicates whether the patient is part of a multiple (bool) or indicates the actual birth order (integer).",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_multipleBirthInteger": {
+              "description": "Extensions for multipleBirthInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "photo": {
+              "description": "Image of the patient.",
+              "type": "array",
+              "items": {
+                "$ref": "Attachment.schema.json#/definitions/Attachment"
+              }
+            },
+            "contact": {
+              "description": "A contact party (e.g. guardian, partner, friend) for the patient.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Patient_Contact"
+              }
+            },
+            "animal": {
+              "description": "This patient is known to be an animal.",
+              "$ref": "#/definitions/Patient_Animal"
+            },
+            "communication": {
+              "description": "Languages which may be used to communicate with the patient about his or her health.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Patient_Communication"
+              }
+            },
+            "generalPractitioner": {
+              "description": "Patient\u0027s nominated care provider.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "managingOrganization": {
+              "description": "Organization that is the custodian of the patient record.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "link": {
+              "description": "Link to another patient resource that concerns the same actual patient.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Patient_Link"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Patient_Contact": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
+          "properties": {
+            "relationship": {
+              "description": "The nature of the relationship between the patient and the contact person.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "name": {
+              "description": "A name associated with the contact person.",
+              "$ref": "HumanName.schema.json#/definitions/HumanName"
+            },
+            "telecom": {
+              "description": "A contact detail for the person, e.g. a telephone number or an email address.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "address": {
+              "description": "Address for the contact person.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "gender": {
+              "description": "Administrative Gender - the gender that the contact person is considered to have for administration and record keeping purposes.",
+              "enum": [
+                "male",
+                "female",
+                "other",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_gender": {
+              "description": "Extensions for gender",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "organization": {
+              "description": "Organization on behalf of which the contact is acting or for which the contact is working.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "The period during which this contact person or organization is valid to be contacted relating to this patient.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    },
+    "Patient_Animal": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
+          "properties": {
+            "species": {
+              "description": "Identifies the high level taxonomic categorization of the kind of animal.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "breed": {
+              "description": "Identifies the detailed categorization of the kind of animal.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "genderStatus": {
+              "description": "Indicates the current state of the animal\u0027s reproductive organs.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "species"
+          ]
+        }
+      ]
+    },
+    "Patient_Communication": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
+          "properties": {
+            "language": {
+              "description": "The ISO-639-1 alpha 2 code in lower case for the language, optionally followed by a hyphen and the ISO-3166-1 alpha 2 code for the region in upper case; e.g. \"en\" for English, or \"en-US\" for American English versus \"en-EN\" for England English.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "preferred": {
+              "description": "Indicates whether or not the patient prefers this language (over other languages he masters up a certain level).",
+              "type": "boolean"
+            },
+            "_preferred": {
+              "description": "Extensions for preferred",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "language"
+          ]
+        }
+      ]
+    },
+    "Patient_Link": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
+          "properties": {
+            "other": {
+              "description": "The other patient resource that the link refers to.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "type": {
+              "description": "The type of link between this patient resource and another patient resource.",
+              "enum": [
+                "replaced-by",
+                "replaces",
+                "refer",
+                "seealso"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "other"
+          ]
+        }
+      ]
+    }
+  }
+}
