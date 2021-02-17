@@ -2011,7 +2011,7 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     'default_export_settings',
     'Allow enterprise admin to set default export settings',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_USER],
     description="""
     Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
