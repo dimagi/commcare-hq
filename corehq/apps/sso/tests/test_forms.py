@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from mock import patch
 
 from django import forms
 from django.test import TestCase
@@ -81,6 +82,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
 
 
+@patch('corehq.apps.sso.utils.get_dashboard_link', return_value='#')
 class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
 
     def setUp(self):
@@ -111,7 +113,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
                                              else datetime.utcnow() + timedelta(days=30))
         self.idp.save()
 
-    def test_bad_slug_update_is_invalid(self):
+    def test_bad_slug_update_is_invalid(self, *args):
         post_data = {
             'name': self.idp.name,
             'is_editable': self.idp.is_editable,
@@ -123,7 +125,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_slug())
         self.assertFalse(edit_idp_form.is_valid())
 
-    def test_slug_update_conflict(self):
+    def test_slug_update_conflict(self, *args):
         second_idp = IdentityProvider.objects.create(
             owner=self.account,
             name='Azure AD for VWX',
@@ -142,7 +144,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_slug())
         self.assertFalse(edit_idp_form.is_valid())
 
-    def test_slug_and_last_modified_by_updates(self):
+    def test_slug_and_last_modified_by_updates(self, *args):
         post_data = {
             'name': self.idp.name,
             'is_editable': self.idp.is_editable,
@@ -158,7 +160,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
         self.assertNotEqual(idp.created_by, self.accounting_admin.username)
 
-    def test_name_updates_and_is_required(self):
+    def test_name_updates_and_is_required(self, *args):
         bad_post_data = {
             'name': '',
             'is_editable': self.idp.is_active,
@@ -181,7 +183,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         idp = IdentityProvider.objects.get(id=self.idp.id)
         self.assertEqual(idp.name, post_data['name'])
 
-    def test_is_editable_has_met_requirements_and_value_updates(self):
+    def test_is_editable_has_met_requirements_and_value_updates(self, *args):
         post_data = {
             'name': self.idp.name,
             'is_editable': True,
@@ -208,7 +210,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         idp = IdentityProvider.objects.get(id=self.idp.id)
         self.assertTrue(idp.is_editable)
 
-    def test_is_active_has_met_requirements_and_value_updates(self):
+    def test_is_active_has_met_requirements_and_value_updates(self, *args):
         post_data = {
             'name': self.idp.name,
             'is_editable': self.idp.is_active,

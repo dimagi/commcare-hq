@@ -55,10 +55,7 @@ def get_dashboard_link(identity_provider):
         is_active=True,
         account__is_active=True,
     ).first()
-    if linked_subscription:
-        return reverse(
-            EditIdentityProviderEnterpriseView.urlname,
-            args=(linked_subscription.subscriber.domain, identity_provider.slug,)
-        )
-    # would only ever reach this in tests
-    return '#'
+    return reverse(
+        EditIdentityProviderEnterpriseView.urlname,
+        args=(linked_subscription.subscriber.domain, identity_provider.slug,)
+    )
