@@ -99,6 +99,11 @@ class CaseCommandsTest(TestCase):
             True, lab_result_case_id, user_id=self.user_id, owner_id='owner1', case_type='lab_result',
             index={'patient': ('patient', patient_case_id, 'child')}
         )
+        excluded_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, excluded_case_id, user_id=self.user_id, owner_id='owner1', case_type='lab_result',
+            index={'patient': ('patient', patient_case_id, 'child')}, update={"has_index_case": 'no'},
+        )
 
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(lab_result_case.indices[0].referenced_type, 'patient')
@@ -109,6 +114,8 @@ class CaseCommandsTest(TestCase):
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
         self.assertEqual(lab_result_case.get_case_property('owner_id'), '-')
+        excluded_case = self.case_accessor.get_case(excluded_case_id)
+        self.assertEqual(excluded_case.indices[0].relationship, 'child')
 
     def test_update_case_index_relationship_with_location(self):
         location_type = LocationType.objects.create(
