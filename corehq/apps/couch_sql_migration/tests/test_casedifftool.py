@@ -11,7 +11,7 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
@@ -495,6 +495,31 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.assert_patched_cases(["diff-case"])
         self.compare_diffs(changes=[
             Diff('change-case', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
+
+    def test_patch_skips_deleted_case(self):
+        self.submit_form(make_test_form("form-1", case_id="del"))
+        self.submit_form(make_test_form("form-2", case_id="mar"))
+        case = self._get_case("del")
+        case.name = "Del"
+        case.opened_by = "someone"
+        case.save()
+        case = self._get_case("mar")
+        case.name = "Mar"
+        case.opened_by = "someone"
+        case.save()
+        CaseAccessors(self.domain.name).soft_delete_cases(["del"], datetime.utcnow())
+        self.do_migration(diffs=[
+            Diff('del', 'diff', ['name'], old='Del', kind="CommCareCase-Deleted"),
+            Diff('del', 'diff', ['opened_by'], old='someone', kind="CommCareCase-Deleted"),
+            Diff('mar', 'diff', ['name'], old='Mar'),
+            Diff('mar', 'diff', ['opened_by'], old='someone'),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.do_case_patch(cases="with-diffs")
+        self.compare_diffs(diffs=[
+            Diff('del', 'diff', ['name'], old='Del', kind="CommCareCase-Deleted"),
+            Diff('del', 'diff', ['opened_by'], old='someone', kind="CommCareCase-Deleted"),
         ])
 
     def test_patch_cases_with_changes(self):

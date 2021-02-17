@@ -44,7 +44,9 @@ def patch_diffs(doc_diffs, log_cases=False):
     pending_diffs = []
     dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     for kind, case_id, diffs in doc_diffs:
-        assert kind == "CommCareCase", (kind, case_id)
+        if kind != "CommCareCase":
+            log.warning("cannot patch %s: %s", kind, case_id)
+            continue
         dd_count("commcare.couchsqlmigration.case.patch")
         try:
             patch_case(case_id, diffs)
