@@ -156,7 +156,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.search = options.search;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
-        this.installReference = options.installReference;
         this.sortIndex = options.sortIndex;
         this.forceManualAction = options.forceManualAction;
 
@@ -251,7 +250,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             search: self.search,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
-            installReference: self.installReference,
             sortIndex: self.sortIndex,
             forceManualAction: self.forceManualAction,
         };
@@ -269,7 +267,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'search': data.search,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
-            'installReference': data.installReference,
             'sortIndex': data.sortIndex,
             'forceManualAction': data.forceManualAction,
         };
