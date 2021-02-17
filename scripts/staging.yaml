@@ -76,4 +76,5 @@ branches:
   - ap/fix-submission-time-in-worker-activity # Amit Feb 11
   # - revert-29106-mjr/login_logging # Jenny Feb 12
   - gh/modify-export-settings-ff
+  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
 submodules: {}
