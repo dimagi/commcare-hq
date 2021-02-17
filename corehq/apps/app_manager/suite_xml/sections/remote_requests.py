@@ -176,7 +176,10 @@ class RemoteRequestFactory(object):
                 'display': display
             }
             if prop.appearance and self.app.enable_search_prompt_appearance:
-                kwargs['appearance'] = prop.appearance
+                if prop.appearance == 'geocoder_receiver':
+                    kwargs['receive'] = prop.geocoder_receiver_expression
+                else:
+                    kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
             if prop.default_value and self.app.enable_default_value_expression:

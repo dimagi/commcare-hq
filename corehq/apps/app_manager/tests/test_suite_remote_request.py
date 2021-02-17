@@ -372,6 +372,75 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
+    def test_prompt_address(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].appearance = 'address'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" appearance="address">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_address_receiver(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].appearance = 'geocoder_receiver'
+        self.module.search_config.properties[0].geocoder_receiver_expression = 'home-street'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" receive="home-street">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_prompt_itemset(self):
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
