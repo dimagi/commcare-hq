@@ -2,7 +2,7 @@ import datetime
 import json
 
 from django.conf import settings
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -57,16 +57,19 @@ class SessionDetailsView(View):
         if domain and DISABLE_WEB_APPS.enabled(domain):
             return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
 
+        domains = set()
+        for user_domain in couch_user.domains:
+            domains.add(user_domain)
+            mirror_domains = DomainPermissionsMirror.mirror_domains(user_domain)
+            domains.update(mirror_domains)
+
+        if not domain or domain not in domains:
+            return HttpResponseForbidden()
+
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
         TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=data.get('domain'))
         session.save()
-
-        domains = set()
-        for domain in couch_user.domains:
-            domains.add(domain)
-            mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
-            domains.update(mirror_domains)
 
         return JsonResponse({
             'username': user.username,
