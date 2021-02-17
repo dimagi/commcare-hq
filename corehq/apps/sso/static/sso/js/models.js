@@ -31,7 +31,7 @@ hqDefine('sso/js/models', [
 
         self.asyncHandlerError = ko.observable();
 
-        self.isNewObjectValid = ko.computed(function() {
+        self.isNewObjectValid = ko.computed(function () {
             return self.validateNewObjectFn(self.newObject());
         });
         self.isAddDisabled = ko.computed(function () {
