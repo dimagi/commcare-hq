@@ -45,8 +45,9 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
-        self.extra_options['location'] = options.get('location')
-        self.extra_options['inactive_location'] = options.get('inactive_location')
+        options.pop("and_linked")
+        options.pop("username")
+        self.extra_options = options
 
         for domain in domains:
             print(f"Processing {domain}")
