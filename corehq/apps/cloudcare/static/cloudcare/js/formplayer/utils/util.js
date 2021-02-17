@@ -167,8 +167,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.steps) {
                 this.steps = [];
             }
-            this.steps.push(step);
-            //clear out pagination and search when we take a step
+
+            // Steps only deal with strings, because formplayer will send them back as strings
+            this.steps.push(String(step));
+
+            // clear out pagination and search when we take a step
             this.page = null;
             this.search = null;
         };
