@@ -148,7 +148,7 @@ class SQLDataValueMap(models.Model):
     )
     column = models.CharField(max_length=64)
     data_element_id = models.CharField(max_length=11)
-    category_option_combo_id = models.CharField(max_length=11)
+    category_option_combo_id = models.CharField(max_length=11, blank=True)
     comment = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -211,9 +211,11 @@ def get_datavalues(
             else:
                 datavalue = {
                     'dataElement': info_for_columns[key]['data_element_id'],
-                    'categoryOptionCombo': info_for_columns[key]['category_option_combo_id'],
                     'value': value,
                 }
+                if info_for_columns[key].get('category_option_combo_id'):
+                    datavalue['categoryOptionCombo'] = (
+                        info_for_columns[key]['category_option_combo_id'])
                 if info_for_columns[key].get('comment'):
                     datavalue['comment'] = info_for_columns[key]['comment']
                 datavalues.append(datavalue)

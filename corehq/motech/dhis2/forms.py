@@ -271,7 +271,7 @@ class DataValueMapBaseForm(forms.ModelForm):
     )
     category_option_combo_id = forms.CharField(
         label=_('Category option combo ID'),
-        required=True,
+        required=False,
         validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
     )
     comment = forms.CharField(

@@ -88,7 +88,10 @@ class Migration(migrations.Migration):
                 )),
                 ('column', models.CharField(max_length=64)),
                 ('data_element_id', models.CharField(max_length=11)),
-                ('category_option_combo_id', models.CharField(max_length=11)),
+                ('category_option_combo_id', models.CharField(
+                    max_length=11,
+                    blank=True,
+                )),
                 ('comment', models.TextField(blank=True, null=True)),
                 ('dataset_map', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
