@@ -178,6 +178,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "address") {
                     appearance = "geocoder_broadcast";
                 }
+                if (searchProperties[i].input_ === "daterange") {
+                    appearance = "daterange";
+                }
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,

@@ -956,6 +956,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['appearance'] = 'address'
         elif prop.get('appearance', '') == 'geocoder_receiver':
             ret['geocoder_receiver_expression'] = ''
+        elif prop.get('appearance', '') == 'daterange':
+            ret['input_'] = 'daterange'
 
         yield ret
 
