@@ -1,4 +1,7 @@
 {% block content %}
-  <h2>Login Success.Username: {{ request.user.username }}</h2>
-  <a href="{% url 'consumer_user:patient_logout' %}">Logout</a>
+  <h2>Login Success.Username: {{ username }}</h2>
+  <a href="{% url 'consumer_user:patient_logout' %}">Logout</a><br>
+  <a href="{% url 'consumer_user:change_password' %}">Change Password</a><br>
+  <a href="{% url 'consumer_user:change_contact_details' %}">Change Contact Details</a><br>
+  <a href="{% url 'consumer_user:domain_and_cases_list' %}">Domain and cases list</a><br>
 {% endblock %}
