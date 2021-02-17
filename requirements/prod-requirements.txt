@@ -381,7 +381,7 @@ python-imap==1.0.0
     # via -r base-requirements.in
 python-levenshtein==0.12.0
     # via -r base-requirements.in
-python-magic==0.4.18
+python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
