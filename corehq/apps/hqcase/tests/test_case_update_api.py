@@ -152,6 +152,19 @@ class TestCaseAPI(TestCase):
             'sport': 'chess',
         })
 
+    def test_update_case_bad_id(self):
+        res = self._update_case('notarealcaseid', {
+            # notable exclusions: case_id, date_opened, date_modified, case_type
+            'case_name': 'Beth Harmon',
+            '@owner_id': 'us_chess_federation',
+            'properties': {
+                'rank': '2100',
+                'champion': 'true',
+            },
+        })
+        self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
+        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+
     def test_create_child_case(self):
         parent_case = self._make_case()
         res = self._create_case({
@@ -228,6 +241,24 @@ class TestCaseAPI(TestCase):
             res.json(),
             {'error': "You cannot submit more than 100 updates in a single request"}
         )
+
+    def test_update_with_bad_case_id(self):
+        res = self._bulk_update_cases([
+            {
+                # attempt to update existing case, but it doesn't exist
+                '@case_id': 'notarealcaseid',
+                'case_name': 'Beth Harmon',
+                '@owner_id': 'us_chess_federation',
+            },
+            {
+                # Also have a (valid) case creation, though it shouldn't go through
+                '@case_type': 'player',
+                'case_name': 'Jolene',
+                '@owner_id': 'methuen_home',
+            },
+        ])
+        self.assertEqual(res.json()['error'], "The following case IDs were not found: notarealcaseid")
+        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
 
     @skip("not yet implemented")
     def test_create_parent_and_child_together(self):

@@ -5,7 +5,6 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from jsonobject.exceptions import BadValueError
@@ -22,6 +21,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
 from .api import JsonCaseCreation, JsonCaseUpdate
@@ -104,6 +104,9 @@ def _handle_case_update(request, case_id=None):
 
 
 def _create_or_update_case(request, data, case_id=None):
+    if case_id is not None and _missing_cases(request.domain, [case_id]):
+        return JsonResponse({'error': f"No case found with ID '{case_id}'"}, status=400)
+
     try:
         update = _get_case_update(data, request.couch_user.user_id, case_id)
     except BadValueError as e:
@@ -124,6 +127,12 @@ def _create_or_update_case(request, data, case_id=None):
 def _bulk_update(request, all_data):
     if len(all_data) > 100:
         msg = "You cannot submit more than 100 updates in a single request"
+        return JsonResponse({'error': msg}, status=400)
+
+    existing_ids = [c['@case_id'] for c in all_data if isinstance(c, dict) and '@case_id' in c]
+    missing = _missing_cases(request.domain, existing_ids)
+    if missing:
+        msg = f"The following case IDs were not found: {', '.join(missing)}"
         return JsonResponse({'error': msg}, status=400)
 
     updates = []
@@ -148,6 +157,14 @@ def _bulk_update(request, all_data):
         '@form_id': xform.form_id,
         '@case_ids': [case.case_id for case in cases],
     })
+
+
+def _missing_cases(domain, case_ids):
+    return set(case_ids) - {
+        case.case_id for case in
+        CaseAccessors(domain).get_cases(case_ids)
+        if case.domain == domain
+    }
 
 
 def _get_case_update(data, user_id, case_id=None):
