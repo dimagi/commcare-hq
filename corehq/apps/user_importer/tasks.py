@@ -61,12 +61,11 @@ def parallel_import_task(domain, user_specs, group_specs, upload_user, upload_re
 
 
 @task(serializer='pickle', queue='user_import_queue')
-def parallel_user_import(domain, user_specs, group_specs, upload_user):
+def parallel_user_import(domain, user_specs, upload_user):
     task = parallel_user_import
-    total = len(user_specs) + len(group_specs)
+    total = len(user_specs)
     DownloadBase.set_progress(task, 0, total)
     task_list = []
-    groups = group_specs
     for users in chunked(user_specs, USER_UPLOAD_CHUNK_SIZE):
         upload_record = UserUploadRecord(
             domain=domain,
@@ -77,14 +76,12 @@ def parallel_user_import(domain, user_specs, group_specs, upload_user):
         subtask = parallel_import_task.delay(
             domain,
             list(users),
-            groups,
+            [],
             upload_user,
             upload_record.pk
         )
         task_list.append(subtask)
 
-        # only process groups the first time
-        groups = []
     incomplete = True
     while incomplete:
         subtask_progress = 0

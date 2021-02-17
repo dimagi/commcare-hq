@@ -1068,10 +1068,16 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         if PARALLEL_USER_IMPORTS.enabled(self.domain):
+            if list(self.group_specs):
+                messages.error(
+                    request,
+                    _("Groups are not allowed with parallel user import. Please upload them separately")
+                )
+                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
+
             task = parallel_user_import.delay(
                 self.domain,
                 list(self.user_specs),
-                list(self.group_specs),
                 request.couch_user
             )
         else:
