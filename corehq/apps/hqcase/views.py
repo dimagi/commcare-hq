@@ -141,6 +141,10 @@ def _create_or_update_case(request, data, case_id=None):
 
 
 def _bulk_update(request, all_data):
+    if len(all_data) > 100:
+        msg = "You cannot submit more than 100 updates in a single request"
+        return JsonResponse({'error': msg}, status=400)
+
     updates = []
     errors = []
     for i, data in enumerate(all_data):

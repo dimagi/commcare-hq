@@ -218,6 +218,17 @@ class TestCaseAPI(TestCase):
         new_case = self.case_accessor.get_case(new_case_id)
         self.assertEqual(new_case.name, 'Jolene')
 
+    def test_bulk_update_too_big(self):
+        res = self._bulk_update_cases([
+            {'case_name': f'case {i}', 'case_type': 'player'}
+            for i in range(103)
+        ])
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(
+            res.json(),
+            {'error': "You cannot submit more than 100 updates in a single request"}
+        )
+
     @skip("not yet implemented")
     def test_create_parent_and_child_together(self):
         # TODO? Since this API doesn't let you provide your own case IDs, you
