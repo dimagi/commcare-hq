@@ -19,12 +19,13 @@ class JsonIndex(jsonobject.JsonObject):
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
-    case_name = jsonobject.StringProperty(required=True)
+    case_name = jsonobject.StringProperty()
     external_id = jsonobject.StringProperty()
     user_id = jsonobject.StringProperty(required=True)
-    owner_id = jsonobject.StringProperty(name='@owner_id', required=True)
+    owner_id = jsonobject.StringProperty(name='@owner_id')
     properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})
     indices = jsonobject.DictProperty(JsonIndex)
+    _is_case_creation = False
 
     _allow_dynamic_properties = False
 
@@ -33,15 +34,21 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         string_conversions = ()
 
     def get_caseblock(self):
+
+        def _if_specified(value):
+            return value if value is not None else CaseBlock.undefined
+
+        # ID and case type can't be changed
         case_id = str(uuid.uuid4()) if self._is_case_creation else self.case_id
         case_type = self.case_type if self._is_case_creation else CaseBlock.undefined
+
         return CaseBlock(
             case_id=case_id,
             user_id=self.user_id,
             case_type=case_type,
-            case_name=self.case_name,
-            external_id=self.external_id or CaseBlock.undefined,
-            owner_id=self.owner_id,
+            case_name=_if_specified(self.case_name),
+            external_id=_if_specified(self.external_id),
+            owner_id=_if_specified(self.owner_id),
             create=self._is_case_creation,
             update=dict(self.properties),
             index={
@@ -53,6 +60,11 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
 
 class JsonCaseCreation(BaseJsonCaseChange):
     case_type = jsonobject.StringProperty(name='@case_type', required=True)
+
+    # overriding from subclass to mark these required
+    case_name = jsonobject.StringProperty(required=True)
+    owner_id = jsonobject.StringProperty(name='@owner_id', required=True)
+
     _is_case_creation = True
 
 
