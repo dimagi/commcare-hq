@@ -11,6 +11,7 @@ from mock import patch
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.consumer_user.signals import send_email_case_changed_receiver
 from django.core.signing import TimestampSigner
+from django.core.signing import Signer
 
 
 def register_url(invitation):
@@ -36,7 +37,6 @@ class RegisterTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'signup.html')
         self.assertFalse(invitation.accepted)
-        self.assertFalse(response.context['existing_user'])
 
     def test_register_consumer(self):
         email = 'a@a.com'
@@ -51,11 +51,12 @@ class RegisterTestCase(TestCase):
             'email': email,
             'password': 'password',
         }
-        self.assertQuerysetEqual(User.objects.filter(username=post_data.get('email')), [])
+        hashed_email = Signer().sign(post_data.get('email'))
+        self.assertQuerysetEqual(User.objects.filter(username=hashed_email), [])
         response = self.client.post(register_uri, post_data)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.login_url)
-        created_user = User.objects.get(username=post_data.get('email'))
+        created_user = User.objects.get(username=hashed_email)
         consumer_user = ConsumerUser.objects.get(user=created_user)
         user_case = ConsumerUserCaseRelationship.objects.get(case_user=consumer_user)
         invitation.refresh_from_db()
@@ -63,12 +64,13 @@ class RegisterTestCase(TestCase):
         self.assertEqual(user_case.domain, invitation.domain)
         self.assertTrue(invitation.accepted)
 
-    def test_register_webuser(self):
+    def test_register_existing_user(self):
         email = 'a1@a1.com'
+        hashed_email = Signer().sign(email)
         invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I',
                                                            invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
-        User.objects.create_user(username=email, email=email, password='password')
+        User.objects.create_user(username=hashed_email, email=email, password='password')
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
         post_data = {
@@ -77,17 +79,9 @@ class RegisterTestCase(TestCase):
             'email': email,
             'password': 'password',
         }
-        self.assertNotEqual(User.objects.filter(username=post_data.get('email')).count(), 0)
+        self.assertNotEqual(User.objects.filter(username=hashed_email).count(), 0)
         response = self.client.post(register_uri, post_data)
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.login_url)
-        created_user = User.objects.get(username=post_data.get('email'))
-        consumer_user = ConsumerUser.objects.get(user=created_user)
-        user_case = ConsumerUserCaseRelationship.objects.get(case_user=consumer_user)
-        invitation.refresh_from_db()
-        self.assertEqual(user_case.case_id, invitation.case_id)
-        self.assertEqual(user_case.domain, invitation.domain)
-        self.assertTrue(invitation.accepted)
 
     def test_register_different_email(self):
         email = 'a2@a2.com'
@@ -103,7 +97,7 @@ class RegisterTestCase(TestCase):
             'password': 'password',
         }
         response = self.client.post(register_uri, post_data)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 302)
 
     def test_register_accepted_invitation(self):
         invitation = ConsumerUserInvitation.objects.create(case_id='5', domain='1', invited_by='I',
@@ -124,26 +118,7 @@ class RegisterTestCase(TestCase):
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'signup.html')
-        self.assertTrue(response.context['existing_user'])
         self.assertFalse(invitation.accepted)
-
-    def test_register_webuser_wrong_password(self):
-        email = 'a7@a7.com'
-        invitation = ConsumerUserInvitation.objects.create(case_id='7', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
-                                                           email=email)
-        User.objects.create_user(username=email, email=email, password='password')
-        register_uri = register_url(invitation.id)
-        self.assertFalse(invitation.accepted)
-        post_data = {
-            'first_name': 'First',
-            'last_name': 'Last',
-            'email': email,
-            'password': 'wrong_password',
-        }
-        self.assertNotEqual(User.objects.filter(username=post_data.get('email')).count(), 0)
-        response = self.client.post(register_uri, post_data)
-        self.assertEqual(response.status_code, 400)
 
     def test_register_invalid_invitation(self):
         register_uri = register_url(1000)
@@ -167,8 +142,9 @@ class LoginTestCase(TestCase):
 
     def test_login_post(self):
         email = 'log@log.in'
+        hashed_email = Signer().sign(email)
         password = 'password'
-        user = User.objects.create_user(username=email, email=email, password=password)
+        user = User.objects.create_user(username=hashed_email, email=email, password=password)
         ConsumerUser.objects.create(user=user)
         post_data = {
             'auth-username': email,
@@ -182,42 +158,14 @@ class LoginTestCase(TestCase):
     def test_login_post_no_consumer_user(self):
         email = 'log1@log1.in'
         password = 'password'
-        User.objects.create_user(username=email, email=email, password=password)
+        hashed_email = Signer().sign(email)
+        User.objects.create_user(username=hashed_email, email=email, password=password)
         post_data = {
             'auth-username': email,
             'auth-password': password,
             'patient_login_view-current_step': 'auth',
         }
         response = self.client.post(self.login_url, post_data)
-        self.assertEqual(response.status_code, 400)
-
-    def test_login_post_no_user(self):
-        email = 'wrong@wrong.in'
-        password = 'password'
-        post_data = {
-            'auth-username': email,
-            'auth-password': password,
-            'patient_login_view-current_step': 'auth',
-        }
-        response = self.client.post(self.login_url, post_data)
-        self.assertEqual(response.status_code, 400)
-
-    def test_login_web_user_logged_in(self):
-        email = 'web@consumer.in'
-        password = 'password'
-        user = User.objects.create_user(username=email, email=email, password=password)
-        ConsumerUser.objects.create(user=user)
-        self.client.login(username=email, password=password)
-        response = self.client.get(self.login_url)
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.homepage_url)
-
-    def test_login_web_user_logged_in_no_consumer_user(self):
-        email = 'web@noconsumer.in'
-        password = 'password'
-        User.objects.create_user(username=email, email=email, password=password)
-        self.client.login(username=email, password=password)
-        response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 400)
 
 
