@@ -257,7 +257,7 @@ HQ_APPS = (
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
-    'corehq.apps.hqwebapp',
+    'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
     'corehq.apps.linked_domain',
@@ -2000,6 +2000,8 @@ DOMAIN_MODULE_MAP = {
     'inddex-reports': 'custom.inddex',
     'inddex-multilingual': 'custom.inddex',
     'inddex-multi-vn': 'custom.inddex',
+    'iita-fcms-nigeria': 'custom.inddex',
+    'cambodia-arch-3-study': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

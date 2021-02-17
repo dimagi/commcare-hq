@@ -30,7 +30,9 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         $modal.find('#js-confirmation-confirm').text(options.confirmText);
         $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
-        $modal.find('#js-confirmation-confirm').click(function (e) {
+        var $confirmationButton = $modal.find('#js-confirmation-confirm');
+        $confirmationButton.off('.confirmationModal');
+        $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
         $modal.modal('show');
@@ -128,6 +130,23 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     };
 
+    Util.getStickyQueryInputs = function () {
+        if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
+            return {};
+        }
+        if (!this.stickyQueryInputs) {
+            return {};
+        }
+        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+    };
+
+    Util.setStickyQueryInputs = function (inputs) {
+        if (!this.stickyQueryInputs) {
+            this.stickyQueryInputs = {};
+        }
+        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
+    };
+
     Util.CloudcareUrl = function (options) {
         this.appId = options.appId;
         this.copyOf = options.copyOf;
@@ -137,7 +156,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.search = options.search;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
-        this.installReference = options.installReference;
         this.sortIndex = options.sortIndex;
         this.forceManualAction = options.forceManualAction;
 
@@ -232,7 +250,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             search: self.search,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
-            installReference: self.installReference,
             sortIndex: self.sortIndex,
             forceManualAction: self.forceManualAction,
         };
@@ -250,7 +267,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'search': data.search,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
-            'installReference': data.installReference,
             'sortIndex': data.sortIndex,
             'forceManualAction': data.forceManualAction,
         };

@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Basic",
+  "$ref": "#/definitions/Basic",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Basic": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Basic is used for handling concepts not yet defined in FHIR, narrative-only resources that don\u0027t map to an existing resource, and custom resources not appropriate for inclusion in the FHIR specification.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Basic resource",
+              "type": "string",
+              "enum": [
+                "Basic"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier assigned to the resource for business purposes, outside the context of FHIR.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "code": {
+              "description": "Identifies the \u0027type\u0027 of resource - equivalent to the resource name for other resources.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "Identifies the patient, practitioner, device or any other resource that is the \"focus\" of this resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "created": {
+              "description": "Identifies when the resource was first created.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "author": {
+              "description": "Indicates who was responsible for creating the resource instance.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "code",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

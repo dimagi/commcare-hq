@@ -1,0 +1,440 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ConceptMap",
+  "$ref": "#/definitions/ConceptMap",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ConceptMap": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ConceptMap resource",
+              "type": "string",
+              "enum": [
+                "ConceptMap"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this concept map when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this concept map is (or will be) published. The URL SHOULD include the major version of the concept map. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this concept map when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the concept map when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the concept map author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the concept map. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the concept map.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this concept map. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this concept map is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the concept map was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the concept map changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the concept map.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the concept map from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate concept map instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the concept map is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this concept map is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the concept map and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the concept map.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceUri": {
+              "description": "The source value set that specifies the concepts that are being mapped.",
+              "type": "string"
+            },
+            "_sourceUri": {
+              "description": "Extensions for sourceUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceReference": {
+              "description": "The source value set that specifies the concepts that are being mapped.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "targetUri": {
+              "description": "The target value set provides context to the mappings. Note that the mapping is made between concepts, not between value sets, but the value set provides important context about how the concept mapping choices are made.",
+              "type": "string"
+            },
+            "_targetUri": {
+              "description": "Extensions for targetUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "targetReference": {
+              "description": "The target value set provides context to the mappings. Note that the mapping is made between concepts, not between value sets, but the value set provides important context about how the concept mapping choices are made.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "group": {
+              "description": "A group of mappings that all have the same source and target system.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ConceptMap_Group"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ConceptMap_Group": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
+          "properties": {
+            "source": {
+              "description": "An absolute URI that identifies the Code System (if the source is a value set that crosses more than one code system).",
+              "type": "string"
+            },
+            "_source": {
+              "description": "Extensions for source",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceVersion": {
+              "description": "The specific version of the code system, as determined by the code system authority.",
+              "type": "string"
+            },
+            "_sourceVersion": {
+              "description": "Extensions for sourceVersion",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "target": {
+              "description": "An absolute URI that identifies the code system of the target code (if the target is a value set that cross code systems).",
+              "type": "string"
+            },
+            "_target": {
+              "description": "Extensions for target",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "targetVersion": {
+              "description": "The specific version of the code system, as determined by the code system authority.",
+              "type": "string"
+            },
+            "_targetVersion": {
+              "description": "Extensions for targetVersion",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "element": {
+              "description": "Mappings for an individual concept in the source to one or more concepts in the target.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ConceptMap_Element"
+              }
+            },
+            "unmapped": {
+              "description": "What to do when there is no match in the mappings in the group.",
+              "$ref": "#/definitions/ConceptMap_Unmapped"
+            }
+          },
+          "required": [
+            "element"
+          ]
+        }
+      ]
+    },
+    "ConceptMap_Element": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
+          "properties": {
+            "code": {
+              "description": "Identity (code or path) or the element/item being mapped.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "The display for the code. The display is only provided to help editors when editing the concept map.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "target": {
+              "description": "A concept from the target value set that this concept maps to.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ConceptMap_Target"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ConceptMap_Target": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
+          "properties": {
+            "code": {
+              "description": "Identity (code or path) or the element/item that the map refers to.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "The display for the code. The display is only provided to help editors when editing the concept map.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "equivalence": {
+              "description": "The equivalence between the source and target concepts (counting for the dependencies and products). The equivalence is read from target to source (e.g. the target is \u0027wider\u0027 than the source).",
+              "enum": [
+                "relatedto",
+                "equivalent",
+                "equal",
+                "wider",
+                "subsumes",
+                "narrower",
+                "specializes",
+                "inexact",
+                "unmatched",
+                "disjoint"
+              ],
+              "type": "string"
+            },
+            "_equivalence": {
+              "description": "Extensions for equivalence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "comment": {
+              "description": "A description of status/issues in mapping that conveys additional information not represented in  the structured data.",
+              "type": "string"
+            },
+            "_comment": {
+              "description": "Extensions for comment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "dependsOn": {
+              "description": "A set of additional dependencies for this mapping to hold. This mapping is only applicable if the specified element can be resolved, and it has the specified value.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ConceptMap_DependsOn"
+              }
+            },
+            "product": {
+              "description": "A set of additional outcomes from this mapping to other elements. To properly execute this mapping, the specified element must be mapped to some data element or source that is in context. The mapping may still be useful without a place for the additional data elements, but the equivalence cannot be relied on.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ConceptMap_DependsOn"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ConceptMap_DependsOn": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
+          "properties": {
+            "property": {
+              "description": "A reference to an element that holds a coded value that corresponds to a code system property. The idea is that the information model carries an element somwhere that is labeled to correspond with a code system property.",
+              "type": "string"
+            },
+            "_property": {
+              "description": "Extensions for property",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "system": {
+              "description": "An absolute URI that identifies the code system of the dependency code (if the source/dependency is a value set that crosses code systems).",
+              "type": "string"
+            },
+            "_system": {
+              "description": "Extensions for system",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Identity (code or path) or the element/item/ValueSet that the map depends on / refers to.",
+              "type": "string"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "The display for the code. The display is only provided to help editors when editing the concept map.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "ConceptMap_Unmapped": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
+          "properties": {
+            "mode": {
+              "description": "Defines which action to take if there is no match in the group. One of 3 actions is possible: use the unmapped code (this is useful when doing a mapping between versions, and only a few codes have changed), use a fixed code (a default code), or alternatively, a reference to a different concept map can be provided (by canonical URL).",
+              "enum": [
+                "provided",
+                "fixed",
+                "other-map"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "The fixed code to use when the mode \u003d \u0027fixed\u0027  - all unmapped codes are mapped to a single fixed code.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "The display for the code. The display is only provided to help editors when editing the concept map.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "The canonical URL of the map to use if this map contains no mapping.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
