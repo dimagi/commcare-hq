@@ -71,6 +71,7 @@ branches:
   - sr/daterange-webapps # Sravan Feb 4
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - jls/remove-autolaunch # Jenny Feb 9
+  - jls/remove-autolaunch-experiment
   - bmb/sso-admin-ui  # Biyeun Feb 9
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - ap/fix-submission-time-in-worker-activity # Amit Feb 11
