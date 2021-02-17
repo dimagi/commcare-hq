@@ -22,13 +22,13 @@ hqDefine("dhis2/js/dataset_map", [
             $sendNowResult.text(gettext('DHIS2 response: ') + response.text);
         };
 
-        var handleFailure = function (response) {
+        var handleFailure = function (resp) {
             $sendNowResult
                 .removeClass("hide text-success")
                 .addClass("text-danger");
             $sendNowResult.text(
                 gettext('CommCare HQ was unable to send the DataSet: ')
-                + response.statusText
+                + (resp.responseJSON ? resp.responseJSON['error'] : resp.statusText)
             );
         };
 
