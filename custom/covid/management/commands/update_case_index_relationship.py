@@ -15,11 +15,12 @@ BATCH_SIZE = 100
 DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
-def should_skip(case, traveler_location_id):
+def should_skip(case, case_type, traveler_location_id):
+    if case_type == 'contact' and case.get_case_property('has_index_case') == 'no':
+        return True
     if traveler_location_id is None:
-        return len(case.indices) != 1 or case.get_case_property('has_index_case') == 'no'
-    return len(case.indices) != 1 or case.get_case_property('owner_id') == traveler_location_id \
-        or case.get_case_property('has_index_case') == 'no'
+        return len(case.indices) != 1
+    return len(case.indices) != 1 or case.get_case_property('owner_id') == traveler_location_id
 
 
 def needs_update(case):
@@ -61,7 +62,7 @@ class Command(CaseUpdateCommand):
         case_blocks = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
-            if should_skip(case, traveler_location_id):
+            if should_skip(case, case_type, traveler_location_id):
                 skip_count += 1
             elif needs_update(case):
                 owner_id = get_owner_id(case_type)
