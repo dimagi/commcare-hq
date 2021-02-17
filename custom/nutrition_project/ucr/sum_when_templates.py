@@ -9,7 +9,7 @@ class ChildDeliverySpec(SumWhenTemplateSpec):
 
 class ChildWeighedSpec(SumWhenTemplateSpec):
     type = TypeProperty("india-nutrition-project_child_weighed")
-    expression = "gender = ? AND residential_status = ? AND child_safe_and_alive = 'yes AND weight is NOT NULL"
+    expression = "gender = ? AND residential_status = ? AND child_safe_and_alive = 'yes' AND weight is NOT NULL"
 
 
 class ChildLowBirthWeightSpec(SumWhenTemplateSpec):
