@@ -65,7 +65,7 @@ jsonobject-couchdbkit~=1.0.1
 jsonobject==0.9.9
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
-jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot%2Bupdate_create/wheel/jsonpath_ng-1.5.2.1-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 kafka-python==1.4.7
 kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
