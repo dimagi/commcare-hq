@@ -1,11 +1,9 @@
 hqDefine('sso/js/models', [
     'jquery',
     'knockout',
-    'underscore',
 ], function (
     $,
-    ko,
-    _
+    ko
 ) {
 
     // todo make this into a better reusable component for HQ?
@@ -33,7 +31,7 @@ hqDefine('sso/js/models', [
 
         self.asyncHandlerError = ko.observable();
 
-        self.isNewObjectValid = ko.computed(function(){
+        self.isNewObjectValid = ko.computed(function() {
             return self.validateNewObjectFn(self.newObject());
         });
         self.isAddDisabled = ko.computed(function () {
@@ -58,7 +56,7 @@ hqDefine('sso/js/models', [
                     } else {
                         self.asyncHandlerError(response.error);
                     }
-                }
+                },
             });
         };
 
@@ -81,7 +79,7 @@ hqDefine('sso/js/models', [
                         } else {
                             self.addObjectError(response.error);
                         }
-                    }
+                    },
                 });
             }
         };
@@ -102,7 +100,7 @@ hqDefine('sso/js/models', [
                     } else {
                         self.asyncHandlerError(response.error);
                     }
-                }
+                },
             });
         };
 
@@ -111,5 +109,5 @@ hqDefine('sso/js/models', [
 
     return {
         linkedObjectListModel: linkedObjectListModel,
-    }
+    };
 });
