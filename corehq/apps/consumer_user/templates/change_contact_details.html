@@ -1,0 +1,26 @@
+{% block content %}
+<h2>Change Contact Details</h2>
+{% if msg %}
+    <p style="font-weight:bold">{{ msg }}</p>
+{% endif %}
+{% if form.errors %}
+    <ul class="user-msg error">
+    {% for field in form %}
+        {% for error in field.errors %}
+            <li>
+              {% if field != '__all__' %}
+                <strong>{{ field.label }}:</strong>
+              {% endif %}
+              {{ error }}
+            </li>
+        {% endfor %}
+    {% endfor %}
+    </ul>
+{% endif %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Submit">
+</form>
+<a href="{% url 'consumer_user:patient_homepage' %}">HomePage</a>
+{% endblock %}

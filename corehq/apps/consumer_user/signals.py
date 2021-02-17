@@ -32,6 +32,7 @@ def send_email_case_changed_receiver(sender, case, **kwargs):
             email_context = {
                 'link': url,
             }
+            print(url)
             send_html_email_async.delay(
                 'Beneficiary Registration',
                 email,

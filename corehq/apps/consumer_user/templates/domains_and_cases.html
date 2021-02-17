@@ -1,0 +1,19 @@
+{% block content %}
+<h2>Domains and cases</h2>
+{% if msg %}
+    <p style="font-weight:bold">{{ msg }}</p>
+{% endif %}
+<table>
+  <tr>
+    <th>Domain</th>
+    <th>Cases</th>
+  </tr>
+  {% for dict in domains_and_cases %}
+  <tr>
+    <td>{{dict.domain}}</td>
+    <td>{{dict.case_id}}</td>
+  </tr>
+  {% endfor %}
+</table>
+<a href="{% url 'consumer_user:patient_homepage' %}">HomePage</a>
+{% endblock %}
