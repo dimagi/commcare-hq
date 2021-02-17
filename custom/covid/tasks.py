@@ -33,7 +33,7 @@ MIN_CASE_COUNT = 20000
 TASK_WINDOW_CUTOFF_HOUR = 11
 
 
-@periodic_task(run_every=crontab(minute=0, hour=8), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute=0, hour=8), queue='ush_background_tasks')
 def prime_formplayer_dbs():
     domains = PRIME_FORMPLAYER_DBS.get_enabled_domains()
     date_window = datetime.utcnow() - relativedelta(hours=SYNC_WINDOW_HOURS)
@@ -44,7 +44,7 @@ def prime_formplayer_dbs():
             prime_formplayer_db_for_user.delay(domain, row[0], row[1], task_cutoff_hour=TASK_WINDOW_CUTOFF_HOUR)
 
 
-@no_result_task(queue='async_restore_queue', max_retries=3, bind=True, rate_limit=RATE_LIMIT)
+@no_result_task(queue='ush_background_tasks', max_retries=3, bind=True, rate_limit=RATE_LIMIT)
 def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id,
                                  clear_data=False, task_cutoff_hour=None):
     if task_cutoff_hour and datetime.utcnow().hour >= task_cutoff_hour:
@@ -76,7 +76,7 @@ def prime_formplayer_db_for_user(self, domain, request_user_id, sync_user_id,
         metrics_counter("commcare.prime_formplayer_db.success", tags=metric_tags)
 
 
-@no_result_task(queue='async_restore_queue', max_retries=3, bind=True)
+@no_result_task(queue='ush_background_tasks', max_retries=3, bind=True)
 def clear_formplayer_db_for_user(self, domain, request_user_id, sync_user_id):
     request_user, as_username = get_prime_restore_user_params(request_user_id, sync_user_id)
 
