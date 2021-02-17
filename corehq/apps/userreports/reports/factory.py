@@ -66,6 +66,16 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     YearRangeTemplateSpec,
 )
 
+from custom.nutrition_project.ucr.sum_when_templates import (
+    ChildDeliverySpec,
+    ChildWeighedSpec,
+    ChildLowBirthWeightSpec,
+    ChildDeathSpec,
+    WomanDeathSpec,
+    WomanDeathTypeSpec,
+    ResidentTypeSpec,
+)
+
 
 class ReportColumnFactory(object):
     class_map = {
@@ -178,6 +188,15 @@ class SumWhenTemplateFactory(object):
         'referral_health_problem_5_problems': ReferralHealthProblem5ProblemsSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
+
+        # India Nutrition Project templates
+        ChildDeliverySpec.type.choices[0]: ChildDeliverySpec,
+        ChildWeighedSpec.type.choices[0]: ChildWeighedSpec,
+        ChildLowBirthWeightSpec.type.choices[0]: ChildLowBirthWeightSpec,
+        ChildDeathSpec.type.choices[0]: ChildDeathSpec,
+        WomanDeathSpec.type.choices[0]: WomanDeathSpec,
+        WomanDeathTypeSpec.type.choices[0]: WomanDeathTypeSpec,
+        ResidentTypeSpec.type.choices[0]: ResidentTypeSpec,
     }
 
     @classmethod
