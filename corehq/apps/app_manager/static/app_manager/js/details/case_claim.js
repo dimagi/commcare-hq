@@ -79,9 +79,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
 
+        self.geocoderReceiverExpression = ko.observable(options.geocoderReceiverExpression);
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue'], saveButton);
+        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'geocoderReceiverExpression'], saveButton);
 
         return self;
     };
@@ -174,12 +175,16 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
+                if (searchProperties[i].input_ === "address") {
+                    appearance = "geocoder_broadcast";
+                }
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
                     hint: hint,
                     appearance: appearance,
                     defaultValue: searchProperties[i].default_value,
+                    geocoderReceiverExpression: searchProperties[i].geocoder_receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
                         instance_uri: searchProperties[i].itemset.instance_uri,
@@ -214,6 +219,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hint: p.hint(),
                         appearance: p.appearance(),
                         default_value: p.defaultValue(),
+                        geocoder_receiver_expression: p.geocoderReceiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
                 }

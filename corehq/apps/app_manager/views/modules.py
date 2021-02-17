@@ -952,6 +952,10 @@ def _update_search_properties(module, search_properties, lang='en'):
 
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
+        elif prop.get('appearance', '') == 'geocoder_broadcast':
+            ret['appearance'] = 'address'
+        elif prop.get('appearance', '') == 'geocoder_receiver':
+            ret['geocoder_receiver_expression'] = ''
 
         yield ret
 
