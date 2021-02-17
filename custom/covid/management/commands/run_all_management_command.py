@@ -32,11 +32,12 @@ class Command(BaseCommand):
             reader = csv.DictReader(file)
             for row in reader:
                 domains.add(row['domain'])
-                locations = {}
+                locations = {'active': {}, 'inactive': ''}
                 if row['non_traveler_active_location_id'] != '':
-                    locations['non_traveler'] = (row['non_traveler_active_location_id'])
+                    locations['active']['non_traveler'] = (row['non_traveler_active_location_id'])
                 if row['traveler_active_location_id'] != '':
-                    locations['traveler'] = (row['traveler_active_location_id'])
+                    locations['active']['traveler'] = (row['traveler_active_location_id'])
+                locations['inactive'] = row['inactive_location_id']
                 location_ids[row['domain']] = locations
 
         total_jobs = []
@@ -45,7 +46,8 @@ class Command(BaseCommand):
         if options["only_inactive"]:
             for domain in domains:
                 jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
-                                       location=location_ids[domain]['traveler']), inactive_location=INACTIVE_LOC) #TODO: add inactive loc
+                                       location=location_ids[domain]['active']['traveler'],
+                                       inactive_location=location_ids[domain]['inactive']))
             pool.join()
             total_jobs.extend(jobs)
         else:
@@ -61,7 +63,7 @@ class Command(BaseCommand):
             jobs = []
             second_pool = Pool(20)
             for domain in domains:
-                for location in location_ids[domain].values():
+                for location in location_ids[domain]['active'].values():
                     jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'patient',
                                                   location=location))
                     jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
