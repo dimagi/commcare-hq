@@ -3,7 +3,7 @@ from django import forms
 from django.db import transaction
 from django.template.defaultfilters import slugify
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 
@@ -278,9 +278,8 @@ class EditIdentityProviderAdminForm(forms.Form):
         )
 
         if self.idp.is_editable:
-            self.fields['is_editable'].help_text = mark_safe(
-                '<a href="{}">{}</a>'
-            ).format(
+            self.fields['is_editable'].help_text = format_html(
+                '<a href="{}">{}</a>',
                 utils.get_dashboard_link(self.idp),
                 _("Edit Enterprise Settings")
             )
