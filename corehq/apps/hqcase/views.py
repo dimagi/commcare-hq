@@ -24,7 +24,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
-from .api import JsonCaseCreation, JsonCaseUpdate
+from .api import JsonCaseCreation, JsonCaseUpdate, serialize_case
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -120,7 +120,7 @@ def _create_or_update_case(request, data, case_id=None):
         }, status=400)
     return JsonResponse({
         '@form_id': xform.form_id,
-        '@case_id': cases[0].case_id,
+        'case': serialize_case(cases[0]),
     })
 
 
@@ -155,7 +155,7 @@ def _bulk_update(request, all_data):
         }, status=400)
     return JsonResponse({
         '@form_id': xform.form_id,
-        '@case_ids': [case.case_id for case in cases],
+        'cases': [serialize_case(case) for case in cases],
     })
 
 

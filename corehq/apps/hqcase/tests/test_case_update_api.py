@@ -144,8 +144,8 @@ class TestCaseAPI(TestCase):
                 'dob': '1948-11-02',
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['@case_id', '@form_id'])
-        case = self.case_accessor.get_case(res['@case_id'])
+        self.assertItemsEqual(res.keys(), ['case', '@form_id'])
+        case = self.case_accessor.get_case(res['case']['@case_id'])
         self.assertEqual(case.domain, self.domain)
         self.assertEqual(case.type, 'player')
         self.assertEqual(case.name, 'Elizabeth Harmon')
@@ -192,7 +192,7 @@ class TestCaseAPI(TestCase):
                 'champion': 'true',
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['@case_id', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['case', '@form_id'])
 
         case = self.case_accessor.get_case(case.case_id)
         self.assertEqual(case.name, 'Beth Harmon')
@@ -235,9 +235,9 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['@case_id', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['case', '@form_id'])
 
-        case = self.case_accessor.get_case(res['@case_id'])
+        case = self.case_accessor.get_case(res['case']['@case_id'])
         self.assertEqual(case.name, 'Harmon/Luchenko')
         self.assertEqual(case.external_id, '23')
         self.assertEqual(case.owner_id, 'harmon')
@@ -274,12 +274,12 @@ class TestCaseAPI(TestCase):
             },
         ]).json()
         #  only returns a single form ID - chunking should happen in the client
-        self.assertItemsEqual(res.keys(), ['@case_ids', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['cases', '@form_id'])
 
         updated_case = self.case_accessor.get_case(existing_case.case_id)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case_id = [cid for cid in res['@case_ids'] if cid != existing_case.case_id][0]
+        new_case_id = [c['@case_id'] for c in res['cases'] if c['case_name'] == 'Jolene'][0]
         new_case = self.case_accessor.get_case(new_case_id)
         self.assertEqual(new_case.name, 'Jolene')
 
