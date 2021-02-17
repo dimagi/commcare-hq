@@ -22,7 +22,7 @@ hqDefine('sso/js/edit_identity_provider', [
                     && newObject.indexOf('.') !== -1
                     && newObject.indexOf('@') === -1
                     && !newObject.endsWith('.');
-            }
+            },
         });
         $('#email-domain-manager').koApplyBindings(emailDomainManager);
         emailDomainManager.init();
@@ -36,7 +36,7 @@ hqDefine('sso/js/edit_identity_provider', [
                 // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
                 var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // eslint-disable-line no-useless-escape
                 return re.test(newObject);
-            }
+            },
         });
         $('#sso-exempt-user-manager').koApplyBindings(ssoExemptUserManager);
         ssoExemptUserManager.init();

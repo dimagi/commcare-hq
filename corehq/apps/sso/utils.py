@@ -62,4 +62,3 @@ def get_dashboard_link(identity_provider):
         )
     # would only ever reach this in tests
     return '#'
-
