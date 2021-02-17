@@ -52,10 +52,8 @@ class TestRequireEnterpriseAdminDecorator(TestCase):
     def test_request_fails_for_unauthorized_user(self):
         self.request.couch_user = self.other_domain_user
         decorated_view = require_enterprise_admin(self.view)
-        self.assertRaises(
-            Http404,
-            lambda: decorated_view(self.request, *self.request_args)
-        )
+        with self.assertRaises(Http404):
+            decorated_view(self.request, *self.request_args)
 
     @classmethod
     def tearDownClass(cls):

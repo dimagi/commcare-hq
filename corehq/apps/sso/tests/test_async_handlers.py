@@ -92,7 +92,8 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'vaultwax.com',
         }
         handler = IdentityProviderAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.add_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.add_object()
 
     def test_add_object_raises_error_if_conflict_with_another_idp(self):
         AuthenticatedEmailDomain.objects.create(
@@ -104,7 +105,8 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'vwx.link',
         }
         handler = IdentityProviderAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.add_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.add_object()
 
     def test_add_object_response(self):
         self.request.POST = {
@@ -125,7 +127,8 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'vaultwax.com',
         }
         handler = IdentityProviderAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.remove_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.remove_object()
 
     def test_remove_object_removes_email_domain(self):
         AuthenticatedEmailDomain.objects.create(
@@ -206,7 +209,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'bademail',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.email_domain)
+        with self.assertRaises(AsyncHandlerError):
+            handler.email_domain
 
     def test_add_object_raises_errors_if_username_exists(self):
         UserExemptFromSingleSignOn.objects.create(
@@ -218,7 +222,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'b@vaultwax.com',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.add_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.add_object()
 
     def test_add_object_raises_errors_if_email_domain_is_linked_to_different_idp(self):
         self.request.POST = {
@@ -226,7 +231,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'b@vwx.link',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.add_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.add_object()
 
     def test_add_object_raises_errors_if_email_domain_does_not_exist(self):
         self.request.POST = {
@@ -234,7 +240,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'b@dimagi.com',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.add_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.add_object()
 
     def test_add_object_response(self):
         self.request.POST = {
@@ -255,7 +262,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'b@vaultwax.com',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.remove_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.remove_object()
 
     def test_remove_object_raises_error_if_username_is_not_linked_to_idp(self):
         UserExemptFromSingleSignOn.objects.create(
@@ -267,7 +275,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'b@vwx.link',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.remove_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.remove_object()
 
     def test_remove_object_raises_error_if_idp_is_editable_and_only_one_username(self):
         UserExemptFromSingleSignOn.objects.create(
@@ -281,7 +290,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             'objectName': 'b@vaultwax.com',
         }
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
-        self.assertRaises(AsyncHandlerError, lambda: handler.remove_object())
+        with self.assertRaises(AsyncHandlerError):
+            handler.remove_object()
 
     def test_remove_object_response(self):
         UserExemptFromSingleSignOn.objects.create(

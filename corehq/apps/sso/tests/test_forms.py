@@ -58,7 +58,8 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         }
         create_idp_form = CreateIdentityProviderForm(post_data)
         create_idp_form.cleaned_data = post_data
-        self.assertRaises(forms.ValidationError, lambda: create_idp_form.clean_slug())
+        with self.assertRaises(forms.ValidationError):
+            create_idp_form.clean_slug()
         self.assertFalse(create_idp_form.is_valid())
 
     def test_created_identity_provider(self):
@@ -122,7 +123,8 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         }
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_slug())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_slug()
         self.assertFalse(edit_idp_form.is_valid())
 
     def test_slug_update_conflict(self, *args):
@@ -141,7 +143,8 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         }
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_slug())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_slug()
         self.assertFalse(edit_idp_form.is_valid())
 
     def test_slug_and_last_modified_by_updates(self, *args):
@@ -192,13 +195,15 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         }
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_editable())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_editable()
 
         email_domain = AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com',
         )
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_editable())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_editable()
 
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
@@ -220,34 +225,42 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
 
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         email_domain = AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com',
         )
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
             email_domain=email_domain,
         )
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         self._fulfill_all_active_requirements(except_entity_id=True)
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         self._fulfill_all_active_requirements(except_login_url=True)
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         self._fulfill_all_active_requirements(except_logout_url=True)
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         self._fulfill_all_active_requirements(except_certificate=True)
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         self._fulfill_all_active_requirements(except_certificate_date=True)
-        self.assertRaises(forms.ValidationError, lambda: edit_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
 
         self._fulfill_all_active_requirements()
         self.assertTrue(edit_idp_form.is_valid())
@@ -299,13 +312,15 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
         edit_sso_idp_form.cleaned_data = post_data
 
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_is_active()
 
         email_domain = AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com',
         )
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_is_active())
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_is_active()
 
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
@@ -314,11 +329,16 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         # should not raise exception now
         edit_sso_idp_form.clean_is_active()
 
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_entity_id())
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_login_url())
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_logout_url())
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_idp_cert_public())
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_date_idp_cert_expiration())
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_entity_id()
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_login_url()
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_logout_url()
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_idp_cert_public()
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_date_idp_cert_expiration()
         self.assertFalse(edit_sso_idp_form.is_valid())
 
         corrected_post_data = self._get_post_data(is_active=True)
@@ -377,4 +397,5 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         }
         edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
         edit_sso_idp_form.cleaned_data = post_data
-        self.assertRaises(forms.ValidationError, lambda: edit_sso_idp_form.clean_date_idp_cert_expiration())
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_date_idp_cert_expiration()
