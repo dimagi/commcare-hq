@@ -13,7 +13,6 @@ requirejs.config({
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
         "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
         "jquery-mousewheel": "jquery-mousewheel/jquery.mousewheel",
-        "datetimepicker": "datetimepicker/build/jquery.datetimepicker.full.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
