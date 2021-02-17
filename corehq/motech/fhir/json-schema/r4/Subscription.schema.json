@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Subscription",
+  "$ref": "#/definitions/Subscription",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Subscription": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The subscription resource is used to define a push based subscription from a server to another system. Once a subscription is registered with the server, the server checks every resource that is created or updated, and if the resource matches the given criteria, it sends a message on the defined \"channel\" so that another system is able to take an appropriate action.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Subscription resource",
+              "type": "string",
+              "enum": [
+                "Subscription"
+              ]
+            },
+            "status": {
+              "description": "The status of the subscription, which marks the server state for managing the subscription.",
+              "enum": [
+                "requested",
+                "active",
+                "error",
+                "off"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details for a human to contact about the subscription. The primary use of this for system administrator troubleshooting.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "end": {
+              "description": "The time for the server to turn the subscription off.",
+              "type": "string"
+            },
+            "_end": {
+              "description": "Extensions for end",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reason": {
+              "description": "A description of why this subscription is defined.",
+              "type": "string"
+            },
+            "_reason": {
+              "description": "Extensions for reason",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "criteria": {
+              "description": "The rules that the server should use to determine when to generate notifications for this subscription.",
+              "type": "string"
+            },
+            "_criteria": {
+              "description": "Extensions for criteria",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "error": {
+              "description": "A record of the last error that occurred when the server processed a notification.",
+              "type": "string"
+            },
+            "_error": {
+              "description": "Extensions for error",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "channel": {
+              "description": "Details where to send notifications when resources are received that meet the criteria.",
+              "$ref": "#/definitions/Subscription_Channel"
+            },
+            "tag": {
+              "description": "A tag to add to any resource that matches the criteria, after the subscription is processed.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            }
+          },
+          "required": [
+            "channel",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Subscription_Channel": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The subscription resource is used to define a push based subscription from a server to another system. Once a subscription is registered with the server, the server checks every resource that is created or updated, and if the resource matches the given criteria, it sends a message on the defined \"channel\" so that another system is able to take an appropriate action.",
+          "properties": {
+            "type": {
+              "description": "The type of channel to send notifications on.",
+              "enum": [
+                "rest-hook",
+                "websocket",
+                "email",
+                "sms",
+                "message"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "endpoint": {
+              "description": "The uri that describes the actual end-point to send messages to.",
+              "type": "string"
+            },
+            "_endpoint": {
+              "description": "Extensions for endpoint",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "payload": {
+              "description": "The mime type to send the payload in - either application/fhir+xml, or application/fhir+json. If the payload is not present, then there is no payload in the notification, just a notification.",
+              "type": "string"
+            },
+            "_payload": {
+              "description": "Extensions for payload",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "header": {
+              "description": "Additional headers / information to send as part of the notification.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_header": {
+              "description": "Extensions for header",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

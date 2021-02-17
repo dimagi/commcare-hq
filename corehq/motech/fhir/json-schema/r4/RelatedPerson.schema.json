@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/RelatedPerson",
+  "$ref": "#/definitions/RelatedPerson",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "RelatedPerson": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Information about a person that is involved in the care for a patient, but who is not the target of healthcare, nor has a formal responsibility in the care process.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a RelatedPerson resource",
+              "type": "string",
+              "enum": [
+                "RelatedPerson"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier for a person within a particular scope.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether this related person record is in active use.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "The patient this person is related to.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "relationship": {
+              "description": "The nature of the relationship between a patient and the related person.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "name": {
+              "description": "A name associated with the person.",
+              "type": "array",
+              "items": {
+                "$ref": "HumanName.schema.json#/definitions/HumanName"
+              }
+            },
+            "telecom": {
+              "description": "A contact detail for the person, e.g. a telephone number or an email address.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "gender": {
+              "description": "Administrative Gender - the gender that the person is considered to have for administration and record keeping purposes.",
+              "enum": [
+                "male",
+                "female",
+                "other",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_gender": {
+              "description": "Extensions for gender",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "birthDate": {
+              "description": "The date on which the related person was born.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_birthDate": {
+              "description": "Extensions for birthDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "address": {
+              "description": "Address where the related person can be contacted or visited.",
+              "type": "array",
+              "items": {
+                "$ref": "Address.schema.json#/definitions/Address"
+              }
+            },
+            "photo": {
+              "description": "Image of the person.",
+              "type": "array",
+              "items": {
+                "$ref": "Attachment.schema.json#/definitions/Attachment"
+              }
+            },
+            "period": {
+              "description": "The period of time that this relationship is considered to be valid. If there are no dates defined, then the interval is unknown.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          },
+          "required": [
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

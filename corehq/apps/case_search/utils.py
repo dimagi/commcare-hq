@@ -50,24 +50,16 @@ class CaseSearchCriteria(object):
         search_es = (CaseSearchES()
                      .domain(self.domain)
                      .case_type(self.case_type)
+                     .is_closed(False)
                      .size(CASE_SEARCH_MAX_RESULTS))
         return search_es
 
     def _assemble_optional_search_params(self):
-        self._add_include_closed()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_daterange_queries()
         self._add_case_property_queries()
-
-    def _add_include_closed(self):
-        try:
-            include_closed = self.criteria.pop('include_closed')
-        except KeyError:
-            include_closed = False
-        if include_closed != 'True':
-            self.search_es = self.search_es.is_closed(False)
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)

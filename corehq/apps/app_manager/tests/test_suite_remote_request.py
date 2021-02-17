@@ -93,7 +93,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         config.default_relevant = True
         self.assertEqual(config.get_relevant(), """
-            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0
+            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         """.strip())
 
         config.default_relevant = False
@@ -103,7 +103,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0) and (double(now()) mod 2 = 0)")
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")
 
     def test_remote_request(self, *args):
         """
@@ -187,30 +187,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ),
             suite.xpath(ref_path)[0]
         )
-
-    def test_case_search_session_var(self, *args):
-        self.module.search_config.session_var = "other_case_id"
-        suite = self.app.create_suite()
-        self.assertXmlPartialEqual('''
-            <partial>
-              <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
-                    relevant="(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/other_case_id]) = 0) and (instance('groups')/groups/group)">
-                <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
-              </post>
-            </partial>
-        ''', suite, './remote-request[1]/post')
-        self.assertXmlPartialEqual('''
-            <partial>
-              <stack>
-                <push>
-                  <rewind value="instance('commcaresession')/session/data/other_case_id"/>
-                </push>
-              </stack>
-            </partial>
-        ''', suite, './remote-request[1]/stack')
-        suite = parse_normalize(suite, to_string=False)
-        self.assertEqual("other_case_id", suite.xpath("./remote-request[1]/session/datum/@id")[0])
-        self.assertEqual("./@case_id", suite.xpath("./remote-request[1]/session/datum/@value")[0])
 
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"

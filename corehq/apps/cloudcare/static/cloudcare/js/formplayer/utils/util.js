@@ -30,7 +30,9 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         $modal.find('#js-confirmation-confirm').text(options.confirmText);
         $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
-        $modal.find('#js-confirmation-confirm').click(function (e) {
+        var $confirmationButton = $modal.find('#js-confirmation-confirm');
+        $confirmationButton.off('.confirmationModal');
+        $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
         $modal.modal('show');
@@ -126,6 +128,23 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             start: selectedPage - limitHalf,
             end: selectedPage + limitHalf,
         };
+    };
+
+    Util.getStickyQueryInputs = function () {
+        if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
+            return {};
+        }
+        if (!this.stickyQueryInputs) {
+            return {};
+        }
+        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+    };
+
+    Util.setStickyQueryInputs = function (inputs) {
+        if (!this.stickyQueryInputs) {
+            this.stickyQueryInputs = {};
+        }
+        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
     };
 
     Util.CloudcareUrl = function (options) {

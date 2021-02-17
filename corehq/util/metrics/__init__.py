@@ -321,5 +321,6 @@ def _global_setup():
         try:
             from ddtrace import tracer
             tracer.enabled = False
+            tracer.log.disabled = True
         except ImportError:
             pass

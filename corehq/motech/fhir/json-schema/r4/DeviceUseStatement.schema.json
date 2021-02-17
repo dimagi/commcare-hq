@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/DeviceUseStatement",
+  "$ref": "#/definitions/DeviceUseStatement",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "DeviceUseStatement": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of a device being used by a patient where the record is the result of a report from the patient or another clinician.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a DeviceUseStatement resource",
+              "type": "string",
+              "enum": [
+                "DeviceUseStatement"
+              ]
+            },
+            "identifier": {
+              "description": "An external identifier for this statement such as an IRI.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "A code representing the patient or other source\u0027s judgment about the state of the device used that this statement is about.  Generally this will be active or completed.",
+              "enum": [
+                "active",
+                "completed",
+                "entered-in-error",
+                "intended",
+                "stopped",
+                "on-hold"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "subject": {
+              "description": "The patient who used the device.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "whenUsed": {
+              "description": "The time period over which the device was used.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "timingTiming": {
+              "description": "How often the device was used.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "timingPeriod": {
+              "description": "How often the device was used.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "timingDateTime": {
+              "description": "How often the device was used.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_timingDateTime": {
+              "description": "Extensions for timingDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "recordedOn": {
+              "description": "The time at which the statement was made/recorded.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_recordedOn": {
+              "description": "Extensions for recordedOn",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "source": {
+              "description": "Who reported the device was being used by the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "device": {
+              "description": "The details of the device used.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "indication": {
+              "description": "Reason or justification for the use of the device.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "bodySite": {
+              "description": "Indicates the site on the subject\u0027s body where the device was used ( i.e. the target site).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "note": {
+              "description": "Details about the device statement that were not represented at all or sufficiently in one of the attributes provided in a class. These may include for example a comment, an instruction, or a note associated with the statement.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "device",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

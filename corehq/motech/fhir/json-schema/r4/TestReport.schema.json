@@ -1,0 +1,391 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/TestReport",
+  "$ref": "#/definitions/TestReport",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "TestReport": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a TestReport resource",
+              "type": "string",
+              "enum": [
+                "TestReport"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier for the TestScript assigned for external purposes outside the context of FHIR.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "name": {
+              "description": "A free text natural language name identifying the executed TestScript.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The current state of this test report.",
+              "enum": [
+                "completed",
+                "in-progress",
+                "waiting",
+                "stopped",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "testScript": {
+              "description": "Ideally this is an absolute URL that is used to identify the version-specific TestScript that was executed, matching the `TestScript.url`.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "result": {
+              "description": "The overall result from the execution of the TestScript.",
+              "enum": [
+                "pass",
+                "fail",
+                "pending"
+              ],
+              "type": "string"
+            },
+            "_result": {
+              "description": "Extensions for result",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "score": {
+              "description": "The final score (percentage of tests passed) resulting from the execution of the TestScript.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_score": {
+              "description": "Extensions for score",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "tester": {
+              "description": "Name of the tester producing this report (Organization or individual).",
+              "type": "string"
+            },
+            "_tester": {
+              "description": "Extensions for tester",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "issued": {
+              "description": "When the TestScript was executed and this TestReport was generated.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_issued": {
+              "description": "Extensions for issued",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "participant": {
+              "description": "A participant in the test execution, either the execution engine, a client, or a server.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestReport_Participant"
+              }
+            },
+            "setup": {
+              "description": "The results of the series of required setup operations before the tests were executed.",
+              "$ref": "#/definitions/TestReport_Setup"
+            },
+            "test": {
+              "description": "A test executed from the test script.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestReport_Test"
+              }
+            },
+            "teardown": {
+              "description": "The results of the series of operations required to clean up after the all the tests were executed (successfully or otherwise).",
+              "$ref": "#/definitions/TestReport_Teardown"
+            }
+          },
+          "required": [
+            "testScript",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "TestReport_Participant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "type": {
+              "description": "The type of participant.",
+              "enum": [
+                "test-engine",
+                "client",
+                "server"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "uri": {
+              "description": "The uri of the participant. An absolute URL is preferred.",
+              "type": "string"
+            },
+            "_uri": {
+              "description": "Extensions for uri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "The display name of the participant.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestReport_Setup": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "action": {
+              "description": "Action would contain either an operation or an assertion.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestReport_Action"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
+    "TestReport_Action": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "operation": {
+              "description": "The operation performed.",
+              "$ref": "#/definitions/TestReport_Operation"
+            },
+            "assert": {
+              "description": "The results of the assertion performed on the previous operations.",
+              "$ref": "#/definitions/TestReport_Assert"
+            }
+          }
+        }
+      ]
+    },
+    "TestReport_Operation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "result": {
+              "description": "The result of this operation.",
+              "enum": [
+                "pass",
+                "skip",
+                "fail",
+                "warning",
+                "error"
+              ],
+              "type": "string"
+            },
+            "_result": {
+              "description": "Extensions for result",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "message": {
+              "description": "An explanatory message associated with the result.",
+              "type": "string"
+            },
+            "_message": {
+              "description": "Extensions for message",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "detail": {
+              "description": "A link to further details on the result.",
+              "type": "string"
+            },
+            "_detail": {
+              "description": "Extensions for detail",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestReport_Assert": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "result": {
+              "description": "The result of this assertion.",
+              "enum": [
+                "pass",
+                "skip",
+                "fail",
+                "warning",
+                "error"
+              ],
+              "type": "string"
+            },
+            "_result": {
+              "description": "Extensions for result",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "message": {
+              "description": "An explanatory message associated with the result.",
+              "type": "string"
+            },
+            "_message": {
+              "description": "Extensions for message",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "detail": {
+              "description": "A link to further details on the result.",
+              "type": "string"
+            },
+            "_detail": {
+              "description": "Extensions for detail",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "TestReport_Test": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "name": {
+              "description": "The name of this test used for tracking/logging purposes by test engines.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A short description of the test used by test engines for tracking and reporting purposes.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "action": {
+              "description": "Action would contain either an operation or an assertion.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestReport_Action1"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
+    "TestReport_Action1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "operation": {
+              "description": "An operation would involve a REST request to a server.",
+              "$ref": "#/definitions/TestReport_Operation"
+            },
+            "assert": {
+              "description": "The results of the assertion performed on the previous operations.",
+              "$ref": "#/definitions/TestReport_Assert"
+            }
+          }
+        }
+      ]
+    },
+    "TestReport_Teardown": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "action": {
+              "description": "The teardown action will only contain an operation.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TestReport_Action2"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
+    "TestReport_Action2": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A summary of information based on the results of executing a TestScript.",
+          "properties": {
+            "operation": {
+              "description": "An operation would involve a REST request to a server.",
+              "$ref": "#/definitions/TestReport_Operation"
+            }
+          },
+          "required": [
+            "operation"
+          ]
+        }
+      ]
+    }
+  }
+}

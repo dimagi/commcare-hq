@@ -1,0 +1,311 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/GraphDefinition",
+  "$ref": "#/definitions/GraphDefinition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "GraphDefinition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a GraphDefinition resource",
+              "type": "string",
+              "enum": [
+                "GraphDefinition"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this graph definition when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this graph definition is (or will be) published. The URL SHOULD include the major version of the graph definition. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the graph definition when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the graph definition author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the graph definition. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this graph definition. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this graph definition is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the graph definition was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the graph definition changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the graph definition.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the graph definition from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate graph definition instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the graph definition is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this graph definition is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "start": {
+              "description": "The type of FHIR resource at which instances of this graph start.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_start": {
+              "description": "Extensions for start",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "The profile that describes the use of the base resource.",
+              "type": "string"
+            },
+            "_profile": {
+              "description": "Extensions for profile",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "link": {
+              "description": "Links this graph makes rules about.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GraphDefinition_Link"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "GraphDefinition_Link": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
+          "properties": {
+            "path": {
+              "description": "Path in the resource that contains the link.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sliceName": {
+              "description": "Which slice (if profiled).",
+              "type": "string"
+            },
+            "_sliceName": {
+              "description": "Extensions for sliceName",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "min": {
+              "description": "Minimum occurrences for this link.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_min": {
+              "description": "Extensions for min",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "max": {
+              "description": "Maximum occurrences for this link.",
+              "type": "string"
+            },
+            "_max": {
+              "description": "Extensions for max",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Information about why this link is of interest in this graph definition.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "target": {
+              "description": "Potential target for the link.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GraphDefinition_Target"
+              }
+            }
+          },
+          "required": [
+            "target"
+          ]
+        }
+      ]
+    },
+    "GraphDefinition_Target": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
+          "properties": {
+            "type": {
+              "description": "Type of resource this link refers to.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "Profile for the target resource.",
+              "type": "string"
+            },
+            "_profile": {
+              "description": "Extensions for profile",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "compartment": {
+              "description": "Compartment Consistency Rules.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GraphDefinition_Compartment"
+              }
+            },
+            "link": {
+              "description": "Additional links from target resource.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GraphDefinition_Link"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "GraphDefinition_Compartment": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
+          "properties": {
+            "code": {
+              "description": "Identifies the compartment.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "rule": {
+              "description": "identical | matching | different | no-rule | custom.",
+              "enum": [
+                "identical",
+                "matching",
+                "different",
+                "custom"
+              ],
+              "type": "string"
+            },
+            "_rule": {
+              "description": "Extensions for rule",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "Custom rule, as a FHIRPath expression.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Documentation for FHIRPath expression.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

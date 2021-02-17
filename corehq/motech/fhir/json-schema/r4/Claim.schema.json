@@ -1,0 +1,876 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Claim",
+  "$ref": "#/definitions/Claim",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Claim": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Claim resource",
+              "type": "string",
+              "enum": [
+                "Claim"
+              ]
+            },
+            "identifier": {
+              "description": "The business identifier for the instance: claim number, pre-determination or pre-authorization number.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status of the resource instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The category of claim, eg, oral, pharmacy, vision, insitutional, professional.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subType": {
+              "description": "A finer grained suite of claim subtype codes which may convey Inpatient vs Outpatient and/or a specialty service. In the US the BillType.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "use": {
+              "description": "Complete (Bill or Claim), Proposed (Pre-Authorization), Exploratory (Pre-determination).",
+              "enum": [
+                "complete",
+                "proposed",
+                "exploratory",
+                "other"
+              ],
+              "type": "string"
+            },
+            "_use": {
+              "description": "Extensions for use",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "Patient Resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "billablePeriod": {
+              "description": "The billable period for which charges are being submitted.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "created": {
+              "description": "The date when the enclosed suite of services were performed or completed.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "enterer": {
+              "description": "Person who created the invoice/claim/pre-determination or pre-authorization.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "insurer": {
+              "description": "The Insurer who is target of the request.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "provider": {
+              "description": "The provider which is responsible for the bill, claim pre-determination, pre-authorization.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "organization": {
+              "description": "The organization which is responsible for the bill, claim pre-determination, pre-authorization.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "priority": {
+              "description": "Immediate (STAT), best effort (NORMAL), deferred (DEFER).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "fundsReserve": {
+              "description": "In the case of a Pre-Determination/Pre-Authorization the provider may request that funds in the amount of the expected Benefit be reserved (\u0027Patient\u0027 or \u0027Provider\u0027) to pay for the Benefits determined on the subsequent claim(s). \u0027None\u0027 explicitly indicates no funds reserving is requested.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "related": {
+              "description": "Other claims which are related to this claim such as prior claim versions or for related services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Related"
+              }
+            },
+            "prescription": {
+              "description": "Prescription to support the dispensing of Pharmacy or Vision products.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "originalPrescription": {
+              "description": "Original prescription which has been superceded by this prescription to support the dispensing of pharmacy services, medications or products. For example, a physician may prescribe a medication which the pharmacy determines is contraindicated, or for which the patient has an intolerance, and therefor issues a new precription for an alternate medication which has the same theraputic intent. The prescription from the pharmacy becomes the \u0027prescription\u0027 and that from the physician becomes the \u0027original prescription\u0027.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "payee": {
+              "description": "The party to be reimbursed for the services.",
+              "$ref": "#/definitions/Claim_Payee"
+            },
+            "referral": {
+              "description": "The referral resource which lists the date, practitioner, reason and other supporting information.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "facility": {
+              "description": "Facility where the services were provided.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "careTeam": {
+              "description": "The members of the team who provided the overall service as well as their role and whether responsible and qualifications.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_CareTeam"
+              }
+            },
+            "information": {
+              "description": "Additional information codes regarding exceptions, special considerations, the condition, situation, prior or concurrent issues. Often there are mutiple jurisdiction specific valuesets which are required.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Information"
+              }
+            },
+            "diagnosis": {
+              "description": "List of patient diagnosis for which care is sought.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Diagnosis"
+              }
+            },
+            "procedure": {
+              "description": "Ordered list of patient procedures performed to support the adjudication.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Procedure"
+              }
+            },
+            "insurance": {
+              "description": "Financial instrument by which payment information for health care.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Insurance"
+              }
+            },
+            "accident": {
+              "description": "An accident which resulted in the need for healthcare services.",
+              "$ref": "#/definitions/Claim_Accident"
+            },
+            "employmentImpacted": {
+              "description": "The start and optional end dates of when the patient was precluded from working due to the treatable condition(s).",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "hospitalization": {
+              "description": "The start and optional end dates of when the patient was confined to a treatment center.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "item": {
+              "description": "First tier of goods and services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Item"
+              }
+            },
+            "total": {
+              "description": "The total value of the claim.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Claim_Related": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "claim": {
+              "description": "Other claims which are related to this claim such as prior claim versions or for related services.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "relationship": {
+              "description": "For example prior or umbrella.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reference": {
+              "description": "An alternate organizational reference to the case or file to which this particular claim pertains - eg Property/Casualy insurer claim # or Workers Compensation case # .",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            }
+          }
+        }
+      ]
+    },
+    "Claim_Payee": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "type": {
+              "description": "Type of Party to be reimbursed: Subscriber, provider, other.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "resourceType": {
+              "description": "organization | patient | practitioner | relatedperson.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "party": {
+              "description": "Party to be reimbursed: Subscriber, provider, other.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "Claim_CareTeam": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "Sequence of the careTeam which serves to order and provide a link.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "provider": {
+              "description": "Member of the team who provided the overall service.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "responsible": {
+              "description": "The party who is billing and responsible for the claimed good or service rendered to the patient.",
+              "type": "boolean"
+            },
+            "_responsible": {
+              "description": "Extensions for responsible",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "role": {
+              "description": "The lead, assisting or supervising practitioner and their discipline if a multidisiplinary team.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "qualification": {
+              "description": "The qualification which is applicable for this service.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "provider"
+          ]
+        }
+      ]
+    },
+    "Claim_Information": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "Sequence of the information element which serves to provide a link.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "The general class of the information supplied: information; exception; accident, employment; onset, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "code": {
+              "description": "System and code pertaining to the specific information regarding special conditions relating to the setting, treatment or patient  for which care is sought which may influence the adjudication.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "timingDate": {
+              "description": "The date when or period to which this information refers.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_timingDate": {
+              "description": "Extensions for timingDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "timingPeriod": {
+              "description": "The date when or period to which this information refers.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "valueString": {
+              "description": "Additional data or information such as resources, documents, images etc. including references to the data or the actual inclusion of the data.",
+              "type": "string"
+            },
+            "_valueString": {
+              "description": "Extensions for valueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueQuantity": {
+              "description": "Additional data or information such as resources, documents, images etc. including references to the data or the actual inclusion of the data.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueAttachment": {
+              "description": "Additional data or information such as resources, documents, images etc. including references to the data or the actual inclusion of the data.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "valueReference": {
+              "description": "Additional data or information such as resources, documents, images etc. including references to the data or the actual inclusion of the data.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reason": {
+              "description": "For example, provides the reason for: the additional stay, or missing tooth or any other situation where a reason code is required in addition to the content.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        }
+      ]
+    },
+    "Claim_Diagnosis": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "Sequence of diagnosis which serves to provide a link.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "diagnosisCodeableConcept": {
+              "description": "The diagnosis.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "diagnosisReference": {
+              "description": "The diagnosis.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "type": {
+              "description": "The type of the Diagnosis, for example: admitting, primary, secondary, discharge.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "packageCode": {
+              "description": "The package billing code, for example DRG, based on the assigned grouping code system.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "Claim_Procedure": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "Sequence of procedures which serves to order and provide a link.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "Date and optionally time the procedure was performed .",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "procedureCodeableConcept": {
+              "description": "The procedure code.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "procedureReference": {
+              "description": "The procedure code.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Claim_Insurance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "Sequence of coverage which serves to provide a link and convey coordination of benefit order.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "focal": {
+              "description": "A flag to indicate that this Coverage is the focus for adjudication. The Coverage against which the claim is to be adjudicated.",
+              "type": "boolean"
+            },
+            "_focal": {
+              "description": "Extensions for focal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "coverage": {
+              "description": "Reference to the program or plan identification, underwriter or payor.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "businessArrangement": {
+              "description": "The contract number of a business agreement which describes the terms and conditions.",
+              "type": "string"
+            },
+            "_businessArrangement": {
+              "description": "Extensions for businessArrangement",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "preAuthRef": {
+              "description": "A list of references from the Insurer to which these services pertain.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_preAuthRef": {
+              "description": "Extensions for preAuthRef",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "claimResponse": {
+              "description": "The Coverages adjudication details.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "coverage"
+          ]
+        }
+      ]
+    },
+    "Claim_Accident": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "date": {
+              "description": "Date of an accident which these services are addressing.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Type of accident: work, auto, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "locationAddress": {
+              "description": "Accident Place.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "locationReference": {
+              "description": "Accident Place.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Claim_Item": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "A service line number.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "careTeamLinkId": {
+              "description": "CareTeam applicable for this service or product line.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_careTeamLinkId": {
+              "description": "Extensions for careTeamLinkId",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "diagnosisLinkId": {
+              "description": "Diagnosis applicable for this service or product line.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_diagnosisLinkId": {
+              "description": "Extensions for diagnosisLinkId",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "procedureLinkId": {
+              "description": "Procedures applicable for this service or product line.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_procedureLinkId": {
+              "description": "Extensions for procedureLinkId",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "informationLinkId": {
+              "description": "Exceptions, special conditions and supporting information pplicable for this service or product line.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_informationLinkId": {
+              "description": "Extensions for informationLinkId",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "revenue": {
+              "description": "The type of reveneu or cost center providing the product and/or service.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "category": {
+              "description": "Health Care Service Type Codes  to identify the classification of service or benefits.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "service": {
+              "description": "If this is an actual service or product line, ie. not a Group, then use code to indicate the Professional Service or Product supplied (eg. CTP, HCPCS,USCLS,ICD10, NCPDP,DIN,RXNorm,ACHI,CCI). If a grouping item then use a group code to indicate the type of thing being grouped eg. \u0027glasses\u0027 or \u0027compound\u0027.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "modifier": {
+              "description": "Item typification or modifiers codes, eg for Oral whether the treatment is cosmetic or associated with TMJ, or for medical whether the treatment was outside the clinic or out of office hours.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "programCode": {
+              "description": "For programs which require reason codes for the inclusion or covering of this billed item under the program or sub-program.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "servicedDate": {
+              "description": "The date or dates when the enclosed suite of services were performed or completed.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_servicedDate": {
+              "description": "Extensions for servicedDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "servicedPeriod": {
+              "description": "The date or dates when the enclosed suite of services were performed or completed.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "locationCodeableConcept": {
+              "description": "Where the service was provided.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "locationAddress": {
+              "description": "Where the service was provided.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "locationReference": {
+              "description": "Where the service was provided.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "quantity": {
+              "description": "The number of repetitions of a service or product.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "unitPrice": {
+              "description": "If the item is a node then this is the fee for the product or service, otherwise this is the total of the fees for the children of the group.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "factor": {
+              "description": "A real number that represents a multiplier used in determining the overall value of services delivered and/or goods received. The concept of a Factor allows for a discount or surcharge multiplier to be applied to a monetary amount.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factor": {
+              "description": "Extensions for factor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "net": {
+              "description": "The quantity times the unit price for an addittional service or product or charge. For example, the formula: unit Quantity * unit Price (Cost per Point) * factor Number  * points \u003d net Amount. Quantity, factor and points are assumed to be 1 if not supplied.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "udi": {
+              "description": "List of Unique Device Identifiers associated with this line item.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "bodySite": {
+              "description": "Physical service site on the patient (limb, tooth, etc).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subSite": {
+              "description": "A region or surface of the site, eg. limb region or tooth surface(s).",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "encounter": {
+              "description": "A billed item may include goods or services provided in multiple encounters.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "detail": {
+              "description": "Second tier of goods and services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_Detail"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Claim_Detail": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "A service line number.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "revenue": {
+              "description": "The type of reveneu or cost center providing the product and/or service.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "category": {
+              "description": "Health Care Service Type Codes  to identify the classification of service or benefits.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "service": {
+              "description": "If this is an actual service or product line, ie. not a Group, then use code to indicate the Professional Service or Product supplied (eg. CTP, HCPCS,USCLS,ICD10, NCPDP,DIN,ACHI,CCI). If a grouping item then use a group code to indicate the type of thing being grouped eg. \u0027glasses\u0027 or \u0027compound\u0027.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "modifier": {
+              "description": "Item typification or modifiers codes, eg for Oral whether the treatment is cosmetic or associated with TMJ, or for medical whether the treatment was outside the clinic or out of office hours.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "programCode": {
+              "description": "For programs which require reson codes for the inclusion, covering, of this billed item under the program or sub-program.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "quantity": {
+              "description": "The number of repetitions of a service or product.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "unitPrice": {
+              "description": "If the item is a node then this is the fee for the product or service, otherwise this is the total of the fees for the children of the group.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "factor": {
+              "description": "A real number that represents a multiplier used in determining the overall value of services delivered and/or goods received. The concept of a Factor allows for a discount or surcharge multiplier to be applied to a monetary amount.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factor": {
+              "description": "Extensions for factor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "net": {
+              "description": "The quantity times the unit price for an addittional service or product or charge. For example, the formula: unit Quantity * unit Price (Cost per Point) * factor Number  * points \u003d net Amount. Quantity, factor and points are assumed to be 1 if not supplied.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "udi": {
+              "description": "List of Unique Device Identifiers associated with this line item.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "subDetail": {
+              "description": "Third tier of goods and services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Claim_SubDetail"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Claim_SubDetail": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
+          "properties": {
+            "sequence": {
+              "description": "A service line number.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "revenue": {
+              "description": "The type of reveneu or cost center providing the product and/or service.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "category": {
+              "description": "Health Care Service Type Codes  to identify the classification of service or benefits.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "service": {
+              "description": "A code to indicate the Professional Service or Product supplied (eg. CTP, HCPCS,USCLS,ICD10, NCPDP,DIN,ACHI,CCI).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "modifier": {
+              "description": "Item typification or modifiers codes, eg for Oral whether the treatment is cosmetic or associated with TMJ, or for medical whether the treatment was outside the clinic or out of office hours.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "programCode": {
+              "description": "For programs which require reson codes for the inclusion, covering, of this billed item under the program or sub-program.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "quantity": {
+              "description": "The number of repetitions of a service or product.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "unitPrice": {
+              "description": "The fee for an addittional service or product or charge.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "factor": {
+              "description": "A real number that represents a multiplier used in determining the overall value of services delivered and/or goods received. The concept of a Factor allows for a discount or surcharge multiplier to be applied to a monetary amount.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factor": {
+              "description": "Extensions for factor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "net": {
+              "description": "The quantity times the unit price for an addittional service or product or charge. For example, the formula: unit Quantity * unit Price (Cost per Point) * factor Number  * points \u003d net Amount. Quantity, factor and points are assumed to be 1 if not supplied.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "udi": {
+              "description": "List of Unique Device Identifiers associated with this line item.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

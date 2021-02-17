@@ -179,6 +179,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     if domains_list != [domain]:
         is_multi_domain_download = True
 
+    current_user_downloaded_count = 0
     for current_domain in domains_list:
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
@@ -191,7 +192,8 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             user_groups_length = max(user_groups_length, len(group_names))
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
             if task:
-                DownloadBase.set_progress(task, n, total_count)
+                DownloadBase.set_progress(task, n + current_user_downloaded_count, total_count)
+        current_user_downloaded_count += n + 1
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
