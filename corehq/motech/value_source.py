@@ -158,7 +158,7 @@ class ValueSource:
             jsonpath = parse_jsonpath(self.jsonpath)
         except Exception as err:
             raise JsonpathError from err
-        jsonpath.update(external_data, value, create=True)
+        jsonpath.update_or_create(external_data, value)
 
     def serialize(self, value: Any) -> Any:
         """
