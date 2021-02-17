@@ -76,7 +76,7 @@
                             <option value="daterange">{% trans "Date Range" %}</option>
                             <option value="barcode_scan">{% trans "Barcode" %}</option>
                             <option value="fixture">{% trans "Lookup Table Selection" %}</option>
-                            <option value="geocoder_broadcast">{% trans "Geocoder Broadcast" %}</option>
+                            <option value="address">{% trans "Geocoder Broadcast" %}</option>
                             <option value="geocoder_receiver">{% trans "Geocoder Receiver" %}</option>
                           </select>
                         </div>
@@ -125,7 +125,7 @@
                             {% trans "Geocoder Receiver Expression" %}
                           </label>
                           <div class="col-xs-12 col-sm-9">
-                            <input class="form-control" type="text" data-bind="value: property.geocoder_receiver_expression"/>
+                            <input class="form-control" type="text" data-bind="value: property.geocoderReceiverExpression"/>
                           </div>
                         </div>
                     </fieldset>

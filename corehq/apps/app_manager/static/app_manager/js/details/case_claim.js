@@ -69,6 +69,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hint: '',
             appearance: '',
             defaultValue: '',
+            geocoderReceiverExpression: '',
             itemsetOptions: {},
         });
         var self = {};
@@ -175,8 +176,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
-                if (searchProperties[i].input_ === "address") {
-                    appearance = "geocoder_broadcast";
+                if (searchProperties[i].appearance === "address") {
+                    appearance = "address";
                 }
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
