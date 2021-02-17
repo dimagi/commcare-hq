@@ -5,7 +5,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
     'jquery-mousewheel',
-    'datetimepicker',
+    'datetimepicker/build/jquery.datetimepicker.full.min',
 ], function (
     $,
     ko,
