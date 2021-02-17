@@ -103,25 +103,6 @@ def _handle_case_update(request, case_id=None):
         return _create_or_update_case(request, data, case_id)
 
 
-def _get_case_update(data, user_id, case_id=None):
-    update_class = JsonCaseCreation if case_id is None else JsonCaseUpdate
-    additonal_args = {'user_id': user_id}
-    if case_id is not None:
-        additonal_args['case_id'] = case_id
-    return update_class.wrap({**data, **additonal_args})
-
-
-def _submit_case_updates(updates, request):
-    return submit_case_blocks(
-        case_blocks=[update.get_caseblock() for update in updates],
-        domain=request.domain,
-        username=request.couch_user.username,
-        user_id=request.couch_user.user_id,
-        xmlns='http://commcarehq.org/case_api',
-        device_id=request.META.get('HTTP_USER_AGENT'),
-    )
-
-
 def _create_or_update_case(request, data, case_id=None):
     try:
         update = _get_case_update(data, request.couch_user.user_id, case_id)
@@ -167,3 +148,22 @@ def _bulk_update(request, all_data):
         '@form_id': xform.form_id,
         '@case_ids': [case.case_id for case in cases],
     })
+
+
+def _get_case_update(data, user_id, case_id=None):
+    update_class = JsonCaseCreation if case_id is None else JsonCaseUpdate
+    additonal_args = {'user_id': user_id}
+    if case_id is not None:
+        additonal_args['case_id'] = case_id
+    return update_class.wrap({**data, **additonal_args})
+
+
+def _submit_case_updates(updates, request):
+    return submit_case_blocks(
+        case_blocks=[update.get_caseblock() for update in updates],
+        domain=request.domain,
+        username=request.couch_user.username,
+        user_id=request.couch_user.user_id,
+        xmlns='http://commcarehq.org/case_api',
+        device_id=request.META.get('HTTP_USER_AGENT'),
+    )
