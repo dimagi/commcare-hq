@@ -138,6 +138,12 @@ class CaseCommandsTest(TestCase):
             index={'patient': ('patient', patient_case_id, 'child')}
         )
 
+        excluded_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, excluded_case_id, user_id=self.user_id, owner_id='owner1', case_type='contact',
+            index={'patient': ('patient', patient_case_id, 'child')}, update={"has_index_case": 'no'},
+        )
+
         traveler_case = self.case_accessor.get_case(traveler_case_id)
         self.assertEqual(traveler_case.indices[0].referenced_type, 'patient')
         self.assertEqual(traveler_case.indices[0].relationship, 'child')
@@ -148,6 +154,45 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(traveler_case.indices[0].relationship, 'child')
         non_traveler_case = self.case_accessor.get_case(non_traveler_case_id)
         self.assertEqual(non_traveler_case.indices[0].relationship, 'extension')
+        excluded_case = self.case_accessor.get_case(excluded_case_id)
+        self.assertEqual(excluded_case.indices[0].relationship, 'child')
+
+    def test_update_case_index_relationship_with_inactive_location(self):
+        location_type = LocationType.objects.create(
+            domain=self.domain,
+            name="Location",
+        )
+        SQLLocation.objects.create(
+            domain=self.domain, name='inactive_loc', location_id='inactive_loc_id',
+            location_type=location_type,
+        )
+        patient_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient_case_id, user_id=self.user_id, owner_id='owner1', case_type='patient',
+        )
+        inactive_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, inactive_case_id, user_id=self.user_id, owner_id='inactive_loc_id', case_type='contact',
+            index={'patient': ('patient', patient_case_id, 'child')}
+        )
+
+        other_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, other_case_id, user_id=self.user_id, owner_id='other_owner_id', case_type='contact',
+            index={'patient': ('patient', patient_case_id, 'child')}
+        )
+
+        inactive_case = self.case_accessor.get_case(inactive_case_id)
+        self.assertEqual(inactive_case.indices[0].referenced_type, 'patient')
+        self.assertEqual(inactive_case.indices[0].relationship, 'child')
+
+        call_command('update_case_index_relationship', self.domain, 'contact',
+                     '--inactive-location=inactive_loc_id')
+
+        inactive_case = self.case_accessor.get_case(inactive_case_id)
+        self.assertEqual(inactive_case.indices[0].relationship, 'extension')
+        non_traveler_case = self.case_accessor.get_case(other_case_id)
+        self.assertEqual(non_traveler_case.indices[0].relationship, 'child')
 
     def test_update_owner_ids(self):
         parent_loc_type = LocationType.objects.create(
