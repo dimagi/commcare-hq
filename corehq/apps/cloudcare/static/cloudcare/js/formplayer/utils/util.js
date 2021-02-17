@@ -211,7 +211,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryData = null;
+console.log("clearing query data because clearExceptApp");
+            //this.queryData = null;
             this.forceManualAction = null;
         };
 
@@ -219,7 +220,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryData = null;
+console.log("clearing query data because onSubmit");
+            //this.queryData = null;
             this.forceManualAction = null;
         };
 
@@ -233,7 +235,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             this.page = null;
             this.search = null;
-            this.queryData = null;
+console.log("clearing query data because spliceSteps");
+            //this.queryData = null;
             this.sortIndex = null;
             this.forceManualAction = null;
         };
