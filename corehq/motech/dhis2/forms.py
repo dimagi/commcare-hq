@@ -259,10 +259,10 @@ class DataValueMapBaseForm(forms.ModelForm):
     column = forms.CharField(
         label=_('Column'),
         required=True,
-        validators=[RegexValidator(r'^[a-zA-Z]\w{0,63}$', _(
+        validators=[RegexValidator(r'^[a-zA-Z][\w-]{0,63}$', _(
             "A column name must start with a letter, and can be followed by "
-            "letters, numbers and underscores. It can't be longer than 64 "
-            "characters."))],
+            "letters, numbers, underscores and hyphens. It can't be longer "
+            "than 64 characters."))],
     )
     data_element_id = forms.CharField(
         label=_('Data element ID'),
