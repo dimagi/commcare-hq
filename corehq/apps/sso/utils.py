@@ -1,4 +1,7 @@
 from django.conf import settings
+from django.urls import reverse
+
+from dimagi.utils.web import get_url_base
 
 
 def get_request_data(request):
@@ -23,3 +26,36 @@ def get_request_data(request):
         'get_data': request.GET.copy(),
         'post_data': request.POST.copy(),
     }
+
+
+def _get_full_sso_url(view_name, identity_provider):
+    return "{}{}".format(
+        get_url_base(),
+        reverse(view_name, args=(identity_provider.slug,))
+    )
+
+
+def get_saml_entity_id(identity_provider):
+    return _get_full_sso_url("sso_saml_metadata", identity_provider)
+
+
+def get_saml_acs_url(identity_provider):
+    return _get_full_sso_url("sso_saml_acs", identity_provider)
+
+
+def get_saml_sls_url(identity_provider):
+    return _get_full_sso_url("sso_saml_sls", identity_provider)
+
+
+def get_dashboard_link(identity_provider):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.sso.views.enterprise_admin import EditIdentityProviderEnterpriseView
+    linked_subscription = Subscription.visible_objects.filter(
+        account=identity_provider.owner,
+        is_active=True,
+        account__is_active=True,
+    ).first()
+    return reverse(
+        EditIdentityProviderEnterpriseView.urlname,
+        args=(linked_subscription.subscriber.domain, identity_provider.slug,)
+    )
