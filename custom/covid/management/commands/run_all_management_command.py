@@ -10,12 +10,12 @@ DEVICE_ID = __name__ + ".run_all_management_command"
 
 def run_command(command, *args, location=None, inactive_location=None):
     try:
-        if location is None:
-            call_command(command, *args)
-        if inactive_location is None:
+        if inactive_location is not None:
+            call_command(command, *args, location=location, inactive_location=inactive_location)
+        elif location is not None:
             call_command(command, *args, location=location)
         else:
-            call_command(command, *args, location=location, inactive_location=inactive_location)
+            call_command(command, *args)
     except Exception as e:
         return False, command, args, e
     return True, command, args, None
@@ -28,12 +28,12 @@ class Command(BaseCommand):
         parser.add_argument('--only-inactive', action='store_true', default=False)
 
     def handle(self, csv_file, **options):
-        domains = set()
+        domains = []
         location_ids = {}
         with open(csv_file, newline='') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                domains.add(row['domain'])
+                domains.append(row['domain'])
                 locations = {'active': {}, 'inactive': ''}
                 if row['non_traveler_active_location_id'] != '':
                     locations['active']['non_traveler'] = (row['non_traveler_active_location_id'])
@@ -41,6 +41,11 @@ class Command(BaseCommand):
                     locations['active']['traveler'] = (row['traveler_active_location_id'])
                 locations['inactive'] = row['inactive_location_id']
                 location_ids[row['domain']] = locations
+
+        if len(set(domains)) != len(domains):
+            domains = set(domains)
+            print("Rows with duplicate domains were found from csv file. The commands for each domains will"
+                  " run differently than the order of the csv file.")
 
         total_jobs = []
         jobs = []
@@ -55,7 +60,7 @@ class Command(BaseCommand):
         else:
             for domain in domains:
                 jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
-                                       location=location_ids[domain]['traveler']))
+                                       location=location_ids[domain]['active']['traveler']))
                 jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
                 jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
                 jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
