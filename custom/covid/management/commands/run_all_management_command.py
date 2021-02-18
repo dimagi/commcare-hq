@@ -28,12 +28,12 @@ class Command(BaseCommand):
         parser.add_argument('--only-inactive', action='store_true', default=False)
 
     def handle(self, csv_file, **options):
-        domains = set()
+        domains = []
         location_ids = {}
         with open(csv_file, newline='') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                domains.add(row['domain'])
+                domains.append(row['domain'])
                 locations = {'active': {}, 'inactive': ''}
                 if row['non_traveler_active_location_id'] != '':
                     locations['active']['non_traveler'] = (row['non_traveler_active_location_id'])
@@ -41,6 +41,11 @@ class Command(BaseCommand):
                     locations['active']['traveler'] = (row['traveler_active_location_id'])
                 locations['inactive'] = row['inactive_location_id']
                 location_ids[row['domain']] = locations
+
+        if len(set(domains)) != len(domains):
+            domains = set(domains)
+            print("Rows with duplicate domains were found from csv file. The commands for each domains will"
+                  " run differently than the order of the csv file.")
 
         total_jobs = []
         jobs = []
