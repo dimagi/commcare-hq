@@ -1582,6 +1582,16 @@ MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
     relevant_environments={"icds", "icds-staging"}
 )
 
+SESSION_ENDPOINTS = StaticToggle(
+    'session_endpoints',
+    'Enable session endpoints',
+
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+    description='Support external Android apps calling in to an endpoint in a '
+                'CommCare app. (Used by the Reminders App)',
+)
+
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
