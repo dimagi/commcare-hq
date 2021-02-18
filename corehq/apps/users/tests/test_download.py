@@ -102,7 +102,6 @@ class TestDownloadMobileWorkers(TestCase):
 
     def test_download(self):
         (headers, rows) = parse_mobile_users(self.domain_obj.name, {})
-        self.assertNotIn('user_profile', headers)
 
         rows = list(rows)
         self.assertEqual(2, len(rows))
