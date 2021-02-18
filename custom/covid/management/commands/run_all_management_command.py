@@ -10,12 +10,12 @@ DEVICE_ID = __name__ + ".run_all_management_command"
 
 def run_command(command, *args, location=None, inactive_location=None):
     try:
-        if location is None:
-            call_command(command, *args)
-        if inactive_location is None:
+        if inactive_location is not None:
+            call_command(command, *args, location=location, inactive_location=inactive_location)
+        elif location is not None:
             call_command(command, *args, location=location)
         else:
-            call_command(command, *args, location=location, inactive_location=inactive_location)
+            call_command(command, *args)
     except Exception as e:
         return False, command, args, e
     return True, command, args, None
