@@ -1,9 +1,15 @@
 import uuid
 
+from django.http import JsonResponse
+
 import jsonobject
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from couchforms.models import XFormError
+
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 def serialize_case(case):
@@ -101,3 +107,86 @@ class JsonCaseCreation(BaseJsonCaseChange):
 class JsonCaseUpdate(BaseJsonCaseChange):
     case_id = jsonobject.StringProperty(required=True)
     _is_case_creation = False
+
+
+def create_or_update_case(request, data, case_id=None):
+    if case_id is not None and _missing_cases(request.domain, [case_id]):
+        return JsonResponse({'error': f"No case found with ID '{case_id}'"}, status=400)
+
+    try:
+        update = _get_case_update(data, request.couch_user.user_id, case_id)
+    except BadValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    xform, cases = _submit_case_updates([update], request)
+    if isinstance(xform, XFormError):
+        return JsonResponse({
+            'error': xform.problem,
+            '@form_id': xform.form_id,
+        }, status=400)
+    return JsonResponse({
+        '@form_id': xform.form_id,
+        'case': serialize_case(cases[0]),
+    })
+
+
+def bulk_update(request, all_data):
+    if len(all_data) > 100:
+        msg = "You cannot submit more than 100 updates in a single request"
+        return JsonResponse({'error': msg}, status=400)
+
+    existing_ids = [c['@case_id'] for c in all_data if isinstance(c, dict) and '@case_id' in c]
+    missing = _missing_cases(request.domain, existing_ids)
+    if missing:
+        msg = f"The following case IDs were not found: {', '.join(missing)}"
+        return JsonResponse({'error': msg}, status=400)
+
+    updates = []
+    errors = []
+    for i, data in enumerate(all_data):
+        try:
+            update = _get_case_update(data, request.couch_user.user_id, data.pop('@case_id', None))
+            updates.append(update)
+        except BadValueError as e:
+            errors.append(f'Error in row {i}: {e}')
+
+    if errors:
+        return JsonResponse({'errors': errors}, status=400)
+
+    xform, cases = _submit_case_updates(updates, request)
+    if isinstance(xform, XFormError):
+        return JsonResponse({
+            'error': xform.problem,
+            '@form_id': xform.form_id,
+        }, status=400)
+    return JsonResponse({
+        '@form_id': xform.form_id,
+        'cases': [serialize_case(case) for case in cases],
+    })
+
+
+def _missing_cases(domain, case_ids):
+    return set(case_ids) - {
+        case.case_id for case in
+        CaseAccessors(domain).get_cases(case_ids)
+        if case.domain == domain
+    }
+
+
+def _get_case_update(data, user_id, case_id=None):
+    update_class = JsonCaseCreation if case_id is None else JsonCaseUpdate
+    additonal_args = {'user_id': user_id}
+    if case_id is not None:
+        additonal_args['case_id'] = case_id
+    return update_class.wrap({**data, **additonal_args})
+
+
+def _submit_case_updates(updates, request):
+    return submit_case_blocks(
+        case_blocks=[update.get_caseblock() for update in updates],
+        domain=request.domain,
+        username=request.couch_user.username,
+        user_id=request.couch_user.user_id,
+        xmlns='http://commcarehq.org/case_api',
+        device_id=request.META.get('HTTP_USER_AGENT'),
+    )
