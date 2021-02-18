@@ -560,7 +560,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
         self.renderSelect2 = function () {
             var $input = $('#' + self.entryId);
-            $input.select2(_.extend({
+            $input.selectWoo(_.extend({
                 allowClear: true,
                 placeholder: self.placeholderText,
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
