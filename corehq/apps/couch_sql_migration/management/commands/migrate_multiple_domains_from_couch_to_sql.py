@@ -190,9 +190,9 @@ def format_diff_stats(stats, header=None):
         class stream:
             write = lines.append
 
-        writer = SimpleTableWriter(stream, TableRowFormatter([30, 10, 10, 10]))
+        writer = SimpleTableWriter(stream, TableRowFormatter([30, 7, 7, 7, 7]))
         writer.write_table(
-            ['Doc Type', '# Couch', '# SQL', '# Docs with Diffs'],
+            ['Doc Type', 'Docs', 'Diffs', "Missing", "Changes"],
             [(doc_type,) + stat.columns for doc_type, stat in stats.items()],
         )
     return "\n".join(lines)
@@ -208,11 +208,11 @@ class DiffStats:
         pending = f"{self.pending} pending" if self.pending else ""
         counts = self.counts
         if not counts:
-            return "?", "?", pending
-        diffs = counts.diffs + counts.changes
+            return "?", "?", "?", pending
+        changes = counts.changes
         if pending:
-            diffs = f"{diffs} + {pending}" if diffs else pending
-        return counts.total, counts.total + counts.missing, diffs
+            changes = f"{changes} + {pending}" if changes else pending
+        return counts.total, counts.diffs, counts.missing, changes
 
     @property
     def patchable(self):
