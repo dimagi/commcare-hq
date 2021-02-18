@@ -3,7 +3,7 @@ from django.forms import PasswordInput
 from django.contrib.auth.models import User
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
-from django.core.signing import Signer
+from corehq.apps.consumer_user.utils import hash_username_from_email
 
 
 class PatientSignUpForm(ModelForm):
@@ -24,7 +24,7 @@ class PatientSignUpForm(ModelForm):
     def save(self, commit=True):
         user = super(PatientSignUpForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password"])
-        user.username = Signer().sign(self.cleaned_data['email'])
+        user.username = hash_username_from_email(self.cleaned_data['email'])
         if commit:
             user.save()
             consumer_user = ConsumerUser.objects.create(user=user)

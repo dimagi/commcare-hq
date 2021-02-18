@@ -13,8 +13,10 @@ from django.core.signing import TimestampSigner
 
 def send_email_case_changed_receiver(sender, case, **kwargs):
     try:
-        email = 'challarao@beehyv.com'
-
+        try:
+            email = case.get_email()
+        except Exception:
+            email = 'challarao@beehyv.com'
         invitation, created = ConsumerUserInvitation.objects.get_or_create(case_id=case.case_id,
                                                                            domain=case.domain)
         if created or invitation.email != email:
