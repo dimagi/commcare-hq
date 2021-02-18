@@ -36,3 +36,8 @@ class WomanDeathTypeSpec(SumWhenTemplateSpec):
 class ResidentTypeSpec(SumWhenTemplateSpec):
     type = TypeProperty("india-nutrition-project_resident_type")
     expression = "gender = ? AND residential_status = ?"
+
+
+class NutritionCenterOpenTodaySpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_nutrition_center_open_today")
+    expression = "nutrition_center_open_today = ?"
