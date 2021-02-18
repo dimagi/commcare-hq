@@ -220,6 +220,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         var options = {
             'appId': urlObject.appId,
             'steps': urlObject.steps,
+            'queryData': urlObject.queryData,
         };
         hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
     });
