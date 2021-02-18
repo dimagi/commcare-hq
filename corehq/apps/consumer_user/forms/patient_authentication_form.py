@@ -3,9 +3,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
-from django.core.signing import Signer
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
+from corehq.apps.consumer_user.utils import hash_username_from_email
 
 
 class PatientAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -21,7 +21,7 @@ class PatientAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         super().__init__(*args, **kwargs)
 
     def clean_username(self):
-        self.cleaned_data['username'] = Signer().sign(self.cleaned_data['username'])
+        self.cleaned_data['username'] = hash_username_from_email(self.cleaned_data['username'])
         return self.cleaned_data['username']
 
     def clean(self):

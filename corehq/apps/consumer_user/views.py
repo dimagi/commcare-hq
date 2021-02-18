@@ -6,7 +6,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.signing import TimestampSigner
-from django.core.signing import Signer
+from .utils import hash_username_from_email
+from .utils import get_email_from_hashed_username
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from datetime import timedelta
@@ -94,7 +95,7 @@ def register_view(request, invitation):
     except SignatureExpired:
         return JsonResponse({'message': "Invitation is expired"}, status=400)
     email = invitation_obj.email
-    hashed_email = Signer().sign(email)
+    hashed_email = hash_username_from_email(email)
     try:
         create_user = request.GET.get('create_user', False)
         if create_user != '1':
@@ -111,7 +112,7 @@ def register_view(request, invitation):
     if request.method == "POST":
         body = request.POST
         entered_email = request.POST.get('email')
-        hashed_username = Signer().sign(entered_email)
+        hashed_username = hash_username_from_email(entered_email)
         form = PatientSignUpForm(body, invitation=invitation_obj)
         try:
             _ = User.objects.get(username=hashed_username)
@@ -175,10 +176,7 @@ def login_accept_view(request, invitation):
 
 @login_required
 def success_view(request):
-    try:
-        username = Signer().unsign(request.user.username)
-    except BadSignature:
-        username = request.user.email
+    username = get_email_from_hashed_username(request.user.username)
     return render(request, 'homepage.html', {'username': username})
 
 
@@ -206,7 +204,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
             messages.success(
                 self.request,
                 _('Password for {} has successfully been reset. You can now login.').format(
-                    Signer().unsign(consumer_user.user.username)
+                    get_email_from_hashed_username(consumer_user.user.username)
                 )
             )
         return super().get_success_url()

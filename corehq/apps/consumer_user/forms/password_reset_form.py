@@ -16,7 +16,7 @@ from django.utils.translation import ugettext_lazy
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from django.core.signing import Signer
+from corehq.apps.consumer_user.utils import hash_username_from_email
 
 
 class ConsumerUserPasswordResetForm(NoAutocompleteMixin, forms.Form):
@@ -34,7 +34,7 @@ class ConsumerUserPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     def clean_email(self):
         UserModel = get_user_model()
-        email = Signer().sign(self.cleaned_data["email"])
+        email = hash_username_from_email(self.cleaned_data["email"])
         matching_users = UserModel._default_manager.filter(username__iexact=email)
 
         # below here is not modified from the superclass
