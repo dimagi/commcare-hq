@@ -4,7 +4,6 @@ import jsonobject
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from couchforms.models import XFormError
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -111,32 +110,36 @@ class UserError(Exception):
     pass
 
 
-def handle_case_update(request, data, case_id):
-    if isinstance(data, list):
-        return bulk_update(request, data)
+def handle_case_update(domain, data, user, device_id, case_id=None):
+    is_bulk = isinstance(data, list)
+    if is_bulk:
+        updates = _get_bulk_updates(domain, data, user)
     else:
-        return create_or_update_case(request, data, case_id)
+        updates = [_get_individual_update(domain, data, user, case_id)]
+
+    xform, cases = _submit_case_updates(updates, domain, user, device_id)
+    if is_bulk:
+        return xform, cases
+    else:
+        return xform, cases[0] if cases else None
 
 
-def create_or_update_case(request, data, case_id=None):
-    if case_id is not None and _missing_cases(request.domain, [case_id]):
+def _get_individual_update(domain, data, user, case_id=None):
+    if case_id is not None and _missing_cases(domain, [case_id]):
         raise UserError(f"No case found with ID '{case_id}'")
 
     try:
-        update = _get_case_update(data, request.couch_user.user_id, case_id)
+        return _get_case_update(data, user.user_id, case_id)
     except BadValueError as e:
         raise UserError(str(e))
 
-    xform, cases = _submit_case_updates([update], request)
-    return xform, cases[0] if cases else None
 
-
-def bulk_update(request, all_data):
+def _get_bulk_updates(domain, all_data, user):
     if len(all_data) > 100:
         raise UserError("You cannot submit more than 100 updates in a single request")
 
     existing_ids = [c['@case_id'] for c in all_data if isinstance(c, dict) and '@case_id' in c]
-    missing = _missing_cases(request.domain, existing_ids)
+    missing = _missing_cases(domain, existing_ids)
     if missing:
         raise UserError(f"The following case IDs were not found: {', '.join(missing)}")
 
@@ -144,7 +147,7 @@ def bulk_update(request, all_data):
     errors = []
     for i, data in enumerate(all_data):
         try:
-            update = _get_case_update(data, request.couch_user.user_id, data.pop('@case_id', None))
+            update = _get_case_update(data, user.user_id, data.pop('@case_id', None))
             updates.append(update)
         except BadValueError as e:
             errors.append(f'Error in row {i}: {e}')
@@ -152,7 +155,7 @@ def bulk_update(request, all_data):
     if errors:
         raise UserError("; ".join(errors))
 
-    return _submit_case_updates(updates, request)
+    return updates
 
 
 def _missing_cases(domain, case_ids):
@@ -171,12 +174,12 @@ def _get_case_update(data, user_id, case_id=None):
     return update_class.wrap({**data, **additonal_args})
 
 
-def _submit_case_updates(updates, request):
+def _submit_case_updates(updates, domain, user, device_id):
     return submit_case_blocks(
         case_blocks=[update.get_caseblock() for update in updates],
-        domain=request.domain,
-        username=request.couch_user.username,
-        user_id=request.couch_user.user_id,
+        domain=domain,
+        username=user.username,
+        user_id=user.user_id,
         xmlns='http://commcarehq.org/case_api',
-        device_id=request.META.get('HTTP_USER_AGENT'),
+        device_id=device_id,
     )

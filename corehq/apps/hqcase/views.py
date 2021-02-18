@@ -94,7 +94,13 @@ def _handle_case_update(request, case_id=None):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
 
     try:
-        xform, case_or_cases = handle_case_update(request, data, case_id)
+        xform, case_or_cases = handle_case_update(
+            domain=request.domain,
+            data=data,
+            user=request.couch_user,
+            device_id=request.META.get('HTTP_USER_AGENT'),
+            case_id=case_id,
+        )
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
