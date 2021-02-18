@@ -60,7 +60,7 @@ class Command(BaseCommand):
         else:
             for domain in domains:
                 jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
-                                       location=location_ids[domain]['traveler']))
+                                       location=location_ids[domain]['active']['traveler']))
                 jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
                 jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
                 jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
