@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
+from couchforms.models import XFormError
 from soil import DownloadBase
 
 from corehq import privileges
@@ -19,7 +20,7 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.utils import should_use_sql_backend
 
-from .api import bulk_update, create_or_update_case
+from .api import UserError, handle_case_update, serialize_case
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -92,7 +93,23 @@ def _handle_case_update(request, case_id=None):
     except (UnicodeDecodeError, json.JSONDecodeError):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
 
-    if isinstance(data, list):
-        return bulk_update(request, data)
-    else:
-        return create_or_update_case(request, data, case_id)
+    try:
+        xform, case_or_cases = handle_case_update(request, data, case_id)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    if isinstance(xform, XFormError):
+        return JsonResponse({
+            'error': xform.problem,
+            '@form_id': xform.form_id,
+        }, status=400)
+
+    if isinstance(case_or_cases, list):
+        return JsonResponse({
+            '@form_id': xform.form_id,
+            'cases': [serialize_case(case) for case in case_or_cases],
+        })
+    return JsonResponse({
+        '@form_id': xform.form_id,
+        'case': serialize_case(case_or_cases),
+    })

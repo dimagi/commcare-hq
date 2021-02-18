@@ -1,7 +1,5 @@
 import uuid
 
-from django.http import JsonResponse
-
 import jsonobject
 from jsonobject.exceptions import BadValueError
 
@@ -109,37 +107,38 @@ class JsonCaseUpdate(BaseJsonCaseChange):
     _is_case_creation = False
 
 
+class UserError(Exception):
+    pass
+
+
+def handle_case_update(request, data, case_id):
+    if isinstance(data, list):
+        return bulk_update(request, data)
+    else:
+        return create_or_update_case(request, data, case_id)
+
+
 def create_or_update_case(request, data, case_id=None):
     if case_id is not None and _missing_cases(request.domain, [case_id]):
-        return JsonResponse({'error': f"No case found with ID '{case_id}'"}, status=400)
+        raise UserError(f"No case found with ID '{case_id}'")
 
     try:
         update = _get_case_update(data, request.couch_user.user_id, case_id)
     except BadValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        raise UserError(str(e))
 
     xform, cases = _submit_case_updates([update], request)
-    if isinstance(xform, XFormError):
-        return JsonResponse({
-            'error': xform.problem,
-            '@form_id': xform.form_id,
-        }, status=400)
-    return JsonResponse({
-        '@form_id': xform.form_id,
-        'case': serialize_case(cases[0]),
-    })
+    return xform, cases[0] if cases else None
 
 
 def bulk_update(request, all_data):
     if len(all_data) > 100:
-        msg = "You cannot submit more than 100 updates in a single request"
-        return JsonResponse({'error': msg}, status=400)
+        raise UserError("You cannot submit more than 100 updates in a single request")
 
     existing_ids = [c['@case_id'] for c in all_data if isinstance(c, dict) and '@case_id' in c]
     missing = _missing_cases(request.domain, existing_ids)
     if missing:
-        msg = f"The following case IDs were not found: {', '.join(missing)}"
-        return JsonResponse({'error': msg}, status=400)
+        raise UserError(f"The following case IDs were not found: {', '.join(missing)}")
 
     updates = []
     errors = []
@@ -151,18 +150,9 @@ def bulk_update(request, all_data):
             errors.append(f'Error in row {i}: {e}')
 
     if errors:
-        return JsonResponse({'errors': errors}, status=400)
+        raise UserError("; ".join(errors))
 
-    xform, cases = _submit_case_updates(updates, request)
-    if isinstance(xform, XFormError):
-        return JsonResponse({
-            'error': xform.problem,
-            '@form_id': xform.form_id,
-        }, status=400)
-    return JsonResponse({
-        '@form_id': xform.form_id,
-        'cases': [serialize_case(case) for case in cases],
-    })
+    return _submit_case_updates(updates, request)
 
 
 def _missing_cases(domain, case_ids):
