@@ -755,6 +755,7 @@ DISABLE_WEB_APPS = StaticToggle(
     'Disable access to Web Apps UI',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Disable+access+to+Web+Apps+UI',
 )
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
