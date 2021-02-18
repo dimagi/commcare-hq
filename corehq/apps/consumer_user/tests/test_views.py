@@ -11,11 +11,18 @@ from mock import patch
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.consumer_user.signals import send_email_case_changed_receiver
 from django.core.signing import TimestampSigner
-from django.core.signing import Signer
+from corehq.apps.consumer_user.utils import hash_username_from_email
 
 
 def register_url(invitation):
     return reverse('consumer_user:patient_register',
+                   kwargs={'invitation': TimestampSigner().sign(
+                       urlsafe_base64_encode(force_bytes(invitation))
+                   )})
+
+
+def login_accept_url(invitation):
+    return reverse('consumer_user:patient_login_with_invitation',
                    kwargs={'invitation': TimestampSigner().sign(
                        urlsafe_base64_encode(force_bytes(invitation))
                    )})
@@ -51,7 +58,7 @@ class RegisterTestCase(TestCase):
             'email': email,
             'password': 'password',
         }
-        hashed_email = Signer().sign(post_data.get('email'))
+        hashed_email = hash_username_from_email(post_data.get('email'))
         self.assertQuerysetEqual(User.objects.filter(username=hashed_email), [])
         response = self.client.post(register_uri, post_data)
         self.assertEqual(response.status_code, 302)
@@ -66,7 +73,7 @@ class RegisterTestCase(TestCase):
 
     def test_register_existing_user(self):
         email = 'a1@a1.com'
-        hashed_email = Signer().sign(email)
+        hashed_email = hash_username_from_email(email)
         invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I',
                                                            invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
@@ -80,8 +87,9 @@ class RegisterTestCase(TestCase):
             'password': 'password',
         }
         self.assertNotEqual(User.objects.filter(username=hashed_email).count(), 0)
-        response = self.client.post(register_uri, post_data)
+        response = self.client.get(register_uri, post_data)
         self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, register_uri.replace('signup', 'login'))
 
     def test_register_different_email(self):
         email = 'a2@a2.com'
@@ -93,11 +101,14 @@ class RegisterTestCase(TestCase):
         post_data = {
             'first_name': 'First',
             'last_name': 'Last',
-            'email': 'a@a.in',
+            'email': 'ae@different.in',
             'password': 'password',
         }
-        response = self.client.post(register_uri, post_data)
+        response = self.client.post(register_uri + '?create_user=1', post_data)
         self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, self.login_url)
+        invitation.refresh_from_db()
+        self.assertTrue(invitation.accepted)
 
     def test_register_accepted_invitation(self):
         invitation = ConsumerUserInvitation.objects.create(case_id='5', domain='1', invited_by='I',
@@ -138,11 +149,11 @@ class LoginTestCase(TestCase):
     def test_login_get(self):
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'two_factor/core/login.html')
+        self.assertTemplateUsed(response, 'two_factor/core/p_login.html')
 
     def test_login_post(self):
         email = 'log@log.in'
-        hashed_email = Signer().sign(email)
+        hashed_email = hash_username_from_email(email)
         password = 'password'
         user = User.objects.create_user(username=hashed_email, email=email, password=password)
         ConsumerUser.objects.create(user=user)
@@ -155,18 +166,25 @@ class LoginTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.homepage_url)
 
-    def test_login_post_no_consumer_user(self):
+    def test_login_accept_invitation(self):
         email = 'log1@log1.in'
         password = 'password'
-        hashed_email = Signer().sign(email)
-        User.objects.create_user(username=hashed_email, email=email, password=password)
+        hashed_email = hash_username_from_email(email)
+        user = User.objects.create_user(username=hashed_email, email=email, password=password)
+        ConsumerUser.objects.create(user=user)
+        invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I',
+                                                           invited_on='2021-02-09 17:17:32.229524+00',
+                                                           email=email)
         post_data = {
             'auth-username': email,
             'auth-password': password,
             'patient_login_view-current_step': 'auth',
         }
-        response = self.client.post(self.login_url, post_data)
-        self.assertEqual(response.status_code, 400)
+        response = self.client.post(login_accept_url(invitation.id), post_data)
+        self.assertEqual(response.status_code, 302)
+        invitation.refresh_from_db()
+        self.assertTrue(invitation.accepted)
+        self.assertRedirects(response, self.homepage_url)
 
 
 class SignalTestCase(TestCase):
@@ -184,3 +202,106 @@ class SignalTestCase(TestCase):
             send_email_case_changed_receiver(None, self.case_sql)
             self.assertEqual(ConsumerUserInvitation.objects.count(), self.invitation_count + 1)
             do_not_send_email.assert_not_called()
+
+
+class DomainsAndCasesTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.url = reverse('consumer_user:domain_and_cases_list')
+
+    def test_domains_and_cases_get(self):
+        email = 'b@b.com'
+        password = 'password'
+        user = User.objects.create_user(username=email, email=email, password=password)
+        consumer_user = ConsumerUser.objects.create(user=user)
+        ConsumerUserCaseRelationship.objects.create(case_user=consumer_user, case_id='1', domain='d1')
+        ConsumerUserCaseRelationship.objects.create(case_user=consumer_user, case_id='1', domain='d2')
+        self.client.login(username=email, password=password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'domains_and_cases.html')
+        self.assertEqual(response.context['domains_and_cases'],
+                         [{'domain': 'd2', 'case_id': '1'}, {'domain': 'd1', 'case_id': '1'}])
+
+    def test_domains_and_cases_no_data(self):
+        email = 'b1@b1.com'
+        password = 'password'
+        user = User.objects.create_user(username=email, email=email, password=password)
+        ConsumerUser.objects.create(user=user)
+        self.client.login(username=email, password=password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'domains_and_cases.html')
+        self.assertEqual(response.context['domains_and_cases'], [])
+
+    def test_domains_and_cases_no_user_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_domains_and_cases_user_logged_in_no_consumer_user(self):
+        email = 'user@noconsumer.in'
+        password = 'password'
+        User.objects.create_user(username=email, email=email, password=password)
+        self.client.login(username=email, password=password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 400)
+
+
+class ChangeContactDetailsTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.url = reverse('consumer_user:change_contact_details')
+
+    def test_change_contact_details_get(self):
+        email = 'b2@b2.com'
+        password = 'password'
+        first_name = 'first'
+        last_name = 'last'
+        user = User.objects.create_user(username=email, email=email,
+                                        password=password, first_name=first_name,
+                                        last_name=last_name)
+        ConsumerUser.objects.create(user=user)
+        self.client.login(username=email, password=password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed('change_contact_details.html')
+
+    def test_change_contact_details_post(self):
+        email = 'b3@b3.com'
+        password = 'password'
+        first_name = 'first'
+        last_name = 'last'
+        user = User.objects.create_user(username=email, email=email,
+                                        password=password, first_name=first_name,
+                                        last_name=last_name)
+        ConsumerUser.objects.create(user=user)
+        self.client.login(username=email, password=password)
+        post_data = {
+            'first_name': 'first_name',
+            'last_name': 'last_name'
+        }
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 200)
+        new_user = User.objects.get(username=email)
+        self.assertEqual(new_user.first_name, 'first_name')
+        self.assertEqual(new_user.last_name, 'last_name')
+
+    def test_change_contact_details_no_user_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_change_contact_details_user_logged_in_no_consumer_user(self):
+        email = 'user@noconsumer.in'
+        password = 'password'
+        first_name = 'first'
+        last_name = 'last'
+        User.objects.create_user(username=email, email=email,
+                                 password=password, first_name=first_name,
+                                 last_name=last_name)
+        self.client.login(username=email, password=password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 400)
