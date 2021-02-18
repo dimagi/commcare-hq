@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Union
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms import model_to_dict
 
 from dateutil.relativedelta import relativedelta
 from memoized import memoized_property
@@ -156,12 +157,10 @@ class SQLDataValueMap(models.Model):
 
 
 @quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
-def get_info_for_columns(
-    dataset_map: Union[DataSetMap, SQLDataSetMap],
-) -> Dict[str, dict]:
+def get_info_for_columns(dataset_map: SQLDataSetMap) -> Dict[str, dict]:
     info_for_columns = {
         dvm.column: {
-            **dvm,
+            **model_to_dict(dvm, exclude=['id', 'dataset_map']),
             'is_org_unit': False,
             'is_period': False,
         }
