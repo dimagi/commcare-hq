@@ -34,7 +34,7 @@ def catch_and_raise_exceptions(func):
             if isinstance(error, TableNotFoundWarning):
                 raise error
             if not settings.UNIT_TESTING:
-                _soft_assert(False, str(e))
+                _soft_assert(False, msg=f"UserReportsError: {str(e)[:50]}...", obj=str(e))
             raise UserReportsError(str(e))
     return _inner
 
