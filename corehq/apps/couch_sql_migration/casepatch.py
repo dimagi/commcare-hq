@@ -320,7 +320,9 @@ def diff_to_json(diff, new_value=None):
 
 
 def is_patchable(diff):
-    return diff.path[0] not in UNPATCHABLE_PROPS
+    return not (diff.path[0] in UNPATCHABLE_PROPS or (
+        list(diff.path) == ["closed"] and not diff.old_value and diff.new_value
+    ))
 
 
 class CannotPatch(Exception):
