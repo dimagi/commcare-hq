@@ -67,7 +67,7 @@
       {
         "display": "M_permanent_resident_child_safe_and_alive",
         "column_id": "M_permanent_resident_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["M", "permanent_resident", "yes"],
@@ -78,7 +78,7 @@
       {
         "display": "M_permanent_resident_not_child_safe_and_alive",
         "column_id": "M_permanent_resident_not_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["M", "permanent_resident", "no"],
@@ -89,7 +89,7 @@
       {
         "display": "M_temp_resident_child_safe_and_alive",
         "column_id": "M_temp_resident_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["M", "temp_resident", "yes"],
@@ -100,7 +100,7 @@
       {
         "display": "M_temp_resident_not_child_safe_and_alive",
         "column_id": "M_temp_resident_not_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["M", "temp_resident", "no"],
@@ -111,7 +111,7 @@
       {
         "display": "F_permanent_resident_child_safe_and_alive",
         "column_id": "F_permanent_resident_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["F", "permanent_resident", "yes"],
@@ -122,7 +122,7 @@
       {
         "display": "F_permanent_resident_not_child_safe_and_alive",
         "column_id": "F_permanent_resident_not_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["F", "permanent_resident", "no"],
@@ -133,7 +133,7 @@
       {
         "display": "F_temp_resident_child_safe_and_alive",
         "column_id": "F_temp_resident_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["F", "temp_resident", "yes"],
@@ -144,7 +144,7 @@
       {
         "display": "F_temp_resident_not_child_safe_and_alive",
         "column_id": "F_temp_resident_not_child_safe_and_alive",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_delivery",
           "binds": ["F", "temp_resident", "no"],
@@ -155,7 +155,7 @@
       {
         "display": "M_permanent_resident_child_weighed",
         "column_id": "M_permanent_resident_child_weighed",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_weighed",
           "binds": ["M", "permanent_resident"],
@@ -166,7 +166,7 @@
       {
         "display": "M_temp_resident_child_weighed",
         "column_id": "M_temp_resident_child_weighed",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_weighed",
           "binds": ["M", "temp_resident"],
@@ -177,7 +177,7 @@
       {
         "display": "F_permanent_resident_child_weighed",
         "column_id": "F_permanent_resident_child_weighed",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_weighed",
           "binds": ["F", "permanent_resident"],
@@ -188,7 +188,7 @@
       {
         "display": "F_temp_resident_child_weighed",
         "column_id": "F_temp_resident_child_weighed",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_weighed",
           "binds": ["F", "temp_resident"],
@@ -199,7 +199,7 @@
       {
         "display": "M_permanent_resident_child_low_birth_weight",
         "column_id": "M_permanent_resident_child_low_birth_weight",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_low_birth_weight",
           "binds": ["M", "permanent_resident"],
@@ -210,7 +210,7 @@
       {
         "display": "M_temp_resident_child_low_birth_weight",
         "column_id": "M_temp_resident_child_low_birth_weight",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_low_birth_weight",
           "binds": ["M", "temp_resident"],
@@ -221,7 +221,7 @@
       {
         "display": "F_permanent_resident_child_low_birth_weight",
         "column_id": "F_permanent_resident_child_low_birth_weight",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_low_birth_weight",
           "binds": ["F", "permanent_resident"],
@@ -232,7 +232,7 @@
       {
         "display": "F_temp_resident_child_low_birth_weight",
         "column_id": "F_temp_resident_child_low_birth_weight",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_child_low_birth_weight",
           "binds": ["F", "temp_resident"],

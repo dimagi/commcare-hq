@@ -74,7 +74,7 @@
       {
         "display": "M_temporary_resident",
         "column_id": "M_temporary_resident",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_resident_type",
           "binds": ["M", "temp_resident"],
@@ -85,7 +85,7 @@
       {
         "display": "F_temporary_resident",
         "column_id": "F_temporary_resident",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_resident_type",
           "binds": ["F", "temp_resident"],
@@ -96,7 +96,7 @@
       {
         "display": "M_permanent_resident",
         "column_id": "M_permanent_resident",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_resident_type",
           "binds": ["M", "permanent_resident"],
@@ -107,7 +107,7 @@
       {
         "display": "F_permanent_resident",
         "column_id": "F_permanent_resident",
-        "type": "sum_when",
+        "type": "sum_when_template",
         "whens": [{
           "type": "india-nutrition-project_resident_type",
           "binds": ["F", "permanent_resident"],
