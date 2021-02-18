@@ -76,5 +76,9 @@ branches:
   - ap/fix-submission-time-in-worker-activity # Amit Feb 11
   # - revert-29106-mjr/login_logging # Jenny Feb 12
   - gh/modify-export-settings-ff
-  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
+  # - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
+  #   ^^^ Breaks ability to build new app versions. Errors:
+  #           Every case must have a name. Please specify a value for the name
+  #           property under "Save data to the following case properties"
+  #           Case Update uses reserved word "case_name"
 submodules: {}
