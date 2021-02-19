@@ -8,10 +8,10 @@ from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from mock import patch
-from corehq.form_processor.models import CommCareCaseSQL
-from corehq.apps.consumer_user.signals import send_email_case_changed_receiver
+from corehq.apps.hqcase.utils import update_case
 from django.core.signing import TimestampSigner
-from corehq.apps.consumer_user.utils import hash_username_from_email
+from corehq.apps.data_interfaces.tests.util import create_case
+from django.test.utils import override_settings
 
 
 def register_url(invitation):
@@ -58,12 +58,11 @@ class RegisterTestCase(TestCase):
             'email': email,
             'password': 'password',
         }
-        hashed_email = hash_username_from_email(post_data.get('email'))
-        self.assertQuerysetEqual(User.objects.filter(username=hashed_email), [])
+        self.assertQuerysetEqual(User.objects.filter(username=post_data.get('email')), [])
         response = self.client.post(register_uri, post_data)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.login_url)
-        created_user = User.objects.get(username=hashed_email)
+        created_user = User.objects.get(username=post_data.get('email'))
         consumer_user = ConsumerUser.objects.get(user=created_user)
         user_case = ConsumerUserCaseRelationship.objects.get(case_user=consumer_user)
         invitation.refresh_from_db()
@@ -73,11 +72,10 @@ class RegisterTestCase(TestCase):
 
     def test_register_existing_user(self):
         email = 'a1@a1.com'
-        hashed_email = hash_username_from_email(email)
         invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I',
                                                            invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
-        User.objects.create_user(username=hashed_email, email=email, password='password')
+        User.objects.create_user(username=email, email=email, password='password')
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
         post_data = {
@@ -86,7 +84,7 @@ class RegisterTestCase(TestCase):
             'email': email,
             'password': 'password',
         }
-        self.assertNotEqual(User.objects.filter(username=hashed_email).count(), 0)
+        self.assertNotEqual(User.objects.filter(username=email).count(), 0)
         response = self.client.get(register_uri, post_data)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, register_uri.replace('signup', 'login'))
@@ -127,8 +125,8 @@ class RegisterTestCase(TestCase):
         User.objects.create_user(username=email, email=email, password='password')
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'signup.html')
+        self.assertEqual(response.status_code, 302)
+        self.assertTemplateNotUsed(response, 'signup.html')
         self.assertFalse(invitation.accepted)
 
     def test_register_invalid_invitation(self):
@@ -149,13 +147,12 @@ class LoginTestCase(TestCase):
     def test_login_get(self):
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'two_factor/core/p_login.html')
+        self.assertTemplateUsed(response, 'p_login.html')
 
     def test_login_post(self):
         email = 'log@log.in'
-        hashed_email = hash_username_from_email(email)
         password = 'password'
-        user = User.objects.create_user(username=hashed_email, email=email, password=password)
+        user = User.objects.create_user(username=email, email=email, password=password)
         ConsumerUser.objects.create(user=user)
         post_data = {
             'auth-username': email,
@@ -169,8 +166,7 @@ class LoginTestCase(TestCase):
     def test_login_accept_invitation(self):
         email = 'log1@log1.in'
         password = 'password'
-        hashed_email = hash_username_from_email(email)
-        user = User.objects.create_user(username=hashed_email, email=email, password=password)
+        user = User.objects.create_user(username=email, email=email, password=password)
         ConsumerUser.objects.create(user=user)
         invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I',
                                                            invited_on='2021-02-09 17:17:32.229524+00',
@@ -190,18 +186,42 @@ class LoginTestCase(TestCase):
 class SignalTestCase(TestCase):
 
     def setUp(self):
-        self.case_sql = CommCareCaseSQL(case_id="case_id", domain="domain", opened_by="in@invite.com")
-        self.invitation_count = ConsumerUserInvitation.objects.count()
+        self.domain = 'consumer-invitation-test'
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email(self):
-        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as async_task:
-            send_email_case_changed_receiver(None, self.case_sql)
-            self.assertEqual(ConsumerUserInvitation.objects.count(), self.invitation_count + 1)
-            async_task.assert_called_once()
-        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as do_not_send_email:
-            send_email_case_changed_receiver(None, self.case_sql)
-            self.assertEqual(ConsumerUserInvitation.objects.count(), self.invitation_count + 1)
-            do_not_send_email.assert_not_called()
+        invitation_count = ConsumerUserInvitation.objects.count()
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as async_task, create_case(
+            self.domain,
+            'commcare-caseuserinvitation',
+            owner_id='comm_care',
+            update={'email': 'testing@testing.in'}
+        ) as case:
+            customer_invitation = ConsumerUserInvitation.objects.get(case_id=case.case_id, domain=case.domain)
+            self.assertEqual(customer_invitation.email, case.get_case_property('email'))
+            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 1)
+            self.assertEqual(async_task.call_count, 1)
+            update_case(self.domain, case.case_id,
+                        case_properties={'contact_phone_number': '12345'})
+            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 1)
+            self.assertEqual(async_task.call_count, 1)
+            update_case(self.domain, case.case_id,
+                        case_properties={'email': 'email@changed.in'})
+            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 1)
+            self.assertEqual(async_task.call_count, 2)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_method_send_email_other_casetype(self):
+        invitation_count = ConsumerUserInvitation.objects.count()
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as async_task, create_case(
+            self.domain,
+            'person',
+            owner_id='comm_care',
+        ) as case:
+            self.assertEqual(ConsumerUserInvitation.objects.filter(case_id=case.case_id,
+                                                                   domain=case.domain).count(), 0)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count)
+            async_task.assert_not_called()
 
 
 class DomainsAndCasesTestCase(TestCase):
