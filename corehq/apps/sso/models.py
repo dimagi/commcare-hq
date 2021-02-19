@@ -124,8 +124,7 @@ class IdentityProvider(models.Model):
             identity_provider=self
         ).values_list('email_domain', flat=True).all()
 
-    @property
-    def sso_exempt_users(self):
+    def get_sso_exempt_users(self):
         return UserExemptFromSingleSignOn.objects.filter(
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
