@@ -74,6 +74,7 @@ from custom.nutrition_project.ucr.sum_when_templates import (
     WomanDeathSpec,
     WomanDeathTypeSpec,
     ResidentTypeSpec,
+    NutritionCenterOpenTodaySpec,
 )
 
 
@@ -197,6 +198,7 @@ class SumWhenTemplateFactory(object):
         WomanDeathSpec.type.choices[0]: WomanDeathSpec,
         WomanDeathTypeSpec.type.choices[0]: WomanDeathTypeSpec,
         ResidentTypeSpec.type.choices[0]: ResidentTypeSpec,
+        NutritionCenterOpenTodaySpec.type.choices[0]: NutritionCenterOpenTodaySpec,
     }
 
     @classmethod
