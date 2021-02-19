@@ -118,8 +118,7 @@ class IdentityProvider(models.Model):
         self.date_sp_rollover_cert_expiration = None
         self.save()
 
-    @property
-    def email_domains(self):
+    def get_email_domains(self):
         return AuthenticatedEmailDomain.objects.filter(
             identity_provider=self
         ).values_list('email_domain', flat=True).all()

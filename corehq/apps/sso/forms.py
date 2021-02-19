@@ -30,7 +30,7 @@ def _validate_or_raise_slugify_error(slug):
 
 
 def _check_is_editable_requirements(identity_provider):
-    if not identity_provider.email_domains:
+    if not identity_provider.get_email_domains():
         raise forms.ValidationError(
             _("Please make sure you specify at "
               "least one Authenticated Email Domain.")
@@ -464,7 +464,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
                         ),
                         hqcrispy.B3TextField(
                             'linked_email_domains',
-                            ", ".join(identity_provider.email_domains),
+                            ", ".join(identity_provider.get_email_domains()),
                         ),
                         twbscrispy.PrependedText('is_active', ''),
                         'sso_exempt_users',
