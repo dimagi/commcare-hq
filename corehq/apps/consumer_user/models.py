@@ -7,7 +7,7 @@ class ConsumerUser(models.Model):
 
 
 class ConsumerUserCaseRelationship(models.Model):
-    case_user = models.ForeignKey(ConsumerUser, on_delete=models.CASCADE)
+    consumer_user = models.ForeignKey(ConsumerUser, on_delete=models.CASCADE)
     case_id = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
 
