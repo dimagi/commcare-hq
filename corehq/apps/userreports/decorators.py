@@ -2,8 +2,6 @@ import hashlib
 import inspect
 from functools import wraps
 
-from django.conf import settings
-
 from sqlagg import ColumnNotFoundException
 from sqlalchemy.exc import ProgrammingError
 
@@ -12,11 +10,6 @@ from corehq.apps.userreports.exceptions import (
     TableNotFoundWarning,
     UserReportsError,
     translate_programming_error,
-)
-from corehq.util.soft_assert import soft_assert
-
-_soft_assert = soft_assert(
-    exponential_backoff=True,
 )
 
 
