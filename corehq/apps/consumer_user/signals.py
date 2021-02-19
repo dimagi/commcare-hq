@@ -1,9 +1,11 @@
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_site_domain
+from django.db.utils import IntegrityError
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.urls import reverse
 from corehq.apps.consumer_user.models import ConsumerUserInvitation
+from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -13,16 +15,22 @@ from django.core.signing import TimestampSigner
 
 def send_email_case_changed_receiver(sender, case, **kwargs):
     try:
+        if case.type != 'commcare-caseuserinvitation':
+            return
         try:
-            email = case.get_email()
-        except Exception:
+            email = case.get_case_property('email')
+        except IntegrityError:
             email = 'challarao@beehyv.com'
         invitation, created = ConsumerUserInvitation.objects.get_or_create(case_id=case.case_id,
                                                                            domain=case.domain)
         if created or invitation.email != email:
             invitation.invited_by = case.opened_by
             invitation.email = email
+            invitation.accepted = False
             invitation.save()
+            if not created:
+                ConsumerUserCaseRelationship.objects.filter(case_id=case.case_id,
+                                                            domain=case.domain).delete()
             # Change to https after the discussion
             url = 'http://%s%s' % (get_site_domain(),
                                     reverse('consumer_user:patient_register',
@@ -34,7 +42,6 @@ def send_email_case_changed_receiver(sender, case, **kwargs):
             email_context = {
                 'link': url,
             }
-            print(url)
             send_html_email_async.delay(
                 'Beneficiary Registration',
                 email,

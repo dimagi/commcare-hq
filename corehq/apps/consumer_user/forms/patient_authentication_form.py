@@ -5,7 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
-from corehq.apps.consumer_user.utils import hash_username_from_email
 
 
 class PatientAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -19,10 +18,6 @@ class PatientAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     def __init__(self, *args, **kwargs):
         self.invitation = kwargs.pop('invitation', None)
         super().__init__(*args, **kwargs)
-
-    def clean_username(self):
-        self.cleaned_data['username'] = hash_username_from_email(self.cleaned_data['username'])
-        return self.cleaned_data['username']
 
     def clean(self):
         username = self.cleaned_data.get('username')

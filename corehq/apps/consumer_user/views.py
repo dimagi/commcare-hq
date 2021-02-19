@@ -6,8 +6,6 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.signing import TimestampSigner
-from .utils import hash_username_from_email
-from .utils import get_email_from_hashed_username
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from datetime import timedelta
@@ -43,7 +41,7 @@ class PatientLoginView(LoginView):
     )
     invitation = None
     hashed_invitation = None
-    template_name = 'two_factor/core/p_login.html'
+    template_name = 'p_login.html'
 
     def get_form_kwargs(self, step=None):
         """
@@ -63,17 +61,15 @@ class PatientLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super(PatientLoginView, self).get_context_data(**kwargs)
-        extra_context = {}
         if self.hashed_invitation:
+            extra_context = {}
             this_is_not_me = reverse('consumer_user:patient_register',
                                      kwargs={
                                          'invitation': self.hashed_invitation
                                      })
             extra_context['this_is_not_me'] = '%s%s' % (this_is_not_me,
                                                         '?create_user=1')
-        url = reverse('consumer_user:password_reset_email')
-        extra_context['password_reset_url'] = url
-        context.update(extra_context)
+            context.update(extra_context)
         return context
 
 
@@ -95,11 +91,10 @@ def register_view(request, invitation):
     except SignatureExpired:
         return JsonResponse({'message': "Invitation is expired"}, status=400)
     email = invitation_obj.email
-    hashed_email = hash_username_from_email(email)
     try:
         create_user = request.GET.get('create_user', False)
         if create_user != '1':
-            _ = User.objects.get(username=hashed_email)
+            User.objects.get(username=email)
             url = reverse('consumer_user:patient_login_with_invitation',
                           kwargs={
                               'invitation': invitation
@@ -112,10 +107,9 @@ def register_view(request, invitation):
     if request.method == "POST":
         body = request.POST
         entered_email = request.POST.get('email')
-        hashed_username = hash_username_from_email(entered_email)
         form = PatientSignUpForm(body, invitation=invitation_obj)
         try:
-            _ = User.objects.get(username=hashed_username)
+            User.objects.get(username=entered_email)
             return render(request, 'signup.html', {'form': form,
                                                    'has_errors': True,
                                                    'errors': 'User with email already exists'})
@@ -176,8 +170,7 @@ def login_accept_view(request, invitation):
 
 @login_required
 def success_view(request):
-    username = get_email_from_hashed_username(request.user.username)
-    return render(request, 'homepage.html', {'username': username})
+    return render(request, 'homepage.html')
 
 
 @login_required
@@ -193,30 +186,6 @@ def detail_view(request):
 
 def delete_view(request):
     pass
-
-
-class CustomPasswordResetView(PasswordResetConfirmView):
-    urlname = 'consumer_user_password_reset_confirm'
-
-    def get_success_url(self):
-        if self.user:
-            consumer_user = ConsumerUser.objects.get(user=self.user)
-            messages.success(
-                self.request,
-                _('Password for {} has successfully been reset. You can now login.').format(
-                    get_email_from_hashed_username(consumer_user.user.username)
-                )
-            )
-        return super().get_success_url()
-
-    def get(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
-        return super().get(request)
-
-    def post(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
-        response = super().post(request)
-        return response
 
 
 def change_password_view(request):
