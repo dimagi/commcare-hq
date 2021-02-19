@@ -148,13 +148,14 @@ class ServiceProviderDetailsForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, identity_provider, *args, **kwargs):
+    def __init__(self, identity_provider, show_public_cert=True,
+                 show_rollover_cert=True, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
         #  whether SP signing is enforced (dependent on client's Azure tier)
-        self.show_public_cert = kwargs.pop('show_public_cert', True)
-        self.show_rollover_cert = kwargs.pop('show_rollover_cert', True)
-        self.show_help_block = kwargs.pop('show_help_block', True)
+        self.show_public_cert = show_public_cert
+        self.show_rollover_cert = show_rollover_cert
+        self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)
 
