@@ -1,5 +1,7 @@
 import uuid
 
+from memoized import memoized
+
 import jsonobject
 from jsonobject.exceptions import BadValueError
 
@@ -45,10 +47,16 @@ def is_simple_dict(d):
 
 
 class JsonIndex(jsonobject.JsonObject):
-    case_id = jsonobject.StringProperty(required=True)
+    case_id = jsonobject.StringProperty()
+    temporary_id = jsonobject.StringProperty()
     case_type = jsonobject.StringProperty(name='@case_type', required=True)
     relationship = jsonobject.StringProperty(name='@relationship', required=True,
                                              choices=('child', 'extension'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not (bool(self.case_id) ^ bool(self.temporary_id)):
+            raise BadValueError("You must set either case_id or temporary_id, and not both.")
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
@@ -66,19 +74,19 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
+    @memoized
+    def get_case_id(self):
+        return str(uuid.uuid4()) if self._is_case_creation else self.case_id
+
     def get_caseblock(self):
 
         def _if_specified(value):
             return value if value is not None else CaseBlock.undefined
 
-        # ID and case type can't be changed
-        case_id = str(uuid.uuid4()) if self._is_case_creation else self.case_id
-        case_type = self.case_type if self._is_case_creation else CaseBlock.undefined
-
         return CaseBlock(
-            case_id=case_id,
+            case_id=self.get_case_id(),
             user_id=self.user_id,
-            case_type=case_type,
+            case_type=self.case_type if self._is_case_creation else CaseBlock.undefined,
             case_name=_if_specified(self.case_name),
             external_id=_if_specified(self.external_id),
             owner_id=_if_specified(self.owner_id),
@@ -93,6 +101,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
 
 class JsonCaseCreation(BaseJsonCaseChange):
     case_type = jsonobject.StringProperty(name='@case_type', required=True)
+    temporary_id = jsonobject.StringProperty()
 
     # overriding from subclass to mark these required
     case_name = jsonobject.StringProperty(required=True)
@@ -152,6 +161,8 @@ def _get_bulk_updates(domain, all_data, user):
         except BadValueError as e:
             errors.append(f'Error in row {i}: {e}')
 
+    populate_index_case_ids(updates)
+
     if errors:
         raise UserError("; ".join(errors))
 
@@ -164,6 +175,20 @@ def _missing_cases(domain, case_ids):
         CaseAccessors(domain).get_cases(case_ids)
         if case.domain == domain
     }
+
+
+def populate_index_case_ids(updates):
+    case_ids_by_temp_id = {
+        update.temporary_id: update.get_case_id()
+        for update in updates if getattr(update, 'temporary_id', None)
+    }
+    for update in updates:
+        for index in update.indices.values():
+            if index.temporary_id:
+                try:
+                    index.case_id = case_ids_by_temp_id[index.temporary_id]
+                except KeyError:
+                    raise UserError(f"Could not find a case with temporary ID '{index.temporary_id}'")
 
 
 def _get_case_update(data, user_id, case_id=None):

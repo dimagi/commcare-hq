@@ -265,7 +265,7 @@ class TestCaseAPI(TestCase):
                 # No case_id means this is a new case
                 '@case_type': 'player',
                 'case_name': 'Jolene',
-                'external_id': '2',
+                'external_id': 'jolene',
                 '@owner_id': 'methuen_home',
                 'properties': {
                     'sport': 'squash',
@@ -279,8 +279,7 @@ class TestCaseAPI(TestCase):
         updated_case = self.case_accessor.get_case(existing_case.case_id)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case_id = [c['@case_id'] for c in res['cases'] if c['case_name'] == 'Jolene'][0]
-        new_case = self.case_accessor.get_case(new_case_id)
+        new_case = self.case_accessor.get_cases_by_external_id('jolene')[0]
         self.assertEqual(new_case.name, 'Jolene')
 
     def test_bulk_update_too_big(self):
@@ -312,13 +311,58 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.json()['error'], "The following case IDs were not found: notarealcaseid")
         self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
 
-    @skip("not yet implemented")
     def test_create_parent_and_child_together(self):
-        # TODO? Since this API doesn't let you provide your own case IDs, you
-        # can't reference uncreated cases in indices unless we invent some
-        # syntax specifically for that. Thinking about leaving out of scope for
-        # v1, at least (it wouldn't be a breaking change to add in later).
-        pass
+        res = self._bulk_update_cases([
+            {
+                '@case_type': 'player',
+                'case_name': 'Elizabeth Harmon',
+                '@owner_id': 'us_chess_federation',
+                'external_id': 'beth',
+                'temporary_id': 'beth_harmon',
+            },
+            {
+                '@case_type': 'match',
+                'case_name': 'Harmon/Luchenko',
+                '@owner_id': 'harmon',
+                'external_id': 'harmon-luchenko',
+                'properties': {
+                    'winner': 'Harmon',
+                },
+                'indices': {
+                    'parent': {
+                        # case_id is unknown at this point
+                        'temporary_id': 'beth_harmon',
+                        '@case_type': 'player',
+                        '@relationship': 'child',
+                    },
+                },
+            },
+        ]).json()
+        parent = self.case_accessor.get_cases_by_external_id('beth')[0]
+        child = self.case_accessor.get_cases_by_external_id('harmon-luchenko')[0]
+        self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
+
+    def test_create_child_with_no_parent(self):
+        res = self._bulk_update_cases([
+            {
+                '@case_type': 'match',
+                'case_name': 'Harmon/Luchenko',
+                '@owner_id': 'harmon',
+                'external_id': 'harmon-luchenko',
+                'properties': {
+                    'winner': 'Harmon',
+                },
+                'indices': {
+                    'parent': {
+                        'temporary_id': 'MISSING',
+                        '@case_type': 'player',
+                        '@relationship': 'child',
+                    },
+                },
+            },
+        ])
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json()['error'], "Could not find a case with temporary ID 'MISSING'")
 
     def test_non_json_data(self):
         res = self._create_case("this isn't json")
