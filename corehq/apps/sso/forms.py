@@ -162,11 +162,14 @@ class ServiceProviderDetailsForm(forms.Form):
     @property
     def service_provider_help_block(self):
         help_link = "#"  # todo
-        help_text = _('<a href="{}">Please read this guide</a> on how to set up '
-                      'CommCare HQ with Azure AD.<br />You will need the following '
-                      'information:').format(help_link)
+        help_text = format_html(
+            _('<a href="{}">Please read this guide</a> on how to set up '
+              'CommCare HQ with Azure AD.<br />You will need the following '
+              'information:'),
+            help_link
+        )
         return crispy.HTML(
-            f'<p class="help-block">{help_text}</p>'
+            format_html('<p class="help-block">{}</p>', help_text)
         )
 
     @property
@@ -193,7 +196,10 @@ class ServiceProviderDetailsForm(forms.Form):
             shown_fields.extend([
                 hqcrispy.B3TextField(
                     'sp_public_cert',
-                    f'<a href="?sp_cert_public" target="_blank">{download}</a>',
+                    format_html(
+                        '<a href="?sp_cert_public" target="_blank">{}</a>',
+                        download
+                    ),
                 ),
                 hqcrispy.B3TextField(
                     'sp_public_cert_expiration',
@@ -205,9 +211,9 @@ class ServiceProviderDetailsForm(forms.Form):
         if self.show_rollover_cert:
             shown_fields.append(hqcrispy.B3TextField(
                 'sp_rollover_cert',
-                (f'<a href="?sp_rollover_cert_public" target="_blank">{download}</a>'
-                    if self.idp.sp_rollover_cert_public
-                    else _("Not needed/generated yet.")),
+                (format_html('<a href="?sp_rollover_cert_public" target="_blank">{}</a>', download)
+                 if self.idp.sp_rollover_cert_public
+                 else _("Not needed/generated yet.")),
             ))
         return shown_fields
 
@@ -296,8 +302,11 @@ class EditIdentityProviderAdminForm(forms.Form):
                         _('Primary Configuration'),
                         hqcrispy.B3TextField(
                             'owner',
-                            f'<a href="{account_link}">'
-                            f'{identity_provider.owner.name}</a>'
+                            format_html(
+                                '<a href="{}">{}</a>',
+                                account_link,
+                                identity_provider.owner.name
+                            )
                         ),
                         'name',
                         twbscrispy.PrependedText('is_editable', ''),
