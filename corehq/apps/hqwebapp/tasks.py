@@ -10,6 +10,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
+from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.models import TransientBounceEmail
@@ -200,6 +201,23 @@ def process_bounced_emails():
                     'error': e,
                 }
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=2), queue='background_queue')
+def alert_bounced_system_emails():
+    bounced_system_emails = get_bounced_system_emails()
+    if bounced_system_emails:
+        bounced_system_emails = ", ".join(bounced_system_emails)
+        mail_admins(
+            "[IMPORTANT] System emails were marked as bounced! Please investigate.",
+            f"These emails have recorded bounces: {bounced_system_emails}. \n"
+            f"Please make sure they are not hard bounced in AWS and follow the "
+            f"steps in Confluence to properly un-bounce them. Thanks! \n"
+            f"HQ will continue to try sending email, but if AWS has them "
+            f"permanently bounced, then these messages will not go "
+            f"through and it will continue to negatively affect our bounce "
+            f"rate percentage. Be swift!"
+        )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=3), queue='background_queue')
