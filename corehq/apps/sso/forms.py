@@ -477,7 +477,6 @@ class SSOEnterpriseSettingsForm(forms.Form):
                             ", ".join(identity_provider.get_email_domains()),
                         ),
                         twbscrispy.PrependedText('is_active', ''),
-                        'sso_exempt_users',
                     ),
                     css_class="panel-body"
                 ),
