@@ -281,6 +281,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             searchButton: '#case-list-search-button',
             searchTextBox: '.module-search-container',
             paginators: '.page-link',
+            goButton: '#case-list-go-button',
             columnHeader: '.header-clickable',
         },
 
@@ -288,6 +289,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
+            'click @ui.goButton': 'caseListGo',
             'click @ui.columnHeader': 'columnSortAction',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
@@ -312,7 +314,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         searchTextKeyAction: function (event) {
             // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
-                this.caseListSearch(event);
+                if (event.target.id === 'goText') {
+                    this.caseListGo(event);
+                } else {
+                    this.caseListSearch(event);
+                }
             }
         },
 
@@ -321,13 +327,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
-        paginateKeyAction: function (e) {
-            // Pressing Enter on a pagination control activates it.
-            if (event.which === 13 || event.keyCode === 13) {
-                e.stopImmediatePropagation();
-                this.paginateAction(e);
+        caseListGo: function (e) {
+            e.preventDefault();
+            var goText = Number($('#goText').val());
+            if (goText && goText <= this.options.pageCount) {
+                FormplayerFrontend.trigger("menu:paginate", goText - 1);
+            } else {
+                FormplayerFrontend.trigger(
+                    "showError",
+                    "Enter valid Page number"
+                );
             }
-        },
+         },
 
         columnSortAction: function (e) {
             var columnSelection = $(e.currentTarget).data("id") + 1;
@@ -335,13 +346,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
+            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             return {
+                startPage: paginateItems.startPage,
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                pageCount: this.options.pageCount,
+                endPage: paginateItems.endPage,
+                pageCount: paginateItems.pageCount,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
@@ -359,6 +373,43 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
+    var paginateOptions = function (currentPage, totalPages) {
+        var maxPages = 5;
+        // ensure current page isn't out of range
+        if (currentPage < 1) {
+            currentPage = 1;
+        } else if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        var startPage, endPage;
+        if (totalPages <= maxPages) {
+            // total pages less than max so show all pages
+            startPage = 1;
+            endPage = totalPages;
+        } else {
+            // total pages more than max so calculate start and end pages
+            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
+            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
+            if (currentPage <= maxPagesBeforeCurrentPage) {
+                // current page near the start
+                startPage = 1;
+                endPage = maxPages;
+            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
+                // current page near the end
+                startPage = totalPages - maxPages + 1;
+                endPage = totalPages;
+            } else {
+                // current page somewhere in the middle
+                startPage = currentPage - maxPagesBeforeCurrentPage;
+                endPage = currentPage + maxPagesAfterCurrentPage;
+            }
+        }
+        return {
+            startPage: startPage,
+            endPage: endPage,
+            pageCount: totalPages,
+        };
+    };
 
     // Return a two- or three-length array of case tile CSS styles
     //
@@ -569,6 +620,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
+        paginateOptions: paginateOptions,
     };
 })
 ;
