@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/PaymentReconciliation",
+  "id": "file:PaymentReconciliation.schema.json",
   "$ref": "#/definitions/PaymentReconciliation",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "PaymentReconciliation": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "This resource provides payment details and claim references supporting a bulk payment.",
@@ -108,7 +108,7 @@
     "PaymentReconciliation_Detail": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides payment details and claim references supporting a bulk payment.",
@@ -156,7 +156,7 @@
     "PaymentReconciliation_ProcessNote": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides payment details and claim references supporting a bulk payment.",
