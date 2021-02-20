@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import models
 
 from jsonfield import JSONField
+from jsonschema import RefResolver, ValidationError, validate
 
 from casexml.apps.case.models import CommCareCase
 
@@ -54,12 +55,8 @@ class FHIRResourceType(models.Model):
         '#/definitions/Patient'
 
         """
-        ver = dict(FHIR_VERSIONS)[self.fhir_version].lower()
-        schema_file = f'{self.name}.schema.json'
-        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
-                            'json-schema', ver, schema_file)
         try:
-            with open(path, 'r') as file:
+            with open(self._schema_file, 'r') as file:
                 return json.load(file)
         except FileNotFoundError:
             raise ConfigurationError(
@@ -69,14 +66,34 @@ class FHIRResourceType(models.Model):
 
     @classmethod
     def get_names(cls, version=FHIR_VERSION_4_0_1):
-        ver = dict(FHIR_VERSIONS)[version].lower()
-        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
-                            'json-schema', ver)
+        schema_dir = get_schema_dir(version)
         ext = len('.schema.json')
-        return [n[:-ext] for n in os.listdir(path)]
+        return [n[:-ext] for n in os.listdir(schema_dir)]
 
     def validate_resource(self, fhir_resource):
-        pass
+        schema = self.get_json_schema()
+        resolver = RefResolver(base_uri=f'file://{self._schema_file}',
+                               referrer=schema)
+        try:
+            validate(fhir_resource, schema, resolver=resolver)
+        except ValidationError as err:
+            raise ConfigurationError(
+                f'Validation failed for resource {fhir_resource!r}: {err}'
+            ) from err
+
+    @property
+    def _schema_file(self):
+        return os.path.join(self._schema_dir, f'{self.name}.schema.json')
+
+    @property
+    def _schema_dir(self):
+        return get_schema_dir(self.fhir_version)
+
+
+def get_schema_dir(version):
+    ver = dict(FHIR_VERSIONS)[version].lower()
+    return os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                        'json-schema', ver)
 
 
 class FHIRResourceProperty(models.Model):
