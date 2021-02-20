@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]
+then
+    echo "Please specify the schema files to fix. e.g."
+    echo
+    echo "    ./fix-schema-files r4/*"
+    echo
+    exit 1
+fi
+
+for schemafile in $*
+do
+    sed -i'' -r -e 's_^([[:space:]]*)"id": "http://hl7.org/fhir/json-schema/([[:alpha:]]+)"_\1"id": "file:\2.schema.json"_' \
+                -e 's_^([[:space:]]*)"\$ref": "([[:alpha:]]+)#/definitions/_\1"$ref": "\2.schema.json#/definitions/_' \
+                "$schemafile"
+done
