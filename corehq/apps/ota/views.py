@@ -135,8 +135,9 @@ def claim(request, domain):
         return HttpResponse('A case_id is required', status=400)
 
     try:
-        if get_first_claim(domain, restore_user.user_id, case_id):
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+        case = get_first_claim(domain, restore_user.user_id, case_id)
+        if case:
+            return HttpResponse('You have already claimed that {}, {}, {}, {}'.format(case, as_user, as_user_obj, restore_user.username),
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
