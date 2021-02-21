@@ -7,7 +7,6 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.data_dictionary.models import CaseType
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -19,14 +18,12 @@ from corehq.motech.repeaters.repeater_generators import (
 )
 from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.utils import pformat_json
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    get_form_question_values,
-)
+from corehq.motech.value_source import get_form_question_values
 from corehq.privileges import DATA_FORWARDING
 from corehq.toggles import FHIR_INTEGRATION
 
 from .const import FHIR_VERSION_4_0_1, XMLNS_FHIR
+from .models import get_case_trigger_info
 from .repeater_helpers import (
     get_info_resources_list,
     register_patients,
@@ -92,28 +89,16 @@ class FHIRRepeater(CaseRepeater):
         return response
 
     def get_case_trigger_infos(self, form_json):
+        form_question_values = get_form_question_values(form_json)
         case_trigger_infos = []
         case_blocks = extract_case_blocks(form_json)
         case_ids = [case_block['@case_id'] for case_block in case_blocks]
         cases = CaseAccessors(self.domain).get_cases(case_ids, ordered=True)
         for case, case_block in zip(cases, case_blocks):
-            assert case_block['@case_id'] == case.case_id
-            case_type = CaseType.objects.get(domain=case.domain, name=case.type)
-            prop_names = [p.name for p in case_type.properties.all()]
-            case_create = case_block.get('create') or {}
-            case_update = case_block.get('update') or {}
-            case_trigger_infos.append(CaseTriggerInfo(
-                domain=self.domain,
-                case_id=case.case_id,
-                type=case.type,
-                name=case.name,
-                owner_id=case.owner_id,
-                modified_by=case.modified_by,
-                updates={**case_create, **case_update},
-                created='create' in case_block,
-                closed='close' in case_block,
-                extra_fields={p: case.get_case_property(p) for p in prop_names},
-                form_question_values=get_form_question_values(form_json),
+            case_trigger_infos.append(get_case_trigger_info(
+                case,
+                case_block,
+                form_question_values,
             ))
         return case_trigger_infos
 
