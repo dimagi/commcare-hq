@@ -227,7 +227,11 @@ def _build_fhir_resource(
     return fhir_resource
 
 
-def get_case_trigger_info(case):
+def get_case_trigger_info(
+    case: Union[CommCareCase, CommCareCaseSQL],
+    case_block: Optional[dict] = None,
+    form_question_values: Optional[dict] = None,
+) -> CaseTriggerInfo:
     """
     Returns ``CaseTriggerInfo`` instance for ``case``.
 
@@ -236,14 +240,36 @@ def get_case_trigger_info(case):
     ``CaseTriggerInfo`` packages case (and form) data for use by
     ``ValueSource``.
     """
+    if case_block is None:
+        case_block = {}
+    else:
+        assert case_block['@case_id'] == case.case_id
+    if form_question_values is None:
+        form_question_values = {}
+
+    case_create = case_block.get('create') or {}
+    case_update = case_block.get('update') or {}
+
     case_type = get_case_type_obj(case.domain, case.type)
     assert case_type, f'CaseType not found for case type {case.type!r}'
     prop_names = [p.name for p in case_type.properties.all()]
+    extra_fields = {p: case.get_case_property(p) for p in prop_names}
+    # Include external_id because `get_bundle_entries()` uses it
+    # to determine whether to PUT or POST.
+    extra_fields['external_id'] = case.get_case_property('external_id')
+
     return CaseTriggerInfo(
         domain=case.domain,
         case_id=case.case_id,
         type=case.type,
-        extra_fields={p: case.get_case_property(p) for p in prop_names},
+        name=case.name,
+        owner_id=case.owner_id,
+        modified_by=case.modified_by,
+        updates={**case_create, **case_update},
+        created='create' in case_block if case_block else None,
+        closed='close' in case_block if case_block else None,
+        extra_fields=extra_fields,
+        form_question_values=form_question_values,
     )
 
 
