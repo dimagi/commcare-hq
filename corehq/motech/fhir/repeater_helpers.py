@@ -20,14 +20,15 @@ def register_patients(
 
 def get_info_resource_list(
     case_trigger_infos: List[CaseTriggerInfo],
-    fhir_version: str,
+    resource_types_by_case_type: dict,
 ) -> List[Tuple[CaseTriggerInfo, dict]]:
     """
     Returns pairs of CaseTriggerInfo + the FHIR resource they map to.
     """
     results = []
     for info in case_trigger_infos:
-        resource = build_fhir_resource_for_info(info, fhir_version)
+        resource_type = resource_types_by_case_type[info.type]
+        resource = build_fhir_resource_for_info(info, resource_type)
         if resource:
             # We return `info` with `resource` because
             # `get_bundle_entries()` will need both.

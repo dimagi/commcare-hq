@@ -18,7 +18,7 @@ from ..const import FHIR_VERSION_4_0_1
 from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
-    get_case_trigger_info,
+    get_case_trigger_info, get_resource_type_or_none,
 )
 from ..repeater_helpers import get_info_resource_list
 
@@ -72,10 +72,12 @@ class TestGetInfoResourcesListOneCase(TestCase, DomainSubscriptionMixin):
         self.case.delete()
 
     def test_get_info_resource_list(self):
-        case_trigger_infos = [get_case_trigger_info(self.case)]
+        resource_type = get_resource_type_or_none(self.case, FHIR_VERSION_4_0_1)
+        case_trigger_infos = [get_case_trigger_info(self.case, resource_type)]
+        resource_types_by_case_type = {'person': resource_type}
         [(info, resource)] = get_info_resource_list(
             case_trigger_infos,
-            FHIR_VERSION_4_0_1,
+            resource_types_by_case_type,
         )
         self.assertEqual(resource, {
             'id': self.case_id,
@@ -188,10 +190,12 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
         self.parent_case.delete()
 
     def test_get_info_resource_list(self):
-        case_trigger_infos = [get_case_trigger_info(self.parent_case)]
+        rt = get_resource_type_or_none(self.parent_case, FHIR_VERSION_4_0_1)
+        case_trigger_infos = [get_case_trigger_info(self.parent_case, rt)]
+        resource_types_by_case_type = {'person': rt}
         [(info, resource)] = get_info_resource_list(
             case_trigger_infos,
-            FHIR_VERSION_4_0_1,
+            resource_types_by_case_type,
         )
         self.assertEqual(resource, {
             'id': self.parent_case_id,

@@ -178,16 +178,16 @@ def build_fhir_resource(
 
     Used by the FHIR API.
     """
-    try:
-        info = get_case_trigger_info(case)
-    except AssertionError:
+    resource_type = get_resource_type_or_none(case, fhir_version)
+    if resource_type is None:
         return None
-    return _build_fhir_resource(info, fhir_version)
+    info = get_case_trigger_info(case, resource_type)
+    return _build_fhir_resource(info, resource_type)
 
 
 def build_fhir_resource_for_info(
     info: CaseTriggerInfo,
-    fhir_version: str,
+    resource_type: FHIRResourceType,
 ) -> Optional[dict]:
     """
     Builds a FHIR resource using data from ``info``. Returns ``None`` if
@@ -195,32 +195,15 @@ def build_fhir_resource_for_info(
 
     Used by ``FHIRRepeater``.
     """
-    return _build_fhir_resource(info, fhir_version, skip_empty=True)
+    return _build_fhir_resource(info, resource_type, skip_empty=True)
 
 
 def _build_fhir_resource(
     info: CaseTriggerInfo,
-    fhir_version: str,
+    resource_type: FHIRResourceType,
     *,
     skip_empty: bool = False,
 ) -> Optional[dict]:
-
-    try:
-        case_type = CaseType.objects.get(
-            domain=info.domain,
-            name=info.type,
-        )
-    except CaseType.DoesNotExist:
-        return None
-
-    try:
-        resource_type = (
-            FHIRResourceType.objects
-            .prefetch_related('properties__case_property')
-            .get(case_type=case_type, fhir_version=fhir_version)
-        )
-    except FHIRResourceType.DoesNotExist:
-        return None
 
     fhir_resource = {}
     for prop in resource_type.properties.all():
@@ -238,7 +221,12 @@ def _build_fhir_resource(
     return fhir_resource
 
 
-def get_case_trigger_info(case):
+def get_case_trigger_info(
+    case: Union[CommCareCase, CommCareCaseSQL],
+    resource_type: FHIRResourceType,
+    case_block: Optional[dict] = None,
+    form_question_values: Optional[dict] = None,
+) -> CaseTriggerInfo:
     """
     Returns ``CaseTriggerInfo`` instance for ``case``.
 
@@ -247,17 +235,50 @@ def get_case_trigger_info(case):
     ``CaseTriggerInfo`` packages case (and form) data for use by
     ``ValueSource``.
     """
-    case_type = CaseType.objects.get(
-        domain=case.domain,
-        name=case.type,
-    )
-    prop_names = [p.name for p in case_type.properties.all()]
+    if case_block is None:
+        case_block = {}
+    else:
+        assert case_block['@case_id'] == case.case_id
+    if form_question_values is None:
+        form_question_values = {}
+
+    case_create = case_block.get('create') or {}
+    case_update = case_block.get('update') or {}
+    case_property_names = [
+        resource_property.case_property.name
+        for resource_property in resource_type.properties.all()
+        if resource_property.case_property
+    ]
+    extra_fields = {
+        p: str(case.get_case_property(p))  # Cast as `str` because
+        # CouchDB can return `Decimal` case properties.
+        for p in case_property_names
+    }
     return CaseTriggerInfo(
         domain=case.domain,
         case_id=case.case_id,
         type=case.type,
-        extra_fields={p: case.get_case_property(p) for p in prop_names},
+        name=case.name,
+        owner_id=case.owner_id,
+        modified_by=case.modified_by,
+        updates={**case_create, **case_update},
+        created='create' in case_block if case_block else None,
+        closed='close' in case_block if case_block else None,
+        extra_fields=extra_fields,
+        form_question_values=form_question_values,
     )
+
+
+def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
+    try:
+        return (
+            FHIRResourceType.objects
+            .select_related('case_type')
+            .prefetch_related('properties__case_property')
+            .get(case_type__name=case.type, fhir_version=fhir_version)
+        )
+    except FHIRResourceType.DoesNotExist:
+        return None
 
 
 def deepmerge(a, b):

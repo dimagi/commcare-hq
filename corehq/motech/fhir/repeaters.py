@@ -1,3 +1,5 @@
+from typing import Dict, List, Tuple
+
 from django.utils.translation import ugettext_lazy as _
 
 from memoized import memoized
@@ -26,7 +28,7 @@ from corehq.privileges import DATA_FORWARDING
 from corehq.toggles import FHIR_INTEGRATION
 
 from .const import FHIR_VERSION_4_0_1, XMLNS_FHIR
-from .models import FHIRResourceType
+from .models import FHIRResourceType, get_case_trigger_info
 from .repeater_helpers import (
     get_info_resource_list,
     register_patients,
@@ -75,15 +77,12 @@ class FHIRRepeater(CaseRepeater):
         to send, returns True.
         """
         requests = self.connection_settings.get_requests(repeat_record.payload_id)
-        case_trigger_infos = self.get_case_trigger_infos(
+        infos, resource_types = self.get_infos_resource_types(
             payload,
             self.fhir_version,
         )
         try:
-            resources = get_info_resource_list(
-                case_trigger_infos,
-                self.fhir_version,
-            )
+            resources = get_info_resource_list(infos, resource_types)
             if not resources:
                 # Nothing to send
                 return True
@@ -94,7 +93,12 @@ class FHIRRepeater(CaseRepeater):
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
-    def get_case_trigger_infos(self, form_json, fhir_version):
+    def get_infos_resource_types(
+        self,
+        form_json: dict,
+        fhir_version: str,
+    ) -> Tuple[List[CaseTriggerInfo], Dict[str, FHIRResourceType]]:
+
         form_question_values = get_form_question_values(form_json)
         case_blocks = extract_case_blocks(form_json)
         cases_by_id = _get_cases_by_id(self.domain, case_blocks)
@@ -104,7 +108,7 @@ class FHIRRepeater(CaseRepeater):
             cases_by_id.values(),
         )
 
-        case_trigger_infos = []
+        case_trigger_info_list = []
         for case_block in case_blocks:
             case = cases_by_id[case_block['@case_id']]
             try:
@@ -114,32 +118,13 @@ class FHIRRepeater(CaseRepeater):
                 # This case is not meant to be represented as a FHIR
                 # resource.
                 continue
-            case_property_names = [
-                resource_property.case_property.name
-                for resource_property in resource_type.properties.all()
-                if resource_property.case_property
-            ]
-            extra_fields = {
-                p: str(case.get_case_property(p))  # Cast as `str` because
-                # CouchDB can return `Decimal` case properties.
-                for p in case_property_names
-            }
-            case_create = case_block.get('create') or {}
-            case_update = case_block.get('update') or {}
-            case_trigger_infos.append(CaseTriggerInfo(
-                domain=self.domain,
-                case_id=case.case_id,
-                type=case.type,
-                name=case.name,
-                owner_id=case.owner_id,
-                modified_by=case.modified_by,
-                updates={**case_create, **case_update},
-                created='create' in case_block,
-                closed='close' in case_block,
-                extra_fields=extra_fields,
-                form_question_values=form_question_values,
+            case_trigger_info_list.append(get_case_trigger_info(
+                case,
+                resource_type,
+                case_block,
+                form_question_values,
             ))
-        return case_trigger_infos
+        return case_trigger_info_list, resource_types_by_case_type
 
 
 def _get_cases_by_id(domain, case_blocks):

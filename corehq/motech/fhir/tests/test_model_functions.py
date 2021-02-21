@@ -6,14 +6,16 @@ from nose.tools import assert_equal
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
+
 from ..const import FHIR_VERSION_4_0_1
 from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
     _build_fhir_resource,
+    build_fhir_resource,
     deepmerge,
     get_case_trigger_info,
-    build_fhir_resource,
+    get_resource_type_or_none,
 )
 
 DOMAIN = 'test-domain'
@@ -23,8 +25,21 @@ class TestGetCaseTriggerInfo(TestCase):
 
     def setUp(self):
         self.case_type = CaseType.objects.create(domain=DOMAIN, name='foo')
+        self.resource_type = FHIRResourceType.objects.create(
+            domain=DOMAIN,
+            case_type=self.case_type,
+            name='Foo',
+        )
         for name in ('een', 'twee', 'drie'):
-            CaseProperty.objects.create(case_type=self.case_type, name=name)
+            prop = CaseProperty.objects.create(
+                case_type=self.case_type,
+                name=name,
+            )
+            FHIRResourceProperty.objects.create(
+                resource_type=self.resource_type,
+                case_property=prop,
+                jsonpath=f'$.{name}',
+            )
 
     def tearDown(self):
         self.case_type.delete()
@@ -40,7 +55,7 @@ class TestGetCaseTriggerInfo(TestCase):
                 'vier': 4, 'vyf': 5, 'ses': 6,
             }
         )
-        info = get_case_trigger_info(case)
+        info = get_case_trigger_info(case, self.resource_type)
         for name in ('een', 'twee', 'drie'):
             self.assertIn(name, info.extra_fields)
         for name in ('vier', 'vyf', 'ses'):
@@ -53,7 +68,7 @@ class TestBuildFHIRResource(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         case_type = CaseType.objects.create(domain=DOMAIN, name='mother')
-        resource_type = FHIRResourceType.objects.create(
+        cls.resource_type = FHIRResourceType.objects.create(
             domain=DOMAIN,
             case_type=case_type,
             name='Patient',
@@ -66,7 +81,7 @@ class TestBuildFHIRResource(TestCase):
         ]:
             prop = CaseProperty.objects.create(case_type=case_type, name=name)
             FHIRResourceProperty.objects.create(
-                resource_type=resource_type,
+                resource_type=cls.resource_type,
                 case_property=prop,
                 jsonpath=jsonpath,
             )
@@ -104,9 +119,12 @@ class TestBuildFHIRResource(TestCase):
         })
 
     def test_num_queries(self):
-        info = get_case_trigger_info(self.case)
         with self.assertNumQueries(3):
-            _build_fhir_resource(info, FHIR_VERSION_4_0_1)
+            resource_type = get_resource_type_or_none(self.case, FHIR_VERSION_4_0_1)
+        with self.assertNumQueries(0):
+            info = get_case_trigger_info(self.case, resource_type)
+        with self.assertNumQueries(0):
+            _build_fhir_resource(info, resource_type)
 
 
 def test_deepmerge():
