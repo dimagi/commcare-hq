@@ -101,19 +101,27 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // e.g. format is home-state, home-zipcode, home-us_state||country
                 var receiveExpression = element.data().receive;
                 var receiveField = receiveExpression.split("-")[1];
+                var value = null;
                 if (broadcastObj === undefined || broadcastObj === Const.NO_ANSWER) {
-                    element.val(Const.NO_ANSWER);
+                    value = Const.NO_ANSWER;
                 } else if (broadcastObj[receiveField]) {
-                    element.val(broadcastObj[receiveField]);
+                    value = broadcastObj[receiveField];
                 } else {
                     // match home-us_state||country style
                     var fields = receiveField.split('||');
                     $.each(fields, function (i, field) {
                         if (broadcastObj[field] !== undefined) {
-                            element.val(broadcastObj[field]);
+                            value = broadcastObj[field];
                             return false;
                         }
                     });
+                }
+                if (element.is('input')) {
+                    element.val(value);
+                }
+                else {
+                    // should be a dropdown
+                    $(".sdr option").filter(function(index) { return $(this).text() === "Barcode"; }).attr('selected', 'selected');
                 }
             }
         },
