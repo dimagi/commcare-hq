@@ -1,6 +1,5 @@
 import datetime
 
-from django.urls import reverse
 from django.conf import settings
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 
