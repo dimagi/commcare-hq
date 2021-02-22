@@ -214,7 +214,7 @@ def domains_and_cases_list_view(request):
     try:
         if request.user and request.user.is_authenticated:
             consumer_user = ConsumerUser.objects.get(user=request.user)
-            qs = ConsumerUserCaseRelationship.objects.filter(case_user=consumer_user)
+            qs = ConsumerUserCaseRelationship.objects.filter(consumer_user=consumer_user)
             domains_and_cases = [val for val in qs.values('domain', 'case_id')]
             return render(request, 'domains_and_cases.html', {'domains_and_cases': domains_and_cases})
         else:

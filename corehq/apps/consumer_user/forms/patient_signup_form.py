@@ -32,5 +32,5 @@ class PatientSignUpForm(ModelForm):
                 self.invitation.save()
             _ = ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
                                                             domain=self.invitation.domain,
-                                                            case_user_id=consumer_user.id)
+                                                            consumer_user=consumer_user)
         return user
