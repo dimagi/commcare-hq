@@ -21,7 +21,8 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
-from .api import SubmissionError, UserError, handle_case_update, serialize_case
+from .api.core import SubmissionError, UserError, serialize_case
+from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
 

@@ -19,7 +19,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.util.test_utils import privilege_enabled
 
-from ..api import serialize_case
+from ..api.core import serialize_case
 from ..utils import submit_case_blocks
 
 
