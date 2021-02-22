@@ -91,19 +91,26 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             search: '.js-user-search',
             query: '.js-user-query',
             page: '.js-page',
+            goPage: '.js-page-go-search',
+            perPage: '.js-page-series',
         },
         events: {
             'click @ui.next': 'onClickNext',
             'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
+            'click @ui.goPage': 'onSubmitPageSearch',
+            'click @ui.perPage': 'onClickPagelimit',
         },
         templateContext: function () {
+            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
+            var paginationOptions = paginateItems.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
-                // Subtract 1 from page so that it is 0 indexed
-                pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
+                limit: this.limit,
+                rowRange: [10, 25, 50, 100],
+                pagesToShow: paginationOptions,
             };
         },
         navigate: function () {
@@ -157,6 +164,25 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 'query': this.ui.query.val(),
                 'page': 1,  // Reset page to one when doing a query
             });
+        },
+        onSubmitPageSearch: function (e) {
+            e.preventDefault();
+            var page = Number($('#goText').val());
+            if (page && page <= this.totalPages()) {
+                this.model.set('page', page);
+            } else {
+                FormplayerFrontend.trigger(
+                    'showError',
+                    'Enter valid Page number'
+                );
+            }
+        },
+        onClickPagelimit: function (e) {
+            e.preventDefault();
+            var rowCount = document.getElementById("itemsText").value;
+            this.limit = rowCount;
+            this.fetchUsers();
+            this.model.set('page', 1);
         },
     });
 
