@@ -1,4 +1,4 @@
-/*global DOMPurify, Marionette */
+/*global DOMPurify, Marionette, MapboxGeocoder */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
@@ -49,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
-        geocoderItemCallback: function(addressTopic) {
+        geocoderItemCallback: function (addressTopic) {
             return function (item) {
                 var broadcastObj = {
                     full: item.place_name,
@@ -90,14 +90,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             };
         },
 
-        geocoderOnClearCallback: function(addressTopic) {
-            return function() {
+        geocoderOnClearCallback: function (addressTopic) {
+            return function () {
                 $.publish(addressTopic, Const.NO_ANSWER);
             };
         },
 
         updateReceiver: function (element) {
-            return function(_event, broadcastObj) {
+            return function (_event, broadcastObj) {
                 // e.g. format is home-state, home-zipcode, home-us_state||country
                 var receiveExpression = element.data().receive;
                 var receiveField = receiveExpression.split("-")[1];
@@ -123,7 +123,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     // should be a dropdown
                     $(".sdr option").filter(function(index) { return $(this).text() === "Barcode"; }).attr('selected', 'selected');
                 }
-            }
+            };
         },
 
         onAttach: function () {
@@ -131,9 +131,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.queryField.each(function () {
                 // Set geocoder receivers to subscribe
                 var receiveExpression = $(this).data().receive;
-                if (receiveExpression !== undefined && receiveExpression !== ""){
-                    var addressTopic = receiveExpression.split("-")[0];
-                    $.subscribe(addressTopic, self.updateReceiver($(this)));
+                if (receiveExpression !== undefined && receiveExpression !== "") {
+                    var topic = receiveExpression.split("-")[0];
+                    $.subscribe(topic, self.updateReceiver($(this)));
                 }
                 // Set geocoder address publish
                 var addressTopic = $(this).data().address;
@@ -156,8 +156,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     inputEl.addClass('form-control');
                     inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
                     var divEl = $('.mapboxgl-ctrl-geocoder');
-                    divEl.css("max-width", "none")
-                    divEl.css("width", "100%")
+                    divEl.css("max-width", "none");
+                    divEl.css("width", "100%");
                 }
             });
         },
