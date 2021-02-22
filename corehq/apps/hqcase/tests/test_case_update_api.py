@@ -135,6 +135,17 @@ class TestCaseAPI(TestCase):
         # for the time being, the implementation is the same
         return self._create_case(body)
 
+    def test_simple_get(self):
+        case_id = self._make_case().case_id
+        res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()['@case_id'], case_id)
+
+    def test_case_not_found(self):
+        res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
+
     def test_create_case(self):
         res = self._create_case({
             # notable exclusions: case_id, date_opened, date_modified

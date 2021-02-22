@@ -17,6 +17,8 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
 from .api import SubmissionError, UserError, handle_case_update, serialize_case
@@ -79,11 +81,21 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @require_superuser_or_contractor
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 def case_api(request, domain, case_id=None):
+    if request.method == 'GET' and case_id:
+        return _handle_individual_get(request, case_id)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
     if request.method == 'PUT' and case_id:
         return _handle_case_update(request, case_id)
     return JsonResponse({'error': "Request method not allowed"}, status=405)
+
+
+def _handle_individual_get(request, case_id):
+    try:
+        case = CaseAccessors(request.domain).get_case(case_id)
+    except CaseNotFound:
+        return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
+    return JsonResponse(serialize_case(case))
 
 
 def _handle_case_update(request, case_id=None):
