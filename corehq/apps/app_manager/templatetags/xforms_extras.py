@@ -92,43 +92,61 @@ def html_name(name):
 
 @register.simple_tag
 def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None):
+    options = _get_dynamic_input_trans_options(name, langs=langs)
+    input_id_attribute = format_html("id='{}'", input_id) if input_id else ""
+    data_bind_attribute = format_html("data-bind='{}'", data_bind) if data_bind else ""
+
+    options.update({
+        "input_name": input_name,
+        "input_id_attribute": input_id_attribute,
+        "data_bind_attribute": data_bind_attribute
+    })
+
     template = '''
         <input type="text"
-               name="{}" {} {}
+               name="{input_name}" {input_id_attribute} {data_bind_attribute}
                class="form-control"
-               value="%(value)s"
-               placeholder="%(placeholder)s" />
-    '''.format(
-        input_name,
-        f"id='{input_id}'" if input_id else "",
-        f"data-bind='{data_bind}'" if data_bind else "")
-    return _input_trans(template, name, langs=langs)
+               value="{value}"
+               placeholder="{placeholder}" />
+    '''
+
+    return format_html(template, **options)
 
 
 @register.simple_tag
 def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
         containerClass='', iconClass='', readOnlyClass='', disallow_edit='false'):
+    options = _get_dynamic_input_trans_options(name, langs=langs, allow_blank=False)
+    options.update({
+        'url': url,
+        'saveValueName': saveValueName,
+        'containerClass': containerClass,
+        'iconClass': iconClass,
+        'readOnlyClass': readOnlyClass,
+        'postSave': postSave,
+        'disallow_edit': disallow_edit
+    })
+
     template = '''
         <inline-edit params="
             name: 'name',
-            value: '%(value)s',
-            placeholder: '%(placeholder)s',
+            value: '{value}',
+            placeholder: '{placeholder}',
             nodeName: 'input',
-            lang: '%(lang)s',
-            url: '{}',
-            saveValueName: '{}',
-            containerClass: '{}',
-            iconClass: '{}',
-            readOnlyClass: '{}',
-            postSave: {},
-            disallow_edit: {},
+            lang: '{lang}',
+            url: '{url}',
+            saveValueName: '{saveValueName}',
+            containerClass: '{containerClass}',
+            iconClass: '{iconClass}',
+            readOnlyClass: '{readOnlyClass}',
+            postSave: {postSave},
+            disallow_edit: {disallow_edit},
         "></inline-edit>
-    '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave, disallow_edit)
-    return _input_trans(template, name, langs=langs, allow_blank=False)
+    '''
+    return format_html(template, **options)
 
 
-# template may have replacements for lang, placeholder, and value
-def _input_trans(template, name, langs=None, allow_blank=True):
+def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True):
     if langs is None:
         langs = ["default"]
     placeholder = _("Untitled")
@@ -149,7 +167,7 @@ def _input_trans(template, name, langs=None, allow_blank=True):
                 options['lang'] = lang
             break
     options = {key: html.escapejs(value) for (key, value) in options.items()}
-    return mark_safe(template % options)
+    return options
 
 
 @register.filter
