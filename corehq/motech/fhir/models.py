@@ -1,5 +1,6 @@
 import json
 import os
+from itertools import zip_longest
 from typing import Optional, Union
 
 from django.conf import settings
@@ -194,14 +195,17 @@ def _build_fhir_resource(
     resource_type = (FHIRResourceType.objects
                      .prefetch_related('properties__case_property')
                      .get(case_type=case_type, fhir_version=fhir_version))
-    fhir_resource = {
-        **resource_type.template,
-        'id': info.case_id,
-        'resourceType': resource_type.name,  # Always required
-    }
+    fhir_resource = {}
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()
         value_source.set_external_value(fhir_resource, info)
+    if not fhir_resource and skip_empty:
+        return None
+    fhir_resource = deepmerge({
+        **resource_type.template,
+        'id': info.case_id,
+        'resourceType': resource_type.name,  # Always required
+    }, fhir_resource)
     resource_type.validate_resource(fhir_resource)
     return fhir_resource
 
@@ -224,3 +228,37 @@ def get_case_trigger_info(case):
         type=case.type,
         extra_fields={p: case.get_case_property(p) for p in prop_names},
     )
+
+
+def deepmerge(a, b):
+    """
+    Merges ``b`` into ``a``.
+
+    >>> foo = {'one': {'two': 2, 'three': 42}}
+    >>> bar = {'one': {'three': 3}}
+    >>> {**foo, **bar}
+    {'one': {'three': 3}}
+    >>> deepmerge(foo, bar)
+    {'one': {'two': 2, 'three': 3}}
+
+    Dicts and lists are recursed. Other data types are replaced.
+
+    >>> foo = {'one': [{'two': 2}, 42]}
+    >>> bar = {'one': [{'three': 3}]}
+    >>> deepmerge(foo, bar)
+    {'one': [{'two': 2, 'three': 3}, 42]}
+
+    """
+    if isinstance(a, dict) and isinstance(b, dict):
+        for key in b:
+            if key in a:
+                a[key] = deepmerge(a[key], b[key])
+            else:
+                a[key] = b[key]
+        return a
+    elif isinstance(a, list) and isinstance(b, list):
+        return list(deepmerge(aa, bb) for aa, bb in zip_longest(a, b))
+    elif b is None:
+        return a
+    else:
+        return b
