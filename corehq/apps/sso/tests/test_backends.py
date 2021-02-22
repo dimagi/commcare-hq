@@ -1,13 +1,7 @@
-from unittest import mock
-
 from django.contrib import auth
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.sso.decorators import (
-    identity_provider_required,
-    use_saml2_auth,
-)
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
 from corehq.apps.users.models import WebUser
