@@ -2,6 +2,8 @@ from uuid import uuid4
 
 from django.test import TestCase
 
+from nose.tools import assert_equal
+
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
 from ..const import FHIR_VERSION_4_0_1
@@ -9,6 +11,7 @@ from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
     _build_fhir_resource,
+    deepmerge,
     get_case_trigger_info,
     build_fhir_resource,
 )
@@ -104,3 +107,30 @@ class TestBuildFHIRResource(TestCase):
         info = get_case_trigger_info(self.case)
         with self.assertNumQueries(3):
             _build_fhir_resource(info, FHIR_VERSION_4_0_1)
+
+
+def test_deepmerge():
+    for a, b, expected in [
+        ('foo', 'bar', 'bar'),
+        (['foo'], ['bar'], ['bar']),
+        ({'foo': 1}, {'bar': 2}, {'foo': 1, 'bar': 2}),
+        ([1, 2], [3], [3, 2]),
+
+        ({'foo': [1, 2]}, {'foo': [3]}, {'foo': [3, 2]}),
+        ({'foo': (1, 2)}, {'foo': (3,)}, {'foo': (3,)}),
+        ({'foo': [1]}, {'foo': [3, 2]}, {'foo': [3, 2]}),
+
+        ({'foo': {'bar': 1}}, {'foo': {'baz': 2}},
+         {'foo': {'bar': 1, 'baz': 2}}),
+
+        ({'foo': None}, {'foo': 1}, {'foo': 1}),
+        ({'foo': 1}, {'foo': None}, {'foo': 1}),  # Don't replace with None ...
+        ({'foo': [1]}, {'foo': [None, None]},  # ... unless it's all you've got
+         {'foo': [1, None]}),
+    ]:
+        yield check_deepmerge, a, b, expected
+
+
+def check_deepmerge(a, b, expected):
+    result = deepmerge(a, b)
+    assert_equal(result, expected)
