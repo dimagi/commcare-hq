@@ -5,18 +5,18 @@ from django.conf import settings
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 
 from dimagi.utils.web import get_url_base
-from corehq.apps.sso import utils
+from corehq.apps.sso.utils import url_helpers
 
 
 def get_saml2_config(identity_provider):
     sp_settings = {
-        "entityId": utils.get_saml_entity_id(identity_provider),
+        "entityId": url_helpers.get_saml_entity_id(identity_provider),
         "assertionConsumerService": {
-            "url": utils.get_saml_acs_url(identity_provider),
+            "url": url_helpers.get_saml_acs_url(identity_provider),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_POST,
         },
         "singleLogoutService": {
-            "url": utils.get_saml_sls_url(identity_provider),
+            "url": url_helpers.get_saml_sls_url(identity_provider),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
         "attributeConsumingService": {

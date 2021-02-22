@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso import utils
+from corehq.apps.sso.utils import url_helpers
 
 TIME_FORMAT = "%Y/%m/%d %H:%M"
 
@@ -177,15 +177,15 @@ class ServiceProviderDetailsForm(forms.Form):
         shown_fields.extend([
             hqcrispy.B3TextField(
                 'sp_entity_id',
-                utils.get_saml_entity_id(self.idp),
+                url_helpers.get_saml_entity_id(self.idp),
             ),
             hqcrispy.B3TextField(
                 'sp_acs_url',
-                utils.get_saml_acs_url(self.idp),
+                url_helpers.get_saml_acs_url(self.idp),
             ),
             hqcrispy.B3TextField(
                 'sp_logout_url',
-                utils.get_saml_sls_url(self.idp),
+                url_helpers.get_saml_sls_url(self.idp),
             ),
         ])
         if self.show_public_cert:
