@@ -67,54 +67,6 @@ class TestCaseAPI(TestCase):
         ).as_text()], domain=self.domain)
         return cases[0]
 
-    def test_serialize_case(self):
-        parent_case_id = self._make_case().case_id
-        xform, cases = submit_case_blocks([CaseBlock(
-            case_id=str(uuid.uuid4()),
-            case_type='match',
-            case_name='Harmon/Luchenko',
-            owner_id='harmon',
-            external_id='14',
-            create=True,
-            update={'winner': 'Harmon'},
-            index={
-                'parent': IndexAttrs(case_type='player', case_id=parent_case_id, relationship='child')
-            },
-        ).as_text()], domain=self.domain)
-        case = cases[0]
-
-        case.opened_on = datetime(2021, 2, 18, 10, 59)
-        case.modified_on = datetime(2021, 2, 18, 10, 59)
-        case.server_modified_on = datetime(2021, 2, 18, 10, 59)
-
-        self.assertEqual(
-            serialize_case(case),
-            {
-                "domain": self.domain,
-                "@case_id": case.case_id,
-                "@case_type": "match",
-                "case_name": "Harmon/Luchenko",
-                "external_id": "14",
-                "@owner_id": "harmon",
-                "date_opened": "2021-02-18T10:59:00",
-                "last_modified": "2021-02-18T10:59:00",
-                "server_last_modified": "2021-02-18T10:59:00",
-                "closed": False,
-                "date_closed": None,
-                "properties": {
-                    "winner": "Harmon",
-                },
-                "indices": {
-                    "parent": {
-                        "case_id": parent_case_id,
-                        "@case_type": "player",
-                        "@relationship": "child",
-                    }
-                }
-            }
-
-        )
-
     def _create_case(self, body):
         return self.client.post(
             reverse('case_api', args=(self.domain,)),
