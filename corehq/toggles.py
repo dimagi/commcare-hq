@@ -690,8 +690,6 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
-        "Feature still being fine tuned so should be used cautiously. "
-        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
@@ -740,6 +738,25 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
+    'ush_dont_close_patient_extensions',
+    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
+    Enabling this results in 'closing patient type cases will not close its contact type
+    extension cases'. Designed for specific USH domain use-case
+    """
+)
+
+DISABLE_WEB_APPS = StaticToggle(
+    'disable_web_apps',
+    'Disable access to Web Apps UI',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Disable+access+to+Web+Apps+UI',
+)
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
@@ -760,9 +777,21 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
-    'Allow case claim to be automatically launched in web apps',
+    '''
+        Support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results"
+    ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+WEBAPPS_STICKY_SEARCH = StaticToggle(
+    'webapps_sticky_search',
+    'COVID: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 
@@ -1907,6 +1936,13 @@ GAEN_OTP_SERVER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+PARALLEL_USER_IMPORTS = StaticToggle(
+    'parallel_user_imports',
+    'COVID: Process user imports in parallel on a dedicated queue',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',
@@ -1964,7 +2000,7 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     'default_export_settings',
     'Allow enterprise admin to set default export settings',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_USER],
     description="""
     Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
@@ -1999,4 +2035,11 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_OTHER],
     default_randomness=0.001
+)
+
+PRIME_FORMPLAYER_DBS = StaticToggle(
+    'prime_formplayer_dbs',
+    'COVID: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

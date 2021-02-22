@@ -1113,6 +1113,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.username.endswith('@dimagi.com')
 
     def is_locked_out(self):
+        return self.supports_lockout() and self.should_be_locked_out()
+
+    def should_be_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
@@ -2242,7 +2245,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml()
+                caseblock.as_xml(), encoding='utf-8'
             ).decode('utf-8'),
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,

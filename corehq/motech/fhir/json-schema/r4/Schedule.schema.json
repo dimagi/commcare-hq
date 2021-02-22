@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Schedule",
+  "$ref": "#/definitions/Schedule",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Schedule": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A container for slots of time that may be available for booking appointments.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Schedule resource",
+              "type": "string",
+              "enum": [
+                "Schedule"
+              ]
+            },
+            "identifier": {
+              "description": "External Ids for this item.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether this schedule record is in active use, or should not be used (such as was entered in error).",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "serviceCategory": {
+              "description": "A broad categorisation of the service that is to be performed during this appointment.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "serviceType": {
+              "description": "The specific service that is to be performed during this appointment.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "specialty": {
+              "description": "The specialty of a practitioner that would be required to perform the service requested in this appointment.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "actor": {
+              "description": "The resource this Schedule resource is providing availability information for. These are expected to usually be one of HealthcareService, Location, Practitioner, PractitionerRole, Device, Patient or RelatedPerson.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "planningHorizon": {
+              "description": "The period of time that the slots that are attached to this Schedule resource cover (even if none exist). These  cover the amount of time that an organization\u0027s planning horizon; the interval for which they are currently accepting appointments. This does not define a \"template\" for planning outside these dates.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "comment": {
+              "description": "Comments on the availability to describe any extended information. Such as custom constraints on the slots that may be associated.",
+              "type": "string"
+            },
+            "_comment": {
+              "description": "Extensions for comment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "actor",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

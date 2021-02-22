@@ -33,7 +33,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
 )
 from corehq.apps.app_manager.const import (
-    CLAIM_DEFAULT_RELEVANT_CONDITION,
     MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
 )
@@ -131,7 +130,7 @@ def get_module_template(user, module):
 def get_module_view_context(request, app, module, lang=None):
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
-        'show_auto_launch': (
+        'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
             and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
@@ -199,20 +198,23 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
-            'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+            'default_search': module.search_config.default_search if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
             'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
-            'search_relevant':
-                module.search_config.relevant if module_offers_search(module) else "",
+            'search_default_relevant':
+                module.search_config.default_relevant if module_offers_search(module) else True,
+            'search_additional_relevant':
+                module.search_config.additional_relevant if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
             'default_value_expression_enabled': app.enable_default_value_expression,
             # populate these even if module_offers_search is false because search_config might just not exist yet
             'search_command_label':
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
-            'search_session_var': module.search_config.session_var if hasattr(module, 'search_config') else "",
+            'search_again_label':
+                module.search_config.again_label if hasattr(module, 'search_config') else "",
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -909,7 +911,7 @@ def _update_search_properties(module, search_properties, lang='en'):
     >>> search_properties = [
     ...     {'name': 'name', 'label': 'Name'},
     ...     {'name': 'dob'. 'label': 'Date of birth'}
-    ... ]  # Incoming search properties' labels are not dictionaries
+    ... ]  # Incoming search properties' labels/hints are not dictionaries
     >>> lang = 'en'
     >>> list(_update_search_properties(module, search_properties, lang)) == [
     ...     {'name': 'name', 'label': {'fr': 'Nom', 'en': 'Name'}},
@@ -925,12 +927,15 @@ def _update_search_properties(module, search_properties, lang='en'):
             label.update({lang: prop['label']})
         else:
             label = {lang: prop['label']}
+        hint = {lang: prop['hint']}
         ret = {
             'name': prop['name'],
             'label': label,
         }
         if prop['default_value']:
             ret['default_value'] = prop['default_value']
+        if prop['hint']:
+            ret['hint'] = hint
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
@@ -947,6 +952,8 @@ def _update_search_properties(module, search_properties, lang='en'):
 
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
+        elif prop.get('appearance', '') == 'daterange':
+            ret['input_'] = 'daterange'
 
         yield ret
 
@@ -1084,6 +1091,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         ):
             command_label = module.search_config.command_label
             command_label[lang] = search_properties.get('search_command_label', '')
+            again_label = module.search_config.again_label
+            again_label[lang] = search_properties.get('search_again_label', '')
             try:
                 properties = [
                     CaseSearchProperty.wrap(p)
@@ -1095,16 +1104,13 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             except CaseSearchConfigError as e:
                 return HttpResponseBadRequest(e)
             module.search_config = CaseSearch(
-                session_var=search_properties.get('session_var', ""),
                 command_label=command_label,
+                again_label=again_label,
                 properties=properties,
-                relevant=(
-                    search_properties.get('relevant')
-                    if search_properties.get('relevant') is not None
-                    else CLAIM_DEFAULT_RELEVANT_CONDITION
-                ),
+                default_relevant=bool(search_properties.get('search_default_relevant')),
+                additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=bool(search_properties.get('auto_launch')),
-                include_closed=bool(search_properties.get('include_closed')),
+                default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),

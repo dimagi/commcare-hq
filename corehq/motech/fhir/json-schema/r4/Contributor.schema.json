@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Contributor",
+  "$ref": "#/definitions/Contributor",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Contributor": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A contributor to the content of a knowledge asset, including authors, editors, reviewers, and endorsers.",
+          "properties": {
+            "type": {
+              "description": "The type of contributor.",
+              "enum": [
+                "author",
+                "editor",
+                "reviewer",
+                "endorser"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "The name of the individual or organization responsible for the contribution.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the contributor.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

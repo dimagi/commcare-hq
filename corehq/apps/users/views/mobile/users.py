@@ -74,7 +74,7 @@ from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.user_importer.tasks import import_users_and_groups
+from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
@@ -123,6 +123,7 @@ from corehq.const import (
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
+    PARALLEL_USER_IMPORTS
 )
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -1064,21 +1065,35 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        upload_record = UserUploadRecord(
-            domain=self.domain,
-            user_id=request.couch_user.user_id
-        )
-        upload_record.save()
-
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        task = import_users_and_groups.delay(
-            self.domain,
-            list(self.user_specs),
-            list(self.group_specs),
-            request.couch_user,
-            upload_record.pk,
-            False
-        )
+        if PARALLEL_USER_IMPORTS.enabled(self.domain):
+            if list(self.group_specs):
+                messages.error(
+                    request,
+                    _("Groups are not allowed with parallel user import. Please upload them separately")
+                )
+                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
+
+            task = parallel_user_import.delay(
+                self.domain,
+                list(self.user_specs),
+                request.couch_user
+            )
+        else:
+            upload_record = UserUploadRecord(
+                domain=self.domain,
+                user_id=request.couch_user.user_id
+            )
+            upload_record.save()
+
+            task = import_users_and_groups.delay(
+                self.domain,
+                list(self.user_specs),
+                list(self.group_specs),
+                request.couch_user,
+                upload_record.pk,
+                False
+            )
         task_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(

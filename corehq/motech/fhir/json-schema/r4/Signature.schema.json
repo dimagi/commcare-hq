@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Signature",
+  "$ref": "#/definitions/Signature",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Signature": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A digital signature along with supporting context. The signature may be electronic/cryptographic in nature, or a graphical image representing a hand-written signature, or a signature process. Different signature approaches have different utilities.",
+          "properties": {
+            "type": {
+              "description": "An indication of the reason that the entity signed this document. This may be explicitly included as part of the signature information and can be used when determining accountability for various actions concerning the document.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "when": {
+              "description": "When the digital signature was signed.",
+              "type": "string"
+            },
+            "_when": {
+              "description": "Extensions for when",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "whoUri": {
+              "description": "A reference to an application-usable description of the identity that signed  (e.g. the signature used their private key).",
+              "type": "string"
+            },
+            "_whoUri": {
+              "description": "Extensions for whoUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "whoReference": {
+              "description": "A reference to an application-usable description of the identity that signed  (e.g. the signature used their private key).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOfUri": {
+              "description": "A reference to an application-usable description of the identity that is represented by the signature.",
+              "type": "string"
+            },
+            "_onBehalfOfUri": {
+              "description": "Extensions for onBehalfOfUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "onBehalfOfReference": {
+              "description": "A reference to an application-usable description of the identity that is represented by the signature.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "contentType": {
+              "description": "A mime type that indicates the technical format of the signature. Important mime types are application/signature+xml for X ML DigSig, application/jwt for JWT, and image/* for a graphical image of a signature, etc.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_contentType": {
+              "description": "Extensions for contentType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "blob": {
+              "description": "The base64 encoding of the Signature content. When signature is not recorded electronically this element would be empty.",
+              "type": "string"
+            },
+            "_blob": {
+              "description": "Extensions for blob",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    }
+  }
+}
