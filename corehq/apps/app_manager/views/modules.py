@@ -954,11 +954,11 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') == 'geocoder_receiver':
-            ret['appearance'] = 'geocoder_receiver'
-            ret['geocoder_receiver_expression'] = prop.get('geocoder_receiver_expression', '')
         elif prop.get('appearance', '') == 'daterange':
             ret['input_'] = 'daterange'
+
+        if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
+            ret['geocoder_receiver_expression'] = prop.get('geocoder_receiver_expression', '')
 
         yield ret
 

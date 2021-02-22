@@ -77,7 +77,6 @@
                             <option value="barcode_scan">{% trans "Barcode" %}</option>
                             <option value="fixture">{% trans "Lookup Table Selection" %}</option>
                             <option value="address">{% trans "Geocoder Broadcast" %}</option>
-                            <option value="geocoder_receiver">{% trans "Geocoder Receiver" %}</option>
                           </select>
                         </div>
                       </div>
@@ -118,7 +117,7 @@
                       </div>
                     </div>
                     </fieldset>
-                      <fieldset data-bind="visible: property.appearance() == 'geocoder_receiver'">
+                      <fieldset data-bind="visible: property.appearance() == 'fixture' || property.appearance() == ''">
                         <legend>{% trans "Advanced Options" %}</legend>
                         <div class="form-group">
                           <label class="control-label col-xs-12 col-sm-3">
