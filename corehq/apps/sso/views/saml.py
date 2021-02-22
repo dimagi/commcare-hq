@@ -9,7 +9,6 @@ from django.http import (
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
-from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 from corehq.apps.sso.decorators import (
     identity_provider_required,
@@ -88,8 +87,6 @@ def sso_saml_acs(request, idp_slug):
             "samlSessionIndex": request.session['samlSessionIndex'],
         }
 
-        # todo redirect here?
-        saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
     else:
         error_reason = request.saml2_auth.get_last_error_reason()
 
