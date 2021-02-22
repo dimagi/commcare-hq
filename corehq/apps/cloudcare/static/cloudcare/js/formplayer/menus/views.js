@@ -295,6 +295,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.columnHeader': 'columnSortAction',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
+            'keypress @ui.paginators': 'paginateKeyAction',
         },
 
         caseListAction: function (e) {
@@ -330,6 +331,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var goText = Number(this.ui.paginationGoText.val());
             var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+        },
+
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginateAction(e);
+            }
         },
 
         paginationGoKeyAction: function (e) {

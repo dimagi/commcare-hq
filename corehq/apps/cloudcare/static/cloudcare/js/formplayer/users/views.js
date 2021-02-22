@@ -91,13 +91,16 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             page: '.js-page',
             paginationGoButton: '#pagination-go-button',
             paginationGoText: '#goText',
+            paginationGoTextBox: '.module-go-container',
             perPage: '.js-page-limit',
         },
         events: {
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
             'click @ui.paginationGoButton': 'paginationGoAction',
-            'click @ui.perPage': 'onClickPageLimit',
+            'change @ui.perPage': 'onClickPageLimit',
+            'keypress @ui.page': 'paginateKeyAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
             var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
@@ -111,7 +114,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 endPage: paginationOptions.endPage,
                 pageCount: paginationOptions.pageCount,
                 currentPage: this.model.get('page') - 1,
-                perPageOptionsText: '15 per page',
+                pageNumLabel: _.template(gettext("Page <%= num %>")),
             };
         },
         navigate: function () {
@@ -143,6 +146,12 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             var page = $(e.currentTarget).data().id;
             this.model.set('page', page + 1);
         },
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                this.onClickPage(e);
+            }
+        },
         onSubmitUserSearch: function (e) {
             e.preventDefault();
             this.model.set({
@@ -156,6 +165,12 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             var page = Number(this.ui.paginationGoText.val());
             var pageNo = paginateItems.paginationGoPageNumber(page, this.totalPages());
             this.model.set('page', pageNo);
+        },
+        paginationGoKeyAction: function (e) {
+            // Pressing Enter in the go box activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                this.paginationGoAction(e);
+            }
         },
         onClickPageLimit: function (e) {
             e.preventDefault();

@@ -30,10 +30,11 @@
           <div class="row">
             <div class="col-sm-3">
               <div class="form-inline per-pagination-text">
-                <select class="form-control js-page-limit" id="itemsText">
-                  <option value="<%= limit %>">{% trans "<%= limit %> per page" %}</option>
+                <select class="form-control js-page-limit">
                   <% for(var i = 0; i < rowRange.length; i++) { %>
-                    <% if (rowRange[i] != limit) { %>
+                    <% if (rowRange[i] === limit) { %>
+                      <option value="<%= rowRange[i] %>" selected>{% trans "<%= rowRange[i] %> per page" %}</option>
+                    <% } else { %>
                       <option value="<%= rowRange[i] %>">{% trans "<%= rowRange[i] %> per page" %}</option>
                     <% } %>
                   <% } %>
