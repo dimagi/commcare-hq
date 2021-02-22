@@ -81,4 +81,5 @@ branches:
   #           property under "Save data to the following case properties"
   #           Case Update uses reserved word "case_name"
   - smh/bulk-upload-web-users # Steph Feb 22
+  - jls/encode-case-claim-params # Jenny Feb 22
 submodules: {}
