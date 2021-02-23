@@ -57,6 +57,16 @@ class TestSsoBackend(TestCase):
             'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
         }
 
+    def test_backend_failure_without_username(self):
+        """
+        SsoBackend (and every backend) should fail because username was not
+        passed to authenticate()
+        """
+        with self.assertRaises(KeyError):
+            auth.authenticate(
+                request=self.request,
+                idp_slug=self.idp.slug,
+            )
 
     def test_backend_failure_without_idp_slug(self):
         """
