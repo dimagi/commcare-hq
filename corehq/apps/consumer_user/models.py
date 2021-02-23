@@ -16,13 +16,10 @@ class ConsumerUserCaseRelationship(models.Model):
 
 
 class ConsumerUserInvitation(models.Model):
-    email = models.EmailField()  # the email address the invite was sent to
+    email = models.EmailField()
     case_id = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
     accepted = models.BooleanField(default=False)
-    invited_by = models.CharField(max_length=255)  # UUID of the (Web|Commcare) User who created this invitation
-    invited_on = models.DateTimeField(auto_now=True)  # datetime when this invitation was created.
+    invited_by = models.CharField(max_length=255)
+    invited_on = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
-
-    class Meta:
-        unique_together = ('case_id', 'domain',)
