@@ -37,7 +37,8 @@ class TestSsoBackend(TestCase):
 
     def setUp(self):
         super().setUp()
-        # Identity Provider is_active is always True by default for each test
+        # some tests set is_active to False, so make sure is_active is always
+        #  True by default
         self.idp.is_active = True
         self.idp.save()
 
