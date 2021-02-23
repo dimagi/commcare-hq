@@ -1,4 +1,4 @@
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.sso.authentication import get_authenticated_sso_user
@@ -90,7 +90,7 @@ class TestGetAuthenticatedSsoUser(TestCase):
     def test_authentication_error_if_email_domain_does_not_exist(self):
         """
         get_authenticated_sso_user should throw an SsoAuthenticationError if
-        the username passed to it matches an email domain that is not mapped 
+        the username passed to it matches an email domain that is not mapped
         to any Identity Provider.
         """
         with self.assertRaises(SsoAuthenticationError):
@@ -110,7 +110,7 @@ class TestGetAuthenticatedSsoUser(TestCase):
                 'b@vwx.link',
                 self.idp.slug  # note that this is self.idp, not idp_vwx
             )
-    
+
     def test_authentication_error_if_user_does_not_exist(self):
         """
         get_authenticated_sso_user should throw an SsoAuthenticationError if
@@ -124,7 +124,7 @@ class TestGetAuthenticatedSsoUser(TestCase):
                 'testnoexist@vaultwax.com',
                 self.idp.slug
             )
-            
+
     def test_successful_authentication(self):
         """
         This test demonstrates the requirements necessary for
