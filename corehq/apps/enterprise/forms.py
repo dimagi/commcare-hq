@@ -93,6 +93,7 @@ class EnterpriseSettingsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
         self.account = kwargs.pop('account', None)
+        self.username = kwargs.pop('username', None)
         self.export_settings = kwargs.pop('export_settings', None)
         kwargs['initial'] = {
             "restrict_domain_creation": self.account.restrict_domain_creation,
@@ -100,7 +101,7 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_signup_message": self.account.restrict_signup_message,
         }
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.username):
             kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
@@ -124,7 +125,7 @@ class EnterpriseSettingsForm(forms.Form):
             )
         )
 
-        if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if DEFAULT_EXPORT_SETTINGS.enabled(self.username):
             self.helper.layout.append(
                 crispy.Div(
                     crispy.Fieldset(
@@ -188,7 +189,7 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.username):
             # forms
             self.export_settings.forms_filetype = self.cleaned_data.get(
                 'forms_filetype',
