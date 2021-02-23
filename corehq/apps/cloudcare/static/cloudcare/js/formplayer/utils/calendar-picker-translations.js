@@ -1,84 +1,84 @@
 (function($) {
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US
-		renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
-		prevText: '&lt;Prev &nbsp; Month',
-		prevStatus: 'Show the previous month',
-		prevJumpText: '&lt;&lt;',
-		prevJumpStatus: 'Show the previous year',
-		nextText: 'Next&nbsp;Month&gt;',
-		nextStatus: 'Show the next month',
-		nextJumpText: '&gt;&gt;',
-		nextJumpStatus: 'Show the next year',
-		currentText: 'Current',
-		currentStatus: 'Show the current month',
-		todayText: 'Today',
-		todayStatus: 'Show today\'s month',
-		clearText: 'Clear',
-		clearStatus: 'Clear all the dates',
-		closeText: 'Close',
-		closeStatus: 'Close the datepicker',
-		yearStatus: 'Change the year',
-		earlierText: '&#160;&#160;▲',
-		laterText: '&#160;&#160;▼',
-		monthStatus: 'Change the month',
-		weekText: 'Wk',
-		weekStatus: 'Week of the year',
-		dayStatus: 'Select DD, M d, yyyy',
-		defaultStatus: 'Select a date',
-		isRTL: false
-	};
+        renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
+        prevText: '&lt;Prev &nbsp; Month',
+        prevStatus: 'Show the previous month',
+        prevJumpText: '&lt;&lt;',
+        prevJumpStatus: 'Show the previous year',
+        nextText: 'Next&nbsp;Month&gt;',
+        nextStatus: 'Show the next month',
+        nextJumpText: '&gt;&gt;',
+        nextJumpStatus: 'Show the next year',
+        currentText: 'Current',
+        currentStatus: 'Show the current month',
+        todayText: 'Today',
+        todayStatus: 'Show today\'s month',
+        clearText: 'Clear',
+        clearStatus: 'Clear all the dates',
+        closeText: 'Close',
+        closeStatus: 'Close the datepicker',
+        yearStatus: 'Change the year',
+        earlierText: '&#160;&#160;▲',
+        laterText: '&#160;&#160;▼',
+        monthStatus: 'Change the month',
+        weekText: 'Wk',
+        weekStatus: 'Week of the year',
+        dayStatus: 'Select DD, M d, yyyy',
+        defaultStatus: 'Select a date',
+        isRTL: false,
+    };
     $.calendars.calendars.ethiopian.prototype.regionalOptions[''] = {
-		name: 'Ethiopian',
-		epochs: ['BEE', 'EE'],
-		monthNames: ['Meskerem', 'Tikemet', 'Hidar', 'Tahesas', 'Tir', 'Yekatit',
-				     'Megabit', 'Miazia', 'Genbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
-		monthNamesShort: ['Mes', 'Tik', 'Hid', 'Tah', 'Tir', 'Yek',
-				          'Meg', 'Mia', 'Gen', 'Sen', 'Ham', 'Neh', 'Pag'],
-		dayNames: ['Ehud', 'Segno', 'Maksegno', 'Irob', 'Hamus', 'Arb', 'Kidame'],
-		dayNamesShort: ['Ehu', 'Seg', 'Mak', 'Iro', 'Ham', 'Arb', 'Kid'],
-		dayNamesMin: ['Eh', 'Se', 'Ma', 'Ir', 'Ha', 'Ar', 'Ki'],
-		digits: null,
-		dateFormat: 'dd/mm/yyyy',
-		firstDay: 0,
-		isRTL: false
+        name: 'Ethiopian',
+        epochs: ['BEE', 'EE'],
+        monthNames: ['Meskerem', 'Tikemet', 'Hidar', 'Tahesas', 'Tir', 'Yekatit',
+                     'Megabit', 'Miazia', 'Genbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
+        monthNamesShort: ['Mes', 'Tik', 'Hid', 'Tah', 'Tir', 'Yek',
+                          'Meg', 'Mia', 'Gen', 'Sen', 'Ham', 'Neh', 'Pag'],
+        dayNames: ['Ehud', 'Segno', 'Maksegno', 'Irob', 'Hamus', 'Arb', 'Kidame'],
+        dayNamesShort: ['Ehu', 'Seg', 'Mak', 'Iro', 'Ham', 'Arb', 'Kid'],
+        dayNamesMin: ['Eh', 'Se', 'Ma', 'Ir', 'Ha', 'Ar', 'Ki'],
+        digits: null,
+        dateFormat: 'dd/mm/yyyy',
+        firstDay: 0,
+        isRTL: false,
     };
 
 
     // Amharic
     $.calendarsPicker.regionalOptions['amh'] = {
-		renderer: $.calendarsPicker.regionalOptions[''].renderer,
-		prevText: 'ያለፈ',
-		prevStatus: 'ያለፈውን ወር አሳይ',
-		prevJumpText: '&lt;&lt;',
-		prevJumpStatus: 'ያለፈውን ዓመት አሳይ',
-		nextText: 'ቀጣይ',
-		nextStatus: 'ቀጣዩን ወር አሳይ',
-		nextJumpText: '&gt;&gt;',
-		nextJumpStatus: 'ቀጣዩን ዓመት አሳይ',
-		currentText: 'አሁን',
-		currentStatus: 'የአሁኑን ወር አሳይ',
-		todayText: 'የአሁኑ ወር',
-		todayStatus: 'የዛሬን ወር አሳይ',
-		clearText: 'አጥፋ',
-		clearStatus: 'የተመረጠውን ቀን አጥፋ',
-		closeText: 'ዝጋ',
-		closeStatus: 'የቀን መምረጫውን ዝጋ',
-		yearStatus: 'ዓመቱን ቀይር',
-		earlierText: '&#160;&#160;▲',
-		laterText: '&#160;&#160;▼',
-		monthStatus: 'ወሩን ቀይር',
-		weekText: 'ሳም',
-		weekStatus: 'የዓመቱ ሳምንት ',
-		dayStatus: 'DD M d yyyy ምረጥ',
-		defaultStatus: 'ቀን ምረጥ',
-		isRTL: false
-	};
+        renderer: $.calendarsPicker.regionalOptions[''].renderer,
+        prevText: 'ያለፈ',
+        prevStatus: 'ያለፈውን ወር አሳይ',
+        prevJumpText: '&lt;&lt;',
+        prevJumpStatus: 'ያለፈውን ዓመት አሳይ',
+        nextText: 'ቀጣይ',
+        nextStatus: 'ቀጣዩን ወር አሳይ',
+        nextJumpText: '&gt;&gt;',
+        nextJumpStatus: 'ቀጣዩን ዓመት አሳይ',
+        currentText: 'አሁን',
+        currentStatus: 'የአሁኑን ወር አሳይ',
+        todayText: 'የአሁኑ ወር',
+        todayStatus: 'የዛሬን ወር አሳይ',
+        clearText: 'አጥፋ',
+        clearStatus: 'የተመረጠውን ቀን አጥፋ',
+        closeText: 'ዝጋ',
+        closeStatus: 'የቀን መምረጫውን ዝጋ',
+        yearStatus: 'ዓመቱን ቀይር',
+        earlierText: '&#160;&#160;▲',
+        laterText: '&#160;&#160;▼',
+        monthStatus: 'ወሩን ቀይር',
+        weekText: 'ሳም',
+        weekStatus: 'የዓመቱ ሳምንት ',
+        dayStatus: 'DD M d yyyy ምረጥ',
+        defaultStatus: 'ቀን ምረጥ',
+        isRTL: false,
+    };
 
-	$.calendars.calendars.ethiopian.prototype.regionalOptions['amh'] = {
-		name: 'የኢትዮጵያ ዘመን አቆጣጠር',
-		epochs: ['BEE', 'EE'],
-		monthNames: [
+    $.calendars.calendars.ethiopian.prototype.regionalOptions['amh'] = {
+        name: 'የኢትዮጵያ ዘመን አቆጣጠር',
+        epochs: ['BEE', 'EE'],
+        monthNames: [
             "መስከረም",
             "ጥቅምት",
             "ህዳር",
@@ -93,7 +93,7 @@
             "ነሃሴ",
             "ጷጉሜ",
         ],
-		monthNamesShort: [
+        monthNamesShort: [
             "መስከረም",
             "ጥቅምት",
             "ህዳር",
@@ -108,7 +108,7 @@
             "ነሃሴ",
             "ጷጉሜ",
         ],
-		dayNames: [
+        dayNames: [
             "እሁድ",
             "ሰኞ",
             "ማክሰኞ",
@@ -117,7 +117,7 @@
             "አርብ",
             "ቅዳሜ",
         ],
-		dayNamesShort: [
+        dayNamesShort: [
             "እሁድ",
             "ሰኞ",
             "ማክሰኞ",
@@ -126,7 +126,7 @@
             "አርብ",
             "ቅዳሜ",
         ],
-		dayNamesMin: [
+        dayNamesMin: [
             "እሁድ",
             "ሰኞ",
             "ማክሰኞ",
@@ -135,45 +135,45 @@
             "አርብ",
             "ቅዳሜ",
         ],
-		digits: null,
-		dateFormat: 'dd/mm/yyyy',
-		firstDay: 0,
-		isRTL: false
-	};
+        digits: null,
+        dateFormat: 'dd/mm/yyyy',
+        firstDay: 0,
+        isRTL: false,
+    };
 
     // Tigrinya
     $.calendarsPicker.regionalOptions['tir'] = {
-		renderer: $.calendarsPicker.regionalOptions[''].renderer,
-		prevText: 'ዝሓለፈ/ሕሉፍ',
-		prevStatus: 'ናይ ዝሓለፈ ወርሒ አርኢ',
-		prevJumpText: '&lt;&lt;',
-		prevJumpStatus: 'ናይ ዝሓለፈ ዓመት አርኢ',
-		nextText: 'ቐጺሉ',
-		nextStatus: 'ቐጻሊ ወርሒ አርኢ',
-		nextJumpText: '&gt;&gt;',
-		nextJumpStatus: 'ቐጻሊ ዓመት አርኢ',
-		currentText: 'ህሉው/ሕዚ',
-		currentStatus: 'ናይ ሕዚ ወርሒ አርኢ',
-		todayText: 'ሎሚ/ሎማዓንቲ',
-		todayStatus: 'ናይ ሎሚ/ሎማዓንቲ ወርሒ አርኢ',
-		clearText: 'ሰርዝ/አጥፍእ',
-		clearStatus: 'ኩሎም ዕለታት ሰርዝ/አጥፍእ',
-		closeText: 'ዕጸው',
-		closeStatus: 'ዕለት መምረፂ ዕጸው/ምዕጻው',
-		yearStatus: 'ዓመት ቐይሪ/ሮ',
-		earlierText: '&#160;&#160;▲',
-		laterText: '&#160;&#160;▼',
-		monthStatus: 'ወርሒ ቐይሪ/ሮ',
-		weekText: 'ሰሙን',
-		weekStatus: 'ሰሙን ዓመት',
-		dayStatus: 'DD M d yyyy ምረፂ/ፅ',
-		defaultStatus: 'ዕለት ምረፂ/ፅ',
-		isRTL: false
-	};
+        renderer: $.calendarsPicker.regionalOptions[''].renderer,
+        prevText: 'ዝሓለፈ/ሕሉፍ',
+        prevStatus: 'ናይ ዝሓለፈ ወርሒ አርኢ',
+        prevJumpText: '&lt;&lt;',
+        prevJumpStatus: 'ናይ ዝሓለፈ ዓመት አርኢ',
+        nextText: 'ቐጺሉ',
+        nextStatus: 'ቐጻሊ ወርሒ አርኢ',
+        nextJumpText: '&gt;&gt;',
+        nextJumpStatus: 'ቐጻሊ ዓመት አርኢ',
+        currentText: 'ህሉው/ሕዚ',
+        currentStatus: 'ናይ ሕዚ ወርሒ አርኢ',
+        todayText: 'ሎሚ/ሎማዓንቲ',
+        todayStatus: 'ናይ ሎሚ/ሎማዓንቲ ወርሒ አርኢ',
+        clearText: 'ሰርዝ/አጥፍእ',
+        clearStatus: 'ኩሎም ዕለታት ሰርዝ/አጥፍእ',
+        closeText: 'ዕጸው',
+        closeStatus: 'ዕለት መምረፂ ዕጸው/ምዕጻው',
+        yearStatus: 'ዓመት ቐይሪ/ሮ',
+        earlierText: '&#160;&#160;▲',
+        laterText: '&#160;&#160;▼',
+        monthStatus: 'ወርሒ ቐይሪ/ሮ',
+        weekText: 'ሰሙን',
+        weekStatus: 'ሰሙን ዓመት',
+        dayStatus: 'DD M d yyyy ምረፂ/ፅ',
+        defaultStatus: 'ዕለት ምረፂ/ፅ',
+        isRTL: false,
+    };
     $.calendars.calendars.ethiopian.prototype.regionalOptions['tir'] = {
-		name: 'Ethiopian',
-		epochs: ['BEE', 'EE'],
-		monthNames: [
+        name: 'Ethiopian',
+        epochs: ['BEE', 'EE'],
+        monthNames: [
             "መስከረም",
             "ጥቅምቲ",
             "ሕዳር",
@@ -188,7 +188,7 @@
             "ነሓሰ",
             "ጳጉሜን",
         ],
-		monthNamesShort: [
+        monthNamesShort: [
             "መስ",
             "ጥቅ",
             "ሕዳ",
@@ -203,7 +203,7 @@
             "ነሓሰ",
             "ጳጉሜን",
         ],
-		dayNames: [
+        dayNames: [
             "ሰንበት",
             "ሶኒ",
             "ሰሉስ",
@@ -212,7 +212,7 @@
             "ዓርቢ",
             "ቐዳም",
         ],
-		dayNamesShort: [
+        dayNamesShort: [
             "ሰንበት",
             "ሶኒ",
             "ሰሉስ",
@@ -221,7 +221,7 @@
             "ዓርቢ",
             "ቐዳም",
         ],
-		dayNamesMin: [
+        dayNamesMin: [
             "ሰንበት",
             "ሶኒ",
             "ሰሉስ",
@@ -230,45 +230,45 @@
             "ዓርቢ",
             "ቐዳም",
         ],
-		digits: null,
-		dateFormat: 'dd/mm/yyyy',
-		firstDay: 0,
-		isRTL: false
+        digits: null,
+        dateFormat: 'dd/mm/yyyy',
+        firstDay: 0,
+        isRTL: false,
     };
 
     // Oromo
     $.calendarsPicker.regionalOptions['orm'] = { // Default regional settings - English/US
-		renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
-		prevText: 'kan darbe',
-		prevStatus: 'baati darbe agarsisii',
-		prevJumpText: '&lt;&lt;',
-		prevJumpStatus: 'bara darbe agarsisii',
-		nextText: 'itti aane dhufu',
-		nextStatus: 'baati itti aanu agarsisii',
-		nextJumpText: '&gt;&gt;',
-		nextJumpStatus: 'bara itti aanu agarsisii',
-		currentText: 'amma',
-		currentStatus: 'baati ammaa agarsisii',
-		todayText: 'har\'a',
-		todayStatus: 'baati akka har\'aa',
-		clearText: 'haqi',
-		clearStatus: 'guyyaa filatame haqi',
-		closeText: 'cufi',
-		closeStatus: 'filattuu guyyaa cufi',
-		yearStatus: 'bara jijjiiri',
-		earlierText: '&#160;&#160;▲',
-		laterText: '&#160;&#160;▼',
-		monthStatus: 'baati jijjiri',
-		weekText: 'Torbaan',
-		weekStatus: 'Torbaan wagga',
-		dayStatus: 'GG/JJ/Bar',
-		defaultStatus: 'guyyaa filadhuu',
-		isRTL: false
-	};
+        renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
+        prevText: 'kan darbe',
+        prevStatus: 'baati darbe agarsisii',
+        prevJumpText: '&lt;&lt;',
+        prevJumpStatus: 'bara darbe agarsisii',
+        nextText: 'itti aane dhufu',
+        nextStatus: 'baati itti aanu agarsisii',
+        nextJumpText: '&gt;&gt;',
+        nextJumpStatus: 'bara itti aanu agarsisii',
+        currentText: 'amma',
+        currentStatus: 'baati ammaa agarsisii',
+        todayText: 'har\'a',
+        todayStatus: 'baati akka har\'aa',
+        clearText: 'haqi',
+        clearStatus: 'guyyaa filatame haqi',
+        closeText: 'cufi',
+        closeStatus: 'filattuu guyyaa cufi',
+        yearStatus: 'bara jijjiiri',
+        earlierText: '&#160;&#160;▲',
+        laterText: '&#160;&#160;▼',
+        monthStatus: 'baati jijjiri',
+        weekText: 'Torbaan',
+        weekStatus: 'Torbaan wagga',
+        dayStatus: 'GG/JJ/Bar',
+        defaultStatus: 'guyyaa filadhuu',
+        isRTL: false,
+    };
     $.calendars.calendars.ethiopian.prototype.regionalOptions['orm'] = {
-		name: 'Ethiopian',
-		epochs: ['BEE', 'EE'],
-		monthNames: [
+        name: 'Ethiopian',
+        epochs: ['BEE', 'EE'],
+        monthNames: [
             "Fulbaana",
             "Onkololessa",
             "sadaasaa",
@@ -283,7 +283,7 @@
             "Hagayya",
             "Qaam'ee",
         ],
-		monthNamesShort: [
+        monthNamesShort: [
             "Ful",
             "Onk",
             "Sad",
@@ -298,7 +298,7 @@
             "Hag",
             "Qam",
         ],
-		dayNames: [
+        dayNames: [
             "Dulbata",
             "Wixata",
             "Kibxata",
@@ -307,7 +307,7 @@
             "Jimaata",
             "Sanbata Duraa",
         ],
-		dayNamesShort: [
+        dayNamesShort: [
             "Dilb",
             "Wix",
             "Kibx",
@@ -316,7 +316,7 @@
             "Jim",
             "San.D",
         ],
-		dayNamesMin: [
+        dayNamesMin: [
             "Dilb",
             "Wix",
             "Kibx",
@@ -325,9 +325,9 @@
             "Jim",
             "San.D",
         ],
-		digits: null,
-		dateFormat: 'dd/mm/yyyy',
-		firstDay: 0,
-		isRTL: false
+        digits: null,
+        dateFormat: 'dd/mm/yyyy',
+        firstDay: 0,
+        isRTL: false,
     };
 })(jQuery);
