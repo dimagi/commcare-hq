@@ -54,7 +54,7 @@
                 "type": "property_path",
                 "property_path": [
                   "form",
-                  "food_served_checked"
+                  "food_served_check"
                 ]
               },
               "property_value": "yes"
