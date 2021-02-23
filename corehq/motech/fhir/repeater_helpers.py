@@ -2,20 +2,43 @@ from typing import List, Tuple
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+
 from requests import Response
 
+from casexml.apps.case.mock import CaseBlock
+
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 
-from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS
+from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
 from .models import build_fhir_resource_for_info
 
 
 def register_patients(
     requests: Requests,
-    info_resources_list: List[tuple],
-):
-    raise NotImplementedError
+    info_resource_list: List[tuple],
+    repeater_id: str,
+) -> List[tuple]:
+
+    info_resource_list_to_send = []
+    for info, resource in info_resource_list:
+        if resource['resourceType'] != 'Patient':
+            info_resource_list_to_send.append((info, resource))
+            continue
+        if info.extra_fields['external_id']:
+            # Patient is already registered
+            info_resource_list_to_send.append((info, resource))
+            continue
+        response = requests.post(
+            'Patient/',
+            json=resource,
+            raise_for_status=True,
+        )
+        _set_external_id(info, response.json()['id'], repeater_id)
+        # Don't append `resource` to `info_resource_list_to_send`
+        # because the remote service has all its data now.
+    return info_resource_list_to_send
 
 
 def get_info_resource_list(
@@ -99,3 +122,20 @@ def get_full_url(
     ver = dict(FHIR_VERSIONS)[fhir_version].lower()
     return (f'{proto}://{host}/a/{domain}/api'
             f"/fhir/{ver}/{resource['resourceType']}/{resource['id']}")
+
+
+def _set_external_id(info, external_id, repeater_id):
+    """
+    Set "external_id" property on the case represented by ``info``.
+    """
+    case_block = CaseBlock(
+        case_id=info.case_id,
+        external_id=external_id,
+        create=False,
+    )
+    submit_case_blocks(
+        [case_block.as_text()],
+        info.domain,
+        xmlns=XMLNS_FHIR,
+        device_id=f'FHIRRepeater-{repeater_id}',
+    )

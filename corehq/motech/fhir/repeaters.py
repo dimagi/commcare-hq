@@ -86,7 +86,7 @@ class FHIRRepeater(CaseRepeater):
             if not resources:
                 # Nothing to send
                 return True
-            register_patients(requests, resources)
+            resources = register_patients(requests, resources, self._id)
             response = send_resources(requests, resources, self.fhir_version)
         except Exception as err:
             requests.notify_exception(str(err))
