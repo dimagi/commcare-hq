@@ -7,7 +7,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
-from couchforms.models import XFormError
 from soil import DownloadBase
 
 from corehq import privileges
@@ -20,7 +19,7 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.utils import should_use_sql_backend
 
-from .api import UserError, handle_case_update, serialize_case
+from .api import SubmissionError, UserError, handle_case_update, serialize_case
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -103,11 +102,10 @@ def _handle_case_update(request, case_id=None):
         )
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
-
-    if isinstance(xform, XFormError):
+    except SubmissionError as e:
         return JsonResponse({
-            'error': xform.problem,
-            '@form_id': xform.form_id,
+            'error': str(e),
+            '@form_id': e.form_id,
         }, status=400)
 
     if isinstance(case_or_cases, list):

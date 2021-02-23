@@ -1,11 +1,11 @@
 import uuid
 
-from memoized import memoized
-
 import jsonobject
 from jsonobject.exceptions import BadValueError
+from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from couchforms.models import XFormError
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -122,6 +122,12 @@ class UserError(Exception):
     pass
 
 
+class SubmissionError(Exception):
+    def __init__(self, msg, form_id):
+        self.form_id = form_id
+        super().__init__(msg)
+
+
 def handle_case_update(domain, data, user, device_id, case_id=None):
     is_bulk = isinstance(data, list)
     if is_bulk:
@@ -130,10 +136,13 @@ def handle_case_update(domain, data, user, device_id, case_id=None):
         updates = [_get_individual_update(domain, data, user, case_id)]
 
     xform, cases = _submit_case_updates(updates, domain, user, device_id)
+    if isinstance(xform, XFormError):
+        raise SubmissionError(xform.problem, xform.form_id,)
+
     if is_bulk:
         return xform, cases
     else:
-        return xform, cases[0] if cases else None
+        return xform, cases[0]
 
 
 def _get_individual_update(domain, data, user, case_id=None):
