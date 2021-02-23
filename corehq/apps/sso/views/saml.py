@@ -96,6 +96,7 @@ def sso_saml_acs(request, idp_slug):
     else:
         error_reason = request.saml2_auth.get_last_error_reason()
 
+    # todo DEBUGGING RESPONSE ONLY. Change prior to release!
     return HttpResponse(json.dumps({
         "errors": errors,
         "error_reason": error_reason,
