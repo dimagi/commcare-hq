@@ -25,10 +25,20 @@ class TestSsoBackend(TestCase):
             cls.domain.name, 'b@vaultwax.com', 'testpwd', None, None
         )
         cls.idp = generator.create_idp('vaultwax', cls.account)
-        cls.idp_two = generator.create_idp('vwx-link', cls.account)
+        AuthenticatedEmailDomain.objects.create(
+            email_domain='vaultwax.com',
+            identity_provider=cls.idp,
+        )
+
+        idp_vwx = generator.create_idp('vwx-link', cls.account)
+        AuthenticatedEmailDomain.objects.create(
+            email_domain='vwx.link',
+            identity_provider=idp_vwx,  # note which idp is mapped here
+        )
 
     @classmethod
     def tearDownClass(cls):
+        AuthenticatedEmailDomain.objects.all().delete()
         IdentityProvider.objects.all().delete()
         cls.user.delete(None)
         cls.domain.delete()
@@ -46,10 +56,6 @@ class TestSsoBackend(TestCase):
         self.request.session = {
             'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
         }
-
-    def tearDown(self):
-        AuthenticatedEmailDomain.objects.all().delete()
-        super().tearDown()
 
 
     def test_backend_failure_without_idp_slug(self):
@@ -139,14 +145,14 @@ class TestSsoBackend(TestCase):
         """
         user = auth.authenticate(
             request=self.request,
-            username='b@vwx.link',
+            username='b@idonotexist.com',
             idp_slug=self.idp.slug
         )
         self.assertIsNone(user)
         self.assertEqual(
             self.request.sso_login_error,
-            "The Email Domain vwx.link is not allowed to authenticate with "
-            "this Identity Provider."
+            "The Email Domain idonotexist.com is not allowed to authenticate "
+            "with this Identity Provider."
         )
 
     def test_login_error_if_email_domain_is_not_authorized(self):
@@ -156,14 +162,10 @@ class TestSsoBackend(TestCase):
         authenticate with the Identity Provider in the request. It should also
         populate request.sso_login_error with an error message.
         """
-        AuthenticatedEmailDomain.objects.create(
-            email_domain='vwx.link',
-            identity_provider=self.idp_two,  # note that this is not self.idp
-        )
         user = auth.authenticate(
             request=self.request,
             username='b@vwx.link',
-            idp_slug=self.idp.slug  # note that this is self.idp, not idp_two
+            idp_slug=self.idp.slug  # note that this is self.idp, not idp_vwx
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -181,10 +183,6 @@ class TestSsoBackend(TestCase):
         todo this test will change with additional user creation workflows
          that will be introduced later
         """
-        AuthenticatedEmailDomain.objects.create(
-            email_domain='vaultwax.com',
-            identity_provider=self.idp,
-        )
         user = auth.authenticate(
             request=self.request,
             username='testnoexist@vaultwax.com',
@@ -201,10 +199,6 @@ class TestSsoBackend(TestCase):
         This test demonstrates the requirements necessary for a SsoBackend to
         successfully return a user and report no login error.
         """
-        AuthenticatedEmailDomain.objects.create(
-            email_domain='vaultwax.com',
-            identity_provider=self.idp,
-        )
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
