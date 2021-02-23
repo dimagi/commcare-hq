@@ -167,8 +167,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.steps) {
                 this.steps = [];
             }
-            this.steps.push(step);
-            //clear out pagination and search when we take a step
+
+            // Steps only deal with strings, because formplayer will send them back as strings
+            this.steps.push(String(step));
+
+            // clear out pagination and search when we take a step
             this.page = null;
             this.search = null;
         };
@@ -192,9 +195,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.queryData) {
                 this.queryData = {};
             }
+            var steps = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().steps;
             this.queryData[sessionStorage.queryKey] = {
                 inputs: queryDict,
                 execute: execute,
+                selections: steps,
             };
         };
 
@@ -225,12 +230,19 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (index === 0) {
                 this.steps = null;
                 this.sessionId = null;
+                this.queryData = null;
             } else {
                 this.steps = this.steps.splice(0, index);
+                var stepsKey = this.steps.join(",");
+                // Query data is necessary to formplayer navigation, so keep it,
+                // but only for the steps that are still relevant to the session.
+                this.queryData = _.pick(this.queryData, function (value) {
+                    var valueKey = value.selections.join(",");
+                    return stepsKey.startsWith(valueKey) && stepsKey !== valueKey;
+                });
             }
             this.page = null;
             this.search = null;
-            this.queryData = null;
             this.sortIndex = null;
             this.forceManualAction = null;
         };
