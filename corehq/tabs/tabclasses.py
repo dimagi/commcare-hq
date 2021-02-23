@@ -68,9 +68,7 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
-from corehq.apps.sso.utils.domain_helpers import (
-    domain_has_editable_identity_provider,
-)
+from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -1573,7 +1571,7 @@ class EnterpriseSettingsTab(UITab):
                            args=[self.domain])
         })
         if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
-            if domain_has_editable_identity_provider(self.domain):
+            if IdentityProvider.domain_has_identity_provider(self.domain):
                 from corehq.apps.sso.views.enterprise_admin import (
                     ManageSSOEnterpriseView,
                     EditIdentityProviderEnterpriseView,
