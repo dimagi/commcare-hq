@@ -108,7 +108,7 @@ class TestSsoBackend(TestCase):
         self.assertIsNone(user)
         self.assertEqual(
             self.request.sso_login_error,
-            "Identity Provider does not exist."
+            "Identity Provider doesnotexist does not exist."
         )
 
     def test_login_error_if_idp_not_active(self):
@@ -127,7 +127,7 @@ class TestSsoBackend(TestCase):
         self.assertIsNone(user)
         self.assertEqual(
             self.request.sso_login_error,
-            "This Identity Provider is not active."
+            "This Identity Provider vaultwax is not active."
         )
 
     def test_login_error_if_bad_username(self):
@@ -162,7 +162,7 @@ class TestSsoBackend(TestCase):
         self.assertEqual(
             self.request.sso_login_error,
             "The Email Domain idonotexist.com is not allowed to authenticate "
-            "with this Identity Provider."
+            "with this Identity Provider (vaultwax)."
         )
 
     def test_login_error_if_email_domain_is_not_authorized(self):
@@ -181,7 +181,7 @@ class TestSsoBackend(TestCase):
         self.assertEqual(
             self.request.sso_login_error,
             "The Email Domain vwx.link is not allowed to authenticate with "
-            "this Identity Provider."
+            "this Identity Provider (vaultwax)."
         )
 
     def test_login_error_if_user_does_not_exist(self):
