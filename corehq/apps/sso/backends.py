@@ -19,11 +19,11 @@ class SsoBackend(ModelBackend):
             identity_provider = IdentityProvider.objects.get(slug=idp_slug)
         except IdentityProvider.DoesNotExist:
             # not sure how we would even get here, but just in case
-            request.sso_login_error = "Identity Provider does not exist."
+            request.sso_login_error = f"Identity Provider {idp_slug} does not exist."
             return None
 
         if not identity_provider.is_active:
-            request.sso_login_error = "This Identity Provider is not active."
+            request.sso_login_error = f"This Identity Provider {idp_slug} is not active."
             return None
 
         try:
@@ -40,7 +40,7 @@ class SsoBackend(ModelBackend):
             # do not continue with authentication
             request.sso_login_error = (
                 f"The Email Domain {email_domain} is not allowed to "
-                f"authenticate with this Identity Provider."
+                f"authenticate with this Identity Provider ({idp_slug})."
             )
             return None
 
