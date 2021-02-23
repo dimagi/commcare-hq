@@ -90,6 +90,9 @@ def register_view(request, invitation):
         return JsonResponse({'message': "Invalid invitation"}, status=400)
     except SignatureExpired:
         return JsonResponse({'message': "Invitation is expired"}, status=400)
+    else:
+        if not invitation_obj.active:
+            return JsonResponse({'message': "Invitation is inactive"}, status=400)
     email = invitation_obj.email
     try:
         create_user = request.GET.get('create_user', False)

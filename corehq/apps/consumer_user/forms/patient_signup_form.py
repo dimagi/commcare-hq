@@ -3,6 +3,7 @@ from django.forms import PasswordInput
 from django.contrib.auth.models import User
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
+from corehq.apps.hqcase.utils import update_case
 
 
 class PatientSignUpForm(ModelForm):
@@ -30,7 +31,10 @@ class PatientSignUpForm(ModelForm):
             if self.invitation:
                 self.invitation.accepted = True
                 self.invitation.save()
-            _ = ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
-                                                            domain=self.invitation.domain,
-                                                            consumer_user=consumer_user)
+                _ = ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
+                                                                domain=self.invitation.domain,
+                                                                consumer_user=consumer_user)
+                update_case(self.invitation.domain,
+                            self.invitation.case_id,
+                            {'invitation_status': 'accepted'})
         return user

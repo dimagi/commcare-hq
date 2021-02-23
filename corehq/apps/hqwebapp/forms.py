@@ -1,5 +1,6 @@
 import json
-
+from datetime import datetime
+from dimagi.utils.web import get_ip
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
@@ -18,8 +19,10 @@ from crispy_forms.helper import FormHelper
 from memoized import memoized
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
+from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.domain.forms import NoAutocompleteMixin
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.metrics import metrics_counter
 
 LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
@@ -52,13 +55,42 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if user and user.is_locked_out():
             metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
-        elif not user:
-            raise self.get_invalid_login_error()
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
+            if not user:
+                try:
+                    _ = ConsumerUser.objects.get(user=self.user_cache)
+                    EmailAuthenticationForm.create_web_user_from_consumer_user(username,
+                                                                               password,
+                                                                               get_ip(self.request))
+                except ConsumerUser.DoesNotExist:
+                    self.get_invalid_login_error()
         except ValidationError:
             raise
         return cleaned_data
+
+    @staticmethod
+    def create_web_user_from_consumer_user(username, password, ip=None, is_domain_admin=True):
+        now = datetime.utcnow()
+
+        new_user = WebUser.create(None, username, password, None, USER_CHANGE_VIA_WEB, is_admin=is_domain_admin)
+        new_user.subscribed_to_commcare_users = False
+        new_user.eula.signed = True
+        new_user.eula.date = now
+        new_user.eula.type = 'End User License Agreement'
+        if ip:
+            new_user.eula.user_ip = ip
+
+        new_user.is_staff = False  # Can't log in to admin site
+        new_user.is_active = True
+        new_user.is_superuser = False
+        new_user.last_login = now
+        new_user.date_joined = now
+        new_user.last_password_set = now
+        new_user.atypical_user = False
+        new_user.save()
+
+        return new_user
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
