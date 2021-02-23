@@ -330,4 +330,4 @@
         firstDay: 0,
         isRTL: false,
     };
-})(jQuery);
+})(window.jQuery);
