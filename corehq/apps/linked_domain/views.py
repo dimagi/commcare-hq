@@ -255,7 +255,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'master_link': self._link_context(master_link, timezone) if master_link else None,
                 'model_status': sorted(model_status, key=lambda m: m['name']),
                 'master_model_status': sorted(master_model_status, key=lambda m: m['name']),
-                'linked_domains': linked_domains,
+                'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
                 'models': [
                     {'slug': model[0], 'name': model[1]}
                     for model in LINKED_MODELS
