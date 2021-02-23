@@ -420,9 +420,7 @@ class FormDictPayloadGenerator(BasePayloadGenerator):
     format_label = _('Python dictionary')
 
     def get_payload(self, repeat_record, form) -> dict:
-        from corehq.apps.api.util import form_to_es_form
-        es_form = form_to_es_form(form, include_attachments=True)
-        return {'form': es_form.form_data}
+        return form.to_json()
 
     @property
     def content_type(self):
