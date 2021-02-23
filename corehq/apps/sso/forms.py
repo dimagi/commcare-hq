@@ -280,7 +280,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         if self.idp.is_editable:
             self.fields['is_editable'].help_text = format_html(
                 '<a href="{}">{}</a>',
-                utils.get_dashboard_link(self.idp),
+                url_helpers.get_dashboard_link(self.idp),
                 _("Edit Enterprise Settings")
             )
 

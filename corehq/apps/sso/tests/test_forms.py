@@ -83,7 +83,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
 
 
-@patch('corehq.apps.sso.utils.get_dashboard_link', return_value='#')
+@patch('corehq.apps.sso.utils.url_helpers.get_dashboard_link', return_value='#')
 class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
 
     def setUp(self):
