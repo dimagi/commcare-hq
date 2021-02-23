@@ -207,8 +207,14 @@ class SignalTestCase(TestCase):
             self.assertEqual(async_task.call_count, 1)
             update_case(self.domain, case.case_id,
                         case_properties={'email': 'email@changed.in'})
-            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 1)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 2)
             self.assertEqual(async_task.call_count, 2)
+            update_case(self.domain, case.case_id, None, True)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 2)
+            self.assertEqual(ConsumerUserInvitation.objects.filter(active=False).count(),
+                             ConsumerUserInvitation.objects.count())
+            self.assertEqual(async_task.call_count, 2)
+
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email_other_casetype(self):

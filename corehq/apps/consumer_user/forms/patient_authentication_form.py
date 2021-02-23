@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
+from corehq.apps.hqcase.utils import update_case
 
 
 class PatientAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -36,6 +37,9 @@ class PatientAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                 _ = ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
                                                                 domain=self.invitation.domain,
                                                                 consumer_user=consumer_user)
+                update_case(self.invitation.domain,
+                            self.invitation.case_id,
+                            {'invitation_status': 'accepted'})
         except ValidationError:
             raise
         return cleaned_data
