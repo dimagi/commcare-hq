@@ -46,21 +46,20 @@ class TestSsoBackend(TestCase):
         self.idp.save()
 
         self.request = RequestFactory().get('/sso/test')
-        self.request.session = {}
+        self.request.session = {
+            'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
+        }
 
     def tearDown(self):
         AuthenticatedEmailDomain.objects.all().delete()
         super().tearDown()
 
-    def _set_saml_session_index(self):
-        self.request.session['samlSessionIndex'] = '_7c84c96e-8774-4e64-893c-06f91d285100'
 
     def test_backend_failure_without_idp_slug(self):
         """
         SsoBackend should fail to move past the first check because an idp_slug
          was not passed to authenticate()
         """
-        self._set_saml_session_index()
         user = auth.authenticate(
             request=self.request,
             username=self.user.username
@@ -74,6 +73,7 @@ class TestSsoBackend(TestCase):
         SsoBackend should fail to move past the first check because a
          samlSessionIndex is not present in request.session.
         """
+        del self.request.session['samlSessionIndex']
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
@@ -87,7 +87,6 @@ class TestSsoBackend(TestCase):
         slug associated with that user does not exist. It should also populate
         request.sso_login_error with an error message.
         """
-        self._set_saml_session_index()
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
@@ -105,7 +104,6 @@ class TestSsoBackend(TestCase):
         associated with that user is not active. It should also populate
         request.sso_login_error with an error message.
         """
-        self._set_saml_session_index()
         self.idp.is_active = False
         self.idp.save()
         user = auth.authenticate(
@@ -125,7 +123,6 @@ class TestSsoBackend(TestCase):
         is not a valid email address (missing email domain / no `@`). It should
         also populate request.sso_login_error with an error message.
         """
-        self._set_saml_session_index()
         user = auth.authenticate(
             request=self.request,
             username='badusername',
@@ -143,7 +140,6 @@ class TestSsoBackend(TestCase):
         matches an email domain that is not mapped to any Identity Provider.
         It should also populate request.sso_login_error with an error message.
         """
-        self._set_saml_session_index()
         user = auth.authenticate(
             request=self.request,
             username='b@vwx.link',
@@ -163,7 +159,6 @@ class TestSsoBackend(TestCase):
         authenticate with the Identity Provider in the request. It should also
         populate request.sso_login_error with an error message.
         """
-        self._set_saml_session_index()
         AuthenticatedEmailDomain.objects.create(
             email_domain='vwx.link',
             identity_provider=self.idp_two,  # note that this is not self.idp
@@ -189,7 +184,6 @@ class TestSsoBackend(TestCase):
         todo this test will change with additional user creation workflows
          that will be introduced later
         """
-        self._set_saml_session_index()
         AuthenticatedEmailDomain.objects.create(
             email_domain='vaultwax.com',
             identity_provider=self.idp,
@@ -210,7 +204,6 @@ class TestSsoBackend(TestCase):
         This test demonstrates the requirements necessary for a SsoBackend to
         successfully return a user and report no login error.
         """
-        self._set_saml_session_index()
         AuthenticatedEmailDomain.objects.create(
             email_domain='vaultwax.com',
             identity_provider=self.idp,
