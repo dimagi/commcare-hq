@@ -30,12 +30,12 @@ def _validate_or_raise_slugify_error(slug):
 
 
 def _check_is_editable_requirements(identity_provider):
-    if not identity_provider.email_domains:
+    if not identity_provider.get_email_domains():
         raise forms.ValidationError(
             _("Please make sure you specify at "
               "least one Authenticated Email Domain.")
         )
-    if not identity_provider.sso_exempt_users:
+    if not identity_provider.get_sso_exempt_users():
         raise forms.ValidationError(
             _("Please make sure you have specified at least one "
               "enterprise admin that is exempt from SSO.")
@@ -148,24 +148,28 @@ class ServiceProviderDetailsForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, identity_provider, *args, **kwargs):
+    def __init__(self, identity_provider, show_public_cert=True,
+                 show_rollover_cert=True, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
         #  whether SP signing is enforced (dependent on client's Azure tier)
-        self.show_public_cert = kwargs.pop('show_public_cert', True)
-        self.show_rollover_cert = kwargs.pop('show_rollover_cert', True)
-        self.show_help_block = kwargs.pop('show_help_block', True)
+        self.show_public_cert = show_public_cert
+        self.show_rollover_cert = show_rollover_cert
+        self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)
 
     @property
     def service_provider_help_block(self):
         help_link = "#"  # todo
-        help_text = _('<a href="{}">Please read this guide</a> on how to set up '
-                      'CommCare HQ with Azure AD.<br />You will need the following '
-                      'information:').format(help_link)
+        help_text = format_html(
+            _('<a href="{}">Please read this guide</a> on how to set up '
+              'CommCare HQ with Azure AD.<br />You will need the following '
+              'information:'),
+            help_link
+        )
         return crispy.HTML(
-            f'<p class="help-block">{help_text}</p>'
+            format_html('<p class="help-block">{}</p>', help_text)
         )
 
     @property
@@ -192,7 +196,10 @@ class ServiceProviderDetailsForm(forms.Form):
             shown_fields.extend([
                 hqcrispy.B3TextField(
                     'sp_public_cert',
-                    f'<a href="?sp_cert_public" target="_blank">{download}</a>',
+                    format_html(
+                        '<a href="?sp_cert_public" target="_blank">{}</a>',
+                        download
+                    ),
                 ),
                 hqcrispy.B3TextField(
                     'sp_public_cert_expiration',
@@ -204,9 +211,9 @@ class ServiceProviderDetailsForm(forms.Form):
         if self.show_rollover_cert:
             shown_fields.append(hqcrispy.B3TextField(
                 'sp_rollover_cert',
-                (f'<a href="?sp_rollover_cert_public" target="_blank">{download}</a>'
-                    if self.idp.sp_rollover_cert_public
-                    else _("Not needed/generated yet.")),
+                (format_html('<a href="?sp_rollover_cert_public" target="_blank">{}</a>', download)
+                 if self.idp.sp_rollover_cert_public
+                 else _("Not needed/generated yet.")),
             ))
         return shown_fields
 
@@ -295,8 +302,11 @@ class EditIdentityProviderAdminForm(forms.Form):
                         _('Primary Configuration'),
                         hqcrispy.B3TextField(
                             'owner',
-                            f'<a href="{account_link}">'
-                            f'{identity_provider.owner.name}</a>'
+                            format_html(
+                                '<a href="{}">{}</a>',
+                                account_link,
+                                identity_provider.owner.name
+                            )
                         ),
                         'name',
                         twbscrispy.PrependedText('is_editable', ''),
@@ -464,10 +474,9 @@ class SSOEnterpriseSettingsForm(forms.Form):
                         ),
                         hqcrispy.B3TextField(
                             'linked_email_domains',
-                            ", ".join(identity_provider.email_domains),
+                            ", ".join(identity_provider.get_email_domains()),
                         ),
                         twbscrispy.PrependedText('is_active', ''),
-                        'sso_exempt_users',
                     ),
                     css_class="panel-body"
                 ),
