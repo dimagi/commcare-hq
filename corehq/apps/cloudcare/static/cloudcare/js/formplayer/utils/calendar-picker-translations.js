@@ -2,7 +2,7 @@
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US
 		renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
-		prevText: '&lt;PrevMonth',
+		prevText: '&lt;Prev &nbsp; Month',
 		prevStatus: 'Show the previous month',
 		prevJumpText: '&lt;&lt;',
 		prevJumpStatus: 'Show the previous year',
