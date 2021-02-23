@@ -3,7 +3,7 @@ describe('#paginateOptions', function () {
     it('Should return paginateOptions', function () {
         var result = paginateItems.paginateOptions(0, 15);
         /**
-         *   result: {stratPage:'', endPage:'', pageCount:''}
+         *   result: {startPage:'', endPage:'', pageCount:''}
          *   endPage: max number of pages to display at a time
          *   pageCount: total number of pages
          */

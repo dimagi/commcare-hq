@@ -86,21 +86,21 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.fetchUsers();
         },
         ui: {
-            next: '.js-user-next',
-            prev: '.js-user-previous',
             search: '.js-user-search',
             query: '.js-user-query',
             page: '.js-page',
-            goPage: '.js-page-go-search',
-            perPage: '.js-page-series',
+            paginationGoButton: '#pagination-go-button',
+            paginationGoText: '#goText',
+            paginationGoTextBox: '.module-go-container',
+            perPage: '.js-page-limit',
         },
         events: {
-            'click @ui.next': 'onClickNext',
-            'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
-            'click @ui.goPage': 'onSubmitPageSearch',
-            'click @ui.perPage': 'onClickPagelimit',
+            'click @ui.paginationGoButton': 'paginationGoAction',
+            'change @ui.perPage': 'onClickPageLimit',
+            'keypress @ui.page': 'paginateKeyAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
             var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
@@ -110,7 +110,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 totalPages: this.totalPages(),
                 limit: this.limit,
                 rowRange: [10, 25, 50, 100],
-                pagesToShow: paginationOptions,
+                startPage: paginationOptions.startPage,
+                endPage: paginationOptions.endPage,
+                pageCount: paginationOptions.pageCount,
+                currentPage: this.model.get('page') - 1,
+                pageNumLabel: _.template(gettext("Page <%= num %>")),
             };
         },
         navigate: function () {
@@ -137,26 +141,16 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                     FormplayerFrontend.trigger('showError', xhr.responseText);
                 });
         },
-        onClickNext: function (e) {
-            e.preventDefault();
-            if (this.model.get('page') === this.totalPages()) {
-                window.console.warn('Attempted to non existant page');
-                return;
-            }
-            this.model.set('page', this.model.get('page') + 1);
-        },
-        onClickPrev: function (e) {
-            e.preventDefault();
-            if (this.model.get('page') === 1) {
-                window.console.warn('Attempted to non existant page');
-                return;
-            }
-            this.model.set('page', this.model.get('page') - 1);
-        },
         onClickPage: function (e) {
             e.preventDefault();
-            var page = $(e.currentTarget).data().page;
-            this.model.set('page', page);
+            var page = $(e.currentTarget).data().id;
+            this.model.set('page', page + 1);
+        },
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                this.onClickPage(e);
+            }
         },
         onSubmitUserSearch: function (e) {
             e.preventDefault();
@@ -165,22 +159,23 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 'page': 1,  // Reset page to one when doing a query
             });
         },
-        onSubmitPageSearch: function (e) {
+        paginationGoAction: function (e) {
+            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
             e.preventDefault();
-            var page = Number($('#goText').val());
-            if (page && page <= this.totalPages()) {
-                this.model.set('page', page);
-            } else {
-                FormplayerFrontend.trigger(
-                    'showError',
-                    'Enter valid Page number'
-                );
+            var page = Number(this.ui.paginationGoText.val());
+            var pageNo = paginateItems.paginationGoPageNumber(page, this.totalPages());
+            this.model.set('page', pageNo);
+        },
+        paginationGoKeyAction: function (e) {
+            // Pressing Enter in the go box activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                this.paginationGoAction(e);
             }
         },
-        onClickPagelimit: function (e) {
+        onClickPageLimit: function (e) {
             e.preventDefault();
-            var rowCount = document.getElementById("itemsText").value;
-            this.limit = rowCount;
+            var rowCount = this.ui.perPage.val();
+            this.limit = Number(rowCount);
             this.fetchUsers();
             this.model.set('page', 1);
         },

@@ -280,18 +280,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
             searchTextBox: '.module-search-container',
-            paginators: '.page-link',
-            goButton: '#case-list-go-button',
+            paginators: '.js-page',
+            paginationGoButton: '#pagination-go-button',
+            paginationGoTextBox: '.module-go-container',
             columnHeader: '.header-clickable',
+            paginationGoText: '#goText',
         },
 
         events: {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
-            'click @ui.goButton': 'caseListGo',
+            'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
         },
 
@@ -314,11 +317,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         searchTextKeyAction: function (event) {
             // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
-                if (event.target.id === 'goText') {
-                    this.caseListGo(event);
-                } else {
-                    this.caseListSearch(event);
-                }
+                this.caseListSearch(event);
             }
         },
 
@@ -327,18 +326,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
-        caseListGo: function (e) {
+        paginationGoAction: function (e) {
             e.preventDefault();
-            var goText = Number($('#goText').val());
-            if (goText && goText <= this.options.pageCount) {
-                FormplayerFrontend.trigger("menu:paginate", goText - 1);
-            } else {
-                FormplayerFrontend.trigger(
-                    "showError",
-                    "Enter valid Page number"
-                );
+            var goText = Number(this.ui.paginationGoText.val());
+            var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
+            FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+        },
+
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginateAction(e);
             }
-         },
+        },
+
+        paginationGoKeyAction: function (e) {
+            // Pressing Enter in the go box activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginationGoAction(e);
+            }
+        },
 
         columnSortAction: function (e) {
             var columnSelection = $(e.currentTarget).data("id") + 1;
@@ -409,6 +418,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             endPage: endPage,
             pageCount: totalPages,
         };
+    };
+
+    var paginationGoPageNumber = function (pageNumber, pageCount) {
+        if (pageNumber >= 1 && pageNumber <= pageCount) {
+            return pageNumber;
+        } else {
+            return pageCount;
+        }
     };
 
     // Return a two- or three-length array of case tile CSS styles
@@ -621,6 +638,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return new PersistentCaseTileView(options);
         },
         paginateOptions: paginateOptions,
+        paginationGoPageNumber: paginationGoPageNumber,
     };
 })
 ;
