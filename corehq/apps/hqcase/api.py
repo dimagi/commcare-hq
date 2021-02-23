@@ -6,7 +6,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
 
@@ -155,8 +155,8 @@ def _get_individual_update(domain, data, user, case_id=None):
 
 
 def _get_bulk_updates(domain, all_data, user):
-    if len(all_data) > 100:
-        raise UserError("You cannot submit more than 100 updates in a single request")
+    if len(all_data) > CASEBLOCK_CHUNKSIZE:
+        raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
     existing_ids = [c['@case_id'] for c in all_data if isinstance(c, dict) and '@case_id' in c]
     missing = _missing_cases(domain, existing_ids)
