@@ -47,11 +47,6 @@ class TestSsoBackend(TestCase):
 
     def setUp(self):
         super().setUp()
-        # some tests set is_active to False, so make sure is_active is always
-        #  True by default
-        self.idp.is_active = True
-        self.idp.save()
-
         self.request = RequestFactory().get('/sso/test')
         self.request.session = {
             'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
@@ -129,6 +124,8 @@ class TestSsoBackend(TestCase):
             self.request.sso_login_error,
             "This Identity Provider vaultwax is not active."
         )
+        self.idp.is_active = True
+        self.idp.save()
 
     def test_login_error_if_bad_username(self):
         """
