@@ -1,17 +1,17 @@
-from django.contrib import auth
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.sso.authentication import get_authenticated_sso_user
+from corehq.apps.sso.exceptions import SsoAuthenticationError
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
 from corehq.apps.users.models import WebUser
 
 
-class TestSsoBackend(TestCase):
+class TestGetAuthenticatedSsoUser(TestCase):
     """
-    This ensures that authentication through the SsoBackend only succeeds
-    when a samlSessionIndex is present and the Identity Provider, its
-    associated email domains, and the username all meet required criteria.
+    This ensures that get_authenticated_sso_user succeeds only when the
+    request has met all required criteria.
     """
 
     @classmethod
@@ -45,172 +45,92 @@ class TestSsoBackend(TestCase):
         cls.account.delete()
         super().tearDownClass()
 
-    def setUp(self):
-        super().setUp()
-        self.request = RequestFactory().get('/sso/test')
-        self.request.session = {
-            'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
-        }
-
-    def test_backend_failure_without_username(self):
+    def test_authentication_error_if_idp_doesnt_exist(self):
         """
-        SsoBackend (and every backend) should fail because username was not
-        passed to authenticate()
+        get_authenticated_sso_user should throw an SsoAuthenticationError if
+        the Identity Provider slug passed to it points to a non-existent
+        Identity Provider.
         """
-        with self.assertRaises(KeyError):
-            auth.authenticate(
-                request=self.request,
-                idp_slug=self.idp.slug,
+        with self.assertRaises(SsoAuthenticationError):
+            get_authenticated_sso_user(
+                self.user.username,
+                'doesnotexist'
             )
 
-    def test_backend_failure_without_idp_slug(self):
+    def test_authentication_error_if_idp_not_active(self):
         """
-        SsoBackend should fail to move past the first check because an idp_slug
-         was not passed to authenticate()
-        """
-        user = auth.authenticate(
-            request=self.request,
-            username=self.user.username
-        )
-        self.assertIsNone(user)
-        with self.assertRaises(AttributeError):
-            self.request.sso_login_error
-
-    def test_backend_failure_without_saml_session_index(self):
-        """
-        SsoBackend should fail to move past the first check because a
-         samlSessionIndex is not present in request.session.
-        """
-        del self.request.session['samlSessionIndex']
-        user = auth.authenticate(
-            request=self.request,
-            username=self.user.username,
-            idp_slug=self.idp.slug
-        )
-        self.assertIsNone(user)
-
-    def test_login_error_if_idp_doesnt_exist(self):
-        """
-        SsoBackend should fail to return a user if the Identity Provider
-        slug associated with that user does not exist. It should also populate
-        request.sso_login_error with an error message.
-        """
-        user = auth.authenticate(
-            request=self.request,
-            username=self.user.username,
-            idp_slug='doesnotexist'
-        )
-        self.assertIsNone(user)
-        self.assertEqual(
-            self.request.sso_login_error,
-            "Identity Provider doesnotexist does not exist."
-        )
-
-    def test_login_error_if_idp_not_active(self):
-        """
-        SsoBackend should fail to return a user if the Identity Provider
-        associated with that user is not active. It should also populate
-        request.sso_login_error with an error message.
+        get_authenticated_sso_user should throw an SsoAuthenticationError if
+        the specified Identity Provider is not active.
         """
         self.idp.is_active = False
         self.idp.save()
-        user = auth.authenticate(
-            request=self.request,
-            username=self.user.username,
-            idp_slug=self.idp.slug
-        )
-        self.assertIsNone(user)
-        self.assertEqual(
-            self.request.sso_login_error,
-            "This Identity Provider vaultwax is not active."
-        )
+        with self.assertRaises(SsoAuthenticationError):
+            get_authenticated_sso_user(
+                self.user.username,
+                self.idp.slug
+            )
+
         self.idp.is_active = True
         self.idp.save()
 
-    def test_login_error_if_bad_username(self):
+    def test_authentication_error_if_bad_username(self):
         """
-        SsoBackend should fail to return a user if the username passed to it
-        is not a valid email address (missing email domain / no `@`). It should
-        also populate request.sso_login_error with an error message.
+        get_authenticated_sso_user should throw an SsoAuthenticationError if
+        the username passed to it is not a valid email address (missing email
+        domain / no `@`).
         """
-        user = auth.authenticate(
-            request=self.request,
-            username='badusername',
-            idp_slug=self.idp.slug
-        )
-        self.assertIsNone(user)
-        self.assertEqual(
-            self.request.sso_login_error,
-            "Username badusername is not valid."
-        )
+        with self.assertRaises(SsoAuthenticationError):
+            get_authenticated_sso_user(
+                'badusername',
+                self.idp.slug
+            )
 
-    def test_login_error_if_email_domain_does_not_exist(self):
+    def test_authentication_error_if_email_domain_does_not_exist(self):
         """
-        SsoBackend should fail to return a user if the username passed to it
-        matches an email domain that is not mapped to any Identity Provider.
-        It should also populate request.sso_login_error with an error message.
+        get_authenticated_sso_user should throw an SsoAuthenticationError if
+        the username passed to it matches an email domain that is not mapped 
+        to any Identity Provider.
         """
-        user = auth.authenticate(
-            request=self.request,
-            username='b@idonotexist.com',
-            idp_slug=self.idp.slug
-        )
-        self.assertIsNone(user)
-        self.assertEqual(
-            self.request.sso_login_error,
-            "The Email Domain idonotexist.com is not allowed to authenticate "
-            "with this Identity Provider (vaultwax)."
-        )
+        with self.assertRaises(SsoAuthenticationError):
+            get_authenticated_sso_user(
+                'b@idonotexist.com',
+                self.idp.slug
+            )
 
-    def test_login_error_if_email_domain_is_not_authorized(self):
+    def test_authentication_error_if_email_domain_is_not_authorized(self):
         """
-        SsoBackend should fail to return a user if the username passed to it
-        matches an email domain that exists, but is not authorized to
-        authenticate with the Identity Provider in the request. It should also
-        populate request.sso_login_error with an error message.
+        get_authenticated_sso_user should throw an SsoAuthenticationError if
+        the username passed to it matches an email domain that exists, but is
+        not authorized to authenticate with the Identity Provider in the request.
         """
-        user = auth.authenticate(
-            request=self.request,
-            username='b@vwx.link',
-            idp_slug=self.idp.slug  # note that this is self.idp, not idp_vwx
-        )
-        self.assertIsNone(user)
-        self.assertEqual(
-            self.request.sso_login_error,
-            "The Email Domain vwx.link is not allowed to authenticate with "
-            "this Identity Provider (vaultwax)."
-        )
-
-    def test_login_error_if_user_does_not_exist(self):
+        with self.assertRaises(SsoAuthenticationError):
+            get_authenticated_sso_user(
+                'b@vwx.link',
+                self.idp.slug  # note that this is self.idp, not idp_vwx
+            )
+    
+    def test_authentication_error_if_user_does_not_exist(self):
         """
-        SsoBackend should fail to return a user if the username passed to does
-        not exist. It should also populate request.sso_login_error with an
-        error message.
+        get_authenticated_sso_user should throw an SsoAuthenticationError if
+        the username passed to does not exist.
 
         todo this test will change with additional user creation workflows
          that will be introduced later
         """
-        user = auth.authenticate(
-            request=self.request,
-            username='testnoexist@vaultwax.com',
-            idp_slug=self.idp.slug
-        )
-        self.assertIsNone(user)
-        self.assertEqual(
-            self.request.sso_login_error,
-            "User testnoexist@vaultwax.com does not exist."
-        )
-
-    def test_successful_login(self):
+        with self.assertRaises(SsoAuthenticationError):
+            get_authenticated_sso_user(
+                'testnoexist@vaultwax.com',
+                self.idp.slug
+            )
+            
+    def test_successful_authentication(self):
         """
-        This test demonstrates the requirements necessary for a SsoBackend to
-        successfully return a user and report no login error.
+        This test demonstrates the requirements necessary for
+        get_authenticated_sso_user to successfully return a user.
         """
-        user = auth.authenticate(
-            request=self.request,
-            username=self.user.username,
-            idp_slug=self.idp.slug
+        user = get_authenticated_sso_user(
+            self.user.username,
+            self.idp.slug
         )
         self.assertIsNotNone(user)
         self.assertEqual(user.username, self.user.username)
-        self.assertIsNone(self.request.sso_login_error)
