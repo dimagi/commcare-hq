@@ -881,7 +881,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                         changedPicker.value
                     );
 
-                if (self.answer() !== self._formatDateForAnswer(newDate.toJSDate())) {
+                if (newDate && (self.answer() !== self._formatDateForAnswer(newDate.toJSDate()))) {
                     self.$picker.calendarsPicker('setDate', changedPicker.value);
                 }
             });
