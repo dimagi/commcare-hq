@@ -2,12 +2,16 @@ from typing import List, Tuple
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+
 from requests import Response
 
+from casexml.apps.case.mock import CaseBlock
+
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 
-from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS
+from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
 from .models import build_fhir_resource_for_info
 
 
@@ -15,7 +19,17 @@ def register_patients(
     requests: Requests,
     info_resources_list: List[tuple],
 ):
-    raise NotImplementedError
+    for info, resources in info_resources_list:
+        if info.extra_fields['external_id']:
+            continue  # Case is already registered
+        for resource in resources:
+            if resource['resourceType'] != 'Patient':
+                continue
+            response = requests.post('Patient/', json=resource,
+                                     raise_for_status=True)
+            set_external_id(info, response.json()['id'])
+            resources.remove(response)
+            # TODO: Update other resources to refer to the new Patient
 
 
 def get_info_resources_list(
@@ -96,3 +110,17 @@ def get_full_url(
     ver = dict(FHIR_VERSIONS)[fhir_version].lower()
     return (f'{proto}://{host}/a/{domain}/api'
             f"/fhir/{ver}/{resource['resourceType']}/{resource['id']}")
+
+
+def set_external_id(info, external_id):
+    info.extra_fields['external_id'] = external_id
+    case_block = CaseBlock(
+        case_id=info.case_id,
+        external_id=external_id,
+        create=False,
+    )
+    submit_case_blocks(
+        [case_block.as_text()],
+        info.domain,
+        xmlns=XMLNS_FHIR,
+    )
