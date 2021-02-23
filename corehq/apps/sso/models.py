@@ -118,14 +118,12 @@ class IdentityProvider(models.Model):
         self.date_sp_rollover_cert_expiration = None
         self.save()
 
-    @property
-    def email_domains(self):
+    def get_email_domains(self):
         return AuthenticatedEmailDomain.objects.filter(
             identity_provider=self
         ).values_list('email_domain', flat=True).all()
 
-    @property
-    def sso_exempt_users(self):
+    def get_sso_exempt_users(self):
         return UserExemptFromSingleSignOn.objects.filter(
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
