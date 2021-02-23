@@ -5,10 +5,9 @@ from jsonobject.exceptions import BadValueError
 from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from couchforms.models import XFormError
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
 
 def serialize_case(case):
@@ -136,7 +135,7 @@ def handle_case_update(domain, data, user, device_id, case_id=None):
         updates = [_get_individual_update(domain, data, user, case_id)]
 
     xform, cases = _submit_case_updates(updates, domain, user, device_id)
-    if isinstance(xform, XFormError):
+    if xform.is_error:
         raise SubmissionError(xform.problem, xform.form_id,)
 
     if is_bulk:
@@ -182,11 +181,8 @@ def _get_bulk_updates(domain, all_data, user):
 
 
 def _missing_cases(domain, case_ids):
-    return set(case_ids) - {
-        case.case_id for case in
-        CaseAccessors(domain).get_cases(case_ids)
-        if case.domain == domain
-    }
+    real_case_ids = CaseAccessorSQL.get_case_ids_that_exist(domain, case_ids)
+    return set(case_ids) - set(real_case_ids)
 
 
 def populate_index_case_ids(updates):

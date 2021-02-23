@@ -5,7 +5,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from couchforms.models import XFormError
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
@@ -14,13 +13,17 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.util.test_utils import privilege_enabled
 
 from ..api import serialize_case
 from ..utils import submit_case_blocks
 
 
+@use_sql_backend
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
@@ -413,7 +416,7 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertIn("InvalidCaseIndex", res.json()['error'])
         form = self.form_accessor.get_form(res.json()['@form_id'])
-        self.assertIsInstance(form, XFormError)
+        self.assertEqual(form.is_error, True)
 
     def test_unset_external_id(self):
         case = self._make_case()
