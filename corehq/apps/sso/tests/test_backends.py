@@ -18,11 +18,7 @@ class TestSsoBackend(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.account = generator.get_billing_account_for_idp()
-        cls.domain = Domain(
-            name="vaultwax-001",
-            is_active=True
-        )
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name("vaultwax-001", is_active=True)
 
         # this will be the user that's "logging in" with SAML2 via the SsoBackend
         cls.user = WebUser.create(
