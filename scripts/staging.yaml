@@ -50,6 +50,7 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
+    # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
@@ -72,9 +73,7 @@ branches:
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - jls/remove-autolaunch # Jenny Feb 9
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
-  - ap/fix-submission-time-in-worker-activity # Amit Feb 11
   # - revert-29106-mjr/login_logging # Jenny Feb 12
-  - gh/modify-export-settings-ff
   # - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   #   ^^^ Breaks ability to build new app versions. Errors:
   #           Every case must have a name. Please specify a value for the name
