@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from unittest import skip
 
 from django.test import TestCase
 from django.urls import reverse
@@ -42,6 +41,7 @@ class TestCaseAPI(TestCase):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -337,7 +337,8 @@ class TestCaseAPI(TestCase):
                     },
                 },
             },
-        ]).json()
+        ])
+        self.assertEqual(res.status_code, 200)
         parent = self.case_accessor.get_cases_by_external_id('beth')[0]
         child = self.case_accessor.get_cases_by_external_id('harmon-luchenko')[0]
         self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)

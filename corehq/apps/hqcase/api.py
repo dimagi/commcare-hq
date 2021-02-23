@@ -74,10 +74,6 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
-    @memoized
-    def get_case_id(self):
-        return str(uuid.uuid4()) if self._is_case_creation else self.case_id
-
     def get_caseblock(self):
 
         def _if_specified(value):
@@ -109,10 +105,17 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
     _is_case_creation = True
 
+    @memoized
+    def get_case_id(self):
+        return str(uuid.uuid4())
+
 
 class JsonCaseUpdate(BaseJsonCaseChange):
     case_id = jsonobject.StringProperty(required=True)
     _is_case_creation = False
+
+    def get_case_id(self):
+        return self.case_id
 
 
 class UserError(Exception):
@@ -154,7 +157,7 @@ def _get_bulk_updates(domain, all_data, user):
 
     updates = []
     errors = []
-    for i, data in enumerate(all_data):
+    for i, data in enumerate(all_data, start=1):
         try:
             update = _get_case_update(data, user.user_id, data.pop('@case_id', None))
             updates.append(update)
