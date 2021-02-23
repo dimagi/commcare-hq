@@ -840,8 +840,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     function EthiopianDateEntry(question, options) {
         var self = this,
             ethiopianLanguageMap = {
-                am: 'am',
-                amh: 'am',
+                am: 'amh',
+                amh: 'amh',
+                ti: 'tir',
+                tir: 'tir',
+                or: 'orm',
+                orm: 'orm',
             },
             calendarLanguage = ethiopianLanguageMap[initialPageData.get('language')] ? ethiopianLanguageMap[initialPageData.get('language')] : 'en';
 
