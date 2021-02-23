@@ -27,7 +27,7 @@ class SsoBackend(ModelBackend):
             return None
 
         try:
-            email_domain = username.split('@')[1]
+            email_domain = username.split('@', 1)[1]
         except IndexError:
             # not a valid username
             request.sso_login_error = f"Username {username} is not valid."
