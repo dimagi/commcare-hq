@@ -5,8 +5,7 @@ from django.test import TestCase
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription, DefaultProductPlan, BillingAccount, \
     SubscriptionAdjustment
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.utils import get_default_export_settings_for_user
-from corehq.apps.users.models import WebUser
+from corehq.apps.export.utils import get_default_export_settings_for_domain
 from corehq.util.test_utils import flag_enabled
 
 
@@ -15,8 +14,6 @@ class TestExportUtils(TestCase):
     def setUp(self):
         super(TestExportUtils, self).setUp()
         self.domain = Domain.get_or_create_with_name('test-export-utils', is_active=True)
-        self.user = WebUser.create(self.domain.name, "export-settings-user", "*******",
-                                   None, None, is_admin=True)
         self.account, _ = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by='webuser@test.com'
@@ -48,7 +45,7 @@ class TestExportUtils(TestCase):
         NOTE: no decorator to enable DEFAULT_EXPORT_SETTINGS feature flag
         """
         self.update_subscription(SoftwarePlanEdition.ENTERPRISE)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -57,7 +54,7 @@ class TestExportUtils(TestCase):
         Verify COMMUNITY software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.COMMUNITY)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -66,7 +63,7 @@ class TestExportUtils(TestCase):
         Verify STANDARD software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.STANDARD)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -75,7 +72,7 @@ class TestExportUtils(TestCase):
         Verify PRO software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.PRO)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -84,7 +81,7 @@ class TestExportUtils(TestCase):
         Verify ADVANCED software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.ADVANCED)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -93,7 +90,7 @@ class TestExportUtils(TestCase):
         Verify RESELLER software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.RESELLER)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -102,7 +99,7 @@ class TestExportUtils(TestCase):
         Verify MANAGED_HOSTING software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.MANAGED_HOSTING)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNone(settings)
 
     @flag_enabled('DEFAULT_EXPORT_SETTINGS')
@@ -112,5 +109,5 @@ class TestExportUtils(TestCase):
         are able to create a DefaultExportSettings instance
         """
         self.update_subscription(SoftwarePlanEdition.ENTERPRISE)
-        settings = get_default_export_settings_for_user(self.user.username, self.domain)
+        settings = get_default_export_settings_for_domain(self.domain)
         self.assertIsNotNone(settings)
