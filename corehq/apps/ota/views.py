@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
+from urllib.parse import unquote
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -126,12 +127,12 @@ def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
     """
-    as_user = request.POST.get('commcare_login_as', None)
+    as_user = unquote(request.POST.get('commcare_login_as', ''))
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    case_id = request.POST.get('case_id', None)
-    if case_id is None:
+    case_id = unquote(request.POST.get('case_id', ''))
+    if not case_id:
         return HttpResponse('A case_id is required', status=400)
 
     try:
@@ -140,8 +141,8 @@ def claim(request, domain):
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
-                   host_type=request.POST.get('case_type'),
-                   host_name=request.POST.get('case_name'),
+                   host_type=unquote(request.POST.get('case_type', '')),
+                   host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
