@@ -10,11 +10,13 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
+from corehq.apps.sso.authentication import get_authenticated_sso_user
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
+from corehq.apps.sso.exceptions import SsoAuthenticationError
 
 
 @identity_provider_required
@@ -50,6 +52,7 @@ def sso_saml_acs(request, idp_slug):
     error_reason = None
     request_session_data = None
     saml_relay = None
+    authentication_error = None
 
     request_id = request.session.get('AuthNRequestID')
     processed_response = request.saml2_auth.process_response(request_id=request_id)
@@ -67,11 +70,14 @@ def sso_saml_acs(request, idp_slug):
         request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
         request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
 
-        user = auth.authenticate(
-            request=request,
-            username=request.session['samlNameId'],
-            idp_slug=idp_slug,
-        )
+        try:
+            user = get_authenticated_sso_user(
+                request.session['samlNameId'],
+                idp_slug,
+            )
+        except SsoAuthenticationError as error:
+            authentication_error = error.message
+            user = None
 
         if user:
             auth.login(request, user)
@@ -98,7 +104,7 @@ def sso_saml_acs(request, idp_slug):
         "processed_response": processed_response,
         "saml_relay": saml_relay,
         "request_session_data": request_session_data,
-        "login_error": getattr(request, 'sso_login_error', None),
+        "login_error": authentication_error,
     }), 'text/json')
 
 
