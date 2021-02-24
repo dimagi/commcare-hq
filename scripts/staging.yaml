@@ -75,4 +75,5 @@ branches:
   - jls/encode-case-claim-params # Jenny Feb 22
   - bmb/sso-backend  # Biyeun Feb 22
   - gh/default-export-settings-fix # Graham Feb 23
+  - sr/geocoder
 submodules: {}
