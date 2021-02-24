@@ -219,9 +219,18 @@ class TestCaseAPI(TestCase):
             'sport': 'chess',
         })
 
+    def test_can_update_case_type(self):
+        case = self._make_case()
+        res = self._update_case(case.case_id, {
+            'case_name': 'Beth Harmon',
+            '@case_type': 'legend',
+        })
+        self.assertEqual(res.status_code, 200)
+        case = self.case_accessor.get_case(case.case_id)
+        self.assertEqual(case.type, 'legend')
+
     def test_update_case_bad_id(self):
         res = self._update_case('notarealcaseid', {
-            # notable exclusions: case_id, date_opened, date_modified, case_type
             'case_name': 'Beth Harmon',
             '@owner_id': 'us_chess_federation',
             'properties': {
