@@ -269,14 +269,14 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'sum',
         0
     ),
-    # if items_expression returns non-iterable reduce(count) should return None
+    # if items_expression returns non-iterable reduce(last_item) should return None
     (
         34,
         {'type': 'identity'},
         'last_item',
         None
     ),
-    # if items_expression returns non-iterable reduce(count) should return None
+    # if items_expression returns non-iterable reduce(first_item) should return None
     (
         34,
         {'type': 'identity'},
