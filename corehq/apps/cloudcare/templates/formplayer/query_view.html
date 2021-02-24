@@ -46,7 +46,7 @@
     <% } else if (input == "daterange") { %>
       <input type="text" class="daterange query-field form-control" value="<%- value %>">
     <% } else if (input == "address") { %>
-      <div class="query-field" style="width: 100%, max-width: none" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
+      <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
       </div>
     <% } else { %>
       <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">

@@ -120,8 +120,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     element.val(value);
                 }
                 else {
-                    // should be a dropdown
-                    $(".sdr option").filter(function(index) { return $(this).text() === "Barcode"; }).attr('selected', 'selected');
+                    // Set lookup table option by label
+                    var option = element.find("option").filter(function(index) { return $(this).text() === value; });
+                    if (option.length > 1) {
+                        option.attr('selected', true);
+                    }
                 }
             };
         },
