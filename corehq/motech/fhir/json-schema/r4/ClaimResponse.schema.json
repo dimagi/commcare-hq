@@ -1,0 +1,658 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ClaimResponse",
+  "$ref": "#/definitions/ClaimResponse",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ClaimResponse": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ClaimResponse resource",
+              "type": "string",
+              "enum": [
+                "ClaimResponse"
+              ]
+            },
+            "identifier": {
+              "description": "The Response business identifier.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status of the resource instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "Patient Resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "created": {
+              "description": "The date when the enclosed suite of services were performed or completed.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "insurer": {
+              "description": "The Insurer who produced this adjudicated response.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "requestProvider": {
+              "description": "The practitioner who is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "requestOrganization": {
+              "description": "The organization which is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "request": {
+              "description": "Original request resource referrence.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "outcome": {
+              "description": "Processing outcome errror, partial or complete processing.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "disposition": {
+              "description": "A description of the status of the adjudication.",
+              "type": "string"
+            },
+            "_disposition": {
+              "description": "Extensions for disposition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "payeeType": {
+              "description": "Party to be reimbursed: Subscriber, provider, other.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "item": {
+              "description": "The first tier service adjudications for submitted services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Item"
+              }
+            },
+            "addItem": {
+              "description": "The first tier service adjudications for payor added services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_AddItem"
+              }
+            },
+            "error": {
+              "description": "Mutually exclusive with Services Provided (Item).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Error"
+              }
+            },
+            "totalCost": {
+              "description": "The total cost of the services reported.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "unallocDeductable": {
+              "description": "The amount of deductible applied which was not allocated to any particular service line.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "totalBenefit": {
+              "description": "Total amount of benefit payable (Equal to sum of the Benefit amounts from all detail lines and additions less the Unallocated Deductible).",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "payment": {
+              "description": "Payment details for the claim if the claim has been paid.",
+              "$ref": "#/definitions/ClaimResponse_Payment"
+            },
+            "reserved": {
+              "description": "Status of funds reservation (For provider, for Patient, None).",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "form": {
+              "description": "The form to be used for printing the content.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "processNote": {
+              "description": "Note text.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_ProcessNote"
+              }
+            },
+            "communicationRequest": {
+              "description": "Request for additional supporting or authorizing information, such as: documents, images or resources.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "insurance": {
+              "description": "Financial instrument by which payment information for health care.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Insurance"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ClaimResponse_Item": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "sequenceLinkId": {
+              "description": "A service line number.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequenceLinkId": {
+              "description": "Extensions for sequenceLinkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "noteNumber": {
+              "description": "A list of note references to the notes provided below.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_noteNumber": {
+              "description": "Extensions for noteNumber",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "adjudication": {
+              "description": "The adjudication results.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Adjudication"
+              }
+            },
+            "detail": {
+              "description": "The second tier service adjudications for submitted services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Detail"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_Adjudication": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "category": {
+              "description": "Code indicating: Co-Pay, deductible, eligible, benefit, tax, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reason": {
+              "description": "Adjudication reason such as limit reached.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "amount": {
+              "description": "Monetary amount associated with the code.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "value": {
+              "description": "A non-monetary value for example a percentage. Mutually exclusive to the amount element above.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        }
+      ]
+    },
+    "ClaimResponse_Detail": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "sequenceLinkId": {
+              "description": "A service line number.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequenceLinkId": {
+              "description": "Extensions for sequenceLinkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "noteNumber": {
+              "description": "A list of note references to the notes provided below.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_noteNumber": {
+              "description": "Extensions for noteNumber",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "adjudication": {
+              "description": "The adjudications results.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Adjudication"
+              }
+            },
+            "subDetail": {
+              "description": "The third tier service adjudications for submitted services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_SubDetail"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_SubDetail": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "sequenceLinkId": {
+              "description": "A service line number.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequenceLinkId": {
+              "description": "Extensions for sequenceLinkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "noteNumber": {
+              "description": "A list of note references to the notes provided below.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_noteNumber": {
+              "description": "Extensions for noteNumber",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "adjudication": {
+              "description": "The adjudications results.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Adjudication"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_AddItem": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "sequenceLinkId": {
+              "description": "List of input service items which this service line is intended to replace.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_sequenceLinkId": {
+              "description": "Extensions for sequenceLinkId",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "revenue": {
+              "description": "The type of reveneu or cost center providing the product and/or service.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "category": {
+              "description": "Health Care Service Type Codes  to identify the classification of service or benefits.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "service": {
+              "description": "A code to indicate the Professional Service or Product supplied.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "modifier": {
+              "description": "Item typification or modifiers codes, eg for Oral whether the treatment is cosmetic or associated with TMJ, or for medical whether the treatment was outside the clinic or out of office hours.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "fee": {
+              "description": "The fee charged for the professional service or product..",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "noteNumber": {
+              "description": "A list of note references to the notes provided below.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_noteNumber": {
+              "description": "Extensions for noteNumber",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "adjudication": {
+              "description": "The adjudications results.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Adjudication"
+              }
+            },
+            "detail": {
+              "description": "The second tier service adjudications for payor added services.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Detail1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_Detail1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "revenue": {
+              "description": "The type of reveneu or cost center providing the product and/or service.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "category": {
+              "description": "Health Care Service Type Codes  to identify the classification of service or benefits.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "service": {
+              "description": "A code to indicate the Professional Service or Product supplied.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "modifier": {
+              "description": "Item typification or modifiers codes, eg for Oral whether the treatment is cosmetic or associated with TMJ, or for medical whether the treatment was outside the clinic or out of office hours.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "fee": {
+              "description": "The fee charged for the professional service or product..",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "noteNumber": {
+              "description": "A list of note references to the notes provided below.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "pattern": "[1-9][0-9]*"
+              }
+            },
+            "_noteNumber": {
+              "description": "Extensions for noteNumber",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "adjudication": {
+              "description": "The adjudications results.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimResponse_Adjudication"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_Error": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "sequenceLinkId": {
+              "description": "The sequence number of the line item submitted which contains the error. This value is omitted when the error is elsewhere.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequenceLinkId": {
+              "description": "Extensions for sequenceLinkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "detailSequenceLinkId": {
+              "description": "The sequence number of the addition within the line item submitted which contains the error. This value is omitted when the error is not related to an Addition.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_detailSequenceLinkId": {
+              "description": "Extensions for detailSequenceLinkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "subdetailSequenceLinkId": {
+              "description": "The sequence number of the addition within the line item submitted which contains the error. This value is omitted when the error is not related to an Addition.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_subdetailSequenceLinkId": {
+              "description": "Extensions for subdetailSequenceLinkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "An error code,from a specified code system, which details why the claim could not be adjudicated.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    },
+    "ClaimResponse_Payment": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "type": {
+              "description": "Whether this represents partial or complete payment of the claim.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "adjustment": {
+              "description": "Adjustment to the payment of this transaction which is not related to adjudication of this transaction.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "adjustmentReason": {
+              "description": "Reason for the payment adjustment.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "date": {
+              "description": "Estimated payment data.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "amount": {
+              "description": "Payable less any payment adjustment.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "identifier": {
+              "description": "Payment identifier.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_ProcessNote": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "number": {
+              "description": "An integer associated with each note which may be referred to from each service line item.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_number": {
+              "description": "Extensions for number",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The note purpose: Print/Display.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "text": {
+              "description": "The note text.",
+              "type": "string"
+            },
+            "_text": {
+              "description": "Extensions for text",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "language": {
+              "description": "The ISO-639-1 alpha 2 code in lower case for the language, optionally followed by a hyphen and the ISO-3166-1 alpha 2 code for the region in upper case; e.g. \"en\" for English, or \"en-US\" for American English versus \"en-EN\" for England English.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "ClaimResponse_Insurance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides the adjudication details from the processing of a Claim resource.",
+          "properties": {
+            "sequence": {
+              "description": "A service line item.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_sequence": {
+              "description": "Extensions for sequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "focal": {
+              "description": "The instance number of the Coverage which is the focus for adjudication. The Coverage against which the claim is to be adjudicated.",
+              "type": "boolean"
+            },
+            "_focal": {
+              "description": "Extensions for focal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "coverage": {
+              "description": "Reference to the program or plan identification, underwriter or payor.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "businessArrangement": {
+              "description": "The contract number of a business agreement which describes the terms and conditions.",
+              "type": "string"
+            },
+            "_businessArrangement": {
+              "description": "Extensions for businessArrangement",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "preAuthRef": {
+              "description": "A list of references from the Insurer to which these services pertain.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_preAuthRef": {
+              "description": "Extensions for preAuthRef",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "claimResponse": {
+              "description": "The Coverages adjudication details.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "coverage"
+          ]
+        }
+      ]
+    }
+  }
+}

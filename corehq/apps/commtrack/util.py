@@ -185,7 +185,7 @@ def submit_mapping_case_block(user, index):
         )
 
     submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
+        ElementTree.tostring(caseblock.as_xml(), encoding='utf-8'),
         user.domain,
         device_id=__name__ + ".submit_mapping_case_block"
     )

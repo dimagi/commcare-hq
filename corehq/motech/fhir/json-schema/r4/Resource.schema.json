@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Resource",
+  "$ref": "#/definitions/Resource",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Resource": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "This is the base resource type for everything.",
+          "properties": {
+            "id": {
+              "description": "The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_id": {
+              "description": "Extensions for id",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "meta": {
+              "description": "The metadata about the resource. This is content that is maintained by the infrastructure. Changes to the content may not always be associated with version changes to the resource.",
+              "$ref": "Meta.schema.json#/definitions/Meta"
+            },
+            "implicitRules": {
+              "description": "A reference to a set of rules that were followed when the resource was constructed, and which must be understood when processing the content.",
+              "type": "string"
+            },
+            "_implicitRules": {
+              "description": "Extensions for implicitRules",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "language": {
+              "description": "The base language in which the resource is written.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_language": {
+              "description": "Extensions for language",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

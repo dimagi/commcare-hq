@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ImagingManifest",
+  "$ref": "#/definitions/ImagingManifest",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ImagingManifest": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ImagingManifest resource",
+              "type": "string",
+              "enum": [
+                "ImagingManifest"
+              ]
+            },
+            "identifier": {
+              "description": "Unique identifier of the DICOM Key Object Selection (KOS) that this resource represents.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "patient": {
+              "description": "A patient resource reference which is the patient subject of all DICOM SOP Instances in this ImagingManifest.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "authoringTime": {
+              "description": "Date and time when the selection of the referenced instances were made. It is (typically) different from the creation date of the selection resource, and from dates associated with the referenced instances (e.g. capture time of the referenced image).",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_authoringTime": {
+              "description": "Extensions for authoringTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "author": {
+              "description": "Author of ImagingManifest. It can be a human author or a device which made the decision of the SOP instances selected. For example, a radiologist selected a set of imaging SOP instances to attach in a diagnostic report, and a CAD application may author a selection to describe SOP instances it used to generate a detection conclusion.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "description": {
+              "description": "Free text narrative description of the ImagingManifest.  \nThe value may be derived from the DICOM Standard Part 16, CID-7010 descriptions (e.g. Best in Set, Complete Study Content). Note that those values cover the wide range of uses of the DICOM Key Object Selection object, several of which are not supported by ImagingManifest. Specifically, there is no expected behavior associated with descriptions that suggest referenced images be removed or not used.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "study": {
+              "description": "Study identity and locating information of the DICOM SOP instances in the selection.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImagingManifest_Study"
+              }
+            }
+          },
+          "required": [
+            "study",
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ImagingManifest_Study": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
+          "properties": {
+            "uid": {
+              "description": "Study instance UID of the SOP instances in the selection.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_uid": {
+              "description": "Extensions for uid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "imagingStudy": {
+              "description": "Reference to the Imaging Study in FHIR form.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "endpoint": {
+              "description": "The network service providing access (e.g., query, view, or retrieval) for the study. See implementation notes for information about using DICOM endpoints. A study-level endpoint applies to each series in the study, unless overridden by a series-level endpoint with the same Endpoint.type.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "series": {
+              "description": "Series identity and locating information of the DICOM SOP instances in the selection.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImagingManifest_Series"
+              }
+            }
+          },
+          "required": [
+            "series"
+          ]
+        }
+      ]
+    },
+    "ImagingManifest_Series": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
+          "properties": {
+            "uid": {
+              "description": "Series instance UID of the SOP instances in the selection.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_uid": {
+              "description": "Extensions for uid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "endpoint": {
+              "description": "The network service providing access (e.g., query, view, or retrieval) for this series. See implementation notes for information about using DICOM endpoints. A series-level endpoint, if present, has precedence over a study-level endpoint with the same Endpoint.type.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "instance": {
+              "description": "Identity and locating information of the selected DICOM SOP instances.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImagingManifest_Instance"
+              }
+            }
+          },
+          "required": [
+            "instance"
+          ]
+        }
+      ]
+    },
+    "ImagingManifest_Instance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
+          "properties": {
+            "sopClass": {
+              "description": "SOP class UID of the selected instance.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_sopClass": {
+              "description": "Extensions for sopClass",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "uid": {
+              "description": "SOP Instance UID of the selected instance.",
+              "type": "string",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*"
+            },
+            "_uid": {
+              "description": "Extensions for uid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

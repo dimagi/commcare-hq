@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Attachment",
+  "$ref": "#/definitions/Attachment",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Attachment": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "For referring to data content defined in other formats.",
+          "properties": {
+            "contentType": {
+              "description": "Identifies the type of the data in the attachment and allows a method to be chosen to interpret or render the data. Includes mime type parameters such as charset where appropriate.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_contentType": {
+              "description": "Extensions for contentType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "language": {
+              "description": "The human language of the content. The value can be any valid value according to BCP 47.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_language": {
+              "description": "Extensions for language",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "data": {
+              "description": "The actual data of the attachment - a sequence of bytes. In XML, represented using base64.",
+              "type": "string"
+            },
+            "_data": {
+              "description": "Extensions for data",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "An alternative location where the data can be accessed.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "size": {
+              "description": "The number of bytes of data that make up this attachment (before base64 encoding, if that is done).",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_size": {
+              "description": "Extensions for size",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "hash": {
+              "description": "The calculated hash of the data using SHA-1. Represented using base64.",
+              "type": "string"
+            },
+            "_hash": {
+              "description": "Extensions for hash",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A label or set of text to display in place of the data.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "creation": {
+              "description": "The date that the attachment was first created.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_creation": {
+              "description": "Extensions for creation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Meta",
+  "$ref": "#/definitions/Meta",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Meta": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "The metadata about a resource. This is content in the resource that is maintained by the infrastructure. Changes to the content may not always be associated with version changes to the resource.",
+          "properties": {
+            "versionId": {
+              "description": "The version specific identifier, as it appears in the version portion of the URL. This values changes when the resource is created, updated, or deleted.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_versionId": {
+              "description": "Extensions for versionId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastUpdated": {
+              "description": "When the resource last changed - e.g. when the version changed.",
+              "type": "string"
+            },
+            "_lastUpdated": {
+              "description": "Extensions for lastUpdated",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "A list of profiles (references to [[[StructureDefinition]]] resources) that this resource claims to conform to. The URL is a reference to [[[StructureDefinition.url]]].",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_profile": {
+              "description": "Extensions for profile",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "security": {
+              "description": "Security labels applied to this resource. These tags connect specific resources to the overall security policy and infrastructure.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "tag": {
+              "description": "Tags applied to this resource. Tags are intended to be used to identify and relate resources to process and workflow, and applications are not required to consider the tags when interpreting the meaning of a resource.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

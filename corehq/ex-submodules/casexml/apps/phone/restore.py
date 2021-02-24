@@ -347,7 +347,7 @@ class RestoreState(object):
     """
 
     def __init__(self, project, restore_user, params, is_async=False,
-                 overwrite_cache=False, case_sync=None):
+                 overwrite_cache=False, case_sync=None, auth_type=None):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -363,6 +363,7 @@ class RestoreState(object):
         self.current_sync_log = None
         self.is_async = is_async
         self.overwrite_cache = overwrite_cache
+        self.auth_type = auth_type
         self._last_sync_log = Ellipsis
 
         if case_sync is None:
@@ -467,6 +468,7 @@ class RestoreState(object):
             extensions_checked=True,
             device_id=self.params.device_id,
             request_user_id=self.restore_user.request_user_id,
+            auth_type=self.auth_type
         )
         if self.params.app:
             new_synclog.app_id = self.params.app.copy_of or self.params.app_id
@@ -504,7 +506,7 @@ class RestoreConfig(object):
 
     def __init__(self, project=None, restore_user=None, params=None,
                  cache_settings=None, is_async=False, case_sync=None,
-                 skip_fixtures=False):
+                 skip_fixtures=False, auth_type=None):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
@@ -520,6 +522,7 @@ class RestoreConfig(object):
             self.params, is_async,
             self.cache_settings.overwrite_cache,
             case_sync=case_sync,
+            auth_type=auth_type
         )
 
         self.force_cache = self.cache_settings.force_cache

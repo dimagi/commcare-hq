@@ -20,6 +20,7 @@ Index
 -----
 
 #. :ref:`sphinx` is used to build the documentation.
+#. :ref:`readthedocs` is used for hosting.
 #. :ref:`doc-style` - Some general tips for writing documentation
 #. :ref:`rst` is used for markup.
 #. :ref:`editors` with RestructuredText support
@@ -39,6 +40,19 @@ Open ``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and y
 * `Sphinx Docs <http://sphinx-doc.org/>`_
 * `Full index <http://sphinx-doc.org/genindex.html>`_
 
+
+.. _readthedocs:
+
+Read the Docs
+-------------
+
+Dimagi maintains the hosted version of the documentation at readthedocs.io.
+For Dimagi employees, the credentials are maintained in our internal CommCare keepass file.
+
+The configuration for readthedocs lives in `.readthedocs.yml`, which calls the `docs/conf.py` script.
+
+Building the documentation reqiures ~all of the source code's requirements to be installed so that
+doc strings can be imported.
 
 .. _doc-style:
 

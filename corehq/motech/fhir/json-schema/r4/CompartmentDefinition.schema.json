@@ -1,0 +1,203 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/CompartmentDefinition",
+  "$ref": "#/definitions/CompartmentDefinition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "CompartmentDefinition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A compartment definition that defines how resources are accessed on a server.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a CompartmentDefinition resource",
+              "type": "string",
+              "enum": [
+                "CompartmentDefinition"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this compartment definition when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this compartment definition is (or will be) published. The URL SHOULD include the major version of the compartment definition. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the compartment definition. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the compartment definition.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this compartment definition. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this compartment definition is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the compartment definition was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the compartment definition changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the compartment definition.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the compartment definition from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "purpose": {
+              "description": "Explaination of why this compartment definition is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate compartment definition instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the compartment definition is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "code": {
+              "description": "Which compartment this definition describes.",
+              "enum": [
+                "Patient",
+                "Encounter",
+                "RelatedPerson",
+                "Practitioner",
+                "Device"
+              ],
+              "type": "string"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "search": {
+              "description": "Whether the search syntax is supported,.",
+              "type": "boolean"
+            },
+            "_search": {
+              "description": "Extensions for search",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "resource": {
+              "description": "Information about how a resource is related to the compartment.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CompartmentDefinition_Resource"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "CompartmentDefinition_Resource": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A compartment definition that defines how resources are accessed on a server.",
+          "properties": {
+            "code": {
+              "description": "The name of a resource supported by the server.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "param": {
+              "description": "The name of a search parameter that represents the link to the compartment. More than one may be listed because a resource may be linked to a compartment in more than one way,.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_param": {
+              "description": "Extensions for param",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "documentation": {
+              "description": "Additional documentation about the resource and compartment.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

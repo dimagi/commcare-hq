@@ -59,7 +59,7 @@ def create_arbitrary_web_user_name(is_dimagi=False):
     return "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
 
 
-def billing_account(web_user_creator, web_user_contact):
+def billing_account(web_user_creator, web_user_contact, is_customer_account=False):
     account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
     currency = Currency.objects.get(code=settings.DEFAULT_CURRENCY)
     billing_account = BillingAccount.objects.create(
@@ -68,6 +68,9 @@ def billing_account(web_user_creator, web_user_contact):
         currency=currency,
     )
     arbitrary_contact_info(billing_account, web_user_contact)
+    if is_customer_account:
+        billing_account.is_customer_billing_account = True
+        billing_account.save()
     return billing_account
 
 

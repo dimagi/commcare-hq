@@ -1,11 +1,13 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
+from couchexport.models import Format
+
 
 class ExportFileType(object):
-    CSV = "CSV"
-    EXCEL_2007_PLUS = "EXCEL_2007_PLUS"
-    EXCEL_PRE_2007 = "EXCEL_PRE_2007"
+    CSV = Format.CSV
+    EXCEL_2007_PLUS = Format.XLS_2007
+    EXCEL_PRE_2007 = Format.XLS
     CHOICES = (
         (CSV, ugettext_lazy("CSV (zip file)")),
         (EXCEL_2007_PLUS, ugettext_lazy("Excel 2007+")),
@@ -37,3 +39,16 @@ class DefaultExportSettings(models.Model):
     # OData Exports
     odata_include_duplicates = models.BooleanField(default=False)
     odata_expand_checkbox = models.BooleanField(default=False)
+
+    def as_dict(self):
+        return {
+            "forms_filetype": self.forms_filetype,
+            "forms_auto_convert": self.forms_auto_convert,
+            "forms_auto_format_cells": self.forms_auto_format_cells,
+            "forms_include_duplicates": self.forms_include_duplicates,
+            "forms_expand_checkbox": self.forms_expand_checkbox,
+            "cases_filetype": self.cases_filetype,
+            "cases_auto_convert": self.cases_auto_convert,
+            "odata_include_duplicates": self.odata_include_duplicates,
+            "odata_expand_checkbox": self.odata_expand_checkbox
+        }

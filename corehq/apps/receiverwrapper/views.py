@@ -1,4 +1,5 @@
 import os
+import logging
 
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
@@ -138,6 +139,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         try:
             result = submission_post.run()
         except XFormLockError as err:
+            logging.warning('Unable to get lock for form %s', err)
             metrics_counter('commcare.xformlocked.count', tags={
                 'domain': domain, 'authenticated': authenticated
             })
