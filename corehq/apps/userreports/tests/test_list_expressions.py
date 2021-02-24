@@ -310,7 +310,6 @@ def test_reduce_items_non_iterable(self, aggregation_fn, expected):
     self.assertEqual(expression(34), expected)
 
 
-
 @generate_cases([
     (
         'count',
