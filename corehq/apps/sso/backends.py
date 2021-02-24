@@ -9,9 +9,8 @@ class SsoBackend(ModelBackend):
     Authenticates against an IdentityProvider and SAML2 session data.
     """
 
-    def authenticate(self, request, username=None, idp_slug=None,
-                     is_handshake_successful=False, **kwargs):
-        if not (username and idp_slug and is_handshake_successful):
+    def authenticate(self, request, username, idp_slug, is_handshake_successful):
+        if not (request and username and idp_slug and is_handshake_successful):
             return None
 
         try:
