@@ -165,6 +165,18 @@ class TestCaseAPI(TestCase):
         self.assertEqual(xform.metadata.userID, self.web_user.user_id)
         self.assertEqual(xform.metadata.deviceID, 'user agent string')
 
+    def test_non_schema_updates(self):
+        res = self._create_case({
+            '@case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'external_id': '1',
+            '@owner_id': 'methuen_home',
+            'bad_property': "this doesn't fit the schema!",
+            'properties': {'sport': 'chess'},
+        })
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json()['error'], "'bad_property' is not a valid field.")
+
     def test_no_required_updates(self):
         case = self._make_case()
 

@@ -73,6 +73,15 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
+    @classmethod
+    def wrap(self, obj):
+        for attr, _ in obj.items():
+            if attr not in self._properties_by_key:
+                # JsonObject will raise an exception here anyways, but we need
+                # a user-friendly error message
+                raise BadValueError(f"'{attr}' is not a valid field.")
+        return super().wrap(obj)
+
     def get_caseblock(self):
 
         def _if_specified(value):
