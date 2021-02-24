@@ -255,34 +255,6 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'max',
         None,
     ),
-    # if items_expression returns [] reduce(count) should return 0
-    (
-        [],
-        {'type': 'identity'},
-        'count',
-        0
-    ),
-    # if items_expression returns [] reduce(sum) should return 0
-    (
-        [],
-        {'type': 'identity'},
-        'sum',
-        0
-    ),
-    # if items_expression returns [] reduce(count) should return None
-    (
-        [],
-        {'type': 'identity'},
-        'last_item',
-        None
-    ),
-    # if items_expression returns [] reduce(count) should return None
-    (
-        [],
-        {'type': 'identity'},
-        'first_item',
-        None
-    ),
 
 ])
 def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
@@ -320,6 +292,33 @@ def test_reduce_items_non_iterable(self, aggregation_fn, expected):
     })
     self.assertEqual(expression(34), expected)
 
+
+
+@generate_cases([
+    (
+        'count',
+        0
+    ),
+    (
+        'sum',
+        0
+    ),
+    (
+        'last_item',
+        None
+    ),
+    (
+        'first_item',
+        None
+    ),
+])
+def test_reduce_items_empty_list(self, aggregation_fn, expected):
+    expression = ExpressionFactory.from_spec({
+        'type': 'reduce_items',
+        'items_expression': 'identity',
+        'aggregation_fn': aggregation_fn
+    })
+    self.assertEqual(expression([]), expected)
 
 
 @generate_cases([
