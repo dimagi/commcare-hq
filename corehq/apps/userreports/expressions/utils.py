@@ -137,4 +137,4 @@ def _last_item(items):
 
 
 def _join(items):
-    return ''.join(items)
+    return ''.join(str(i) for i in items)

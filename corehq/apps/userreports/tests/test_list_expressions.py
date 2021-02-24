@@ -248,6 +248,13 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'join',
         'joinsarecool',
     ),
+    # test non-strings
+    (
+        ['joins', 4, 'life'],
+        {'type': 'identity'},
+        'join',
+        'joins4life',
+    ),
     # if items can't be compared should return None
     (
         [datetime.datetime.now(), datetime.date.today()],
