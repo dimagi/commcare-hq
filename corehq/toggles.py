@@ -904,9 +904,10 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
-    "Allow domain to override default length of inactivity timeout",
+    "COVID: Allow domain to override default length of inactivity timeout",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Allow+domain+to+override+default+length+of+inactivity+timeout",
 )
 
 # not referenced in code directly but passed through to vellum
@@ -1912,14 +1913,16 @@ REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
     'COVID: Allow refer case repeaters to be setup',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'COVID: Enable usage of AWS Connect Dialer',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
 )
 
 HMAC_CALLOUT = StaticToggle(
@@ -1933,7 +1936,8 @@ GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
     'COVID: Enable retrieving OTPs from a GAEN Server',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
 )
 
 PARALLEL_USER_IMPORTS = StaticToggle(
