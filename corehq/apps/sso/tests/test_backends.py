@@ -25,6 +25,8 @@ class TestSsoBackend(TestCase):
             cls.domain.name, 'b@vaultwax.com', 'testpwd', None, None
         )
         cls.idp = generator.create_idp('vaultwax', cls.account)
+        cls.idp.is_active = True
+        cls.idp.save()
         AuthenticatedEmailDomain.objects.create(
             email_domain='vaultwax.com',
             identity_provider=cls.idp,
