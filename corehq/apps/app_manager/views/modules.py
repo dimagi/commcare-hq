@@ -958,7 +958,7 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['input_'] = 'daterange'
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
-            ret['geocoder_receiver_expression'] = prop.get('geocoder_receiver_expression', '')
+            ret['receiver_expression'] = prop.get('receiver_expression', '')
 
         yield ret
 

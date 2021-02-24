@@ -410,8 +410,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """Setting the appearance to "address"
         """
         # Shouldn't be included for versions before 2.50
-        self.module.search_config.properties[0].appearance = 'geocoder_receiver'
-        self.module.search_config.properties[0].geocoder_receiver_expression = 'home-street'
+        self.module.search_config.properties[0].appearance = 'receiver'
+        self.module.search_config.properties[0].receiver_expression = 'home-street'
         suite = self.app.create_suite()
         expected = """
         <partial>
@@ -430,7 +430,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt input="geocoder_receiver" key="name" receive="home-street">
+          <prompt input="receiver" key="name" receive="home-street">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

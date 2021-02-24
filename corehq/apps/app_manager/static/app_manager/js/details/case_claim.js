@@ -69,7 +69,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hint: '',
             appearance: '',
             defaultValue: '',
-            geocoderReceiverExpression: '',
+            receiverExpression: '',
             itemsetOptions: {},
         });
         var self = {};
@@ -80,10 +80,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
 
-        self.geocoderReceiverExpression = ko.observable(options.geocoderReceiverExpression);
+        self.receiverExpression = ko.observable(options.receiverExpression);
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'geocoderReceiverExpression'], saveButton);
+        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
 
         return self;
     };
@@ -188,7 +188,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     hint: hint,
                     appearance: appearance,
                     defaultValue: searchProperties[i].default_value,
-                    geocoderReceiverExpression: searchProperties[i].geocoder_receiver_expression,
+                    receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
                         instance_uri: searchProperties[i].itemset.instance_uri,
@@ -223,7 +223,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hint: p.hint(),
                         appearance: p.appearance(),
                         default_value: p.defaultValue(),
-                        geocoder_receiver_expression: p.geocoderReceiverExpression(),
+                        receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
                 }

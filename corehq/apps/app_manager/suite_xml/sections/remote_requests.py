@@ -176,7 +176,7 @@ class RemoteRequestFactory(object):
                 'display': display
             }
             if not prop.appearance or prop.itemset.nodeset:
-                kwargs['receive'] = prop.geocoder_receiver_expression
+                kwargs['receive'] = prop.receiver_expression
             if prop.appearance and self.app.enable_search_prompt_appearance:
                 if prop.appearance == 'address':
                     kwargs['input_'] = prop.appearance

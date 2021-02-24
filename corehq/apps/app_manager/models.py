@@ -2090,8 +2090,8 @@ class CaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
     hint = DictProperty()
 
-    # applicable when appearance is a geocoder_receiver
-    geocoder_receiver_expression = StringProperty()
+    # applicable when appearance is a receiver
+    receiver_expression = StringProperty()
     itemset = SchemaProperty(Itemset)
 
 
