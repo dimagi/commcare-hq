@@ -1,8 +1,0 @@
-doc_id,state_id,supervisor_id,timeend,inserted_at
-doc_id1,st1,s1,2017-01-01,2017-01-01
-doc_id2,st1,s2,2017-01-01,2017-01-01
-doc_id3,st1,s3,2017-04-01,2017-01-01
-doc_id4,st1,s4,2017-01-01,2017-01-01
-doc_id5,st2,s5,2017-04-01,2017-01-01
-doc_id6,st2,s6,2017-05-31,2017-01-01
-doc_id7,st2,s7,2017-06-01,2017-01-01

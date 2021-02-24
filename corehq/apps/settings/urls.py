@@ -7,13 +7,13 @@ from corehq.apps.locations.urls import settings_urls as location_settings
 from corehq.apps.products.urls import settings_urls as product_settings
 from corehq.apps.programs.urls import settings_urls as program_settings
 from corehq.apps.settings.views import (
+    ApiKeyView,
     ChangeMyPasswordView,
     DefaultMySettingsView,
     EnableMobilePrivilegesView,
     MyAccountSettingsView,
     MyProjectsList,
     default,
-    new_api_key,
     project_id_mapping,
     redirect_domain_settings,
     redirect_users,
@@ -22,10 +22,10 @@ from corehq.apps.settings.views import (
 urlpatterns = [
     url(r'^$', DefaultMySettingsView.as_view(), name=DefaultMySettingsView.urlname),
     url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.urlname),
+    url(r'^api_keys/$', ApiKeyView.as_view(), name=ApiKeyView.urlname),
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
     url(r'^mobile_privileges/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
-    url(r'new_api_key/$', new_api_key, name='new_api_key'),
 ]
 
 domain_specific = [

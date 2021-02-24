@@ -9,7 +9,6 @@
  * @copyright 2015 asvd <heliosframework@gmail.com>
  */
 
-/* globals define */
 /* globals exports */
 
 (function (root, factory) {

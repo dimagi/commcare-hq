@@ -126,10 +126,6 @@ hqDefine("app_manager/js/forms/form_view", function () {
             $shadowParent.koApplyBindings({
                 shadow_parent: ko.observable(initialPageData('shadow_parent_form_id')),
             });
-        } else if (hqImport('hqwebapp/js/toggles').toggleEnabled('NO_VELLUM')) {
-            $('#no-vellum').koApplyBindings({
-                no_vellum: ko.observable(initialPageData('no_vellum')),
-            });
         }
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_INSTANCES')) {

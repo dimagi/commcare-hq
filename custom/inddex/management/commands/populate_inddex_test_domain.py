@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.domain.forms import DimagiOnlyEnterpriseForm
 from corehq.apps.domain.shortcuts import create_domain
 from custom.inddex.example_data.data import populate_inddex_domain
-from custom.inddex.reports.gaps_summary import GapsSummaryReport
+from custom.inddex.reports.r2a_gaps_summary import GapsSummaryReport
 
 
 class Command(BaseCommand):

@@ -1,11 +1,8 @@
 import traceback
 from datetime import datetime
-from xml.etree import cElementTree as ElementTree
 
 from celery.task import task
 import json
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
 
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
@@ -69,30 +66,3 @@ def eval_dots_block(xform_json, callback=None):
         tb = traceback.format_exc()
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
 
-
-def set_schedule_case_properties(pact_case):
-    """
-    Sets the required schedule case properties on the case if they are different from the current
-    case properties. See the README for more information.
-    """
-    SCHEDULE_CASE_PROPERTY_PREFIX = 'dotSchedule'
-    DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-    current_schedule = pact_case.current_schedule
-    if current_schedule is not None:
-        to_change = {}
-        for day in DAYS:
-            case_property_name = '{}{}'.format(SCHEDULE_CASE_PROPERTY_PREFIX, day)
-            from_case = getattr(pact_case, case_property_name, None)
-            from_schedule = current_schedule[day]
-            if (from_case or from_schedule) and from_case != from_schedule:
-                to_change[case_property_name] = current_schedule[day]
-        if to_change:
-            case_block = CaseBlock(
-                case_id=pact_case._id,
-                update=to_change,
-            ).as_xml()
-            submit_case_blocks(
-                [ElementTree.tostring(case_block)],
-                'pact',
-                device_id=__name__ + ".set_schedule_case_properties",
-            )

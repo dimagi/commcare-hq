@@ -212,6 +212,7 @@ class LocationsListView(BaseLocationView):
             'has_location_types': has_location_types,
             'can_edit_root': self.can_access_all_locations,
             'location_search_help': ExpandedMobileWorkerFilter.location_search_help,
+            'user_is_domain_admin': self.request.couch_user.is_domain_admin(self.domain),
         }
 
     def get_visible_locations(self):
@@ -275,7 +276,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
-    @method_decorator(require_can_edit_locations)
     @method_decorator(locations_access_required)
     @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
@@ -559,8 +559,8 @@ class BaseEditLocationView(BaseLocationView):
         data = self.request.POST if self.request.method == 'POST' else None
         return LocationFormSet(
             self.location,
+            self.request,
             bound_data=data,
-            request_user=self.request.couch_user,
             is_new=self.creates_new_location,
         )
 
@@ -1020,9 +1020,10 @@ def location_export(request, domain):
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     root_location_id = request.GET.get('root_location_id')
+    owner_id = request.couch_user.get_id
     download = DownloadBase()
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
-                                         headers_only, root_location_id)
+                                         headers_only, owner_id, root_location_id)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
@@ -1055,7 +1056,7 @@ class DownloadLocationStatusView(BaseLocationView):
             next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
             next_url_text = _("Go back to organization download")
         else:
-            next_url = reverse("location_export", args=[self.domain])
+            next_url = reverse(LocationsListView.urlname, args=[self.domain])
             next_url_text = _("Go back to organization structure")
         context.update({
             'domain': self.domain,

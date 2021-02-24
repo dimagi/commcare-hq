@@ -98,6 +98,12 @@ class Attachment(IsImageMixin):
                 except IOError:
                     self.content_type = 'application/octet-stream'
 
+    def has_size(self):
+        if not hasattr(self.raw_content, 'size'):
+            return False
+
+        return self.raw_content.size is not None
+
     @property
     @memoized
     def content_length(self):
@@ -151,6 +157,7 @@ class Attachment(IsImageMixin):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
+        # TODO remove when Django 1 is no longer supported
         if fileobj is None:
             assert not isinstance(self.raw_content, BlobMeta), repr(self)
             # work around Django 1.11 bug, fixed in 2.0
@@ -1395,6 +1402,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.form_id == other.form_id
         )
 
+    def __hash__(self):
+        return hash((self.case_id, self.type, self.form_id))
+
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         """Get or create a form transaction for a the given form and case.
@@ -1598,6 +1608,19 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     def location(self):
         from corehq.apps.locations.models import SQLLocation
         return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
+
+    @property
+    def sql_location(self):
+        return self.location
+
+    @property
+    @memoized
+    def sql_product(self):
+        from corehq.apps.products.models import SQLProduct
+        try:
+            return SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
+        except SQLProduct.DoesNotExist:
+            return None
 
     @property
     def location_id(self):

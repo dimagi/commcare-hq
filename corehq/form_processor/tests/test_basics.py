@@ -343,7 +343,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         user = create_restore_user(self.project.name)
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
-        case = CaseBlock(
+        case = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             user_id=user.user_id, owner_id=user.user_id, case_type='demo',
@@ -431,7 +431,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
     def test_globally_unique_case_id(self):
         case_id = uuid.uuid4().hex
-        case = CaseBlock(
+        case = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             user_id='user1',
@@ -482,7 +482,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
 class FundamentalCaseTestsSQL(FundamentalCaseTests):
     def test_long_value_validation(self):
         case_id = uuid.uuid4().hex
-        case = CaseBlock(
+        case = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             user_id='user1',
@@ -505,7 +505,7 @@ def _submit_case_block(create, case_id, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)
     return post_case_blocks(
         [
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 create=create,
                 case_id=case_id,
                 **kwargs

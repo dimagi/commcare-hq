@@ -163,8 +163,8 @@ hqDefine("export/js/create_export", [
         self.setCaseTypes = self._initSelect2(self.caseType, 'case_type');
 
         // Behavior of drilldown itself (interactions between the dropdowns)
-        self.updateAppChoices = function () {
-            var appChoices = self._apps_by_type[self.appType()];
+        self.appType.subscribe(function (newValue) {
+            var appChoices = self._apps_by_type[newValue];
             self.setApps(appChoices);
             self.selectedAppData({});
             self.selectedFormData({});
@@ -172,7 +172,7 @@ hqDefine("export/js/create_export", [
             self.setModules();
             self.setForms();
             self.setCaseTypes();
-        };
+        });
         self.application.subscribe(function (newValue) {
             if (newValue) {
                 if (self.modelType() === 'form') {
@@ -202,7 +202,7 @@ hqDefine("export/js/create_export", [
             }
         });
         self.module.subscribe(function (newValue) {
-            if (newValue) {
+            if (newValue && self.application()) {
                 var formChoices = self._forms_by_app_by_module[self.application()][newValue];
                 self.setForms(formChoices);
             } else {

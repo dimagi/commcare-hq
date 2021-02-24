@@ -2249,10 +2249,13 @@ They conform to a slightly different style:
        }
    }
 
-Having defined the data source you need to add the path to the data
-source file to the ``STATIC_DATA_SOURCES`` setting in ``settings.py``.
+Having defined the data source you need to use the ``static_ucr_data_source_paths``
+extension point to make CommCare aware of your data source.
 Now when the static data source pillow is run it will pick up the data
 source and rebuild it.
+
+Alternatively, the legacy method is to add the path to the data
+source file to the ``STATIC_DATA_SOURCES`` setting in ``settings.py``.
 
 Changes to the data source require restarting the pillow which will
 rebuild the SQL table. Alternately you can use the UI to rebuild the
@@ -2275,6 +2278,13 @@ Static configurable reports have the following style:
        }
    }
 
+Having defined the report you need to use the ``static_ucr_report_paths``
+extension point to make CommCare aware of your report.
+
+Alternatively, the legacy method is to add the path to the data
+source file to the ``STATIC_UCR_REPORTS`` setting in ``settings.py``.
+
+
 Custom configurable reports
 ---------------------------
 
@@ -2292,21 +2302,32 @@ Extending User Configurable Reports
 When building a custom report for a client, you may find that you want
 to extend UCR with custom functionality. The UCR framework allows
 developers to write custom expressions, and register them with the
-framework. To do so, simply add a tuple to the
-``CUSTOM_UCR_EXPRESSIONS`` setting list. The first item in the tuple is
-the name of the expression type, the second item is the path to a
-function with a signature like conditional_expression(spec, context)
-that returns an expression object. e.g.:
+framework. To do so:
+
+1. Define a function that returns an expression object
 
 ::
 
-   # settings.py
+    def custom_expression(spec, context):
+        ...
 
-   CUSTOM_UCR_EXPRESSIONS = [
-       ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
-   ]
+2. Extend the ``custom_ucr_expressions`` extension point:
 
-Following are some custom expressions that are currently available.
+::
+
+    from corehq.apps.userreports.extension_points import custom_ucr_expressions
+
+    @custom_ucr_expressions.extend()
+    def ucr_expressions():
+        return [
+            ('expression_name', 'path.to.custom_expression'),
+        ]
+
+See also:
+
+* CommCare Extension documentation for more details on using extensions.
+* ``custom_ucr_expressions`` docstring for full extension point details.
+
 
 -  ``location_type_name``: A way to get location type from a location
    document id.

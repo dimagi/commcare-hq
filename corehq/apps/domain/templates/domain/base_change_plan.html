@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block page_content %}
+  {% block plan_breadcrumbs %}
   <ol class="breadcrumb">
     {% for step in steps %}
       <li>
@@ -20,6 +21,7 @@
       </li>
     {% endfor %}
   </ol>
+  {% endblock %}
   <div class="select-plan-header">
     <h2>{{ step_title }}</h2>
   </div>

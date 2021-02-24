@@ -129,10 +129,16 @@ class flag_enabled(object):
     enabled = True
 
     def __init__(self, toggle_name, is_preview=False):
-        location = 'corehq.feature_previews' if is_preview else 'corehq.toggles'
+        from corehq.feature_previews import all_previews_by_name
+        from corehq.toggles import all_toggles_by_name
+        provider = all_previews_by_name if is_preview else all_toggles_by_name
+        toggles = [
+            t for name, t in provider().items() if name == toggle_name
+        ]
+        assert len(toggles) == 1, f"Toggle not found: {toggle_name}"
+        toggle = toggles[0]
         self.patches = [
-            mock.patch('.'.join([location, toggle_name, method_name]),
-                       new=lambda *args, **kwargs: self.enabled)
+            mock.patch.object(toggle, method_name, new=lambda *args, **kwargs: self.enabled)
             for method_name in ['enabled', 'enabled_for_request']
         ]
 
@@ -505,7 +511,7 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_text()], domain=domain
+        [CaseBlock.deprecated_init(**kwargs).as_text()], domain=domain
     )
 
 
@@ -614,7 +620,7 @@ def update_case(domain, case_id, case_properties, user_id=None):
         kwargs['user_id'] = user_id
 
     post_case_blocks(
-        [CaseBlock(**kwargs).as_xml()], domain=domain
+        [CaseBlock.deprecated_init(**kwargs).as_xml()], domain=domain
     )
 
 

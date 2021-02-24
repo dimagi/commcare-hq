@@ -15,6 +15,7 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.auth import BasicAuthManager
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -153,7 +154,7 @@ def save_match_ids(case, case_config, patient):
                 kwargs['external_id'] = value
             else:
                 case_update[case_property] = value
-    case_block = CaseBlock(
+    case_block = CaseBlock.deprecated_init(
         case_id=case.get_id,
         create=False,
         update=case_update,
@@ -253,18 +254,24 @@ def create_patient(requests, info, case_config):
 
 
 def authenticate_session(requests):
+    if not isinstance(requests.auth_manager, BasicAuthManager):
+        raise OpenmrsConfigurationError(
+            f'OpenMRS server at {requests.base_url!r} needs to be configured '
+            'for basic authentication.'
+        )
     login_data = {
-        'uname': requests.username,
-        'pw': requests.password,
+        'uname': requests.auth_manager.username,
+        'pw': requests.auth_manager.password,
         'submit': 'Log In',
         'redirect': '',
         'refererURL': '',
     }
-    response = requests.post('/ms/legacyui/loginServlet', login_data, headers={'Accept': 'text/html'})
+    response = requests.post('/ms/legacyui/loginServlet', login_data,
+                             headers={'Accept': 'text/html'})
     if not 200 <= response.status_code < 300:
-        raise OpenmrsHtmlUiChanged('Domain "{}": Unexpected OpenMRS login page at "{}".'.format(
-            requests.domain_name, response.url
-        ))
+        raise OpenmrsHtmlUiChanged(
+            f'Unexpected OpenMRS login page at {response.url!r}.'
+        )
 
 
 @quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
@@ -314,21 +321,23 @@ def generate_identifier(requests, identifier_type):
     If the identifier source doesn't return an identifier, return None.
     If anything goes wrong ... return None.
 
-    The idgen module is not a REST API. It does not use API
-    authentication. The user has to be logged in using the HTML login
-    page, and the resulting authenticated session used for sending
-    requests.
+    Partners in Health have written basic auth support for the idgen
+    module, but it is not yet widely used. Until then, requests must use
+    a session that has been authenticated with the HTML login page.
     """
     identifier = None
     source_id = None
+
+    # Create a new Requests session to log in using an HTML login page.
+    # See `authenticate_session()` for details.
     with Requests(
         domain_name=requests.domain_name,
         base_url=requests.base_url,
-        username=requests.username,
-        password=requests.password,
         verify=requests.verify,
+        auth_manager=requests.auth_manager,
         notify_addresses=requests.notify_addresses,
         payload_id=requests.payload_id,
+        logger=requests.logger,
     ) as requests_session:
         authenticate_session(requests_session)
         try:
@@ -428,7 +437,7 @@ def delete_case_property(
         case_block_kwargs = {case_property: None}
     else:
         case_block_kwargs = {"update": {case_property: None}}
-    case_block = CaseBlock(case_id=case_id, create=False, **case_block_kwargs)
+    case_block = CaseBlock.deprecated_init(case_id=case_id, create=False, **case_block_kwargs)
     submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_OPENMRS)
 
 

@@ -51,7 +51,6 @@ from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import (
-    ALLOWED_EXTENSIONS,
     get_spreadsheet,
     open_spreadsheet_download_ref,
 )
@@ -85,7 +84,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import SpreadsheetFileExtError
+from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError
 
 transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60 * 60)
 
@@ -311,9 +310,9 @@ class ManageMultimediaPathsView(BaseMultimediaTemplateView):
     def post(self, request, *args, **kwargs):
         handle = request.FILES['bulk_upload_file']
         extension = os.path.splitext(handle.name)[1][1:].strip().lower()
-        if extension not in ALLOWED_EXTENSIONS:
+        if extension not in valid_extensions:
             messages.error(request, _("Please choose a file with one of the following extensions: "
-                                      "{}").format(", ".join(ALLOWED_EXTENSIONS)))
+                                      "{}").format(", ".join(valid_extensions)))
             return self.get(request, *args, **kwargs)
 
         meta = transient_file_store.write_file(handle, handle.name, self.domain)

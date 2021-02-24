@@ -1,15 +1,15 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from corehq.util.global_request import get_request_domain
-from couchforms.const import (
-    EMPTY_PAYLOAD_ERROR,
-    MAGIC_PROPERTY,
-    MULTIPART_EMPTY_PAYLOAD_ERROR,
-    MULTIPART_FILENAME_ERROR,
-)
+from couchforms.const import MAGIC_PROPERTY
 import logging
 from datetime import datetime
 from django.conf import settings
 
+from couchforms.exceptions import (
+    EmptyPayload,
+    MultipartEmptyPayload,
+    MultipartFilenameError,
+    InvalidSubmissionFileExtensionError,
+)
 from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip, get_site_domain
 
@@ -40,23 +40,33 @@ def get_instance_and_attachment(request):
             raise MultimediaBug("Received a submission with POST.keys()")
 
         try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
+            instance_file = request.FILES[MAGIC_PROPERTY]
         except MultiValueDictKeyError:
-            instance = MULTIPART_FILENAME_ERROR
+            raise MultipartFilenameError()
         else:
+            if not _valid_file_extension(instance_file):
+                raise InvalidSubmissionFileExtensionError()
+            instance = instance_file.read()
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
                     attachments[key] = item
         if not instance:
-            instance = MULTIPART_EMPTY_PAYLOAD_ERROR
+            raise MultipartEmptyPayload()
     else:
         # j2me and touchforms; of the form
         # $ curl --data '@form.xml' $URL
         instance = request.body
         if not instance:
-            instance = EMPTY_PAYLOAD_ERROR
+            raise EmptyPayload()
     request._instance_and_attachment = (instance, attachments)
     return instance, attachments
+
+
+def _valid_file_extension(file):
+    if "." not in file.name:
+        return False
+    file_extension = file.name.rsplit(".", 1)[-1]
+    return file_extension == 'xml'
 
 
 def get_location(request=None):

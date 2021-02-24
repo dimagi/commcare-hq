@@ -1,6 +1,7 @@
-/*global FormplayerFrontend */
-
-FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone, Marionette) {
+hqDefine("cloudcare/js/formplayer/users/utils", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    var Utils = {};
     Utils.Users = {
         /**
          * logInAsUser
@@ -10,7 +11,7 @@ FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone
          * setting it in a cookie
          */
         logInAsUser: function (restoreAsUsername) {
-            var currentUser = FormplayerFrontend.request('currentUser');
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
 
             $.cookie(
@@ -18,7 +19,8 @@ FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone
                     currentUser.domain,
                     currentUser.username
                 ),
-                currentUser.restoreAs
+                currentUser.restoreAs,
+                { secure: initialPageData('secure_cookies') }
             );
         },
         restoreAsKey: function (domain, username) {
@@ -48,4 +50,5 @@ FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone
             return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
+    return Utils;
 });

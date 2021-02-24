@@ -3,6 +3,7 @@ import datetime
 from celery.signals import before_task_publish, task_prerun, task_postrun
 from django.core.cache import cache
 
+from corehq.util.metrics import push_metrics
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -73,6 +74,7 @@ def celery_add_time_sent(headers=None, body=None, **kwargs):
 @task_prerun.connect
 def celery_record_time_to_start(task_id=None, task=None, **kwargs):
     from corehq.util.metrics import metrics_counter, metrics_gauge
+    from corehq.util.metrics.const import MPM_MAX
 
     tags = {
         'celery_task_name': task.name,
@@ -85,7 +87,8 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
     except TimingNotAvailable:
         metrics_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
     else:
-        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags)
+        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags,
+            multiprocess_mode=MPM_MAX)
         get_task_time_to_start.set_cached_value(task_id).to(time_to_start)
 
     TimeToRunTimer(task_id).start_timing()
@@ -113,3 +116,8 @@ def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
             bucket_tag='duration', buckets=DAY_SCALE_TIME_BUCKETS, bucket_unit='s',
             tags=tags
         )
+
+
+@task_postrun.connect
+def celery_push_metrics(**kwargs):
+    push_metrics()

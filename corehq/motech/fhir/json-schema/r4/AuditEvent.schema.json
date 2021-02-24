@@ -1,0 +1,365 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/AuditEvent",
+  "$ref": "#/definitions/AuditEvent",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "AuditEvent": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a AuditEvent resource",
+              "type": "string",
+              "enum": [
+                "AuditEvent"
+              ]
+            },
+            "type": {
+              "description": "Identifier for a family of the event.  For example, a menu item, program, rule, policy, function code, application name or URL. It identifies the performed function.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "subtype": {
+              "description": "Identifier for the category of event.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "action": {
+              "description": "Indicator for type of action performed during the event that generated the audit.",
+              "enum": [
+                "C",
+                "R",
+                "U",
+                "D",
+                "E"
+              ],
+              "type": "string"
+            },
+            "_action": {
+              "description": "Extensions for action",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "recorded": {
+              "description": "The time when the event occurred on the source.",
+              "type": "string"
+            },
+            "_recorded": {
+              "description": "Extensions for recorded",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "outcome": {
+              "description": "Indicates whether the event succeeded or failed.",
+              "enum": [
+                "0",
+                "4",
+                "8",
+                "12"
+              ],
+              "type": "string"
+            },
+            "_outcome": {
+              "description": "Extensions for outcome",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "outcomeDesc": {
+              "description": "A free text description of the outcome of the event.",
+              "type": "string"
+            },
+            "_outcomeDesc": {
+              "description": "Extensions for outcomeDesc",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "purposeOfEvent": {
+              "description": "The purposeOfUse (reason) that was used during the event being recorded.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "agent": {
+              "description": "An actor taking an active role in the event or activity that is logged.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AuditEvent_Agent"
+              }
+            },
+            "source": {
+              "description": "The system that is reporting the event.",
+              "$ref": "#/definitions/AuditEvent_Source"
+            },
+            "entity": {
+              "description": "Specific instances of data or objects that have been accessed.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AuditEvent_Entity"
+              }
+            }
+          },
+          "required": [
+            "agent",
+            "source",
+            "type",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "AuditEvent_Agent": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.",
+          "properties": {
+            "role": {
+              "description": "The security role that the user was acting under, that come from local codes defined by the access control security system (e.g. RBAC, ABAC) used in the local context.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reference": {
+              "description": "Direct reference to a resource that identifies the agent.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "userId": {
+              "description": "Unique identifier for the user actively participating in the event.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "altId": {
+              "description": "Alternative agent Identifier. For a human, this should be a user identifier text string from authentication system. This identifier would be one known to a common authentication system (e.g. single sign-on), if available.",
+              "type": "string"
+            },
+            "_altId": {
+              "description": "Extensions for altId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "Human-meaningful name for the agent.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requestor": {
+              "description": "Indicator that the user is or is not the requestor, or initiator, for the event being audited.",
+              "type": "boolean"
+            },
+            "_requestor": {
+              "description": "Extensions for requestor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "location": {
+              "description": "Where the event occurred.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "policy": {
+              "description": "The policy or plan that authorized the activity being recorded. Typically, a single activity may have multiple applicable policies, such as patient consent, guarantor funding, etc. The policy would also indicate the security token used.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_policy": {
+              "description": "Extensions for policy",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "media": {
+              "description": "Type of media involved. Used when the event is about exporting/importing onto media.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "network": {
+              "description": "Logical network location for application activity, if the activity has a network location.",
+              "$ref": "#/definitions/AuditEvent_Network"
+            },
+            "purposeOfUse": {
+              "description": "The reason (purpose of use), specific to this agent, that was used during the event being recorded.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AuditEvent_Network": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.",
+          "properties": {
+            "address": {
+              "description": "An identifier for the network access point of the user device for the audit event.",
+              "type": "string"
+            },
+            "_address": {
+              "description": "Extensions for address",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "An identifier for the type of network access point that originated the audit event.",
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "AuditEvent_Source": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.",
+          "properties": {
+            "site": {
+              "description": "Logical source location within the healthcare enterprise network.  For example, a hospital or other provider location within a multi-entity provider group.",
+              "type": "string"
+            },
+            "_site": {
+              "description": "Extensions for site",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "Identifier of the source where the event was detected.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "type": {
+              "description": "Code specifying the type of source where event originated.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            }
+          },
+          "required": [
+            "identifier"
+          ]
+        }
+      ]
+    },
+    "AuditEvent_Entity": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.",
+          "properties": {
+            "identifier": {
+              "description": "Identifies a specific instance of the entity. The reference should always be version specific.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "reference": {
+              "description": "Identifies a specific instance of the entity. The reference should be version specific.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "type": {
+              "description": "The type of the object that was involved in this audit event.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "role": {
+              "description": "Code representing the role the entity played in the event being audited.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "lifecycle": {
+              "description": "Identifier for the data life-cycle stage for the entity.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "securityLabel": {
+              "description": "Security labels for the identified entity.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "name": {
+              "description": "A name of the entity in the audit event.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Text that describes the entity in more detail.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "query": {
+              "description": "The query parameters for a query-type entities.",
+              "type": "string"
+            },
+            "_query": {
+              "description": "Extensions for query",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "detail": {
+              "description": "Tagged value pairs for conveying additional information about the entity.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AuditEvent_Detail"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AuditEvent_Detail": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.",
+          "properties": {
+            "type": {
+              "description": "The type of extra detail provided in the value.",
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The details, base64 encoded. Used to carry bulk information.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

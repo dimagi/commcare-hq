@@ -29,7 +29,7 @@ from soil.progress import update_task_state
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
 # owner_id, external_id, etc. (See also custom_data_fields.models.RESERVED_WORDS)
-RESERVED_FIELDS = ('type',)
+RESERVED_FIELDS = ('type', 'closed', 'parent_ref')
 EXTERNAL_ID = 'external_id'
 
 
@@ -87,9 +87,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
         )
-
-
-ALLOWED_EXTENSIONS = ['xls', 'xlsx']
 
 
 class WorksheetWrapper(object):

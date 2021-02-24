@@ -133,7 +133,7 @@ def _restoring_as_yourself(couch_user, as_user_obj):
 
 
 def _ensure_valid_domain(domain, couch_user):
-    if not couch_user.is_member_of(domain):
+    if not couch_user.is_member_of(domain, allow_mirroring=True):
         raise RestorePermissionDenied(_("{} was not in the domain {}").format(couch_user.username, domain))
 
 
@@ -169,9 +169,9 @@ def get_restore_user(domain, couch_user, as_user_obj):
     couch_restore_user = as_user_obj or couch_user
 
     if couch_restore_user.is_commcare_user():
-        return couch_restore_user.to_ota_restore_user()
+        return couch_restore_user.to_ota_restore_user(couch_user)
     elif couch_restore_user.is_web_user():
-        return couch_restore_user.to_ota_restore_user(domain)
+        return couch_restore_user.to_ota_restore_user(domain, couch_user)
     else:
         return None
 

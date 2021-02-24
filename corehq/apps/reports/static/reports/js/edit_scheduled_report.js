@@ -6,7 +6,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     "hqwebapp/js/toggles",
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/widgets",  // autocomplete widget for email recipient list
-    "jquery-ui/ui/datepicker",
+    "jquery-ui/ui/widgets/datepicker",
     'hqwebapp/js/components.ko',    // select toggle widget
 ], function (
     $,

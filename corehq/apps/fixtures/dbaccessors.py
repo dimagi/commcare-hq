@@ -1,3 +1,5 @@
+from dimagi.utils.couch.database import iter_bulk_delete
+
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -28,6 +30,14 @@ def get_fixture_data_types(domain):
     ))
 
 
+def get_fixture_data_type_by_tag(domain, tag):
+    data_types = get_fixture_data_types(domain)
+    for data_type in data_types:
+        if data_type.tag == tag:
+            return data_type
+    return None
+
+
 @quickcache(['domain', 'data_type_id'], timeout=60 * 60, memoize_timeout=60, skip_arg='bypass_cache')
 def get_fixture_items_for_data_type(domain, data_type_id, bypass_cache=False):
     from corehq.apps.fixtures.models import FixtureDataItem
@@ -38,6 +48,13 @@ def get_fixture_items_for_data_type(domain, data_type_id, bypass_cache=False):
         reduce=False,
         include_docs=True,
     ))
+
+
+def delete_fixture_items_for_data_type(domain, data_type_id):
+    from corehq.apps.fixtures.models import FixtureDataItem
+    iter_bulk_delete(FixtureDataItem.get_db(), [
+        i["_id"] for i in iter_fixture_items_for_data_type(domain, data_type_id)
+    ])
 
 
 def iter_fixture_items_for_data_type(domain, data_type_id):

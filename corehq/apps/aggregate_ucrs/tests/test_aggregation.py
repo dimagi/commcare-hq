@@ -154,7 +154,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     @classmethod
     def _create_case(cls, parent_id):
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             case_id=case_id,
             case_type=cls.case_type,
             date_opened=cls.case_date_opened,
@@ -170,7 +170,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     @classmethod
     def _create_closed_case(cls):
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             case_id=case_id,
             case_type=cls.case_type,
             date_opened=cls.closed_case_date_opened,
@@ -186,7 +186,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         parent_id = uuid.uuid4().hex
         post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=parent_id,
                     case_name=case_name,
@@ -206,7 +206,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             received_on=received_on,
         )
         properties = cls._get_case_property_values()
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             case_id=case_id,
             update=properties,
         )

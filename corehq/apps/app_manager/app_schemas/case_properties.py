@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict, deque, namedtuple
-from itertools import chain
 
 from memoized import memoized
 
@@ -188,6 +187,18 @@ def _flatten_case_properties(case_properties_by_case_type):
                 case_property=case_property_parts[-1]
             ))
     return result
+
+
+def _clean_case_type_properties(case_properties_by_case_type):
+    for case_properties in case_properties_by_case_type.values():
+        _replace_properties_with_attributes(case_properties)
+
+
+def _replace_properties_with_attributes(case_properties):
+    for prop in list(case_properties):
+        if prop == 'owner_id':
+            case_properties.remove(prop)
+            case_properties.add('@owner_id')
 
 
 def _propagate_and_normalize_case_properties(case_properties_by_case_type, parent_type_map,
@@ -403,6 +414,8 @@ class ParentCasePropertyBuilder(object):
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
 
+        _clean_case_type_properties(case_properties_by_case_type)
+
         if self.exclude_invalid_properties:
             from corehq.apps.app_manager.helpers.validators import validate_property
             for case_type, case_properties in case_properties_by_case_type.items():
@@ -534,4 +547,4 @@ def _get_usercase_default_properties(domain):
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 
     fields_def = CustomDataFieldsDefinition.get_or_create(domain, CUSTOM_USER_DATA_FIELD_TYPE)
-    return [f.slug for f in fields_def.fields]
+    return [f.slug for f in fields_def.get_fields()]

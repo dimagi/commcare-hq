@@ -89,7 +89,7 @@ class CommCareUserResource(UserResource):
         return super(UserResource, self).dehydrate(bundle)
 
     def dehydrate_user_data(self, bundle):
-        user_data = bundle.obj.user_data
+        user_data = bundle.obj.metadata
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
             user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}

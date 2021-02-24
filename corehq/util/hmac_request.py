@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 from functools import wraps
 
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.http import HttpResponse
 
 from corehq.util.soft_assert.api import soft_assert
 
+auth_logger = logging.getLogger("commcare_auth")
 _soft_assert = soft_assert(notify_admins=True)
 
 
@@ -21,7 +23,7 @@ def get_hmac_digest(shared_key, data):
     return digest.decode('utf-8')
 
 
-def validate_request_hmac(setting_name, ignore_if_debug=False):
+def validate_request_hmac(setting_name, ignore_if_debug=False, audit_user='system'):
     """
     Decorator to validate request sender using a shared secret
     to compare the HMAC of the request body or query string with
@@ -43,6 +45,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
 
     :param setting_name: The name of the Django setting that holds the secret key
     :param ignore_if_debug: If set to True this is completely ignored if settings.DEBUG is True
+    :param audit_user: The username to report to an auditing system, since these requests are anonymous but auth'd.
     """
     def _outer(fn):
         shared_key = getattr(settings, setting_name, None)
@@ -50,6 +53,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             if ignore_if_debug and settings.DEBUG:
+                request.audit_user = audit_user
                 return fn(request, *args, **kwargs)
 
             data = request.get_full_path() if request.method == 'GET' else request.body
@@ -57,13 +61,22 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
             _soft_assert(shared_key, 'Missing shared auth setting: {}'.format(setting_name))
             expected_digest = request.META.get('HTTP_X_MAC_DIGEST', None)
             if not expected_digest or not shared_key:
+                auth_logger.info(
+                    "Request rejected reason=%s request=%s",
+                    "hmac:missing_key" if not shared_key else "hmac:missing_header", request.path
+                )
                 return HttpResponse(status=401)
 
             digest = get_hmac_digest(shared_key, data)
 
             if expected_digest != digest:
+                auth_logger.info(
+                    "Request rejected reason=%s request=%s",
+                    "hmac:digest_mismatch", request.path
+                )
                 return HttpResponse(status=401)
 
+            request.audit_user = audit_user
             return fn(request, *args, **kwargs)
         return _inner
     return _outer

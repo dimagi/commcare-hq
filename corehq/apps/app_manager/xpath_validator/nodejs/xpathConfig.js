@@ -1,6 +1,6 @@
 if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-    var parser = require('js-xpath/parser');
-    var xpath = require('js-xpath/xpath');
+    var parser = require('xpath/parser');
+    var xpath = require('xpath/xpath');
 }
 
 var XPATH_CONFIG = (function () {

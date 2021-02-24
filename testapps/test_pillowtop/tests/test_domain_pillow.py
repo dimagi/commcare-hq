@@ -12,7 +12,7 @@ from corehq.pillows.domain import get_domain_kafka_to_elasticsearch_pillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class DomainPillowTest(TestCase):
@@ -23,7 +23,7 @@ class DomainPillowTest(TestCase):
         self.elasticsearch = get_es_new()
         delete_all_domains()
         ensure_index_deleted(self.index_info.index)
-        initialize_index(self.elasticsearch, self.index_info)
+        initialize_index_and_mapping(self.elasticsearch, self.index_info)
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)

@@ -1,39 +1,45 @@
+import datetime
 import os
 import tempfile
-
 from wsgiref.util import FileWrapper
+from zipfile import ZipFile
 
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 
 from couchexport.models import Format
-
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
-
-from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload, BlobDownload
+from soil import (
+    BlobDownload,
+    CachedDownload,
+    DownloadBase,
+    FileDownload,
+    MultipleTaskDownload,
+)
 from soil.exceptions import TaskFailedError
-from soil.heartbeat import is_alive, heartbeat_enabled
 from soil.progress import get_task_status
 
-from corehq.util.view_utils import absolute_reverse
 from corehq.blobs import CODES, get_blob_db
+from corehq.celery_monitoring.heartbeat import (
+    Heartbeat,
+    HeartbeatNeverRecorded,
+)
 from corehq.util.files import safe_filename_header
-
-from zipfile import ZipFile
+from corehq.util.view_utils import absolute_reverse
 
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
                            content_disposition=None, download_id=None,
-                           extras=None):
+                           extras=None, owner_ids=None):
     """
     Expose a cache download object.
     """
     ref = CachedDownload.create(payload, expiry, mimetype=mimetype,
                                 content_disposition=content_disposition,
                                 download_id=download_id, extras=extras,
-                                suffix=file_extension)
+                                suffix=file_extension, owner_ids=owner_ids)
     ref.save(expiry)
     return ref
 
@@ -52,7 +58,8 @@ def expose_blob_download(
         expiry,
         mimetype='text/plain',
         content_disposition=None,
-        download_id=None):
+        download_id=None,
+        owner_ids=None):
     """
     Expose a blob object for download
     """
@@ -62,6 +69,7 @@ def expose_blob_download(
         mimetype=mimetype,
         content_disposition=content_disposition,
         download_id=download_id,
+        owner_ids=owner_ids,
     )
     ref.save(expiry)
     return ref
@@ -95,13 +103,24 @@ def get_download_context(download_id, message=None, require_result=False):
         'result': task_status.result,
         'error': task_status.error,
         'is_ready': is_ready,
-        'is_alive': is_alive() if heartbeat_enabled() else True,
+        'is_alive': _is_alive(),
         'progress': task_status.progress._asdict(),
         'download_id': download_id,
         'allow_dropbox_sync': isinstance(download_data, FileDownload) and download_data.use_transfer,
         'has_file': download_data is not None and download_data.has_file,
         'custom_message': message,
     }
+
+
+def _is_alive():
+    queue = getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+    try:
+        blockage = Heartbeat(queue).get_blockage_duration()
+        if blockage > datetime.timedelta(minutes=5):
+            return False
+        return True
+    except HeartbeatNeverRecorded:
+        return False
 
 
 def process_email_request(domain, download_id, email_address):
@@ -134,12 +153,13 @@ def get_download_file_path(use_transfer, filename):
     return fpath
 
 
-def expose_download(use_transfer, file_path, filename, download_id, file_type):
+def expose_download(use_transfer, file_path, filename, download_id, file_type, owner_ids=None):
     common_kwargs = {
         'mimetype': Format.from_format(file_type).mimetype,
         'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
         'download_id': download_id,
         'expiry': (1 * 60 * 60),
+        'owner_ids': owner_ids,
     }
     if use_transfer:
         expose_file_download(
@@ -153,48 +173,3 @@ def expose_download(use_transfer, file_path, filename, download_id, file_type):
             file_extension=file_type,
             **common_kwargs
         )
-
-
-def expose_zipped_blob_download(data_path, filename, format, domain):
-    """Expose zipped file content as a blob download
-
-    :param data_path: Path to data file. Will be deleted.
-    :param filename: File name.
-    :param format: `couchexport.models.Format` constant.
-    :param domain: Domain name.
-    :returns: A link to download the file.
-    """
-    try:
-        _, zip_temp_path = tempfile.mkstemp(".zip")
-        with ZipFile(zip_temp_path, 'w') as zip_file_:
-            zip_file_.write(data_path, filename)
-    finally:
-        os.remove(data_path)
-
-    try:
-        expiry_mins = 60 * 24
-        file_format = Format.from_format(format)
-        file_name_header = safe_filename_header(filename, file_format.extension)
-        ref = expose_blob_download(
-            filename,
-            expiry=expiry_mins * 60,
-            mimetype=file_format.mimetype,
-            content_disposition=file_name_header
-        )
-        with open(zip_temp_path, 'rb') as file_:
-            get_blob_db().put(
-                file_,
-                domain=domain,
-                parent_id=domain,
-                type_code=CODES.tempfile,
-                key=ref.download_id,
-                timeout=expiry_mins
-            )
-    finally:
-        os.remove(zip_temp_path)
-
-    return "%s%s?%s" % (
-        get_url_base(),
-        reverse('retrieve_download', kwargs={'download_id': ref.download_id}),
-        "get_file"  # download immediately rather than rendering page
-    )

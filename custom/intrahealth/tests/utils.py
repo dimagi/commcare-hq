@@ -7,7 +7,7 @@ from corehq.apps.users.models import WebUser
 
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext
@@ -29,7 +29,7 @@ class YeksiTestCase(TestCase):
         cls.domain = domain
         user = WebUser.get_by_username('test')
         if not user:
-            user = WebUser.create(domain.name, 'test', 'passwordtest')
+            user = WebUser.create(domain.name, 'test', 'passwordtest', None, None)
         user.is_authenticated = True
         user.is_superuser = True
         user.is_authenticated = True
@@ -38,7 +38,7 @@ class YeksiTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super().tearDownClass()
 
 

@@ -41,7 +41,7 @@
         {% if report.needs_filters %}
           {% include 'reports/partials/description.html' %}
         {% else %}
-          <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+          <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
             <thead>
             {%  if report_table.headers.complex %}
               {{ report_table.headers.render_html|safe }}

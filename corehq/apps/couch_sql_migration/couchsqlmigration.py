@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from functools import partial
 from threading import Lock
 
-from django.conf import settings
 from django.db.utils import IntegrityError
 
 import attr
@@ -91,6 +90,7 @@ from .asyncforms import AsyncFormProcessor, get_case_ids
 from .casediff import MISSING_BLOB_PRESENT, diff_form_state
 from .casediffqueue import CaseDiffProcess, CaseDiffPending
 from .json2xml import convert_form_to_xml
+from .patches import migration_patches
 from .retrydb import (
     couch_form_exists,
     get_couch_case,
@@ -110,6 +110,7 @@ from .util import (
     str_to_datetime,
     worker_pool,
 )
+from corehq.apps.domain.utils import get_custom_domain_module
 
 log = logging.getLogger(__name__)
 
@@ -228,7 +229,6 @@ class CouchSqlDomainMigrator:
                 process_form(doc)
 
     def _migrate_form(self, couch_form, case_ids, **kw):
-        set_local_domain_sql_backend_override(self.domain)
         form_id = couch_form.form_id
         self._migrate_form_and_associated_models(couch_form, **kw)
         self.case_diff_queue.update(case_ids, form_id)
@@ -237,6 +237,7 @@ class CouchSqlDomainMigrator:
         """
         Copies `couch_form` into a new sql form
         """
+        set_local_domain_sql_backend_override(self.domain)
         sql_form = None
         try:
             assert couch_form.domain == self.domain, couch_form.form_id
@@ -275,6 +276,7 @@ class CouchSqlDomainMigrator:
             try:
                 sql_form = get_sql_form(couch_form.form_id)
             except XFormNotFound:
+                sql_form = None
                 proc = "" if form_is_processed else " unprocessed"
                 log.error("Error migrating%s form %s",
                     proc, couch_form.form_id, exc_info=exc_info)
@@ -286,7 +288,7 @@ class CouchSqlDomainMigrator:
             try:
                 sql_form = get_sql_form(couch_form.form_id)
             except XFormNotFound:
-                pass
+                sql_form = None
             if self.stop_on_error:
                 raise err from None
         finally:
@@ -294,9 +296,12 @@ class CouchSqlDomainMigrator:
                 self._save_diffs(couch_form, sql_form)
 
     def _save_diffs(self, couch_form, sql_form):
-        couch_json = couch_form.to_json()
-        sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
-        self.statedb.save_form_diffs(couch_json, sql_json)
+        if sql_form is not None:
+            couch_json = couch_form.to_json()
+            sql_json = sql_form_to_json(sql_form)
+            self.statedb.save_form_diffs(couch_json, sql_json)
+        else:
+            self.statedb.add_missing_docs(couch_form.doc_type, [couch_form.form_id])
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -346,6 +351,7 @@ class CouchSqlDomainMigrator:
                 pool.spawn(copy_case, doc)
 
     def _copy_unprocessed_case(self, doc):
+        set_local_domain_sql_backend_override(self.domain)
         couch_case = CommCareCase.wrap(doc)
         log.debug('Processing doc: %(doc_type)s(%(_id)s)', doc)
         try:
@@ -432,7 +438,8 @@ class CouchSqlDomainMigrator:
             form = XFormInstance.get(form_id)
         except XFormNotFound:
             form = MissingFormLoader(self.domain).load_form(form_id, case_id)
-            log.warning("couch form missing, blob present: %s", form_id)
+            blob = "missing" if form is None else "present"
+            log.warning("couch form missing, blob %s: %s", blob, form_id)
         except Exception:
             log.exception("Error migrating form %s", form_id)
             form = None
@@ -534,6 +541,7 @@ class CouchSqlDomainMigrator:
                 and isinstance(old_value, dict)
                 and "ledger" in old_value
                 and old_value.get("form_state") != MISSING_BLOB_PRESENT
+                and old_value["ledger"]["last_modified_form_id"] is not None
             ):
                 yield old_value["ledger"]["last_modified_form_id"]
 
@@ -720,7 +728,7 @@ class CouchSqlDomainMigrator:
             msgs.append("does not have SQL backend enabled")
         if COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
             msgs.append("is blacklisted")
-        if domain_name in settings.DOMAIN_MODULE_MAP:
+        if get_custom_domain_module(domain_name):
             msgs.append("has custom reports")
         if msgs:
             raise MigrationRestricted("{}: {}".format(domain_name, "; ".join(msgs)))
@@ -766,98 +774,6 @@ class CouchSqlDomainMigrator:
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
 NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 30)
-
-
-@contextmanager
-def migration_patches():
-    with patch_case_property_validators(), \
-            patch_XFormInstance_get_xml(), \
-            patch_case_date_modified_fixer(), \
-            patch_kafka():
-        yield
-
-
-@contextmanager
-def patch_case_property_validators():
-    def truncate_255(value):
-        return value[:255]
-
-    from corehq.form_processor.backends.sql.update_strategy import PROPERTY_TYPE_MAPPING
-    original = PROPERTY_TYPE_MAPPING.copy()
-    PROPERTY_TYPE_MAPPING.update(
-        name=truncate_255,
-        type=truncate_255,
-        owner_id=truncate_255,
-        external_id=truncate_255,
-    )
-    try:
-        yield
-    finally:
-        PROPERTY_TYPE_MAPPING.update(original)
-
-
-@contextmanager
-def patch_case_date_modified_fixer():
-    def has_case_id_and_valid_date_modified(case_block):
-        has_case = has_case_id(case_block)
-        if has_case:
-            datemod = case_block.get('@date_modified')
-            if isinstance(datemod, str) and MALFORMED_DATE.match(datemod):
-                # fix modified date so subsequent validation (immediately
-                # after this function call) does not fail
-                assert datemod[8] == "0", datemod
-                case_block["@date_modified"] = datemod[:8] + datemod[9:]
-        return has_case
-    import casexml.apps.case.xform as module
-    from casexml.apps.case.xform import has_case_id
-    from .diff import MALFORMED_DATE
-    module.has_case_id = has_case_id_and_valid_date_modified
-    try:
-        yield
-    finally:
-        module.has_case_id = has_case_id
-
-
-@contextmanager
-def patch_XFormInstance_get_xml():
-    @memoized
-    def get_xml(self):
-        try:
-            return self._unsafe_get_xml()
-        except MissingFormXml as err:
-            try:
-                data = self.to_json()
-            except Exception:
-                raise err
-            return convert_form_to_xml(data["form"]).encode('utf-8')
-
-    if hasattr(XFormInstance, "_unsafe_get_xml"):
-        # noop when already patched
-        yield
-        return
-
-    XFormInstance._unsafe_get_xml = XFormInstance.get_xml
-    XFormInstance.get_xml = get_xml
-    try:
-        yield
-    finally:
-        XFormInstance.get_xml = XFormInstance._unsafe_get_xml
-        del XFormInstance._unsafe_get_xml
-
-
-@contextmanager
-def patch_kafka():
-    def drop_change(self, topic, change_meta):
-        doc_id = change_meta.document_id
-        log.debug("kafka not publishing doc_id=%s to %s", doc_id, topic)
-
-    from corehq.apps.change_feed.producer import ChangeProducer
-    send_change = ChangeProducer.send_change
-    ChangeProducer.send_change = drop_change
-    try:
-        yield
-    finally:
-        ChangeProducer.send_change = send_change
 
 
 class MigrationLedgerProcessor(LedgerProcessorSQL):
@@ -969,7 +885,10 @@ def _migrate_form_attachments(sql_form, couch_form):
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
             if couch_meta is None:
-                assert not metas[0].blob_exists(), metas
+                if metas[0].blob_exists():
+                    # not sure how this is possible, but at least one
+                    # form existed that hit this branch.
+                    return metas[0]
             elif metas[0].key != couch_meta.key:
                 assert not blobdb.exists(couch_meta.key), couch_meta
                 if metas[0].blob_exists():
@@ -1361,15 +1280,21 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
     if rows.state.is_resume() and rows.state.to_json().get("kwargs"):
-        log.info("iteration state: %r", rows.state.to_json()["kwargs"])
+        log.debug("iteration state: %r", rows.state.to_json()["kwargs"])
     row = None
+    log_message = log.debug
     try:
         for row in rows:
             yield row[row_key]
+    except:  # noqa E772
+        log_message = logging.info
+        raise
     finally:
         final_state = rows.state.to_json().get("kwargs")
         if final_state:
-            log.info("final iteration state: %r", final_state)
+            if stopper.clean_break:
+                log_message = logging.info
+            log_message("final iteration state: %r", final_state)
 
 
 _iter_docs.chunk_size = 1000
@@ -1459,8 +1384,8 @@ class MissingFormLoader:
     def iter_blob_forms(self, diff):
         """Yield forms from blob XML that are missing in Couch and SQL
 
-        The "missing in Couch" condition is encoded in the diff record,
-        and therefore is not checked directly here.
+        The "missing in Couch, blob present" condition is encoded in
+        the diff record, and therefore is not checked directly here.
         """
         if not diff.old_value or MISSING_BLOB_PRESENT not in diff.old_value:
             return
@@ -1473,7 +1398,7 @@ class MissingFormLoader:
 
     def load_form(self, form_id, case_id=None):
         """Load a form from blob XML that is missing in Couch and SQL"""
-        metas = next(self.iter_blob_metas([form_id]), None)
+        metas = next(self.iter_blob_metas([form_id], maybe_missing=True), None)
         if metas is None:
             return None
         self.seen.add(form_id)
@@ -1493,9 +1418,11 @@ class MissingFormLoader:
             data = json.loads(diff.old_value)
             assert data["form_state"] == MISSING_BLOB_PRESENT, data
             form_ids = [data["ledger"]["last_modified_form_id"]]
+        else:
+            raise ValueError(f"unknown diff kind: {diff.kind}")
         return form_ids, case_id
 
-    def iter_blob_metas(self, form_ids):
+    def iter_blob_metas(self, form_ids, maybe_missing=False):
         form_ids = [f for f in form_ids if not sql_form_exists(f)]
         if not form_ids:
             return
@@ -1504,9 +1431,11 @@ class MissingFormLoader:
         for meta in metas:
             if meta.type_code == CODES.form_xml:
                 yield meta, [m for m in metas if m.parent_id == meta.parent_id]
-                assert meta.parent_id not in parents, metas
+                assert meta.parent_id not in parents, \
+                    f"found two XML blobs for form {meta.parent_id}"
                 parents.add(meta.parent_id)
-        assert parents == set(form_ids), (form_ids, parents)
+        assert maybe_missing or set(form_ids) == parents, \
+            f"unexpected missing XML for forms: {set(form_ids) - parents}"
 
     def xml_to_form(self, xml_meta, case_id, all_metas):
         form_id = xml_meta.parent_id
@@ -1542,6 +1471,8 @@ def get_main_forms_iteration_stop_date(statedb):
         return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"
+    if len(kwargs["startkey"]) != 3:
+        return None
     # this is tightly coupled to by_domain_doc_type_date/view in couch:
     # the last key element is expected to be a datetime
     return kwargs["startkey"][-1]

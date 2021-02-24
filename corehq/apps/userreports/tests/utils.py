@@ -171,5 +171,5 @@ def mock_filter_missing_domains(configs):
 
 
 skip_domain_filter_patch = patch(
-    'corehq.apps.userreports.pillow._filter_missing_domains', mock_filter_missing_domains
+    'corehq.apps.userreports.pillow._filter_domains_to_skip', mock_filter_missing_domains
 )

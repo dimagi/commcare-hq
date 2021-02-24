@@ -162,6 +162,10 @@ class Command(BaseCommand):
         Role(slug=privileges.PROJECT_ACCESS,
              name='Project Access',
              description='Allows access to core project functionality.'),
+        Role(slug=privileges.APP_USER_PROFILES,
+             name='App User Profiles',
+             description='Allows use of App User Profiles.'),
+        Role(slug=privileges.GEOCODER, name='Geocoder', description='Address widget in Web Apps.'),
     ]
 
     BOOTSTRAP_PLANS = [

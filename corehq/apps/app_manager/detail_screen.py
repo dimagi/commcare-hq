@@ -104,7 +104,7 @@ class FormattedDetailColumn(object):
         self.parent_tab_nodeset = parent_tab_nodeset
 
     def has_sort_node_for_nodeset_column(self):
-        return False
+        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
 
     @property
     def locale_id(self):
@@ -336,9 +336,7 @@ class Plain(FormattedDetailColumn):
 
 @register_format_type('date')
 class Date(FormattedDetailColumn):
-
-    XPATH_FUNCTION = "if({xpath} = '', '', format_date(date(if({xpath} = '', 0, {xpath})),'short'))"
-
+    XPATH_FUNCTION = "if({xpath} = '', '', format-date(date({xpath}), '{column.date_format}'))"
     SORT_XPATH_FUNCTION = "{xpath}"
 
 
@@ -471,9 +469,6 @@ class LateFlag(HideShortHeaderColumn):
 
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
-
-    def has_sort_node_for_nodeset_column(self):
-        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
 
     @property
     def header(self):

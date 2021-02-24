@@ -21,8 +21,7 @@ from corehq.util.decorators import handle_uncaught_exceptions
 from corehq.util.soft_assert import soft_assert
 
 _no_cookie_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                         '{}@{}'.format('biyeun', 'dimagi.com'),
-                                         '{}@{}'.format('jschweers', 'dimagi.com')],
+                                         '{}@{}'.format('biyeun', 'dimagi.com')],
                                      send_to_ops=False)
 
 

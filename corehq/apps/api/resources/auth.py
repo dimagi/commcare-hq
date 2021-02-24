@@ -10,25 +10,21 @@ from corehq.apps.api.odata.views import odata_permissions_check
 from corehq.apps.domain.auth import BASIC, determine_authtype_from_header
 from corehq.apps.domain.decorators import (
     api_key_auth,
-    basic_auth,
     basic_auth_or_try_api_key_auth,
-    digest_auth,
-    login_or_api_key,
-    login_or_basic,
-    login_or_digest,
+    get_auth_decorator_map,
 )
 from corehq.apps.users.decorators import (
-    require_permission,
+    require_api_permission,
     require_permission_raw,
 )
-from corehq.toggles import IS_CONTRACTOR
+from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
 
-def api_auth(view_func):
+def wrap_4xx_errors_for_apis(view_func):
     @wraps(view_func)
-    def _inner(req, domain, *args, **kwargs):
+    def _inner(req, *args, **kwargs):
         try:
-            return view_func(req, domain, *args, **kwargs)
+            return view_func(req, *args, **kwargs)
         except Http404 as e:
             if str(e):
                 return HttpResponse(json.dumps({"error": str(e)}),
@@ -40,7 +36,51 @@ def api_auth(view_func):
     return _inner
 
 
-class LoginAndDomainAuthentication(Authentication):
+class HQAuthenticationMixin:
+    decorator_map = {}  # should be set by subclasses
+
+    def _get_auth_decorator(self, request):
+        return self.decorator_map[determine_authtype_from_header(request)]
+
+    def get_identifier(self, request):
+        username = request.couch_user.username
+        if API_THROTTLE_WHITELIST.enabled(username):
+            return username
+        return f"{getattr(request, 'domain', '')}_{username}"
+
+
+class LoginAuthentication(HQAuthenticationMixin, Authentication):
+    """
+    Just checks you are able to login. Does not check against any permissions/domains, etc.
+    """
+    def __init__(self, allow_session_auth=False):
+        super().__init__()
+        self.decorator_map = get_auth_decorator_map(require_domain=False, allow_sessions=allow_session_auth)
+
+    def is_authenticated(self, request, **kwargs):
+        return self._auth_test(request, wrappers=[
+            self._get_auth_decorator(request),
+            wrap_4xx_errors_for_apis,
+        ], **kwargs)
+
+    def _auth_test(self, request, wrappers, **kwargs):
+        PASSED_AUTH = object()
+
+        def dummy(request, **kwargs):
+            return PASSED_AUTH
+
+        wrapped_dummy = dummy
+        for wrapper in wrappers:
+            wrapped_dummy = wrapper(wrapped_dummy)
+
+        try:
+            response = wrapped_dummy(request, **kwargs)
+            return response is PASSED_AUTH
+        except PermissionDenied:
+            return False
+
+
+class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
 
     def __init__(self, allow_session_auth=False, *args, **kwargs):
         """
@@ -48,30 +88,13 @@ class LoginAndDomainAuthentication(Authentication):
             set this to True to allow session based access to this resource
         """
         super(LoginAndDomainAuthentication, self).__init__(*args, **kwargs)
-        if allow_session_auth:
-            self.decorator_map = {
-                'digest': login_or_digest,
-                'basic': login_or_basic,
-                'api_key': login_or_api_key,
-            }
-        else:
-            self.decorator_map = {
-                'digest': digest_auth,
-                'basic': basic_auth,
-                'api_key': api_key_auth,
-            }
+        self.decorator_map = get_auth_decorator_map(require_domain=True, allow_sessions=allow_session_auth)
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
-            self._get_auth_decorator(request),
-            api_auth,
-            require_permission('access_api', login_decorator=self._get_auth_decorator(request)),
+            require_api_permission('access_api', login_decorator=self._get_auth_decorator(request)),
+            wrap_4xx_errors_for_apis,
         ], **kwargs)
-
-    def _get_auth_decorator(self, request):
-        # the initial digest request doesn't have any authorization, so default to
-        # digest in order to send back
-        return self.decorator_map[determine_authtype_from_header(request)]
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
@@ -96,8 +119,19 @@ class LoginAndDomainAuthentication(Authentication):
         else:
             return response
 
-    def get_identifier(self, request):
-        return request.couch_user.username
+
+class NoAPIPermissionsAuthentication(LoginAndDomainAuthentication):
+    """
+    Checks for domain and login and does not check for access api permissions
+    """
+    def __init__(self, *args, **kwargs):
+        super(NoAPIPermissionsAuthentication, self).__init__(*args, **kwargs)
+
+    def is_authenticated(self, request, **kwargs):
+        return self._auth_test(request, wrappers=[
+            self._get_auth_decorator(request),
+            wrap_4xx_errors_for_apis,
+        ], **kwargs)
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):
@@ -108,8 +142,8 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
         wrappers = [
-            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
-            api_auth,
+            require_api_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
+            wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
@@ -129,7 +163,7 @@ class ODataAuthentication(LoginAndDomainAuthentication):
                 odata_permissions_check,
                 self._get_auth_decorator(request)
             ),
-            api_auth,
+            wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
@@ -143,7 +177,7 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
         permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
         wrappers = [
             require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
-            api_auth,
+            wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
@@ -162,7 +196,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
             self._permission_check,
             login_decorator=self._get_auth_decorator(request)
         )
-        wrappers = [decorator, api_auth]
+        wrappers = [decorator, wrap_4xx_errors_for_apis]
         # passing the domain is a hack to work around non-domain-specific requests
         # failing on auth
         return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/PaymentNotice",
+  "$ref": "#/definitions/PaymentNotice",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "PaymentNotice": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource provides the status of the payment for goods and services rendered, and the request and response resource references.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a PaymentNotice resource",
+              "type": "string",
+              "enum": [
+                "PaymentNotice"
+              ]
+            },
+            "identifier": {
+              "description": "The notice business identifier.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status of the resource instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "request": {
+              "description": "Reference of resource for which payment is being made.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "response": {
+              "description": "Reference of response to resource for which payment is being made.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "statusDate": {
+              "description": "The date when the above payment action occurrred.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_statusDate": {
+              "description": "Extensions for statusDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "created": {
+              "description": "The date when this resource was created.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "target": {
+              "description": "The Insurer who is target  of the request.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "provider": {
+              "description": "The practitioner who is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "organization": {
+              "description": "The organization which is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "paymentStatus": {
+              "description": "The payment status, typically paid: payment sent, cleared: payment received.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

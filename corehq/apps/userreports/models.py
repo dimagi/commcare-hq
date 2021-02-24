@@ -18,6 +18,7 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -98,6 +99,9 @@ def _check_ids(value):
 
 
 class DataSourceActionLog(models.Model):
+    """
+    Audit model that tracks changes to UCRs and their underlying tables.
+    """
     BUILD = 'build'
     MIGRATE = 'migrate'
     REBUILD = 'rebuild'
@@ -169,6 +173,9 @@ class DataSourceBuildInformation(DocumentSchema):
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
+
+    # If this is a linked datasource, this is the ID of the datasource this pulls from
+    master_id = StringProperty()
 
 
 class Validation(DocumentSchema):
@@ -622,6 +629,9 @@ class ReportMeta(DocumentSchema):
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
+    # If this is a linked report, this is the ID of the report this pulls from
+    master_id = StringProperty()
+
 
 class ReportConfiguration(QuickCachedDocumentMixin, Document):
     """
@@ -731,7 +741,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         """
         langs = set()
         for item in self.columns + self.filters:
-            if isinstance(item['display'], dict):
+            if isinstance(item.get('display'), dict):
                 langs |= set(item['display'].keys())
         return langs
 
@@ -824,7 +834,9 @@ class StaticDataSourceConfiguration(JsonObject):
         :return: Generator of all wrapped configs read from disk
         """
         def __get_all():
-            for path_or_glob in settings.STATIC_DATA_SOURCES:
+            paths = list(settings.STATIC_DATA_SOURCES)
+            paths.extend(static_ucr_data_source_paths())
+            for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:
@@ -908,7 +920,9 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def _all(cls):
         def __get_all():
-            for path_or_glob in settings.STATIC_UCR_REPORTS:
+            paths = list(settings.STATIC_UCR_REPORTS)
+            paths.extend(static_ucr_report_paths())
+            for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:

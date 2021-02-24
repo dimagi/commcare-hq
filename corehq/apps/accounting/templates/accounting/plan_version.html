@@ -3,16 +3,11 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% requirejs_main "accounting/js/base_subscriptions_main" %}
+
 {% block page_content %}
-  <p class="lead">
-    You are viewing a specific version of this plan.
-  </p>
-  <p>
-    If you want to make updates to this plan, go to the <a href="{% url "edit_software_plan" plan_id %} ">
-    plan updates form</a>.  Remember that you will need to update any subscriptions to reference the new plan
-    version.
-  </p>
-  <div class="tab-pane" id="versions">
-    {% include 'accounting/partials/version_summary_tab.html' %}
-  </div>
+  {% include 'accounting/partials/version_summary_tab.html' %}
+  {% if is_customer_plan %}
+    {% include 'accounting/partials/customer_plan_version_tools.html' %}
+  {% endif %}
 {% endblock %}

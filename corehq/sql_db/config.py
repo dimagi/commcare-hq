@@ -111,8 +111,8 @@ class PlProxyConfig(object):
     def from_settings(cls):
         assert settings.USE_PARTITIONED_DATABASE
         return (
-            PlProxyConfig.from_dict(settings.DATABASES) or
-            PlProxyConfig.from_legacy_dict(getattr(settings, 'PARTITION_DATABASE_CONFIG'))
+            PlProxyConfig.from_dict(settings.DATABASES)
+            or PlProxyConfig.from_legacy_dict(settings.PARTITION_DATABASE_CONFIG)
         )
 
     @classmethod

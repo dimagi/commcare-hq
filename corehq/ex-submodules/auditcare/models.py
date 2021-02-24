@@ -17,6 +17,7 @@ from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
+from dimagi.utils.web import get_ip
 
 log = logging.getLogger(__name__)
 
@@ -332,7 +333,7 @@ class NavigationEventAudit(AuditEvent):
                     request.path, '&'.join(["%s=%s" % (x, request.GET[x]) for x in request.GET.keys()]))
             else:
                 audit.request_path = request.path
-            audit.ip_address = utils.get_ip(request)
+            audit.ip_address = get_ip(request)
             audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
             audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
@@ -393,7 +394,7 @@ class AccessAudit(AuditEvent):
         '''Creates an instance of a Access log.
         '''
         audit = cls.create_audit(cls, user)
-        audit.ip_address = utils.get_ip(request)
+        audit.ip_address = get_ip(request)
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
         audit.http_accept = request.META.get('HTTP_ACCEPT', '<unknown>')
         audit.path_info = request.META.get('PATH_INFO', '<unknown>')
@@ -410,7 +411,7 @@ class AccessAudit(AuditEvent):
         '''Creates an instance of a Access log.
         '''
         audit = cls.create_audit(cls, username)
-        audit.ip_address = utils.get_ip(request)
+        audit.ip_address = get_ip(request)
         audit.access_type = 'login_failed'
         if username != None:
             audit.description = "Login Failure: %s" % (username)
@@ -423,7 +424,7 @@ class AccessAudit(AuditEvent):
     def audit_logout(cls, request, user):
         '''Log a logout event'''
         audit = cls.create_audit(cls, user)
-        audit.ip_address = utils.get_ip(request)
+        audit.ip_address = get_ip(request)
 
         if user == AnonymousUser:
             audit.description = "Logout anonymous"

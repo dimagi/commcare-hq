@@ -17,6 +17,7 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
 from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
 
@@ -27,9 +28,7 @@ FOODRECALL_CASE_TYPE = 'foodrecall'
 
 def populate_inddex_domain(domain):
     user = _get_or_create_user(domain)
-    _import_cases(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
-    _import_cases(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
-    _update_case_id_properties(domain, user)
+    _import_cases(domain, user)
     _import_fixtures(domain)
     _rebuild_datasource(domain)
 
@@ -38,11 +37,19 @@ def _get_or_create_user(domain):
     username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username, strict=True)
     if not user:
-        user = CommCareUser.create(domain, username, 'secret')
+        user = CommCareUser.create(domain, username, 'secret', None, None)
     return user
 
 
-def _import_cases(domain, case_type, csv_filename, user):
+def _import_cases(domain, user):
+    BULK_UPLOAD_DATE_OPENED.set(domain, True, NAMESPACE_DOMAIN)
+    _import_case_type(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
+    _import_case_type(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
+    BULK_UPLOAD_DATE_OPENED.set(domain, False, NAMESPACE_DOMAIN)
+    _update_case_id_properties(domain, user)
+
+
+def _import_case_type(domain, case_type, csv_filename, user):
     headers, rows = _read_csv(csv_filename)
     worksheet = WorksheetWrapper(make_worksheet([headers] + rows))
     config = _get_importer_config(case_type, headers, user._id)
@@ -67,7 +74,7 @@ def _update_case_id_properties(domain, user):
                 update[k] = case_ids_by_external_id[v]
         if update:
             case_blocks.append(
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,

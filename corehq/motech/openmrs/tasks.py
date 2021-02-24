@@ -42,7 +42,7 @@ from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.exceptions import OpenmrsException
 from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.requests import Requests
+from corehq.motech.requests import get_basic_requests
 from corehq.motech.utils import b64_aes_decrypt
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -123,7 +123,7 @@ def get_addpatient_caseblock(patient, importer, owner_id):
     """
     case_id = uuid.uuid4().hex
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=True,
         case_id=case_id,
         owner_id=owner_id,
@@ -139,7 +139,7 @@ def get_updatepatient_caseblock(case, patient, importer):
     Updates a case with imported patient details. Does not change owner.
     """
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=False,
         case_id=case.get_id,
         case_name=case_name,
@@ -227,8 +227,10 @@ def import_patients_to_domain(domain_name, force=False):
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
-    requests = Requests(importer.domain, importer.server_url, importer.username, password,
-                        notify_addresses=importer.notify_addresses)
+    requests = get_basic_requests(
+        importer.domain, importer.server_url, importer.username, password,
+        notify_addresses=importer.notify_addresses,
+    )
     if importer.location_type_name:
         try:
             location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)

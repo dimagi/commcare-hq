@@ -82,12 +82,12 @@ class AudioTranslatorFilesTest(TestCase, TestXmlMixin):
 
         # Verify that the path being used for the select question with both choices missing
         # is the same path that the translator is being asked to use in the other file.
-        self.assertEquals(audio_by_text['choices_both_missing'], choices_both_missing_path)
+        self.assertEqual(audio_by_text['choices_both_missing'], choices_both_missing_path)
 
         # Verify that the path being used for the select question with one audio missing
         # is the path that already exists in the application.
         choices_one_of_each_path = [key for key in app.multimedia_map.keys() if 'choices_one_of_each' in key][0]
-        self.assertEquals(audio_by_text['choices_one_of_each'], choices_one_of_each_path)
+        self.assertEqual(audio_by_text['choices_one_of_each'], choices_one_of_each_path)
 
         # Verify the new paths, created due to different text sharing the same audio path
         self.assertRegex(audio_by_text['different_text_same_missing_audio2'],

@@ -1,3 +1,32 @@
+import uuid
+from datetime import datetime
+
+from corehq.apps.sms.models import OUTGOING, SMS
+
+short_text = "This is a test text message under 160 characters."
+
+long_text = (
+    "This is a test text message that's over 160 characters in length. "
+    "Or at least it will be. Thinking about kale. I like kale. Kale is "
+    "a fantastic thing. Also bass music. I really like dat bass."
+)
+
+
+def get_fake_sms(domain, backend_api_id, backend_couch_id, text):
+    msg = SMS(
+        domain=domain,
+        phone_number='+12223334444',
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        backend_api=backend_api_id,
+        backend_id=backend_couch_id,
+        backend_message_id=uuid.uuid4().hex,
+        text=text
+    )
+    msg.save()
+    return msg
+
+
 class FakeTwilioMessage(object):
     status = 'sent'
 
@@ -9,7 +38,7 @@ class FakeTwilioMessage(object):
         return self
 
 
-class FakeTwilioMessageFactory(object):
+class FakeMessageFactory(object):
     backend_message_id_to_num_segments = {}
     backend_message_id_to_price = {}
 
@@ -30,8 +59,20 @@ class FakeTwilioMessageFactory(object):
         return cls.backend_message_id_to_num_segments.get(backend_message_id) or 1
 
     @classmethod
-    def get_message(cls, backend_message_id):
+    def get_twilio_message(cls, backend_message_id):
         return FakeTwilioMessage(
             cls.get_price_for_message(backend_message_id) * -1,
             num_segments=cls.get_num_segments_for_message(backend_message_id),
         )
+
+    @classmethod
+    def get_infobip_message(cls, backend_message_id):
+        return {
+            'messageCount': cls.get_num_segments_for_message(backend_message_id),
+            'status': {
+                'name': 'sent'
+            },
+            'price': {
+                'pricePerMessage': cls.get_price_for_message(backend_message_id)
+            }
+        }

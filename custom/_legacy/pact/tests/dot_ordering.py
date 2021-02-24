@@ -49,7 +49,7 @@ class dotsOrderingTests(TestCase):
 
         self.submit_url = '/a/%s/receiver' % self.domain.name
 
-        self.user = CommCareUser.create(self.domain.name, 'ctsims', 'mockmock', uuid=CTSIMS_ID)
+        self.user = CommCareUser.create(self.domain.name, 'ctsims', 'mockmock', None, None, uuid=CTSIMS_ID)
 
         nonart_case_regimens = regimen_dict_from_choice(DOT_NONART, "morning,bedtime")
         art_case_regimens = regimen_dict_from_choice(DOT_ART, "morning,bedtime")

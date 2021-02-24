@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <tr>
-    <td>{{ repeater.url }}
+    <td>{{ repeater.name }}
         {% if repeater.white_listed_case_types %}
             <br/>Case Type: {{ repeater.white_listed_case_types|join:", " }}
         {% endif %}
@@ -53,8 +53,8 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.url as repeat_url %}
-                                    Are you sure you want to resume forwarding to: "{{ repeat_url }}" ?
+                                {% blocktrans with repeater.name as name %}
+                                    Are you sure you want to resume forwarding to: "{{ name }}" ?
                                     <br/>
                                     All records enqueued for this forwarder with be triggered
                                     once forwarding is resumed.
@@ -87,8 +87,8 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.url as repeat_url %}
-                                    Are you sure you want to pause forwarding to: "{{ repeat_url }}" ?
+                                {% blocktrans with repeater.name as name %}
+                                    Are you sure you want to pause forwarding to: "{{ name }}" ?
                                     <br/>
                                     Please note that new records would get enqueued but would get triggered
                                     only when forwarding is resumed.
@@ -126,10 +126,10 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.url as repeat_url %}
-                                    Are you sure you want to stop forwarding to: {{ repeat_url }} ?
+                                {% blocktrans with repeater.name as name %}
+                                    Are you sure you want to stop forwarding to: {{ name }} ?
                                     <br/>
-                                    Forwarder and it's data would not be deleted but no new records would get added for
+                                    Forwarder and its data would not be deleted but no new records would get added for
                                     this forwarder and it would not appear in this list anymore.
                                 {% endblocktrans %}
                             </p>

@@ -1,10 +1,10 @@
 <ul class="fa-ul" data-bind="foreach: {{ questions }}"><!-- Each of these is an object containing a condition and a question -->
   <li>
     <i data-bind="attr: {'class': $root.questionIcon(question)}"></i>
-    <!-- ko text: $root.showIds() ? question.value :  $root.translateQuestion(question) --><!-- /ko -->
+    <!-- ko text: $root.questionLabel(question)  --><!-- /ko -->
     <!-- ko if: question.options -->
     <ul data-bind="foreach: question.options">
-      <li data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data)"></li>
+      <li data-bind="text: $root.questionLabel($data)"></li>
     </ul>
     <!-- /ko -->
     <!-- ko if: condition || question.calculate -->

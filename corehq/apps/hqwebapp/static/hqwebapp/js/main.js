@@ -2,6 +2,7 @@ hqDefine('hqwebapp/js/main', [
     "jquery",
     "knockout",
     "underscore",
+    "hqwebapp/js/lib/modernizr",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
     "analytix/js/google",
@@ -11,6 +12,7 @@ hqDefine('hqwebapp/js/main', [
     $,
     ko,
     _,
+    modernizr,
     initialPageData,
     alertUser,
     googleAnalytics
@@ -79,6 +81,27 @@ hqDefine('hqwebapp/js/main', [
             }).appendTo(element);
         },
     };
+
+    ko.bindingHandlers.runOnInit = {
+        // suggestion from https://github.com/knockout/knockout/issues/2446 to use
+        // instead of an anonymous template
+        init: function(elem, valueAccessor) {
+            valueAccessor();
+        }
+    };
+    ko.virtualElements.allowedBindings.runOnInit = true;
+
+    ko.bindingHandlers.allowDescendantBindings = {
+        // fixes an issue where we try to apply bindings to a parent element
+        // that has a child element with existing bindings.
+        // see: https://github.com/knockout/knockout/issues/1922
+        init: function(elem, valueAccessor) {
+            // Let bindings proceed as normal *only if* my value is false
+            var shouldAllowBindings = ko.unwrap(valueAccessor());
+            return { controlsDescendantBindings: !shouldAllowBindings };
+        }
+    };
+    ko.virtualElements.allowedBindings.allowDescendantBindings = true;
 
     var initBlock = function ($elem) {
         'use strict';
@@ -373,9 +396,31 @@ hqDefine('hqwebapp/js/main', [
             if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
                 $maintenance.removeClass('hide');
                 $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/' });
+                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
                 });
             }
+        }
+
+        function unsupportedBrowser() {
+            // check explicitly for Safari. Relying on browser capabilities would be preferred,
+            // but our issue with Safari is described here: https://dimagi-dev.atlassian.net/browse/SUPPORT-4778
+            // (history.replaceState raises security exceptions that aren't present in other browsers).
+            // This can be verified here: (https://jsfiddle.net/j1sxxLwy/),
+            // but it's not something that can be efficiently feature-checked
+            if (window.safari !== undefined) {
+                return true;    // found a Safari browser
+            }
+
+            // Try to filter out legacy browsers like Internet Explorer.
+            // We don't explicitly rely on SVG SMIL animation,
+            // but it's a decent test for avoiding legacy IE.
+            // TODO: Find more granular tests for what the website requires
+            return !modernizr.smil;
+        }
+
+        var $unsupportedBrowser = $("#unsupported-browser");
+        if (unsupportedBrowser()) {
+            $unsupportedBrowser.removeClass('hide');
         }
 
         // EULA modal

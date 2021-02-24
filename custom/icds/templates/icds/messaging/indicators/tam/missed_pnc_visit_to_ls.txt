@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-AWC {{ awc }} ஆனது PNC வின் ஒரு வாரத்திற்குள் {{ beneficiary }}

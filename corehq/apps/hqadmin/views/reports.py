@@ -2,40 +2,19 @@ import csv
 from collections import defaultdict
 
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from dimagi.utils.dates import add_months
 from dimagi.utils.django.management import export_as_csv_action
-from dimagi.utils.web import json_response
 
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.es import filters
-from corehq.apps.es.domains import DomainES
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-
-
-def top_five_projects_by_country(request):
-    data = {}
-    internalMode = request.user.is_superuser
-    attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
-
-    if internalMode:
-        attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
-
-    if 'country' in request.GET:
-        country = request.GET.get('country')
-        projects = (DomainES().is_active_project().real_domains()
-                    .filter(filters.term('deployment.countries', country))
-                    .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
-        data = {country: projects, 'internal': internalMode}
-
-    return JsonResponse(data)
 
 
 class DownloadMALTView(BaseAdminSectionView):

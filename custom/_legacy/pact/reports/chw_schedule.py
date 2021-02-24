@@ -3,13 +3,14 @@ from dateutil.parser import parser
 from django.core.cache import cache
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import ReportXFormES
+from corehq.apps.api.es import ReportFormESView
+from corehq.apps.es import filters
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
-from pact.utils import get_patient_display_cache, get_report_script_field
+from pact.utils import get_patient_display_cache, get_report_script_field, get_by_case_id_form_es_query
 import logging
 
 cached_schedules = {}
@@ -99,7 +100,7 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = ReportXFormES(PACT_DOMAIN)
+    xform_es = ReportFormESView(PACT_DOMAIN)
     script_fields = {
         "doc_id": get_report_script_field('_id', is_known=True),
         "pact_id": get_report_script_field("form.pact_id"),
@@ -119,13 +120,13 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     term_block = {'form.#type': 'dots_form'}
     if username is not None:
         term_block['form.meta.username'] = username
-    query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms=term_block,
-                                      date_field='form.encounter_date.#value', startdate=query_date,
-                                      enddate=query_date)
-    query['sort'] = {'received_on': 'asc'}
+    query = (
+        get_by_case_id_form_es_query(0, 1, case_id)
+        .filter(filters.range_filter('form.encounter_date.#value', gte=query_date, lte=query_date))
+        .sort('received_on')
+        .raw_query
+    )
     query['script_fields'] = script_fields
-    query['size'] = 1
-    query['from'] = 0
     res = xform_es.run_query(query)
     print(json.dumps(res, indent=2))
     return res

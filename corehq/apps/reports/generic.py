@@ -461,11 +461,6 @@ class GenericReportView(object):
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
                 js_options=self.js_options,
-                custom_filter_action_template=(
-                    self.custom_filter_action_template
-                    if hasattr(self, 'custom_filter_action_template')
-                    else False
-                ),
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -654,7 +649,6 @@ class GenericReportView(object):
         return json_response(self.json_dict)
 
     @property
-    @request_cache()
     def export_response(self):
         """
         Intention: Not to be overridden in general.
@@ -665,9 +659,15 @@ class GenericReportView(object):
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
         else:
-            temp = io.BytesIO()
-            export_from_tables(self.export_table, temp, self.export_format)
-            return export_response(temp, self.export_format, self.export_name)
+            # We only want to cache the responses which serve files directly
+            # The response which return 200 and emails the reports should not be cached
+            return self._export_response_direct()
+
+    @request_cache()
+    def _export_response_direct(self):
+        temp = io.BytesIO()
+        export_from_tables(self.export_table, temp, self.export_format)
+        return export_response(temp, self.export_format, self.export_name)
 
     @property
     @request_cache()
@@ -816,7 +816,6 @@ class GenericTabularReport(GenericReportView):
     # and return a dictionary of items that will show up in
     # the report context
     extra_context_providers = []
-    custom_filter_action_template = None
 
     @property
     def headers(self):

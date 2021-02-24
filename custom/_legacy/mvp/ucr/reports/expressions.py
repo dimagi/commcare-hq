@@ -5,14 +5,6 @@ NEONATE_FORM = "http://openrosa.org/formdesigner/5cd541d5a1034f02c922dc888416148
 CHILD_FORM = "http://openrosa.org/formdesigner/a591e5a20bf459c898bff3faacd552a3ebcc0f5d"
 ADULT_FORM = "http://openrosa.org/formdesigner/60666f0dc7688fdef369947196722ff2f235101e"
 
-CUSTOM_UCR_EXPRESSIONS = [
-    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
-    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
-    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
-    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
-    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
-]
-
 
 class TreatmentPlaceExpressionSpec(JsonObject):
     type = TypeProperty('mvp_treatment_place_name')

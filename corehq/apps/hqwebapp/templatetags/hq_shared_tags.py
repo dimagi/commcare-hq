@@ -231,9 +231,11 @@ def can_use_restore_as(request):
     if request.couch_user.is_superuser:
         return True
 
+    domain = getattr(request, 'domain', None)
+
     return (
-        request.couch_user.can_login_as(request.domain) and
-        has_privilege(request, privileges.LOGIN_AS)
+        request.couch_user.can_login_as(domain)
+        and has_privilege(request, privileges.LOGIN_AS)
     )
 
 
@@ -386,19 +388,6 @@ def chevron(value):
         return format_html('<span class="fa fa-chevron-up" style="color: #006400;"></span>')
     elif value < 0:
         return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
-    else:
-        return ''
-
-
-@register.simple_tag
-def reverse_chevron(value):
-    """
-    Displays a red up chevron if value > 0, and a green down chevron if value < 0
-    """
-    if value > 0:
-        return format_html('<span class="fa fa-chevron-up" style="color: #8b0000;"></span>')
-    elif value < 0:
-        return format_html('<span class="fa fa-chevron-down" style="color: #006400;"> </span>')
     else:
         return ''
 

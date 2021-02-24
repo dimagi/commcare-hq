@@ -4,6 +4,7 @@ import json
 from django.test import TestCase
 
 from corehq.apps.es.sms import SMSES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -16,9 +17,10 @@ from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from pillowtop.processors.elastic import send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch
 
 
+@es_test
 class DomainCalculatedPropertiesTest(TestCase):
 
     @classmethod
@@ -45,15 +47,7 @@ class DomainCalculatedPropertiesTest(TestCase):
             'date': json_format_datetime(datetime.datetime.utcnow()),
             'doc_type': SMS_INDEX_INFO.type,
         }
-        send_to_elasticsearch(
-            index=SMS_INDEX_INFO.index,
-            doc_type=SMS_INDEX_INFO.type,
-            doc_id=sms_doc['_id'],
-            es_getter=get_es_new,
-            name='ElasticProcessor',
-            data=sms_doc,
-            update=False,
-        )
+        send_to_elasticsearch("sms", sms_doc)
         refresh_elasticsearch_index('sms')
 
     def tearDown(self):

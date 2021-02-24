@@ -70,7 +70,7 @@
   <td class="module-column module-column-name">
     <h3>
       <b><%= username %></b>
-      <span><%= first_name + ' ' + last_name %></span>
+      <span><%- first_name + ' ' + last_name %></span>
       <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
     </h3>
   </td>
@@ -81,7 +81,7 @@
     <tbody>
     <tr>
       <th>{% trans "Name" %}</th>
-      <td><%= user.first_name + ' ' + user.last_name %></td>
+      <td><%- user.first_name + ' ' + user.last_name %></td>
     </tr>
     <% if (user.location) { %>
     <tr>

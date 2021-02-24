@@ -154,6 +154,11 @@ class SoftwarePlanEdition(object):
         PRO,
         ADVANCED,
     ]
+    SELF_RENEWABLE_EDITIONS = [
+        ADVANCED,
+        PRO,
+        STANDARD,
+    ]
 
 
 class SoftwarePlanVisibility(object):
@@ -407,6 +412,15 @@ class BillingAccount(ValidateModelMixin, models.Model):
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
+
+    # Settings restricting Hubspot data
+    block_hubspot_data_for_all_users = models.BooleanField(default=False)
+    block_email_domains_from_hubspot = ArrayField(
+        models.CharField(max_length=253, null=True, blank=True),
+        blank=True,
+        null=True,
+        default=list
+    )
 
     class Meta(object):
         app_label = 'accounting'
@@ -1139,6 +1153,11 @@ class Subscription(models.Model):
             and other.subscriber.pk == self.subscriber.pk
             and other.account.pk == self.account.pk
         )
+
+    def __hash__(self):
+        # Defining __eq__ appears block a class from inheriting its parent's __hash__.
+        # This restores that.
+        return super().__hash__()
 
     def save(self, *args, **kwargs):
         """
@@ -2161,13 +2180,15 @@ class Invoice(InvoiceBase):
         return self.subscription.subscriber.domain
 
     @classmethod
-    def autopayable_invoices(cls, date_due):
+    def autopayable_invoices(cls, date_due=Ellipsis):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
-            date_due=date_due,
             is_hidden=False,
             subscription__account__auto_pay_user__isnull=False,
         )
+        # we use Ellipsis because date due can actually be None
+        if date_due is not Ellipsis:
+            invoices = invoices.filter(date_due=date_due)
         return invoices
 
     def pay_invoice(self, payment_record):
@@ -2820,7 +2841,7 @@ class CustomerBillingRecord(BillingRecordBase):
         return not self.invoice.is_hidden
 
     def email_context(self):
-        from corehq.apps.accounting.views import EnterpriseBillingStatementsView
+        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
         context = super(CustomerBillingRecord, self).email_context()
         is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")
@@ -3398,6 +3419,15 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
+    def get_non_general_credits_for_account(cls, account):
+        return cls.objects.filter(
+            account=account, subscription__exact=None, is_active=True
+        ).filter(
+            Q(is_product=True) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+        ).all()
+
+    @classmethod
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
                                                  is_product=False):
@@ -3550,7 +3580,7 @@ class StripePaymentMethod(PaymentMethod):
         if self.customer_id is not None:
             try:
                 customer = self._get_stripe_customer()
-            except stripe.InvalidRequestError:
+            except stripe.error.InvalidRequestError:
                 pass
         if customer is None:
             customer = self._create_stripe_customer()

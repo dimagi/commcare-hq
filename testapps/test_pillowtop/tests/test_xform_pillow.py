@@ -42,7 +42,9 @@ class XFormPillowTest(TestCase):
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
-            cls.password
+            cls.password,
+            None,
+            None,
         )
         cls.metadata = TestFormMetadata(
             domain=cls.domain,
@@ -66,7 +68,7 @@ class XFormPillowTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super().tearDownClass()
 
     @run_with_all_backends

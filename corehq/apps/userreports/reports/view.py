@@ -65,12 +65,14 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.util import (
     ReportExport,
-    has_location_filter,
+    report_has_location_filter,
 )
 from corehq.apps.userreports.tasks import export_ucr_async
 from corehq.apps.userreports.util import (
+    can_delete_report,
     can_edit_report,
     default_language,
+    get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
     has_report_builder_trial,
@@ -134,6 +136,12 @@ def tmp_report_config(report_config):
     report_config.delete()
 
 
+def _ucr_view_is_safe(view_fn, *args, **kwargs):
+    return report_has_location_filter(config_id=kwargs.get('subreport_slug'),
+                                      domain=kwargs.get('domain'))
+
+
+@conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
@@ -157,7 +165,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_datatables
     @use_nvd3
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
-    @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
             from corehq.apps.userreports.views import paywall_home
@@ -338,6 +345,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'method': 'POST',
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
+            'can_delete_report': can_delete_report(self.request, self),
+            'referring_apps': get_referring_apps(self.domain, self.report_config_id),
             'has_report_builder_trial': has_report_builder_trial(self.request),
             'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
@@ -345,7 +354,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         context.update(self.pop_report_builder_context_data())
         if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
             context['report_table']['default_rows'] = 100
-        if self.request.couch_user.is_staff:
+        if self.request.couch_user.is_staff and hasattr(self.data_source, 'data_source'):
             context['queries'] = self.data_source.data_source.get_query_strings()
         return context
 
@@ -594,9 +603,10 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 
-    def get_report(self, domain, slug, config_id):
+    @classmethod
+    def get_report(cls, domain, slug, config_id):
         try:
-            report_class = self._report_class(domain, config_id)
+            report_class = cls._report_class(domain, config_id)
         except BadSpecError:
             return None
         return report_class.get_report(domain, slug, config_id)
@@ -608,6 +618,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         return url(pattern, cls.as_view(), name=cls.slug)
 
 
+@conditionally_location_safe(_ucr_view_is_safe)
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
     page_title = ugettext_noop('Download UCR Status')
@@ -635,10 +646,6 @@ class DownloadUCRStatusView(BaseDomainView):
             return render(request, 'hqwebapp/soil_status_full.html', context)
         else:
             raise Http403()
-
-    @conditionally_location_safe(has_location_filter)
-    def dispatch(self, *args, **kwargs):
-        return super(DownloadUCRStatusView, self).dispatch(*args, **kwargs)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -669,8 +676,7 @@ class DownloadUCRStatusView(BaseDomainView):
 
 
 def _safe_download_poll(view_fn, request, domain, download_id, *args, **kwargs):
-    config_id = request.GET.get('config_id')
-    return config_id and has_location_filter(None, domain=domain, subreport_slug=config_id)
+    return report_has_location_filter(request.GET.get('config_id'), domain)
 
 
 @conditionally_location_safe(_safe_download_poll)

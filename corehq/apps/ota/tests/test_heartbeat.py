@@ -19,7 +19,7 @@ class HeartbeatTests(TestCase):
     def setUpClass(cls):
         super(HeartbeatTests, cls).setUpClass()
         cls.domain_obj = create_domain(uuid4().hex)
-        cls.user = CommCareUser.create(cls.domain_obj.name, 'user1', '123')
+        cls.user = CommCareUser.create(cls.domain_obj.name, 'user1', '123', None, None)
         cls.app, cls.build = cls._create_app_and_build()
         cls.url = reverse('phone_heartbeat', args=[cls.domain_obj.name, cls.build.get_id])
 

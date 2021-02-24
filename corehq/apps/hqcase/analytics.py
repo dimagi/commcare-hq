@@ -20,4 +20,4 @@ def get_number_of_cases_in_domain_of_type(domain, case_type):
 
 
 def get_number_of_cases_in_domain(domain):
-    return CaseES().domain(domain).size(0).run().total
+    return CaseES().domain(domain).count()

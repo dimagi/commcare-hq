@@ -8,7 +8,7 @@ from corehq.apps.users.models import CommCareUser
 class ReminderUtilTest(TestCase):
 
     def setUp(self):
-        self.user = CommCareUser.create('test', 'test', 'test')
+        self.user = CommCareUser.create('test', 'test', 'test', None, None)
 
     def test_get_two_way_number_for_recipient(self):
         self.assertIsNone(get_two_way_number_for_recipient(self.user))
@@ -39,4 +39,4 @@ class ReminderUtilTest(TestCase):
 
     def tearDown(self):
         delete_domain_phone_numbers('test')
-        self.user.delete()
+        self.user.delete(deleted_by=None)

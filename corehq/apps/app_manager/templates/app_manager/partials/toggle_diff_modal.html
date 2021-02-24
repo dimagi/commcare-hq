@@ -10,10 +10,17 @@
         <h4 class="modal-title">{% trans "Feature Discrepancy" %}</h4>
       </div>
       <div class="modal-body form-horizontal">
-        {% blocktrans %}
-          The following features are not turned on in the domain to which you're copying.
-          Select any that you wish to copy along with this application.
-        {% endblocktrans %}
+        <p>
+          {% blocktrans %}
+            The following features are not turned on in the domain to which you're copying.
+            Select any that you wish to copy along with this application.
+          {% endblocktrans %}
+        </p>
+        <div>
+          <button class="btn btn-default btn-xs select-all">
+            {% trans "Select All" %}
+          </button>
+        </div>
         <ul class="list-unstyled"></ul>
       </div>
       <div class="modal-footer">
@@ -26,6 +33,7 @@
     <li class="checkbox">
       <label>
         <input type="checkbox" data-slug="<%= slug %>" />
+        <span class='label label-<%= tag_css_class %>'><%= tag_name %></span>
         <%= label %>
       </label>
     </li>

@@ -1,6 +1,0 @@
-doc_id,awc_id,state_id,date_cbe_organise,submitted_on,inserted_at, theme_cbe, count_targeted_beneficiaries, count_other_beneficiaries
-dummy1,a3,st1,2017-04-02,2017-04-02,2017-04-02,third_fourth_month_of_pregnancy,10,6
-dummy2,a13,st2,2017-05-02,2017-05-02,2017-05-02,annaprasan_diwas,12,1
-dummy3,a2,st1,2017-04-02,2017-04-02,2017-04-02,coming_of_age,1,3
-dummy4,a20,st1,2017-05-02,2017-05-02,2017-05-02,public_health_message,3,
-dummy5,a13,st2,2017-05-14,2017-05-14,2017-05-14,suposhan_diwas,8,0

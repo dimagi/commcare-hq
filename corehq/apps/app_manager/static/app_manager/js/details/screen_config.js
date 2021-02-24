@@ -219,10 +219,37 @@ hqDefine('app_manager/js/details/screen_config', function () {
             is_parent: true,
         });
         self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
-        self.active = ko.observable(init.active);
+        self.allCaseModules = ko.observable(init.allCaseModules);
         self.parentModules = ko.observable(init.parentModules);
         self.lang = ko.observable(init.lang);
         self.langs = ko.observable(init.langs);
+        self.enableOtherOption = hqImport('hqwebapp/js/toggles').toggleEnabled('NON_PARENT_MENU_SELECTION');
+
+        self.selectOptions = [
+            {id: 'none', text: gettext('None')},
+            {id: 'parent', text: gettext('Parent')},
+        ];
+        if (self.enableOtherOption) {
+            self.selectOptions.push(
+                {id: 'other', text: gettext('Other')}
+            );
+        }
+        var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';
+        if (self.enableOtherOption) {
+            self.selectMode = ko.observable(selectMode);
+            self.active = ko.computed(function () {
+                return (self.selectMode() !== 'none');
+            });
+        }
+        else {
+            self.active = ko.observable(init.active);
+            self.selectMode = ko.computed(function () {
+                return self.active ? 'parent' : 'none';
+            });
+        }
+        self.relationship = ko.computed(function () {
+            return (self.selectMode() === 'parent' || self.selectMode() === 'none') ? 'parent' : null ;
+        });
 
         function getTranslation(name, langs) {
             var firstLang = _(langs).find(function (lang) {
@@ -230,11 +257,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
             return name[firstLang];
         }
+        self.dropdownModules = ko.computed(function () {
+            return (self.selectMode() === 'parent') ? self.parentModules() : self.allCaseModules();
+        });
         self.hasError = ko.computed(function () {
-            return !_.contains(_.pluck(self.parentModules(), 'unique_id'), self.moduleId());
+            return !_.contains(_.pluck(self.dropdownModules(), 'unique_id'), self.moduleId());
         });
         self.moduleOptions = ko.computed(function () {
-            var options = _(self.parentModules()).map(function (module) {
+            var options = _(self.dropdownModules()).map(function (module) {
                 var STAR = '\u2605',
                     SPACE = '\u3000';
                 var marker = (module.is_parent ? STAR : SPACE);
@@ -305,6 +335,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     hasAutocomplete: false,
                     header: {},
                     model: screen.model,
+                    date_format: "",
                     time_ago_interval: detailScreenConfig.TIME_AGO.year,
                 };
                 _.each(_.keys(defaults), function (key) {
@@ -468,6 +499,26 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.graph_extra.setName(self.header.val());
                 });
 
+                var yyyy = new Date().getFullYear(),
+                    yy = String(yyyy).substring(2);
+                self.date_extra = uiElement.select([{
+                    label: '31/10/' + yy,
+                    value: '%d/%m/%y',
+                }, {
+                    label: '31/10/' + yyyy,
+                    value: '%d/%m/%Y',
+                }, {
+                    label: '10/31/' + yyyy,
+                    value: '%m/%d/%Y',
+                }, {
+                    label: '10/31/' + yy,
+                    value: '%m/%d/%y',
+                }, {
+                    label: gettext('Oct 31, ') + yyyy,
+                    value: '%b %d, %Y',
+                }]).val(self.original.date_format);
+                self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
+
                 self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
                 self.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
                 self.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
@@ -512,6 +563,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     'nodeset',
                     'relevant',
                     'format',
+                    'date_extra',
                     'enum_extra',
                     'graph_extra',
                     'late_flag_extra',
@@ -528,13 +580,22 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.format.on('change', function () {
                     // Prevent self from running on page load before init
                     if (self.format.ui.parent().length > 0) {
+                        self.date_extra.ui.detach();
                         self.enum_extra.ui.detach();
                         self.graph_extra.ui.detach();
                         self.late_flag_extra.ui.detach();
                         self.filter_xpath_extra.ui.detach();
                         self.calc_xpath_extra.ui.detach();
                         self.time_ago_extra.ui.detach();
-                        if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                        if (this.val() === "date") {
+                            self.format.ui.parent().append(self.date_extra.ui);
+                            var select = self.date_extra.ui.find('select');
+                            select.change(function () {
+                                self.date_extra.value = select.val();
+                                fireChange();
+                            });
+                            self.date_extra.value = select.val();
+                        } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                             self.enum_extra.values_are_icons(this.val() === 'enum-image');
                             self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
                             self.format.ui.parent().append(self.enum_extra.ui);
@@ -581,6 +642,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.nodeset = self.nodeset.val();
                     column.relevant = self.relevant.val();
                     column.format = self.format.val();
+                    column.date_format = self.date_extra.val();
                     column.enum = self.enum_extra.getItems();
                     column.graph_configuration =
                         self.format.val() === "graph" ? self.graph_extra.val() : null;
@@ -690,6 +752,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.field.setEdit(true);
                     column.header.setEdit(true);
                     column.format.setEdit(true);
+                    column.date_extra.setEdit(true);
                     column.enum_extra.setEdit(true);
                     column.late_flag_extra.setEdit(true);
                     column.filter_xpath_extra.setEdit(true);
@@ -888,7 +951,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         if (self.config.hasOwnProperty('parentSelect')) {
                             parentSelect = {
                                 module_id: self.config.parentSelect.moduleId(),
-                                relationship: 'parent',
+                                relationship: self.config.parentSelect.relationship(),
                                 active: self.config.parentSelect.active(),
                             };
                         }
@@ -999,7 +1062,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.parentSelect = module.parentSelect({
                         active: spec.parentSelect.active,
                         moduleId: spec.parentSelect.module_id,
+                        relationship: spec.parentSelect.relationship,
                         parentModules: spec.parentModules,
+                        allCaseModules: spec.allCaseModules,
                         lang: self.lang,
                         langs: self.langs,
                     });
@@ -1089,14 +1154,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         self.shortScreen.saveButton
                     );
                     // Set up case search
-                    self.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
+                    var caseClaimModels = hqImport("app_manager/js/details/case_claim");
+                    self.search = caseClaimModels.searchViewModel(
                         spec.searchProperties || [],
-                        spec.includeClosed,
                         spec.defaultProperties,
+                        _.pick(spec, caseClaimModels.searchConfigKeys),
                         spec.lang,
-                        spec.searchButtonDisplayCondition,
-                        spec.blacklistedOwnerIdsExpression,
-                        self.shortScreen.saveButton
+                        self.shortScreen.saveButton,
+                        self.filter.filterText
                     );
                 }
                 if (spec.state.long !== undefined) {

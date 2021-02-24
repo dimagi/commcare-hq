@@ -106,3 +106,49 @@ class KnownRangesTests(SimpleTestCase):
             self.assertEqual(start_date, datetime.date(year=1829, month=8, day=17))
             self.assertEqual(end_date, self.first_performance)
             # TODO: If the start date occurs after the end date, we should switch them.
+
+    def test_currentindianfinancialyear(self):
+        def check_dates(on_date, expected_start_date, expected_end_date):
+            date_class = datetime.date
+            with patch('datetime.date') as date_patch:
+                date_patch.side_effect = lambda *args, **kwargs: date_class(*args, **kwargs)
+                date_patch.today.return_value = on_date
+                start_date, end_date = get_daterange_start_end_dates('currentindianfinancialyear')
+
+                # to avoid false positives when compared with mock
+                self.assertIsInstance(start_date, date_class)
+                self.assertIsInstance(end_date, date_class)
+
+                self.assertEqual(start_date, expected_start_date)
+                self.assertEqual(end_date, expected_end_date)
+
+        check_dates(
+            datetime.date(year=2020, month=2, day=20),
+            datetime.date(year=2019, month=4, day=1),
+            datetime.date(year=2020, month=3, day=31)
+        )
+        check_dates(
+            datetime.date(year=2020, month=3, day=30),
+            datetime.date(year=2019, month=4, day=1),
+            datetime.date(year=2020, month=3, day=31)
+        )
+        check_dates(
+            datetime.date(year=2020, month=3, day=31),
+            datetime.date(year=2019, month=4, day=1),
+            datetime.date(year=2020, month=3, day=31)
+        )
+        check_dates(
+            datetime.date(year=2020, month=4, day=1),
+            datetime.date(year=2020, month=4, day=1),
+            datetime.date(year=2021, month=3, day=31)
+        )
+        check_dates(
+            datetime.date(year=2020, month=4, day=2),
+            datetime.date(year=2020, month=4, day=1),
+            datetime.date(year=2021, month=3, day=31)
+        )
+        check_dates(
+            datetime.date(year=2020, month=6, day=5),
+            datetime.date(year=2020, month=4, day=1),
+            datetime.date(year=2021, month=3, day=31)
+        )

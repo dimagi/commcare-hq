@@ -1,6 +1,15 @@
-hqDefine("cloudcare/js/config", function () {
+hqDefine("cloudcare/js/config", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/main',
+], function (
+    $,
+    ko,
+    initialPageData,
+    hqMain
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var makeDB = function (list) {
             /* turn a list into a dict indexed by each object's _id */
             var db = {};
@@ -70,7 +79,7 @@ hqDefine("cloudcare/js/config", function () {
             self.groupDB = options.groupDB;
             self.appDB = options.appDB;
             self.applicationAccess = ApplicationAccess.wrap(options.access);
-            self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+            self.saveButton = hqMain.initSaveButton({
                 save: function () {
                     self.saveButton.ajax({
                         url: initialPageData.reverse("cloudcare_app_settings"),
@@ -88,7 +97,7 @@ hqDefine("cloudcare/js/config", function () {
                 var returnValue = [];
                 for (var i = 0; i < self.applicationAccess.app_groups().length; i++) {
                     var group = self.applicationAccess.app_groups()[i];
-                    if (!lookup.hasOwnProperty(group.group_id())) {
+                    if (!_.has(lookup, group.group_id())) {
                         lookup[group.group_id()] = {
                             group: group.group_id.obj(),
                             apps: [],
@@ -97,7 +106,7 @@ hqDefine("cloudcare/js/config", function () {
                     lookup[group.group_id()].apps.push(group.app_id.obj());
                 }
                 for (var id in lookup) {
-                    if (lookup.hasOwnProperty(id)) {
+                    if (_.has(lookup, id)) {
                         returnValue.push(lookup[id]);
                     }
                 }

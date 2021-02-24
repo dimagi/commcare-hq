@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-रिकार्ड के जानकारी के आधार पर आापके केन्द्र में पूर्व माह में VHSND नहीं आयोजित किया गया है। कृपया प्रत्येक माह नियमित रूप से VHSND का आयोजन सुनिश्चित करें।

@@ -67,6 +67,7 @@ from corehq.apps.export.views.utils import (
     DataFileDownloadList,
     GenerateSchemaFromAllBuildsView,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     # Export list views
@@ -95,7 +96,7 @@ urlpatterns = [
         ODataFeedListView.as_view(),
         name=ODataFeedListView.urlname),
     url(r"^custom/download_data_files/$",
-        DataFileDownloadList.as_view(),
+        waf_allow('XSS_BODY')(DataFileDownloadList.as_view()),
         name=DataFileDownloadList.urlname),
     url(r"^custom/download_data_files/(?P<pk>[\w\-]+)/(?P<filename>.*)$",
         DataFileDownloadDetail.as_view(),

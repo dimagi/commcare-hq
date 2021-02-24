@@ -10,6 +10,5 @@ linters:
     config: .flake8
   eslint:
     config: ./.eslintrc.js
-    install_plugins: true
 #  pytype:  # failing due to timeout
 #    config: ./.pytype.cfg

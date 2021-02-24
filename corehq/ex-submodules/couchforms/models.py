@@ -368,6 +368,7 @@ class XFormError(XFormInstance):
         instance.__class__ = XFormError
         instance.doc_type = 'XFormError'
         instance.problem = error_message
+        instance.orig_id = None
 
         if with_new_id:
             new_id = uuid.uuid4().hex
@@ -486,6 +487,7 @@ class DefaultAuthContext(DocumentSchema):
 
 
 class UnfinishedSubmissionStub(models.Model):
+    id = models.BigAutoField(primary_key=True)
     xform_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
     saved = models.BooleanField(default=False)

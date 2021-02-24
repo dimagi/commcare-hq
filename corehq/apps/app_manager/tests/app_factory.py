@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
     Application,
     AutoSelectCase,
     CaseIndex,
+    CaseSearchProperty,
     DetailColumn,
     FormActionCondition,
     LoadUpdateAction,
@@ -57,14 +58,11 @@ class AppFactory(object):
         module.unique_id = '{}_module'.format(slug)
         module.case_type = case_type
 
-        def get_unique_id(module_or_form):
-            return module_or_form if isinstance(module_or_form, str) else module_or_form.unique_id
-
         if parent_module:
-            module.root_module_id = get_unique_id(parent_module)
+            module.root_module_id = self.unique_id(parent_module)
 
         if case_list_form:
-            module.case_list_form.form_id = get_unique_id(case_list_form)
+            module.case_list_form.form_id = self.unique_id(case_list_form)
 
         self.slugs[module.unique_id] = slug
 
@@ -76,10 +74,13 @@ class AppFactory(object):
     def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module, case_list_form)
 
-    def new_shadow_module(self, slug, source_module, with_form=True):
+    def new_shadow_module(self, slug, source_module, with_form=True, shadow_module_version=2, parent_module=None):
         module = self.app.add_module(ShadowModule.new_module('{} module'.format(slug), None))
         module.unique_id = '{}_module'.format(slug)
         module.source_module_id = source_module.unique_id
+        if parent_module:
+            module.root_module_id = self.unique_id(parent_module)
+        module.shadow_module_version = shadow_module_version
         self.slugs[module.unique_id] = slug
         return (module, self.new_form(module)) if with_form else module
 
@@ -102,6 +103,9 @@ class AppFactory(object):
         form = module.new_shadow_form('{} form {}'.format(slug, index), None)
         form.unique_id = '{}_form_{}'.format(slug, index)
         return form
+
+    def unique_id(self, module_or_form):
+        return module_or_form if isinstance(module_or_form, str) else module_or_form.unique_id
 
     @staticmethod
     def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
@@ -194,8 +198,32 @@ class AppFactory(object):
 
         case_module.case_list_form.form_id = register_form.get_unique_id()
         case_module.case_list_form.label = {
-            'en': 'New Case'
+            'en': 'New Case',
         }
+        return factory
+
+    @classmethod
+    def case_claim_app_factory(cls):
+        factory = cls(build_version='2.51.0')
+
+        case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
+
+        register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'New Case',
+        }
+        case_module.search_config.command_label = {
+            'en': 'Find a Mother',
+        }
+        case_module.search_config.again_label = {
+            'en': 'Find Another Mother',
+        }
+        case_module.search_config.properties = [CaseSearchProperty(
+            name='name',
+            label={'en': 'Name of Mother'}
+        )]
         return factory
 
     @staticmethod

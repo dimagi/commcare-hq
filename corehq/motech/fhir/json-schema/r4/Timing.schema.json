@@ -1,0 +1,247 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Timing",
+  "$ref": "#/definitions/Timing",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Timing": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "Specifies an event that may occur multiple times. Timing schedules are used to record when things are planned, expected or requested to occur. The most common usage is in dosage instructions for medications. They are also used when planning care of various kinds, and may be used for reporting the schedule to which past regular activities were carried out.",
+          "properties": {
+            "event": {
+              "description": "Identifies specific times when the event occurs.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+              }
+            },
+            "_event": {
+              "description": "Extensions for event",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "repeat": {
+              "description": "A set of rules that describe when the event is scheduled.",
+              "$ref": "#/definitions/Timing_Repeat"
+            },
+            "code": {
+              "description": "A code for the timing schedule. Some codes such as BID are ubiquitous, but many institutions define their own additional codes. If a code is provided, the code is understood to be a complete statement of whatever is specified in the structured timing data, and either the code or the data may be used to interpret the Timing, with the exception that .repeat.bounds still applies over the code (and is not contained in the code).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "Timing_Repeat": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Specifies an event that may occur multiple times. Timing schedules are used to record when things are planned, expected or requested to occur. The most common usage is in dosage instructions for medications. They are also used when planning care of various kinds, and may be used for reporting the schedule to which past regular activities were carried out.",
+          "properties": {
+            "boundsDuration": {
+              "description": "Either a duration for the length of the timing schedule, a range of possible length, or outer bounds for start and/or end limits of the timing schedule.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "boundsRange": {
+              "description": "Either a duration for the length of the timing schedule, a range of possible length, or outer bounds for start and/or end limits of the timing schedule.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "boundsPeriod": {
+              "description": "Either a duration for the length of the timing schedule, a range of possible length, or outer bounds for start and/or end limits of the timing schedule.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "count": {
+              "description": "A total count of the desired number of repetitions.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_count": {
+              "description": "Extensions for count",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "countMax": {
+              "description": "A maximum value for the count of the desired repetitions (e.g. do something 6-8 times).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_countMax": {
+              "description": "Extensions for countMax",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "duration": {
+              "description": "How long this thing happens for when it happens.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_duration": {
+              "description": "Extensions for duration",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "durationMax": {
+              "description": "The upper limit of how long this thing happens for when it happens.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_durationMax": {
+              "description": "Extensions for durationMax",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "durationUnit": {
+              "description": "The units of time for the duration, in UCUM units.",
+              "enum": [
+                "s",
+                "min",
+                "h",
+                "d",
+                "wk",
+                "mo",
+                "a"
+              ],
+              "type": "string"
+            },
+            "_durationUnit": {
+              "description": "Extensions for durationUnit",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "frequency": {
+              "description": "The number of times to repeat the action within the specified period / period range (i.e. both period and periodMax provided).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_frequency": {
+              "description": "Extensions for frequency",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "frequencyMax": {
+              "description": "If present, indicates that the frequency is a range - so to repeat between [frequency] and [frequencyMax] times within the period or period range.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_frequencyMax": {
+              "description": "Extensions for frequencyMax",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "Indicates the duration of time over which repetitions are to occur; e.g. to express \"3 times per day\", 3 would be the frequency and \"1 day\" would be the period.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_period": {
+              "description": "Extensions for period",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "periodMax": {
+              "description": "If present, indicates that the period is a range from [period] to [periodMax], allowing expressing concepts such as \"do this once every 3-5 days.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_periodMax": {
+              "description": "Extensions for periodMax",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "periodUnit": {
+              "description": "The units of time for the period in UCUM units.",
+              "enum": [
+                "s",
+                "min",
+                "h",
+                "d",
+                "wk",
+                "mo",
+                "a"
+              ],
+              "type": "string"
+            },
+            "_periodUnit": {
+              "description": "Extensions for periodUnit",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "dayOfWeek": {
+              "description": "If one or more days of week is provided, then the action happens only on the specified day(s).",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_dayOfWeek": {
+              "description": "Extensions for dayOfWeek",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "timeOfDay": {
+              "description": "Specified time of day for action to take place.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?"
+              }
+            },
+            "_timeOfDay": {
+              "description": "Extensions for timeOfDay",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "when": {
+              "description": "Real world events that the occurrence of the event should be tied to.",
+              "enum": [
+                "MORN",
+                "AFT",
+                "EVE",
+                "NIGHT",
+                "PHS",
+                "HS",
+                "WAKE",
+                "C",
+                "CM",
+                "CD",
+                "CV",
+                "AC",
+                "ACM",
+                "ACD",
+                "ACV",
+                "PC",
+                "PCM",
+                "PCD",
+                "PCV"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_when": {
+              "description": "Extensions for when",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "offset": {
+              "description": "The number of minutes from the event. If the event code does not indicate whether the minutes is before or after the event, then the offset is assumed to be after the event.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_offset": {
+              "description": "Extensions for offset",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

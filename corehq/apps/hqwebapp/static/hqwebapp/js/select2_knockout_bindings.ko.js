@@ -2,6 +2,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     'jquery',
     'knockout',
     'DOMPurify/dist/purify.min',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,

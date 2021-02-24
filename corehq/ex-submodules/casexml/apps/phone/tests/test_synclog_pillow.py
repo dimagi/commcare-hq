@@ -40,7 +40,7 @@ class SyncLogPillowTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_sync_logs()
-        cls.ccuser.delete()
+        cls.ccuser.delete(deleted_by=None)
         cls.domain.delete()
         super(SyncLogPillowTest, cls).tearDownClass()
 

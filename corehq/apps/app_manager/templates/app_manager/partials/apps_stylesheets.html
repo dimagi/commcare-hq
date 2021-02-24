@@ -3,7 +3,7 @@
 
 {% compress css %}
   {# Explicitly include this because app manager doesn't do class-based views, so it doesn't use @use_jquery_ui #}
-  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui-built-themes/redmond/jquery-ui.min.css' %}"/>
 {% endcompress %}
 {% compress css %}
   <link type="text/less"

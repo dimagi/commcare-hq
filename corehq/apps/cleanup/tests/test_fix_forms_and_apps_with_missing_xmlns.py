@@ -20,6 +20,7 @@ from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xml
     set_xmlns_on_form,
 )
 from corehq.apps.cleanup.tasks import fix_xforms_with_missing_xmlns
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -30,6 +31,7 @@ from corehq.util.test_utils import trap_extra_setup
 DOMAIN = "test"
 
 
+@es_test
 class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)

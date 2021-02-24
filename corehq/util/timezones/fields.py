@@ -49,7 +49,7 @@ class TimeZoneField(models.CharField):
         return self.get_prep_value(value)
 
     def flatten_data(self, follow, obj=None):
-        value = self._get_val_from_obj(obj)
+        value = self.get_default() if obj is None else self.value_from_object(obj)
         if value is None:
             value = ""
         return {self.attname: smart_text(value)}

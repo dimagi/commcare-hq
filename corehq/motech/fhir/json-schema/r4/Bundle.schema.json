@@ -1,0 +1,299 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Bundle",
+  "$ref": "#/definitions/Bundle",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Bundle": {
+      "allOf": [
+        {
+          "$ref": "Resource#/definitions/Resource"
+        },
+        {
+          "description": "A container for a collection of resources.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Bundle resource",
+              "type": "string",
+              "enum": [
+                "Bundle"
+              ]
+            },
+            "identifier": {
+              "description": "A persistent identifier for the batch that won\u0027t change as a batch is copied from server to server.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "type": {
+              "description": "Indicates the purpose of this bundle - how it was intended to be used.",
+              "enum": [
+                "document",
+                "message",
+                "transaction",
+                "transaction-response",
+                "batch",
+                "batch-response",
+                "history",
+                "searchset",
+                "collection"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "total": {
+              "description": "If a set of search matches, this is the total number of matches for the search (as opposed to the number of results in this bundle).",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_total": {
+              "description": "Extensions for total",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "link": {
+              "description": "A series of links that provide context to this bundle.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Bundle_Link"
+              }
+            },
+            "entry": {
+              "description": "An entry in a bundle resource - will either contain a resource, or information about a resource (transactions and history only).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Bundle_Entry"
+              }
+            },
+            "signature": {
+              "description": "Digital Signature - base64 encoded. XML-DSIg or a JWT.",
+              "$ref": "Signature.schema.json#/definitions/Signature"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Bundle_Link": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A container for a collection of resources.",
+          "properties": {
+            "relation": {
+              "description": "A name which details the functional use for this link - see [http://www.iana.org/assignments/link-relations/link-relations.xhtml#link-relations-1](http://www.iana.org/assignments/link-relations/link-relations.xhtml#link-relations-1).",
+              "type": "string"
+            },
+            "_relation": {
+              "description": "Extensions for relation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "The reference details for the link.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Bundle_Entry": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A container for a collection of resources.",
+          "properties": {
+            "link": {
+              "description": "A series of links that provide context to this entry.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Bundle_Link"
+              }
+            },
+            "fullUrl": {
+              "description": "The Absolute URL for the resource.  The fullUrl SHALL not disagree with the id in the resource. The fullUrl is a version independent reference to the resource. The fullUrl element SHALL have a value except that: \n* fullUrl can be empty on a POST (although it does not need to when specifying a temporary id for reference in the bundle)\n* Results from operations might involve resources that are not identified.",
+              "type": "string"
+            },
+            "_fullUrl": {
+              "description": "Extensions for fullUrl",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "resource": {
+              "description": "The Resources for the entry.",
+              "$ref": "ResourceList.schema.json#/definitions/ResourceList"
+            },
+            "search": {
+              "description": "Information about the search process that lead to the creation of this entry.",
+              "$ref": "#/definitions/Bundle_Search"
+            },
+            "request": {
+              "description": "Additional information about how this entry should be processed as part of a transaction.",
+              "$ref": "#/definitions/Bundle_Request"
+            },
+            "response": {
+              "description": "Additional information about how this entry should be processed as part of a transaction.",
+              "$ref": "#/definitions/Bundle_Response"
+            }
+          }
+        }
+      ]
+    },
+    "Bundle_Search": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A container for a collection of resources.",
+          "properties": {
+            "mode": {
+              "description": "Why this entry is in the result set - whether it\u0027s included as a match or because of an _include requirement.",
+              "enum": [
+                "match",
+                "include",
+                "outcome"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "score": {
+              "description": "When searching, the server\u0027s search ranking score for the entry.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_score": {
+              "description": "Extensions for score",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Bundle_Request": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A container for a collection of resources.",
+          "properties": {
+            "method": {
+              "description": "The HTTP verb for this entry in either a change history, or a transaction/ transaction response.",
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE"
+              ],
+              "type": "string"
+            },
+            "_method": {
+              "description": "Extensions for method",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "The URL for this entry, relative to the root (the address to which the request is posted).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "ifNoneMatch": {
+              "description": "If the ETag values match, return a 304 Not Modified status. See the API documentation for [\"Conditional Read\"](http.html#cread).",
+              "type": "string"
+            },
+            "_ifNoneMatch": {
+              "description": "Extensions for ifNoneMatch",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "ifModifiedSince": {
+              "description": "Only perform the operation if the last updated date matches. See the API documentation for [\"Conditional Read\"](http.html#cread).",
+              "type": "string"
+            },
+            "_ifModifiedSince": {
+              "description": "Extensions for ifModifiedSince",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "ifMatch": {
+              "description": "Only perform the operation if the Etag value matches. For more information, see the API section [\"Managing Resource Contention\"](http.html#concurrency).",
+              "type": "string"
+            },
+            "_ifMatch": {
+              "description": "Extensions for ifMatch",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "ifNoneExist": {
+              "description": "Instruct the server not to perform the create if a specified resource already exists. For further information, see the API documentation for [\"Conditional Create\"](http.html#ccreate). This is just the query portion of the URL - what follows the \"?\" (not including the \"?\").",
+              "type": "string"
+            },
+            "_ifNoneExist": {
+              "description": "Extensions for ifNoneExist",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Bundle_Response": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A container for a collection of resources.",
+          "properties": {
+            "status": {
+              "description": "The status code returned by processing this entry. The status SHALL start with a 3 digit HTTP code (e.g. 404) and may contain the standard HTTP description associated with the status code.",
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "location": {
+              "description": "The location header created by processing this operation.",
+              "type": "string"
+            },
+            "_location": {
+              "description": "Extensions for location",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "etag": {
+              "description": "The etag for the resource, it the operation for the entry produced a versioned resource (see [Resource Metadata and Versioning](http.html#versioning) and [Managing Resource Contention](http.html#concurrency)).",
+              "type": "string"
+            },
+            "_etag": {
+              "description": "Extensions for etag",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastModified": {
+              "description": "The date/time that the resource was modified on the server.",
+              "type": "string"
+            },
+            "_lastModified": {
+              "description": "Extensions for lastModified",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "outcome": {
+              "description": "An OperationOutcome containing hints and warnings produced as part of processing this entry in a batch or transaction.",
+              "$ref": "ResourceList.schema.json#/definitions/ResourceList"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

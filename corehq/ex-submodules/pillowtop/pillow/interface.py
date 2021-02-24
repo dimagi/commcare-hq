@@ -1,3 +1,4 @@
+import time
 from abc import ABCMeta, abstractproperty, abstractmethod
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -10,6 +11,7 @@ import sys
 from sentry_sdk import configure_scope
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicPartition
@@ -105,7 +107,12 @@ class PillowBase(metaclass=ABCMeta):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+        if self.is_dedicated_migration_process:
+            for processor in self.processors:
+                processor.bootstrap_if_needed()
+            time.sleep(10)
+        else:
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -314,7 +321,8 @@ class PillowBase(metaclass=ABCMeta):
 
         tags = {"pillow_name": self.get_name()}
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
-        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
+        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags,
+            multiprocess_mode=MPM_MAX)
 
         # processing_time per change
         metrics_counter('commcare.change_feed.processing_time.total', processing_time / change_count, tags=tags)
@@ -329,7 +337,7 @@ class PillowBase(metaclass=ABCMeta):
             metrics_gauge('commcare.change_feed.checkpoint_offsets', value, tags={
                 'pillow_name': self.get_name(),
                 'topic': _topic_for_ddog(topic),
-            })
+            }, multiprocess_mode=MPM_MAX)
 
     def _record_change_in_datadog(self, change, processing_time):
         self.__record_change_metric_in_datadog(
@@ -370,7 +378,7 @@ class PillowBase(metaclass=ABCMeta):
                     TopicPartition(change.topic, change.partition)
                     if change.partition is not None else change.topic
                 ),
-            })
+            }, multiprocess_mode=MPM_MAX)
 
             if processing_time:
                 tags = {'pillow_name': self.get_name()}
@@ -415,8 +423,9 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, name, checkpoint, change_feed, processor,
-                 change_processed_event_handler=None, processor_chunk_size=0):
+    def __init__(self, name, checkpoint, change_feed, processor, process_num=0,
+                 change_processed_event_handler=None, processor_chunk_size=0,
+                 is_dedicated_migration_process=False):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
@@ -427,6 +436,7 @@ class ConstructedPillow(PillowBase):
             self.processors = [processor]
 
         self._change_processed_event_handler = change_processed_event_handler
+        self.is_dedicated_migration_process = is_dedicated_migration_process
 
     @property
     def topics(self):

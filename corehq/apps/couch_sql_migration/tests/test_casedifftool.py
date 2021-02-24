@@ -375,6 +375,50 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.compare_diffs()
         self.assert_patched_cases(["case-1"])
 
+    def test_patch_case_closed_in_couch_missing_sql(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        case = CaseAccessorCouch.get_case("case-1")
+        case.closed = True
+        case.closed_by = "3fae4ea4af440efaa53441b5"
+        case.closed_on = datetime(2010, 9, 8, 7, 6, 5)
+        case.user_id = "3fae4ea4af440efaa53441b5"
+        case.save()
+        FormAccessors(self.domain_name).soft_delete_forms(
+            ["form-1"], datetime.utcnow(), 'test-deletion')
+        self.do_migration(diffs=IGNORE)
+        self.compare_diffs(changes=[
+            Diff('case-1', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
+        self.do_case_patch()
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
+    def test_patch_case_with_deleted_form_and_unexpected_diff(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        case = CaseAccessorCouch.get_case("case-1")
+        case.user_id = "unexpected"
+        case.save()
+        FormAccessors(self.domain_name).soft_delete_forms(
+            ["form-1"], datetime.utcnow(), 'test-deletion')
+        self.do_migration(diffs=IGNORE)
+        self.compare_diffs(changes=[
+            Diff('case-1', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
+
+        # first patch results in unexpected diff
+        self.do_case_patch()
+        self.compare_diffs(diffs=[
+            Diff('case-1', 'diff', ['opened_by'], old='3fae4ea4af440efaa53441b5', new='unexpected'),
+            Diff('case-1', 'set_mismatch', path=['xform_ids', '[*]'], old='form-1', new=ANY),
+        ])
+        self.assert_patched_cases(["case-1"])
+
+        # second patch resolves unexpected diff
+        self.do_case_patch()
+        self.compare_diffs()
+        self.assert_backend("sql")
+        self.assertFalse(self._get_case("case-1").deleted)
+
     def test_patch_case_index(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self.do_migration(case_diff="none")
@@ -423,6 +467,60 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             self.do_case_patch()
         self.compare_diffs()
         self.assert_patched_cases(["case-1"])
+
+    def test_patch_missing_case_with_index(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        case = CaseAccessorCouch.get_case("case-1")
+        case.indices = [CommCareCaseIndex.wrap({
+            "doc_type": "CommCareCaseIndex",
+            "identifier": "parent",
+            "referenced_type": "household",
+            "referenced_id": "a53346d5",
+            "relationship": "child",
+        })]
+        case.save()
+        FormAccessors(self.domain_name).soft_delete_forms(
+            ['form-1'], datetime.utcnow(), 'test-deletion')
+        self.do_migration(diffs=IGNORE)
+        self.compare_diffs(changes=[
+            Diff('case-1', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
+        self.do_case_patch()
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
+    def test_patch_cases_with_diffs(self):
+        self.do_migration_with_diffs_and_changes()
+        self.do_case_patch(cases="with-diffs")
+        self.assert_patched_cases(["diff-case"])
+        self.compare_diffs(changes=[
+            Diff('change-case', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
+
+    def test_patch_cases_with_changes(self):
+        self.do_migration_with_diffs_and_changes()
+        self.do_case_patch(cases="with-changes")
+        self.assert_patched_cases(["change-case"])
+        self.compare_diffs([
+            Diff('diff-case', 'diff', ['age'], old='30', new='27'),
+            Diff('diff-case', 'set_mismatch', ['xform_ids', '[*]'], old='one', new=''),
+        ])
+
+    def do_migration_with_diffs_and_changes(self):
+        self.submit_form(make_test_form("zero", case_id="diff-case", age=27))
+        one = self.submit_form(make_test_form("one", case_id="diff-case", age=30))
+        one.initial_processing_complete = False
+        one.save()
+        two = self.submit_form(make_test_form("two", case_id="change-case", age=27))
+        FormAccessors(self.domain_name).soft_delete_forms(
+            [two.form_id], datetime.utcnow(), 'test-deletion')
+        self.do_migration(diffs=IGNORE)
+        self.compare_diffs(diffs=[
+            Diff('diff-case', 'diff', ['age'], old='30', new='27'),
+            Diff('diff-case', 'set_mismatch', ['xform_ids', '[*]'], old='one', new=''),
+        ], changes=[
+            Diff('change-case', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
+        ])
 
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product

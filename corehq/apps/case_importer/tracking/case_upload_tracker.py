@@ -89,12 +89,10 @@ class CaseUpload(object):
         ).save()
 
     def store_task_result(self, task_status):
-        self._case_upload_record.set_task_status_json(task_status)
-        self._case_upload_record.save()
+        self._case_upload_record.save_task_status_json(task_status)
 
-    def store_task_result_if_failed(self):
-        if self._case_upload_record.set_task_status_json_if_failed():
-            self._case_upload_record.save()
+    def store_failed_task_result(self):
+        self._case_upload_record.save_task_status_json_if_failed()
 
     def record_form(self, form_id):
         case_upload_record = self._case_upload_record

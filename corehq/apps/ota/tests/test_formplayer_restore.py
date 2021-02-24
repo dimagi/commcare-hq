@@ -1,10 +1,9 @@
-from django.http.response import HttpResponse
+import six
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-import mock
-import six
-
+from casexml.apps.phone.models import SyncLogSQL
+from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.users.models import CommCareUser
@@ -25,23 +24,29 @@ class FormplayerRestoreTest(TestCase):
         super(FormplayerRestoreTest, cls).setUpClass()
         create_domain(cls.domain)
         create_domain(cls.wrong_domain)
-        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, '123')
+        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, '123', None, None)
         cls.uri = reverse('ota_restore', args=[cls.domain])
         cls.uri_wrong_domain = reverse('ota_restore', args=[cls.wrong_domain])
 
     @classmethod
     def tearDownClass(cls):
-        cls.commcare_user.delete()
+        cls.commcare_user.delete(deleted_by=None)
         delete_all_domains()
         super(FormplayerRestoreTest, cls).tearDownClass()
 
-    @mock.patch('corehq.apps.ota.views.get_restore_response')
-    def test_commcare_user_restore(self, mock_restore):
-        # mock for the sake for fast running test
-        mock_restore.return_value = (HttpResponse('Success', status=200), None)
-        resp = self._do_post({'version': 2.0, 'as': self.commcare_user.username})
+    def test_formplayer_restore(self):
+        self._test_formplayer_restore(self.commcare_user)
+
+    def _test_formplayer_restore(self, as_user):
+        data = {'version': 2.0, 'as': as_user.username}
+        resp = self._do_post(data)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content.decode('utf-8'), "Success")
+        self.assertIn("ota_restore_success", resp.getvalue().decode("utf-8"))
+        synclog = list(SyncLogSQL.objects.all())[0]
+        self.assertTrue(synclog.is_formplayer)
+        self.assertEqual(synclog.user_id, as_user.user_id)
+        self.assertEqual(synclog.request_user_id, as_user.user_id)
+        self.assertEqual(synclog.auth_type, FORMPLAYER)
 
     def test_missing_as_user_param(self):
         resp = self._do_post({'version': 2.0})
@@ -61,6 +66,7 @@ class FormplayerRestoreTest(TestCase):
 
     def _do_post(self, data, uri=None, hmac=None):
         uri = uri or self.uri
+        data["device_id"] = "WebAppsLogin"
         params = six.moves.urllib.parse.urlencode(data)
         # have to format url with params directly to ensure ordering remains unchanged
         full_url = '{}?{}'.format(uri, params)

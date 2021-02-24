@@ -234,6 +234,11 @@ def case_search_locale(module):
     return "case_search.m{module.id}".format(module=module)
 
 
+@pattern('case_search.m%d.again')
+def case_search_again_locale(module):
+    return "case_search.m{module.id}.again".format(module=module)
+
+
 @pattern('search_command.m%d')
 def search_command(module):
     return "search_command.m{module.id}".format(module=module)
@@ -242,6 +247,11 @@ def search_command(module):
 @pattern('search_property.m%d.%s')
 def search_property_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
+
+
+@pattern('search_property.m%d.%s.hint')
+def search_property_hint_locale(module, search_prop):
+    return "search_property.m{module.id}.{search_prop}.hint".format(module=module, search_prop=search_prop)
 
 
 @pattern('custom_assertion.m%d.f%d.%d')

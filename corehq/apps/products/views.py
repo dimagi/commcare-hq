@@ -355,13 +355,14 @@ def product_importer_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
+@login_and_domain_required
 def download_products(request, domain):
     def _parse_custom_properties(product):
         product_data_model = CustomDataFieldsDefinition.get_or_create(
             domain,
             ProductFieldsView.field_type
         )
-        product_data_fields = [f.slug for f in product_data_model.fields]
+        product_data_fields = [f.slug for f in product_data_model.get_fields()]
 
         model_data = {}
         uncategorized_data = {}

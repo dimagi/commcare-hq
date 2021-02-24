@@ -125,7 +125,7 @@ class Version2CaseParsingTest(TestCase):
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
             post_case_blocks([
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True, case_id=prereq,
                     user_id=user_id
                 ).as_xml()
@@ -154,7 +154,7 @@ class Version2CaseParsingTest(TestCase):
         # quick test for ota restore
         v2response = xml.get_case_xml(case, [const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE], V2)
         expected_v2_response = """
-        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50.000000Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
+        <case case_id="foo-case-id" user_id="bar-user-id" date_modified="2011-12-07T13:42:50.000000Z" xmlns="http://commcarehq.org/case/transaction/v2">
                 <create>
                     <case_type>v2_case_type</case_type>
                     <case_name>test case name</case_name>

@@ -20,11 +20,11 @@ class MobileAuthTest(TestCase):
         self.domain = create_domain(self.domain_name)
         self.username = 'test-user'
         self.password = 'awesome'
-        self.commcare_user = CommCareUser.create(self.domain_name, self.username, self.password)
+        self.commcare_user = CommCareUser.create(self.domain_name, self.username, self.password, None, None)
         self.user_id = self.commcare_user.get_id
 
     def tearDown(self):
-        self.commcare_user.delete()
+        self.commcare_user.delete(deleted_by=None)
 
     @staticmethod
     def format_datetime_no_usec(dt):

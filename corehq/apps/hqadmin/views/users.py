@@ -309,7 +309,7 @@ class AdminRestoreView(TemplateView):
                     'If you believe this is a bug please report an issue.'
                 ).format(response.status_code, response.content.decode('utf-8'))
                 xml_payload = E.error(message)
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True).decode('utf-8')
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True, encoding='utf-8').decode('utf-8')
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
@@ -339,7 +339,7 @@ class DomainAdminRestoreView(AdminRestoreView):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    web_user_email = request.GET.get("q")
+    web_user_email = request.GET.get("q", "").lower()
 
     context = {
         'current_page': {
@@ -477,6 +477,12 @@ class DisableTwoFactorView(FormView):
             'username': self.request.GET.get("q"),
             'disable_for_days': 0,
         }
+
+    def render_to_response(self, context, **response_kwargs):
+        context.update({
+            'username': self.request.GET.get("q"),
+        })
+        return super().render_to_response(context, **response_kwargs)
 
     def get(self, request, *args, **kwargs):
         from django_otp import user_has_device

@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ awc }} के  द्वारा {{ beneficiary }} के पूरक आहार आरम्भ किये जाने के समय / दौरान कोई ग्रह  भ्रमण प्रतिवारित नहीं किया गया  हैं |

@@ -67,6 +67,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def _columns(self):
+        selected_app_info = "selected app version {app_id}".format(
+            app_id=self.selected_app_id
+        ) if self.selected_app_id else "for last built app"
         return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
@@ -92,6 +95,11 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
                              sql_col='last_form_app_commcare_version'),
+            DataTablesColumn(_("Number of unsent forms in user's phone"),
+                             help_text=_("The number of unsent forms in users' phones for {app_info}".format(
+                                 app_info=selected_app_info
+                             )),
+                             sortable=False),
         ]
 
     @property
@@ -303,8 +311,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
-            last_build_profile_name = None
+            last_build_profile_name = device = device_app_meta = num_unsent_forms = None
+            is_commcare_user = user.get('doc_type') == 'CommCareUser'
             build_version = _("Unknown")
+            devices = user.get('devices', None)
+            if devices:
+                device = max(devices, key=lambda dev: dev['last_used'])
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
                 last_submissions = reporting_metadata.get('last_submissions')
@@ -318,22 +330,26 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_builds = reporting_metadata.get('last_builds')
                 if last_builds:
                     last_build = self.get_data_for_app(last_builds, self.selected_app_id)
+                if device and is_commcare_user:
+                    device_app_meta = self.get_data_for_app(device.get('app_meta'), self.selected_app_id)
             else:
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
                 last_build = reporting_metadata.get('last_build_for_user', {})
+                if last_build.get('app_id') and device and device.get('app_meta'):
+                    device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
+
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             else:
-                devices = user.get('devices', None)
-                if devices:
-                    device = max(devices, key=lambda dev: dev['last_used'])
-                    if device.get('commcare_version', None):
-                        commcare_version = _get_commcare_version(device['commcare_version'])
+                if device and device.get('commcare_version', None):
+                    commcare_version = _get_commcare_version(device['commcare_version'])
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
                 last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
+            if device_app_meta:
+                num_unsent_forms = device_app_meta.get('num_unsent_forms')
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
@@ -351,7 +367,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
-                app_name or "---", build_version, commcare_version or '---'
+                app_name or "---", build_version, commcare_version or '---',
+                num_unsent_forms if num_unsent_forms is not None else "---",
             ]
             if self.show_build_profile:
                 row_data.append(last_build_profile_name)

@@ -103,8 +103,10 @@ def _filename(domain, type_, date):
 
 
 def _get_file(doc_type):
-    fileobj = tempfile.NamedTemporaryFile(prefix='domain_dump_raw_{}_'.format(doc_type), mode='wb', delete=False)
-    return fileobj.name, gzip.GzipFile(fileobj=fileobj)
+    with tempfile.NamedTemporaryFile(prefix='domain_dump_raw_{}_'.format(doc_type),
+            mode='wb', delete=False) as fileobj:
+        zipped_obj = gzip.GzipFile(filename=fileobj.name, mode='wb')
+    return zipped_obj.name, zipped_obj
 
 
 def _get_form_query(domain):

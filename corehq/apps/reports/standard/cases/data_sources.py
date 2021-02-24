@@ -254,6 +254,9 @@ class SafeCaseDisplay(object):
         if name == '_link':
             return self._link
 
+        if name == 'indices':
+            return json.dumps(self.case.get('indices', []))
+
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
             return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
 

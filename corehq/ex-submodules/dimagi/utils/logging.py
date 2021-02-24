@@ -7,6 +7,7 @@ notify_logger = logging.getLogger('notify')
 
 
 def notify_error(message, details=None):
+    print({'details': details})
     notify_logger.error(message, extra={'details': details})
 
 

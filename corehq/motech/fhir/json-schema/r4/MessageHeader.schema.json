@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/MessageHeader",
+  "$ref": "#/definitions/MessageHeader",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "MessageHeader": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The header for a message exchange that is either requesting or responding to an action.  The reference(s) that are the subject of the action as well as other information related to the action are typically transmitted in a bundle in which the MessageHeader resource instance is the first resource in the bundle.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a MessageHeader resource",
+              "type": "string",
+              "enum": [
+                "MessageHeader"
+              ]
+            },
+            "event": {
+              "description": "Code that identifies the event this message represents and connects it with its definition. Events defined as part of the FHIR specification have the system value \"http://hl7.org/fhir/message-events\".",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "destination": {
+              "description": "The destination application which the message is intended for.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MessageHeader_Destination"
+              }
+            },
+            "receiver": {
+              "description": "Allows data conveyed by a message to be addressed to a particular person or department when routing to a specific application isn\u0027t sufficient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "sender": {
+              "description": "Identifies the sending system to allow the use of a trust relationship.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "timestamp": {
+              "description": "The time that the message was sent.",
+              "type": "string"
+            },
+            "_timestamp": {
+              "description": "Extensions for timestamp",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "enterer": {
+              "description": "The person or device that performed the data entry leading to this message. When there is more than one candidate, pick the most proximal to the message. Can provide other enterers in extensions.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "author": {
+              "description": "The logical author of the message - the person or device that decided the described event should happen. When there is more than one candidate, pick the most proximal to the MessageHeader. Can provide other authors in extensions.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "source": {
+              "description": "The source application from which this message originated.",
+              "$ref": "#/definitions/MessageHeader_Source"
+            },
+            "responsible": {
+              "description": "The person or organization that accepts overall responsibility for the contents of the message. The implication is that the message event happened under the policies of the responsible party.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reason": {
+              "description": "Coded indication of the cause for the event - indicates  a reason for the occurrence of the event that is a focus of this message.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "response": {
+              "description": "Information about the message that this message is a response to.  Only present if this message is a response.",
+              "$ref": "#/definitions/MessageHeader_Response"
+            },
+            "focus": {
+              "description": "The actual data of the message - a reference to the root/focus class of the event.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "source",
+            "event",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "MessageHeader_Destination": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The header for a message exchange that is either requesting or responding to an action.  The reference(s) that are the subject of the action as well as other information related to the action are typically transmitted in a bundle in which the MessageHeader resource instance is the first resource in the bundle.",
+          "properties": {
+            "name": {
+              "description": "Human-readable name for the target system.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "target": {
+              "description": "Identifies the target end system in situations where the initial message transmission is to an intermediary system.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "endpoint": {
+              "description": "Indicates where the message should be routed to.",
+              "type": "string"
+            },
+            "_endpoint": {
+              "description": "Extensions for endpoint",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "MessageHeader_Source": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The header for a message exchange that is either requesting or responding to an action.  The reference(s) that are the subject of the action as well as other information related to the action are typically transmitted in a bundle in which the MessageHeader resource instance is the first resource in the bundle.",
+          "properties": {
+            "name": {
+              "description": "Human-readable name for the source system.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "software": {
+              "description": "May include configuration or other information useful in debugging.",
+              "type": "string"
+            },
+            "_software": {
+              "description": "Extensions for software",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "Can convey versions of multiple systems in situations where a message passes through multiple hands.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "An e-mail, phone, website or other contact point to use to resolve issues with message communications.",
+              "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+            },
+            "endpoint": {
+              "description": "Identifies the routing target to send acknowledgements to.",
+              "type": "string"
+            },
+            "_endpoint": {
+              "description": "Extensions for endpoint",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "MessageHeader_Response": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The header for a message exchange that is either requesting or responding to an action.  The reference(s) that are the subject of the action as well as other information related to the action are typically transmitted in a bundle in which the MessageHeader resource instance is the first resource in the bundle.",
+          "properties": {
+            "identifier": {
+              "description": "The MessageHeader.id of the message to which this message is a response.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_identifier": {
+              "description": "Extensions for identifier",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Code that identifies the type of response to the message - whether it was successful or not, and whether it should be resent or not.",
+              "enum": [
+                "ok",
+                "transient-error",
+                "fatal-error"
+              ],
+              "type": "string"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "details": {
+              "description": "Full details of any issues found in the message.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

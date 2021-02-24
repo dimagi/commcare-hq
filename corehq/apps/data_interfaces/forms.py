@@ -34,7 +34,7 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 
 
@@ -421,7 +421,7 @@ class CaseRuleCriteriaForm(forms.Form):
         raise ValueError(_("Invalid JSON object given"))
 
     def set_case_type_choices(self, initial):
-        case_types = [''] + list(get_case_types_for_domain_es(self.domain))
+        case_types = [''] + list(get_case_types_for_domain(self.domain))
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules

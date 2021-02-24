@@ -24,7 +24,9 @@ class MarkLatestSubmissionTest(TestCase):
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
-            cls.password
+            cls.password,
+            None,
+            None,
         )
 
     def tearDown(self):
@@ -33,7 +35,7 @@ class MarkLatestSubmissionTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super(MarkLatestSubmissionTest, cls).tearDownClass()
 
     def test_mark_latest_submission_basic(self):

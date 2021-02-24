@@ -26,8 +26,8 @@ from corehq.apps.dashboard.models import (
     ReportsPaginator,
     Tile,
 )
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.decorators import login_and_domain_required, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
@@ -113,14 +113,11 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
 
 
 def _get_default_tiles(request):
-    can_edit_apps = lambda request: (request.couch_user.is_web_user()
-                                     or request.couch_user.can_edit_apps())
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
 
     def can_view_apps(request):
-        return can_edit_apps(request) and has_privilege(request,
-                                                        privileges.PROJECT_ACCESS)
+        return request.couch_user.can_view_apps() and has_privilege(request, privileges.PROJECT_ACCESS)
 
     def can_view_users(request):
         can_do_something = (

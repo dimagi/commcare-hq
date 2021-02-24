@@ -17,11 +17,11 @@ def needs_update(case):
 
 
 def case_block(case):
-    return ElementTree.tostring(CaseBlock(
+    return ElementTree.tostring(CaseBlock.deprecated_init(
         create=False,
         case_id=case['_id'],
         owner_id=case['location_id'],
-    ).as_xml())
+    ).as_xml(), encoding='utf-8')
 
 
 def get_cases(domain):

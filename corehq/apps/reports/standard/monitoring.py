@@ -25,6 +25,7 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     TermsAggregation,
 )
+from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import (
     conditionally_location_safe,
     location_safe,
@@ -94,8 +95,17 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
-        user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.raw_username, user_link)
+        if self._has_form_view_permission():
+            user_link = self.get_raw_user_link(user)
+            return self.table_cell(user.raw_username, user_link)
+        return self.table_cell(user.raw_username)
+
+    def _has_form_view_permission(self):
+        return self.request.couch_user.has_permission(
+            self.request.domain,
+            'view_report',
+            data='corehq.apps.reports.standard.inspect.SubmitHistory'
+        )
 
     def get_raw_user_link(self, user):
         raise NotImplementedError
@@ -383,6 +393,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
+        track_es_report_load(self.domain, self.slug, len(self.paginated_user_ids))
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
             size=self.pagination.start + self.pagination.count
@@ -707,14 +718,16 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
+        selected_users = self.selected_simplified_users
+        track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))
 
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for simplified_user in self.selected_simplified_users:
+        for simplified_user in selected_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (simplified_user.user_id, form['app_id'], form['xmlns'].lower())
+                        (simplified_user.user_id, form['app_id'], form['xmlns'])
                     ])
                 row_sum = sum(row)
                 row = (
@@ -913,6 +926,9 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             users = self.users_by_username(order)
 
+        track_es_report_load(self.domain, self.slug, len(users))
+        # Todo; this hits ES seperately for each user
+        #   should instead aggregate by user in one ES query
         rows = [self.get_row(user) for user in users]
         self.total_row = self.get_row()
         return rows
@@ -1040,6 +1056,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         app_id = self.selected_form_data['app_id']
         xmlns = self.selected_form_data['xmlns']
 
+        track_es_report_load(self.domain, self.slug, len(self.users))
+
         data_map = get_form_duration_stats_by_user(
             self.domain,
             app_id,
@@ -1058,7 +1076,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
                 _fmt_ts(stats.get('max')),
-                stats.get('count', 0),
+                self.table_cell(stats.get('count', 0)),
             ])
 
         total_data = get_form_duration_stats_for_users(
@@ -1070,12 +1088,14 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             self.datespan.enddate_utc,
             by_submission_time=self.by_submission_time,
         )
-        self.total_row = ["All Users",
-                          _fmt_ts(total_data.get('avg')),
-                          _fmt_ts(total_data.get('std_deviation')),
-                          _fmt_ts(total_data.get('min')),
-                          _fmt_ts(total_data.get('max')),
-                          total_data.get('count', 0)]
+        self.total_row = [
+            "All Users",
+            _fmt_ts(total_data.get('avg')),
+            _fmt_ts(total_data.get('std_deviation')),
+            _fmt_ts(total_data.get('min')),
+            _fmt_ts(total_data.get('max')),
+            self.table_cell(total_data.get('count', 0)),
+        ]
         return rows
 
 
@@ -1120,6 +1140,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             user_map = {user.user_id: user
                         for user in users if user.user_id}
             user_ids = [user.user_id for user in users if user.user_id]
+            track_es_report_load(self.domain, self.slug, len(self.user_ids))
 
             xmlnss = []
             app_ids = []
@@ -1247,7 +1268,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @property
     @memoized
     def activity_times(self):
-        all_times = []
         users = _get_selected_users(self.domain, self.request)
         user_ids = [user.user_id for user in users]
         xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
@@ -1311,6 +1331,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
+        # Apply the fix made in https://github.com/gak/pygooglechart/pull/25/
+        #   since a new version is not yet released
+        ScatterChart.BASE_URL = 'https://chart.googleapis.com/chart'
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
@@ -1339,7 +1362,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
         # our google charts library doesn't support unicode
         # TODO: replace with some in JS (d3?)
-        chart.set_axis_labels('y', [''] + [day_names[n].encode('ascii', 'replace') for n in days] + [''])
+        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
@@ -1905,6 +1928,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
+            track_es_report_load(self.domain, self.slug, len(self.users_to_iterate))
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))

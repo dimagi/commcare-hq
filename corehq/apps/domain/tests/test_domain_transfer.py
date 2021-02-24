@@ -28,20 +28,20 @@ class BaseDomainTest(TestCase):
 
         self.username = 'bananafana'
         self.password = '*******'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
 
         self.another_domain = Domain(name='anotherdomain', is_active=True)
         self.another_domain.save()
         self.mugglename = 'muggle'
-        self.muggle = WebUser.create(self.another_domain.name, self.mugglename, self.password)
+        self.muggle = WebUser.create(self.another_domain.name, self.mugglename, self.password, None, None)
         self.muggle.save()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
-        self.muggle.delete()
+        self.muggle.delete(deleted_by=None)
         self.another_domain.delete()
 
 
@@ -144,11 +144,11 @@ class TestTransferDomainViews(BaseDomainTest):
         self.transfer.save()
         self.transfer.send_transfer_request()
 
-        self.rando = WebUser.create(self.domain.name, 'rando', self.password)
+        self.rando = WebUser.create(self.domain.name, 'rando', self.password, None, None)
 
     def tearDown(self):
         self.transfer.delete()
-        self.rando.delete()
+        self.rando.delete(deleted_by=None)
         super(TestTransferDomainViews, self).tearDown()
 
     def test_permissions_for_activation(self):

@@ -1,11 +1,12 @@
 from corehq.util.workbook_reading import Cell, Worksheet
+from corehq.util.workbook_reading.exceptions import SpreadsheetFileInvalidError
 
 
 def make_worksheet(rows=None, title=None):
     rows = rows or []
     row_lengths = [len(row) for row in rows]
-    assert all(row_length == row_lengths[0] for row_length in row_lengths), \
-        "rows must be all the same length"
+    if any(row_length != row_lengths[0] for row_length in row_lengths):
+        raise SpreadsheetFileInvalidError("Rows must be all the same length")
 
     def iter_rows():
         for row in rows:

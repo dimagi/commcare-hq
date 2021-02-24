@@ -1,6 +1,6 @@
 hqDefine("reports/js/datepicker", [
     'jquery',
-    'jquery-ui/ui/datepicker',
+    'jquery-ui/ui/widgets/datepicker',
 ], function (
     $
 ) {

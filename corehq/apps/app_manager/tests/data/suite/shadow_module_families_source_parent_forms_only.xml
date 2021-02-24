@@ -13,14 +13,14 @@
   </menu>
   <menu id="root">
     <text>
-      <locale id="modules.m1"/>
-    </text>
-    <command id="m1-f0"/>
-  </menu>
-  <menu id="root">
-    <text>
       <locale id="modules.m2"/>
     </text>
     <command id="m2-f0"/>
+  </menu>
+  <menu id="root">
+    <text>
+      <locale id="modules.m3"/>
+    </text>
+    <command id="m3-f0"/>
   </menu>
 </partial>

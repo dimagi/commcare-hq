@@ -9,7 +9,7 @@ from corehq.apps.userreports.util import get_table_name
 from django.utils.translation import ugettext as _
 
 TABLE_ID = 'asha_facilitators'
-DOMAIN = 'up-nrhm'
+DOMAIN = 'nhm-af-up'
 
 
 class FunctionalityChecklistMeta(QueryMeta):

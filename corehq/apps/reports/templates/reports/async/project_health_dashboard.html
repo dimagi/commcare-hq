@@ -7,7 +7,6 @@
   <div id="six-months-reports" class="hide" data-value='{{ six_months_reports|JSON }}'></div>
   <div class="row">
     <div class="col-md-12">
-      {% include "reports/project_health/partials/last_month_stats.html" %}
       {% if request.user.is_superuser %}
         <p>
           <a href="{% url 'domain_internal_settings' domain %}">

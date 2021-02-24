@@ -333,6 +333,7 @@ def prepare_custom_export(request, domain):
         view_helper.model,
         request.couch_user.username,
         filters=export_filters,
+        owner_id=request.couch_user.get_id,
         filename=filename,
     )
 
@@ -452,7 +453,8 @@ def prepare_form_multimedia(request, domain):
         export_id=export.get_id,
         datespan=datespan,
         user_types=user_types,
-        download_id=download.download_id
+        download_id=download.download_id,
+        owner_id=request.couch_user.get_id,
     ))
 
     return json_response({
@@ -462,6 +464,7 @@ def prepare_form_multimedia(request, domain):
 
 
 @require_GET
+@location_safe
 @login_and_domain_required
 def has_multimedia(request, domain):
     """Checks to see if this form export has multimedia available to export
@@ -558,6 +561,9 @@ class DownloadDETSchemaView(View):
             return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
         output_file.seek(0)
-        response = HttpResponse(output_file, content_type='application/vnd.ms-excel')
+        response = HttpResponse(
+            output_file,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
         response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
         return response

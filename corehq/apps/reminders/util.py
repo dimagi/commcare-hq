@@ -8,7 +8,10 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
-from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
+)
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
@@ -117,7 +120,7 @@ def get_two_way_number_for_recipient(recipient):
                     if phone in two_way_numbers:
                         return two_way_numbers[phone]
                 raise Exception("Phone number list and PhoneNumber entries are out "
-                    "of sync for user %s" % recipient.get_id)
+                                "of sync for user %s" % recipient.get_id)
             else:
                 raise Exception("Expected a CouchUser")
     return None

@@ -18,7 +18,7 @@ class TestMobileWorkerListView(TestCase):
     def setUp(self):
         super().setUp()
         self.project = create_domain(self.domain)
-        self.web_user = WebUser.create(self.domain, self.web_username, self.password)
+        self.web_user = WebUser.create(self.domain, self.web_username, self.password, None, None)
 
         # We aren't testing permissions for this test
         self.web_user.is_superuser = True

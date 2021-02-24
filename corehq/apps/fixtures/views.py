@@ -23,6 +23,7 @@ from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
@@ -283,6 +284,7 @@ def download_item_lists(request, domain):
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
+        owner_id=request.couch_user.get_id,
     ))
     return download.get_start_response()
 
@@ -438,6 +440,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
         }
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
 @api_auth

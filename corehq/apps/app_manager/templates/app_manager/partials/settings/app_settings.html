@@ -275,14 +275,14 @@
       {% include 'app_manager/languages.html' %}
     </div>
     <div class="tab-pane" id="actions">
+      {% if copy_app_form %}
+        <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
+          <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+            {% crispy copy_app_form %}
+          </form>
+        </div>
+      {% endif %}
       {% if not is_linked_app %}
-        {% if copy_app_form %}
-          <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
-            <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-              {% crispy copy_app_form %}
-            </form>
-          </div>
-        {% endif %}
         {% if linked_domains_enabled %}
           <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
             <legend>{% trans 'Linked Project Whitelist' %}</legend>

@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/EpisodeOfCare",
+  "$ref": "#/definitions/EpisodeOfCare",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "EpisodeOfCare": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "An association between a patient and an organization / healthcare provider(s) during which time encounters may occur. The managing organization assumes a level of responsibility for the patient during this time.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a EpisodeOfCare resource",
+              "type": "string",
+              "enum": [
+                "EpisodeOfCare"
+              ]
+            },
+            "identifier": {
+              "description": "The EpisodeOfCare may be known by different identifiers for different contexts of use, such as when an external agency is tracking the Episode for funding purposes.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "planned | waitlist | active | onhold | finished | cancelled.",
+              "enum": [
+                "planned",
+                "waitlist",
+                "active",
+                "onhold",
+                "finished",
+                "cancelled",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "statusHistory": {
+              "description": "The history of statuses that the EpisodeOfCare has been through (without requiring processing the history of the resource).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EpisodeOfCare_StatusHistory"
+              }
+            },
+            "type": {
+              "description": "A classification of the type of episode of care; e.g. specialist referral, disease management, type of funded care.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "diagnosis": {
+              "description": "The list of diagnosis relevant to this episode of care.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EpisodeOfCare_Diagnosis"
+              }
+            },
+            "patient": {
+              "description": "The patient who is the focus of this episode of care.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "managingOrganization": {
+              "description": "The organization that has assumed the specific responsibilities for the specified duration.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "The interval during which the managing organization assumes the defined responsibility.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "referralRequest": {
+              "description": "Referral Request(s) that are fulfilled by this EpisodeOfCare, incoming referrals.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "careManager": {
+              "description": "The practitioner that is the care manager/care co-ordinator for this patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "team": {
+              "description": "The list of practitioners that may be facilitating this episode of care for specific purposes.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "account": {
+              "description": "The set of accounts that may be used for billing for this EpisodeOfCare.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "EpisodeOfCare_StatusHistory": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An association between a patient and an organization / healthcare provider(s) during which time encounters may occur. The managing organization assumes a level of responsibility for the patient during this time.",
+          "properties": {
+            "status": {
+              "description": "planned | waitlist | active | onhold | finished | cancelled.",
+              "enum": [
+                "planned",
+                "waitlist",
+                "active",
+                "onhold",
+                "finished",
+                "cancelled",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "The period during this EpisodeOfCare that the specific status applied.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          },
+          "required": [
+            "period"
+          ]
+        }
+      ]
+    },
+    "EpisodeOfCare_Diagnosis": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An association between a patient and an organization / healthcare provider(s) during which time encounters may occur. The managing organization assumes a level of responsibility for the patient during this time.",
+          "properties": {
+            "condition": {
+              "description": "A list of conditions/problems/diagnoses that this episode of care is intended to be providing care for.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "role": {
+              "description": "Role that this diagnosis has within the episode of care (e.g. admission, billing, discharge …).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "rank": {
+              "description": "Ranking of the diagnosis (for each role type).",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_rank": {
+              "description": "Extensions for rank",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "condition"
+          ]
+        }
+      ]
+    }
+  }
+}

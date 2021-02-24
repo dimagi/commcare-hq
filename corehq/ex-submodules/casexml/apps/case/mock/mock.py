@@ -75,7 +75,7 @@ class CaseFactory(object):
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
             kwargs.setdefault(k, v)
-        return CaseBlock(case_id=case_id, **kwargs).as_xml()
+        return CaseBlock.deprecated_init(case_id=case_id, **kwargs).as_xml()
 
     def get_case_blocks(self, case_structures):
 

@@ -11,10 +11,10 @@ class PasswordLockoutTest(TestCase):
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         self.username = 'auser@qwerty.com'
         self.password = 'apassword'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
 
     def test_login_lockout(self):

@@ -9,13 +9,14 @@ from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     FilteredModelIteratorBuilder,
+    ManyFilters,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
-    UsernameFilter
+    UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
-from corehq.apps.dump_reload.util import get_model_label, get_model_class
+from corehq.apps.dump_reload.util import get_model_class, get_model_label
 from corehq.sql_db.config import plproxy_config
 
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
@@ -32,6 +33,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
@@ -78,6 +80,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('scheduling_partitioned.CaseAlertScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.CaseTimedScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.TimedScheduleInstance', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('custom_data_fields.CustomDataFieldsDefinition', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('custom_data_fields.Field', SimpleFilter('definition__domain')),
     FilteredModelIteratorBuilder('data_interfaces.AutomaticUpdateRule', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.ClosedParentDefinition',
                                        SimpleFilter('caserulecriteria__rule__domain')),
@@ -112,24 +116,40 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('sms.Keyword', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.KeywordAction', SimpleFilter('keyword__domain')),
     FilteredModelIteratorBuilder('sms.QueuedSMS', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('sms.SelfRegistrationInvitation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SQLMobileBackend', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', ManyFilters('domain', 'backend__domain')),
     FilteredModelIteratorBuilder('cloudcare.ApplicationAccess', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLCommtrackConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLActionConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLAlertConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLConsumptionConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLStockLevelsConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.SQLStockRestoreConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
+    FilteredModelIteratorBuilder('fhir.FHIRResourceType', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fhir.FHIRResourceProperty', SimpleFilter('resource_type__domain')),
     FilteredModelIteratorBuilder('app_manager.GlobalAppConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.AppReleaseByLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeaterStub', SimpleFilter('domain')),
+    # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
+    # RepeatRecord, but this does not seem like a good idea.
+    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
+    UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
 ]]
@@ -157,9 +177,14 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
     :param excluded_models: List of model_class classes to exclude
     :return: generator yielding models objects
     """
+    builders = get_model_iterator_builders_to_dump(domain, excludes)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout)
+
+
+def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None):
     if stats_counter is None:
         stats_counter = Counter()
-    for model_class, builder in get_model_iterator_builders_to_dump(domain, excludes):
+    for model_class, builder in builders:
         model_label = get_model_label(model_class)
         for iterator in builder.iterators():
             for obj in iterator:
@@ -169,7 +194,7 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
             stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
-def get_model_iterator_builders_to_dump(domain, excludes):
+def get_model_iterator_builders_to_dump(domain, excludes, limit_to_db=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
@@ -184,11 +209,14 @@ def get_model_iterator_builders_to_dump(domain, excludes):
         if model_class in excluded_models:
             continue
 
-        for model_class, builder in get_all_model_iterators_builders_for_domain(model_class, domain):
+        iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
+        for model_class, builder in get_all_model_iterators_builders_for_domain(
+            model_class, domain, iterator_builders, limit_to_db=limit_to_db
+        ):
             yield model_class, builder
 
 
-def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db=None):
+def get_all_model_iterators_builders_for_domain(model_class, domain, builders, limit_to_db=None):
     if settings.USE_PARTITIONED_DATABASE and hasattr(model_class, 'partition_attr'):
         using = plproxy_config.form_processing_dbs
     else:
@@ -201,10 +229,15 @@ def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db
         using = [limit_to_db]
 
     for db_alias in using:
-        if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
-            iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
-            for builder in iterator_builders:
-                yield model_class, builder.build(domain, model_class, db_alias)
+        if model_class._meta.proxy:
+            continue
+
+        master_db = settings.DATABASES[db_alias].get('STANDBY', {}).get('MASTER')
+        if not router.allow_migrate_model(master_db or db_alias, model_class):
+            continue
+
+        for builder in builders:
+            yield model_class, builder.build(domain, model_class, db_alias)
 
 
 def get_excluded_apps_and_models(excludes):
@@ -225,7 +258,13 @@ def get_excluded_apps_and_models(excludes):
             try:
                 app_config = apps.get_app_config(exclude)
             except LookupError:
-                raise DomainDumpError('Unknown app in excludes: %s' % exclude)
+                from corehq.util.couch import get_document_class_by_doc_type
+                from corehq.util.exceptions import DocumentClassNotFound
+                # ignore this if it's a couch doc type
+                try:
+                    get_document_class_by_doc_type(exclude)
+                except DocumentClassNotFound:
+                    raise DomainDumpError('Unknown app in excludes: %s' % exclude)
             excluded_apps.add(app_config)
     return excluded_apps, excluded_models
 

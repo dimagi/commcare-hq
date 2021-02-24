@@ -11,10 +11,10 @@ from .es_query import HQESQuery
 class FormES(HQESQuery):
     index = 'forms'
     default_filters = {
-        'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
-        'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
-        'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
-        'has_domain': {"not": {"missing": {"field": "domain"}}}
+        'is_xform_instance': filters.term("doc_type", "xforminstance"),
+        'has_xmlns': filters.exists("xmlns"),
+        'has_user': filters.exists("form.meta.userID"),
+        'has_domain': filters.exists("domain"),
     }
 
     @property
@@ -42,7 +42,7 @@ class FormES(HQESQuery):
         return self.date_histogram('date_histogram', 'received_on', 'day', timezone=timezone)
 
     def domain_aggregation(self):
-        return self.terms_aggregation('domain', 'domain')
+        return self.terms_aggregation('domain.exact', 'domain')
 
     def only_archived(self):
         """Include only archived forms, which are normally excluded"""
@@ -71,7 +71,7 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 
 def user_id(user_ids):
-    if not isinstance(user_ids, (list, set)):
+    if not isinstance(user_ids, (list, set, tuple)):
         user_ids = [user_ids]
     return filters.term(
         'form.meta.userID',

@@ -115,7 +115,7 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
         resp = FormplayerInterface(session.session_id, v.domain).current_question()
 
         send_sms_to_verified_number(v, resp.event.text_prompt,
-            metadata=outbound_metadata)
+            metadata=outbound_metadata, events=[resp.event])
     return True
 
 

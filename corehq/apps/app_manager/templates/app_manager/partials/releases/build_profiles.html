@@ -7,6 +7,7 @@
     <h4 class="panel-title-nolink">
       {% trans "Current Profiles" %}
     </h4>
+
   </div>
   <div class="panel-body">
     {% if app.is_remote_app %}
@@ -22,14 +23,12 @@
         and options on different phones. Application profiles will appear in <em>new</em> versions
         of the application.
       {% endblocktrans %}
-      <span class="hq-help-template"
-            data-title="{% trans "Application Profiles" %}"
-            data-placement="left"
-            data-content="
-              {% blocktrans %}
-                  Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>
-              {% endblocktrans %}">
-        </span>
+      {% if can_edit_apps and request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+        <a href="{% url 'manage_releases_by_app_profile' domain %}">{% trans "Manage application profiles here."%}</a>
+      {% endif %}
+      {% blocktrans %}
+        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>
+      {% endblocktrans %}
     </div>
     <table class="table table-profiles">
       <thead>

@@ -15,7 +15,7 @@
             <thead>
                 <tr>
                     <th class="col-sm-4">
-                        {% trans 'Url' %}
+                        {% trans 'Name' %}
                     </th>
                     <th class="col-sm-1">
                         {% trans 'Pending' %}
@@ -41,11 +41,11 @@
             </tbody>
             </table>
         {% else %}
-            <p>{% blocktrans %}You haven't configured any urls to forward to yet.{% endblocktrans %}</p>
+            <p>{% blocktrans %}You haven't configured any services to forward to yet.{% endblocktrans %}</p>
         {% endif %}
         <a class="btn btn-primary"
            href="{% url 'add_repeater' domain type_info.class_name %}"><i class="fa fa-plus"></i>
-          {% trans 'Add a forwarding location' %}
+          {% trans 'Add a service to forward to' %}
         </a>
     </div>
     {% endfor %}

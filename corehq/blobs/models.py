@@ -120,6 +120,11 @@ class BlobMeta(PartitionedModel, Model):
         with self.open() as fileobj:
             return get_content_md5(fileobj)
 
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.key
+
 
 class DeletedBlobMeta(PartitionedModel, Model):
     """Metadata about a non-temporary object deleted from the blob db

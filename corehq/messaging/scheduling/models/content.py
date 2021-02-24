@@ -1,27 +1,25 @@
 import jsonfield as old_jsonfield
 from contextlib import contextmanager
 from copy import deepcopy
+from datetime import datetime
+
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.sms.api import (
-    MessageMetadata,
-    send_sms,
-    send_sms_to_verified_number,
-)
-from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
-from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
+from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
+from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from memoized import memoized
-from dimagi.utils.logging import notify_exception
+
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
@@ -65,7 +63,8 @@ class SMSContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(
+            recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
@@ -143,9 +142,24 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+        metrics_counter('commcare.messaging.email.sent', tags={'domain': logged_event.domain})
+        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL,
+                              [email_address], logged_subevent.id,
+                              domain=logged_event.domain)
+
+        email = Email(
+            domain=logged_event.domain,
+            date=datetime.utcnow(),
+            couch_recipient_doc_type=logged_subevent.recipient_type,
+            couch_recipient=logged_subevent.recipient_id,
+            messaging_subevent_id=logged_subevent.pk,
+            recipient_address=email_address,
+            subject=subject,
+            body=message,
+        )
+        email.save()
+
         email_usage.update_count()
-        logged_subevent.completed()
 
 
 class SMSSurveyContent(Content):
@@ -216,7 +230,8 @@ class SMSSurveyContent(Content):
         # not the user case contact.
         phone_entry_or_number = (
             phone_entry or
-            self.get_two_way_entry_or_phone_number(recipient, try_user_case=False)
+            self.get_two_way_entry_or_phone_number(
+                recipient, try_user_case=False, domain_for_toggles=logged_event.domain)
         )
 
         if phone_entry_or_number is None:
@@ -225,13 +240,6 @@ class SMSSurveyContent(Content):
 
         if requires_input and not isinstance(phone_entry_or_number, PhoneNumber):
             logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
-            return
-
-        # The SMS framework already checks if the number has opted out before sending to
-        # it. But for this use case we check for it here because we don't want to start
-        # the survey session if they've opted out.
-        if self.phone_has_opted_out(phone_entry_or_number):
-            logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
             return
 
         with self.get_critical_section(recipient):
@@ -261,7 +269,11 @@ class SMSSurveyContent(Content):
             if session:
                 logged_subevent.xforms_session = session
                 logged_subevent.save()
-                self.send_first_message(
+                # send_first_message is a celery task
+                # but we first call it synchronously to save resources in the 99% case
+                # send_first_message will retry itself as a delayed celery task
+                # if there are conflicting sessions preventing it from sending immediately
+                send_first_message(
                     logged_event.domain,
                     recipient,
                     phone_entry_or_number,
@@ -270,7 +282,6 @@ class SMSSurveyContent(Content):
                     logged_subevent,
                     self.get_workflow(logged_event)
                 )
-                logged_subevent.completed()
 
     def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
             app, module, form):
@@ -299,6 +310,7 @@ class SMSSurveyContent(Content):
                 module,
                 form,
                 case_id,
+                yield_responses=True
             )
         except TouchformsError as e:
             logged_subevent.error(
@@ -323,30 +335,6 @@ class SMSSurveyContent(Content):
         session.save()
 
         return session, responses
-
-    def send_first_message(self, domain, recipient, phone_entry_or_number, session, responses, logged_subevent,
-            workflow):
-        if len(responses) > 0:
-            message = format_message_list(responses)
-            metadata = MessageMetadata(
-                workflow=workflow,
-                xforms_session_couch_id=session.couch_id,
-            )
-            if isinstance(phone_entry_or_number, PhoneNumber):
-                send_sms_to_verified_number(
-                    phone_entry_or_number,
-                    message,
-                    metadata,
-                    logged_subevent=logged_subevent
-                )
-            else:
-                send_sms(
-                    domain,
-                    recipient,
-                    phone_entry_or_number,
-                    message,
-                    metadata
-                )
 
 
 class IVRSurveyContent(Content):
@@ -456,14 +444,19 @@ class CustomContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = self.get_two_way_entry_or_phone_number(
+            recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
         # An empty list of messages returned from a custom content handler means
         # we shouldn't send anything, so we don't log an error for that.
-        for message in self.get_list_of_messages(recipient):
-            self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
-
+        try:
+            for message in self.get_list_of_messages(recipient):
+                self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message,
+                                      logged_subevent)
+        except Exception as error:
+            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE, additional_error_text=str(error))
+            raise
         logged_subevent.completed()

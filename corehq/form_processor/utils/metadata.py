@@ -50,7 +50,7 @@ def scrub_form_meta(form_id, form_data):
                 logging.error('form %s contains a poorly structured meta block.'
                               'this might cause data display problems.')
         if isinstance(meta_block, dict):
-            for key in meta_block:
+            for key in list(meta_block):
                 if key in property_map and property_map[key] not in meta_block:
                     meta_block[property_map[key]] = meta_block[key]
                     del meta_block[key]

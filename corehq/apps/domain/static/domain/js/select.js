@@ -14,9 +14,8 @@ hqDefine("domain/js/select", [
         assertProperties.assert(options, ['domainLinks', 'invitationLinks']);
         var self = {};
 
-        self.allInvitationLinks = ko.observableArray(options.invitationLinks);
         self.allDomainLinks = ko.observableArray(options.domainLinks);
-        self.invitationLinks = ko.observableArray();
+        self.invitationLinks = ko.observableArray(options.invitationLinks);
         self.domainLinks = ko.observableArray();
 
         self.query = ko.observable('');
@@ -25,7 +24,6 @@ hqDefine("domain/js/select", [
             return link.display_name.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
         self.search = function () {
-            self.invitationLinks(_.filter(self.allInvitationLinks(), self._match));
             self.domainLinks(_.filter(self.allDomainLinks(), self._match));
         };
 

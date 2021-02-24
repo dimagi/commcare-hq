@@ -29,10 +29,17 @@ from corehq.apps.reports.daterange import (
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     get_INFilter_element_bindparam,
+    get_null_empty_value_bindparam)
+
+# todo: if someone wants to name an actual choice any of these values, it will break
+from corehq.apps.userreports.datatypes import (
+    DATA_TYPE_DATE,
+    DATA_TYPE_DATETIME
 )
 
-SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
+SHOW_ALL_CHOICE = '_all'
 NONE_CHOICE = "\u2400"
+
 CHOICE_DELIMITER = "\u001f"
 
 
@@ -207,9 +214,6 @@ class PreFilterValue(FilterValue):
     def _is_dyn_date(self):
         return self.value.get('operator') in self.dyn_date_operators
 
-    def _is_null(self):
-        return self.value['operand'] is None
-
     def _is_list(self):
         """
         Returns true if operand should be treated like an array when building
@@ -217,13 +221,24 @@ class PreFilterValue(FilterValue):
         """
         return isinstance(self.value['operand'], list)
 
-    @property
-    def _null_filter(self):
-        operator = self.value.get('operator') or 'is'
-        try:
-            return self.null_operator_filters[operator]
-        except KeyError:
-            raise TypeError('Null value does not support "{}" operator'.format(operator))
+    def _has_empty_value(self):
+        """
+        Returns true if operand has no value.
+        """
+        return self.value['operand'] == '' or self.value['operand'] is None
+
+    def _is_empty(self):
+        """
+        Returns true if the value should be treated as a filter to show only empty data
+        """
+        operator = self.value.get('operator') or '='
+        return self._has_empty_value() and operator == '='
+
+    def _is_exists(self):
+        """
+        Returns true if the value should be treated as a filter to show non-empty data
+        """
+        return self._has_empty_value() and self.value.get('operator') == '!='
 
     @property
     def _array_filter(self):
@@ -247,8 +262,20 @@ class PreFilterValue(FilterValue):
                 self.filter['field'],
                 get_INFilter_bindparams(self.filter['slug'], ['start_date', 'end_date'])
             )
-        elif self._is_null():
-            return self._null_filter(self.filter['field'])
+        elif self._is_empty():
+            if self.filter.get('datatype') in [DATA_TYPE_DATE, DATA_TYPE_DATETIME]:
+                return ISNULLFilter(self.filter['field'])
+            else:
+                return ORFilter([
+                    EQFilter(self.filter['field'], self.filter['slug']),
+                    ISNULLFilter(self.filter['field']),
+                ])
+        elif self._is_exists():
+            if self.filter.get('datatype') in [DATA_TYPE_DATE, DATA_TYPE_DATETIME]:
+                return NOTNULLFilter(self.filter['field'])
+            else:
+                # this resolves to != '', which also filters out null data in postgres
+                return NOTEQFilter(self.filter['field'], self.filter['slug'])
         elif self._is_list():
             return self._array_filter(
                 self.filter['field'],
@@ -264,8 +291,15 @@ class PreFilterValue(FilterValue):
                 get_INFilter_element_bindparam(self.filter['slug'], i): str(v)
                 for i, v in enumerate([start_date, end_date])
             }
-        elif self._is_null():
-            return {}
+        elif self._is_empty() or self._is_exists():
+            if self.filter.get('datatype') in [DATA_TYPE_DATE, DATA_TYPE_DATETIME]:
+                # Both == '' and != '' do not work for dates in postgres so the expression should only be for NULL
+                # checks that get added later. Hence don't return any comparison for value here
+                return {}
+            else:
+                return {
+                    self.filter['slug']: '',
+                }
         elif self._is_list():
             # Array params work like IN bind params
             return {
@@ -295,6 +329,9 @@ class ChoiceListFilterValue(FilterValue):
     def is_null(self):
         return NONE_CHOICE in [choice.value for choice in self.value]
 
+    def _get_value_without_nulls(self):
+        return [choice for choice in self.value if choice.value != NONE_CHOICE]
+
     @property
     def _ancestor_filter(self):
         """
@@ -317,29 +354,54 @@ class ChoiceListFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.show_all:
             return None
-        if self.is_null:
-            return ISNULLFilter(self.filter['field'])
 
-        in_filter = INFilter(
-            self.filter['field'],
-            get_INFilter_bindparams(self.filter['slug'], self.value)
-        )
-        if self._ancestor_filter:
-            return ANDFilter(
-                [self._ancestor_filter.sql_filter(), in_filter]
+        sql_filters = []
+
+        non_null_values = self._get_value_without_nulls()
+        if non_null_values:
+            in_filter = INFilter(
+                self.filter['field'],
+                get_INFilter_bindparams(self.filter['slug'], non_null_values)
+            )
+            if self._ancestor_filter:
+                sql_filters.append(ANDFilter([
+                    self._ancestor_filter.sql_filter(),
+                    in_filter,
+                ]))
+            else:
+                sql_filters.append(in_filter)
+        elif self._ancestor_filter:
+            sql_filters.append(self._ancestor_filter.sql_filter())
+
+        if self.is_null:
+            # combine null and blank fields into a single filter
+            sql_filters.append(
+                ORFilter([
+                    ISNULLFilter(self.filter['field']),
+                    EQFilter(self.filter['field'], get_null_empty_value_bindparam(self.filter['slug'])),
+                ])
+            )
+
+        if len(sql_filters) > 1:
+            return ORFilter(
+                sql_filters
             )
         else:
-            return in_filter
+            return sql_filters[0]
 
     def to_sql_values(self):
-        if self.show_all or self.is_null:
+        if self.show_all:
             return {}
         values = {
             get_INFilter_element_bindparam(self.filter['slug'], i): val.value
-            for i, val in enumerate(self.value)
+            for i, val in enumerate(self._get_value_without_nulls())
         }
+        if self.is_null:
+            values[get_null_empty_value_bindparam(self.filter['slug'])] = ''
+
         if self._ancestor_filter:
             values.update(self._ancestor_filter.sql_value())
+
         return values
 
 

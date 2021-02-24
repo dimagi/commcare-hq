@@ -13,8 +13,10 @@ from corehq.motech.utils import (
     AES_KEY_MAX_LEN,
     b64_aes_decrypt,
     b64_aes_encrypt,
+    get_endpoint_url,
     pformat_json,
     simple_pad,
+    unpad,
 )
 
 
@@ -34,6 +36,21 @@ class SimplePadTests(SimpleTestCase):
         """
         padded = simple_pad(b'xy\xc5\xba\xc5\xbay', 8, b'*')
         self.assertEqual(padded, b'xy\xc5\xba\xc5\xbay*')
+
+
+class UnpadTests(SimpleTestCase):
+
+    def test_unpad_simple(self):
+        unpadded = unpad(b'xyzzy   ')
+        self.assertEqual(unpadded, b'xyzzy')
+
+    def test_unpad_crypto(self):
+        unpadded = unpad(b'xyzzy\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+        self.assertEqual(unpadded, b'xyzzy')
+
+    def test_unpad_empty(self):
+        unpadded = unpad(b'')
+        self.assertEqual(unpadded, b'')
 
 
 @override_settings(SECRET_KEY='xyzzy')
@@ -190,6 +207,21 @@ class EncryptionTests(SimpleTestCase):
     def test_encrypt_decrypt_utf8(self):
         message = 'आपके आसपास एक जंगल है'
         self.assert_message_equals_plaintext(message)
+
+
+class GetEndpointUrlTests(SimpleTestCase):
+
+    def test_base_url_none(self):
+        url = get_endpoint_url(None, 'https://example.com/foo')
+        self.assertEqual(url, 'https://example.com/foo')
+
+    def test_trailing_slash(self):
+        url = get_endpoint_url('https://example.com/foo', '')
+        self.assertEqual(url, 'https://example.com/foo/')
+
+    def test_no_urls_given(self):
+        with self.assertRaises(ValueError):
+            get_endpoint_url(None, None)
 
 
 class DocTests(SimpleTestCase):

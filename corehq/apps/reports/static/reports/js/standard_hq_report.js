@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ_MODULES, HQAsyncReport, standardHQReport */
+/* globals COMMCAREHQ_MODULES, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
@@ -65,7 +65,7 @@ hqDefine("reports/js/standard_hq_report", [
 
         var reportOptions = initialPageData.get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
-            var asyncHQReport = new HQAsyncReport({
+            var asyncHQReport = hqImport("reports/js/reports.async")({
                 standardReport: getStandard(),
             });
             asyncHQReport.init();

@@ -2,13 +2,13 @@
 {% load i18n %}
 
 {% block page_content %}
-  <h1>{% block title %}{% trans "Disable Two-factor Authentication" %}{% endblock %}</h1>
-  <p>{% blocktrans %}You are about to disable two-factor authentication. This
+  <h1>{% block title %}{% trans "Remove Two-factor Authentication" %}{% endblock %}</h1>
+  <p>{% blocktrans %}You are about to <strong>remove</strong> two-factor authentication. This
     compromises your account security, are you sure?{% endblocktrans %}</p>
   <form method="post">
     {% csrf_token %}
     <table>{{ form }}</table>
     <button class="btn btn-danger"
-            type="submit">{% trans "Disable" %}</button>
+            type="submit">{% trans "Remove" %}</button>
   </form>
 {% endblock %}

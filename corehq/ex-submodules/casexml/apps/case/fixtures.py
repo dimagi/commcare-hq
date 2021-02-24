@@ -44,9 +44,9 @@ class CaseDBFixture(object):
         https://github.com/dimagi/commcare/wiki/fixtures
         """
         element = safe_element("results")
-        element.attrib = {'id': self.id}
+        element.set('id', self.id)
 
         for case in self.cases:
             element.append(get_casedb_element(case))
 
-        return ElementTree.tostring(element, encoding="utf-8")
+        return ElementTree.tostring(element, encoding='utf-8')

@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.forms import BackendForm
 from time import sleep
+from io import BytesIO
 
 
 class SQLTestSMSBackend(SQLSMSBackend):
@@ -36,3 +38,13 @@ class SQLTestSMSBackend(SQLSMSBackend):
 
             # Simulate latency
             sleep(1)
+
+    def download_incoming_media(self, media_url):
+        file_id = media_url.rsplit('/', 1)[-1]
+        uploaded_file = UploadedFile(
+            BytesIO(b"fake"),
+            file_id,
+            content_type='image/jpeg',
+            size=4
+        )
+        return file_id, uploaded_file

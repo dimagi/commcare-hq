@@ -6,6 +6,7 @@ from corehq.apps.hqadmin.tasks import (
     send_abnormal_usage_alert,
 )
 from corehq.util.metrics import metrics_gauge_task
+from corehq.util.metrics.const import MPM_MAX
 
 from .do_import import do_import
 from .exceptions import ImporterError
@@ -38,13 +39,13 @@ def bulk_import_async(config, domain, excel_id):
         return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
     finally:
         if not result_stored:
-            store_task_result_if_failed.delay(excel_id)
+            store_failed_task_result.delay(excel_id)
 
 
 @task(serializer='pickle', queue='case_import_queue')
-def store_task_result_if_failed(upload_id):
+def store_failed_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
-    case_upload.store_task_result_if_failed()
+    case_upload.store_failed_task_result()
 
 
 def _alert_on_result(result, domain):
@@ -65,5 +66,6 @@ def _alert_on_result(result, domain):
 total_bytes = metrics_gauge_task(
     'commcare.case_importer.files.total_bytes',
     get_case_upload_files_total_bytes,
-    run_every=crontab(minute=0)
+    run_every=crontab(minute=0),
+    multiprocess_mode=MPM_MAX
 )

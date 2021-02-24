@@ -28,19 +28,19 @@ class CaseClaimTests(TestCase):
     def setUp(self):
         super(CaseClaimTests, self).setUp()
         self.domain = create_domain(DOMAIN)
-        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
+        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD, None, None)
         self.host_case_id = uuid4().hex
         self.host_case_name = 'Dmitri Bashkirov'
         self.host_case_type = 'person'
         self.create_case()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
         super(CaseClaimTests, self).tearDown()
 
     def create_case(self):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=self.host_case_id,
             case_name=self.host_case_name,
@@ -112,7 +112,7 @@ class CaseClaimTests(TestCase):
         self.assertIsNone(first_claim)
 
     def _close_case(self, case_id):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=False,
             case_id=case_id,
             close=True

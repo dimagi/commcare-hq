@@ -1,6 +1,5 @@
 from collections import namedtuple
 
-from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -9,7 +8,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP
 from corehq.motech.repeaters.models import FormRepeater, RepeatRecord
 
@@ -25,6 +24,6 @@ def bootrap_domain_for_zapier(domain_name):
     subscription.is_active = True
     subscription.save()
 
-    web_user = WebUser.create(domain_name, 'test', '******')
-    api_key_object, _ = ApiKey.objects.get_or_create(user=web_user.get_django_user())
+    web_user = WebUser.create(domain_name, 'test', '******', None, None)
+    api_key_object, _ = HQApiKey.objects.get_or_create(user=web_user.get_django_user())
     return ZapierDomainConfig(domain_object, web_user, api_key_object.key)

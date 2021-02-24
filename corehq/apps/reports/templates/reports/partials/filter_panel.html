@@ -34,9 +34,6 @@
         {% trans "Save" %}...
       </button>
     {% endif %}
-    {% if report.custom_filter_action_template %}
-      {% include report.custom_filter_action_template %}
-    {% endif %}
 
     {% if report.is_emailable %}
       <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">

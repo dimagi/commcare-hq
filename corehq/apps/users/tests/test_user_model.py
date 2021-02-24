@@ -1,9 +1,17 @@
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
+from unittest.mock import patch
 
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceAppMeta
+from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     run_with_all_backends,
@@ -13,6 +21,8 @@ from corehq.form_processor.utils import (
     get_simple_wrapped_form,
 )
 from corehq.util.test_utils import softer_assert
+
+from corehq.apps.users.models import MAX_LOGIN_ATTEMPTS
 
 
 class UserModelTest(TestCase):
@@ -25,6 +35,8 @@ class UserModelTest(TestCase):
             domain=self.domain,
             username='birdman',
             password='***',
+            created_by=None,
+            created_via=None,
         )
 
         self.metadata = TestFormMetadata(
@@ -38,6 +50,15 @@ class UserModelTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         self.domain_obj.delete()
         super(UserModelTest, self).tearDown()
+
+    def create_commcare_user(self, username):
+        return CommCareUser.create(
+            domain=self.domain,
+            username=username,
+            password='***',
+            created_by=None,
+            created_via=None,
+        )
 
     @run_with_all_backends
     def test_get_form_ids(self):
@@ -62,6 +83,120 @@ class UserModelTest(TestCase):
         CommCareUser.bulk_save([self.user])
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
+
+    def test_user_data_not_allowed_in_create(self):
+        message = "Do not access user_data directly, pass metadata argument to create."
+        with self.assertRaisesMessage(ValueError, message):
+            CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
+
+    def test_metadata(self):
+        metadata = self.user.metadata
+        self.assertEqual(metadata, {'commcare_project': 'my-domain'})
+        metadata.update({
+            'cruise': 'control',
+            'this': 'road',
+        })
+        self.user.update_metadata(metadata)
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+            'cruise': 'control',
+            'this': 'road',
+        })
+        self.user.pop_metadata('cruise')
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+            'this': 'road',
+        })
+        self.user.update_metadata({'this': 'field'})
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+            'this': 'field',
+        })
+
+    def test_metadata_with_profile(self):
+        definition = CustomDataFieldsDefinition(domain='my-domain', field_type=UserFieldsView.field_type)
+        definition.save()
+        definition.set_fields([Field(slug='start')])
+        definition.save()
+        profile = CustomDataFieldsProfile(
+            name='low',
+            fields={'start': 'sometimes'},
+            definition=definition,
+        )
+        profile.save()
+        conflict_message = "metadata properties conflict with profile: start"
+
+        # Custom user data profiles get their data added to metadata automatically for mobile users
+        self.user.update_metadata({PROFILE_SLUG: profile.id})
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+            PROFILE_SLUG: profile.id,
+            'start': 'sometimes',
+        })
+
+        # Remove profile should remove it and related fields
+        self.user.pop_metadata(PROFILE_SLUG)
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+        })
+
+        # Can't add profile that conflicts with existing data
+        self.user.update_metadata({
+            'start': 'never',
+            'end': 'yesterday',
+        })
+        with self.assertRaisesMessage(ValueError, conflict_message):
+            self.user.update_metadata({
+                PROFILE_SLUG: profile.id,
+            })
+
+        # Can't add data that conflicts with existing profile
+        self.user.pop_metadata('start')
+        self.user.update_metadata({PROFILE_SLUG: profile.id})
+        with self.assertRaisesMessage(ValueError, conflict_message):
+            self.user.update_metadata({'start': 'never'})
+
+        # Can't add both a profile and conflicting data
+        self.user.pop_metadata(PROFILE_SLUG)
+        with self.assertRaisesMessage(ValueError, conflict_message):
+            self.user.update_metadata({
+                PROFILE_SLUG: profile.id,
+                'start': 'never',
+            })
+
+        # Custom user data profiles don't get populated for web users
+        web_user = WebUser.create(None, "imogen", "*****", None, None)
+        self.assertEqual(web_user.metadata, {
+            'commcare_project': None,
+        })
+        web_user.update_metadata({PROFILE_SLUG: profile.id})
+        self.assertEqual(web_user.metadata, {
+            'commcare_project': None,
+            PROFILE_SLUG: profile.id,
+        })
+
+        definition.delete()
+        web_user.delete(deleted_by=None)
+
+    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
+    def test_commcare_user_is_locked_only_with_toggle(self, mock_lockout_enabled_for_domain):
+        # Web Users should always be locked out when they go beyond
+        # the the max login attempts,
+        # but Commcare Users need an additional domain toggle
+        commcare_user = self.create_commcare_user('test_user')
+        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
+        mock_lockout_enabled_for_domain.return_value = False
+
+        self.assertFalse(commcare_user.is_locked_out())
+
+    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
+    def test_commcare_user_should_be_locked_out(self, mock_lockout_enabled_for_domain):
+        # Make sure the we know the user should be locked, if not for the toggle
+        commcare_user = self.create_commcare_user('test_user')
+        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
+        mock_lockout_enabled_for_domain.return_value = False
+
+        self.assertTrue(commcare_user.should_be_locked_out())
 
 
 class UserDeviceTest(SimpleTestCase):

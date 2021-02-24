@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite version="1" descriptor="Media Suite File">
+    <media path="../../commcare">
+        <resource lazy="false" id="media-15eae2a64605b608c35a967a6d0604cb-audio1.mp3">
+            <location authority="remote">http://localhost:8000/hq/multimedia/file/CommCareAudio/456/audio1.mp3</location>
+        </resource>
+    </media>
+    <media path="../../commcare">
+        <resource lazy="false" id="media-5385c58d28c08a0b30ce495dbc21bc42-image1.jpg">
+            <location authority="remote">http://localhost:8000/hq/multimedia/file/CommCareImage/123/image1.jpg</location>
+        </resource>
+    </media>
+    <media path="../../commcare/video-inline/data">
+        <resource lazy="true" id="media-eb2483b7be7a27497788afbb2c8b0000-inline_video.mp4">
+            <location authority="remote">http://localhost:8000/hq/multimedia/file/CommCareVideo/789/inline_video.mp4</location>
+        </resource>
+    </media>
+</suite>

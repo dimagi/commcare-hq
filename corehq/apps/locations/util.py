@@ -207,7 +207,7 @@ class LocationExporter(object):
         ])
         for loc_type in self.location_types:
             additional_headers = []
-            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.fields)
+            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.get_fields())
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
                 additional_headers.extend('consumption: {}'.format(code) for code in self.product_codes)
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
@@ -240,7 +240,7 @@ class LocationExporter(object):
                     'do_delete': '',
                 }
                 row = [row_data[attr] for attr in LOCATION_SHEET_HEADERS_BASE.keys()]
-                for field in self.data_model.fields:
+                for field in self.data_model.get_fields():
                     row.append(model_data.get(field.slug, ''))
 
                 if include_consumption:
@@ -281,7 +281,8 @@ class LocationExporter(object):
         writer.write([('types', rows)])
 
 
-def dump_locations(domain, download_id, include_consumption, headers_only, root_location_id=None, task=None):
+def dump_locations(domain, download_id, include_consumption, headers_only,
+                   owner_id, root_location_id=None, task=None):
     exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
                                 headers_only=headers_only, async_task=task)
 
@@ -314,6 +315,7 @@ def dump_locations(domain, download_id, include_consumption, headers_only, root_
             mimetype=file_format.mimetype,
             content_disposition=safe_filename_header(filename, file_format.extension),
             download_id=download_id,
+            owner_ids=[owner_id],
         )
 
 

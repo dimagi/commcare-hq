@@ -20,11 +20,11 @@ def create_case(domain, case_type, **kwargs):
             case.delete()
 
 
-def create_empty_rule(domain, workflow):
+def create_empty_rule(domain, workflow, case_type='person'):
     return AutomaticUpdateRule.objects.create(
         domain=domain,
         name='test',
-        case_type='person',
+        case_type=case_type,
         active=True,
         deleted=False,
         filter_on_server_modified=False,

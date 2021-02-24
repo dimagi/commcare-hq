@@ -26,6 +26,7 @@ from django.http import (
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -37,23 +38,31 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
+import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.toggles import MONITOR_2FA_CHANGES
+from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.users.event_handlers import handle_email_invite_message
+from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
@@ -87,6 +96,8 @@ from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
+    HQAuthenticationTokenForm,
+    HQBackupTokenForm
 )
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
@@ -99,7 +110,7 @@ from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
@@ -108,7 +119,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
@@ -131,7 +142,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
-def server_error(request, template_name='500.html'):
+def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
     """
@@ -172,7 +183,7 @@ def server_error(request, template_name='500.html'):
     ))
 
 
-def not_found(request, template_name='404.html'):
+def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
     """
@@ -196,6 +207,11 @@ def redirect_to_default(req, domain=None):
         else:
             url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
+        if MONITOR_2FA_CHANGES.enabled(domain):
+            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
+            monitor_2fa_soft_assert(False, f'2FA required page shown to user '
+                                           f'{req.user.username} on {domain} after '
+                                           f'login')
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
@@ -306,7 +322,7 @@ def server_up(req):
             'status': 'failed' if not status.success else 'ok',
             'check': check_name
         }
-        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags, multiprocess_mode=MPM_MAX)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -335,7 +351,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
     """
@@ -373,6 +389,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         with mutable_querydict(req.POST):
             req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
 
+    context = {}
+
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
@@ -380,10 +398,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             old_lang = req.session.get(LANGUAGE_SESSION_KEY)
             update_session_language(req, old_lang, new_lang)
 
+            # context needed for MONITOR_2FA_CHANGES toggle in HQLoginView
+            context.update({
+                'is_commcare_user': couch_user.is_commcare_user(),
+            })
+
     req.base_template = settings.BASE_TEMPLATE
 
-    context = {}
-    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -410,6 +431,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if settings.IS_SAAS_ENVIRONMENT:
         context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
+    context.update(extra_context)
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
@@ -447,26 +469,52 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     return _login(req, domain, custom_template_name, extra_context)
 
 
+@xframe_options_sameorigin
+@location_safe
+def iframe_domain_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
+        'current_page': {'page_name': _('Your session has expired')},
+    })
+
+
 class HQLoginView(LoginView):
     form_list = [
         ('auth', EmailAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
     extra_context = {}
+
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        # The forms need the request to properly log authentication failures
+        kwargs.setdefault('request', self.request)
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
-        context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+
+        steps = context.get('wizard', {}).get('steps')
+        domain = context.get('domain')
+        is_commcare_user = context.get('is_commcare_user', False)
+        if (steps and steps.current == 'token'
+                and is_commcare_user and MONITOR_2FA_CHANGES.enabled(domain)):
+            username = self.request.POST['auth-username'].lower()
+            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
+            monitor_2fa_soft_assert(
+                False,
+                f'2FA TOKEN required upon login for mobile worker {username} from {domain}'
+            )
+
         return context
 
 
 class CloudCareLoginView(HQLoginView):
     form_list = [
         ('auth', CloudCareAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
 
 
@@ -483,6 +531,34 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+
+# ping_response powers the ping_login and ping_session views, both tiny views used in user inactivity and
+# session expiration handling.ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+@location_safe
+@two_factor_exempt
+def ping_response(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'session_expiry': request.session.get('session_expiry'),
+        'secure_session': request.session.get('secure_session'),
+        'secure_session_timeout': request.session.get('secure_session_timeout'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@login_required
+def login_new_window(request):
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
+
+
+@xframe_options_sameorigin
+@location_safe
+@login_required
+def iframe_domain_login_new_window(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
 @login_and_domain_required
@@ -504,38 +580,43 @@ def dropbox_upload(request, download_id):
     if download is None:
         logging.error("Download file request for expired/nonexistent file requested")
         raise Http404
-    else:
-        filename = download.get_filename()
-        # Hack to get target filename from content disposition
-        match = re.search('filename="([^"]*)"', download.content_disposition)
-        dest = match.group(1) if match else 'download.txt'
 
-        try:
-            uploader = DropboxUploadHelper.create(
-                request.session.get(DROPBOX_ACCESS_TOKEN),
-                src=filename,
-                dest=dest,
-                download_id=download_id,
-                user=request.user,
-            )
-        except DropboxInvalidToken:
-            return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
-        except DropboxUploadAlreadyInProgress:
-            uploader = DropboxUploadHelper.objects.get(download_id=download_id)
-            messages.warning(
-                request,
-                'The file is in the process of being synced to dropbox! It is {0:.2f}% '
-                'complete.'.format(uploader.progress * 100)
-            )
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    if download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+        return no_permissions(request, message=_(
+            "You do not have access to this file. It can only be uploaded to dropbox by the user who created it"
+        ))
 
-        uploader.upload()
+    filename = download.get_filename()
+    # Hack to get target filename from content disposition
+    match = re.search('filename="([^"]*)"', download.content_disposition)
+    dest = match.group(1) if match else 'download.txt'
 
-        messages.success(
-            request,
-            _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
-                " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+    try:
+        uploader = DropboxUploadHelper.create(
+            request.session.get(DROPBOX_ACCESS_TOKEN),
+            src=filename,
+            dest=dest,
+            download_id=download_id,
+            user=request.user,
         )
+    except DropboxInvalidToken:
+        return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
+    except DropboxUploadAlreadyInProgress:
+        uploader = DropboxUploadHelper.objects.get(download_id=download_id)
+        messages.warning(
+            request,
+            'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+            'complete.'.format(uploader.progress * 100)
+        )
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    uploader.upload()
+
+    messages.success(
+        request,
+        _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+            " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+    )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -550,6 +631,7 @@ def debug_notify(request):
     return HttpResponse("Email should have been sent")
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
@@ -564,13 +646,36 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
+    url = request.POST.get('page', None)
+    domain = None
+    if url:
+        path = urlparse(url).path
+        if path:
+            domain = get_domain_from_url(path)
+    domain = domain or '_unknown'
+
     metrics_counter('commcare.jserror.count', tags={
         'os': os,
         'browser_version': browser_version,
         'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
-        'file': request.POST.get('filename'),
+        'url': sanitize_url(url),
         'bot': bot,
+        'domain': domain,
+    })
+
+    notify_error(message=f'[JS] {request.POST.get("message")}', details={
+        'message': request.POST.get('message'),
+        'domain': domain,
+        'page': url,
+        'file': request.POST.get('file'),
+        'line': request.POST.get('line'),
+        'stack': request.POST.get('stack'),
+        'meta': {
+            'os': os,
+            'browser_version': browser_version,
+            'browser_name': browser_name,
+            'bot': bot,
+        }
     })
 
     return HttpResponse('')
@@ -1215,7 +1320,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(
@@ -1231,3 +1336,40 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def log_email_event(request, secret):
+    # From Amazon SNS:
+    # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+
+    if secret != settings.SNS_EMAIL_EVENT_SECRET:
+        return HttpResponse("Incorrect secret", status=403, content_type='text/plain')
+
+    request_json = json.loads(request.body)
+
+    if request_json['Type'] == "SubscriptionConfirmation":
+        # When creating an SNS topic, the first message is a subscription
+        # confirmation, where we need to access the subscribe URL to confirm we
+        # are able to receive messages at this endpoint
+        subscribe_url = request_json['SubscribeURL']
+        requests.get(subscribe_url)
+        return HttpResponse()
+
+    message = json.loads(request_json['Message'])
+    headers = message.get('mail', {}).get('headers', [])
+
+    for header in headers:
+        if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
+            if Invitation.EMAIL_ID_PREFIX in header["value"]:
+                handle_email_invite_message(message, header["value"].split(Invitation.EMAIL_ID_PREFIX)[1])
+            else:
+                subevent_id = header["value"]
+                handle_email_messaging_subevent(message, subevent_id)
+            break
+
+    handle_email_sns_event(message)
+
+    return HttpResponse()

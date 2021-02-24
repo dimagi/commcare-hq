@@ -3,9 +3,11 @@
          update="{{ profile_url }}&amp;profile={{ build_profile_id }}"
          requiredMajor="{{ app.build_spec.major_release }}"
          requiredMinor="{{ app.build_spec.minor_release.1 }}"
+         requiredMinimal="{{ app.build_spec.patch_release.2 }}"
          uniqueid="{{ uniqueid }}"
          name="{{ name }}"
-         descriptor="{{ descriptor }}">
+         descriptor="{{ descriptor }}"
+         buildProfileID="{% if build_profile_id %}{{ build_profile_id }}{% endif %}">
     <property key="BackupMode" value="file_mode" force="true"/>
     <property key="backup-url" value="file:///E:/CommCare.Backup" force="true"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup" force="true"/>
@@ -22,6 +24,9 @@
     {% endif %}
     {% if target_package_id %}
     <property key="target-package-id" value="{{ target_package_id }}" force="true"/>
+    {% endif %}
+    {% if support_email %}
+    <property key="support-email-address" value="{{ support_email }}" force="true"/>
     {% endif %}
 
     <!-- Properties configured on CommCare HQ 1.0 -->

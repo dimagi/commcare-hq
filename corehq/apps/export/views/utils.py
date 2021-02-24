@@ -18,7 +18,7 @@ from soil.progress import get_task_status
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.decorators import LoginAndDomainMixin, api_auth
 from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -247,7 +247,7 @@ class ODataFeedMixin(object):
         return export_instance
 
 
-class GenerateSchemaFromAllBuildsView(View):
+class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
     urlname = 'build_full_schema'
 
     def export_cls(self, type_):
@@ -386,7 +386,7 @@ def can_view_form_exports(couch_user, domain):
 
 
 def can_view_case_exports(couch_user, domain):
-    return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
+    return ExportsPermissionsManager('case', domain, couch_user).has_case_export_permissions
 
 
 def clean_odata_columns(export_instance):

@@ -1,53 +1,95 @@
-<div>
-  {% for plan_version in plan_versions %}
-    <p><h3>{{ plan_version }}</h3></p>
-    <p><strong>Date Created:</strong> {{ plan_version.date_created }}</p>
-    <p>
-      <strong>Role:</strong> {{ plan_version.role }}
-    </p>
-    <p>
-      <strong>Products:</strong>
-    <table class="table table-striped table-bordered">
-      <thead>
-      <tr>
-        <th>Name</th>
-        <th>Monthly Fee</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr>
-        <td>{{ plan_version.product_rate }}</td>
-        <td>{{ plan_version.product_rate.monthly_fee }}</td>
-      </tr>
-      </tbody>
-    </table>
-    </p>
-    <p>
-      <strong>Features:</strong>
-    <table class="table table-striped table-bordered">
-      <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Free limit</th>
-        <th>Per excess fee</th>
-        <th>Monthly fee</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% for feature_rate in plan_version.feature_rates.all %}
+
+{% for plan_version in plan_versions %}
+  {% if is_version_detail_page %}
+    <div class="page-header" style="margin-top: 0;">
+      <h2>{{ plan_version }}</h2>
+    </div>
+    <div class="alert alert-info">
+      {% if is_latest_version %}
+        <p>
+          You are viewing the latest version of the plan "{{ plan_name }}".
+        </p>
+      {% else %}
+        <p class="lead">
+          You are viewing an older version of the plan "{{ plan_name }}".
+        </p>
+        <p>
+          <a href="{{ latest_version_url }}">View the latest version of this plan.</a>
+        </p>
+      {% endif %}
+      <p>
+        If you want to make a new version of this plan or view summaries
+        of older plans, please visit the
+        <a href="{% url "edit_software_plan" plan_id %} ">edit software plan page</a>.
+      </p>
+    </div>
+  {% endif %}
+  <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          {% if is_version_detail_page %}
+            Version Details
+          {% else %}
+            {{ plan_version }}
+              <a class="pull-right" href="{% url 'software_plan_version' plan_version.plan.id plan_version.id %}">
+                View Details
+              </a>
+            {% endif %}
+        </h4>
+      </div>
+    <div class="panel-body">
+      <p>
+        <strong>Date Created:</strong> {{ plan_version.date_created }}
+      </p>
+      <p>
+        <strong>Role:</strong> {{ plan_version.role }}
+      </p>
+      <h4>
+        Products:
+      </h4>
+      <table class="table table-striped table-bordered">
+        <thead>
         <tr>
-          <td>{{ feature_rate.feature.name }}</td>
-          <td>{{ feature_rate.feature.feature_type }}</td>
-          <td>{{ feature_rate.monthly_limit }}</td>
-          <td>{{ feature_rate.per_excess_fee }}</td>
-          <td>{{ feature_rate.monthly_fee }}</td>
+          <th>Name</th>
+          <th>Monthly Fee</th>
         </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    </p>
-  {% empty %}
+        </thead>
+        <tbody>
+        <tr>
+          <td>{{ plan_version.product_rate }}</td>
+          <td>{{ plan_version.product_rate.monthly_fee }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <h4>
+        Features:
+      </h4>
+      <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Free limit</th>
+          <th>Per excess fee</th>
+          <th>Monthly fee</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for feature_rate in plan_version.feature_rates.all %}
+          <tr>
+            <td>{{ feature_rate.feature.name }}</td>
+            <td>{{ feature_rate.feature.feature_type }}</td>
+            <td>{{ feature_rate.monthly_limit }}</td>
+            <td>{{ feature_rate.per_excess_fee }}</td>
+            <td>{{ feature_rate.monthly_fee }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% empty %}
+  <div class="well">
     <h3>No versions exist for this plan.</h3>
-  {% endfor %}
-</div>
+  </div>
+{% endfor %}

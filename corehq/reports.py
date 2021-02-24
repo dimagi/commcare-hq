@@ -10,6 +10,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    DeployHistoryReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
@@ -51,6 +52,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionAdjustmentInterface,
     CreditAdjustmentInterface,
 )
+from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -140,7 +142,6 @@ def REPORTS(project):
         sms.ScheduleInstanceReport,
     ])
 
-    messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
     messaging_reports = _filter_reports(report_set, messaging_reports)
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
@@ -321,6 +322,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         PaymentRecordInterface,
         SubscriptionAdjustmentInterface,
         CreditAdjustmentInterface,
+        IdentityProviderInterface,
     )),
 )
 
@@ -339,6 +341,7 @@ ADMIN_REPORTS = (
         DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
         UserAuditReport,
+        DeployHistoryReport,
     )),
 )
 

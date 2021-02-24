@@ -5,7 +5,7 @@ import re
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-BOWER_PATH = '../../../../../../bower_components'
+YARN_PATH = '../../../../../../node_modules'
 B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"
 
 
@@ -24,9 +24,9 @@ class Command(BaseCommand):
             with codecs.open(less_file, 'r', 'utf-8') as fd:
                 content = fd.read()
                 if content is not None:
-                    if BOWER_PATH in content:
+                    if YARN_PATH in content:
                         print("Updated less @imports in {}".format(less_file))
-                        content = content.replace(BOWER_PATH, '../..')
+                        content = content.replace(YARN_PATH, '../..')
                     else:
                         p = re.search(B3_REGEX, content)
                         if p is not None:

@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ImmunizationRecommendation",
+  "$ref": "#/definitions/ImmunizationRecommendation",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ImmunizationRecommendation": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ImmunizationRecommendation resource",
+              "type": "string",
+              "enum": [
+                "ImmunizationRecommendation"
+              ]
+            },
+            "identifier": {
+              "description": "A unique identifier assigned to this particular recommendation record.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "patient": {
+              "description": "The patient the recommendations are for.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "recommendation": {
+              "description": "Vaccine administration recommendations.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImmunizationRecommendation_Recommendation"
+              }
+            }
+          },
+          "required": [
+            "patient",
+            "recommendation",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ImmunizationRecommendation_Recommendation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
+          "properties": {
+            "date": {
+              "description": "The date the immunization recommendation was created.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "vaccineCode": {
+              "description": "Vaccine that pertains to the recommendation.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "targetDisease": {
+              "description": "The targeted disease for the recommendation.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "doseNumber": {
+              "description": "The next recommended dose number (e.g. dose 2 is the next recommended dose).",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_doseNumber": {
+              "description": "Extensions for doseNumber",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "forecastStatus": {
+              "description": "Vaccine administration status.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "dateCriterion": {
+              "description": "Vaccine date recommendations.  For example, earliest date to administer, latest date to administer, etc.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImmunizationRecommendation_DateCriterion"
+              }
+            },
+            "protocol": {
+              "description": "Contains information about the protocol under which the vaccine was administered.",
+              "$ref": "#/definitions/ImmunizationRecommendation_Protocol"
+            },
+            "supportingImmunization": {
+              "description": "Immunization event history that supports the status and recommendation.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "supportingPatientInformation": {
+              "description": "Patient Information that supports the status and recommendation.  This includes patient observations, adverse reactions and allergy/intolerance information.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "forecastStatus"
+          ]
+        }
+      ]
+    },
+    "ImmunizationRecommendation_DateCriterion": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
+          "properties": {
+            "code": {
+              "description": "Date classification of recommendation.  For example, earliest date to give, latest date to give, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "value": {
+              "description": "The date whose meaning is specified by dateCriterion.code.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    },
+    "ImmunizationRecommendation_Protocol": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
+          "properties": {
+            "doseSequence": {
+              "description": "Indicates the nominal position in a series of the next dose.  This is the recommended dose number as per a specified protocol.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_doseSequence": {
+              "description": "Extensions for doseSequence",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Contains the description about the protocol under which the vaccine was administered.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "authority": {
+              "description": "Indicates the authority who published the protocol.  For example, ACIP.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "series": {
+              "description": "One possible path to achieve presumed immunity against a disease - within the context of an authority.",
+              "type": "string"
+            },
+            "_series": {
+              "description": "Extensions for series",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

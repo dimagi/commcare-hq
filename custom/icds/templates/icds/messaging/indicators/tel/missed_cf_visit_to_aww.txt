@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ awc }} అంగన్ వాడీ కేంద్రం  {{ beneficiary }} కు అనుబంధ పోషకాహారం మొదలు పెట్టవలసిన సమయంలో ఒక్క గృహ  సందర్శననూ రిపోర్టు చేయలేదు 

@@ -1,4 +1,35 @@
 ======================
+Testing infrastructure
+======================
+
+Tests are run with `nose <https://nose.readthedocs.io/en/latest/man.html>`_.
+Unlike many projects that use nose, tests cannot normally be invoked with the
+``nosetests`` command because it does not perform necessary Django setup.
+Instead, tests are invoked using the standard Django convention:
+``./manage.py test``.
+
+Nose plugins
+============
+
+Nose plugins are used for various purposes, some of which are optional and can
+be enabled with command line parameters or environment variables. Others are
+required by the test environment and are always enabled. Custom plugins are
+registered with `django-nose <https://github.com/dimagi/django-nose>`_ via the
+``NOSE_PLUGINS`` setting in
+`testsettings <https://github.com/dimagi/commcare-hq/blob/master/testsettings.py>`_.
+
+One very important always-enabled plugin applies
+`patches <https://github.com/dimagi/commcare-hq/blob/master/corehq/tests/noseplugins/patches.py>`_
+before tests are run. The patches remain in effect for the duration of the test
+run unless utilities are provided to temporarily disable them. For example,
+`sync_users_to_es <https://github.com/dimagi/commcare-hq/blob/master/corehq/util/es/testing.py>`_
+is a decorator/context manager that enables syncing of users to ElasticSearch
+when a user is saved. Since this syncing involves custom test setup not done by
+most tests it is disabled by default, but it can be temporarily enabled using
+``sync_users_to_es`` in tests that need it.
+
+
+======================
 Testing best practices
 ======================
 

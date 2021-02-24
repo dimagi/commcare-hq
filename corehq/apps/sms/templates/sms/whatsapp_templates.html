@@ -36,11 +36,15 @@
         <tr>
           <td>{{ template.name }}</td>
           <td>
-            {% for component in template.components %}
-              {% if component.type == 'BODY' %}
-                {{ component.text }}
-              {% endif %}
-            {% endfor %}
+            {% if template.components %}
+              {% for component in template.components %}
+                {% if component.type == 'BODY' %}
+                  {{ component.text }}
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              {{ template.body }}
+            {% endif %}
           </td>
           <td>{{ template.category }}</td>
           <td>{{ template.status }}</td>

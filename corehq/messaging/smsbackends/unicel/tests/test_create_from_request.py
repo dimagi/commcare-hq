@@ -37,14 +37,14 @@ class IncomingPostTest(TestCase):
         self.user = 'username-unicel'
         self.password = 'password'
         self.number = 5555551234
-        self.couch_user = WebUser.create(self.domain.name, self.user, self.password)
+        self.couch_user = WebUser.create(self.domain.name, self.user, self.password, None, None)
         self.couch_user.add_phone_number(self.number)
         self.couch_user.save()
         self.message_ascii = 'It Works'
         self.message_utf_hex = '0939093F0928094D092609400020091509300924093E00200939094800200907093800200938092E092F00200915093E092E002009390948003F'
 
     def tearDown(self):
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         self.domain.delete()
         super().tearDown()
 
