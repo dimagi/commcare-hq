@@ -129,7 +129,7 @@ class IdentityProvider(models.Model):
         ).values_list('username', flat=True)
 
     @classmethod
-    def domain_has_identity_provider(cls, domain):
+    def domain_has_editable_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)
         return cls.objects.filter(owner=owner, is_editable=True).exists()
 
