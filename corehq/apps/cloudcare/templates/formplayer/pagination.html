@@ -8,10 +8,10 @@
   <!-- Render Previous button -->
   <% if (currentPage > 0) { %>
     <li>
-      <a class="js-page" aria-label="First Page" tabindex="0" data-id="0">
+      <a class="js-page" aria-label='{% trans_html_attr "First Page" %}' tabindex="0" data-id="0">
       <span><i class="fa fa-fast-backward"></i></span>
     </a>
-    <a class="js-page" aria-label="Previous" tabindex="0" data-id="<%= currentPage - 1 %>">
+    <a class="js-page" aria-label='{% trans_html_attr "Previous" %}' tabindex="0" data-id="<%= currentPage - 1 %>">
       <span><i class="fa fa-caret-left"></i></span>
     </a>
     </li>
@@ -63,10 +63,10 @@
       </li>
     <% } else { %>
       <li>
-      <a class="js-page" aria-label="Next" tabindex="0" data-id="<%= currentPage + 1 %>">
+      <a class="js-page" aria-label='{% trans_html_attr "Next" %}' tabindex="0" data-id="<%= currentPage + 1 %>">
         <span><i class="fa fa-caret-right"></i></span>
       </a>
-      <a class="js-page" aria-label="Last Page" tabindex="0" data-id="<%= pageCount - 1 %>">
+      <a class="js-page" aria-label='{% trans_html_attr "Last Page" %}' tabindex="0" data-id="<%= pageCount - 1 %>">
         <span><i class="fa fa-fast-forward"></i></span>
       </a>
       </li>

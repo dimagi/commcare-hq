@@ -28,7 +28,7 @@
       <% if (!(pageCount === 1 && limit === 10)) { %>
         <div class="container">
           <div class="row">
-            <div class="col-sm-3">
+            <div class="col-sm-2">
               <div class="form-inline per-pagination-text">
                 <select class="form-control js-page-limit">
                   <% for(var i = 0; i < rowRange.length; i++) { %>
@@ -42,7 +42,7 @@
               </div>
             </div>
           <% if (pageCount > 1) { %>
-            <div class="col-sm-6">
+            <div class="col-sm-7 text-center">
               <nav class="module-pagination-container">
                 {% block pagination_templates %}
                   {% include 'formplayer/pagination.html' %}
@@ -51,7 +51,7 @@
             </div>
             <div class="col-sm-3 module-go-container">
               <div class="input-group input-group-sm module-pagination-container">
-                <input type="text" class="form-control" placeholder="Go to page" id="goText">
+                <input type="text" class="form-control" placeholder='{% trans_html_attr "Go to page" %}' id="goText">
                 <div class="input-group-btn">
                   <button class="btn btn-default" type="button" id="pagination-go-button">{% trans "Go" %}</button>
                 </div>
