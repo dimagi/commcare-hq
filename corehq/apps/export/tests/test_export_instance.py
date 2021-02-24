@@ -186,7 +186,6 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
             forms_filetype=ExportFileType.CSV,
             forms_auto_convert=False,
             forms_auto_format_cells=True,
-            forms_include_duplicates=True,
             forms_expand_checkbox=True
         )
         with mock.patch('corehq.apps.export.models.new.get_default_export_settings_for_domain') as m:
@@ -196,7 +195,6 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
         self.assertEqual(instance.export_format, Format.CSV)
         self.assertEqual(instance.transform_dates, False)
         self.assertEqual(instance.format_data_in_excel, True)
-        self.assertEqual(instance.include_errors, True)
         self.assertEqual(instance.split_multiselects, True)
 
 

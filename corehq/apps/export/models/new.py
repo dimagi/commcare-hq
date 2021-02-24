@@ -1209,7 +1209,6 @@ class FormExportInstance(ExportInstance):
                 export_format=settings.forms_filetype,
                 transform_dates=settings.forms_auto_convert,
                 format_data_in_excel=settings.forms_auto_format_cells,
-                include_errors=settings.forms_include_duplicates,
                 split_multiselects=settings.forms_expand_checkbox,
             )
         else:
