@@ -1353,7 +1353,7 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
 
     form_name = _("Followup with Person")
 
-    output_tag = mark_safe(  # nosec: no user-input
+    output_tag = mark_safe(  # nosec: no user input
         "<output value=\"instance('casedb')/casedb/case[@case_id = "
         "instance('commcaresession')/session/data/case_id]/case_name\" "
         "vellum:value=\"#case/case_name\" />"

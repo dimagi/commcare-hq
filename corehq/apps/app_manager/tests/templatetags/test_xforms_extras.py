@@ -1,8 +1,15 @@
 from lxml.html import fragment_fromstring
 from django.test import SimpleTestCase
-from ...templatetags.xforms_extras import \
-    html_trans, html_trans_prefix, html_trans_prefix_delim, clean_trans, trans, \
-    html_name, input_trans, inline_edit_trans
+from ...templatetags.xforms_extras import (
+    html_trans,
+    html_trans_prefix,
+    html_trans_prefix_delim,
+    clean_trans,
+    trans,
+    html_name,
+    input_trans,
+    inline_edit_trans
+)
 
 
 class TestTransFilter(SimpleTestCase):
@@ -11,7 +18,7 @@ class TestTransFilter(SimpleTestCase):
         result = trans(empty_translation_dict)
         self.assertEqual(result, '')
 
-    def test_unspecified_language_includes_tag(self):
+    def test_unspecified_language_includes_indicator(self):
         translation_dict = {'en': 'English Output'}
         result = trans(translation_dict)
         self.assertEqual(result, 'English Output [en] ')
@@ -21,50 +28,50 @@ class TestTransFilter(SimpleTestCase):
         result = trans(translation_dict, include_lang=False)
         self.assertEqual(result, 'English Output')
 
-    def test_primary_language_excludes_tag(self):
+    def test_primary_language_excludes_indicator(self):
         translation_dict = {'en': 'English Output'}
         langs = ['en']
         result = trans(translation_dict, langs=langs)
         self.assertEqual(result, 'English Output')
 
-    def test_secondary_language_includes_tag(self):
+    def test_secondary_language_includes_indicator(self):
         translation_dict = {'en': 'English Output'}
         langs = ['por', 'en']
         result = trans(translation_dict, langs=langs)
         self.assertEqual(result, 'English Output [en] ')
 
-    def test_do_not_use_delimiter_includes_html_tag(self):
+    def test_do_not_use_delimiter_includes_html_indicator(self):
         translation_dict = {'en': 'English Output'}
         result = trans(translation_dict, use_delim=False)
         self.assertEqual(result,
             'English Output <span class="btn btn-xs btn-info btn-langcode-preprocessed">en</span> ')
 
-    def test_prefix_puts_tag_in_front_of_translation(self):
+    def test_prefix_puts_indicator_in_front_of_translation(self):
         translation_dict = {'en': 'English Output'}
         result = trans(translation_dict, prefix=True)
         self.assertEqual(result, ' [en] English Output')
 
-    def test_strip_tags_removes_tags_from_html_tag(self):
+    def test_strip_tags_removes_tags_from_html_indicator(self):
         translation_dict = {'en': 'English Output'}
         result = trans(translation_dict, use_delim=False, strip_tags=True)
         self.assertEqual(result, 'English Output en ')
 
 
 class TestHTMLTransFilter(SimpleTestCase):
-    def test_primary_language_includes_no_tag(self):
+    def test_primary_language_includes_no_indicator(self):
         name_dict = {'en': 'English Output'}
         langs = ['en']
         result = html_trans(name_dict, langs)
         self.assertEqual(result, 'English Output')
 
-    def test_non_primary_includes_appended_tag(self):
+    def test_non_primary_includes_appended_indicator(self):
         name_dict = {'por': 'Portuguese Output'}
         langs = ['en', 'por']
         result = html_trans(name_dict, langs)
         unpadded_result = ' '.join(result.split())
         self.assertEqual(unpadded_result, 'Portuguese Output por')
 
-    def test_no_language_returns_first_available_with_appended_tag(self):
+    def test_no_language_returns_first_available_with_appended_indicator(self):
         name_dict = {'en': 'English Output'}
         result = html_trans(name_dict)
         unpadded_result = ' '.join(result.split())
@@ -94,13 +101,13 @@ class TestHTMLTransFilter(SimpleTestCase):
 
 
 class TestHTMLTransPrefixFilter(SimpleTestCase):
-    def test_primary_language_includes_no_tag(self):
+    def test_primary_language_includes_no_indicator(self):
         name_dict = {'en': 'English Output'}
         langs = ['en']
         result = html_trans_prefix(name_dict, langs)
         self.assertEqual(result, 'English Output')
 
-    def test_non_primary_language_includes_prepended_html_tag(self):
+    def test_non_primary_language_includes_prepended_html_indicator(self):
         name_dict = {'por': 'Portuguese Output'}
         langs = ['en', 'por']
         result = html_trans_prefix(name_dict, langs)
@@ -108,7 +115,7 @@ class TestHTMLTransPrefixFilter(SimpleTestCase):
         self.assertEqual(unpadded_result,
             '<span class="btn btn-xs btn-info btn-langcode-preprocessed">por</span> Portuguese Output')
 
-    def test_default_language_includes_prepended_html_tag(self):
+    def test_default_language_includes_prepended_html_indicator(self):
         name_dict = {'en': 'English Output'}
         result = html_trans_prefix(name_dict)
         unpadded_result = ' '.join(result.split())
@@ -123,19 +130,19 @@ class TestHTMLTransPrefixFilter(SimpleTestCase):
 
 
 class TestHTMLTransPrefixDelimFilter(SimpleTestCase):
-    def test_primary_language_includes_no_tag(self):
+    def test_primary_language_includes_no_indicator(self):
         name_dict = {'en': 'English Output'}
         langs = ['en']
         result = html_trans_prefix_delim(name_dict, langs)
         self.assertEqual(result, 'English Output')
 
-    def test_non_primary_language_includes_prepended_tag(self):
+    def test_non_primary_language_includes_prepended_indicator(self):
         name_dict = {'por': 'Portuguese Output'}
         langs = ['en', 'por']
         result = html_trans_prefix_delim(name_dict, langs)
         self.assertEqual(result, ' [por] Portuguese Output')
 
-    def test_default_language_includes_prepended_tag(self):
+    def test_default_language_includes_prepended_indicator(self):
         name_dict = {'en': 'English Output'}
         result = html_trans_prefix_delim(name_dict)
         self.assertEqual(result, ' [en] English Output')
@@ -148,19 +155,19 @@ class TestHTMLTransPrefixDelimFilter(SimpleTestCase):
 
 
 class TestCleanTransFilter(SimpleTestCase):
-    def test_primary_language_includes_no_tag(self):
+    def test_primary_language_includes_no_indicator(self):
         name_dict = {'en': 'English Output'}
         langs = ['en']
         result = clean_trans(name_dict, langs)
         self.assertEqual(result, 'English Output')
 
-    def test_non_primary_language_includes_no_tag(self):
+    def test_non_primary_language_includes_no_indicator(self):
         name_dict = {'por': 'Portuguese Output'}
         langs = ['en', 'por']
         result = clean_trans(name_dict, langs)
         self.assertEqual(result, 'Portuguese Output')
 
-    def test_default_language_includes_no_tag(self):
+    def test_default_language_includes_no_indicator(self):
         name_dict = {'en': 'English Output'}
         result = clean_trans(name_dict)
         self.assertEqual(result, 'English Output')

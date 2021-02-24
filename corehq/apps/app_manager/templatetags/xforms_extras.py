@@ -1,12 +1,14 @@
 from django import template
 from django.utils import html
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import (
+    ugettext as _,
+    ugettext_lazy
+)
 
 register = template.Library()
 
-EMPTY_LABEL = mark_safe('<span class="label label-info">Empty</span>')  # nosec: no user input
+EMPTY_LABEL = format_html('<span class="label label-info">{}</span>', ugettext_lazy('Empty'))
 
 
 @register.simple_tag
@@ -17,16 +19,16 @@ def translate(t, lang, langs=None):
             return t[lang]
 
 
-def tag_with_brackets(lang):
+def _create_indicator_with_brackets(lang):
     return ' [%s] ' % lang
 
 
-def tag_with_markup(lang):
+def _create_indicator_with_markup(lang):
     style = 'btn btn-xs btn-info btn-langcode-preprocessed'
     return format_html(' <span class="{}">{}</span> ', style, lang)
 
 
-def empty_tag(lang):
+def _create_empty_indicator(lang):
     return ''
 
 
@@ -35,11 +37,11 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, str
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
-            tag = tag_with_brackets
+            create_lang_indicator = _create_indicator_with_brackets
         else:
-            tag = tag_with_markup
+            create_lang_indicator = _create_indicator_with_markup
     else:
-        tag = empty_tag
+        create_lang_indicator = _create_empty_indicator
 
     translation_in_requested_langs = False
     n = ''
@@ -53,14 +55,14 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, str
         if lang in name and name[lang] is not None:
             n = str(name[lang])
             is_currently_set_language = langs and lang == langs[0]
-            affix = ("" if is_currently_set_language else tag(lang))
+            affix = ("" if is_currently_set_language else create_lang_indicator(lang))
             translation_in_requested_langs = True
             break
 
     if not translation_in_requested_langs and len(name) > 0:
         lang, n = sorted(name.items())[0]
         n = str(n)
-        affix = tag(lang)
+        affix = create_lang_indicator(lang)
 
     if strip_tags:
         n = html.strip_tags(n)
