@@ -71,6 +71,7 @@ def sso_saml_acs(request, idp_slug):
             request=request,
             username=request.session['samlNameId'],
             idp_slug=idp_slug,
+            is_handshake_successful=True,
         )
 
         if user:

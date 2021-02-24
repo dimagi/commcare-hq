@@ -48,9 +48,6 @@ class TestSsoBackend(TestCase):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
-        self.request.session = {
-            'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
-        }
 
     def test_backend_failure_without_username(self):
         """
@@ -61,6 +58,7 @@ class TestSsoBackend(TestCase):
             auth.authenticate(
                 request=self.request,
                 idp_slug=self.idp.slug,
+                is_handshake_successful=True,
             )
 
     def test_backend_failure_without_idp_slug(self):
@@ -70,24 +68,26 @@ class TestSsoBackend(TestCase):
         """
         user = auth.authenticate(
             request=self.request,
-            username=self.user.username
+            username=self.user.username,
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         with self.assertRaises(AttributeError):
             self.request.sso_login_error
 
-    def test_backend_failure_without_saml_session_index(self):
+    def test_backend_failure_without_is_handshake_successful_flag(self):
         """
         SsoBackend should fail to move past the first check because a
          samlSessionIndex is not present in request.session.
         """
-        del self.request.session['samlSessionIndex']
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
             idp_slug=self.idp.slug
         )
         self.assertIsNone(user)
+        with self.assertRaises(AttributeError):
+            self.request.sso_login_error
 
     def test_login_error_if_idp_doesnt_exist(self):
         """
@@ -98,7 +98,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
-            idp_slug='doesnotexist'
+            idp_slug='doesnotexist',
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -117,7 +118,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
-            idp_slug=self.idp.slug
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -136,7 +138,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username='badusername',
-            idp_slug=self.idp.slug
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -153,7 +156,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username='b@idonotexist.com',
-            idp_slug=self.idp.slug
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -172,7 +176,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username='b@vwx.link',
-            idp_slug=self.idp.slug  # note that this is self.idp, not idp_vwx
+            idp_slug=self.idp.slug,  # note that this is self.idp, not idp_vwx
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -193,7 +198,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username='testnoexist@vaultwax.com',
-            idp_slug=self.idp.slug
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
         )
         self.assertIsNone(user)
         self.assertEqual(
@@ -209,7 +215,8 @@ class TestSsoBackend(TestCase):
         user = auth.authenticate(
             request=self.request,
             username=self.user.username,
-            idp_slug=self.idp.slug
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
         )
         self.assertIsNotNone(user)
         self.assertEqual(user.username, self.user.username)

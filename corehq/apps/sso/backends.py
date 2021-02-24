@@ -9,10 +9,9 @@ class SsoBackend(ModelBackend):
     Authenticates against an IdentityProvider and SAML2 session data.
     """
 
-    def authenticate(self, request, username=None, idp_slug=None, **kwargs):
-        #  Note: when implementing ODIC or other protocols in the future,
-        #   a different request.session check can be made
-        if not (username and idp_slug and request.session.get('samlSessionIndex')):
+    def authenticate(self, request, username=None, idp_slug=None,
+                     is_handshake_successful=False, **kwargs):
+        if not (username and idp_slug and is_handshake_successful):
             return None
 
         try:
