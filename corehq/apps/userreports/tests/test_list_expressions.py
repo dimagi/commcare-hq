@@ -255,6 +255,12 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'join',
         'joins4life',
     ),
+    (
+        [None, 'joins', 'work'],
+        {'type': 'identity'},
+        'join',
+        'joinswork',
+    ),
     # if items can't be compared should return None
     (
         [datetime.datetime.now(), datetime.date.today()],
