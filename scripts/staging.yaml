@@ -67,19 +67,12 @@ branches:
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - ap/fix-header-tab-caching # Amit Feb 3
-  - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
-  - sr/cs-help2  # Sravan Feb 4
-  - sr/daterange-webapps # Sravan Feb 4
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - jls/remove-autolaunch # Jenny Feb 9
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
-  # - revert-29106-mjr/login_logging # Jenny Feb 12
-  # - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
-  #   ^^^ Breaks ability to build new app versions. Errors:
-  #           Every case must have a name. Please specify a value for the name
-  #           property under "Save data to the following case properties"
-  #           Case Update uses reserved word "case_name"
+  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - smh/bulk-upload-web-users # Steph Feb 22
   - jls/encode-case-claim-params # Jenny Feb 22
   - bmb/sso-backend  # Biyeun Feb 22
+  - gh/default-export-settings-fix # Graham Feb 23
 submodules: {}
