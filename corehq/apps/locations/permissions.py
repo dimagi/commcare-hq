@@ -100,10 +100,8 @@ see.
 from functools import wraps
 
 from django.http import Http404
-from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
-from django.views.generic import View
 
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
@@ -113,11 +111,8 @@ from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.domain.decorators import (
-    domain_admin_required,
     login_and_domain_required,
 )
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 
