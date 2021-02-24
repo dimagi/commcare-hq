@@ -109,12 +109,17 @@ class TestSsoBackend(TestCase):
             "Identity Provider doesnotexist does not exist."
         )
 
+    def _activate_idp(self):
+        self.idp.is_active = True
+        self.idp.save()
+
     def test_login_error_if_idp_not_active(self):
         """
         SsoBackend should fail to return a user if the Identity Provider
         associated with that user is not active. It should also populate
         request.sso_login_error with an error message.
         """
+        self.addCleanup(self._activate_idp)
         self.idp.is_active = False
         self.idp.save()
         user = auth.authenticate(
@@ -128,8 +133,6 @@ class TestSsoBackend(TestCase):
             self.request.sso_login_error,
             "This Identity Provider vaultwax is not active."
         )
-        self.idp.is_active = True
-        self.idp.save()
 
     def test_login_error_if_bad_username(self):
         """
