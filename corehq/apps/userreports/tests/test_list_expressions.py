@@ -283,6 +283,10 @@ def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
         'first_item',
         None
     ),
+    (
+        'join',
+        '',
+    ),
 ])
 def test_reduce_items_non_iterable(self, aggregation_fn, expected):
     expression = ExpressionFactory.from_spec({
@@ -310,6 +314,10 @@ def test_reduce_items_non_iterable(self, aggregation_fn, expected):
     (
         'first_item',
         None
+    ),
+    (
+        'join',
+        '',
     ),
 ])
 def test_reduce_items_empty_list(self, aggregation_fn, expected):
