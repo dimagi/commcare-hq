@@ -110,22 +110,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 var addressTopic = $(this).data().address;
                 if (addressTopic !== undefined && addressTopic !== "") {
                     // set this up as mapbox input
-                    var geocoder = new MapboxGeocoder({
-                        accessToken: initialPageData.get("mapbox_access_token"),
-                        types: 'address',
-                        enableEventLogging: false,
-                        getItemValue: self.geocoderItemCallback(addressTopic),
-                    });
-                    var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
-                    if (defaultGeocoderLocation.coordinates) {
-                        geocoder.setProximity(defaultGeocoderLocation.coordinates);
-                    }
-                    geocoder.addTo("#" + addressTopic + "_mapbox");
-                    geocoder.on('clear', self.geocoderOnClearCallback(addressTopic));
-                    // Set style to the div created by mapbox/
-                    var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
-                    inputEl.addClass('form-control');
-                    inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+                    Utils.renderMapboxInput(
+                        addressTopic + "_mapbox",
+                        self.geocoderItemCallback(addressTopic),
+                        self.geocoderOnClearCallback(addressTopic),
+                        initialPageData
+                    );
                     var divEl = $('.mapboxgl-ctrl-geocoder');
                     divEl.css("max-width", "none");
                     divEl.css("width", "100%");

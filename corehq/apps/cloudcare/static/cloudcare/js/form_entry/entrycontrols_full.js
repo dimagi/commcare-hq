@@ -272,22 +272,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 });
             }
 
-            var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
-            var geocoder = new MapboxGeocoder({
-                accessToken: initialPageData.get("mapbox_access_token"),
-                types: 'address',
-                enableEventLogging: false,
-                getItemValue: self.geocoderItemCallback,
-            });
-            if (defaultGeocoderLocation.coordinates) {
-                geocoder.setProximity(defaultGeocoderLocation.coordinates);
-            }
-            geocoder.on('clear', self.geocoderOnClearCallback);
-            geocoder.addTo('#' + self.entryId);
-            // Must add the form-control class to the input created by mapbox in order to edit.
-            var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
-            inputEl.addClass('form-control');
-            inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+            Utils.renderMapboxInput(
+                self.entryId,
+                self.geocoderItemCallback,
+                self.geocoderOnClearCallback,
+                initialPageData
+            );
         };
 
         self._inputOnKeyDown = function (event) {
