@@ -19,7 +19,6 @@ user_login_failed = Signal(providing_args=['request', 'username'])
 def model_to_json(instance):
     """
     converts a django model into json in the format used by jsonobject
-
     """
 
     class DummyObject(JsonObject):
@@ -40,8 +39,8 @@ def django_audit_save(sender, instance, created, raw=False, **kwargs):
     if raw:
         return
 
+    from auditcare.models import AuditEvent
     usr = get_current_user()
-
     instance_json = model_to_json(instance)
 
     #really stupid sanity check for unit tests when threadlocals doesn't update and user model data is updated.
@@ -50,14 +49,13 @@ def django_audit_save(sender, instance, created, raw=False, **kwargs):
             User.objects.get(id=usr.id)
         except:
             usr = None
-    from auditcare.models import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
 
 def couch_audit_save(instance, *args, **kwargs):
+    from auditcare.models import AuditEvent
     instance.__orig_save(*args, **kwargs)
     instance_json = instance.to_json()
-    from auditcare.models import AuditEvent
     usr = get_current_user()
     if usr != None:
         try:
@@ -68,15 +66,14 @@ def couch_audit_save(instance, *args, **kwargs):
 
 
 if not hasattr(settings, 'AUDIT_MODEL_SAVE'):
-    log.warning("You do not have the AUDIT_MODEL_SAVE settings variable setup.  If you want to setup model save audit events, please add the property and populate it with fully qualified model names.")
+    log.warning(
+        "You do not have the AUDIT_MODEL_SAVE settings variable setup. "
+        "If you want to setup model save audit events, please add the property "
+        "and populate it with fully qualified model names."
+    )
     settings.AUDIT_MODEL_SAVE = []
 
-if hasattr(settings, 'AUDIT_DJANGO_USER'):
-    do_audit_django_user = settings.AUDIT_DJANGO_USER
-else:
-    do_audit_django_user = False
-
-if do_audit_django_user:
+if getattr(settings, 'AUDIT_DJANGO_USER', False):
     settings.AUDIT_MODEL_SAVE.append('django.contrib.auth.models.User')
 
 for full_str in settings.AUDIT_MODEL_SAVE:
@@ -87,10 +84,9 @@ for full_str in settings.AUDIT_MODEL_SAVE:
     if hasattr(mod, model_class):
         audit_model = getattr(mod, model_class)
         if issubclass(audit_model, models.Model):
-            # it's a django model subclass.
-            post_save.connect(django_audit_save, sender=audit_model, dispatch_uid="audit_save_" + str(model_class)) #note, you should add a unique dispatch_uid to this else you might get dupes
-            # source; http://groups.google.com/group/django-users/browse_thread/thread/0f8db267a1fb036f
+            post_save.connect(django_audit_save, sender=audit_model, dispatch_uid="audit_save_" + str(model_class))
+            # note, you should add a unique dispatch_uid to this else you might get dupes
+            # source: http://groups.google.com/group/django-users/browse_thread/thread/0f8db267a1fb036f
         elif issubclass(audit_model, Document):
-            # it's a couchdbkit Document subclass
             audit_model.__orig_save = audit_model.save
             audit_model.save = couch_audit_save

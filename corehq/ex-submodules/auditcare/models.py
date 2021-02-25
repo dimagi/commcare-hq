@@ -34,23 +34,34 @@ def make_uuid():
 def getdate():
     return datetime.utcnow()
 
-#class AuditManager(models.Manager):
-#    pass
 
-
-STANDARD_HEADER_KEYS = ['X_FORWARDED_FOR', 'X_FORWARDED_HOST', 'X_FORWARDED_SERVER', 'VIA', 'HTTP_REFERER', 'REQUEST_METHOD',
-  'QUERY_STRING', 'HTTP_ACCEPT_CHARSET',
- 'HTTP_CONNECTION', 'HTTP_COOKIE', 'SERVER_NAME', 'SERVER_PORT',
-   'HTTP_ACCEPT', 'REMOTE_ADDR', 'HTTP_ACCEPT_LANGUAGE', 'CONTENT_TYPE', 'HTTP_ACCEPT_ENCODING']
+STANDARD_HEADER_KEYS = [
+    'X_FORWARDED_FOR',
+    'X_FORWARDED_HOST',
+    'X_FORWARDED_SERVER',
+    'VIA',
+    'HTTP_REFERER',
+    'REQUEST_METHOD',
+    'QUERY_STRING',
+    'HTTP_ACCEPT_CHARSET',
+    'HTTP_CONNECTION',
+    'HTTP_COOKIE',
+    'SERVER_NAME',
+    'SERVER_PORT',
+    'HTTP_ACCEPT',
+    'REMOTE_ADDR',
+    'HTTP_ACCEPT_LANGUAGE',
+    'CONTENT_TYPE',
+    'HTTP_ACCEPT_ENCODING',
+]
 
 
 class AuditEvent(Document):
-    user = StringProperty() #the user committing the action
-    base_type = StringProperty(default="AuditEvent") #for subclassing this needs to stay consistent
-    #subclasses will be know directly from the doc_type, so it's not here.
-    #doc_type = StringProperty() #Descriptor classifying this particular instance - this will be the child class's class name, with some modifications if need be
+    user = StringProperty()  # the user committing the action
+    base_type = StringProperty(default="AuditEvent")  # for subclassing this needs to stay consistent
+    # subclasses will be known directly from the doc_type, so it's not here.
     event_date = DateTimeProperty(default=getdate)
-    description = StringProperty() #particular instance details of this audit event
+    description = StringProperty()  # particular instance details of this audit event
 
     @property
     def summary(self):
@@ -75,7 +86,7 @@ class AuditEvent(Document):
         if isinstance(user, AnonymousUser):
             audit.user = None
             audit.description = "[AnonymousAccess] "
-        elif user == None:
+        elif user is None:
             audit.user = None
             audit.description = '[NullUser] '
         elif isinstance(user, User):
@@ -99,22 +110,24 @@ class ModelActionAudit(AuditEvent):
     for couch models:
         the object_type will be the doc_type
         the object_uuid will be theh doc's doc_id
-        the revision_id will be the _rev as emitted by the 
+        the revision_id will be the _rev as emitted by the
 
     """
     object_type = StringProperty()
     object_uuid = StringProperty()
     revision_checksum = StringProperty()
     revision_id = StringProperty()
-    archived_data = DictProperty() # the instance data of the model at this rev.  So at any given moment, the CURRENT instance of this model will be equal to this.
+    # the instance data of the model at this rev.  So at any given moment, the
+    # CURRENT instance of this model will be equal to this.
+    archived_data = DictProperty()
 
-    #PRIOR values are stored here so as to show the delta of data.
-    removed = DictProperty() #data/properties removed in this revision.
-    added = DictProperty() # data/properties added in this revision
-    changed = DictProperty() # data/properties changed in this revision
+    # PRIOR values are stored here so as to show the delta of data.
+    removed = DictProperty()  # data/properties removed in this revision.
+    added = DictProperty()  # data/properties added in this revision
+    changed = DictProperty()  # data/properties changed in this revision
 
-    next_id = StringProperty() #the doc_id of the next revision
-    prev_id = StringProperty() #the doc_id of the previous revision
+    next_id = StringProperty()  # the doc_id of the next revision
+    prev_id = StringProperty()  # the doc_id of the previous revision
 
     def next(self):
         if self.next_id is not None:
@@ -174,13 +187,11 @@ class ModelActionAudit(AuditEvent):
         if save:
             self.save()
 
-
     def resolved_changed_fields(self, filters=None, excludes=None):
         """
-        Generator for changed field values yielding
-        (field_key, (from_val, to_val))
-        This answers the question
-        'Field X was changed from_val to to_val'
+        Generator for changed field values yielding (field_key, (from_val, to_val))
+
+        This answers the question 'Field X was changed from_val to to_val'
         """
         changed, added, removed = self.get_changed_fields(filters=filters, excludes=excludes)
         #returns generated tuples of (field, (from_val, to_val))
@@ -191,12 +202,12 @@ class ModelActionAudit(AuditEvent):
             if next_val != prior_val:
                 yield (ckey, (prior_val, next_val))
 
-
     def get_changed_fields(self, filters=None, excludes=None):
         """
         Gets all the changed fields for an audit event.
 
-        Returns a tuple of field KEYS that lets you access the changed fields and also get the values from them programmatically later.
+        Returns a tuple of field KEYS that lets you access the changed fields
+        and also get the values from them programmatically later.
         """
         changed_keys = list(self.changed)
         added_keys = list(self.added)
@@ -229,7 +240,11 @@ class ModelActionAudit(AuditEvent):
         """
 
         db = AuditEvent.get_db()
-        prior_revs = db.view('auditcare/model_actions_by_id', key=[model_class_name, instance_id], reduce=False).all()
+        prior_revs = db.view(
+            'auditcare/model_actions_by_id',
+            key=[model_class_name, instance_id],
+            reduce=False,
+        ).all()
 
         audit.description += "Save %s" % (model_class_name)
         audit.object_type = model_class_name
@@ -251,8 +266,8 @@ class ModelActionAudit(AuditEvent):
             if is_django:
                 #for django models, increment an integral counter.
                 try:
-                    audit.revision_id = str(len(prior_revs) + 1) #str(int(last_rev) + 1)
-                except:
+                    audit.revision_id = str(len(prior_revs) + 1)  # str(int(last_rev) + 1)
+                except Exception:
                     log.error("Error, last revision for object %s is not an integer, resetting to one")
                     audit.revision_id = "1"
             else:
@@ -263,7 +278,7 @@ class ModelActionAudit(AuditEvent):
                 #no actual changes made on this save, do nothing
                 log.debug("No data change, not creating audit event")
             else:
-                audit.next_id = None #this is the head
+                audit.next_id = None  # this is the head
                 audit.prev_id = sorted_revs[-1]['id']
                 audit.compute_changes(save=False)
                 audit.save()
@@ -275,13 +290,20 @@ class ModelActionAudit(AuditEvent):
         revision_id = None
         cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
 
-
     @classmethod
     def audit_couch_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
         instance_id = instance._id
         revision_id = instance._rev
-        cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=False)
+        cls._save_model_audit(
+            audit,
+            instance_id,
+            instance_json,
+            revision_id,
+            model_class.__name__,
+            is_django=False,
+        )
+
 
 setattr(AuditEvent, 'audit_django_save', ModelActionAudit.audit_django_save)
 setattr(AuditEvent, 'audit_couch_save', ModelActionAudit.audit_couch_save)
@@ -295,10 +317,11 @@ class NavigationEventAudit(AuditEvent):
     ip_address = StringProperty()
     user_agent = StringProperty()
 
-    view = StringProperty() #the fully qualifid view name
+    view = StringProperty()  # the fully qualifid view name
     view_kwargs = DictProperty()
-    headers = DictProperty() #the request.META?
-    session_key = StringProperty() #in the future possibly save some disk space by storing user agent and IP stuff in a separte session document?
+    headers = DictProperty()  # the request.META?
+    # in the future possibly save some disk space by storing user agent and IP stuff in a separte session document?
+    session_key = StringProperty()
 
     status_code = IntegerProperty()
 
@@ -323,8 +346,8 @@ class NavigationEventAudit(AuditEvent):
             audit = cls.create_audit(cls, user)
             audit.description += "View"
             if len(list(request.GET)) > 0:
-                audit.request_path = "%s?%s" % (
-                    request.path, '&'.join(["%s=%s" % (x, request.GET[x]) for x in request.GET.keys()]))
+                params = "&".join(f"{x}={request.GET[x]}" for x in request.GET.keys())
+                audit.request_path = f"{request.path}?{params}"
             else:
                 audit.request_path = request.path
             audit.ip_address = get_ip(request)
@@ -334,7 +357,10 @@ class NavigationEventAudit(AuditEvent):
                 header_item = request.META.get(k, None)
                 if header_item is not None:
                     audit.headers[k] = header_item
-            #audit.headers = request.META #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
+            # it's a bit verbose to go to that extreme, TODO: need to have
+            # targeted fields in the META, but due to server differences, it's
+            # hard to make it universal.
+            #audit.headers = request.META
             audit.session_key = request.session.session_key
             audit.extra = extra
             audit.view_kwargs = view_kwargs
@@ -342,6 +368,7 @@ class NavigationEventAudit(AuditEvent):
             return audit
         except Exception as ex:
             log.error("NavigationEventAudit.audit_view error: %s", ex)
+
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
@@ -358,13 +385,13 @@ ACCESS_CHOICES = (
     (ACCESS_USER_LOCKOUT, "User Lockout"),
     (ACCESS_IP_LOCKOUT, "IP Lockout"),
     (ACCESS_PASSWORD, "Password Change"),
-    )
+)
 
 
 class AccessAudit(AuditEvent):
     access_type = StringProperty(choices=ACCESS_CHOICES)
     ip_address = StringProperty()
-    session_key = StringProperty() #the django auth session key
+    session_key = StringProperty()  # the django auth session key
 
     user_agent = StringProperty()
 
@@ -382,7 +409,6 @@ class AccessAudit(AuditEvent):
     def summary(self):
         return "%s from %s" % (self.access_type, self.ip_address)
 
-
     @classmethod
     def audit_login(cls, request, user, *args, **kwargs):
         '''Creates an instance of a Access log.
@@ -396,7 +422,7 @@ class AccessAudit(AuditEvent):
         audit.access_type = 'login'
         audit.description = "Login Success"
         audit.session_key = request.session.session_key
-        audit.get_data = [] #[query2str(request.GET.items())]
+        audit.get_data = []  # [query2str(request.GET.items())]
         audit.post_data = []
         audit.save()
 
@@ -407,7 +433,7 @@ class AccessAudit(AuditEvent):
         audit = cls.create_audit(cls, username)
         audit.ip_address = get_ip(request)
         audit.access_type = 'login_failed'
-        if username != None:
+        if username is not None:
             audit.description = "Login Failure: %s" % (username)
         else:
             audit.description = "Login Failure"
@@ -445,7 +471,6 @@ class AuditCommand(AuditEvent):
     # ip address if available of logged in user running cmd
     ip_address = StringProperty()
     pid = IntegerProperty()
-
 
     @classmethod
     def audit_command(cls):
@@ -487,7 +512,8 @@ setattr(AuditEvent, 'audit_command', AuditCommand.audit_command)
 
 
 def audit_login(sender, **kwargs):
-    AuditEvent.audit_login(kwargs["request"], kwargs["user"], True) # success
+    AuditEvent.audit_login(kwargs["request"], kwargs["user"], True)  # success
+
 
 if user_logged_in:
     user_logged_in.connect(audit_login)
@@ -495,6 +521,7 @@ if user_logged_in:
 
 def audit_logout(sender, **kwargs):
     AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
+
 
 if user_logged_out:
     user_logged_out.connect(audit_logout)

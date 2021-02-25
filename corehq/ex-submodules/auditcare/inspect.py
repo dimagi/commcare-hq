@@ -1,4 +1,3 @@
-
 #inspector methods
 from datetime import datetime, timedelta
 
@@ -11,6 +10,7 @@ default_excludes = ['_rev']
 
 
 class ObjectHistoryWrapper(object):
+
     def __init__(self, obj, filter_fields=None, exclude_fields=None, start_date=None, end_date=None, **kwargs):
         self.object = obj
         self.filter_fields = filter_fields or []
@@ -32,14 +32,10 @@ class ObjectHistoryWrapper(object):
         if len(self.filter_fields) > 0:
             final_fields = filter_fields[:]
         self.final_fields = final_fields
-
-        revisions=ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all()
-        #need a better view to filter by date
-
-        #todo: filter by date ranges
-        #return sorted(revisions, key=lambda x: x.event_date, reverse=True)
-
-        self.revisions=sorted(ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all(), key=lambda x: x.event_date)
+        self.revisions = sorted(
+            ModelActionAudit.view('auditcare/model_actions_by_id', key=key, reduce=False, include_docs=True).all(),
+            key=lambda x: x.event_date
+        )
 
     def filtered_changes(self):
         """
@@ -50,8 +46,10 @@ class ObjectHistoryWrapper(object):
         key: changed_fields, value: a tuple of field names ([changed fields], [added fields], [removed fields])
         """
         for rev in self.revisions:
-            yield {"revision": rev, 'changed_fields': rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)}
-
+            yield {
+                "revision": rev,
+                'changed_fields': rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)
+            }
 
     def change_narratives(self):
         """
@@ -61,11 +59,15 @@ class ObjectHistoryWrapper(object):
         """
         ret = []
         for rev in self.revisions:
-            changed, added, removed  = rev.get_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)
+            changed, added, removed = rev.get_changed_fields(
+                filters=self.filter_fields, excludes=self.exclude_fields
+            )
             if len(changed) > 0:
-                ret.append({'revision': rev, 'changes': list(rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields))})
+                changes = list(
+                    rev.resolved_changed_fields(filters=self.filter_fields, excludes=self.exclude_fields)
+                )
+                ret.append({'revision': rev, 'changes': changes})
         return ret
-
 
 
 def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter_fields=None, exclude_fields=None):
@@ -78,7 +80,8 @@ def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter
     start_date if None, search from the beginning of time
     end_date if None, will assume now
 
-    date_range - if set, will assume now-date_range (days), else, will assume end_date and work backwards with the date_range days
+    date_range - if set, will assume now-date_range (days), else, will assume
+                 end_date and work backwards with the date_range days
 
     filter_fields are the fields in which you want to track and report back the diffs for
 
@@ -86,9 +89,6 @@ def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter
 
     returns a list of all the deltas by field and value
     """
-
-
-
     #parameter/date range checking
     if date_range is None:
         if start_date is not None and end_date is None:
@@ -113,5 +113,10 @@ def history_for_doc(obj, start_date=None, end_date=None, date_range=None, filter
             end_date = datetime.utcnow()
             start_date = end_date - timedelta(days=abs(date_range))
 
-
-    return ObjectHistoryWrapper(obj, filter_fields=filter_fields, exclude_fields=exclude_fields, start_date=start_date, end_date=end_date)
+    return ObjectHistoryWrapper(
+        obj,
+        filter_fields=filter_fields,
+        exclude_fields=exclude_fields,
+        start_date=start_date,
+        end_date=end_date,
+    )

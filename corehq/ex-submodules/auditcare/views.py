@@ -83,17 +83,17 @@ def audited_logout(request, *args, **kwargs):
     ip = request.META.get('REMOTE_ADDR', '')
     ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
     attempt = AccessAudit()
-    attempt.doc_type=AccessAudit.__name__
+    attempt.doc_type = AccessAudit.__name__
     attempt.access_type = models.ACCESS_LOGOUT
-    attempt.user_agent=ua
+    attempt.user_agent = ua
     attempt.user = user.username
     attempt.session_key = request.session.session_key
-    attempt.ip_address=ip
-    attempt.get_data=[]
-    attempt.post_data=[]
-    attempt.http_accept=request.META.get('HTTP_ACCEPT', '<unknown>')
-    attempt.path_info=request.META.get('PATH_INFO', '<unknown>')
-    attempt.failures_since_start=0
+    attempt.ip_address = ip
+    attempt.get_data = []
+    attempt.post_data = []
+    attempt.http_accept = request.META.get('HTTP_ACCEPT', '<unknown>')
+    attempt.path_info = request.META.get('PATH_INFO', '<unknown>')
+    attempt.failures_since_start = 0
     attempt.save()
 
     # call the logout function
@@ -126,9 +126,10 @@ def single_model_history(request, model_name, *args, **kwargs):
     # it's for a particular model
     context = {}
     db = AccessAudit.get_db()
-    vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name, ''], endkey=[model_name, 'z']).all()
-    model_dict= dict((x['key'][1], x['value']) for x in vals)
-    context['instances_dict']=model_dict
+    vals = db.view(
+        'auditcare/model_actions_by_id', group=True, startkey=[model_name, ''], endkey=[model_name, 'z']
+    ).all()
+    context['instances_dict'] = {x['key'][1]: x['value'] for x in vals}
     context['model'] = model_name
     return render(request, 'auditcare/single_model_changes.html', context)
 
@@ -142,7 +143,5 @@ def model_histories(request, *args, **kwargs):
     db = AccessAudit.get_db()
     vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
     # do a dict comprehension here because we know all the keys in this reduce are unique
-    model_dict = dict((x['value'][0], x['value']) for x in vals)
-    context = {'model_dict': model_dict}
+    context = {'model_dict': {x['value'][0]: x['value'] for x in vals}}
     return render(request, 'auditcare/model_changes.html', context)
-

@@ -14,11 +14,11 @@ class TestGDPRScrubUserAuditcare(TestCase):
         NavigationEventAudit(user="test_user1", request_path="/fake/path/2").save()
 
     def tearDown(self):
-        all_auditcare_ids = list(set([result["id"] for result in NavigationEventAudit.get_db().view(
+        all_auditcare_ids = {result["id"] for result in NavigationEventAudit.get_db().view(
             "auditcare/urlpath_by_user_date",
             reduce=False,
-        ).all()]))
-        iter_bulk_delete(NavigationEventAudit.get_db(), all_auditcare_ids)
+        ).all()}
+        iter_bulk_delete(NavigationEventAudit.get_db(), list(all_auditcare_ids))
 
     def test_update_username_no_returned_docs(self):
         management.call_command("gdpr_scrub_user_auditcare", "nonexistent_user")

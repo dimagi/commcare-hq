@@ -31,6 +31,10 @@ LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
 LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
+log = logging.getLogger(__name__)
+if VERBOSE:
+    log.info('AXES: BEGIN LOG')
+
 
 def query2str(items):
     """Turns a dictionary into an easy-to-read list of key-value pairs.
@@ -45,11 +49,6 @@ def query2str(items):
 
     return '\n'.join(kvs)
 
-log = logging.getLogger(__name__)
-if VERBOSE:
-    log.info('AXES: BEGIN LOG')
-    #log.info('Using django-axes ' + axes.get_version())
-
 
 def get_user_attempt(request):
     """
@@ -60,19 +59,18 @@ def get_user_attempt(request):
     if USE_USER_AGENT:
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
 
-        attempts = AccessAudit.view('auditcare/login_events', key=['ip_ua', ip, ua], include_docs=True, limit=25).all()
-
-        #attempts = AccessAttempt.objects.filter( user_agent=ua, ip_address=ip )
+        attempts = AccessAudit.view(
+            'auditcare/login_events', key=['ip_ua', ip, ua], include_docs=True, limit=25
+        ).all()
     else:
         attempts = AccessAudit.view('auditcare/login_events', key=['ip', ip], include_docs=True, limit=25).all()
-        #attempts = AccessAttempt.objects.filter( ip_address=ip )
 
     attempts = sorted(attempts, key=lambda x: x.event_date, reverse=True)
     if not attempts:
         log.info("No attempts for given access, creating new attempt")
         return None
 
-    #walk the attempts
+    # walk the attempts
     attempt = None
     for at in attempts:
         if at.access_type == models.ACCESS_FAILED:
@@ -85,8 +83,6 @@ def get_user_attempt(request):
             attempt = None
             break
 
-
-
     if COOLOFF_TIME and attempt and datetime.utcnow() - attempt.event_date < COOLOFF_TIME:
         log.info("Last login failure is still within the cooloff time, incrementing last access attempt.")
     else:
@@ -96,12 +92,14 @@ def get_user_attempt(request):
 
 
 def watch_logout(func):
-    def decorated_logout (request, *args, **kwargs):
+    def decorated_logout(request, *args, **kwargs):
         # share some useful information
         if func.__name__ != 'decorated_logout' and VERBOSE:
             log.info('AXES: Calling decorated logout function: %s', func.__name__)
-            if args: log.info('args: %s', args)
-            if kwargs: log.info('kwargs: %s', kwargs)
+            if args:
+                log.info('args: %s', args)
+            if kwargs:
+                log.info('kwargs: %s', kwargs)
         log.info("Function: %s", func.__name__)
         log.info("Logged logout for user %s", request.user.username)
         user = request.user
@@ -109,17 +107,17 @@ def watch_logout(func):
         ip = get_ip(request)
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
         attempt = AccessAudit()
-        attempt.doc_type=AccessAudit.__name__
+        attempt.doc_type = AccessAudit.__name__
         attempt.access_type = models.ACCESS_LOGOUT
-        attempt.user_agent=ua
+        attempt.user_agent = ua
         attempt.user = user.username
         attempt.session_key = request.session.session_key
-        attempt.ip_address=ip
-        attempt.get_data=[] #[query2str(request.GET.items())]
-        attempt.post_data=[]
-        attempt.http_accept=request.META.get('HTTP_ACCEPT', '<unknown>')
-        attempt.path_info=request.META.get('PATH_INFO', '<unknown>')
-        attempt.failures_since_start=0
+        attempt.ip_address = ip
+        attempt.get_data = []  # [query2str(request.GET.items())]
+        attempt.post_data = []
+        attempt.http_accept = request.META.get('HTTP_ACCEPT', '<unknown>')
+        attempt.path_info = request.META.get('PATH_INFO', '<unknown>')
+        attempt.failures_since_start = 0
         attempt.save()
 
         # call the logout function
@@ -136,20 +134,19 @@ def watch_logout(func):
     return decorated_logout
 
 
-
-
 def watch_login(func):
     """
     Used to decorate the django.contrib.admin.site.login method.
     """
 
-
     def decorated_login(request, *args, **kwargs):
         # share some useful information
         if func.__name__ != 'decorated_login' and VERBOSE:
             log.info('AXES: Calling decorated function: %s', func.__name__)
-            if args: log.info('args: %s', args)
-            if kwargs: log.info('kwargs: %s', kwargs)
+            if args:
+                log.info('args: %s', args)
+            if kwargs:
+                log.info('kwargs: %s', kwargs)
 
         # call the login function
         response = func(request, *args, **kwargs)
@@ -165,9 +162,9 @@ def watch_login(func):
         if request.method == 'POST':
             # see if the login was successful
             login_unsuccessful = (
-                response and
-                not response.has_header('location') and
-                response.status_code != 302
+                response
+                and not response.has_header('location')
+                and response.status_code != 302
             )
             if log_request(request, login_unsuccessful):
                 return response
@@ -191,11 +188,8 @@ def lockout_response(request):
         return HttpResponseRedirect(LOCKOUT_URL)
 
     if COOLOFF_TIME:
-        return HttpResponse("Account locked: too many login attempts.  "
-                            "Please try again later.")
-    else:
-        return HttpResponse("Account locked: too many login attempts.  "
-                            "Contact an admin to unlock your account.")
+        return HttpResponse("Account locked: too many login attempts. Please try again later.")
+    return HttpResponse("Account locked: too many login attempts. Contact an admin to unlock your account.")
 
 
 def log_request(request, login_unsuccessful):
@@ -222,7 +216,6 @@ def log_request(request, login_unsuccessful):
                 attempted_username = form.get_user().username
             else:
                 attempted_username = form.data.get('username')
-                attempted_password = form.data.get('password')
 
         # add a failed attempt for this user
         failures += 1
@@ -237,25 +230,25 @@ def log_request(request, login_unsuccessful):
             attempt.http_accept = request.META.get('HTTP_ACCEPT', '<unknown>')
             attempt.path_info = request.META.get('PATH_INFO', '<unknown>')
             attempt.failures_since_start = failures
-            attempt.event_date = datetime.utcnow() #why do we do this?
+            attempt.event_date = datetime.utcnow()  # why do we do this?
             attempt.save()
-            log.info('AXES: Repeated login failure by %s. Updating access '
-                     'record. Count = %s', attempt.ip_address, failures)
+            log.info('AXES: Repeated login failure by %s. Updating access record. Count = %s',
+                     attempt.ip_address, failures)
         else:
             ip = get_ip(request)
             ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
             attempt = AccessAudit()
             attempt.event_date = datetime.utcnow()
-            attempt.doc_type=AccessAudit.__name__
+            attempt.doc_type = AccessAudit.__name__
             attempt.access_type = models.ACCESS_FAILED
-            attempt.user_agent=ua
+            attempt.user_agent = ua
             attempt.user = attempted_username
-            attempt.ip_address=ip
+            attempt.ip_address = ip
             #attempt.get_data = [query2str(request.GET.items())]
             #attempt.post_data= [query2str(request.POST.items())]
-            attempt.http_accept=request.META.get('HTTP_ACCEPT', '<unknown>')
-            attempt.path_info=request.META.get('PATH_INFO', '<unknown>')
-            attempt.failures_since_start=failures
+            attempt.http_accept = request.META.get('HTTP_ACCEPT', '<unknown>')
+            attempt.path_info = request.META.get('PATH_INFO', '<unknown>')
+            attempt.failures_since_start = failures
             attempt.save()
             log.info('AXES: New login failure by %s. Creating access record.', ip)
 
