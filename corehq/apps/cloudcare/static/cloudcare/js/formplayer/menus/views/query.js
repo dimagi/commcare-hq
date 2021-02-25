@@ -1,4 +1,4 @@
-/*global DOMPurify, Marionette, MapboxGeocoder */
+/*global DOMPurify, Marionette*/
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
@@ -89,7 +89,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 else {
                     // Set lookup table option by label
-                    var option = element.find("option").filter(function(index) { return $(this).text() === value; });
+                    var option = element.find("option").filter(function (_) {
+                        return $(this).text() === value;
+                    });
                     if (option.length > 1) {
                         option.attr('selected', true);
                     }

@@ -1,3 +1,4 @@
+/*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var module = {
         resourceMap: undefined,
@@ -64,6 +65,36 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return form;
     };
 
+    /**
+     * Sets a div to be a mapbox geocoder input
+     * @param {(string|string[])} divId - Div ID for the Mapbox input
+     * @param {Object} itemCallback - function to call back after new search
+     * @param {Object} clearCallBack - function to call back after clearing the input
+     * @param {Object} initialPageData - initial_page_data object
+     */
+    module.renderMapboxInput = function(divId, itemCallback, clearCallBack, initialPageData) {
+        var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
+        var geocoder = new MapboxGeocoder({
+            accessToken: initialPageData.get("mapbox_access_token"),
+            types: 'address',
+            enableEventLogging: false,
+            getItemValue: itemCallback,
+        });
+        if (defaultGeocoderLocation.coordinates) {
+            geocoder.setProximity(defaultGeocoderLocation.coordinates);
+        }
+        geocoder.on('clear', clearCallBack);
+        geocoder.addTo('#' + divId);
+        // Must add the form-control class to the input created by mapbox in order to edit.
+        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
+        inputEl.addClass('form-control');
+        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+    };
+
+    /**
+     * Composes a boardcast object from mapbox result to be used by receivers
+     * @param {Object} mapboxResult - Mapbox query result object
+     */
     module.getBroadcastObject = function (mapboxResult) {
         var broadcastObj = {
             full: mapboxResult.place_name,
@@ -100,25 +131,6 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         broadcastObj.street = mapboxResult.address || '';
         broadcastObj.street += ' ' + mapboxResult.text;
         return broadcastObj;
-    };
-
-    module.renderMapboxInput = function(inputId, itemCallback, clearCallBack, initialPageData) {
-        var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
-        var geocoder = new MapboxGeocoder({
-            accessToken: initialPageData.get("mapbox_access_token"),
-            types: 'address',
-            enableEventLogging: false,
-            getItemValue: itemCallback,
-        });
-        if (defaultGeocoderLocation.coordinates) {
-            geocoder.setProximity(defaultGeocoderLocation.coordinates);
-        }
-        geocoder.on('clear', clearCallBack);
-        geocoder.addTo('#' + inputId);
-        // Must add the form-control class to the input created by mapbox in order to edit.
-        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
-        inputEl.addClass('form-control');
-        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
     };
 
     return module;
