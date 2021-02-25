@@ -71,7 +71,6 @@ branches:
   # - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - smh/bulk-upload-web-users # Steph Feb 22
-  - bmb/sso-backend  # Biyeun Feb 22
   - gh/default-export-settings-fix # Graham Feb 23
   - sr/geocoder  # Sravan Feb 25
   - gh/remove-include-duplicates # Graham Feb 24
