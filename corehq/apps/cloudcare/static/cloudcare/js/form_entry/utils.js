@@ -72,7 +72,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} clearCallBack - function to call back after clearing the input
      * @param {Object} initialPageData - initial_page_data object
      */
-    module.renderMapboxInput = function(divId, itemCallback, clearCallBack, initialPageData) {
+    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData) {
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
