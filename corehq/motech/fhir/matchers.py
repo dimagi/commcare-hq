@@ -219,27 +219,3 @@ class OrganizationMatcher(ResourceMatcher):
         PropertyWeight('$.name', Decimal('0.8'), OrganizationName),
         PropertyWeight('$.telecom[0].value', Decimal('0.4')),
     ]
-
-
-def get_matcher(resource: dict) -> ResourceMatcher:
-    """
-    Returns a subclass of ``ResourceMatcher`` instantiated with
-    ``resource``.
-
-    .. IMPORTANT::
-       ``get_matcher()`` assumes that subclasses of ``ResourceMatcher``
-       are named for the resource type they are implemented for.
-       e.g. ``PatientMatcher`` matches Patient resources.
-
-    """
-    suffix = len('Matcher')
-    classes_by_resource_type = {cls.__name__[:-suffix]: cls
-                                for cls in ResourceMatcher.__subclasses__()}
-    try:
-        matcher_class = classes_by_resource_type[resource['resourceType']]
-    except KeyError:
-        raise NotImplementedError(
-            'ResourceMatcher not implemented for resource type '
-            f"{resource['resourceType']!r}"
-        )
-    return matcher_class(resource)
