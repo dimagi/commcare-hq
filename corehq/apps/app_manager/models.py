@@ -35,7 +35,7 @@ from django.utils.translation import ugettext_lazy
 import qrcode
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
-from jsonpath_rw import jsonpath, parse
+from jsonpath_ng import jsonpath, parse
 from lxml import etree
 from memoized import memoized
 
@@ -1098,7 +1098,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding="unicode"))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding='utf-8'))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -2088,6 +2088,7 @@ class CaseSearchProperty(DocumentSchema):
     appearance = StringProperty()
     input_ = StringProperty()
     default_value = StringProperty()
+    hint = DictProperty()
 
     itemset = SchemaProperty(Itemset)
 

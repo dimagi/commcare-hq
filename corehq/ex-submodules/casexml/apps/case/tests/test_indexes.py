@@ -207,7 +207,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
+            ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -236,7 +236,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
+            ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -265,7 +265,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
+            ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>

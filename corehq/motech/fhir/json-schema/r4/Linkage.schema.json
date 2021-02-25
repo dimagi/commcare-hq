@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Linkage",
+  "$ref": "#/definitions/Linkage",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Linkage": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Identifies two or more records (resource instances) that are referring to the same real-world \"occurrence\".",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Linkage resource",
+              "type": "string",
+              "enum": [
+                "Linkage"
+              ]
+            },
+            "active": {
+              "description": "Indicates whether the asserted set of linkages are considered to be \"in effect\".",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "author": {
+              "description": "Identifies the user or organization responsible for asserting the linkages and who establishes the context for evaluating the nature of each linkage.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "item": {
+              "description": "Identifies one of the records that is considered to refer to the same real-world occurrence as well as how the items hould be evaluated within the collection of linked items.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Linkage_Item"
+              }
+            }
+          },
+          "required": [
+            "item",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Linkage_Item": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Identifies two or more records (resource instances) that are referring to the same real-world \"occurrence\".",
+          "properties": {
+            "type": {
+              "description": "Distinguishes which item is \"source of truth\" (if any) and which items are no longer considered to be current representations.",
+              "enum": [
+                "source",
+                "alternate",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "resource": {
+              "description": "The resource instance being linked as part of the group.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "resource"
+          ]
+        }
+      ]
+    }
+  }
+}

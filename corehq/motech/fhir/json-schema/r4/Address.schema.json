@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Address",
+  "$ref": "#/definitions/Address",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Address": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "An address expressed using postal conventions (as opposed to GPS or other location definition formats).  This data type may be used to convey addresses for use in delivering mail as well as for visiting locations which might not be valid for mail delivery.  There are a variety of postal address formats defined around the world.",
+          "properties": {
+            "use": {
+              "description": "The purpose of this address.",
+              "enum": [
+                "home",
+                "work",
+                "temp",
+                "old"
+              ],
+              "type": "string"
+            },
+            "_use": {
+              "description": "Extensions for use",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Distinguishes between physical addresses (those you can visit) and mailing addresses (e.g. PO Boxes and care-of addresses). Most addresses are both.",
+              "enum": [
+                "postal",
+                "physical",
+                "both"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "text": {
+              "description": "A full text representation of the address.",
+              "type": "string"
+            },
+            "_text": {
+              "description": "Extensions for text",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "line": {
+              "description": "This component contains the house number, apartment number, street name, street direction,  P.O. Box number, delivery hints, and similar address information.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_line": {
+              "description": "Extensions for line",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "city": {
+              "description": "The name of the city, town, village or other community or delivery center.",
+              "type": "string"
+            },
+            "_city": {
+              "description": "Extensions for city",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "district": {
+              "description": "The name of the administrative area (county).",
+              "type": "string"
+            },
+            "_district": {
+              "description": "Extensions for district",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "state": {
+              "description": "Sub-unit of a country with limited sovereignty in a federally organized country. A code may be used if codes are in common use (i.e. US 2 letter state codes).",
+              "type": "string"
+            },
+            "_state": {
+              "description": "Extensions for state",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "postalCode": {
+              "description": "A postal code designating a region defined by the postal service.",
+              "type": "string"
+            },
+            "_postalCode": {
+              "description": "Extensions for postalCode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "country": {
+              "description": "Country - a nation as commonly understood or generally accepted.",
+              "type": "string"
+            },
+            "_country": {
+              "description": "Extensions for country",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "Time period when address was/is in use.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

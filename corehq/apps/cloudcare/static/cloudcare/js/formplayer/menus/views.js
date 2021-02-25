@@ -285,6 +285,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoTextBox: '.module-go-container',
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
+            casesPerPageLimit: '.cases-per-page-limit',
         },
 
         events: {
@@ -293,6 +294,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
+            'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
@@ -326,6 +328,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
+        onPerPageLimitChange: function (e) {
+            e.preventDefault();
+            var casesPerPage = this.ui.casesPerPageLimit.val();
+            FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage);
+        },
+
         paginationGoAction: function (e) {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
@@ -356,6 +364,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
+            var casesPerPage = Number(Util.currentUrlToObject().casesPerPage) || 10;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -365,6 +374,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
+                rowRange: [10, 25, 50, 100],
+                limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",

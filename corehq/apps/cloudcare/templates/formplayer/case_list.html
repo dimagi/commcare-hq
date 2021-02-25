@@ -63,25 +63,9 @@
     <% } %>
 
     <% if (endPage && pageCount > 1) { %>
-      <div class="container">
-        <div class="row">
-          <div class="col-sm-9">
-            <nav class="module-caselist-pagination-container">
-              {% block pagination_templates %}
-                {% include 'formplayer/pagination.html' %}
-              {% endblock %}
-            </nav>
-            </div>
-          <div class="col-sm-3 module-go-container">
-            <div class="input-group input-group-lg">
-              <input type="text" class="form-control" placeholder="Go to page" id="goText">
-              <div class="input-group-btn">
-                <button class="btn btn-default" type="button" id="pagination-go-button">{% trans "Go" %}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {% block pagination_templates %}
+        {% include 'formplayer/pagination.html' %}
+      {% endblock %}
     <% } %>
   </div>
 </script>

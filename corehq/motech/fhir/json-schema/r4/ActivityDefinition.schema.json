@@ -1,0 +1,362 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ActivityDefinition",
+  "$ref": "#/definitions/ActivityDefinition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ActivityDefinition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ActivityDefinition resource",
+              "type": "string",
+              "enum": [
+                "ActivityDefinition"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this activity definition when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this activity definition is (or will be) published. The URL SHOULD include the major version of the activity definition. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this activity definition when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the activity definition when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the activity definition author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence. To provide a version consistent with the Decision Support Service specification, use the format Major.Minor.Revision (e.g. 1.0.0). For more information on versioning knowledge assets, refer to the Decision Support Service specification. Note that a version is required for non-experimental active assets.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the activity definition. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the activity definition.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this activity definition. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this activity definition is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the activity definition was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the activity definition changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the activity definition.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A free text natural language description of the activity definition from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "purpose": {
+              "description": "Explaination of why this activity definition is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "usage": {
+              "description": "A detailed description of how the asset is used from a clinical perspective.",
+              "type": "string"
+            },
+            "_usage": {
+              "description": "Extensions for usage",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "approvalDate": {
+              "description": "The date on which the resource content was approved by the publisher. Approval happens once when the content is officially approved for usage.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_approvalDate": {
+              "description": "Extensions for approvalDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastReviewDate": {
+              "description": "The date on which the resource content was last reviewed. Review happens periodically after approval, but doesn\u0027t change the original approval date.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_lastReviewDate": {
+              "description": "Extensions for lastReviewDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "effectivePeriod": {
+              "description": "The period during which the activity definition content was or is planned to be in active use.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate activity definition instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the activity definition is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "topic": {
+              "description": "Descriptive topics related to the content of the activity. Topics provide a high-level categorization of the activity that can be useful for filtering and searching.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "contributor": {
+              "description": "A contributor to the content of the asset, including authors, editors, reviewers, and endorsers.",
+              "type": "array",
+              "items": {
+                "$ref": "Contributor.schema.json#/definitions/Contributor"
+              }
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the activity definition and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the activity definition.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "relatedArtifact": {
+              "description": "Related artifacts such as additional documentation, justification, or bibliographic references.",
+              "type": "array",
+              "items": {
+                "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+              }
+            },
+            "library": {
+              "description": "A reference to a Library resource containing any formal logic used by the asset.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "kind": {
+              "description": "A description of the kind of resource the activity definition is representing. For example, a MedicationRequest, a ProcedureRequest, or a CommunicationRequest. Typically, but not always, this is a Request resource.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_kind": {
+              "description": "Extensions for kind",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Detailed description of the type of activity; e.g. What lab test, what procedure, what kind of encounter.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "timingTiming": {
+              "description": "The period, timing or frequency upon which the described activity is to occur.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "timingDateTime": {
+              "description": "The period, timing or frequency upon which the described activity is to occur.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_timingDateTime": {
+              "description": "Extensions for timingDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "timingPeriod": {
+              "description": "The period, timing or frequency upon which the described activity is to occur.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "timingRange": {
+              "description": "The period, timing or frequency upon which the described activity is to occur.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "location": {
+              "description": "Identifies the facility where the activity will occur; e.g. home, hospital, specific clinic, etc.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "participant": {
+              "description": "Indicates who should participate in performing the action described.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ActivityDefinition_Participant"
+              }
+            },
+            "productReference": {
+              "description": "Identifies the food, drug or other product being consumed or supplied in the activity.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "productCodeableConcept": {
+              "description": "Identifies the food, drug or other product being consumed or supplied in the activity.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "quantity": {
+              "description": "Identifies the quantity expected to be consumed at once (per dose, per meal, etc.).",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "dosage": {
+              "description": "Provides detailed dosage instructions in the same way that they are described for MedicationRequest resources.",
+              "type": "array",
+              "items": {
+                "$ref": "Dosage.schema.json#/definitions/Dosage"
+              }
+            },
+            "bodySite": {
+              "description": "Indicates the sites on the subject\u0027s body where the procedure should be performed (I.e. the target sites).",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "transform": {
+              "description": "A reference to a StructureMap resource that defines a transform that can be executed to produce the intent resource using the ActivityDefinition instance as the input.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "dynamicValue": {
+              "description": "Dynamic values that will be evaluated to produce values for elements of the resulting resource. For example, if the dosage of a medication must be computed based on the patient\u0027s weight, a dynamic value would be used to specify an expression that calculated the weight, and the path on the intent resource that would contain the result.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ActivityDefinition_DynamicValue"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ActivityDefinition_Participant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",
+          "properties": {
+            "type": {
+              "description": "The type of participant in the action.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "role": {
+              "description": "The role the participant should play in performing the described action.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "ActivityDefinition_DynamicValue": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",
+          "properties": {
+            "description": {
+              "description": "A brief, natural language description of the intended semantics of the dynamic value.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "path": {
+              "description": "The path to the element to be customized. This is the path on the resource that will hold the result of the calculation defined by the expression.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "language": {
+              "description": "The media type of the language for the expression.",
+              "type": "string"
+            },
+            "_language": {
+              "description": "Extensions for language",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "An expression specifying the value of the customized element.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
