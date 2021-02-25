@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.utils.dateparse import parse_datetime
 
 from corehq.util.metrics import metrics_counter
@@ -140,3 +141,37 @@ def get_relevant_aws_meta(message_info):
                 destination=mail_info.get('destination', []),
             ))
     return aws_info
+
+
+def get_emails_to_never_bounce():
+    system_emails = [
+        settings.SERVER_EMAIL,
+        settings.DEFAULT_FROM_EMAIL,
+        settings.SUPPORT_EMAIL,
+        settings.PROBONO_SUPPORT_EMAIL,
+        settings.ACCOUNTS_EMAIL,
+        settings.DATA_EMAIL,
+        settings.SUBSCRIPTION_CHANGE_EMAIL,
+        settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL,
+        settings.BILLING_EMAIL,
+        settings.INVOICING_CONTACT_EMAIL,
+        settings.GROWTH_EMAIL,
+        settings.MASTER_LIST_EMAIL,
+        settings.SALES_EMAIL,
+        settings.EULA_CHANGE_EMAIL,
+        settings.PRIVACY_EMAIL,
+        settings.CONTACT_EMAIL,
+        settings.FEEDBACK_EMAIL,
+        settings.SOFT_ASSERT_EMAIL,
+        settings.DAILY_DEPLOY_EMAIL,
+        settings.SAAS_REPORTING_EMAIL,
+    ]
+    system_emails.extend(settings.BOOKKEEPER_CONTACT_EMAILS)
+    return [email for email in system_emails if isinstance(email, str)]
+
+
+def get_bounced_system_emails():
+    system_emails = get_emails_to_never_bounce()
+    general_bounces = BouncedEmail.objects.filter(email__in=system_emails).values_list('email', flat=True)
+    transient_bounces = TransientBounceEmail.objects.filter(email__in=system_emails).values_list('email', flat=True)
+    return list(general_bounces) + list(transient_bounces)

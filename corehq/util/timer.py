@@ -217,7 +217,8 @@ def time_method():
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if self.timing_context.is_started():
-                with self.timing_context(fn.__name__):
+                tag = f"{type(self).__name__}.{fn.__name__}"
+                with self.timing_context(tag):
                     return fn(self, *args, **kwargs)
             else:
                 return fn(self, *args, **kwargs)

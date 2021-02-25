@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ParameterDefinition",
+  "$ref": "#/definitions/ParameterDefinition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ParameterDefinition": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "The parameters to the module. This collection specifies both the input and output parameters. Input parameters are provided by the caller as part of the $evaluate operation. Output parameters are included in the GuidanceResponse.",
+          "properties": {
+            "name": {
+              "description": "The name of the parameter used to allow access to the value of the parameter in evaluation contexts.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "use": {
+              "description": "Whether the parameter is input or output for the module.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_use": {
+              "description": "Extensions for use",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "min": {
+              "description": "The minimum number of times this parameter SHALL appear in the request or response.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_min": {
+              "description": "Extensions for min",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "max": {
+              "description": "The maximum number of times this element is permitted to appear in the request or response.",
+              "type": "string"
+            },
+            "_max": {
+              "description": "Extensions for max",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "documentation": {
+              "description": "A brief discussion of what the parameter is for and how it is used by the module.",
+              "type": "string"
+            },
+            "_documentation": {
+              "description": "Extensions for documentation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of the parameter.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "If specified, this indicates a profile that the input data must conform to, or that the output data will conform to.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

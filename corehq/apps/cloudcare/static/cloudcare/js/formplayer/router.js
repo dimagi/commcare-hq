@@ -8,7 +8,6 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             "home/:id": "landingPageApp", // Show app in landing page mode (LandingPageAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
-            "local/:path": "localInstall",
             "restore_as/:page/:query": "listUsers",
             "restore_as/:page/": "listUsers",
             "restore_as": "listUsers",
@@ -26,6 +25,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+            Util.setStickyQueryInputs({});
             appsController.listApps();
         },
         singleApp: function (appId) {
@@ -47,7 +47,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            if (!urlObject.appId && !urlObject.installReference) {
+            if (!urlObject.appId) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
@@ -73,9 +73,6 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         },
         getSession: function (sessionId) {
             FormplayerFrontend.getChannel().request("getSession", sessionId);
-        },
-        localInstall: function (path) {
-            FormplayerFrontend.trigger("localInstall", path);
         },
         /**
          * renderResponse
@@ -225,14 +222,6 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             'steps': urlObject.steps,
         };
         hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
-    });
-
-    FormplayerFrontend.on("localInstall", function (path) {
-        var urlObject = new Util.CloudcareUrl({
-            'installReference': path,
-        });
-        Util.setUrlToObject(urlObject);
-        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(urlObject);
     });
 
     return {

@@ -199,7 +199,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'default_search': module.search_config.default_search if module_offers_search(module) else False,
-            'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
             'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
@@ -216,7 +215,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.again_label if hasattr(module, 'search_config') else "",
-            'search_session_var': module.search_config.session_var if hasattr(module, 'search_config') else "",
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -913,7 +911,7 @@ def _update_search_properties(module, search_properties, lang='en'):
     >>> search_properties = [
     ...     {'name': 'name', 'label': 'Name'},
     ...     {'name': 'dob'. 'label': 'Date of birth'}
-    ... ]  # Incoming search properties' labels are not dictionaries
+    ... ]  # Incoming search properties' labels/hints are not dictionaries
     >>> lang = 'en'
     >>> list(_update_search_properties(module, search_properties, lang)) == [
     ...     {'name': 'name', 'label': {'fr': 'Nom', 'en': 'Name'}},
@@ -929,12 +927,15 @@ def _update_search_properties(module, search_properties, lang='en'):
             label.update({lang: prop['label']})
         else:
             label = {lang: prop['label']}
+        hint = {lang: prop['hint']}
         ret = {
             'name': prop['name'],
             'label': label,
         }
         if prop['default_value']:
             ret['default_value'] = prop['default_value']
+        if prop['hint']:
+            ret['hint'] = hint
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
@@ -951,6 +952,8 @@ def _update_search_properties(module, search_properties, lang='en'):
 
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
+        elif prop.get('appearance', '') == 'daterange':
+            ret['input_'] = 'daterange'
 
         yield ret
 
@@ -1101,7 +1104,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             except CaseSearchConfigError as e:
                 return HttpResponseBadRequest(e)
             module.search_config = CaseSearch(
-                session_var=search_properties.get('session_var', ""),
                 command_label=command_label,
                 again_label=again_label,
                 properties=properties,
@@ -1109,7 +1111,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
-                include_closed=bool(search_properties.get('include_closed')),
                 search_filter=search_properties.get('search_filter', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),

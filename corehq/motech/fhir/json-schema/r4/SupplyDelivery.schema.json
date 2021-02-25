@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/SupplyDelivery",
+  "$ref": "#/definitions/SupplyDelivery",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "SupplyDelivery": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Record of delivery of what is supplied.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a SupplyDelivery resource",
+              "type": "string",
+              "enum": [
+                "SupplyDelivery"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier assigned by the dispensing facility when the item(s) is dispensed.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "basedOn": {
+              "description": "A plan, proposal or order that is fulfilled in whole or in part by this event.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "partOf": {
+              "description": "A larger event of which this particular event is a component or step.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "status": {
+              "description": "A code specifying the state of the dispense event.",
+              "enum": [
+                "in-progress",
+                "completed",
+                "abandoned",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "A link to a resource representing the person whom the delivered item is for.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "type": {
+              "description": "Indicates the type of dispensing event that is performed. Examples include: Trial Fill, Completion of Trial, Partial Fill, Emergency Fill, Samples, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "suppliedItem": {
+              "description": "The item that is being delivered or has been supplied.",
+              "$ref": "#/definitions/SupplyDelivery_SuppliedItem"
+            },
+            "occurrenceDateTime": {
+              "description": "The date or time(s) the activity occurred.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_occurrenceDateTime": {
+              "description": "Extensions for occurrenceDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "occurrencePeriod": {
+              "description": "The date or time(s) the activity occurred.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "occurrenceTiming": {
+              "description": "The date or time(s) the activity occurred.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "supplier": {
+              "description": "The individual responsible for dispensing the medication, supplier or device.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "destination": {
+              "description": "Identification of the facility/location where the Supply was shipped to, as part of the dispense event.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "receiver": {
+              "description": "Identifies the person who picked up the Supply.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "SupplyDelivery_SuppliedItem": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Record of delivery of what is supplied.",
+          "properties": {
+            "quantity": {
+              "description": "The amount of supply that has been dispensed. Includes unit of measure.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "itemCodeableConcept": {
+              "description": "Identifies the medication, substance or device being dispensed. This is either a link to a resource representing the details of the item or a code that identifies the item from a known list.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "itemReference": {
+              "description": "Identifies the medication, substance or device being dispensed. This is either a link to a resource representing the details of the item or a code that identifies the item from a known list.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

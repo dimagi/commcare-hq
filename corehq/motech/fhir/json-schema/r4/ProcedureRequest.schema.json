@@ -1,0 +1,240 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ProcedureRequest",
+  "$ref": "#/definitions/ProcedureRequest",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ProcedureRequest": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of a request for diagnostic investigations, treatments, or operations to be performed.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ProcedureRequest resource",
+              "type": "string",
+              "enum": [
+                "ProcedureRequest"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers assigned to this order instance by the orderer and/or the receiver and/or order fulfiller.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "definition": {
+              "description": "Protocol or definition followed by this request.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "basedOn": {
+              "description": "Plan/proposal/order fulfilled by this request.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "replaces": {
+              "description": "The request takes the place of the referenced completed or terminated request(s).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "requisition": {
+              "description": "A shared identifier common to all procedure or diagnostic requests that were authorized more or less simultaneously by a single author, representing the composite or group identifier.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The status of the order.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "intent": {
+              "description": "Whether the request is a proposal, plan, an original order or a reflex order.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_intent": {
+              "description": "Extensions for intent",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "priority": {
+              "description": "Indicates how quickly the ProcedureRequest should be addressed with respect to other requests.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_priority": {
+              "description": "Extensions for priority",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "doNotPerform": {
+              "description": "Set this to true if the record is saying that the procedure should NOT be performed.",
+              "type": "boolean"
+            },
+            "_doNotPerform": {
+              "description": "Extensions for doNotPerform",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "A code that classifies the procedure for searching, sorting and display purposes (e.g. \"Surgical Procedure\").",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "code": {
+              "description": "A code that identifies a particular procedure, diagnostic investigation, or panel of investigations, that have been requested.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "On whom or what the procedure or diagnostic is to be performed. This is usually a human patient, but can also be requested on animals, groups of humans or animals, devices such as dialysis machines, or even locations (typically for environmental scans).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "An encounter or episode of care that provides additional information about the healthcare context in which this request is made.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "occurrenceDateTime": {
+              "description": "The date/time at which the diagnostic testing should occur.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_occurrenceDateTime": {
+              "description": "Extensions for occurrenceDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "occurrencePeriod": {
+              "description": "The date/time at which the diagnostic testing should occur.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "occurrenceTiming": {
+              "description": "The date/time at which the diagnostic testing should occur.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "asNeededBoolean": {
+              "description": "If a CodeableConcept is present, it indicates the pre-condition for performing the procedure.  For example \"pain\", \"on flare-up\", etc.",
+              "type": "boolean"
+            },
+            "_asNeededBoolean": {
+              "description": "Extensions for asNeededBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "asNeededCodeableConcept": {
+              "description": "If a CodeableConcept is present, it indicates the pre-condition for performing the procedure.  For example \"pain\", \"on flare-up\", etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "authoredOn": {
+              "description": "When the request transitioned to being actionable.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_authoredOn": {
+              "description": "Extensions for authoredOn",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requester": {
+              "description": "The individual who initiated the request and has responsibility for its activation.",
+              "$ref": "#/definitions/ProcedureRequest_Requester"
+            },
+            "performerType": {
+              "description": "Desired type of performer for doing the diagnostic testing.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "performer": {
+              "description": "The desired perfomer for doing the diagnostic testing.  For example, the surgeon, dermatopathologist, endoscopist, etc.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reasonCode": {
+              "description": "An explanation or justification for why this diagnostic investigation is being requested in coded or textual form.   This is often for billing purposes.  May relate to the resources referred to in supportingInformation.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reasonReference": {
+              "description": "Indicates another resource that provides a justification for why this diagnostic investigation is being requested.   May relate to the resources referred to in supportingInformation.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "supportingInfo": {
+              "description": "Additional clinical information about the patient or specimen that may influence the procedure or diagnostics or their interpretations.     This information includes diagnosis, clinical findings and other observations.  In laboratory ordering these are typically referred to as \"ask at order entry questions (AOEs)\".  This includes observations explicitly requested by the producer (filler) to provide context or supporting information needed to complete the order. For example,  reporting the amount of inspired oxygen for blood gas measurements.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "specimen": {
+              "description": "One or more specimens that the laboratory procedure will use.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "bodySite": {
+              "description": "Anatomic location where the procedure should be performed. This is the target site.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "note": {
+              "description": "Any other notes and comments made about the service request. For example, letting provider know that \"patient hates needles\" or other provider instructions.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "relevantHistory": {
+              "description": "Key events in the history of the request.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "subject",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ProcedureRequest_Requester": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a request for diagnostic investigations, treatments, or operations to be performed.",
+          "properties": {
+            "agent": {
+              "description": "The device, practitioner or organization who initiated the request.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOf": {
+              "description": "The organization the device or practitioner was acting on behalf of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "agent"
+          ]
+        }
+      ]
+    }
+  }
+}

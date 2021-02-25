@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/UsageContext",
+  "$ref": "#/definitions/UsageContext",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "UsageContext": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "Specifies clinical/business/etc metadata that can be used to retrieve, index and/or categorize an artifact. This metadata can either be specific to the applicable population (e.g., age category, DRG) or the specific context of care (e.g., venue, care setting, provider of care).",
+          "properties": {
+            "code": {
+              "description": "A code that identifies the type of context being specified by this usage context.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "valueCodeableConcept": {
+              "description": "A value that defines the context specified in this context of use. The interpretation of the value is defined by the code.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueQuantity": {
+              "description": "A value that defines the context specified in this context of use. The interpretation of the value is defined by the code.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueRange": {
+              "description": "A value that defines the context specified in this context of use. The interpretation of the value is defined by the code.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    }
+  }
+}

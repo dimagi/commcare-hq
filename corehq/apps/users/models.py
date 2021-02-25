@@ -717,7 +717,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         return False
 
     @memoized
-    def get_role(self, domain=None, checking_global_admin=True):
+    def get_role(self, domain=None, checking_global_admin=True, allow_mirroring=False):
         """
         Get the role object for this user
         """
@@ -730,8 +730,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
-        if self.is_member_of(domain):
-            return self.get_domain_membership(domain).role
+        if self.is_member_of(domain, allow_mirroring):
+            return self.get_domain_membership(domain, allow_mirroring).role
         else:
             raise DomainMembershipError()
 
@@ -1112,6 +1112,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.username.endswith('@dimagi.com')
 
     def is_locked_out(self):
+        return self.supports_lockout() and self.should_be_locked_out()
+
+    def should_be_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
@@ -2241,7 +2244,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml()
+                caseblock.as_xml(), encoding='utf-8'
             ).decode('utf-8'),
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,

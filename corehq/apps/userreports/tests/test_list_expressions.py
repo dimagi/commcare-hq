@@ -242,68 +242,31 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'last_item',
         2
     ),
+    (
+        ['joins', 'are', 'cool'],
+        {'type': 'identity'},
+        'join',
+        'joinsarecool',
+    ),
+    # test non-strings
+    (
+        ['joins', 4, 'life'],
+        {'type': 'identity'},
+        'join',
+        'joins4life',
+    ),
+    (
+        [None, 'joins', 'work'],
+        {'type': 'identity'},
+        'join',
+        'joinswork',
+    ),
     # if items can't be compared should return None
     (
         [datetime.datetime.now(), datetime.date.today()],
         {'type': 'identity'},
         'max',
         None,
-    ),
-    # if items_expression returns non-iterable reduce(count) should return 0
-    (
-        34,
-        {'type': 'identity'},
-        'count',
-        0
-    ),
-    # if items_expression returns non-iterable reduce(sum) should return 0
-    (
-        34,
-        {'type': 'identity'},
-        'sum',
-        0
-    ),
-    # if items_expression returns non-iterable reduce(count) should return None
-    (
-        34,
-        {'type': 'identity'},
-        'last_item',
-        None
-    ),
-    # if items_expression returns non-iterable reduce(count) should return None
-    (
-        34,
-        {'type': 'identity'},
-        'first_item',
-        None
-    ),
-    # if items_expression returns [] reduce(count) should return 0
-    (
-        [],
-        {'type': 'identity'},
-        'count',
-        0
-    ),
-    # if items_expression returns [] reduce(sum) should return 0
-    (
-        [],
-        {'type': 'identity'},
-        'sum',
-        0
-    ),
-    # if items_expression returns [] reduce(count) should return None
-    (
-        [],
-        {'type': 'identity'},
-        'last_item',
-        None
-    ),
-    # if items_expression returns [] reduce(count) should return None
-    (
-        [],
-        {'type': 'identity'},
-        'first_item',
-        None
     ),
 
 ])
@@ -314,6 +277,68 @@ def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
         'aggregation_fn': reduce_ex
     })
     self.assertEqual(expression(doc), expected)
+
+
+@generate_cases([
+    (
+        'count',
+        0
+    ),
+    (
+        'sum',
+        0
+    ),
+    (
+        'last_item',
+        None
+    ),
+    (
+        'first_item',
+        None
+    ),
+    (
+        'join',
+        '',
+    ),
+])
+def test_reduce_items_non_iterable(self, aggregation_fn, expected):
+    expression = ExpressionFactory.from_spec({
+        'type': 'reduce_items',
+        'items_expression': 'identity',
+        'aggregation_fn': aggregation_fn
+    })
+    self.assertEqual(expression(34), expected)
+
+
+@generate_cases([
+    (
+        'count',
+        0
+    ),
+    (
+        'sum',
+        0
+    ),
+    (
+        'last_item',
+        None
+    ),
+    (
+        'first_item',
+        None
+    ),
+    (
+        'join',
+        '',
+    ),
+])
+def test_reduce_items_empty_list(self, aggregation_fn, expected):
+    expression = ExpressionFactory.from_spec({
+        'type': 'reduce_items',
+        'items_expression': 'identity',
+        'aggregation_fn': aggregation_fn
+    })
+    self.assertEqual(expression([]), expected)
 
 
 @generate_cases([

@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/AdverseEvent",
+  "$ref": "#/definitions/AdverseEvent",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "AdverseEvent": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Actual or  potential/avoided event causing unintended physical injury resulting from or contributed to by medical care, a research study or other healthcare setting factors that requires additional monitoring, treatment, or hospitalization, or that results in death.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a AdverseEvent resource",
+              "type": "string",
+              "enum": [
+                "AdverseEvent"
+              ]
+            },
+            "identifier": {
+              "description": "The identifier(s) of this adverse event that are assigned by business processes and/or used to refer to it when a direct URL reference to the resource itsefl is not appropriate.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "category": {
+              "description": "The type of event which is important to characterize what occurred and caused harm to the subject, or had the potential to cause harm to the subject.",
+              "enum": [
+                "AE",
+                "PAE"
+              ],
+              "type": "string"
+            },
+            "_category": {
+              "description": "Extensions for category",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "This element defines the specific type of event that occurred or that was prevented from occurring.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "This subject or group impacted by the event.  With a prospective adverse event, there will be no subject as the adverse event was prevented.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "date": {
+              "description": "The date (and perhaps time) when the adverse event occurred.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reaction": {
+              "description": "Includes information about the reaction that occurred as a result of exposure to a substance (for example, a drug or a chemical).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "location": {
+              "description": "The information about where the adverse event occurred.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "seriousness": {
+              "description": "Describes the seriousness or severity of the adverse event.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "outcome": {
+              "description": "Describes the type of outcome from the adverse event.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "recorder": {
+              "description": "Information on who recorded the adverse event.  May be the patient or a practitioner.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "eventParticipant": {
+              "description": "Parties that may or should contribute or have contributed information to the Act. Such information includes information leading to the decision to perform the Act and how to perform the Act (e.g. consultant), information that the Act itself seeks to reveal (e.g. informant of clinical history), or information about what Act was performed (e.g. informant witness).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "description": {
+              "description": "Describes the adverse event in text.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "suspectEntity": {
+              "description": "Describes the entity that is suspected to have caused the adverse event.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AdverseEvent_SuspectEntity"
+              }
+            },
+            "subjectMedicalHistory": {
+              "description": "AdverseEvent.subjectMedicalHistory.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "referenceDocument": {
+              "description": "AdverseEvent.referenceDocument.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "study": {
+              "description": "AdverseEvent.study.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "AdverseEvent_SuspectEntity": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Actual or  potential/avoided event causing unintended physical injury resulting from or contributed to by medical care, a research study or other healthcare setting factors that requires additional monitoring, treatment, or hospitalization, or that results in death.",
+          "properties": {
+            "instance": {
+              "description": "Identifies the actual instance of what caused the adverse event.  May be a substance, medication, medication administration, medication statement or a device.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "causality": {
+              "description": "causality1 | causality2.",
+              "enum": [
+                "causality1",
+                "causality2"
+              ],
+              "type": "string"
+            },
+            "_causality": {
+              "description": "Extensions for causality",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "causalityAssessment": {
+              "description": "assess1 | assess2.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "causalityProductRelatedness": {
+              "description": "AdverseEvent.suspectEntity.causalityProductRelatedness.",
+              "type": "string"
+            },
+            "_causalityProductRelatedness": {
+              "description": "Extensions for causalityProductRelatedness",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "causalityMethod": {
+              "description": "method1 | method2.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "causalityAuthor": {
+              "description": "AdverseEvent.suspectEntity.causalityAuthor.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "causalityResult": {
+              "description": "result1 | result2.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "instance"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,482 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Measure",
+  "$ref": "#/definitions/Measure",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Measure": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The Measure resource provides the definition of a quality measure.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Measure resource",
+              "type": "string",
+              "enum": [
+                "Measure"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this measure when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this measure is (or will be) published. The URL SHOULD include the major version of the measure. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this measure when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the measure when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the measure author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence. To provide a version consistent with the Decision Support Service specification, use the format Major.Minor.Revision (e.g. 1.0.0). For more information on versioning knowledge assets, refer to the Decision Support Service specification. Note that a version is required for non-experimental active artifacts.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the measure. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the measure.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this measure. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this measure is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the measure was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the measure changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the measure.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A free text natural language description of the measure from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "purpose": {
+              "description": "Explaination of why this measure is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "usage": {
+              "description": "A detailed description of how the measure is used from a clinical perspective.",
+              "type": "string"
+            },
+            "_usage": {
+              "description": "Extensions for usage",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "approvalDate": {
+              "description": "The date on which the resource content was approved by the publisher. Approval happens once when the content is officially approved for usage.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_approvalDate": {
+              "description": "Extensions for approvalDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastReviewDate": {
+              "description": "The date on which the resource content was last reviewed. Review happens periodically after approval, but doesn\u0027t change the original approval date.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_lastReviewDate": {
+              "description": "Extensions for lastReviewDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "effectivePeriod": {
+              "description": "The period during which the measure content was or is planned to be in active use.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate measure instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the measure is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "topic": {
+              "description": "Descriptive topics related to the content of the measure. Topics provide a high-level categorization of the type of the measure that can be useful for filtering and searching.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "contributor": {
+              "description": "A contributor to the content of the measure, including authors, editors, reviewers, and endorsers.",
+              "type": "array",
+              "items": {
+                "$ref": "Contributor.schema.json#/definitions/Contributor"
+              }
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the measure and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the measure.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "relatedArtifact": {
+              "description": "Related artifacts such as additional documentation, justification, or bibliographic references.",
+              "type": "array",
+              "items": {
+                "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+              }
+            },
+            "library": {
+              "description": "A reference to a Library resource containing the formal logic used by the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "disclaimer": {
+              "description": "Notices and disclaimers regarding the use of the measure, or related to intellectual property (such as code systems) referenced by the measure.",
+              "type": "string"
+            },
+            "_disclaimer": {
+              "description": "Extensions for disclaimer",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "scoring": {
+              "description": "Indicates how the calculation is performed for the measure, including proportion, ratio, continuous variable, and cohort. The value set is extensible, allowing additional measure scoring types to be represented.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "compositeScoring": {
+              "description": "If this is a composite measure, the scoring method used to combine the component measures to determine the composite score.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "type": {
+              "description": "Indicates whether the measure is used to examine a process, an outcome over time, a patient-reported outcome, or a structure measure such as utilization.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "riskAdjustment": {
+              "description": "A description of the risk adjustment factors that may impact the resulting score for the measure and how they may be accounted for when computing and reporting measure results.",
+              "type": "string"
+            },
+            "_riskAdjustment": {
+              "description": "Extensions for riskAdjustment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "rateAggregation": {
+              "description": "Describes how to combine the information calculated, based on logic in each of several populations, into one summarized result.",
+              "type": "string"
+            },
+            "_rateAggregation": {
+              "description": "Extensions for rateAggregation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "rationale": {
+              "description": "Provides a succint statement of the need for the measure. Usually includes statements pertaining to importance criterion: impact, gap in care, and evidence.",
+              "type": "string"
+            },
+            "_rationale": {
+              "description": "Extensions for rationale",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "clinicalRecommendationStatement": {
+              "description": "Provides a summary of relevant clinical guidelines or other clinical recommendations supporting the measure.",
+              "type": "string"
+            },
+            "_clinicalRecommendationStatement": {
+              "description": "Extensions for clinicalRecommendationStatement",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "improvementNotation": {
+              "description": "Information on whether an increase or decrease in score is the preferred result (e.g., a higher score indicates better quality OR a lower score indicates better quality OR quality is whthin a range).",
+              "type": "string"
+            },
+            "_improvementNotation": {
+              "description": "Extensions for improvementNotation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "Provides a description of an individual term used within the measure.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_definition": {
+              "description": "Extensions for definition",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "guidance": {
+              "description": "Additional guidance for the measure including how it can be used in a clinical context, and the intent of the measure.",
+              "type": "string"
+            },
+            "_guidance": {
+              "description": "Extensions for guidance",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "set": {
+              "description": "The measure set, e.g. Preventive Care and Screening.",
+              "type": "string"
+            },
+            "_set": {
+              "description": "Extensions for set",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "group": {
+              "description": "A group of population criteria for the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Measure_Group"
+              }
+            },
+            "supplementalData": {
+              "description": "The supplemental data criteria for the measure report, specified as either the name of a valid CQL expression within a referenced library, or a valid FHIR Resource Path.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Measure_SupplementalData"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Measure_Group": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The Measure resource provides the definition of a quality measure.",
+          "properties": {
+            "identifier": {
+              "description": "A unique identifier for the group. This identifier will used to report data for the group in the measure report.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "name": {
+              "description": "Optional name or short description of this group.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "The human readable description of this population group.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "population": {
+              "description": "A population criteria for the measure.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Measure_Population"
+              }
+            },
+            "stratifier": {
+              "description": "The stratifier criteria for the measure report, specified as either the name of a valid CQL expression defined within a referenced library, or a valid FHIR Resource Path.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Measure_Stratifier"
+              }
+            }
+          },
+          "required": [
+            "identifier"
+          ]
+        }
+      ]
+    },
+    "Measure_Population": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The Measure resource provides the definition of a quality measure.",
+          "properties": {
+            "identifier": {
+              "description": "A unique identifier for the population criteria. This identifier is used to report data against this criteria within the measure report.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "code": {
+              "description": "The type of population criteria.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "name": {
+              "description": "Optional name or short description of this population.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "The human readable description of this population criteria.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "criteria": {
+              "description": "The name of a valid referenced CQL expression (may be namespaced) that defines this population criteria.",
+              "type": "string"
+            },
+            "_criteria": {
+              "description": "Extensions for criteria",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Measure_Stratifier": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The Measure resource provides the definition of a quality measure.",
+          "properties": {
+            "identifier": {
+              "description": "The identifier for the stratifier used to coordinate the reported data back to this stratifier.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "criteria": {
+              "description": "The criteria for the stratifier. This must be the name of an expression defined within a referenced library.",
+              "type": "string"
+            },
+            "_criteria": {
+              "description": "Extensions for criteria",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "path": {
+              "description": "The path to an element that defines the stratifier, specified as a valid FHIR resource path.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Measure_SupplementalData": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The Measure resource provides the definition of a quality measure.",
+          "properties": {
+            "identifier": {
+              "description": "An identifier for the supplemental data.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "usage": {
+              "description": "An indicator of the intended usage for the supplemental data element. Supplemental data indicates the data is additional information requested to augment the measure information. Risk adjustment factor indicates the data is additional information used to calculate risk adjustment factors when applying a risk model to the measure calculation.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "criteria": {
+              "description": "The criteria for the supplemental data. This must be the name of a valid expression defined within a referenced library, and defines the data to be returned for this element.",
+              "type": "string"
+            },
+            "_criteria": {
+              "description": "Extensions for criteria",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "path": {
+              "description": "The supplemental data to be supplied as part of the measure response, specified as a valid FHIR Resource Path.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

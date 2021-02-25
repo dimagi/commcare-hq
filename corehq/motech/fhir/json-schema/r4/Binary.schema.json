@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Binary",
+  "$ref": "#/definitions/Binary",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Binary": {
+      "allOf": [
+        {
+          "$ref": "Resource#/definitions/Resource"
+        },
+        {
+          "description": "A binary resource can contain any content, whether text, image, pdf, zip archive, etc.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Binary resource",
+              "type": "string",
+              "enum": [
+                "Binary"
+              ]
+            },
+            "contentType": {
+              "description": "MimeType of the binary content represented as a standard MimeType (BCP 13).",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_contentType": {
+              "description": "Extensions for contentType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "securityContext": {
+              "description": "Treat this binary as if it was this other resource for access control purposes.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "content": {
+              "description": "The actual content, base64 encoded.",
+              "type": "string"
+            },
+            "_content": {
+              "description": "Extensions for content",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}
