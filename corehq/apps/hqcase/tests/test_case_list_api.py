@@ -18,6 +18,7 @@ from corehq.util.test_utils import (
     trap_extra_setup,
 )
 
+from ..api.core import UserError
 from ..api.get_list import get_list
 from ..utils import submit_case_blocks
 
@@ -62,7 +63,10 @@ class TestCaseListAPI(TestCase):
             ).as_text()
             for external_id, name, properties in case_specs
         ], domain=cls.domain)
-        return cases
+
+        # preserve ordering
+        order = {external_id: index for index, (external_id, _, __) in enumerate(case_specs)}
+        return sorted(cases, key=lambda case: order[case.external_id])
 
     @classmethod
     def tearDownClass(cls):
@@ -73,7 +77,18 @@ class TestCaseListAPI(TestCase):
 
 @generate_cases([
     ({}, ['mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
+    ({'limit': 2}, ['mattie', 'rooster']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, params, expected):
     actual = [c['external_id'] for c in get_list(self.domain, params)]
-    self.assertItemsEqual(actual, expected)
+    # order matters, so this doesn't use assertItemsEqual
+    self.assertEqual(actual, expected)
+
+
+@generate_cases([
+    ({'limit': 10000}, "You cannot request more than 5000 cases per request."),
+], TestCaseListAPI)
+def test_bad_requests(self, params, error_msg):
+    with self.assertRaises(UserError) as e:
+        get_list(self.domain, params)
+    self.assertEqual(str(e.exception), error_msg)
