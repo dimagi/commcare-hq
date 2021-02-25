@@ -20,4 +20,8 @@ FHIR_BUNDLE_TYPES = {
 # service. e.g. Setting `external_id` on a case to its FHIR ID, or cases
 # created or updated in CommCare via our FHIR API. This is to prevent
 # FHIRRepeater from sending data from a FHIR service back again.
-XMLNS_FHIR = 'http://commcarehq.org/fhir-engine-read'
+XMLNS_FHIR = 'http://commcarehq.org/x/fhir/engine-read'
+
+# The URI to identify CommCare as the system responsible for allocating
+# case IDs. See https://www.hl7.org/fhir/datatypes.html#Identifier
+SYSTEM_URI_CASE_ID = 'http://commcarehq.org/x/fhir/case-id'
