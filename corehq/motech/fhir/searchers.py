@@ -3,7 +3,7 @@ from typing import Generator, List, Type, Union
 import attr
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
-from corehq.motech.requests import Requests
+from corehq.motech.requests import Requests, json_or_http_error
 from corehq.motech.utils import simplify_list
 
 from .const import SYSTEM_URI_CASE_ID
@@ -47,7 +47,7 @@ class Search:
                 f"{self.resource['resourceType']}/",
                 params=request_params,
             )
-            searchset_bundle = response.json()
+            searchset_bundle = json_or_http_error(response)
             yield from self.iter_searchset(searchset_bundle)
 
     def get_request_params(self, search_params: List['SearchParam']) -> List[dict]:
