@@ -105,8 +105,8 @@ class PatchCase:
             self._dynamic_properties = props
             if props or has_known_props(self.diffs) or self.indices:
                 updates.append(const.CASE_ACTION_UPDATE)
-            if self._should_close():
-                updates.append(const.CASE_ACTION_CLOSE)
+        if self._should_close():
+            updates.append(const.CASE_ACTION_CLOSE)
 
     def __hash__(self):
         return hash(self.case_id)
@@ -115,8 +115,10 @@ class PatchCase:
         return getattr(self.case, name)
 
     def _should_close(self):
-        return (self.case.closed
-            and any(d.path == ["closed"] and not d.new_value for d in self.diffs))
+        return self.case.closed and (
+            any(d.path == ["closed"] and not d.new_value for d in self.diffs)
+            or is_missing_in_sql(self.diffs)
+        )
 
     def dynamic_case_properties(self):
         return self._dynamic_properties
@@ -127,6 +129,8 @@ class PatchCase:
     def indices(self):
         diffs = [d for d in self.diffs if d.path[0] == "indices"]
         if not diffs:
+            if is_missing_in_sql(self.diffs):
+                yield from self.case.indices
             return
         for diff in diffs:
             if diff.path != ["indices", "[*]"]:

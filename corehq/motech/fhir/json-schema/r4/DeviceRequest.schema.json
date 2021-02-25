@@ -1,0 +1,198 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/DeviceRequest",
+  "$ref": "#/definitions/DeviceRequest",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "DeviceRequest": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Represents a request for a patient to employ a medical device. The device may be an implantable device, or an external assistive device, such as a walker.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a DeviceRequest resource",
+              "type": "string",
+              "enum": [
+                "DeviceRequest"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers assigned to this order by the orderer or by the receiver.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "definition": {
+              "description": "Protocol or definition followed by this request. For example: The proposed act must be performed if the indicated conditions occur, e.g.., shortness of breath, SpO2 less than x%.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "basedOn": {
+              "description": "Plan/proposal/order fulfilled by this request.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "priorRequest": {
+              "description": "The request takes the place of the referenced completed or terminated request(s).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "groupIdentifier": {
+              "description": "Composite request this is part of.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The status of the request.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "intent": {
+              "description": "Whether the request is a proposal, plan, an original order or a reflex order.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "priority": {
+              "description": "Indicates how quickly the {{title}} should be addressed with respect to other requests.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_priority": {
+              "description": "Extensions for priority",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "codeReference": {
+              "description": "The details of the device to be used.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "codeCodeableConcept": {
+              "description": "The details of the device to be used.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "The patient who will use the device.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "An encounter that provides additional context in which this request is made.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "occurrenceDateTime": {
+              "description": "The timing schedule for the use of the device. The Schedule data type allows many different expressions, for example. \"Every 8 hours\"; \"Three times a day\"; \"1/2 an hour before breakfast for 10 days from 23-Dec 2011:\"; \"15 Oct 2013, 17 Oct 2013 and 1 Nov 2013\".",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_occurrenceDateTime": {
+              "description": "Extensions for occurrenceDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "occurrencePeriod": {
+              "description": "The timing schedule for the use of the device. The Schedule data type allows many different expressions, for example. \"Every 8 hours\"; \"Three times a day\"; \"1/2 an hour before breakfast for 10 days from 23-Dec 2011:\"; \"15 Oct 2013, 17 Oct 2013 and 1 Nov 2013\".",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "occurrenceTiming": {
+              "description": "The timing schedule for the use of the device. The Schedule data type allows many different expressions, for example. \"Every 8 hours\"; \"Three times a day\"; \"1/2 an hour before breakfast for 10 days from 23-Dec 2011:\"; \"15 Oct 2013, 17 Oct 2013 and 1 Nov 2013\".",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "authoredOn": {
+              "description": "When the request transitioned to being actionable.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_authoredOn": {
+              "description": "Extensions for authoredOn",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requester": {
+              "description": "The individual who initiated the request and has responsibility for its activation.",
+              "$ref": "#/definitions/DeviceRequest_Requester"
+            },
+            "performerType": {
+              "description": "Desired type of performer for doing the diagnostic testing.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "performer": {
+              "description": "The desired perfomer for doing the diagnostic testing.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reasonCode": {
+              "description": "Reason or justification for the use of this device.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reasonReference": {
+              "description": "Reason or justification for the use of this device.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "supportingInfo": {
+              "description": "Additional clinical information about the patient that may influence the request fulfilment.  For example, this may includes body where on the subject\u0027s the device will be used ( i.e. the target site).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "note": {
+              "description": "Details about this request that were not represented at all or sufficiently in one of the attributes provided in a class. These may include for example a comment, an instruction, or a note associated with the statement.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "relevantHistory": {
+              "description": "Key events in the history of the request.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "intent",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "DeviceRequest_Requester": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Represents a request for a patient to employ a medical device. The device may be an implantable device, or an external assistive device, such as a walker.",
+          "properties": {
+            "agent": {
+              "description": "The device, practitioner, etc. who initiated the request.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOf": {
+              "description": "The organization the device or practitioner was acting on behalf of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "agent"
+          ]
+        }
+      ]
+    }
+  }
+}

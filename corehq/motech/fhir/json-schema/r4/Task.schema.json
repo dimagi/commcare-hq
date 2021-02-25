@@ -1,0 +1,887 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Task",
+  "$ref": "#/definitions/Task",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Task": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A task to be performed.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Task resource",
+              "type": "string",
+              "enum": [
+                "Task"
+              ]
+            },
+            "identifier": {
+              "description": "The business identifier for this task.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "definitionUri": {
+              "description": "A reference to a formal or informal definition of the task.  For example, a protocol, a step within a defined workflow definition, etc.",
+              "type": "string"
+            },
+            "_definitionUri": {
+              "description": "Extensions for definitionUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definitionReference": {
+              "description": "A reference to a formal or informal definition of the task.  For example, a protocol, a step within a defined workflow definition, etc.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "basedOn": {
+              "description": "BasedOn refers to a higher-level authorization that triggered the creation of the task.  It references a \"request\" resource such as a ProcedureRequest, MedicationRequest, ProcedureRequest, CarePlan, etc. which is distinct from the \"request\" resource the task is seeking to fulfil.  This latter resource is referenced by FocusOn.  For example, based on a ProcedureRequest (\u003d BasedOn), a task is created to fulfil a procedureRequest ( \u003d FocusOn ) to collect a specimen from a patient.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "groupIdentifier": {
+              "description": "An identifier that links together multiple tasks and other requests that were created in the same context.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "partOf": {
+              "description": "Task that this particular task is part of.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "status": {
+              "description": "The current status of the task.",
+              "enum": [
+                "draft",
+                "requested",
+                "received",
+                "accepted",
+                "rejected",
+                "ready",
+                "cancelled",
+                "in-progress",
+                "on-hold",
+                "failed",
+                "completed",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "statusReason": {
+              "description": "An explanation as to why this task is held, failed, was refused, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "businessStatus": {
+              "description": "Contains business-specific nuances of the business state.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "intent": {
+              "description": "Indicates the \"level\" of actionability associated with the Task.  I.e. Is this a proposed task, a planned task, an actionable task, etc.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_intent": {
+              "description": "Extensions for intent",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "priority": {
+              "description": "Indicates how quickly the Task should be addressed with respect to other requests.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_priority": {
+              "description": "Extensions for priority",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "A name or code (or both) briefly describing what the task involves.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "description": {
+              "description": "A free-text description of what is to be performed.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "focus": {
+              "description": "The request being actioned or the resource being manipulated by this task.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "for": {
+              "description": "The entity who benefits from the performance of the service specified in the task (e.g., the patient).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The healthcare event  (e.g. a patient and healthcare provider interaction) during which this task was created.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "executionPeriod": {
+              "description": "Identifies the time action was first taken against the task (start) and/or the time final action was taken against the task prior to marking it as completed (end).",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "authoredOn": {
+              "description": "The date and time this task was created.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_authoredOn": {
+              "description": "Extensions for authoredOn",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastModified": {
+              "description": "The date and time of last modification to this task.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_lastModified": {
+              "description": "Extensions for lastModified",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requester": {
+              "description": "The creator of the task.",
+              "$ref": "#/definitions/Task_Requester"
+            },
+            "performerType": {
+              "description": "The type of participant that can execute the task.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "owner": {
+              "description": "Individual organization or Device currently responsible for task execution.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reason": {
+              "description": "A description or code indicating why this task needs to be performed.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "note": {
+              "description": "Free-text information captured about the task as it progresses.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "relevantHistory": {
+              "description": "Links to Provenance records for past versions of this Task that identify key state transitions or updates that are likely to be relevant to a user looking at the current version of the task.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "restriction": {
+              "description": "If the Task.focus is a request resource and the task is seeking fulfillment (i.e is asking for the request to be actioned), this element identifies any limitations on what parts of the referenced request should be actioned.",
+              "$ref": "#/definitions/Task_Restriction"
+            },
+            "input": {
+              "description": "Additional information that may be needed in the execution of the task.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Task_Input"
+              }
+            },
+            "output": {
+              "description": "Outputs produced by the Task.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Task_Output"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Task_Requester": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A task to be performed.",
+          "properties": {
+            "agent": {
+              "description": "The device, practitioner, etc. who initiated the task.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOf": {
+              "description": "The organization the device or practitioner was acting on behalf of when they initiated the task.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "agent"
+          ]
+        }
+      ]
+    },
+    "Task_Restriction": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A task to be performed.",
+          "properties": {
+            "repetitions": {
+              "description": "Indicates the number of times the requested action should occur.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_repetitions": {
+              "description": "Extensions for repetitions",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "Over what time-period is fulfillment sought.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "recipient": {
+              "description": "For requests that are targeted to more than on potential recipient/target, for whom is fulfillment sought?",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Task_Input": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A task to be performed.",
+          "properties": {
+            "type": {
+              "description": "A code or description indicating how the input is intended to be used as part of the task execution.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueBoolean": {
+              "description": "The value of the input parameter as a basic type.",
+              "type": "boolean"
+            },
+            "_valueBoolean": {
+              "description": "Extensions for valueBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueInteger": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_valueInteger": {
+              "description": "Extensions for valueInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDecimal": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?",
+              "type": "number"
+            },
+            "_valueDecimal": {
+              "description": "Extensions for valueDecimal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueBase64Binary": {
+              "description": "The value of the input parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueBase64Binary": {
+              "description": "Extensions for valueBase64Binary",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueInstant": {
+              "description": "The value of the input parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueInstant": {
+              "description": "Extensions for valueInstant",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueString": {
+              "description": "The value of the input parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueString": {
+              "description": "Extensions for valueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueUri": {
+              "description": "The value of the input parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueUri": {
+              "description": "Extensions for valueUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDate": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_valueDate": {
+              "description": "Extensions for valueDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDateTime": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_valueDateTime": {
+              "description": "Extensions for valueDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueTime": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?",
+              "type": "string"
+            },
+            "_valueTime": {
+              "description": "Extensions for valueTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueCode": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*",
+              "type": "string"
+            },
+            "_valueCode": {
+              "description": "Extensions for valueCode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueOid": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*",
+              "type": "string"
+            },
+            "_valueOid": {
+              "description": "Extensions for valueOid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueUuid": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+              "type": "string"
+            },
+            "_valueUuid": {
+              "description": "Extensions for valueUuid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueId": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+              "type": "string"
+            },
+            "_valueId": {
+              "description": "Extensions for valueId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueUnsignedInt": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "[0]|([1-9][0-9]*)",
+              "type": "number"
+            },
+            "_valueUnsignedInt": {
+              "description": "Extensions for valueUnsignedInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valuePositiveInt": {
+              "description": "The value of the input parameter as a basic type.",
+              "pattern": "[1-9][0-9]*",
+              "type": "number"
+            },
+            "_valuePositiveInt": {
+              "description": "Extensions for valuePositiveInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueMarkdown": {
+              "description": "The value of the input parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueMarkdown": {
+              "description": "Extensions for valueMarkdown",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueElement": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueExtension": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Extension.schema.json#/definitions/Extension"
+            },
+            "valueBackboneElement": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
+            },
+            "valueNarrative": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Narrative.schema.json#/definitions/Narrative"
+            },
+            "valueAnnotation": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Annotation.schema.json#/definitions/Annotation"
+            },
+            "valueAttachment": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "valueIdentifier": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "valueCodeableConcept": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueCoding": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "valueQuantity": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueDuration": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "valueSimpleQuantity": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueDistance": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Distance.schema.json#/definitions/Distance"
+            },
+            "valueCount": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Count.schema.json#/definitions/Count"
+            },
+            "valueMoney": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "valueAge": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Age.schema.json#/definitions/Age"
+            },
+            "valueRange": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "valuePeriod": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "valueRatio": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Ratio.schema.json#/definitions/Ratio"
+            },
+            "valueReference": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "valueSampledData": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "SampledData.schema.json#/definitions/SampledData"
+            },
+            "valueSignature": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Signature.schema.json#/definitions/Signature"
+            },
+            "valueHumanName": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "HumanName.schema.json#/definitions/HumanName"
+            },
+            "valueAddress": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "valueContactPoint": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+            },
+            "valueTiming": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "valueMeta": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Meta.schema.json#/definitions/Meta"
+            },
+            "valueElementDefinition": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "ElementDefinition.schema.json#/definitions/ElementDefinition"
+            },
+            "valueContactDetail": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+            },
+            "valueContributor": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Contributor.schema.json#/definitions/Contributor"
+            },
+            "valueDosage": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "Dosage.schema.json#/definitions/Dosage"
+            },
+            "valueRelatedArtifact": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+            },
+            "valueUsageContext": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+            },
+            "valueDataRequirement": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "DataRequirement.schema.json#/definitions/DataRequirement"
+            },
+            "valueParameterDefinition": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "ParameterDefinition.schema.json#/definitions/ParameterDefinition"
+            },
+            "valueTriggerDefinition": {
+              "description": "The value of the input parameter as a basic type.",
+              "$ref": "TriggerDefinition.schema.json#/definitions/TriggerDefinition"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "Task_Output": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A task to be performed.",
+          "properties": {
+            "type": {
+              "description": "The name of the Output parameter.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueBoolean": {
+              "description": "The value of the Output parameter as a basic type.",
+              "type": "boolean"
+            },
+            "_valueBoolean": {
+              "description": "Extensions for valueBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueInteger": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_valueInteger": {
+              "description": "Extensions for valueInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDecimal": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?",
+              "type": "number"
+            },
+            "_valueDecimal": {
+              "description": "Extensions for valueDecimal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueBase64Binary": {
+              "description": "The value of the Output parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueBase64Binary": {
+              "description": "Extensions for valueBase64Binary",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueInstant": {
+              "description": "The value of the Output parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueInstant": {
+              "description": "Extensions for valueInstant",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueString": {
+              "description": "The value of the Output parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueString": {
+              "description": "Extensions for valueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueUri": {
+              "description": "The value of the Output parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueUri": {
+              "description": "Extensions for valueUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDate": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_valueDate": {
+              "description": "Extensions for valueDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDateTime": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_valueDateTime": {
+              "description": "Extensions for valueDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueTime": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?",
+              "type": "string"
+            },
+            "_valueTime": {
+              "description": "Extensions for valueTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueCode": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*",
+              "type": "string"
+            },
+            "_valueCode": {
+              "description": "Extensions for valueCode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueOid": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "urn:oid:(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*",
+              "type": "string"
+            },
+            "_valueOid": {
+              "description": "Extensions for valueOid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueUuid": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+              "type": "string"
+            },
+            "_valueUuid": {
+              "description": "Extensions for valueUuid",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueId": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+              "type": "string"
+            },
+            "_valueId": {
+              "description": "Extensions for valueId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueUnsignedInt": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "[0]|([1-9][0-9]*)",
+              "type": "number"
+            },
+            "_valueUnsignedInt": {
+              "description": "Extensions for valueUnsignedInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valuePositiveInt": {
+              "description": "The value of the Output parameter as a basic type.",
+              "pattern": "[1-9][0-9]*",
+              "type": "number"
+            },
+            "_valuePositiveInt": {
+              "description": "Extensions for valuePositiveInt",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueMarkdown": {
+              "description": "The value of the Output parameter as a basic type.",
+              "type": "string"
+            },
+            "_valueMarkdown": {
+              "description": "Extensions for valueMarkdown",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueElement": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueExtension": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Extension.schema.json#/definitions/Extension"
+            },
+            "valueBackboneElement": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
+            },
+            "valueNarrative": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Narrative.schema.json#/definitions/Narrative"
+            },
+            "valueAnnotation": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Annotation.schema.json#/definitions/Annotation"
+            },
+            "valueAttachment": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "valueIdentifier": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "valueCodeableConcept": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "valueCoding": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "valueQuantity": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueDuration": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "valueSimpleQuantity": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "valueDistance": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Distance.schema.json#/definitions/Distance"
+            },
+            "valueCount": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Count.schema.json#/definitions/Count"
+            },
+            "valueMoney": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "valueAge": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Age.schema.json#/definitions/Age"
+            },
+            "valueRange": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "valuePeriod": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "valueRatio": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Ratio.schema.json#/definitions/Ratio"
+            },
+            "valueReference": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "valueSampledData": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "SampledData.schema.json#/definitions/SampledData"
+            },
+            "valueSignature": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Signature.schema.json#/definitions/Signature"
+            },
+            "valueHumanName": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "HumanName.schema.json#/definitions/HumanName"
+            },
+            "valueAddress": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Address.schema.json#/definitions/Address"
+            },
+            "valueContactPoint": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+            },
+            "valueTiming": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "valueMeta": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Meta.schema.json#/definitions/Meta"
+            },
+            "valueElementDefinition": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "ElementDefinition.schema.json#/definitions/ElementDefinition"
+            },
+            "valueContactDetail": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+            },
+            "valueContributor": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Contributor.schema.json#/definitions/Contributor"
+            },
+            "valueDosage": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "Dosage.schema.json#/definitions/Dosage"
+            },
+            "valueRelatedArtifact": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+            },
+            "valueUsageContext": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+            },
+            "valueDataRequirement": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "DataRequirement.schema.json#/definitions/DataRequirement"
+            },
+            "valueParameterDefinition": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "ParameterDefinition.schema.json#/definitions/ParameterDefinition"
+            },
+            "valueTriggerDefinition": {
+              "description": "The value of the Output parameter as a basic type.",
+              "$ref": "TriggerDefinition.schema.json#/definitions/TriggerDefinition"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    }
+  }
+}

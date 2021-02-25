@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/HumanName",
+  "$ref": "#/definitions/HumanName",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "HumanName": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A human\u0027s name with the ability to identify parts and usage.",
+          "properties": {
+            "use": {
+              "description": "Identifies the purpose for this name.",
+              "enum": [
+                "usual",
+                "official",
+                "temp",
+                "nickname",
+                "anonymous",
+                "old",
+                "maiden"
+              ],
+              "type": "string"
+            },
+            "_use": {
+              "description": "Extensions for use",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "text": {
+              "description": "A full text representation of the name.",
+              "type": "string"
+            },
+            "_text": {
+              "description": "Extensions for text",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "family": {
+              "description": "The part of a name that links to the genealogy. In some cultures (e.g. Eritrea) the family name of a son is the first name of his father.",
+              "type": "string"
+            },
+            "_family": {
+              "description": "Extensions for family",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "given": {
+              "description": "Given name.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_given": {
+              "description": "Extensions for given",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "prefix": {
+              "description": "Part of the name that is acquired as a title due to academic, legal, employment or nobility status, etc. and that appears at the start of the name.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_prefix": {
+              "description": "Extensions for prefix",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "suffix": {
+              "description": "Part of the name that is acquired as a title due to academic, legal, employment or nobility status, etc. and that appears at the end of the name.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_suffix": {
+              "description": "Extensions for suffix",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "period": {
+              "description": "Indicates the period of time when this name was valid for the named person.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Media",
+  "$ref": "#/definitions/Media",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Media": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A photo, video, or audio recording acquired or used in healthcare. The actual content may be inline or provided by direct reference.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Media resource",
+              "type": "string",
+              "enum": [
+                "Media"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers associated with the image - these may include identifiers for the image itself, identifiers for the context of its collection (e.g. series ids) and context ids such as accession numbers or other workflow identifiers.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "basedOn": {
+              "description": "A procedure that is fulfilled in whole or in part by the creation of this media.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "type": {
+              "description": "Whether the media is a photo (still image), an audio recording, or a video recording.",
+              "enum": [
+                "photo",
+                "video",
+                "audio"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "subtype": {
+              "description": "Details of the type of the media - usually, how it was acquired (what type of device). If images sourced from a DICOM system, are wrapped in a Media resource, then this is the modality.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "view": {
+              "description": "The name of the imaging view e.g. Lateral or Antero-posterior (AP).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "Who/What this Media is a record of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The encounter or episode of care that establishes the context for this media.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "occurrenceDateTime": {
+              "description": "The date and time(s) at which the media was collected.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_occurrenceDateTime": {
+              "description": "Extensions for occurrenceDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "occurrencePeriod": {
+              "description": "The date and time(s) at which the media was collected.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "operator": {
+              "description": "The person who administered the collection of the image.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "reasonCode": {
+              "description": "Describes why the event occurred in coded or textual form.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "bodySite": {
+              "description": "Indicates the site on the subject\u0027s body where the media was collected (i.e. the target site).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "device": {
+              "description": "The device used to collect the media.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "height": {
+              "description": "Height of the image in pixels (photo/video).",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_height": {
+              "description": "Extensions for height",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "width": {
+              "description": "Width of the image in pixels (photo/video).",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_width": {
+              "description": "Extensions for width",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "frames": {
+              "description": "The number of frames in a photo. This is used with a multi-page fax, or an imaging acquisition context that takes multiple slices in a single image, or an animated gif. If there is more than one frame, this SHALL have a value in order to alert interface software that a multi-frame capable rendering widget is required.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_frames": {
+              "description": "Extensions for frames",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "duration": {
+              "description": "The duration of the recording in seconds - for audio and video.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_duration": {
+              "description": "Extensions for duration",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "content": {
+              "description": "The actual content of the media - inline or by direct reference to the media source file.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "note": {
+              "description": "Comments made about the media by the performer, subject or other participants.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            }
+          },
+          "required": [
+            "content",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
+from urllib.parse import unquote
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -126,12 +127,12 @@ def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
     """
-    as_user = request.POST.get('commcare_login_as', None)
+    as_user = unquote(request.POST.get('commcare_login_as', ''))
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    case_id = request.POST.get('case_id', None)
-    if case_id is None:
+    case_id = unquote(request.POST.get('case_id', ''))
+    if not case_id:
         return HttpResponse('A case_id is required', status=400)
 
     try:
@@ -140,8 +141,8 @@ def claim(request, domain):
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
-                   host_type=request.POST.get('case_type'),
-                   host_name=request.POST.get('case_name'),
+                   host_type=unquote(request.POST.get('case_type', '')),
+                   host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
@@ -174,6 +175,7 @@ def get_restore_params(request):
         'user_id': request.GET.get('user_id'),
         'case_sync': request.GET.get('case_sync'),
         'skip_fixtures': request.GET.get('skip_fixtures') == 'true',
+        'auth_type': getattr(request, 'auth_type', None),
     }
 
 
@@ -183,7 +185,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
                          openrosa_version=None, case_sync=None,
-                         skip_fixtures=False):
+                         skip_fixtures=False, auth_type=None):
     """
     :param domain: Domain being restored from
     :param couch_user: User performing restore
@@ -201,6 +203,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param openrosa_version:
     :param case_sync: Override default case sync algorithm
     :param skip_fixtures: Do not include fixtures in sync payload
+    :param auth_type: The type of auth that was used to authenticate the request.
+        Used to determine if the request is coming from an actual user or as part of some automation.
     :return: Tuple of (http response, timing context or None)
     """
 
@@ -272,7 +276,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         ),
         is_async=async_restore_enabled,
         case_sync=case_sync,
-        skip_fixtures=skip_fixtures
+        skip_fixtures=skip_fixtures,
+        auth_type=auth_type
     )
     return restore_config.get_response(), restore_config.timing_context
 

@@ -94,6 +94,7 @@ class SuiteGenerator(object):
         else:
             training_menu = None
 
+        detail_section_elements = DetailContributor(None, self.app, self.modules).get_section_elements()
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
@@ -101,7 +102,9 @@ class SuiteGenerator(object):
                 menus.get_module_contributions(module, training_menu)
             )
 
-            self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
+            self.suite.remote_requests.extend(
+                remote_requests.get_module_contributions(module, detail_section_elements)
+            )
 
             if self.app.supports_session_endpoints:
                 self.suite.endpoints.extend(

@@ -1,6 +1,6 @@
 # Module 1 Form 2: Spray Operator Morning Mobilization Inspection
 http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
-- question: [hand_wash_station]
+  - question: [hand_wash_station]
     base_path: [morning_mobilization_grp, Q1]
     comment: [hand_washing_station_comments]
     flag_name: "1. Is there a hand-washing station at the entrance of the operations site?"
@@ -11,7 +11,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: ""
     warning_por: ""
     responsible_follow_up: "District Coordinator"
-- question: [people_hand_washing ]
+  - question: [people_hand_washing ]
     base_path: [morning_mobilization_grp, Q1a]
     comment: [hand_washing_station_comments]
     flag_name: "1.a Are persons washing their hands before they enter the operations site?"
@@ -22,7 +22,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: ""
     warning_por: ""
     responsible_follow_up: "District Coordinator"
-- question: [sop_physical]
+  - question: [sop_physical]
     base_path: [morning_mobilization_grp, Q2]
     comment: [sop_physical_comments]
     flag_name: "2. Have the Team Leaders performed a physical inspection of each Spray Operator, looking for symptoms such as nausea, dizziness, confusion, breathing problems, skin irritation, excessive sweating, fatigue, weakness, alcohol intoxication, etc.?"
@@ -66,7 +66,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Les opérateurs de pulvérisation ne sont pas correctement nourris ou hydratés avant d'enfiler les EPI."
     warning_por: "Problema reportado: Roceador nao se alimentou ou hidratou propriamente antes de vestir EPI."
     responsible_follow_up: "District coordinator"
-- question: [insecticide_record]
+  - question: [insecticide_record]
     base_path: [morning_mobilization_grp, Q5]
     comment: [insecticide_record_comments]
     flag_name: "5. Does the storekeeper record all insecticide serial numbers before issuing to team leaders?"
@@ -77,7 +77,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: "
     warning_por: "Problema reportado: "
     responsible_follow_up: "ECO"
-- question: [teamlead_record]
+  - question: [teamlead_record]
     base_path: [morning_mobilization_grp, Q6]
     comment: [teamlead_record_comments]
     flag_name: "6. Does the team leader record all serial numbers issued to spray operators?"
@@ -88,7 +88,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
-- question: [distrib_sign]
+  - question: [distrib_sign]
     base_path: [morning_mobilization_grp, Q7]
     comment: [distrib_sign_comments]
     flag_name: "7. Do the team leader and spray operators sign the daily team leader distribution form?"
@@ -99,7 +99,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
-- question: [sop_full_ppe]
+  - question: [sop_full_ppe]
     base_path: [morning_mobilization_grp, Q8]
     comment: [sop_full_ppe_comments]
     flag_name: "8. Are SOs in full PPE before boarding truck?"
@@ -145,7 +145,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Tous les insecticides et l'eau de rinçage contaminée ne sont pas utilisés pour remplir les réservoirs des OP."
     warning_por: "Problema reportado: Os roceadores nao e usam todo insecticida e agua contaminada para encher os tanques das bombas."
     responsible_follow_up: "District coordinator"
-- question: [vehicle_space]
+  - question: [vehicle_space]
     base_path: [morning_mobilization_grp, Q12]
     comment: [vehicle_space_comments]
     flag_name: "12. Are the team members properly spaced and staggered in the vehicle?"

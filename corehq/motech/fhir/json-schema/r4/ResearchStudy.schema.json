@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ResearchStudy",
+  "$ref": "#/definitions/ResearchStudy",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ResearchStudy": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A process where a researcher or organization plans and then executes a series of steps intended to increase the field of healthcare-related knowledge.  This includes studies of safety, efficacy, comparative effectiveness and other information about medications, devices, therapies and other interventional and investigative techniques.  A ResearchStudy involves the gathering of information about human or animal subjects.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ResearchStudy resource",
+              "type": "string",
+              "enum": [
+                "ResearchStudy"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers assigned to this research study by the sponsor or other systems.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "title": {
+              "description": "A short, descriptive user-friendly label for the study.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "protocol": {
+              "description": "The set of steps expected to be performed as part of the execution of the study.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "partOf": {
+              "description": "A larger research study of which this particular study is a component or step.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "status": {
+              "description": "The current state of the study.",
+              "enum": [
+                "draft",
+                "in-progress",
+                "suspended",
+                "stopped",
+                "completed",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "Codes categorizing the type of study such as investigational vs. observational, type of blinding, type of randomization, safety vs. efficacy, etc.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "focus": {
+              "description": "The condition(s), medication(s), food(s), therapy(ies), device(s) or other concerns or interventions that the study is seeking to gain more information about.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "contact": {
+              "description": "Contact details to assist a user in learning more about or engaging with the study.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "relatedArtifact": {
+              "description": "Citations, references and other related documents.",
+              "type": "array",
+              "items": {
+                "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+              }
+            },
+            "keyword": {
+              "description": "Key terms to aid in searching for or filtering the study.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "jurisdiction": {
+              "description": "Indicates a country, state or other region where the study is taking place.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "description": {
+              "description": "A full description of how the study is being conducted.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "enrollment": {
+              "description": "Reference to a Group that defines the criteria for and quantity of subjects participating in the study.  E.g. \" 200 female Europeans between the ages of 20 and 45 with early onset diabetes\".",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "period": {
+              "description": "Identifies the start date and the expected (or actual, depending on status) end date for the study.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "sponsor": {
+              "description": "The organization responsible for the execution of the study.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "principalInvestigator": {
+              "description": "Indicates the individual who has primary oversite of the execution of the study.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "site": {
+              "description": "Clinic, hospital or other healthcare location that is participating in the study.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "reasonStopped": {
+              "description": "A description and/or code explaining the premature termination of the study.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "note": {
+              "description": "Comments made about the event by the performer, subject or other participants.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "arm": {
+              "description": "Describes an expected sequence of events for one of the participants of a study.  E.g. Exposure to drug A, wash-out, exposure to drug B, wash-out, follow-up.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ResearchStudy_Arm"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ResearchStudy_Arm": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A process where a researcher or organization plans and then executes a series of steps intended to increase the field of healthcare-related knowledge.  This includes studies of safety, efficacy, comparative effectiveness and other information about medications, devices, therapies and other interventional and investigative techniques.  A ResearchStudy involves the gathering of information about human or animal subjects.",
+          "properties": {
+            "name": {
+              "description": "Unique, human-readable label for this arm of the study.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Categorization of study arm, e.g. experimental, active comparator, placebo comparater.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "description": {
+              "description": "A succinct description of the path through the study that would be followed by a subject adhering to this arm.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

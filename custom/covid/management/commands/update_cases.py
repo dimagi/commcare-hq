@@ -12,6 +12,9 @@ class CaseUpdateCommand(BaseCommand):
         Override all methods that raise NotImplementedError.
     """
 
+    def __init__(self):
+        self.extra_options = {}
+
     def case_block(self):
         raise NotImplementedError()
 
@@ -41,6 +44,10 @@ class CaseUpdateCommand(BaseCommand):
                 raise Exception("The username you entered is invalid")
         else:
             user_id = SYSTEM_USER_ID
+
+        options.pop("and_linked")
+        options.pop("username")
+        self.extra_options = options
 
         for domain in domains:
             print(f"Processing {domain}")
