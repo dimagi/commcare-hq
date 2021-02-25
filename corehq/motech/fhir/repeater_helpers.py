@@ -12,7 +12,9 @@ from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 
 from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
+from .matchers import PatientMatcher
 from .models import build_fhir_resource_for_info
+from .searchers import PatientSearcher
 
 
 def register_patients(
@@ -25,11 +27,29 @@ def register_patients(
         for resource in resources:
             if resource['resourceType'] != 'Patient':
                 continue
-            response = requests.post('Patient/', json=resource,
-                                     raise_for_status=True)
-            set_external_id(info, response.json()['id'])
-            resources.remove(response)
-            # TODO: Update other resources to refer to the new Patient
+            patient = find_patient(requests, resource)  # Raises DuplicateWarning
+            if patient:
+                set_external_id(info, patient['id'])
+            else:
+                patient = register_patient(requests, resource)
+                set_external_id(info, patient['id'])
+                resources.remove(resource)
+
+
+def find_patient(requests, resource):
+    searcher = PatientSearcher(requests, resource)
+    matcher = PatientMatcher(resource)
+    for search in searcher.iter_searches():
+        candidates = search.iter_candidates()
+        match = matcher.find_match(candidates)  # Raises DuplicateWarning
+        if match:
+            return match
+    return None
+
+
+def register_patient(requests, resource):
+    response = requests.post('Patient/', json=resource, raise_for_status=True)
+    return response.json()
 
 
 def get_info_resources_list(
