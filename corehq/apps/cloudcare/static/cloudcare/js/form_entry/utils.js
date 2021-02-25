@@ -64,5 +64,43 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return form;
     };
 
+    module.getBroadcastObject = function (mapboxResult) {
+        var broadcastObj = {
+            full: mapboxResult.place_name,
+        };
+        mapboxResult.context.forEach(function (contextValue) {
+            try {
+                if (contextValue.id.startsWith('postcode')) {
+                    broadcastObj.zipcode = contextValue.text;
+                } else if (contextValue.id.startsWith('place')) {
+                    broadcastObj.city = contextValue.text;
+                } else if (contextValue.id.startsWith('country')) {
+                    broadcastObj.country = contextValue.text;
+                    if (contextValue.short_code) {
+                        broadcastObj.country_short = contextValue.short_code;
+                    }
+                } else if (contextValue.id.startsWith('region')) {
+                    broadcastObj.region = contextValue.text;
+                    // TODO: Deprecate state_short and state_long.
+                    broadcastObj.state_long = contextValue.text;
+                    if (contextValue.short_code) {
+                        broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                    }
+                    // If US region, it's actually a state so add us_state.
+                    if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
+                        broadcastObj.us_state = contextValue.text;
+                        broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
+                    }
+                }
+            } catch (err) {
+                // Swallow error, broadcast best effort. Consider logging.
+            }
+        });
+        // street composed of (optional) number and street name.
+        broadcastObj.street = mapboxResult.address || '';
+        broadcastObj.street += ' ' + mapboxResult.text;
+        return broadcastObj;
+    }
+
     return module;
 });

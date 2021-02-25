@@ -5,8 +5,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var separator = " to ";
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var Const = hqImport("cloudcare/js/form_entry/const");
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        Utils = hqImport("cloudcare/js/form_entry/utils"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
@@ -51,40 +52,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         geocoderItemCallback: function (addressTopic) {
             return function (item) {
-                var broadcastObj = {
-                    full: item.place_name,
-                };
-                item.context.forEach(function (contextValue) {
-                    try {
-                        if (contextValue.id.startsWith('postcode')) {
-                            broadcastObj.zipcode = contextValue.text;
-                        } else if (contextValue.id.startsWith('place')) {
-                            broadcastObj.city = contextValue.text;
-                        } else if (contextValue.id.startsWith('country')) {
-                            broadcastObj.country = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.country_short = contextValue.short_code;
-                            }
-                        } else if (contextValue.id.startsWith('region')) {
-                            broadcastObj.region = contextValue.text;
-                            // TODO: Deprecate state_short and state_long.
-                            broadcastObj.state_long = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.state_short = contextValue.short_code.replace('US-', '');
-                            }
-                            // If US region, it's actually a state so add us_state.
-                            if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
-                                broadcastObj.us_state = contextValue.text;
-                                broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
-                            }
-                        }
-                    } catch (err) {
-                        // Swallow error, broadcast best effort. Consider logging.
-                    }
-                });
-                // street composed of (optional) number and street name.
-                broadcastObj.street = item.address || '';
-                broadcastObj.street += ' ' + item.text;
+                var broadcastObj = Utils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
