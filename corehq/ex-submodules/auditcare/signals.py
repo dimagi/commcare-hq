@@ -1,7 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import post_save
@@ -42,13 +41,6 @@ def django_audit_save(sender, instance, created, raw=False, **kwargs):
     from auditcare.models import AuditEvent
     usr = get_current_user()
     instance_json = model_to_json(instance)
-
-    #really stupid sanity check for unit tests when threadlocals doesn't update and user model data is updated.
-    if usr != None:
-        try:
-            User.objects.get(id=usr.id)
-        except:
-            usr = None
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
 
@@ -57,11 +49,6 @@ def couch_audit_save(instance, *args, **kwargs):
     instance.__orig_save(*args, **kwargs)
     instance_json = instance.to_json()
     usr = get_current_user()
-    if usr != None:
-        try:
-            User.objects.get(id=usr.id)
-        except:
-            usr = None
     AuditEvent.audit_couch_save(instance.__class__, instance, instance_json, usr)
 
 
