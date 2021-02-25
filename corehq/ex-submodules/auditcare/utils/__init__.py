@@ -1,17 +1,12 @@
 #source, from django-tracking
 
+from threading import local
 
 from django.conf import settings
 
-
-# threadlocals middleware for global usage
-# if this is used elsewhere in your system, consider using that instead of this.
-try:
-    from threading import local
-except ImportError:
-    from django.utils._threading_local import local
-
 _thread_locals = local()
+
+
 def get_current_user():
     return getattr(_thread_locals, 'user', None)
 

@@ -1,10 +1,8 @@
-# django imports
 from django.core.management.base import BaseCommand
-from optparse import make_option
-
-import urls
 
 from auditcare.utils import show_urls
+
+import urls
 
 
 class Command(BaseCommand):

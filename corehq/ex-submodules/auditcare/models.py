@@ -7,30 +7,24 @@ import platform
 import uuid
 from datetime import datetime
 
+from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 
-from dimagi.ext.couchdbkit import (
-    Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
-)
-from django.conf import settings
-from django.contrib.auth.models import User, AnonymousUser
-from django.contrib.contenttypes.models import ContentType
-
 from auditcare import utils
+from auditcare.signals import user_login_failed
+from dimagi.ext.couchdbkit import (
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    IntegerProperty,
+    StringListProperty,
+    StringProperty,
+)
 from dimagi.utils.web import get_ip
 
 log = logging.getLogger(__name__)
-
-
-try:
-    from django.contrib.auth.signals import user_logged_in, user_logged_out
-except:
-    if getattr(settings, 'AUDITCARE_LOG_ERRORS', True):
-        log.error("Error, django.contrib.auth signals not available in this version of django yet.")
-    user_logged_in = None
-    user_logged_out = None
-
-from auditcare.signals import user_login_failed
 
 
 def make_uuid():

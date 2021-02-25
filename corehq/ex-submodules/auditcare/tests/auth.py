@@ -1,19 +1,17 @@
 import datetime
-import time
 from datetime import timedelta
 
-from django.conf import settings
-from django.urls import reverse
-from django.test.client import Client
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.test.client import Client
+from django.urls import reverse
+
 from freezegun import freeze_time
 
-from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 from auditcare import models
+from auditcare.models import AccessAudit, AuditEvent, ModelActionAudit
 from auditcare.tests.testutils import delete_all, get_latest_access
 from auditcare.utils import _thread_locals
-from six.moves import range
 
 
 class AuthenticationTestCase(TestCase):

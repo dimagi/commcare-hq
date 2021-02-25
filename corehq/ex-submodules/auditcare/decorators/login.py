@@ -1,14 +1,16 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-import django
-from django.contrib.auth.forms import AuthenticationForm
+import logging
 
 from datetime import datetime, timedelta
+
 from django.conf import settings
 from django.contrib.auth import logout
+from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import RequestContext
+
 from auditcare import models
 from auditcare.models import AccessAudit
 from dimagi.utils.web import get_ip
@@ -24,9 +26,6 @@ USE_USER_AGENT = getattr(settings, 'AXES_USE_USER_AGENT', False)
 COOLOFF_TIME = getattr(settings, 'AXES_COOLOFF_TIME', 3)
 if isinstance(COOLOFF_TIME, int):
     COOLOFF_TIME = timedelta(hours=COOLOFF_TIME)
-
-import logging
-
 
 LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
 LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)

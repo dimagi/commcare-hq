@@ -1,9 +1,11 @@
 
 #inspector methods
-from dimagi.ext.couchdbkit import Document
 from datetime import datetime, timedelta
+
 from django.db.models.base import Model
+
 from auditcare.models import ModelActionAudit
+from dimagi.ext.couchdbkit import Document
 
 default_excludes = ['_rev']
 

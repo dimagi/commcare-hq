@@ -1,7 +1,8 @@
-from django.test import TestCase
 from django.core import management
-from auditcare.utils.export import navigation_event_ids_by_user
+from django.test import TestCase
+
 from auditcare.models import NavigationEventAudit
+from auditcare.utils.export import navigation_event_ids_by_user
 from dimagi.utils.couch.database import iter_bulk_delete
 
 

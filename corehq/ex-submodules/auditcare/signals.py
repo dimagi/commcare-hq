@@ -1,21 +1,16 @@
 import logging
 
-from django.db.models.query import QuerySet
-
-from dimagi.ext.couchdbkit import Document
-from dimagi.ext.jsonobject import JsonObject
-from django.db.models.signals import post_save
-from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import models
+from django.db.models.query import QuerySet
+from django.db.models.signals import post_save
+from django.dispatch import Signal
 from django.forms import model_to_dict
 
-try:
-    from dimagi.utils.threadlocals import get_current_user
-except:
-    from auditcare.utils import get_current_user
-
-from django.dispatch import Signal
+from auditcare.utils import get_current_user
+from dimagi.ext.couchdbkit import Document
+from dimagi.ext.jsonobject import JsonObject
 
 log = logging.getLogger(__name__)
 user_login_failed = Signal(providing_args=['request', 'username'])

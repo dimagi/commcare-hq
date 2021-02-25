@@ -1,27 +1,24 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-import csv
+import logging
 from argparse import ArgumentTypeError
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
-from auditcare.utils import login_template
-from auditcare.decorators.login import lockout_response
-from auditcare.decorators.login import log_request
-from auditcare.inspect import history_for_doc
 
-from django.conf import settings
-from django.shortcuts import render
 from auditcare import models
+from auditcare.decorators.login import lockout_response, log_request
+from auditcare.inspect import history_for_doc
 from auditcare.models import AccessAudit
-
-import logging
-
+from auditcare.utils import login_template
 from auditcare.utils.export import write_export_from_all_log_events
+
 from corehq.util.argparse_types import date_type
 
 LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)

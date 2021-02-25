@@ -1,11 +1,12 @@
-from django.test import TestCase
 import time
-from django.test import Client
-from auditcare.inspect import history_for_doc
-from auditcare.utils import _thread_locals
+
 from django.contrib.auth.models import User
+from django.test import Client, TestCase
+
+from auditcare.inspect import history_for_doc
 from auditcare.models import AuditEvent, ModelActionAudit
 from auditcare.tests.testutils import delete_all
+from auditcare.utils import _thread_locals
 
 
 class ModelEventTestCase(TestCase):

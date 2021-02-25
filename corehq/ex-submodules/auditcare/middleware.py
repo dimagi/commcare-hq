@@ -5,10 +5,10 @@ from django.conf import settings
 from django.contrib import admin
 from django.utils.deprecation import MiddlewareMixin
 
-from auditcare.models import AuditEvent
-from auditcare.decorators import watch_login
-from auditcare.decorators import watch_logout
 from six.moves import filter
+
+from auditcare.decorators import watch_login, watch_logout
+from auditcare.models import AuditEvent
 
 log = logging.getLogger(__name__)
 

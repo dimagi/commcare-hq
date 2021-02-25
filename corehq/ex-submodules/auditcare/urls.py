@@ -2,7 +2,7 @@ import traceback
 
 from django.conf.urls import url
 
-from auditcare.utils import logout_template, login_template
+from auditcare.utils import login_template, logout_template
 from auditcare.views import (
     audited_login,
     audited_logout,
@@ -12,7 +12,6 @@ from auditcare.views import (
     model_instance_history,
     single_model_history,
 )
-from six.moves import filter
 
 
 def is_test_trace(item):
