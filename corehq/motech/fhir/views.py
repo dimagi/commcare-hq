@@ -1,4 +1,6 @@
 from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
 from corehq.util.view_utils import absolute_reverse
 
 from corehq import toggles
@@ -8,6 +10,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.fhir.models import FHIRResourceType, build_fhir_resource
 
 
+@require_GET
 @login_and_domain_required
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
@@ -30,6 +33,7 @@ def get_view(request, domain, resource_type, resource_id):
     return JsonResponse(response)
 
 
+@require_GET
 @login_and_domain_required
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
