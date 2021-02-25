@@ -12,7 +12,9 @@ from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 
 from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
+from .matchers import PatientMatcher
 from .models import build_fhir_resource_for_info
+from .searchers import PatientSearcher
 
 
 def register_patients(
@@ -30,15 +32,32 @@ def register_patients(
             # Patient is already registered
             info_resource_list_to_send.append((info, resource))
             continue
-        response = requests.post(
-            'Patient/',
-            json=resource,
-            raise_for_status=True,
-        )
-        _set_external_id(info, response.json()['id'], repeater_id)
-        # Don't append `resource` to `info_resource_list_to_send`
-        # because the remote service has all its data now.
+        patient = find_patient(requests, resource)  # Raises DuplicateWarning
+        if patient:
+            _set_external_id(info, patient['id'], repeater_id)
+            info_resource_list_to_send.append((info, resource))
+        else:
+            patient = register_patient(requests, resource)
+            _set_external_id(info, patient['id'], repeater_id)
+            # Don't append `resource` to `info_resource_list_to_send`
+            # because the remote service has all its data now.
     return info_resource_list_to_send
+
+
+def find_patient(requests, resource):
+    searcher = PatientSearcher(requests, resource)
+    matcher = PatientMatcher(resource)
+    for search in searcher.iter_searches():
+        candidates = search.iter_candidates()
+        match = matcher.find_match(candidates)  # Raises DuplicateWarning
+        if match:
+            return match
+    return None
+
+
+def register_patient(requests, resource):
+    response = requests.post('Patient/', json=resource, raise_for_status=True)
+    return response.json()
 
 
 def get_info_resource_list(
@@ -139,3 +158,5 @@ def _set_external_id(info, external_id, repeater_id):
         xmlns=XMLNS_FHIR,
         device_id=f'FHIRRepeater-{repeater_id}',
     )
+    # If case was matched, set external_id to update remote resource
+    info.extra_fields['external_id'] = external_id
