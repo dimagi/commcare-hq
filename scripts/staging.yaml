@@ -73,5 +73,5 @@ branches:
   - smh/bulk-upload-web-users # Steph Feb 22
   - sr/geocoder  # Sravan Feb 25
   - dependabot/pip/requirements/django-extensions-3.1.1 # Graham Feb 25
-  #- gh/remove-include-duplicates # Graham Feb 25
+  - gh/remove-include-duplicates # Graham Feb 25
 submodules: {}
