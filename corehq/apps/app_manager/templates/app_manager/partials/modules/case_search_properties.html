@@ -76,7 +76,9 @@
                             <option value="daterange">{% trans "Date Range" %}</option>
                             <option value="barcode_scan">{% trans "Barcode" %}</option>
                             <option value="fixture">{% trans "Lookup Table Selection" %}</option>
+                            {% if js_options.has_geocoder_privs %}
                             <option value="address">{% trans "Geocoder Broadcast" %}</option>
+                            {% endif %}
                           </select>
                         </div>
                       </div>
@@ -116,6 +118,7 @@
                         <input class="form-control" type="text" data-bind="value: property.itemset.sort" placeholder="name"/>
                       </div>
                     </div>
+                    {% if js_options.has_geocoder_privs %}
                     </fieldset>
                       <fieldset data-bind="visible: property.appearance() == 'fixture' || property.appearance() == ''">
                         <legend>{% trans "Advanced Options" %}</legend>
@@ -128,6 +131,7 @@
                           </div>
                         </div>
                     </fieldset>
+                    {% endif %}
                     <fieldset data-bind="visible: property.appearance() == 'fixture'">
                       <legend>{% trans "Advanced Lookup Table Options" %}</legend>
                       <div class="form-group">
