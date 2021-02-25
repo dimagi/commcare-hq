@@ -1576,14 +1576,6 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
-    'MULTI_MASTER_BYPASS_VERSION_CHECK',
-    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
-)
-
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
