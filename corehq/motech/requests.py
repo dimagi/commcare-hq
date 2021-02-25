@@ -4,6 +4,7 @@ from typing import Callable, Optional
 
 from django.conf import settings
 from django.utils.translation import gettext as _
+from requests import HTTPError
 
 from requests.structures import CaseInsensitiveDict
 
@@ -270,6 +271,16 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         message = f'HTTP status code {response.status_code}: {response.text}'
         requests.notify_error(message)
     return response
+
+
+def json_or_http_error(response):
+    try:
+        return response.json()
+    except ValueError as err:
+        raise HTTPError(
+            'Invalid JSON response from remote service',
+            response=response,
+        ) from err
 
 
 def validate_user_input_url_for_repeaters(url, domain, src):
