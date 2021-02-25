@@ -213,7 +213,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryData = null;
             this.forceManualAction = null;
         };
 
@@ -221,7 +220,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryData = null;
             this.forceManualAction = null;
         };
 
@@ -230,7 +228,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (index === 0) {
                 this.steps = null;
                 this.sessionId = null;
-                this.queryData = null;
             } else {
                 this.steps = this.steps.splice(0, index);
                 var stepsKey = this.steps.join(",");
