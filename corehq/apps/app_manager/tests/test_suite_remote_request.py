@@ -410,27 +410,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """Setting the appearance to "address"
         """
         # Shouldn't be included for versions before 2.50
-        self.module.search_config.properties[0].appearance = 'receiver'
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name">
-            <display>
-              <text>
-                <locale id="search_property.m0.name"/>
-              </text>
-            </display>
-          </prompt>
-        </partial>
-        """
-        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
-
-        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
-        suite = self.app.create_suite()
-        expected = """
-        <partial>
-          <prompt input="receiver" key="name" receive="home-street">
+          <prompt key="name" receive="home-street">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
