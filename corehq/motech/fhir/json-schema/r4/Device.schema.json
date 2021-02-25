@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Device",
+  "$ref": "#/definitions/Device",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Device": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource identifies an instance or a type of a manufactured item that is used in the provision of healthcare without being substantially changed through that activity. The device may be a medical or non-medical device.  Medical devices include durable (reusable) medical equipment, implantable devices, as well as disposable equipment used for diagnostic, treatment, and research for healthcare and public health.  Non-medical devices may include items such as a machine, cellphone, computer, application, etc.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Device resource",
+              "type": "string",
+              "enum": [
+                "Device"
+              ]
+            },
+            "identifier": {
+              "description": "Unique instance identifiers assigned to a device by manufacturers other organizations or owners.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "udi": {
+              "description": "[Unique device identifier (UDI)](device.html#5.11.3.2.2) assigned to device label or package.",
+              "$ref": "#/definitions/Device_Udi"
+            },
+            "status": {
+              "description": "Status of the Device availability.",
+              "enum": [
+                "active",
+                "inactive",
+                "entered-in-error",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Code or identifier to identify a kind of device.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "lotNumber": {
+              "description": "Lot number assigned by the manufacturer.",
+              "type": "string"
+            },
+            "_lotNumber": {
+              "description": "Extensions for lotNumber",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "manufacturer": {
+              "description": "A name of the manufacturer.",
+              "type": "string"
+            },
+            "_manufacturer": {
+              "description": "Extensions for manufacturer",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "manufactureDate": {
+              "description": "The date and time when the device was manufactured.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_manufactureDate": {
+              "description": "Extensions for manufactureDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expirationDate": {
+              "description": "The date and time beyond which this device is no longer valid or should not be used (if applicable).",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_expirationDate": {
+              "description": "Extensions for expirationDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "model": {
+              "description": "The \"model\" is an identifier assigned by the manufacturer to identify the product by its type. This number is shared by the all devices sold as the same type.",
+              "type": "string"
+            },
+            "_model": {
+              "description": "Extensions for model",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The version of the device, if the device has multiple releases under the same model, or if the device is software or carries firmware.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "Patient information, If the device is affixed to a person.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "owner": {
+              "description": "An organization that is responsible for the provision and ongoing maintenance of the device.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "contact": {
+              "description": "Contact details for an organization or a particular human that is responsible for the device.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "location": {
+              "description": "The place where the device can be found.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "url": {
+              "description": "A network address on which the device may be contacted directly.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "note": {
+              "description": "Descriptive information, usage information or implantation information that is not captured in an existing element.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "safety": {
+              "description": "Provides additional safety characteristics about a medical device.  For example devices containing latex.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Device_Udi": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource identifies an instance or a type of a manufactured item that is used in the provision of healthcare without being substantially changed through that activity. The device may be a medical or non-medical device.  Medical devices include durable (reusable) medical equipment, implantable devices, as well as disposable equipment used for diagnostic, treatment, and research for healthcare and public health.  Non-medical devices may include items such as a machine, cellphone, computer, application, etc.",
+          "properties": {
+            "deviceIdentifier": {
+              "description": "The device identifier (DI) is a mandatory, fixed portion of a UDI that identifies the labeler and the specific version or model of a device.",
+              "type": "string"
+            },
+            "_deviceIdentifier": {
+              "description": "Extensions for deviceIdentifier",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "Name of device as used in labeling or catalog.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "jurisdiction": {
+              "description": "The identity of the authoritative source for UDI generation within a  jurisdiction.  All UDIs are globally unique within a single namespace. with the appropriate repository uri as the system.  For example,  UDIs of devices managed in the U.S. by the FDA, the value is  http://hl7.org/fhir/NamingSystem/fda-udi.",
+              "type": "string"
+            },
+            "_jurisdiction": {
+              "description": "Extensions for jurisdiction",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "carrierHRF": {
+              "description": "The full UDI carrier as the human readable form (HRF) representation of the barcode string as printed on the packaging of the device.",
+              "type": "string"
+            },
+            "_carrierHRF": {
+              "description": "Extensions for carrierHRF",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "carrierAIDC": {
+              "description": "The full UDI carrier of the Automatic Identification and Data Capture (AIDC) technology representation of the barcode string as printed on the packaging of the device - E.g a barcode or RFID.   Because of limitations on character sets in XML and the need to round-trip JSON data through XML, AIDC Formats *SHALL* be base64 encoded.",
+              "type": "string"
+            },
+            "_carrierAIDC": {
+              "description": "Extensions for carrierAIDC",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "issuer": {
+              "description": "Organization that is charged with issuing UDIs for devices.  For example, the US FDA issuers include :\n1) GS1: \nhttp://hl7.org/fhir/NamingSystem/gs1-di, \n2) HIBCC:\nhttp://hl7.org/fhir/NamingSystem/hibcc-dI, \n3) ICCBBA for blood containers:\nhttp://hl7.org/fhir/NamingSystem/iccbba-blood-di, \n4) ICCBA for other devices:\nhttp://hl7.org/fhir/NamingSystem/iccbba-other-di.",
+              "type": "string"
+            },
+            "_issuer": {
+              "description": "Extensions for issuer",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "entryType": {
+              "description": "A coded entry to indicate how the data was entered.",
+              "enum": [
+                "barcode",
+                "rfid",
+                "manual",
+                "card",
+                "self-reported",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_entryType": {
+              "description": "Extensions for entryType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

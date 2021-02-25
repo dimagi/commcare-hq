@@ -18,7 +18,7 @@ class TestDecorators(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.idp = generator.create_idp(self.account, include_certs=True)
+        self.idp = generator.create_idp('vaultwax', self.account, include_certs=True)
 
         self.request = RequestFactory().get('/sso/test')
         self.request_args = (self.idp.slug, )

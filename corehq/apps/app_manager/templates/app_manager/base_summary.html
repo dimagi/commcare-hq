@@ -139,10 +139,10 @@
   {# Question label/id switcher #}
   <script type="text/html" id="label-id-toggle">
     <div class="btn-group btn-group-separated" role="group" >
-      <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
+      <button type="button" class="btn btn-default" data-bind="click: toggleLabels, css: { 'active': showLabels }">
         {% trans "Labels" %}
       </button>
-      <button type="button" class="btn btn-default" data-bind="click: turnIdsOn, css: { 'active': showIds }">
+      <button type="button" class="btn btn-default" data-bind="click: toggleIds, css: { 'active': showIds }">
         {% trans "Question IDs" %}
       </button>
     </div>

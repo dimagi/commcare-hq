@@ -8,12 +8,13 @@ hqDefine('accounting/js/widgets', [
     ko,
     _
 ) {
-    var asyncSelect2Handler = function (field, multiple) {
+    var asyncSelect2Handler = function (field, multiple, handlerSlug) {
         'use strict';
         var self = {};
 
         self.fieldName = field;
         self.multiple = !! multiple;
+        self.handlerSlug = handlerSlug || 'select2_billing';
 
         self.init = function (initial) {
             var $field = $('form [name="' + self.fieldName + '"]');
@@ -42,7 +43,7 @@ hqDefine('accounting/js/widgets', [
                         type: 'post',
                         data: function (params) {
                             return {
-                                handler: 'select2_billing',
+                                handler: self.handlerSlug,
                                 action: self.fieldName,
                                 searchString: params.term,
                                 existing: $('form [name="' + self.fieldName + '"]').val(),

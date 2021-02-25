@@ -5,8 +5,8 @@
   "server_environment": [
     "india"
   ],
-  "report_id": "static-new_member_registrations_v1",
-  "data_source_table": "static-member_cases_v1",
+  "report_id": "static-new-member_registrations_v1",
+  "data_source_table": "static-member_registrations_v1",
   "config": {
     "title": "New member registrations per month (Static)",
     "description": "New member registrations per flw per month",
@@ -42,28 +42,11 @@
         "datatype": "string"
       },
       {
-        "display": "Opened On",
-        "slug": "opened_on",
+        "display": "Date of Birth",
+        "slug": "dob",
         "type": "date",
-        "field": "opened_on",
+        "field": "dob",
         "datatype": "date"
-      },
-      {
-        "display": "Closed",
-        "slug": "closed",
-        "type": "choice_list",
-        "field": "closed",
-        "datatype": "string",
-        "choices": [
-          {
-            "display": "yes",
-            "value": "True"
-          },
-          {
-            "display": "no",
-            "value": "False"
-          }
-        ]
       }
     ],
     "columns": [
@@ -71,7 +54,7 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "opened_on",
+        "field": "completed_time",
         "format": "%Y-%m"
       },
       {
@@ -82,22 +65,55 @@
         "aggregation": "simple"
       },
       {
-        "display": "FLW Name",
-        "column_id": "flw_name",
-        "type": "field",
-        "field": "flw_id",
-        "aggregation": "simple",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        }
-      },
-      {
-        "display": "Population",
+        "display": "Count",
         "column_id": "count",
         "type": "field",
         "field": "doc_id",
         "aggregation": "count"
+      },
+      {
+        "display": "M_temporary_resident",
+        "column_id": "M_temporary_resident",
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_resident_type",
+          "binds": ["M", "temp_resident"],
+          "then": 1
+        }],
+        "else_": 0
+      },
+      {
+        "display": "F_temporary_resident",
+        "column_id": "F_temporary_resident",
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_resident_type",
+          "binds": ["F", "temp_resident"],
+          "then": 1
+        }],
+        "else_": 0
+      },
+      {
+        "display": "M_permanent_resident",
+        "column_id": "M_permanent_resident",
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_resident_type",
+          "binds": ["M", "permanent_resident"],
+          "then": 1
+        }],
+        "else_": 0
+      },
+      {
+        "display": "F_permanent_resident",
+        "column_id": "F_permanent_resident",
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_resident_type",
+          "binds": ["F", "permanent_resident"],
+          "then": 1
+        }],
+        "else_": 0
       }
     ]
   },

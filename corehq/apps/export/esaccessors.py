@@ -24,7 +24,8 @@ def get_case_export_base_query(domain, case_type):
     return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .case_type(case_type)
-            .sort("opened_on"))
+            .sort("opened_on")
+            .sort('inserted_at', reset_sort=False))
 
 
 def get_sms_export_base_query(domain):

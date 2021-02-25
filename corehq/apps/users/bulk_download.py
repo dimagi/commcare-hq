@@ -166,7 +166,6 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         domain,
         UserFieldsView.field_type
     )
-    location_cache = LocationIdToSiteCodeCache(domain)
 
     unrecognized_user_data_keys = set()
     user_groups_length = 0
@@ -181,6 +180,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
+        location_cache = LocationIdToSiteCodeCache(current_domain)
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([

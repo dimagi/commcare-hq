@@ -9,14 +9,11 @@ from corehq.apps.sso.models import (
 
 
 @unit_testing_only
-def create_idp(account=None, include_certs=False):
-    if not account:
-        account = get_billing_account_for_idp()
-    idp_slug = data_gen.arbitrary_unique_name()[:20]
+def create_idp(slug, account, include_certs=False):
     idp = IdentityProvider(
         name=f"Azure AD for {account.name}",
-        slug=idp_slug,
-        owner=account
+        slug=slug,
+        owner=account,
     )
     idp.save()
     if include_certs:

@@ -67,6 +67,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
+    use_daterangepicker,
     use_datatables,
     use_jquery_ui,
     waf_allow)
@@ -96,6 +97,7 @@ class FormplayerMain(View):
     preview = False
     urlname = 'formplayer_main'
 
+    @use_daterangepicker
     @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
@@ -290,6 +292,7 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))

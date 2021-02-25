@@ -1,0 +1,295 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Composition",
+  "$ref": "#/definitions/Composition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Composition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A set of healthcare-related information that is assembled together into a single logical document that provides a single coherent statement of meaning, establishes its own context and that has clinical attestation with regard to who is making the statement. While a Composition defines the structure, it does not actually contain the content: rather the full content of a document is contained in a Bundle, of which the Composition is the first resource contained.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Composition resource",
+              "type": "string",
+              "enum": [
+                "Composition"
+              ]
+            },
+            "identifier": {
+              "description": "Logical identifier for the composition, assigned when created. This identifier stays constant as the composition is changed over time.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The workflow/clinical status of this composition. The status is a marker for the clinical standing of the document.",
+              "enum": [
+                "preliminary",
+                "final",
+                "amended",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "Specifies the particular kind of composition (e.g. History and Physical, Discharge Summary, Progress Note). This usually equates to the purpose of making the composition.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "class": {
+              "description": "A categorization for the type of the composition - helps for indexing and searching. This may be implied by or derived from the code specified in the Composition Type.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "Who or what the composition is about. The composition can be about a person, (patient or healthcare practitioner), a device (e.g. a machine) or even a group of subjects (such as a document about a herd of livestock, or a set of patients that share a common exposure).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "encounter": {
+              "description": "Describes the clinical encounter or type of care this documentation is associated with.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "date": {
+              "description": "The composition editing time, when the composition was last logically changed by the author.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "author": {
+              "description": "Identifies who is responsible for the information in the composition, not necessarily who typed it in.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "title": {
+              "description": "Official human-readable label for the composition.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "confidentiality": {
+              "description": "The code specifying the level of confidentiality of the Composition.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_confidentiality": {
+              "description": "Extensions for confidentiality",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "attester": {
+              "description": "A participant who has attested to the accuracy of the composition/document.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Composition_Attester"
+              }
+            },
+            "custodian": {
+              "description": "Identifies the organization or group who is responsible for ongoing maintenance of and access to the composition/document information.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "relatesTo": {
+              "description": "Relationships that this composition has with other compositions or documents that already exist.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Composition_RelatesTo"
+              }
+            },
+            "event": {
+              "description": "The clinical service, such as a colonoscopy or an appendectomy, being documented.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Composition_Event"
+              }
+            },
+            "section": {
+              "description": "The root of the sections that make up the composition.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Composition_Section"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "author",
+            "type",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Composition_Attester": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of healthcare-related information that is assembled together into a single logical document that provides a single coherent statement of meaning, establishes its own context and that has clinical attestation with regard to who is making the statement. While a Composition defines the structure, it does not actually contain the content: rather the full content of a document is contained in a Bundle, of which the Composition is the first resource contained.",
+          "properties": {
+            "mode": {
+              "description": "The type of attestation the authenticator offers.",
+              "enum": [
+                "personal",
+                "professional",
+                "legal",
+                "official"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "time": {
+              "description": "When the composition was attested by the party.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_time": {
+              "description": "Extensions for time",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "party": {
+              "description": "Who attested the composition in the specified way.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Composition_RelatesTo": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of healthcare-related information that is assembled together into a single logical document that provides a single coherent statement of meaning, establishes its own context and that has clinical attestation with regard to who is making the statement. While a Composition defines the structure, it does not actually contain the content: rather the full content of a document is contained in a Bundle, of which the Composition is the first resource contained.",
+          "properties": {
+            "code": {
+              "description": "The type of relationship that this composition has with anther composition or document.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "targetIdentifier": {
+              "description": "The target composition/document of this relationship.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "targetReference": {
+              "description": "The target composition/document of this relationship.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Composition_Event": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of healthcare-related information that is assembled together into a single logical document that provides a single coherent statement of meaning, establishes its own context and that has clinical attestation with regard to who is making the statement. While a Composition defines the structure, it does not actually contain the content: rather the full content of a document is contained in a Bundle, of which the Composition is the first resource contained.",
+          "properties": {
+            "code": {
+              "description": "This list of codes represents the main clinical acts, such as a colonoscopy or an appendectomy, being documented. In some cases, the event is inherent in the typeCode, such as a \"History and Physical Report\" in which the procedure being documented is necessarily a \"History and Physical\" act.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "period": {
+              "description": "The period of time covered by the documentation. There is no assertion that the documentation is a complete representation for this period, only that it documents events during this time.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "detail": {
+              "description": "The description and/or reference of the event(s) being documented. For example, this could be used to document such a colonoscopy or an appendectomy.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Composition_Section": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of healthcare-related information that is assembled together into a single logical document that provides a single coherent statement of meaning, establishes its own context and that has clinical attestation with regard to who is making the statement. While a Composition defines the structure, it does not actually contain the content: rather the full content of a document is contained in a Bundle, of which the Composition is the first resource contained.",
+          "properties": {
+            "title": {
+              "description": "The label for this particular section.  This will be part of the rendered content for the document, and is often used to build a table of contents.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "A code identifying the kind of content contained within the section. This must be consistent with the section title.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "text": {
+              "description": "A human-readable narrative that contains the attested content of the section, used to represent the content of the resource to a human. The narrative need not encode all the structured data, but is required to contain sufficient detail to make it \"clinically safe\" for a human to just read the narrative.",
+              "$ref": "Narrative.schema.json#/definitions/Narrative"
+            },
+            "mode": {
+              "description": "How the entry list was prepared - whether it is a working list that is suitable for being maintained on an ongoing basis, or if it represents a snapshot of a list of items from another source, or whether it is a prepared list where items may be marked as added, modified or deleted.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "orderedBy": {
+              "description": "Specifies the order applied to the items in the section entries.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "entry": {
+              "description": "A reference to the actual resource from which the narrative in the section is derived.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "emptyReason": {
+              "description": "If the section is empty, why the list is empty. An empty section typically has some text explaining the empty reason.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "section": {
+              "description": "A nested sub-section within this section.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Composition_Section"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

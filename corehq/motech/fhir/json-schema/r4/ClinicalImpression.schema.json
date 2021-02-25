@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ClinicalImpression",
+  "$ref": "#/definitions/ClinicalImpression",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ClinicalImpression": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of a clinical assessment performed to determine what problem(s) may affect the patient and before planning the treatments or management strategies that are best to manage a patient\u0027s condition. Assessments are often 1:1 with a clinical consultation / encounter,  but this varies greatly depending on the clinical workflow. This resource is called \"ClinicalImpression\" rather than \"ClinicalAssessment\" to avoid confusion with the recording of assessment tools such as Apgar score.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ClinicalImpression resource",
+              "type": "string",
+              "enum": [
+                "ClinicalImpression"
+              ]
+            },
+            "identifier": {
+              "description": "A unique identifier assigned to the clinical impression that remains consistent regardless of what server the impression is stored on.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "Identifies the workflow status of the assessment.",
+              "enum": [
+                "draft",
+                "completed",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Categorizes the type of clinical assessment performed.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "description": {
+              "description": "A summary of the context and/or cause of the assessment - why / where was it performed, and what patient events/status prompted it.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "subject": {
+              "description": "The patient or group of individuals assessed as part of this record.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The encounter or episode of care this impression was created as part of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "effectiveDateTime": {
+              "description": "The point in time or period over which the subject was assessed.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_effectiveDateTime": {
+              "description": "Extensions for effectiveDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "effectivePeriod": {
+              "description": "The point in time or period over which the subject was assessed.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "date": {
+              "description": "Indicates when the documentation of the assessment was complete.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "assessor": {
+              "description": "The clinician performing the assessment.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "previous": {
+              "description": "A reference to the last assesment that was conducted bon this patient. Assessments are often/usually ongoing in nature; a care provider (practitioner or team) will make new assessments on an ongoing basis as new data arises or the patient\u0027s conditions changes.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "problem": {
+              "description": "This a list of the relevant problems/conditions for a patient.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "investigation": {
+              "description": "One or more sets of investigations (signs, symptions, etc.). The actual grouping of investigations vary greatly depending on the type and context of the assessment. These investigations may include data generated during the assessment process, or data previously generated and recorded that is pertinent to the outcomes.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClinicalImpression_Investigation"
+              }
+            },
+            "protocol": {
+              "description": "Reference to a specific published clinical protocol that was followed during this assessment, and/or that provides evidence in support of the diagnosis.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_protocol": {
+              "description": "Extensions for protocol",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "summary": {
+              "description": "A text summary of the investigations and the diagnosis.",
+              "type": "string"
+            },
+            "_summary": {
+              "description": "Extensions for summary",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "finding": {
+              "description": "Specific findings or diagnoses that was considered likely or relevant to ongoing treatment.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClinicalImpression_Finding"
+              }
+            },
+            "prognosisCodeableConcept": {
+              "description": "Estimate of likely outcome.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "prognosisReference": {
+              "description": "RiskAssessment expressing likely outcome.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "action": {
+              "description": "Action taken as part of assessment procedure.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "note": {
+              "description": "Commentary about the impression, typically recorded after the impression itself was made, though supplemental notes by the original author could also appear.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ClinicalImpression_Investigation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a clinical assessment performed to determine what problem(s) may affect the patient and before planning the treatments or management strategies that are best to manage a patient\u0027s condition. Assessments are often 1:1 with a clinical consultation / encounter,  but this varies greatly depending on the clinical workflow. This resource is called \"ClinicalImpression\" rather than \"ClinicalAssessment\" to avoid confusion with the recording of assessment tools such as Apgar score.",
+          "properties": {
+            "code": {
+              "description": "A name/code for the group (\"set\") of investigations. Typically, this will be something like \"signs\", \"symptoms\", \"clinical\", \"diagnostic\", but the list is not constrained, and others such groups such as (exposure|family|travel|nutitirional) history may be used.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "item": {
+              "description": "A record of a specific investigation that was undertaken.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    },
+    "ClinicalImpression_Finding": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a clinical assessment performed to determine what problem(s) may affect the patient and before planning the treatments or management strategies that are best to manage a patient\u0027s condition. Assessments are often 1:1 with a clinical consultation / encounter,  but this varies greatly depending on the clinical workflow. This resource is called \"ClinicalImpression\" rather than \"ClinicalAssessment\" to avoid confusion with the recording of assessment tools such as Apgar score.",
+          "properties": {
+            "itemCodeableConcept": {
+              "description": "Specific text, code or reference for finding or diagnosis, which may include ruled-out or resolved conditions.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "itemReference": {
+              "description": "Specific text, code or reference for finding or diagnosis, which may include ruled-out or resolved conditions.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "basis": {
+              "description": "Which investigations support finding or diagnosis.",
+              "type": "string"
+            },
+            "_basis": {
+              "description": "Extensions for basis",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
