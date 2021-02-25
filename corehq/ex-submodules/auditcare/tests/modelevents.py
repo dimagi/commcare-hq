@@ -1,5 +1,3 @@
-import time
-
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 
@@ -51,10 +49,8 @@ class ModelEventTestCase(TestCase):
             "auditcare/model_actions_by_id", include_docs=True, reduce=False
         ).count()
 
-        time.sleep(1)
         self.user.email = 'foo@foo.com'
         self.user.save()
-        time.sleep(1)
 
         model_count2 = ModelActionAudit.view(
             "auditcare/model_actions_by_id", include_docs=True, reduce=False
@@ -78,7 +74,6 @@ class ModelEventTestCase(TestCase):
 
         # Filter for email and see if it shows up
         new_last_name = 'alksjflajdsflkjsadf'
-        time.sleep(1)
         self.user.last_name = new_last_name
         self.user.save()
 
