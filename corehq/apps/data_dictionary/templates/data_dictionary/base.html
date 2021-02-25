@@ -93,11 +93,7 @@
           </td>
           {% if fhir_integration_enabled %}
           <td>
-            <textarea class="form-control vertical-resize" data-bind="
-              value: $data.fhirRsourcePropPath,
-              rows: 1,
-              placeholder: '{% trans "FHIR Resource Property Path" %}',
-            "></textarea>
+            <input class="form-control" data-bind="value: $data.fhirRsourcePropPath"></input>
           </td>
           {% endif %}
           <!-- ko if: !deprecated() -->
