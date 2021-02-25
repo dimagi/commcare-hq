@@ -1,3 +1,7 @@
+from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+
+
 def serialize_case(case):
     """Serializes a case for the V0.6 Case API"""
     return {
@@ -25,7 +29,37 @@ def serialize_case(case):
 
 
 def _isoformat(value):
-    return value.isoformat() if value else None
+    return json_format_datetime(value) if value else None
+
+
+def serialize_es_case(case_doc):
+    """Serializes a CaseSearch result for the V0.6 Case API"""
+    return {
+        "domain": case_doc['domain'],
+        "@case_id": case_doc['_id'],
+        "@case_type": case_doc['type'],
+        "case_name": case_doc['name'],
+        "external_id": case_doc['external_id'],
+        "@owner_id": case_doc['owner_id'],
+        "date_opened": case_doc['opened_on'],
+        "last_modified": case_doc['modified_on'],
+        "server_last_modified": case_doc['server_modified_on'],
+        "closed": case_doc['closed'],
+        "date_closed": case_doc['closed_on'],
+        "properties": {
+            prop['key']: prop['value']
+            for prop in case_doc['case_properties']
+            if prop['key'] not in SPECIAL_CASE_PROPERTIES
+        },
+        "indices": {
+            index['identifier']: {
+                "case_id": index['referenced_id'],
+                "@case_type": index['referenced_type'],
+                "@relationship": index['relationship'],
+            }
+            for index in case_doc['indices']
+        },
+    }
 
 
 class UserError(Exception):
