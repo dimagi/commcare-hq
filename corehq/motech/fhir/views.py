@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.views.decorators.http import require_GET
 
 from corehq import toggles
 from corehq.apps.domain.decorators import (
@@ -42,6 +43,7 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
 
+@require_GET
 @login_and_domain_required
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
@@ -64,6 +66,7 @@ def get_view(request, domain, resource_type, resource_id):
     return JsonResponse(response)
 
 
+@require_GET
 @login_and_domain_required
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
