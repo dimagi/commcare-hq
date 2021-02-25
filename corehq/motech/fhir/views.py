@@ -1,13 +1,15 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
-from corehq.util.view_utils import absolute_reverse
-
 from corehq import toggles
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.fhir.models import FHIRResourceType, build_fhir_resource
+from corehq.util.view_utils import absolute_reverse
 
 
 @require_GET
