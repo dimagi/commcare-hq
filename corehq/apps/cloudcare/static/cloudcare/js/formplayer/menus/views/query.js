@@ -112,8 +112,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 var addressTopic = $(this).data().address;
                 if (addressTopic !== undefined && addressTopic !== "") {
                     // set this up as mapbox input
+                    var inputId = addressTopic + "_mapbox";
+                    if (!initialPageData.get("has_geocoder_privs")) {
+                        $("#" + inputId).addClass('unsupported alert alert-warning');
+                        $("#" + inputId).text(gettext(
+                            "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                        );
+                        return true;
+                    }
                     Utils.renderMapboxInput(
-                        addressTopic + "_mapbox",
+                        inputId,
                         self.geocoderItemCallback(addressTopic),
                         self.geocoderOnClearCallback(addressTopic),
                         initialPageData
