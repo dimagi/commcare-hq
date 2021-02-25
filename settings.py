@@ -183,6 +183,7 @@ ADD_CAPTCHA_FIELD_TO_FORMS = False
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+    'corehq.apps.sso.backends.SsoBackend',
 ]
 
 PASSWORD_HASHERS = (
