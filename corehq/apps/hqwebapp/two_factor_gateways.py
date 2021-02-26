@@ -25,7 +25,7 @@ from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
-from corehq.util.soft_assert import soft_assert
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_ip
 
 VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
@@ -69,11 +69,11 @@ class Gateway(object):
                 body=message)
         except TwilioRestException as e:
             request = get_request()
-            _soft_assert = soft_assert(notify_admins=True)
-            _soft_assert(False, msg='TwilioRestException', obj=str(e))
-            messages.error(request, _('''
-                Error received from Twilio. If you do not receive a token, please retry in a few minutes.
-            '''))
+            if request:
+                notify_exception(request, str(e))
+                messages.error(request, _('''
+                    Error received from Twilio. If you do not receive a token, please retry in a few minutes.
+                '''))
 
     def make_call(self, device, token):
         if rate_limit_two_factor_setup(device):
