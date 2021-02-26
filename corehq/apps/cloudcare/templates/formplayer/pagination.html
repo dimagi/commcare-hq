@@ -8,7 +8,7 @@
     <div class="row">
       <div class="col-sm-2 module-per-page-container">
         <div class="form-inline input-group-lg">
-          <select class="form-control cases-per-page-limit">
+          <select class="form-control per-page-limit">
             <% for(var i = 0; i < rowRange.length; i++) { %>
               <% if (rowRange[i] === limit) { %>
                 <option value="<%= rowRange[i] %>" selected>{% trans "<%= rowRange[i] %> per page" %}</option>

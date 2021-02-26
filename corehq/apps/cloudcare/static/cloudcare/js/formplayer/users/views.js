@@ -92,13 +92,13 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             paginationGoButton: '#pagination-go-button',
             paginationGoText: '#goText',
             paginationGoTextBox: '.module-go-container',
-            casesPerPageLimit: '.cases-per-page-limit',
+            usersPerPageLimit: '.per-page-limit',
         },
         events: {
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
             'click @ui.paginationGoButton': 'paginationGoAction',
-            'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
+            'change @ui.usersPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.page': 'paginateKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
@@ -174,7 +174,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         onPerPageLimitChange: function (e) {
             e.preventDefault();
-            var rowCount = this.ui.casesPerPageLimit.val();
+            var rowCount = this.ui.usersPerPageLimit.val();
             this.limit = Number(rowCount);
             this.fetchUsers();
             this.model.set('page', 1);

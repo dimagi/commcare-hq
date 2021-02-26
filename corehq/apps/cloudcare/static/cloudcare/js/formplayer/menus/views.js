@@ -285,7 +285,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoTextBox: '.module-go-container',
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
-            casesPerPageLimit: '.cases-per-page-limit',
+            casesPerPageLimit: '.per-page-limit',
         },
 
         events: {
