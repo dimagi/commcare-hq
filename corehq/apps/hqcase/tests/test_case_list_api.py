@@ -54,7 +54,7 @@ class TestCaseListAPI(TestCase):
                 case_type='team',
                 case_name=name,
                 external_id=name,
-                owner_id='owner',
+                owner_id='team_owner',
                 create=True,
             ))
 
@@ -70,11 +70,13 @@ class TestCaseListAPI(TestCase):
                 case_type='person',
                 case_name=name,
                 external_id=external_id,
-                owner_id='owner',
+                owner_id='person_owner',
                 create=True,
                 update=properties,
                 index={'parent': IndexAttrs('team', team_id, 'child')}
             ))
+
+        case_blocks[-1].close = True  # close Ned Pepper
 
         _, cases = submit_case_blocks([cb.as_text() for cb in case_blocks], domain=cls.domain)
 
@@ -92,6 +94,14 @@ class TestCaseListAPI(TestCase):
 @generate_cases([
     ("", ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
     ("limit=2", ['good_guys', 'bad_guys']),
+    ("external_id=mattie", ['mattie']),
+    ("external_id=the-man-with-no-name", []),
+    ("case_type=team", ["good_guys", "bad_guys"]),
+    ("owner_id=person_owner", ['mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
+    ("case_name=Mattie Ross", ["mattie"]),
+    ("case_name=Mattie+Ross", ["mattie"]),
+    ("case_name=Mattie", []),
+    ("closed=true", ["ned"]),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()

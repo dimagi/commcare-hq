@@ -1,4 +1,7 @@
-from corehq.apps.es import CaseSearchES
+from dimagi.utils.parsing import FALSE_STRINGS
+
+from corehq.apps.es import case_search
+from corehq.apps.es import cases as case_es
 
 from .core import UserError, serialize_es_case
 
@@ -13,21 +16,21 @@ def _to_int(val, param_name):
         raise UserError(f"'{val}' is not a valid value for '{param_name}'")
 
 
-# TODO:
-# external_id
-# case_type
-# owner_id
-# case_name
-# last_modified_by_user_id
-# closed
-# last_modified_start
-# last_modified_end
-# server_last_modified_start
-# server_last_modified_end
-# date_opened_start
-# date_opened_end
-# date_closed_start
-# date_closed_end
+FILTERS = {
+    'external_id': case_search.external_id,
+    'case_type': case_es.case_type,
+    'owner_id': case_es.owner,
+    'case_name': case_es.case_name,
+    'closed': lambda val: case_es.is_closed(_to_boolean(val)),
+    # last_modified_start
+    # last_modified_end
+    # server_last_modified_start
+    # server_last_modified_end
+    # date_opened_start
+    # date_opened_end
+    # date_closed_start
+    # date_closed_end
+}
 
 
 def get_list(domain, params):
@@ -36,10 +39,19 @@ def get_list(domain, params):
     if page_size > MAX_PAGE_SIZE:
         raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
 
-    query = (CaseSearchES()
+    query = (case_search.CaseSearchES()
              .domain(domain)
              .size(page_size)
              .start(start)
              .sort("@indexed_on"))
 
+    for k, v in params.items():
+        if k not in FILTERS:
+            raise UserError(f"'{k}' is not a valid parameter.")
+        query = query.filter(FILTERS[k](v))
+
     return [serialize_es_case(case) for case in query.run().hits]
+
+
+def _to_boolean(val):
+    return val.lower() not in [''] + list(FALSE_STRINGS)
