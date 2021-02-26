@@ -24,14 +24,14 @@ class FHIRResourceType(models.Model):
     domain = models.CharField(max_length=127, db_index=True)
     fhir_version = models.CharField(max_length=12, choices=FHIR_VERSIONS,
                                     default=FHIR_VERSION_4_0_1)
-    case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
+    case_type = models.OneToOneField(CaseType, on_delete=models.CASCADE)
 
     # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
     name = models.CharField(max_length=255)
 
     # `template` offers a way to define a FHIR resource if it cannot be
     # built using only mapped case properties.
-    template = JSONField(null=True, blank=True, default=None)
+    template = JSONField(default=dict)
 
     def __str__(self):
         return self.name
