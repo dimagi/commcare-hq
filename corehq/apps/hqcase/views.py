@@ -103,7 +103,7 @@ def _handle_individual_get(request, case_id):
 
 
 def _handle_list_view(request):
-    cases = get_list(request.domain, dict(request.GET))
+    cases = get_list(request.domain, request.GET.dict())
     return JsonResponse(cases)
 
 

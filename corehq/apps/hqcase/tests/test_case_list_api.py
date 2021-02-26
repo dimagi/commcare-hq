@@ -1,6 +1,7 @@
 import uuid
 
 from django.test import TestCase
+from django.http import QueryDict
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -89,19 +90,22 @@ class TestCaseListAPI(TestCase):
 
 
 @generate_cases([
-    ({}, ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
-    ({'limit': 2}, ['good_guys', 'bad_guys']),
+    ("", ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
+    ("limit=2", ['good_guys', 'bad_guys']),
 ], TestCaseListAPI)
-def test_case_list_queries(self, params, expected):
+def test_case_list_queries(self, querystring, expected):
+    params = QueryDict(querystring).dict()
     actual = [c['external_id'] for c in get_list(self.domain, params)]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
 
 
 @generate_cases([
-    ({'limit': 10000}, "You cannot request more than 5000 cases per request."),
+    ("limit=nolimitz", "'nolimitz' is not a valid value for 'limit'"),
+    ("limit=10000", "You cannot request more than 5000 cases per request."),
 ], TestCaseListAPI)
-def test_bad_requests(self, params, error_msg):
+def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
+        params = QueryDict(querystring).dict()
         get_list(self.domain, params)
     self.assertEqual(str(e.exception), error_msg)
