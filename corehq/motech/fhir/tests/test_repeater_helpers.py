@@ -202,3 +202,155 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
             ],
             'resourceType': 'Patient',
         })
+
+
+class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
+    """
+    Demonstrates building multiple resources using subcases.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
+
+        cls.person_case_type = CaseType.objects.create(
+            domain=DOMAIN, name='person')
+        name = CaseProperty.objects.create(
+            case_type=cls.person_case_type, name='name')
+
+        resource_type_for_person = FHIRResourceType.objects.create(
+            domain=DOMAIN, case_type=cls.person_case_type, name='Patient')
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_person,
+            case_property=name,
+            jsonpath='$.name[0].text',
+        )
+
+        cls.vitals_case_type = CaseType.objects.create(
+            domain=DOMAIN, name='vitals')
+        temperature = CaseProperty.objects.create(
+            case_type=cls.vitals_case_type, name='temperature')
+
+        resource_type_for_vitals = FHIRResourceType.objects.create(
+            domain=DOMAIN,
+            case_type=cls.vitals_case_type,
+            name='Observation',
+            template={
+                'code': {
+                    'coding': [{
+                        'system': 'http://loinc.org',
+                        'code': '8310-5',
+                        'display': 'Body temperature',
+                    }],
+                    'text': 'Temperature',
+                },
+                'valueQuantity': {
+                    'unit': 'degrees Celsius',
+                },
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            case_property=temperature,
+            jsonpath='$.valueQuantity.value',
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'supercase_value_source': {
+                    'case_property': 'name',
+                    'jsonpath': '$.subject.display',
+                }
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'supercase_value_source': {
+                    'case_property': 'case_id',
+                    'jsonpath': '$.subject.reference',
+                }
+            }
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.person_case_type.delete()
+        cls.vitals_case_type.delete()
+        cls.teardown_subscriptions()
+        cls.domain_obj.delete()
+        clear_plan_version_cache()
+        super().tearDownClass()
+
+    def setUp(self):
+        now = datetime.utcnow()
+        owner_id = str(uuid4())
+        self.parent_case_id = str(uuid4())
+        self.parent_case = CommCareCase(
+            _id=self.parent_case_id,
+            domain=DOMAIN,
+            type='person',
+            name='Beth',
+            owner_id=owner_id,
+            modified_on=now,
+            server_modified_on=now,
+        )
+        self.parent_case.save()
+
+        self.child_case_id = str(uuid4())
+        self.child_case = CommCareCase(
+            _id=self.child_case_id,
+            domain=DOMAIN,
+            type='vitals',
+            temperature=36.1,
+            indices=[CommCareCaseIndex(
+                identifier='parent',
+                referenced_type='person',
+                referenced_id=self.parent_case_id,
+            )],
+            owner_id=owner_id,
+            modified_on=now,
+            server_modified_on=now,
+        )
+        self.child_case.save()
+
+    def tearDown(self):
+        self.child_case.delete()
+        self.parent_case.delete()
+
+    def test_get_info_resources_list(self):
+        case_trigger_infos = [
+            get_case_trigger_info(self.parent_case),
+            get_case_trigger_info(self.child_case),
+        ]
+        info_resources_list = get_info_resources_list(
+            case_trigger_infos,
+            FHIR_VERSION_4_0_1,
+        )
+        resources = [resource for info, resource in info_resources_list]
+        self.assertEqual(resources, [{
+            'id': self.parent_case_id,
+            'name': [{'text': 'Beth'}],
+            'resourceType': 'Patient',
+        }, {
+            'id': self.child_case_id,
+            'code': {
+                'coding': [{
+                    'system': 'http://loinc.org',
+                    'code': '8310-5',
+                    'display': 'Body temperature',
+                }],
+                'text': 'Temperature',
+            },
+            'valueQuantity': {
+                'value': 36.1,
+                'unit': 'degrees Celsius',
+            },
+            'subject': {
+                'reference': self.parent_case_id,
+                'display': 'Beth',
+            },
+            'resourceType': 'Observation',
+        }])
