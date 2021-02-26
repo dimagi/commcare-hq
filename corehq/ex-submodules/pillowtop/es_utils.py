@@ -93,6 +93,7 @@ ES_INDEX_SETTINGS = {
 
     CASE_SEARCH_HQ_INDEX_NAME: {
         "settings": {
+            "number_of_shards": 20,
             "analysis": _get_analysis('default', 'my_ngram_analyzer')
         }
     }
