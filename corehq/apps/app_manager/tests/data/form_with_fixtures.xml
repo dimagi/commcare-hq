@@ -28,7 +28,7 @@
             <label ref="jr:itext('lookup-table-label')"/>
             <itemset nodeset="instance('country')/country_list/country">
                 <label ref="name"/>
-                <value ref="name"/>
+                <value ref="id"/>
             </itemset>
         </select1>
     </h:body>

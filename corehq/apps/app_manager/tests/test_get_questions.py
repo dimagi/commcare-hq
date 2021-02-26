@@ -293,10 +293,16 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             lang='en',
             attachment=self.get_xml('form_with_fixtures').decode('utf-8')
         )
-        questions = form_with_fixtures.get_questions(['en'])
+        questions = form_with_fixtures.get_questions(['en'], include_fixtures=True)
         self.assertEqual(questions[0], {
             "comment": None,
             "constraint": None,
+            "fixture_data": {
+                "nodeset": "instance('country')/country_list/country",
+                "label_ref": "name",
+                "value_ref": "id",
+
+            },
             "group": None,
             "hashtagValue": "#form/lookup-table",
             "is_group": False,
