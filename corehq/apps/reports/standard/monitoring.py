@@ -31,6 +31,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
 )
 from corehq.apps.reports import util
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_case_counts_closed_by_user,
@@ -716,7 +717,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
         ) and not export:
             raise BadRequestError(
-                _('Query selects too many users. Please modify your filters to select fewer users')
+                _('Query selects too many users. Please modify your filters to select fewer than {} users').format(
+                    USER_QUERY_LIMIT,
+                )
             )
         selected_users = self.selected_simplified_users
         track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))

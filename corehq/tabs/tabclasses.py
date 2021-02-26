@@ -1571,7 +1571,7 @@ class EnterpriseSettingsTab(UITab):
                            args=[self.domain])
         })
         if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
-            if IdentityProvider.domain_has_identity_provider(self.domain):
+            if IdentityProvider.domain_has_editable_identity_provider(self.domain):
                 from corehq.apps.sso.views.enterprise_admin import (
                     ManageSSOEnterpriseView,
                     EditIdentityProviderEnterpriseView,
