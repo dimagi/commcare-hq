@@ -65,11 +65,11 @@ branches:
   - nh/reminders  # Norman Jan 26
   - ap/fix-deactivated-users-not-showing-in-reports # Amit Jan 28
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
-  #- adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
-  #- solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
+  - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
+  - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - jls/remove-autolaunch # Jenny Feb 9
-  #- adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
-  #- adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
+  - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
+  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - smh/bulk-upload-web-users # Steph Feb 22
   - sr/geocoder  # Sravan Feb 25
   - dependabot/pip/requirements/django-extensions-3.1.1 # Graham Feb 25
