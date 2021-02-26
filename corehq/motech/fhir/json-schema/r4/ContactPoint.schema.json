@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ContactPoint",
+  "$ref": "#/definitions/ContactPoint",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ContactPoint": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "Details for all kinds of technology mediated contact points for a person or organization, including telephone, email, etc.",
+          "properties": {
+            "system": {
+              "description": "Telecommunications form for contact point - what communications system is required to make use of the contact.",
+              "enum": [
+                "phone",
+                "fax",
+                "email",
+                "pager",
+                "url",
+                "sms",
+                "other"
+              ],
+              "type": "string"
+            },
+            "_system": {
+              "description": "Extensions for system",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "value": {
+              "description": "The actual contact point details, in a form that is meaningful to the designated communication system (i.e. phone number or email address).",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "use": {
+              "description": "Identifies the purpose for the contact point.",
+              "enum": [
+                "home",
+                "work",
+                "temp",
+                "old",
+                "mobile"
+              ],
+              "type": "string"
+            },
+            "_use": {
+              "description": "Extensions for use",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "rank": {
+              "description": "Specifies a preferred order in which to use a set of contacts. Contacts are ranked with lower values coming before higher values.",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_rank": {
+              "description": "Extensions for rank",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "Time period when the contact point was/is in use.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/List",
+  "$ref": "#/definitions/List",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "List": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A set of information summarized from a list of other resources.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a List resource",
+              "type": "string",
+              "enum": [
+                "List"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier for the List assigned for business purposes outside the context of FHIR.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "Indicates the current state of this list.",
+              "enum": [
+                "current",
+                "retired",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "mode": {
+              "description": "How this list was prepared - whether it is a working list that is suitable for being maintained on an ongoing basis, or if it represents a snapshot of a list of items from another source, or whether it is a prepared list where items may be marked as added, modified or deleted.",
+              "enum": [
+                "working",
+                "snapshot",
+                "changes"
+              ],
+              "type": "string"
+            },
+            "_mode": {
+              "description": "Extensions for mode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A label for the list assigned by the author.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "This code defines the purpose of the list - why it was created.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "The common subject (or patient) of the resources that are in the list, if there is one.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "encounter": {
+              "description": "The encounter that is the context in which this list was created.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "date": {
+              "description": "The date that the list was prepared.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "source": {
+              "description": "The entity responsible for deciding what the contents of the list were. Where the list was created by a human, this is the same as the author of the list.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "orderedBy": {
+              "description": "What order applies to the items in the list.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "note": {
+              "description": "Comments that apply to the overall list.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "entry": {
+              "description": "Entries in this list.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/List_Entry"
+              }
+            },
+            "emptyReason": {
+              "description": "If the list is empty, why the list is empty.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "List_Entry": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of information summarized from a list of other resources.",
+          "properties": {
+            "flag": {
+              "description": "The flag allows the system constructing the list to indicate the role and significance of the item in the list.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "deleted": {
+              "description": "True if this item is marked as deleted in the list.",
+              "type": "boolean"
+            },
+            "_deleted": {
+              "description": "Extensions for deleted",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "When this item was added to the list.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "item": {
+              "description": "A reference to the actual resource from which data was derived.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "item"
+          ]
+        }
+      ]
+    }
+  }
+}

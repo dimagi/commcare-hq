@@ -29,6 +29,7 @@ def main():
         GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
+        GeventCommand('run_all_management_command'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 

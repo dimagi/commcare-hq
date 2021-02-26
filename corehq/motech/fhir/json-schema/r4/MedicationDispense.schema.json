@@ -1,0 +1,251 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/MedicationDispense",
+  "$ref": "#/definitions/MedicationDispense",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "MedicationDispense": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Indicates that a medication product is to be or has been dispensed for a named person/patient.  This includes a description of the medication product (supply) provided and the instructions for administering the medication.  The medication dispense is the result of a pharmacy system responding to a medication order.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a MedicationDispense resource",
+              "type": "string",
+              "enum": [
+                "MedicationDispense"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier assigned by the dispensing facility - this is an identifier assigned outside FHIR.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "partOf": {
+              "description": "The procedure that the dispense is done because of.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "status": {
+              "description": "A code specifying the state of the set of dispense events.",
+              "enum": [
+                "preparation",
+                "in-progress",
+                "on-hold",
+                "completed",
+                "entered-in-error",
+                "stopped"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "Indicates type of medication dispense and where the medication is expected to be consumed or administered.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "medicationCodeableConcept": {
+              "description": "Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "medicationReference": {
+              "description": "Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "subject": {
+              "description": "A link to a resource representing the person or the group to whom the medication will be given.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The encounter or episode of care that establishes the context for this event.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "supportingInformation": {
+              "description": "Additional information that supports the medication being dispensed.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "performer": {
+              "description": "Indicates who or what performed the event.  It should be assumed that the performer is the dispenser of the medication.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MedicationDispense_Performer"
+              }
+            },
+            "authorizingPrescription": {
+              "description": "Indicates the medication order that is being dispensed against.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "type": {
+              "description": "Indicates the type of dispensing event that is performed. For example, Trial Fill, Completion of Trial, Partial Fill, Emergency Fill, Samples, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "quantity": {
+              "description": "The amount of medication that has been dispensed. Includes unit of measure.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "daysSupply": {
+              "description": "The amount of medication expressed as a timing amount.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "whenPrepared": {
+              "description": "The time when the dispensed product was packaged and reviewed.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_whenPrepared": {
+              "description": "Extensions for whenPrepared",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "whenHandedOver": {
+              "description": "The time the dispensed product was provided to the patient or their representative.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_whenHandedOver": {
+              "description": "Extensions for whenHandedOver",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "destination": {
+              "description": "Identification of the facility/location where the medication was shipped to, as part of the dispense event.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "receiver": {
+              "description": "Identifies the person who picked up the medication.  This will usually be a patient or their caregiver, but some cases exist where it can be a healthcare professional.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "note": {
+              "description": "Extra information about the dispense that could not be conveyed in the other attributes.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "dosageInstruction": {
+              "description": "Indicates how the medication is to be used by the patient.",
+              "type": "array",
+              "items": {
+                "$ref": "Dosage.schema.json#/definitions/Dosage"
+              }
+            },
+            "substitution": {
+              "description": "Indicates whether or not substitution was made as part of the dispense.  In some cases substitution will be expected but does not happen, in other cases substitution is not expected but does happen.  This block explains what substitution did or did not happen and why.  If nothing is specified, substitution was not done.",
+              "$ref": "#/definitions/MedicationDispense_Substitution"
+            },
+            "detectedIssue": {
+              "description": "Indicates an actual or potential clinical issue with or between one or more active or proposed clinical actions for a patient; e.g. Drug-drug interaction, duplicate therapy, dosage alert etc.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "notDone": {
+              "description": "True if the dispense was not performed for some reason.",
+              "type": "boolean"
+            },
+            "_notDone": {
+              "description": "Extensions for notDone",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "notDoneReasonCodeableConcept": {
+              "description": "Indicates the reason why a dispense was not performed.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "notDoneReasonReference": {
+              "description": "Indicates the reason why a dispense was not performed.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "eventHistory": {
+              "description": "A summary of the events of interest that have occurred, such as when the dispense was verified.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "MedicationDispense_Performer": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Indicates that a medication product is to be or has been dispensed for a named person/patient.  This includes a description of the medication product (supply) provided and the instructions for administering the medication.  The medication dispense is the result of a pharmacy system responding to a medication order.",
+          "properties": {
+            "actor": {
+              "description": "The device, practitioner, etc. who performed the action.  It should be assumed that the actor is the dispenser of the medication.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "onBehalfOf": {
+              "description": "The organization the device or practitioner was acting on behalf of.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "actor"
+          ]
+        }
+      ]
+    },
+    "MedicationDispense_Substitution": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Indicates that a medication product is to be or has been dispensed for a named person/patient.  This includes a description of the medication product (supply) provided and the instructions for administering the medication.  The medication dispense is the result of a pharmacy system responding to a medication order.",
+          "properties": {
+            "wasSubstituted": {
+              "description": "True if the dispenser dispensed a different drug or product from what was prescribed.",
+              "type": "boolean"
+            },
+            "_wasSubstituted": {
+              "description": "Extensions for wasSubstituted",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "A code signifying whether a different drug was dispensed from what was prescribed.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reason": {
+              "description": "Indicates the reason for the substitution of (or lack of substitution) from what was prescribed.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "responsibleParty": {
+              "description": "The person or organization that has primary responsibility for the substitution.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

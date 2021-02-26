@@ -1,0 +1,447 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Sequence",
+  "$ref": "#/definitions/Sequence",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Sequence": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "Raw data describing a biological sequence.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Sequence resource",
+              "type": "string",
+              "enum": [
+                "Sequence"
+              ]
+            },
+            "identifier": {
+              "description": "A unique identifier for this particular sequence instance. This is a FHIR-defined id.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "type": {
+              "description": "Amino Acid Sequence/ DNA Sequence / RNA Sequence.",
+              "enum": [
+                "aa",
+                "dna",
+                "rna"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "coordinateSystem": {
+              "description": "Whether the sequence is numbered starting at 0 (0-based numbering or coordinates, inclusive start, exclusive end) or starting at 1 (1-based numbering, inclusive start and inclusive end).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_coordinateSystem": {
+              "description": "Extensions for coordinateSystem",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "The patient whose sequencing results are described by this resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "specimen": {
+              "description": "Specimen used for sequencing.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "device": {
+              "description": "The method for sequencing, for example, chip information.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "performer": {
+              "description": "The organization or lab that should be responsible for this result.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "quantity": {
+              "description": "The number of copies of the seqeunce of interest. (RNASeq).",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "referenceSeq": {
+              "description": "A sequence that is used as a reference to describe variants that are present in a sequence analyzed.",
+              "$ref": "#/definitions/Sequence_ReferenceSeq"
+            },
+            "variant": {
+              "description": "The definition of variant here originates from Sequence ontology ([variant_of](http://www.sequenceontology.org/browser/current_svn/term/variant_of)). This element can represent amino acid or nucleic sequence change(including insertion,deletion,SNP,etc.)  It can represent some complex mutation or segment variation with the assist of CIGAR string.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Sequence_Variant"
+              }
+            },
+            "observedSeq": {
+              "description": "Sequence that was observed. It is the result marked by referenceSeq along with variant records on referenceSeq. This shall starts from referenceSeq.windowStart and end by referenceSeq.windowEnd.",
+              "type": "string"
+            },
+            "_observedSeq": {
+              "description": "Extensions for observedSeq",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "quality": {
+              "description": "An experimental feature attribute that defines the quality of the feature in a quantitative way, such as a phred quality score ([SO:0001686](http://www.sequenceontology.org/browser/current_svn/term/SO:0001686)).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Sequence_Quality"
+              }
+            },
+            "readCoverage": {
+              "description": "Coverage (read depth or depth) is the average number of reads representing a given nucleotide in the reconstructed sequence.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_readCoverage": {
+              "description": "Extensions for readCoverage",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "repository": {
+              "description": "Configurations of the external repository. The repository shall store target\u0027s observedSeq or records related with target\u0027s observedSeq.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Sequence_Repository"
+              }
+            },
+            "pointer": {
+              "description": "Pointer to next atomic sequence which at most contains one variant.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Sequence_ReferenceSeq": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Raw data describing a biological sequence.",
+          "properties": {
+            "chromosome": {
+              "description": "Structural unit composed of a nucleic acid molecule which controls its own replication through the interaction of specific proteins at one or more origins of replication ([SO:0000340](http://www.sequenceontology.org/browser/current_svn/term/SO:0000340)).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "genomeBuild": {
+              "description": "The Genome Build used for reference, following GRCh build versions e.g. \u0027GRCh 37\u0027.  Version number must be included if a versioned release of a primary build was used.",
+              "type": "string"
+            },
+            "_genomeBuild": {
+              "description": "Extensions for genomeBuild",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "referenceSeqId": {
+              "description": "Reference identifier of reference sequence submitted to NCBI. It must match the type in the Sequence.type field. For example, the prefix, “NG_” identifies reference sequence for genes, “NM_” for messenger RNA transcripts, and “NP_” for amino acid sequences.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "referenceSeqPointer": {
+              "description": "A Pointer to another Sequence entity as reference sequence.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "referenceSeqString": {
+              "description": "A string like \"ACGT\".",
+              "type": "string"
+            },
+            "_referenceSeqString": {
+              "description": "Extensions for referenceSeqString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "strand": {
+              "description": "Directionality of DNA sequence. Available values are \"1\" for the plus strand (5\u0027 to 3\u0027)/Watson/Sense/positive  and \"-1\" for the minus strand(3\u0027 to 5\u0027)/Crick/Antisense/negative.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_strand": {
+              "description": "Extensions for strand",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "windowStart": {
+              "description": "Start position of the window on the reference sequence. If the coordinate system is either 0-based or 1-based, then start position is inclusive.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_windowStart": {
+              "description": "Extensions for windowStart",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "windowEnd": {
+              "description": "End position of the window on the reference sequence. If the coordinate system is 0-based then end is is exclusive and does not include the last position. If the coordinate system is 1-base, then end is inclusive and includes the last position.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_windowEnd": {
+              "description": "Extensions for windowEnd",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Sequence_Variant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Raw data describing a biological sequence.",
+          "properties": {
+            "start": {
+              "description": "Start position of the variant on the  reference sequence.If the coordinate system is either 0-based or 1-based, then start position is inclusive.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_start": {
+              "description": "Extensions for start",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "end": {
+              "description": "End position of the variant on the reference sequence.If the coordinate system is 0-based then end is is exclusive and does not include the last position. If the coordinate system is 1-base, then end is inclusive and includes the last position.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_end": {
+              "description": "Extensions for end",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "observedAllele": {
+              "description": "An allele is one of a set of coexisting sequence variants of a gene ([SO:0001023](http://www.sequenceontology.org/browser/current_svn/term/SO:0001023)).  Nucleotide(s)/amino acids from start position of sequence to stop position of sequence on the positive (+) strand of the observed  sequence. When the sequence  type is DNA, it should be the sequence on the positive (+) strand. This will lay in the range between variant.start and variant.end.",
+              "type": "string"
+            },
+            "_observedAllele": {
+              "description": "Extensions for observedAllele",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "referenceAllele": {
+              "description": "An allele is one of a set of coexisting sequence variants of a gene ([SO:0001023](http://www.sequenceontology.org/browser/current_svn/term/SO:0001023)). Nucleotide(s)/amino acids from start position of sequence to stop position of sequence on the positive (+) strand of the reference sequence. When the sequence  type is DNA, it should be the sequence on the positive (+) strand. This will lay in the range between variant.start and variant.end.",
+              "type": "string"
+            },
+            "_referenceAllele": {
+              "description": "Extensions for referenceAllele",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "cigar": {
+              "description": "Extended CIGAR string for aligning the sequence with reference bases. See detailed documentation [here](http://support.illumina.com/help/SequencingAnalysisWorkflow/Content/Vault/Informatics/Sequencing_Analysis/CASAVA/swSEQ_mCA_ExtendedCIGARFormat.htm).",
+              "type": "string"
+            },
+            "_cigar": {
+              "description": "Extensions for cigar",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "variantPointer": {
+              "description": "A pointer to an Observation containing variant information.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Sequence_Quality": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Raw data describing a biological sequence.",
+          "properties": {
+            "type": {
+              "description": "INDEL / SNP / Undefined variant.",
+              "enum": [
+                "indel",
+                "snp",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "standardSequence": {
+              "description": "Gold standard sequence used for comparing against.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "start": {
+              "description": "Start position of the sequence. If the coordinate system is either 0-based or 1-based, then start position is inclusive.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_start": {
+              "description": "Extensions for start",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "end": {
+              "description": "End position of the sequence.If the coordinate system is 0-based then end is is exclusive and does not include the last position. If the coordinate system is 1-base, then end is inclusive and includes the last position.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_end": {
+              "description": "Extensions for end",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "score": {
+              "description": "The score of an experimentally derived feature such as a p-value ([SO:0001685](http://www.sequenceontology.org/browser/current_svn/term/SO:0001685)).",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "method": {
+              "description": "Which method is used to get sequence quality.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "truthTP": {
+              "description": "True positives, from the perspective of the truth data, i.e. the number of sites in the Truth Call Set for which there are paths through the Query Call Set that are consistent with all of the alleles at this site, and for which there is an accurate genotype call for the event.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_truthTP": {
+              "description": "Extensions for truthTP",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "queryTP": {
+              "description": "True positives, from the perspective of the query data, i.e. the number of sites in the Query Call Set for which there are paths through the Truth Call Set that are consistent with all of the alleles at this site, and for which there is an accurate genotype call for the event.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_queryTP": {
+              "description": "Extensions for queryTP",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "truthFN": {
+              "description": "False negatives, i.e. the number of sites in the Truth Call Set for which there is no path through the Query Call Set that is consistent with all of the alleles at this site, or sites for which there is an inaccurate genotype call for the event. Sites with correct variant but incorrect genotype are counted here.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_truthFN": {
+              "description": "Extensions for truthFN",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "queryFP": {
+              "description": "False positives, i.e. the number of sites in the Query Call Set for which there is no path through the Truth Call Set that is consistent with this site. Sites with correct variant but incorrect genotype are counted here.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_queryFP": {
+              "description": "Extensions for queryFP",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "gtFP": {
+              "description": "The number of false positives where the non-REF alleles in the Truth and Query Call Sets match (i.e. cases where the truth is 1/1 and the query is 0/1 or similar).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_gtFP": {
+              "description": "Extensions for gtFP",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "precision": {
+              "description": "QUERY.TP / (QUERY.TP + QUERY.FP).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_precision": {
+              "description": "Extensions for precision",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "recall": {
+              "description": "TRUTH.TP / (TRUTH.TP + TRUTH.FN).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_recall": {
+              "description": "Extensions for recall",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "fScore": {
+              "description": "Harmonic mean of Recall and Precision, computed as: 2 * precision * recall / (precision + recall).",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_fScore": {
+              "description": "Extensions for fScore",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Sequence_Repository": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "Raw data describing a biological sequence.",
+          "properties": {
+            "type": {
+              "description": "Click and see / RESTful API / Need login to see / RESTful API with authentication / Other ways to see resource.",
+              "enum": [
+                "directlink",
+                "openapi",
+                "login",
+                "oauth",
+                "other"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "url": {
+              "description": "URI of an external repository which contains further details about the genetics data.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "URI of an external repository which contains further details about the genetics data.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "datasetId": {
+              "description": "Id of the variant in this external repository. The server will understand how to use this id to call for more info about datasets in external repository.",
+              "type": "string"
+            },
+            "_datasetId": {
+              "description": "Extensions for datasetId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "variantsetId": {
+              "description": "Id of the variantset in this external repository. The server will understand how to use this id to call for more info about variantsets in external repository.",
+              "type": "string"
+            },
+            "_variantsetId": {
+              "description": "Extensions for variantsetId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "readsetId": {
+              "description": "Id of the read in this external repository.",
+              "type": "string"
+            },
+            "_readsetId": {
+              "description": "Extensions for readsetId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

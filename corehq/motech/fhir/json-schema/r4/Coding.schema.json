@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Coding",
+  "$ref": "#/definitions/Coding",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Coding": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A reference to a code defined by a terminology system.",
+          "properties": {
+            "system": {
+              "description": "The identification of the code system that defines the meaning of the symbol in the code.",
+              "type": "string"
+            },
+            "_system": {
+              "description": "Extensions for system",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The version of the code system which was used when choosing this code. Note that a well-maintained code system does not need the version reported, because the meaning of codes is consistent across versions. However this cannot consistently be assured. and when the meaning is not guaranteed to be consistent, the version SHOULD be exchanged.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "A symbol in syntax defined by the system. The symbol may be a predefined code or an expression in a syntax defined by the coding system (e.g. post-coordination).",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "A representation of the meaning of the code in the system, following the rules of the system.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "userSelected": {
+              "description": "Indicates that this coding was chosen by a user directly - i.e. off a pick list of available items (codes or displays).",
+              "type": "boolean"
+            },
+            "_userSelected": {
+              "description": "Extensions for userSelected",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

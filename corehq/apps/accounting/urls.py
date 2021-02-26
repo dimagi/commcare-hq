@@ -26,6 +26,10 @@ from corehq.apps.accounting.views import (
     TriggerDowngradeView,
     TriggerAutopaymentsView,
 )
+from corehq.apps.sso.views.accounting_admin import (
+    NewIdentityProviderAdminView,
+    EditIdentityProviderAdminView,
+)
 
 urlpatterns = [
     url(r'^$', accounting_default, name='accounting_default'),
@@ -60,6 +64,10 @@ urlpatterns = [
         name=CustomerInvoiceSummaryView.urlname),
     url(r'^customer_invoices/(?P<statement_id>[\w-]+).pdf$', CustomerInvoicePdfView.as_view(),
         name=CustomerInvoicePdfView.urlname),
+    url(r'^identity_provider/(\d+)/$', EditIdentityProviderAdminView.as_view(),
+        name=EditIdentityProviderAdminView.urlname),
+    url(r'^identity_provider/new/$', NewIdentityProviderAdminView.as_view(),
+        name=NewIdentityProviderAdminView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
 ]

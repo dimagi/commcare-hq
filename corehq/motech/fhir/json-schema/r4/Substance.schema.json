@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Substance",
+  "$ref": "#/definitions/Substance",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Substance": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A homogeneous material with a definite composition.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Substance resource",
+              "type": "string",
+              "enum": [
+                "Substance"
+              ]
+            },
+            "identifier": {
+              "description": "Unique identifier for the substance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "A code to indicate if the substance is actively used.",
+              "enum": [
+                "active",
+                "inactive",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "A code that classifies the general type of substance.  This is used  for searching, sorting and display purposes.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "code": {
+              "description": "A code (or set of codes) that identify this substance.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "description": {
+              "description": "A description of the substance - its appearance, handling requirements, and other usage notes.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "instance": {
+              "description": "Substance may be used to describe a kind of substance, or a specific package/container of the substance: an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Substance_Instance"
+              }
+            },
+            "ingredient": {
+              "description": "A substance can be composed of other substances.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Substance_Ingredient"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Substance_Instance": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A homogeneous material with a definite composition.",
+          "properties": {
+            "identifier": {
+              "description": "Identifier associated with the package/container (usually a label affixed directly).",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "expiry": {
+              "description": "When the substance is no longer valid to use. For some substances, a single arbitrary date is used for expiry.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_expiry": {
+              "description": "Extensions for expiry",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "quantity": {
+              "description": "The amount of the substance.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            }
+          }
+        }
+      ]
+    },
+    "Substance_Ingredient": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A homogeneous material with a definite composition.",
+          "properties": {
+            "quantity": {
+              "description": "The amount of the ingredient in the substance - a concentration ratio.",
+              "$ref": "Ratio.schema.json#/definitions/Ratio"
+            },
+            "substanceCodeableConcept": {
+              "description": "Another substance that is a component of this substance.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "substanceReference": {
+              "description": "Another substance that is a component of this substance.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

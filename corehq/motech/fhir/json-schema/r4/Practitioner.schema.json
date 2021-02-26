@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Practitioner",
+  "$ref": "#/definitions/Practitioner",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Practitioner": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A person who is directly or indirectly involved in the provisioning of healthcare.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Practitioner resource",
+              "type": "string",
+              "enum": [
+                "Practitioner"
+              ]
+            },
+            "identifier": {
+              "description": "An identifier that applies to this person in this role.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether this practitioner\u0027s record is in active use.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "The name(s) associated with the practitioner.",
+              "type": "array",
+              "items": {
+                "$ref": "HumanName.schema.json#/definitions/HumanName"
+              }
+            },
+            "telecom": {
+              "description": "A contact detail for the practitioner, e.g. a telephone number or an email address.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "address": {
+              "description": "Address(es) of the practitioner that are not role specific (typically home address). \rWork addresses are not typically entered in this property as they are usually role dependent.",
+              "type": "array",
+              "items": {
+                "$ref": "Address.schema.json#/definitions/Address"
+              }
+            },
+            "gender": {
+              "description": "Administrative Gender - the gender that the person is considered to have for administration and record keeping purposes.",
+              "enum": [
+                "male",
+                "female",
+                "other",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_gender": {
+              "description": "Extensions for gender",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "birthDate": {
+              "description": "The date of birth for the practitioner.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_birthDate": {
+              "description": "Extensions for birthDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "photo": {
+              "description": "Image of the person.",
+              "type": "array",
+              "items": {
+                "$ref": "Attachment.schema.json#/definitions/Attachment"
+              }
+            },
+            "qualification": {
+              "description": "Qualifications obtained by training and certification.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Practitioner_Qualification"
+              }
+            },
+            "communication": {
+              "description": "A language the practitioner is able to use in patient communication.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Practitioner_Qualification": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A person who is directly or indirectly involved in the provisioning of healthcare.",
+          "properties": {
+            "identifier": {
+              "description": "An identifier that applies to this person\u0027s qualification in this role.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "code": {
+              "description": "Coded representation of the qualification.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "period": {
+              "description": "Period during which the qualification is valid.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "issuer": {
+              "description": "Organization that regulates and issues the qualification.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    }
+  }
+}
