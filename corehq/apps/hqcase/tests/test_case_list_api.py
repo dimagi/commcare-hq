@@ -1,7 +1,8 @@
+import datetime
 import uuid
 
-from django.test import TestCase
 from django.http import QueryDict
+from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -58,6 +59,7 @@ class TestCaseListAPI(TestCase):
                 create=True,
             ))
 
+        date_opened = datetime.datetime(1878, 2, 17, 12)
         for external_id, name, properties, team_id in [
                 ('mattie', "Mattie Ross", {}, good_id),
                 ('rooster', "Reuben Cogburn", {"alias": "Rooster"}, good_id),
@@ -71,10 +73,12 @@ class TestCaseListAPI(TestCase):
                 case_name=name,
                 external_id=external_id,
                 owner_id='person_owner',
+                date_opened=date_opened,
                 create=True,
                 update=properties,
                 index={'parent': IndexAttrs('team', team_id, 'child')}
             ))
+            date_opened += datetime.timedelta(days=1)
 
         case_blocks[-1].close = True  # close Ned Pepper
 
@@ -102,6 +106,12 @@ class TestCaseListAPI(TestCase):
     ("case_name=Mattie+Ross", ["mattie"]),
     ("case_name=Mattie", []),
     ("closed=true", ["ned"]),
+    ("date_opened.lt=1878-02-19", ["mattie", "rooster"]),
+    ("date_opened.lte=1878-02-19", ["mattie", "rooster", "laboeuf"]),
+    ("date_opened.lte=1878-02-19T00:00:00", ["mattie", "rooster"]),
+    ("date_opened.gt=1878-02-18&date_opened.lt=1878-02-20", ["laboeuf"]),
+    ("date_opened.gt=1878-02-19T11:00:00&date_opened.lt=1878-02-19T13:00:00", ["laboeuf"]),
+    ("date_opened.lt=1878-02-18&date_opened.gt=1878-02-19", []),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()
@@ -113,6 +123,8 @@ def test_case_list_queries(self, querystring, expected):
 @generate_cases([
     ("limit=nolimitz", "'nolimitz' is not a valid value for 'limit'"),
     ("limit=10000", "You cannot request more than 5000 cases per request."),
+    ("date_opened.lt=bad-datetime", "Cannot parse datetime 'bad-datetime'"),
+    ("date_opened.lt=2020-02-30", "Cannot parse datetime '2020-02-30'"),
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
