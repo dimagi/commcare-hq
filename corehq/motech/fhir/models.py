@@ -244,11 +244,7 @@ def get_case_trigger_info(
 
     case_create = case_block.get('create') or {}
     case_update = case_block.get('update') or {}
-    case_property_names = [
-        resource_property.case_property.name
-        for resource_property in resource_type.properties.all()
-        if resource_property.case_property
-    ]
+    case_property_names = _get_case_property_names(resource_type)
     extra_fields = {
         p: str(case.get_case_property(p))  # Cast as `str` because
         # CouchDB can return `Decimal` case properties.
@@ -267,6 +263,20 @@ def get_case_trigger_info(
         extra_fields=extra_fields,
         form_question_values=form_question_values,
     )
+
+
+def _get_case_property_names(resource_type):
+    """
+    Returns the names of mapped case properties, plus "external_id"
+    """
+    # We will need "external_id" to tell whether a case already exists
+    # on the remote service.
+    case_property_names = ['external_id']
+    for resource_property in resource_type.properties.all():
+        value_source = resource_property.get_value_source()
+        if hasattr(value_source, 'case_property'):
+            case_property_names.append(value_source.case_property)
+    return case_property_names
 
 
 def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
