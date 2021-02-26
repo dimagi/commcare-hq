@@ -50,8 +50,9 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
+    # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - jls/sync-mixins-hard-fail # Jenny May 24
+  # - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
@@ -65,16 +66,15 @@ branches:
   - ap/fix-deactivated-users-not-showing-in-reports # Amit Jan 28
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
-  - ap/fix-header-tab-caching # Amit Feb 3
-  - sr/cs-help2+sr/daterange-webapps # Sravan Feb 4
-  - sr/cs-help2  # Sravan Feb 4
-  - sr/daterange-webapps # Sravan Feb 4
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - jls/remove-autolaunch # Jenny Feb 9
-  - bmb/sso-admin-ui  # Biyeun Feb 9
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
-  - ap/fix-submission-time-in-worker-activity # Amit Feb 11
-  # - revert-29106-mjr/login_logging # Jenny Feb 12
-  - gh/modify-export-settings-ff
-  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
+  #- adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
+  - smh/bulk-upload-web-users # Steph Feb 22
+  - sr/geocoder  # Sravan Feb 25
+  - dependabot/pip/requirements/django-extensions-3.1.1 # Graham Feb 25
+  - gh/remove-include-duplicates # Graham Feb 25
+  - dependabot/pip/requirements/django-compressor-2.4 # Graham Feb 25
+  - mk/fhir/data-dictionary # MK Feb 26
+  - mk/fhir/api # MK Feb 26
 submodules: {}

@@ -154,6 +154,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.steps = options.steps;
         this.page = options.page;
         this.search = options.search;
+        this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
@@ -178,6 +179,12 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setPage = function (page) {
             this.page = page;
+        };
+
+        this.setCasesPerPage = function (casesPerPage) {
+            this.casesPerPage = casesPerPage;
+            this.page = null;
+            this.sortIndex = null;
         };
 
         this.setSort = function (sortIndex) {
@@ -213,6 +220,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
+            this.casesPerPage = null;
             this.forceManualAction = null;
         };
 
@@ -220,6 +228,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
+            this.casesPerPage = null;
             this.forceManualAction = null;
         };
 
@@ -240,6 +249,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             this.page = null;
             this.search = null;
+            this.casesPerPage = null;
             this.sortIndex = null;
             this.forceManualAction = null;
         };
@@ -254,6 +264,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             steps: self.steps,
             page: self.page,
             search: self.search,
+            casesPerPage: self.casesPerPage,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
@@ -271,6 +282,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'steps': data.steps,
             'page': data.page,
             'search': data.search,
+            'casesPerPage': data.casesPerPage,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
