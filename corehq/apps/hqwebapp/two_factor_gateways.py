@@ -69,8 +69,8 @@ class Gateway(object):
                 body=message)
         except TwilioRestException as e:
             request = get_request()
+            notify_exception(request, str(e))
             if request:
-                notify_exception(request, str(e))
                 messages.error(request, _('''
                     Error received from SMS partner. If you do not receive a token, please retry in a few minutes.
                 '''))
