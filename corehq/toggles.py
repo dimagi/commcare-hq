@@ -1238,14 +1238,6 @@ INBOUND_SMS_LENIENCY = StaticToggle(
 )
 
 
-HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
-    'hide_messaging_dashboard',
-    "Hide messaging dashboard from users who are not superusers.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-
 WHATSAPP_MESSAGING = StaticToggle(
     'whatsapp_messaging',
     "Default SMS to send messages via Whatsapp, where available",
