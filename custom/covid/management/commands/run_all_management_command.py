@@ -52,15 +52,22 @@ class Command(BaseCommand):
         pool = Pool(20)
         if options["only_inactive"]:
             for domain in domains:
-                jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
-                                       location=location_ids[domain]['active']['traveler'],
-                                       inactive_location=location_ids[domain]['inactive']))
+                if 'traveler' in location_ids[domain]['active']:
+                    jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
+                                           location=location_ids[domain]['active']['traveler'],
+                                           inactive_location=location_ids[domain]['inactive']))
+                else:
+                    jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
+                                           inactive_location=location_ids[domain]['inactive']))
             pool.join()
             total_jobs.extend(jobs)
         else:
             for domain in domains:
-                jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
-                                       location=location_ids[domain]['active']['traveler']))
+                if 'traveler' in location_ids[domain]['active']:
+                    jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
+                                           location=location_ids[domain]['active']['traveler']))
+                else:
+                    jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact'))
                 jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
                 jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
                 jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
