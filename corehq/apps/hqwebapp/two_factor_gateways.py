@@ -1,5 +1,6 @@
 import random
 
+from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils import translation
@@ -9,6 +10,7 @@ from django.utils.translation import ugettext as _
 from requests.compat import getproxies
 from six.moves.urllib.parse import urlencode
 from tastypie.http import HttpTooManyRequests
+from twilio.base.exceptions import TwilioRestException
 from twilio.http.http_client import TwilioHttpClient
 from twilio.rest import Client
 from two_factor.models import PhoneDevice
@@ -59,10 +61,16 @@ class Gateway(object):
             return HttpTooManyRequests()
 
         message = _('Your authentication token is %s') % token
-        self.client.api.account.messages.create(
-            to=device.number.as_e164,
-            from_=self.from_number,
-            body=message)
+        try:
+            self.client.api.account.messages.create(
+                to=device.number.as_e164,
+                from_=self.from_number,
+                body=message)
+        except TwilioRestException:
+            request = get_request()
+            messages.error(request, _('''
+                Error received from Twilio. If you do not receive a token, please retry in a few minutes.
+            '''))
 
     def make_call(self, device, token):
         if rate_limit_two_factor_setup(device):
