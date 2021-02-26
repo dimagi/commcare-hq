@@ -55,11 +55,6 @@ class EnterpriseSettingsForm(forms.Form):
                                 "boolean values (True/False), and currencies.")
     )
 
-    forms_include_duplicates = forms.BooleanField(
-        label=ugettext_lazy("Include duplicates and other unprocessed forms"),
-        required=False,
-    )
-
     forms_expand_checkbox = forms.BooleanField(
         label=ugettext_lazy("Expand checkbox questions"),
         required=False,
@@ -78,11 +73,6 @@ class EnterpriseSettingsForm(forms.Form):
         help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
                                 "Otherwise they will appear as a normal text format. This also allows "
                                 "for hyperlinks to the multimedia captured by your form submission.")
-    )
-
-    odata_include_duplicates = forms.BooleanField(
-        label=ugettext_lazy("Include duplicates and other unprocessed forms"),
-        required=False,
     )
 
     odata_expand_checkbox = forms.BooleanField(
@@ -140,9 +130,6 @@ class EnterpriseSettingsForm(forms.Form):
                             crispy.Field('forms_auto_format_cells')
                         ),
                         crispy.Div(
-                            crispy.Field('forms_include_duplicates')
-                        ),
-                        crispy.Div(
                             crispy.Field('forms_expand_checkbox')
                         ),
                     ),
@@ -157,9 +144,6 @@ class EnterpriseSettingsForm(forms.Form):
                     ),
                     crispy.Fieldset(
                         _("Edit Default OData Export Settings"),
-                        crispy.Div(
-                            crispy.Field('odata_include_duplicates')
-                        ),
                         crispy.Div(
                             crispy.Field('odata_expand_checkbox'),
                         ),
@@ -203,10 +187,6 @@ class EnterpriseSettingsForm(forms.Form):
                 'forms_auto_format_cells',
                 self.export_settings.forms_auto_format_cells
             )
-            self.export_settings.forms_include_duplicates = self.cleaned_data.get(
-                'forms_include_duplicates',
-                self.export_settings.forms_include_duplicates
-            )
             self.export_settings.forms_expand_checkbox = self.cleaned_data.get(
                 'forms_expand_checkbox',
                 self.export_settings.forms_expand_checkbox
@@ -221,10 +201,6 @@ class EnterpriseSettingsForm(forms.Form):
                 self.export_settings.cases_auto_convert
             )
             # odata
-            self.export_settings.odata_include_duplicates = self.cleaned_data.get(
-                'odata_include_duplicates',
-                self.export_settings.odata_include_duplicates
-            )
             self.export_settings.odata_expand_checkbox = self.cleaned_data.get(
                 'odata_expand_checkbox',
                 self.export_settings.odata_expand_checkbox
