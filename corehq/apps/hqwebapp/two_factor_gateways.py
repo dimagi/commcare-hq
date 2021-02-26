@@ -75,6 +75,11 @@ class Gateway(object):
                 Error received from Twilio. If you do not receive a token, please retry in a few minutes.
             '''))
 
+        request = get_request()
+        messages.success(request, _('''
+            This demonstrates we can use messages.
+        '''))
+
     def make_call(self, device, token):
         if rate_limit_two_factor_setup(device):
             return HttpTooManyRequests()
