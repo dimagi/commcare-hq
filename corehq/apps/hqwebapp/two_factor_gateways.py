@@ -72,7 +72,7 @@ class Gateway(object):
             if request:
                 notify_exception(request, str(e))
                 messages.error(request, _('''
-                    Error received from Twilio. If you do not receive a token, please retry in a few minutes.
+                    Error received from SMS partner. If you do not receive a token, please retry in a few minutes.
                 '''))
 
     def make_call(self, device, token):
