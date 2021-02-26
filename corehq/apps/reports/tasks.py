@@ -370,7 +370,7 @@ def _get_export_properties(export):
     return properties
 
 
-def find_question_id(form, value):
+def find_question_id(form, value, last_path=False):
     if not isinstance(form, dict):
         # Recursive calls should always give `form` a form value.
         # However, https://dimagi-dev.atlassian.net/browse/SAAS-11326
@@ -381,15 +381,18 @@ def find_question_id(form, value):
 
     for k, v in form.items():
         if isinstance(v, dict):
-            ret = find_question_id(v, value)
+            ret = find_question_id(v, value, last_path=last_path)
             if ret:
                 return [k] + ret
         elif isinstance(v, list):
             for repeat in v:
-                ret = find_question_id(repeat, value)
+                ret = find_question_id(repeat, value, last_path=last_path)
                 if ret:
                     return [k] + ret
         else:
+            if last_path:
+                v = os.path.basename(os.path.normpath(v))
+
             if v == value:
                 return [k]
 
@@ -424,8 +427,12 @@ def _extract_form_attachment_info(form, properties):
         if content_type == 'text/xml':
             continue
         try:
-            question_id = str(
-                '-'.join(find_question_id(form.form_data, attachment_name)))
+            question_id_components = find_question_id(form.form_data, attachment_name)
+            if question_id_components is None:
+                # NOTE: special case until rd-toolkit bug is fixed, search for question_id again
+                # See https://dimagi-dev.atlassian.net/browse/SAAS-11792
+                question_id_components = find_question_id(form.form_data, attachment_name, last_path=True)
+            question_id = str('-'.join(question_id_components))
         except TypeError:
             question_id = 'unknown' + str(unknown_number)
             unknown_number += 1
