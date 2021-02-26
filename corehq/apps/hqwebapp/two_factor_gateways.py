@@ -1,5 +1,6 @@
 import random
 
+from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils import translation
@@ -9,6 +10,7 @@ from django.utils.translation import ugettext as _
 from requests.compat import getproxies
 from six.moves.urllib.parse import urlencode
 from tastypie.http import HttpTooManyRequests
+from twilio.base.exceptions import TwilioRestException
 from twilio.http.http_client import TwilioHttpClient
 from twilio.rest import Client
 from two_factor.models import PhoneDevice
@@ -23,6 +25,7 @@ from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import get_ip
 
 VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
@@ -59,10 +62,23 @@ class Gateway(object):
             return HttpTooManyRequests()
 
         message = _('Your authentication token is %s') % token
-        self.client.api.account.messages.create(
-            to=device.number.as_e164,
-            from_=self.from_number,
-            body=message)
+        try:
+            self.client.api.account.messages.create(
+                to=device.number.as_e164,
+                from_=self.from_number,
+                body=message)
+        except TwilioRestException as e:
+            request = get_request()
+            _soft_assert = soft_assert(notify_admins=True)
+            _soft_assert(False, msg='TwilioRestException', obj=str(e))
+            messages.error(request, _('''
+                Error received from Twilio. If you do not receive a token, please retry in a few minutes.
+            '''))
+
+        request = get_request()
+        messages.success(request, _('''
+            This demonstrates we can use messages.
+        '''))
 
     def make_call(self, device, token):
         if rate_limit_two_factor_setup(device):
