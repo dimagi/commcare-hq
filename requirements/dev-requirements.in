@@ -23,5 +23,6 @@ sphinxcontrib-django~=0.5
 recommonmark
 graphviz==0.16
 
-# linting
+# linting/formatting
 flake8
+yapf
