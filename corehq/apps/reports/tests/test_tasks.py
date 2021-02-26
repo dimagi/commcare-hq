@@ -35,3 +35,15 @@ class FindQuestionIdTests(SimpleTestCase):
 
         result = find_question_id(form, 'my_attachment')
         self.assertIsNone(result)
+
+    def test_finds_last_path(self):
+        form = {'attachment': '/path/to/my/attachment.ext'}
+
+        result = find_question_id(form, 'attachment.ext', last_path=True)
+        self.assertEqual(result, ['attachment'])
+
+    def test_does_not_find_last_path(self):
+        form = {'attachment': '/path/to/my/attachment.ext'}
+
+        result = find_question_id(form, 'attachment.ext')
+        self.assertIsNone(result)
