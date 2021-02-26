@@ -4,7 +4,7 @@ from datetime import datetime
 from django.test import TestCase
 from django.urls import reverse
 
-from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
