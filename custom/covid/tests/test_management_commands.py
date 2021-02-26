@@ -223,11 +223,19 @@ class CaseCommandsTest(TestCase):
             case_type='investigation',
         )
 
+        improper_investigation_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, improper_investigation_case_id, user_id=self.user_id, owner_id='fake-test-location',
+            case_type='investigation',
+        )
+
         investigation_case = self.case_accessor.get_case(investigation_case_id)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-parent-location')
 
         call_command('update_owner_ids', self.domain, 'investigation')
 
+        improper_investigation_case = self.case_accessor.get_case(improper_investigation_case_id)
+        self.assertEqual(improper_investigation_case.get_case_property('owner_id'), 'fake-test-location')
         investigation_case = self.case_accessor.get_case(investigation_case_id)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-child-location')
 
