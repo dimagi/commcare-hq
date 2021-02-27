@@ -4,7 +4,7 @@ import attr
 from jsonobject.containers import JsonDict
 from jsonpath_ng.ext.parser import parse as parse_jsonpath
 from schema import Optional as SchemaOptional
-from schema import Or, Schema, SchemaError
+from schema import And, Or, Schema, SchemaError
 
 from couchforms.const import TAG_FORM, TAG_META
 
@@ -204,16 +204,10 @@ class CaseProperty(ValueSource):
     """
     case_property: str
 
-    class IsNotBlank:
-        def validate(self, data):
-            if isinstance(data, str) and len(data):
-                return data
-            raise SchemaError(f"Value cannot be blank.")
-
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         (schema, *other_args), kwargs = super().get_schema_params()
-        schema.update({"case_property": cls.IsNotBlank()})
+        schema.update({"case_property": And(str, len)})
         return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
