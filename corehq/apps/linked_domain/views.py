@@ -423,13 +423,12 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 if action.model_detail:
                     detail = action.wrapped_detail
                     tag = action.wrapped_detail.tag
-                    try:
-                        fixture = fixtures.get(tag)
-                        del fixtures[tag]
-                    except KeyError:
+                    fixture = fixtures.pop(tag, None)
+                    if not fixture:
                         fixture = get_fixture_data_type_by_tag(self.domain, tag)
-                    tag_name = fixture.tag
-                    can_update = fixture.is_global
+                    if fixture:
+                        tag_name = fixture.tag
+                        can_update = fixture.is_global
                 update['name'] = f'{name} ({tag_name})'
                 update['can_update'] = can_update
             if action.model == 'report':
