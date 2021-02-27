@@ -61,8 +61,8 @@ def clean_logs():
 
     Runs on the 27th of every month.
     """
-    ninety_days_ago = datetime.now() - timedelta(days=90)
-    RequestLog.objects.filter(timestamp__lt=ninety_days_ago).delete()
+    # There was a pileup of this task and none of them were completing so I'm temporarily making this a noop
+    pass
 
 
 @periodic_task(
