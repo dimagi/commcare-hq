@@ -55,18 +55,16 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if user and user.is_locked_out():
             metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
-        try:
-            cleaned_data = super(EmailAuthenticationForm, self).clean()
-            if not user:
-                try:
-                    _ = ConsumerUser.objects.get(user=self.user_cache)
-                    EmailAuthenticationForm.create_web_user_from_consumer_user(username,
-                                                                               password,
-                                                                               get_ip(self.request))
-                except ConsumerUser.DoesNotExist:
-                    self.get_invalid_login_error()
-        except ValidationError:
-            raise
+
+        cleaned_data = super(EmailAuthenticationForm, self).clean()
+        if not user:
+            consumer_user = ConsumerUser.objects.get_or_none(user=self.user_cache)
+            if consumer_user:
+                EmailAuthenticationForm.create_web_user_from_consumer_user(username,
+                                                                           password,
+                                                                           get_ip(self.request))
+            else:
+                self.get_invalid_login_error()
         return cleaned_data
 
     @staticmethod
@@ -75,17 +73,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
         new_user = WebUser.create(None, username, password, None, USER_CHANGE_VIA_WEB, is_admin=is_domain_admin)
         new_user.subscribed_to_commcare_users = False
-        new_user.eula.signed = True
-        new_user.eula.date = now
-        new_user.eula.type = 'End User License Agreement'
-        if ip:
-            new_user.eula.user_ip = ip
-
-        new_user.is_staff = False  # Can't log in to admin site
-        new_user.is_active = True
-        new_user.is_superuser = False
         new_user.last_login = now
-        new_user.date_joined = now
         new_user.last_password_set = now
         new_user.atypical_user = False
         new_user.save()

@@ -12,17 +12,18 @@ from corehq.apps.hqcase.utils import update_case
 from django.core.signing import TimestampSigner
 from corehq.apps.data_interfaces.tests.util import create_case
 from django.test.utils import override_settings
+from corehq.apps.consumer_user.const import CONSUMER_INVITATION_CASE_TYPE
 
 
 def register_url(invitation):
-    return reverse('consumer_user:patient_register',
+    return reverse('consumer_user:consumer_user_register',
                    kwargs={'invitation': TimestampSigner().sign(
                        urlsafe_base64_encode(force_bytes(invitation))
                    )})
 
 
 def login_accept_url(invitation):
-    return reverse('consumer_user:patient_login_with_invitation',
+    return reverse('consumer_user:consumer_user_login_with_invitation',
                    kwargs={'invitation': TimestampSigner().sign(
                        urlsafe_base64_encode(force_bytes(invitation))
                    )})
@@ -32,12 +33,18 @@ class RegisterTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.login_url = reverse('consumer_user:patient_login')
+        self.login_url = reverse('consumer_user:consumer_user_login')
         self.client = Client()
+
+    def tearDown(self):
+        super().tearDown()
+        ConsumerUserCaseRelationship.objects.all().delete()
+        ConsumerUserInvitation.objects.all().delete()
+        ConsumerUser.objects.all().delete()
+        User.objects.all().delete()
 
     def test_register_get(self):
         invitation = ConsumerUserInvitation.objects.create(case_id='1', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email='a@a.com')
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
@@ -48,7 +55,6 @@ class RegisterTestCase(TestCase):
     def test_register_consumer(self):
         email = 'a@a.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='2', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
@@ -73,7 +79,6 @@ class RegisterTestCase(TestCase):
     def test_register_existing_user(self):
         email = 'a1@a1.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
         User.objects.create_user(username=email, email=email, password='password')
         register_uri = register_url(invitation.id)
@@ -92,7 +97,6 @@ class RegisterTestCase(TestCase):
     def test_register_different_email(self):
         email = 'a2@a2.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='4', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
@@ -110,7 +114,6 @@ class RegisterTestCase(TestCase):
 
     def test_register_accepted_invitation(self):
         invitation = ConsumerUserInvitation.objects.create(case_id='5', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email='a@a.com', accepted=True)
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
@@ -120,7 +123,6 @@ class RegisterTestCase(TestCase):
     def test_register_get_webuser(self):
         email = 'a6@a6.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
         User.objects.create_user(username=email, email=email, password='password')
         register_uri = register_url(invitation.id)
@@ -140,9 +142,16 @@ class LoginTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.login_url = reverse('consumer_user:patient_login')
-        self.homepage_url = reverse('consumer_user:patient_homepage')
+        self.login_url = reverse('consumer_user:consumer_user_login')
+        self.homepage_url = reverse('consumer_user:consumer_user_homepage')
         self.client = Client()
+
+    def tearDown(self):
+        super().tearDown()
+        ConsumerUserCaseRelationship.objects.all().delete()
+        ConsumerUserInvitation.objects.all().delete()
+        ConsumerUser.objects.all().delete()
+        User.objects.all().delete()
 
     def test_login_get(self):
         response = self.client.get(self.login_url)
@@ -157,7 +166,7 @@ class LoginTestCase(TestCase):
         post_data = {
             'auth-username': email,
             'auth-password': password,
-            'patient_login_view-current_step': 'auth',
+            'consumer_user_login_view-current_step': 'auth',
         }
         response = self.client.post(self.login_url, post_data)
         self.assertEqual(response.status_code, 302)
@@ -169,12 +178,11 @@ class LoginTestCase(TestCase):
         user = User.objects.create_user(username=email, email=email, password=password)
         ConsumerUser.objects.create(user=user)
         invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I',
-                                                           invited_on='2021-02-09 17:17:32.229524+00',
                                                            email=email)
         post_data = {
             'auth-username': email,
             'auth-password': password,
-            'patient_login_view-current_step': 'auth',
+            'consumer_user_login_view-current_step': 'auth',
         }
         response = self.client.post(login_accept_url(invitation.id), post_data)
         self.assertEqual(response.status_code, 302)
@@ -188,38 +196,47 @@ class SignalTestCase(TestCase):
     def setUp(self):
         self.domain = 'consumer-invitation-test'
 
+    def tearDown(self):
+        super().tearDown()
+        ConsumerUserCaseRelationship.objects.all().delete()
+        ConsumerUserInvitation.objects.all().delete()
+        ConsumerUser.objects.all().delete()
+        User.objects.all().delete()
+
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email(self):
-        invitation_count = ConsumerUserInvitation.objects.count()
-        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as async_task, create_case(
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async, create_case(
             self.domain,
-            'commcare-caseuserinvitation',
+            CONSUMER_INVITATION_CASE_TYPE,
             owner_id='comm_care',
             update={'email': 'testing@testing.in'}
         ) as case:
+            # Creating new comm care case creates a new ConsumerUserInvitation
             customer_invitation = ConsumerUserInvitation.objects.get(case_id=case.case_id, domain=case.domain)
             self.assertEqual(customer_invitation.email, case.get_case_property('email'))
-            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 1)
-            self.assertEqual(async_task.call_count, 1)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
+            # Updating the case properties other than email should not create a new invitation
             update_case(self.domain, case.case_id,
                         case_properties={'contact_phone_number': '12345'})
-            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 1)
-            self.assertEqual(async_task.call_count, 1)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
+            # Updating the case again with a changed email address creates a new invitation
             update_case(self.domain, case.case_id,
                         case_properties={'email': 'email@changed.in'})
-            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 2)
-            self.assertEqual(async_task.call_count, 2)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
+            self.assertEqual(send_html_email_async.call_count, 2)
+            # Closing the case should make invitation inactive
             update_case(self.domain, case.case_id, None, True)
-            self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count + 2)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=False).count(),
                              ConsumerUserInvitation.objects.count())
-            self.assertEqual(async_task.call_count, 2)
-
+            self.assertEqual(send_html_email_async.call_count, 2)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email_other_casetype(self):
         invitation_count = ConsumerUserInvitation.objects.count()
-        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as async_task, create_case(
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async, create_case(
             self.domain,
             'person',
             owner_id='comm_care',
@@ -227,7 +244,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(case_id=case.case_id,
                                                                    domain=case.domain).count(), 0)
             self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count)
-            async_task.assert_not_called()
+            send_html_email_async.assert_not_called()
 
 
 class DomainsAndCasesTestCase(TestCase):
@@ -236,6 +253,12 @@ class DomainsAndCasesTestCase(TestCase):
         super().setUp()
         self.client = Client()
         self.url = reverse('consumer_user:domain_and_cases_list')
+
+    def tearDown(self):
+        super().tearDown()
+        ConsumerUserCaseRelationship.objects.all().delete()
+        ConsumerUser.objects.all().delete()
+        User.objects.all().delete()
 
     def test_domains_and_cases_get(self):
         email = 'b@b.com'
@@ -264,7 +287,7 @@ class DomainsAndCasesTestCase(TestCase):
 
     def test_domains_and_cases_no_user_logged_in(self):
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 302)
 
     def test_domains_and_cases_user_logged_in_no_consumer_user(self):
         email = 'user@noconsumer.in'
@@ -272,7 +295,7 @@ class DomainsAndCasesTestCase(TestCase):
         User.objects.create_user(username=email, email=email, password=password)
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 302)
 
 
 class ChangeContactDetailsTestCase(TestCase):
@@ -281,6 +304,11 @@ class ChangeContactDetailsTestCase(TestCase):
         super().setUp()
         self.client = Client()
         self.url = reverse('consumer_user:change_contact_details')
+
+    def tearDown(self):
+        super().tearDown()
+        ConsumerUser.objects.all().delete()
+        User.objects.all().delete()
 
     def test_change_contact_details_get(self):
         email = 'b2@b2.com'
@@ -318,7 +346,7 @@ class ChangeContactDetailsTestCase(TestCase):
 
     def test_change_contact_details_no_user_logged_in(self):
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 302)
 
     def test_change_contact_details_user_logged_in_no_consumer_user(self):
         email = 'user@noconsumer.in'
@@ -330,4 +358,4 @@ class ChangeContactDetailsTestCase(TestCase):
                                  last_name=last_name)
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 302)
