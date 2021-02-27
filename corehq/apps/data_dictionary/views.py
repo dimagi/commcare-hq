@@ -239,10 +239,10 @@ def _process_bulk_upload(bulk_file, domain):
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
             case_type = worksheet.title
-            for row in itertools.islice(worksheet.iter_rows(), 1, None):
+            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
                 name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
                 if name:
                     error = save_case_property(name, case_type, domain, data_type, description, group, deprecated)
                     if error:
-                        errors.append(error)
+                        errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
     return errors
