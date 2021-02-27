@@ -4,9 +4,13 @@ from django.contrib.auth.models import User
 from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
 from corehq.apps.hqcase.utils import update_case
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext_lazy as _
+from corehq.apps.consumer_user.const import CONSUMER_INVITATION_STATUS
+from corehq.apps.consumer_user.const import CONSUMER_INVITATION_ACCEPTED
 
 
-class PatientSignUpForm(ModelForm):
+class ConsumerUserSignUpForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.invitation = kwargs.pop('invitation', None)
@@ -21,8 +25,14 @@ class PatientSignUpForm(ModelForm):
             'password': PasswordInput(),
         }
 
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(username=email).exists():
+            raise ValidationError(_(u'Username "%s" is already in use.' % email))
+        return email
+
     def save(self, commit=True):
-        user = super(PatientSignUpForm, self).save(commit=False)
+        user = super(ConsumerUserSignUpForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password"])
         user.username = self.cleaned_data['email']
         if commit:
@@ -31,10 +41,10 @@ class PatientSignUpForm(ModelForm):
             if self.invitation:
                 self.invitation.accepted = True
                 self.invitation.save()
-                _ = ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
-                                                                domain=self.invitation.domain,
-                                                                consumer_user=consumer_user)
+                ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
+                                                            domain=self.invitation.domain,
+                                                            consumer_user=consumer_user)
                 update_case(self.invitation.domain,
                             self.invitation.case_id,
-                            {'invitation_status': 'accepted'})
+                            {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED})
         return user

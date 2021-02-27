@@ -53,11 +53,6 @@ class UsersMiddleware(MiddlewareMixin):
                 if 'domain' in view_kwargs:
                     domain = request.domain
                     request.couch_user.current_domain = domain
-            # else:
-            #     if request.resolver_match.route.startswith('^hq/consumer_user/'):
-            #         pass
-            #     else:
-            #         return HttpResponse(status=401)
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
