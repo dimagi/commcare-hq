@@ -27,7 +27,11 @@ from corehq.toggles import FHIR_INTEGRATION
 
 from .const import FHIR_VERSION_4_0_1, XMLNS_FHIR
 from .models import FHIRResourceType
-from .repeater_helpers import get_fhir_bundle, register_patients, send_bundle
+from .repeater_helpers import (
+    get_info_resource_list,
+    register_patients,
+    send_resources,
+)
 
 
 class FHIRRepeater(CaseRepeater):
@@ -70,17 +74,21 @@ class FHIRRepeater(CaseRepeater):
         Returns an HTTP response-like object. If the payload has nothing
         to send, returns True.
         """
-        response = True
         requests = self.connection_settings.get_requests(repeat_record.payload_id)
         case_trigger_infos = self.get_case_trigger_infos(
             payload,
             self.fhir_version,
         )
         try:
-            register_patients(requests, case_trigger_infos, self.fhir_version)
-            bundle = get_fhir_bundle(case_trigger_infos, self.fhir_version)
-            if bundle:
-                response = send_bundle(requests, bundle)
+            resources = get_info_resource_list(
+                case_trigger_infos,
+                self.fhir_version,
+            )
+            if not resources:
+                # Nothing to send
+                return True
+            register_patients(requests, resources)
+            response = send_resources(requests, resources, self.fhir_version)
         except Exception as err:
             requests.notify_exception(str(err))
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
