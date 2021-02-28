@@ -10,14 +10,16 @@ from jsonfield import JSONField
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.util import get_case_type_obj
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     ValueSource,
     as_value_source,
 )
+
+from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 
 
 class FHIRResourceType(models.Model):
@@ -72,6 +74,9 @@ class FHIRResourceType(models.Model):
                             'json-schema', ver)
         ext = len('.schema.json')
         return [n[:-ext] for n in os.listdir(path)]
+
+    def validate_resource(self, fhir_resource):
+        pass
 
 
 class FHIRResourceProperty(models.Model):
@@ -146,33 +151,76 @@ class FHIRResourceProperty(models.Model):
         return as_value_source(value_source_config)
 
 
-def build_fhir_resource(case, version=FHIR_VERSION_4_0_1):
-    case_type = CaseType.objects.get(
-        domain=case.domain,
-        name=case.type,
-    )
-    info = get_case_trigger_info(case, case_type)
+def build_fhir_resource(
+    case: Union[CommCareCase, CommCareCaseSQL],
+    fhir_version: str = FHIR_VERSION_4_0_1,
+) -> Optional[dict]:
+    """
+    Builds a FHIR resource using data from ``case``. Returns ``None`` if
+    mappings do not exist.
+
+    Used by the FHIR API.
+    """
+    try:
+        info = get_case_trigger_info(case)
+    except AssertionError:
+        return None
+    return _build_fhir_resource(info, fhir_version)
+
+
+def build_fhir_resource_for_info(
+    info: CaseTriggerInfo,
+    fhir_version: str,
+) -> Optional[dict]:
+    """
+    Builds a FHIR resource using data from ``info``. Returns ``None`` if
+    mappings do not exist, or if there is no data to forward.
+
+    Used by ``FHIRRepeater``.
+    """
+    return _build_fhir_resource(info, fhir_version, skip_empty=True)
+
+
+def _build_fhir_resource(
+    info: CaseTriggerInfo,
+    fhir_version: str,
+    *,
+    skip_empty: bool = False,
+) -> Optional[dict]:
+    case_type = get_case_type_obj(info.domain, info.type)
+    if not case_type:
+        return None
+
     resource_type = (FHIRResourceType.objects
                      .prefetch_related('properties__case_property')
-                     .get(case_type=case_type, fhir_version=version))
-    fhir_resource = resource_type.template or {}
+                     .get(case_type=case_type, fhir_version=fhir_version))
+    fhir_resource = {
+        **resource_type.template,
+        'id': info.case_id,
+        'resourceType': resource_type.name,  # Always required
+    }
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()
         value_source.set_external_value(fhir_resource, info)
+    resource_type.validate_resource(fhir_resource)
     return fhir_resource
 
 
-def get_case_trigger_info(
-        case: Union[CommCareCase, CommCareCaseSQL],
-        case_type: CaseType,
-) -> CaseTriggerInfo:
+def get_case_trigger_info(case):
     """
-    CaseTriggerInfo packages case (and form) data for use by ValueSource
+    Returns ``CaseTriggerInfo`` instance for ``case``.
+
+    Ignores case properties that aren't in the Data Dictionary.
+
+    ``CaseTriggerInfo`` packages case (and form) data for use by
+    ``ValueSource``.
     """
+    case_type = get_case_type_obj(case.domain, case.type)
+    assert case_type, f'CaseType not found for case type {case.type!r}'
     prop_names = [p.name for p in case_type.properties.all()]
     return CaseTriggerInfo(
         domain=case.domain,
         case_id=case.case_id,
         type=case.type,
-        updates={p: case.get_case_property(p) for p in prop_names},
+        extra_fields={p: case.get_case_property(p) for p in prop_names},
     )
