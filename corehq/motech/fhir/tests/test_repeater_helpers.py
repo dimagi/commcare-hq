@@ -13,9 +13,12 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.motech.const import COMMCARE_DATA_TYPE_DECIMAL
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_TEXT,
+)
 
-from ..const import FHIR_VERSION_4_0_1
+from ..const import FHIR_DATA_TYPE_LIST_OF_STRING, FHIR_VERSION_4_0_1
 from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
@@ -114,7 +117,9 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
                 'subcase_value_source': {
                     'case_property': 'given_names',
                     # Use counter1 to skip the name set by the parent case
-                    'jsonpath': '$.name[{counter1}].given[0]',
+                    'jsonpath': '$.name[{counter1}].given',
+                    'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
+                    'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
                 },
                 'case_types': ['person_name'],
             }
@@ -203,7 +208,7 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
             'id': self.parent_case_id,
             'name': [
                 {'text': 'Ted'},
-                {'given': ['Theodore John'], 'family': 'Kaczynski'},
+                {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
                 {'given': ['Unabomber']},
             ],
             'resourceType': 'Patient',
