@@ -31,7 +31,10 @@ class FHIRResourceType(models.Model):
 
     # `template` offers a way to define a FHIR resource if it cannot be
     # built using only mapped case properties.
-    template = JSONField(null=True, blank=True, default=None)
+    template = JSONField(default=dict)
+
+    class Meta:
+        unique_together = ('case_type', 'fhir_version')
 
     def __str__(self):
         return self.name
