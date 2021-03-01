@@ -55,14 +55,20 @@ logging = get_task_logger(__name__)
     run_every=crontab(day_of_month=27, hour=6, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
-def clean_logs():
+def raw_delete_logs():
     """
     Drop MOTECH logs older than 90 days.
+
+    Does not notify pre_delete and post_delete signal listeners. Does
+    not respect cascade delete.
 
     Runs on the 27th of every month.
     """
     ninety_days_ago = datetime.now() - timedelta(days=90)
-    RequestLog.objects.filter(timestamp__lt=ninety_days_ago).delete()
+    # _raw_delete() does not prefetch the IDs of all the rows to be
+    # deleted, cascade-delete items related to them, or notify signal
+    # listeners. See https://code.djangoproject.com/ticket/9519#comment:30
+    RequestLog.objects.filter(timestamp__lt=ninety_days_ago)._raw_delete()  # noqa
 
 
 @periodic_task(
