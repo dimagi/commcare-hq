@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/PractitionerRole",
+  "id": "file:PractitionerRole.schema.json",
   "$ref": "#/definitions/PractitionerRole",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "PractitionerRole": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A specific set of Roles/Locations/specialties/services that a practitioner may perform at an organization for a period of time.",
@@ -120,7 +120,7 @@
     "PractitionerRole_AvailableTime": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A specific set of Roles/Locations/specialties/services that a practitioner may perform at an organization for a period of time.",
@@ -173,7 +173,7 @@
     "PractitionerRole_NotAvailable": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A specific set of Roles/Locations/specialties/services that a practitioner may perform at an organization for a period of time.",
