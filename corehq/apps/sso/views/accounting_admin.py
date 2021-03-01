@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.html import format_html
 
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import (
@@ -68,7 +69,7 @@ class IdentityProviderInterface(AddItemInterface):
         def _idp_to_row(idp):
             edit_url = reverse(EditIdentityProviderAdminView.urlname, args=(idp.id,))
             return [
-                f'<a href="{edit_url}">{idp.name}</a>',
+                format_html('<a href="{}">{}</a>', edit_url, idp.name),
                 idp.slug,
                 "Open" if idp.is_editable else "Closed",
                 "Active" if idp.is_active else "Inactive",

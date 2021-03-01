@@ -77,6 +77,16 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case1.case_id, cases[0].case_id)
         self.assertEqual(case2.case_id, cases[1].case_id)
 
+    def test_get_case_ids_that_exist(self):
+        case1 = _create_case()
+        case2 = _create_case()
+
+        case_ids = CaseAccessorSQL.get_case_ids_that_exist(
+            DOMAIN,
+            ['missing_case', case1.case_id, case2.case_id]
+        )
+        self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
+
     def test_get_case_xform_ids(self):
         form_id1 = uuid.uuid4().hex
         case = _create_case(form_id=form_id1)
