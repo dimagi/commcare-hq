@@ -49,6 +49,6 @@ class CaseUpdateCommand(BaseCommand):
         options.pop("username")
         self.extra_options = options
 
-        for domain in domains:
+        for domain in sorted(domains):
             print(f"Processing {domain}")
             self.update_cases(domain, case_type, user_id)
