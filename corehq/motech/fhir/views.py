@@ -13,6 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import absolute_reverse
 
+from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
 from .models import FHIRResourceType, build_fhir_resource
 
@@ -47,7 +48,10 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 @login_and_domain_required
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
-def get_view(request, domain, resource_type, resource_id):
+def get_view(request, domain, fhir_version_name, resource_type, resource_id):
+    fhir_version = _get_fhir_version(fhir_version_name)
+    if not fhir_version:
+        return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
     try:
         case = CaseAccessors(domain).get_case(resource_id)
         if case.is_deleted:
@@ -57,6 +61,7 @@ def get_view(request, domain, resource_type, resource_id):
 
     if not FHIRResourceType.objects.filter(
             domain=domain,
+            fhir_version=fhir_version,
             name=resource_type,
             case_type__name=case.type
     ).exists():
@@ -73,7 +78,10 @@ def get_view(request, domain, resource_type, resource_id):
 @login_and_domain_required
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
-def search_view(request, domain, resource_type):
+def search_view(request, domain, fhir_version_name, resource_type):
+    fhir_version = _get_fhir_version(fhir_version_name)
+    if not fhir_version:
+        return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
     patient_case_id = request.GET.get('patient_id')
     if not patient_case_id:
         return JsonResponse(status=400, data={'message': "Please pass patient_id"})
@@ -85,8 +93,11 @@ def search_view(request, domain, resource_type):
     except CaseNotFound:
         return JsonResponse(status=400, data={'message': f"Could not find patient with ID {patient_case_id}"})
 
-    case_types_for_resource_type = list(FHIRResourceType.objects.filter(domain=domain, name=resource_type).
-                                        values_list('case_type__name', flat=True))
+    case_types_for_resource_type = list(
+        FHIRResourceType.objects.filter(
+            domain=domain, name=resource_type, fhir_version=fhir_version
+        ).values_list('case_type__name', flat=True)
+    )
     if not case_types_for_resource_type:
         return JsonResponse(status=400,
                             data={'message': f"Resource type {resource_type} not available on {domain}"})
@@ -106,3 +117,12 @@ def search_view(request, domain, resource_type):
             }
         })
     return JsonResponse(response)
+
+
+def _get_fhir_version(fhir_version_name):
+    fhir_version = None
+    try:
+        fhir_version = [v[0] for v in FHIR_VERSIONS if v[1] == fhir_version_name][0]
+    except IndexError:
+        pass
+    return fhir_version
