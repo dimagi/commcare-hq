@@ -342,7 +342,6 @@ def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
     )
 
 
-
 def _convert_legacy_indices_to_export_properties(indices):
     # Strip the prefixed 'form' and change '.'s to '-'s
     return set(map(
@@ -370,7 +369,28 @@ def _get_export_properties(export):
     return properties
 
 
-def find_question_id(form, value, last_path=False):
+def _get_question_id_for_attachment(form, attachment_name):
+    """
+    Attempts to build and return a question_id from retrieved path list
+    """
+    question_id_components = _find_path_to_question_id(form, attachment_name, use_basename=False)
+
+    # NOTE: until rd-toolkit bug is fixed, search for question_id again looking at basename of attachment_name
+    # See https://dimagi-dev.atlassian.net/browse/SAAS-11792
+    if question_id_components is None:
+        question_id_components = _find_path_to_question_id(form, attachment_name, use_basename=True)
+
+    try:
+        return str('-'.join(question_id_components))
+    except TypeError:
+        return None
+
+
+def _find_path_to_question_id(form, attachment_name, use_basename=False):
+    """
+    Returns the list of keys used to find attachment_name in the form (None if not found)
+    use_basename
+    """
     if not isinstance(form, dict):
         # Recursive calls should always give `form` a form value.
         # However, https://dimagi-dev.atlassian.net/browse/SAAS-11326
@@ -381,19 +401,19 @@ def find_question_id(form, value, last_path=False):
 
     for k, v in form.items():
         if isinstance(v, dict):
-            ret = find_question_id(v, value, last_path=last_path)
+            ret = _find_path_to_question_id(v, attachment_name, use_basename=use_basename)
             if ret:
                 return [k] + ret
         elif isinstance(v, list):
             for repeat in v:
-                ret = find_question_id(repeat, value, last_path=last_path)
+                ret = _find_path_to_question_id(repeat, attachment_name, use_basename=use_basename)
                 if ret:
                     return [k] + ret
         else:
-            if last_path:
-                v = os.path.basename(os.path.normpath(v))
-
-            if v == value:
+            if use_basename and os.path.isabs(v):
+                # only worth using basename if path is absolute since that is the edge case this attempts to solve
+                v = os.path.basename(v)
+            if v == attachment_name:
                 return [k]
 
     return None
@@ -426,14 +446,9 @@ def _extract_form_attachment_info(form, properties):
             content_type = attachment['content_type']
         if content_type == 'text/xml':
             continue
-        try:
-            question_id_components = find_question_id(form.form_data, attachment_name)
-            if question_id_components is None:
-                # NOTE: special case until rd-toolkit bug is fixed, search for question_id again
-                # See https://dimagi-dev.atlassian.net/browse/SAAS-11792
-                question_id_components = find_question_id(form.form_data, attachment_name, last_path=True)
-            question_id = str('-'.join(question_id_components))
-        except TypeError:
+
+        question_id = _get_question_id_for_attachment(form.form_data, attachment_name)
+        if question_id is None:
             question_id = 'unknown' + str(unknown_number)
             unknown_number += 1
 
