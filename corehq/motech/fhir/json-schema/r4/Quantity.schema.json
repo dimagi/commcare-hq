@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Quantity",
+  "$ref": "#/definitions/Quantity",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Quantity": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A measured amount (or an amount that can potentially be measured). Note that measured amounts include amounts that are not precisely quantified, including amounts involving arbitrary units and floating currencies.",
+          "properties": {
+            "value": {
+              "description": "The value of the measured amount. The value includes an implicit precision in the presentation of the value.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "comparator": {
+              "description": "How the value should be understood and represented - whether the actual value is greater or less than the stated value due to measurement issues; e.g. if the comparator is \"\u003c\" , then the real value is \u003c stated value.",
+              "enum": [
+                "\u003c",
+                "\u003c\u003d",
+                "\u003e\u003d",
+                "\u003e"
+              ],
+              "type": "string"
+            },
+            "_comparator": {
+              "description": "Extensions for comparator",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "unit": {
+              "description": "A human-readable form of the unit.",
+              "type": "string"
+            },
+            "_unit": {
+              "description": "Extensions for unit",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "system": {
+              "description": "The identification of the system that provides the coded form of the unit.",
+              "type": "string"
+            },
+            "_system": {
+              "description": "Extensions for system",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "A computer processable form of the unit in some unit representation system.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

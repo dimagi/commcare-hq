@@ -1,0 +1,722 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/PlanDefinition",
+  "$ref": "#/definitions/PlanDefinition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "PlanDefinition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a PlanDefinition resource",
+              "type": "string",
+              "enum": [
+                "PlanDefinition"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this plan definition when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this plan definition is (or will be) published. The URL SHOULD include the major version of the plan definition. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this plan definition when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the plan definition when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the plan definition author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence. To provide a version consistent with the Decision Support Service specification, use the format Major.Minor.Revision (e.g. 1.0.0). For more information on versioning knowledge assets, refer to the Decision Support Service specification. Note that a version is required for non-experimental active artifacts.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the plan definition. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the plan definition.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of asset the plan definition represents, e.g. an order set, protocol, or event-condition-action rule.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "status": {
+              "description": "The status of this plan definition. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this plan definition is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the plan definition was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the plan definition changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the plan definition.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A free text natural language description of the plan definition from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "purpose": {
+              "description": "Explaination of why this plan definition is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "usage": {
+              "description": "A detailed description of how the asset is used from a clinical perspective.",
+              "type": "string"
+            },
+            "_usage": {
+              "description": "Extensions for usage",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "approvalDate": {
+              "description": "The date on which the resource content was approved by the publisher. Approval happens once when the content is officially approved for usage.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_approvalDate": {
+              "description": "Extensions for approvalDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastReviewDate": {
+              "description": "The date on which the resource content was last reviewed. Review happens periodically after approval, but doesn\u0027t change the original approval date.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_lastReviewDate": {
+              "description": "Extensions for lastReviewDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "effectivePeriod": {
+              "description": "The period during which the plan definition content was or is planned to be in active use.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate plan definition instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the plan definition is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "topic": {
+              "description": "Descriptive topics related to the content of the plan definition. Topics provide a high-level categorization of the definition that can be useful for filtering and searching.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "contributor": {
+              "description": "A contributor to the content of the asset, including authors, editors, reviewers, and endorsers.",
+              "type": "array",
+              "items": {
+                "$ref": "Contributor.schema.json#/definitions/Contributor"
+              }
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the plan definition and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the plan definition.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "relatedArtifact": {
+              "description": "Related artifacts such as additional documentation, justification, or bibliographic references.",
+              "type": "array",
+              "items": {
+                "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+              }
+            },
+            "library": {
+              "description": "A reference to a Library resource containing any formal logic used by the plan definition.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "goal": {
+              "description": "Goals that describe what the activities within the plan are intended to achieve. For example, weight loss, restoring an activity of daily living, obtaining herd immunity via immunization, meeting a process improvement objective, etc.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_Goal"
+              }
+            },
+            "action": {
+              "description": "An action to be taken as part of the plan.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_Action"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "PlanDefinition_Goal": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "category": {
+              "description": "Indicates a category the goal falls within.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "description": {
+              "description": "Human-readable and/or coded description of a specific desired objective of care, such as \"control blood pressure\" or \"negotiate an obstacle course\" or \"dance with child at wedding\".",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "priority": {
+              "description": "Identifies the expected level of importance associated with reaching/sustaining the defined goal.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "start": {
+              "description": "The event after which the goal should begin being pursued.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "addresses": {
+              "description": "Identifies problems, conditions, issues, or concerns the goal is intended to address.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "documentation": {
+              "description": "Didactic or other informational resources associated with the goal that provide further supporting information about the goal. Information resources can include inline text commentary and links to web resources.",
+              "type": "array",
+              "items": {
+                "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+              }
+            },
+            "target": {
+              "description": "Indicates what should be done and within what timeframe.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_Target"
+              }
+            }
+          },
+          "required": [
+            "description"
+          ]
+        }
+      ]
+    },
+    "PlanDefinition_Target": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "measure": {
+              "description": "The parameter whose value is to be tracked, e.g. body weigth, blood pressure, or hemoglobin A1c level.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "detailQuantity": {
+              "description": "The target value of the measure to be achieved to signify fulfillment of the goal, e.g. 150 pounds or 7.0%. Either the high or low or both values of the range can be specified. Whan a low value is missing, it indicates that the goal is achieved at any value at or below the high value. Similarly, if the high value is missing, it indicates that the goal is achieved at any value at or above the low value.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "detailRange": {
+              "description": "The target value of the measure to be achieved to signify fulfillment of the goal, e.g. 150 pounds or 7.0%. Either the high or low or both values of the range can be specified. Whan a low value is missing, it indicates that the goal is achieved at any value at or below the high value. Similarly, if the high value is missing, it indicates that the goal is achieved at any value at or above the low value.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "detailCodeableConcept": {
+              "description": "The target value of the measure to be achieved to signify fulfillment of the goal, e.g. 150 pounds or 7.0%. Either the high or low or both values of the range can be specified. Whan a low value is missing, it indicates that the goal is achieved at any value at or below the high value. Similarly, if the high value is missing, it indicates that the goal is achieved at any value at or above the low value.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "due": {
+              "description": "Indicates the timeframe after the start of the goal in which the goal should be met.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            }
+          }
+        }
+      ]
+    },
+    "PlanDefinition_Action": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "label": {
+              "description": "A user-visible label for the action.",
+              "type": "string"
+            },
+            "_label": {
+              "description": "Extensions for label",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "The title of the action displayed to a user.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A short description of the action used to provide a summary to display to the user.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "textEquivalent": {
+              "description": "A text equivalent of the action to be performed. This provides a human-interpretable description of the action when the definition is consumed by a system that may not be capable of interpreting it dynamically.",
+              "type": "string"
+            },
+            "_textEquivalent": {
+              "description": "Extensions for textEquivalent",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "A code that provides meaning for the action or action group. For example, a section may have a LOINC code for a the section of a documentation template.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "reason": {
+              "description": "A description of why this action is necessary or appropriate.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "documentation": {
+              "description": "Didactic or other informational resources associated with the action that can be provided to the CDS recipient. Information resources can include inline text commentary and links to web resources.",
+              "type": "array",
+              "items": {
+                "$ref": "RelatedArtifact.schema.json#/definitions/RelatedArtifact"
+              }
+            },
+            "goalId": {
+              "description": "Identifies goals that this action supports. The reference must be to a goal element defined within this plan definition.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+              }
+            },
+            "_goalId": {
+              "description": "Extensions for goalId",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "triggerDefinition": {
+              "description": "A description of when the action should be triggered.",
+              "type": "array",
+              "items": {
+                "$ref": "TriggerDefinition.schema.json#/definitions/TriggerDefinition"
+              }
+            },
+            "condition": {
+              "description": "An expression that describes applicability criteria, or start/stop conditions for the action.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_Condition"
+              }
+            },
+            "input": {
+              "description": "Defines input data requirements for the action.",
+              "type": "array",
+              "items": {
+                "$ref": "DataRequirement.schema.json#/definitions/DataRequirement"
+              }
+            },
+            "output": {
+              "description": "Defines the outputs of the action, if any.",
+              "type": "array",
+              "items": {
+                "$ref": "DataRequirement.schema.json#/definitions/DataRequirement"
+              }
+            },
+            "relatedAction": {
+              "description": "A relationship to another action such as \"before\" or \"30-60 minutes after start of\".",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_RelatedAction"
+              }
+            },
+            "timingDateTime": {
+              "description": "An optional value describing when the action should be performed.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_timingDateTime": {
+              "description": "Extensions for timingDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "timingPeriod": {
+              "description": "An optional value describing when the action should be performed.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "timingDuration": {
+              "description": "An optional value describing when the action should be performed.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "timingRange": {
+              "description": "An optional value describing when the action should be performed.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            },
+            "timingTiming": {
+              "description": "An optional value describing when the action should be performed.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "participant": {
+              "description": "Indicates who should participate in performing the action described.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_Participant"
+              }
+            },
+            "type": {
+              "description": "The type of action to perform (create, update, remove).",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "groupingBehavior": {
+              "description": "Defines the grouping behavior for the action and its children.",
+              "enum": [
+                "visual-group",
+                "logical-group",
+                "sentence-group"
+              ],
+              "type": "string"
+            },
+            "_groupingBehavior": {
+              "description": "Extensions for groupingBehavior",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "selectionBehavior": {
+              "description": "Defines the selection behavior for the action and its children.",
+              "enum": [
+                "any",
+                "all",
+                "all-or-none",
+                "exactly-one",
+                "at-most-one",
+                "one-or-more"
+              ],
+              "type": "string"
+            },
+            "_selectionBehavior": {
+              "description": "Extensions for selectionBehavior",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requiredBehavior": {
+              "description": "Defines the requiredness behavior for the action.",
+              "enum": [
+                "must",
+                "could",
+                "must-unless-documented"
+              ],
+              "type": "string"
+            },
+            "_requiredBehavior": {
+              "description": "Extensions for requiredBehavior",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "precheckBehavior": {
+              "description": "Defines whether the action should usually be preselected.",
+              "enum": [
+                "yes",
+                "no"
+              ],
+              "type": "string"
+            },
+            "_precheckBehavior": {
+              "description": "Extensions for precheckBehavior",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "cardinalityBehavior": {
+              "description": "Defines whether the action can be selected multiple times.",
+              "enum": [
+                "single",
+                "multiple"
+              ],
+              "type": "string"
+            },
+            "_cardinalityBehavior": {
+              "description": "Extensions for cardinalityBehavior",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "A reference to an ActivityDefinition that describes the action to be taken in detail, or a PlanDefinition that describes a series of actions to be taken.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "transform": {
+              "description": "A reference to a StructureMap resource that defines a transform that can be executed to produce the intent resource using the ActivityDefinition instance as the input.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "dynamicValue": {
+              "description": "Customizations that should be applied to the statically defined resource. For example, if the dosage of a medication must be computed based on the patient\u0027s weight, a customization would be used to specify an expression that calculated the weight, and the path on the resource that would contain the result.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_DynamicValue"
+              }
+            },
+            "action": {
+              "description": "Sub actions that are contained within the action. The behavior of this action determines the functionality of the sub-actions. For example, a selection behavior of at-most-one indicates that of the sub-actions, at most one may be chosen as part of realizing the action definition.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlanDefinition_Action"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "PlanDefinition_Condition": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "kind": {
+              "description": "The kind of condition.",
+              "enum": [
+                "applicability",
+                "start",
+                "stop"
+              ],
+              "type": "string"
+            },
+            "_kind": {
+              "description": "Extensions for kind",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A brief, natural language description of the condition that effectively communicates the intended semantics.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "language": {
+              "description": "The media type of the language for the expression.",
+              "type": "string"
+            },
+            "_language": {
+              "description": "Extensions for language",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "An expression that returns true or false, indicating whether or not the condition is satisfied.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "PlanDefinition_RelatedAction": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "actionId": {
+              "description": "The element id of the related action.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_actionId": {
+              "description": "Extensions for actionId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "relationship": {
+              "description": "The relationship of this action to the related action.",
+              "enum": [
+                "before-start",
+                "before",
+                "before-end",
+                "concurrent-with-start",
+                "concurrent",
+                "concurrent-with-end",
+                "after-start",
+                "after",
+                "after-end"
+              ],
+              "type": "string"
+            },
+            "_relationship": {
+              "description": "Extensions for relationship",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "offsetDuration": {
+              "description": "A duration or range of durations to apply to the relationship. For example, 30-60 minutes before.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "offsetRange": {
+              "description": "A duration or range of durations to apply to the relationship. For example, 30-60 minutes before.",
+              "$ref": "Range.schema.json#/definitions/Range"
+            }
+          }
+        }
+      ]
+    },
+    "PlanDefinition_Participant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "type": {
+              "description": "The type of participant in the action.",
+              "enum": [
+                "patient",
+                "practitioner",
+                "related-person"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "role": {
+              "description": "The role the participant should play in performing the described action.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "PlanDefinition_DynamicValue": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource allows for the definition of various types of plans as a sharable, consumable, and executable artifact. The resource is general enough to support the description of a broad range of clinical artifacts such as clinical decision support rules, order sets and protocols.",
+          "properties": {
+            "description": {
+              "description": "A brief, natural language description of the intended semantics of the dynamic value.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "path": {
+              "description": "The path to the element to be customized. This is the path on the resource that will hold the result of the calculation defined by the expression.",
+              "type": "string"
+            },
+            "_path": {
+              "description": "Extensions for path",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "language": {
+              "description": "The media type of the language for the expression.",
+              "type": "string"
+            },
+            "_language": {
+              "description": "Extensions for language",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "An expression specifying the value of the customized element.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

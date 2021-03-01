@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Slot",
+  "$ref": "#/definitions/Slot",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Slot": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A slot of time on a schedule that may be available for booking appointments.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Slot resource",
+              "type": "string",
+              "enum": [
+                "Slot"
+              ]
+            },
+            "identifier": {
+              "description": "External Ids for this item.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "serviceCategory": {
+              "description": "A broad categorisation of the service that is to be performed during this appointment.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "serviceType": {
+              "description": "The type of appointments that can be booked into this slot (ideally this would be an identifiable service - which is at a location, rather than the location itself). If provided then this overrides the value provided on the availability resource.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "specialty": {
+              "description": "The specialty of a practitioner that would be required to perform the service requested in this appointment.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "appointmentType": {
+              "description": "The style of appointment or patient that may be booked in the slot (not service type).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "schedule": {
+              "description": "The schedule resource that this slot defines an interval of status information.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "status": {
+              "description": "busy | free | busy-unavailable | busy-tentative | entered-in-error.",
+              "enum": [
+                "busy",
+                "free",
+                "busy-unavailable",
+                "busy-tentative",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "start": {
+              "description": "Date/Time that the slot is to begin.",
+              "type": "string"
+            },
+            "_start": {
+              "description": "Extensions for start",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "end": {
+              "description": "Date/Time that the slot is to conclude.",
+              "type": "string"
+            },
+            "_end": {
+              "description": "Extensions for end",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "overbooked": {
+              "description": "This slot has already been overbooked, appointments are unlikely to be accepted for this time.",
+              "type": "boolean"
+            },
+            "_overbooked": {
+              "description": "Extensions for overbooked",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "comment": {
+              "description": "Comments on the slot to describe any extended information. Such as custom constraints on the slot.",
+              "type": "string"
+            },
+            "_comment": {
+              "description": "Extensions for comment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "schedule",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

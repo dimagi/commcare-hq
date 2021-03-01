@@ -816,6 +816,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
 
     @staticmethod
+    def get_case_ids_that_exist(domain, case_ids):
+        result = []
+        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
+            result.extend(CommCareCaseSQL.objects
+                          .using(db_name)
+                          .filter(domain=domain, case_id__in=case_ids_chunk)
+                          .values_list('case_id', flat=True))
+        return result
+
+    @staticmethod
     def get_case_xform_ids(case_id):
         with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
@@ -1112,7 +1122,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids, include_closed=True):
+    def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
@@ -1128,6 +1138,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 referenced_id__in=case_ids)
             if not include_closed:
                 query = query.filter(case__closed=False)
+            if exclude_for_case_type:
+                query = query.exclude(referenced_type=exclude_for_case_type)
             extension_case_ids.update(query.values_list('case_id', flat=True))
         return list(extension_case_ids)
 

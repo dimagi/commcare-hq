@@ -1,0 +1,325 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/SearchParameter",
+  "$ref": "#/definitions/SearchParameter",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "SearchParameter": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A search parameter that defines a named search item that can be used to search/filter on a resource.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a SearchParameter resource",
+              "type": "string",
+              "enum": [
+                "SearchParameter"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this search parameter when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this search parameter is (or will be) published. The URL SHOULD include the major version of the search parameter. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the search parameter when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the search parameter author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the search parameter. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this search parameter. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this search parameter is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the search parameter was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the search parameter changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the search parameter.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate search parameter instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the search parameter is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this search parameter is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "The code used in the URL or the parameter name in a parameters resource for this search parameter.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "base": {
+              "description": "The base resource type(s) that this search parameter can be used against.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_base": {
+              "description": "Extensions for base",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "type": {
+              "description": "The type of value a search parameter refers to, and how the content is interpreted.",
+              "enum": [
+                "number",
+                "date",
+                "string",
+                "token",
+                "reference",
+                "composite",
+                "quantity",
+                "uri"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "derivedFrom": {
+              "description": "Where this search parameter is originally defined. If a derivedFrom is provided, then the details in the search parameter must be consistent with the definition from which it is defined. I.e. the parameter should have the same meaning, and (usually) the functionality should be a proper subset of the underlying search parameter.",
+              "type": "string"
+            },
+            "_derivedFrom": {
+              "description": "Extensions for derivedFrom",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A free text natural language description of the search parameter from a consumer\u0027s perspective. and how it used.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "expression": {
+              "description": "A FHIRPath expression that returns a set of elements for the search parameter.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "xpath": {
+              "description": "An XPath expression that returns a set of elements for the search parameter.",
+              "type": "string"
+            },
+            "_xpath": {
+              "description": "Extensions for xpath",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "xpathUsage": {
+              "description": "How the search parameter relates to the set of elements returned by evaluating the xpath query.",
+              "enum": [
+                "normal",
+                "phonetic",
+                "nearby",
+                "distance",
+                "other"
+              ],
+              "type": "string"
+            },
+            "_xpathUsage": {
+              "description": "Extensions for xpathUsage",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "target": {
+              "description": "Types of resource (if a resource is referenced).",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_target": {
+              "description": "Extensions for target",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "comparator": {
+              "description": "Comparators supported for the search parameter.",
+              "enum": [
+                "eq",
+                "ne",
+                "gt",
+                "lt",
+                "ge",
+                "le",
+                "sa",
+                "eb",
+                "ap"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_comparator": {
+              "description": "Extensions for comparator",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "modifier": {
+              "description": "A modifier supported for the search parameter.",
+              "enum": [
+                "missing",
+                "exact",
+                "contains",
+                "not",
+                "text",
+                "in",
+                "not-in",
+                "below",
+                "above",
+                "type"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_modifier": {
+              "description": "Extensions for modifier",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "chain": {
+              "description": "Contains the names of any search parameters which may be chained to the containing search parameter. Chained parameters may be added to search parameters of type reference, and specify that resources will only be returned if they contain a reference to a resource which matches the chained parameter value. Values for this field should be drawn from SearchParameter.code for a parameter on the target resource type.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_chain": {
+              "description": "Extensions for chain",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "component": {
+              "description": "Used to define the parts of a composite search parameter.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SearchParameter_Component"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "SearchParameter_Component": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A search parameter that defines a named search item that can be used to search/filter on a resource.",
+          "properties": {
+            "definition": {
+              "description": "The definition of the search parameter that describes this part.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "expression": {
+              "description": "A sub-expression that defines how to extract values for this component from the output of the main SearchParameter.expression.",
+              "type": "string"
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "definition"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/HealthcareService",
+  "$ref": "#/definitions/HealthcareService",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "HealthcareService": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The details of a healthcare service available at a location.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a HealthcareService resource",
+              "type": "string",
+              "enum": [
+                "HealthcareService"
+              ]
+            },
+            "identifier": {
+              "description": "External identifiers for this item.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "active": {
+              "description": "Whether this healthcareservice record is in active use.",
+              "type": "boolean"
+            },
+            "_active": {
+              "description": "Extensions for active",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "providedBy": {
+              "description": "The organization that provides this healthcare service.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "category": {
+              "description": "Identifies the broad category of service being performed or delivered.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "type": {
+              "description": "The specific type of service that may be delivered or performed.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "specialty": {
+              "description": "Collection of specialties handled by the service site. This is more of a medical term.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "location": {
+              "description": "The location(s) where this healthcare service may be provided.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "name": {
+              "description": "Further description of the service as it would be presented to a consumer while searching.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "comment": {
+              "description": "Any additional description of the service and/or any specific issues not covered by the other attributes, which can be displayed as further detail under the serviceName.",
+              "type": "string"
+            },
+            "_comment": {
+              "description": "Extensions for comment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "extraDetails": {
+              "description": "Extra details about the service that can\u0027t be placed in the other fields.",
+              "type": "string"
+            },
+            "_extraDetails": {
+              "description": "Extensions for extraDetails",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "photo": {
+              "description": "If there is a photo/symbol associated with this HealthcareService, it may be included here to facilitate quick identification of the service in a list.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "telecom": {
+              "description": "List of contacts related to this specific healthcare service.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "coverageArea": {
+              "description": "The location(s) that this service is available to (not where the service is provided).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "serviceProvisionCode": {
+              "description": "The code(s) that detail the conditions under which the healthcare service is available/offered.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "eligibility": {
+              "description": "Does this service have specific eligibility requirements that need to be met in order to use the service?",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "eligibilityNote": {
+              "description": "Describes the eligibility conditions for the service.",
+              "type": "string"
+            },
+            "_eligibilityNote": {
+              "description": "Extensions for eligibilityNote",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "programName": {
+              "description": "Program Names that can be used to categorize the service.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_programName": {
+              "description": "Extensions for programName",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "characteristic": {
+              "description": "Collection of characteristics (attributes).",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "referralMethod": {
+              "description": "Ways that the service accepts referrals, if this is not provided then it is implied that no referral is required.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "appointmentRequired": {
+              "description": "Indicates whether or not a prospective consumer will require an appointment for a particular service at a site to be provided by the Organization. Indicates if an appointment is required for access to this service.",
+              "type": "boolean"
+            },
+            "_appointmentRequired": {
+              "description": "Extensions for appointmentRequired",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "availableTime": {
+              "description": "A collection of times that the Service Site is available.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HealthcareService_AvailableTime"
+              }
+            },
+            "notAvailable": {
+              "description": "The HealthcareService is not available during this period of time due to the provided reason.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HealthcareService_NotAvailable"
+              }
+            },
+            "availabilityExceptions": {
+              "description": "A description of site availability exceptions, e.g. public holiday availability. Succinctly describing all possible exceptions to normal site availability as details in the available Times and not available Times.",
+              "type": "string"
+            },
+            "_availabilityExceptions": {
+              "description": "Extensions for availabilityExceptions",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "endpoint": {
+              "description": "Technical endpoints providing access to services operated for the specific healthcare services defined at this resource.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "HealthcareService_AvailableTime": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The details of a healthcare service available at a location.",
+          "properties": {
+            "daysOfWeek": {
+              "description": "Indicates which days of the week are available between the start and end Times.",
+              "enum": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri",
+                "sat",
+                "sun"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_daysOfWeek": {
+              "description": "Extensions for daysOfWeek",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "allDay": {
+              "description": "Is this always available? (hence times are irrelevant) e.g. 24 hour service.",
+              "type": "boolean"
+            },
+            "_allDay": {
+              "description": "Extensions for allDay",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "availableStartTime": {
+              "description": "The opening time of day. Note: If the AllDay flag is set, then this time is ignored.",
+              "type": "string",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?"
+            },
+            "_availableStartTime": {
+              "description": "Extensions for availableStartTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "availableEndTime": {
+              "description": "The closing time of day. Note: If the AllDay flag is set, then this time is ignored.",
+              "type": "string",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?"
+            },
+            "_availableEndTime": {
+              "description": "Extensions for availableEndTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "HealthcareService_NotAvailable": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The details of a healthcare service available at a location.",
+          "properties": {
+            "description": {
+              "description": "The reason that can be presented to the user as to why this time is not available.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "during": {
+              "description": "Service is not available (seasonally or for a public holiday) from this date.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

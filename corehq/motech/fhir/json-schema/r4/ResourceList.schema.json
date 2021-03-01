@@ -1,0 +1,372 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ResourceList",
+  "$ref": "#/definitions/ResourceList",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ResourceList": {
+      "oneOf": [
+        {
+          "$ref": "Account.schema.json#/definitions/Account"
+        },
+        {
+          "$ref": "ActivityDefinition.schema.json#/definitions/ActivityDefinition"
+        },
+        {
+          "$ref": "AdverseEvent.schema.json#/definitions/AdverseEvent"
+        },
+        {
+          "$ref": "AllergyIntolerance.schema.json#/definitions/AllergyIntolerance"
+        },
+        {
+          "$ref": "Appointment.schema.json#/definitions/Appointment"
+        },
+        {
+          "$ref": "AppointmentResponse.schema.json#/definitions/AppointmentResponse"
+        },
+        {
+          "$ref": "AuditEvent.schema.json#/definitions/AuditEvent"
+        },
+        {
+          "$ref": "Basic.schema.json#/definitions/Basic"
+        },
+        {
+          "$ref": "Binary.schema.json#/definitions/Binary"
+        },
+        {
+          "$ref": "BodySite.schema.json#/definitions/BodySite"
+        },
+        {
+          "$ref": "Bundle.schema.json#/definitions/Bundle"
+        },
+        {
+          "$ref": "CapabilityStatement.schema.json#/definitions/CapabilityStatement"
+        },
+        {
+          "$ref": "CarePlan.schema.json#/definitions/CarePlan"
+        },
+        {
+          "$ref": "CareTeam.schema.json#/definitions/CareTeam"
+        },
+        {
+          "$ref": "ChargeItem.schema.json#/definitions/ChargeItem"
+        },
+        {
+          "$ref": "Claim.schema.json#/definitions/Claim"
+        },
+        {
+          "$ref": "ClaimResponse.schema.json#/definitions/ClaimResponse"
+        },
+        {
+          "$ref": "ClinicalImpression.schema.json#/definitions/ClinicalImpression"
+        },
+        {
+          "$ref": "CodeSystem.schema.json#/definitions/CodeSystem"
+        },
+        {
+          "$ref": "Communication.schema.json#/definitions/Communication"
+        },
+        {
+          "$ref": "CommunicationRequest.schema.json#/definitions/CommunicationRequest"
+        },
+        {
+          "$ref": "CompartmentDefinition.schema.json#/definitions/CompartmentDefinition"
+        },
+        {
+          "$ref": "Composition.schema.json#/definitions/Composition"
+        },
+        {
+          "$ref": "ConceptMap.schema.json#/definitions/ConceptMap"
+        },
+        {
+          "$ref": "Condition.schema.json#/definitions/Condition"
+        },
+        {
+          "$ref": "Consent.schema.json#/definitions/Consent"
+        },
+        {
+          "$ref": "Contract.schema.json#/definitions/Contract"
+        },
+        {
+          "$ref": "Coverage.schema.json#/definitions/Coverage"
+        },
+        {
+          "$ref": "DataElement.schema.json#/definitions/DataElement"
+        },
+        {
+          "$ref": "DetectedIssue.schema.json#/definitions/DetectedIssue"
+        },
+        {
+          "$ref": "Device.schema.json#/definitions/Device"
+        },
+        {
+          "$ref": "DeviceComponent.schema.json#/definitions/DeviceComponent"
+        },
+        {
+          "$ref": "DeviceMetric.schema.json#/definitions/DeviceMetric"
+        },
+        {
+          "$ref": "DeviceRequest.schema.json#/definitions/DeviceRequest"
+        },
+        {
+          "$ref": "DeviceUseStatement.schema.json#/definitions/DeviceUseStatement"
+        },
+        {
+          "$ref": "DiagnosticReport.schema.json#/definitions/DiagnosticReport"
+        },
+        {
+          "$ref": "DocumentManifest.schema.json#/definitions/DocumentManifest"
+        },
+        {
+          "$ref": "DocumentReference.schema.json#/definitions/DocumentReference"
+        },
+        {
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
+        },
+        {
+          "$ref": "EligibilityRequest.schema.json#/definitions/EligibilityRequest"
+        },
+        {
+          "$ref": "EligibilityResponse.schema.json#/definitions/EligibilityResponse"
+        },
+        {
+          "$ref": "Encounter.schema.json#/definitions/Encounter"
+        },
+        {
+          "$ref": "Endpoint.schema.json#/definitions/Endpoint"
+        },
+        {
+          "$ref": "EnrollmentRequest.schema.json#/definitions/EnrollmentRequest"
+        },
+        {
+          "$ref": "EnrollmentResponse.schema.json#/definitions/EnrollmentResponse"
+        },
+        {
+          "$ref": "EpisodeOfCare.schema.json#/definitions/EpisodeOfCare"
+        },
+        {
+          "$ref": "ExpansionProfile.schema.json#/definitions/ExpansionProfile"
+        },
+        {
+          "$ref": "ExplanationOfBenefit.schema.json#/definitions/ExplanationOfBenefit"
+        },
+        {
+          "$ref": "FamilyMemberHistory.schema.json#/definitions/FamilyMemberHistory"
+        },
+        {
+          "$ref": "Flag.schema.json#/definitions/Flag"
+        },
+        {
+          "$ref": "Goal.schema.json#/definitions/Goal"
+        },
+        {
+          "$ref": "GraphDefinition.schema.json#/definitions/GraphDefinition"
+        },
+        {
+          "$ref": "Group.schema.json#/definitions/Group"
+        },
+        {
+          "$ref": "GuidanceResponse.schema.json#/definitions/GuidanceResponse"
+        },
+        {
+          "$ref": "HealthcareService.schema.json#/definitions/HealthcareService"
+        },
+        {
+          "$ref": "ImagingManifest.schema.json#/definitions/ImagingManifest"
+        },
+        {
+          "$ref": "ImagingStudy.schema.json#/definitions/ImagingStudy"
+        },
+        {
+          "$ref": "Immunization.schema.json#/definitions/Immunization"
+        },
+        {
+          "$ref": "ImmunizationRecommendation.schema.json#/definitions/ImmunizationRecommendation"
+        },
+        {
+          "$ref": "ImplementationGuide.schema.json#/definitions/ImplementationGuide"
+        },
+        {
+          "$ref": "Library.schema.json#/definitions/Library"
+        },
+        {
+          "$ref": "Linkage.schema.json#/definitions/Linkage"
+        },
+        {
+          "$ref": "List.schema.json#/definitions/List"
+        },
+        {
+          "$ref": "Location.schema.json#/definitions/Location"
+        },
+        {
+          "$ref": "Measure.schema.json#/definitions/Measure"
+        },
+        {
+          "$ref": "MeasureReport.schema.json#/definitions/MeasureReport"
+        },
+        {
+          "$ref": "Media.schema.json#/definitions/Media"
+        },
+        {
+          "$ref": "Medication.schema.json#/definitions/Medication"
+        },
+        {
+          "$ref": "MedicationAdministration.schema.json#/definitions/MedicationAdministration"
+        },
+        {
+          "$ref": "MedicationDispense.schema.json#/definitions/MedicationDispense"
+        },
+        {
+          "$ref": "MedicationRequest.schema.json#/definitions/MedicationRequest"
+        },
+        {
+          "$ref": "MedicationStatement.schema.json#/definitions/MedicationStatement"
+        },
+        {
+          "$ref": "MessageDefinition.schema.json#/definitions/MessageDefinition"
+        },
+        {
+          "$ref": "MessageHeader.schema.json#/definitions/MessageHeader"
+        },
+        {
+          "$ref": "NamingSystem.schema.json#/definitions/NamingSystem"
+        },
+        {
+          "$ref": "NutritionOrder.schema.json#/definitions/NutritionOrder"
+        },
+        {
+          "$ref": "Observation.schema.json#/definitions/Observation"
+        },
+        {
+          "$ref": "OperationDefinition.schema.json#/definitions/OperationDefinition"
+        },
+        {
+          "$ref": "OperationOutcome.schema.json#/definitions/OperationOutcome"
+        },
+        {
+          "$ref": "Organization.schema.json#/definitions/Organization"
+        },
+        {
+          "$ref": "Parameters.schema.json#/definitions/Parameters"
+        },
+        {
+          "$ref": "Parameters.schema.json#/definitions/Parameters"
+        },
+        {
+          "$ref": "Patient.schema.json#/definitions/Patient"
+        },
+        {
+          "$ref": "PaymentNotice.schema.json#/definitions/PaymentNotice"
+        },
+        {
+          "$ref": "PaymentReconciliation.schema.json#/definitions/PaymentReconciliation"
+        },
+        {
+          "$ref": "Person.schema.json#/definitions/Person"
+        },
+        {
+          "$ref": "PlanDefinition.schema.json#/definitions/PlanDefinition"
+        },
+        {
+          "$ref": "Practitioner.schema.json#/definitions/Practitioner"
+        },
+        {
+          "$ref": "PractitionerRole.schema.json#/definitions/PractitionerRole"
+        },
+        {
+          "$ref": "Procedure.schema.json#/definitions/Procedure"
+        },
+        {
+          "$ref": "ProcedureRequest.schema.json#/definitions/ProcedureRequest"
+        },
+        {
+          "$ref": "ProcessRequest.schema.json#/definitions/ProcessRequest"
+        },
+        {
+          "$ref": "ProcessResponse.schema.json#/definitions/ProcessResponse"
+        },
+        {
+          "$ref": "Provenance.schema.json#/definitions/Provenance"
+        },
+        {
+          "$ref": "Questionnaire.schema.json#/definitions/Questionnaire"
+        },
+        {
+          "$ref": "QuestionnaireResponse.schema.json#/definitions/QuestionnaireResponse"
+        },
+        {
+          "$ref": "ReferralRequest.schema.json#/definitions/ReferralRequest"
+        },
+        {
+          "$ref": "RelatedPerson.schema.json#/definitions/RelatedPerson"
+        },
+        {
+          "$ref": "RequestGroup.schema.json#/definitions/RequestGroup"
+        },
+        {
+          "$ref": "ResearchStudy.schema.json#/definitions/ResearchStudy"
+        },
+        {
+          "$ref": "ResearchSubject.schema.json#/definitions/ResearchSubject"
+        },
+        {
+          "$ref": "Resource.schema.json#/definitions/Resource"
+        },
+        {
+          "$ref": "RiskAssessment.schema.json#/definitions/RiskAssessment"
+        },
+        {
+          "$ref": "Schedule.schema.json#/definitions/Schedule"
+        },
+        {
+          "$ref": "SearchParameter.schema.json#/definitions/SearchParameter"
+        },
+        {
+          "$ref": "Sequence.schema.json#/definitions/Sequence"
+        },
+        {
+          "$ref": "ServiceDefinition.schema.json#/definitions/ServiceDefinition"
+        },
+        {
+          "$ref": "Slot.schema.json#/definitions/Slot"
+        },
+        {
+          "$ref": "Specimen.schema.json#/definitions/Specimen"
+        },
+        {
+          "$ref": "StructureDefinition.schema.json#/definitions/StructureDefinition"
+        },
+        {
+          "$ref": "StructureMap.schema.json#/definitions/StructureMap"
+        },
+        {
+          "$ref": "Subscription.schema.json#/definitions/Subscription"
+        },
+        {
+          "$ref": "Substance.schema.json#/definitions/Substance"
+        },
+        {
+          "$ref": "SupplyDelivery.schema.json#/definitions/SupplyDelivery"
+        },
+        {
+          "$ref": "SupplyRequest.schema.json#/definitions/SupplyRequest"
+        },
+        {
+          "$ref": "Task.schema.json#/definitions/Task"
+        },
+        {
+          "$ref": "TestReport.schema.json#/definitions/TestReport"
+        },
+        {
+          "$ref": "TestScript.schema.json#/definitions/TestScript"
+        },
+        {
+          "$ref": "ValueSet.schema.json#/definitions/ValueSet"
+        },
+        {
+          "$ref": "VisionPrescription.schema.json#/definitions/VisionPrescription"
+        }
+      ]
+    }
+  }
+}

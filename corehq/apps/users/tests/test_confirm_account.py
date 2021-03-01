@@ -29,6 +29,8 @@ class TestAccountConfirmation(TestCase):
         )
         # confirm user can't login
         self.assertEqual(False, self.client.login(username=self.username, password=self.password))
+        # Refresh the user after a failed login, as it will be out of date
+        self.user = CommCareUser.get_by_username(self.username)
 
     @classmethod
     def tearDownClass(cls):
@@ -44,6 +46,8 @@ class TestAccountConfirmation(TestCase):
 
         # confirm user can't login
         self.assertEqual(False, self.client.login(username=self.username, password=self.password))
+        # User is now outdated from the failed login, re-fetch
+        self.user = CommCareUser.get_by_username(self.username)
 
         new_password = 'm0r3s3cr3t!'
         self.user.confirm_account(password=new_password)
