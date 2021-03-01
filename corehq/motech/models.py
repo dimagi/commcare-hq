@@ -214,7 +214,16 @@ class RequestLog(models.Model):
     """
     Store API requests and responses to analyse errors and keep an audit trail
     """
-    domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
+
+    # NOTE: RequestLog instances are bulk-deleted after 90 days by
+    #       `corehq.motech.repeaters.tasks.raw_delete_logs` without
+    #       checking for cascade deletes or signals.
+    #         * Do not link cascade deletes to RequestLog.
+    #         * Do not create pre_delete or post_delete signal listeners
+    #           for RequestLog instances.
+    #       They will be ignored.
+
+    domain = models.CharField(max_length=126, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     log_level = models.IntegerField(null=True)
     # payload_id is set for requests that are caused by a payload (e.g.

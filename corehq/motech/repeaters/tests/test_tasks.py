@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
@@ -12,7 +12,7 @@ from corehq.form_processor.utils.xform import (
     FormSubmissionBuilder,
     TestFormMetadata,
 )
-from corehq.motech.models import ConnectionSettings
+from corehq.motech.models import ConnectionSettings, RequestLog
 
 from ..const import (
     RECORD_CANCELLED_STATE,
@@ -20,11 +20,43 @@ from ..const import (
     RECORD_PENDING_STATE,
 )
 from ..models import FormRepeater, RepeaterStub
-from ..tasks import process_repeater_stub
+from ..tasks import process_repeater_stub, raw_delete_logs
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
                'naoi', 'deich']
+
+
+class TestRawDeleteLogs(TestCase):
+
+    def tearDown(self):
+        RequestLog.objects.filter(domain=DOMAIN).delete()
+
+    def test_raw_delete_logs_old(self):
+        log = RequestLog.objects.create(domain=DOMAIN)
+        log.timestamp = datetime.utcnow() - timedelta(days=91)
+        log.save()  # Replace the value set by auto_now_add=True
+        raw_delete_logs.apply()
+
+        count = RequestLog.objects.filter(domain=DOMAIN).count()
+        self.assertEqual(count, 0)
+
+    def test_raw_delete_logs_new(self):
+        log = RequestLog.objects.create(domain=DOMAIN)
+        log.timestamp = datetime.utcnow() - timedelta(days=89)
+        log.save()
+        raw_delete_logs.apply()
+
+        count = RequestLog.objects.filter(domain=DOMAIN).count()
+        self.assertGreater(count, 0)
+
+    def test_num_queries(self):
+        log = RequestLog.objects.create(domain=DOMAIN)
+        log.timestamp = datetime.utcnow() - timedelta(days=91)
+        log.save()
+
+        with self.assertNumQueries(1):
+            raw_delete_logs.apply()
 
 
 class TestProcessRepeaterStub(TestCase):
