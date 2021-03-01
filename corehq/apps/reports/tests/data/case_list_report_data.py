@@ -1,3 +1,5 @@
+from datetime import datetime
+
 dummy_user_list = [
     {
         'domain': 'case-list-test',
@@ -55,7 +57,7 @@ dummy_case_list = [
         'owner_id': 'deactive1',
         'user_id': 'deactivated-worker-1@commcarehq.org',
         'type': 'case',
-        'opened_on': '2021-02-24T00:00:00.000000Z',
+        'opened_on': datetime(2021, 2, 24),
         'modified_on': None,
         'closed_on': None,
     },
@@ -66,7 +68,7 @@ dummy_case_list = [
         'owner_id': 'active1',
         'user_id': 'active-worker-1@commcarehq.org',
         'type': 'case',
-        'opened_on': '2021-02-24T00:00:00.000000Z',
+        'opened_on': datetime(2021, 2, 24),
         'modified_on': None,
         'closed_on': None,
     },
@@ -77,7 +79,7 @@ dummy_case_list = [
         'owner_id': 'active1',
         'user_id': 'active-worker-1@commcarehq.org',
         'type': 'case',
-        'opened_on': '2021-02-24T00:00:00.000000Z',
+        'opened_on': datetime(2021, 2, 24),
         'modified_on': None,
         'closed_on': None,
     },
@@ -88,7 +90,7 @@ dummy_case_list = [
         'owner_id': 'web1',
         'user_id': 'active-worker-1@commcarehq.org',
         'type': 'case',
-        'opened_on': '2021-02-24T00:00:00.000000Z',
+        'opened_on': datetime(2021, 2, 24),
         'modified_on': None,
         'closed_on': None,
     },
@@ -99,7 +101,7 @@ dummy_case_list = [
         'owner_id': 'active2',
         'user_id': 'active-worker-2@commcarehq.org',
         'type': 'case',
-        'opened_on': '2021-02-24T00:00:00.000000Z',
+        'opened_on': datetime(2021, 2, 24),
         'modified_on': None,
         'closed_on': None,
     },
