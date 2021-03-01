@@ -2,7 +2,8 @@ import csv
 
 from django.core.management.base import BaseCommand, CommandError
 
-from auditcare.utils.export import write_log_events, get_users_to_export
+from auditcare.utils.export import get_users_to_export, write_log_events
+
 from corehq.apps.domain.models import Domain
 from corehq.util.argparse_types import date_type
 
@@ -12,18 +13,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('filename', help="Output file path")
-        parser.add_argument(
-            '-d',
-            '--domain',
-            dest='domain',
-            help="Limit logs to only this domain"
-        )
-        parser.add_argument(
-            '-u',
-            '--user',
-            dest='user',
-            help="Limit logs to only this user"
-        )
+        parser.add_argument('-d', '--domain', dest='domain', help="Limit logs to only this domain")
+        parser.add_argument('-u', '--user', dest='user', help="Limit logs to only this user")
         parser.add_argument(
             '-s',
             '--startdate',
@@ -69,14 +60,14 @@ class Command(BaseCommand):
             writer = csv.writer(csvfile)
             writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
             for user in users:
-                write_log_events(
-                    writer, user, domain,
-                    start_date=options['start'], end_date=options['end']
-                )
+                write_log_events(writer, user, domain, start_date=options['start'], end_date=options['end'])
 
             for user in super_users:
                 write_log_events(
-                    writer, user, domain,
+                    writer,
+                    user,
+                    domain,
                     override_user=dimagi_username,
-                    start_date=options['start'], end_date=options['end']
+                    start_date=options['start'],
+                    end_date=options['end']
                 )

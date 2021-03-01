@@ -1,10 +1,12 @@
-from corehq.util.log import with_progress_bar
-from corehq.util.couch import iter_update, DocUpdate
-from django.core.management.base import BaseCommand
-from auditcare.utils.export import navigation_event_ids_by_user
 import logging
-from auditcare.models import NavigationEventAudit
 
+from django.core.management.base import BaseCommand
+
+from auditcare.models import NavigationEventAudit
+from auditcare.utils.export import navigation_event_ids_by_user
+
+from corehq.util.couch import DocUpdate, iter_update
+from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
 
