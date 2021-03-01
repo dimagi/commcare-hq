@@ -5674,8 +5674,8 @@ class LinkedApplication(Application):
         if self.domain_link:
             versions = get_latest_master_releases_versions(self.domain_link)
             # Use self.get_master_app_briefs to limit return value by family_id
-            origin_ids = [b.id for b in self.get_master_app_briefs()]
-            return {key: value for key, value in versions.items() if key in origin_ids}
+            upstream_ids = [b.id for b in self.get_master_app_briefs()]
+            return {key: value for key, value in versions.items() if key in upstream_ids}
         return {}
 
     @memoized
