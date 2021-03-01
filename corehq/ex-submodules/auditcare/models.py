@@ -2,8 +2,6 @@ import copy
 import hashlib
 import json
 import logging
-import os
-import platform
 import uuid
 from datetime import datetime
 
@@ -462,55 +460,6 @@ setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
 setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
 
 
-class AuditCommand(AuditEvent):
-    """
-    Audit wrapper class to capture environmental information around a management command run.
-    """
-    sudo_user = StringProperty()
-
-    # ip address if available of logged in user running cmd
-    ip_address = StringProperty()
-    pid = IntegerProperty()
-
-    @classmethod
-    def audit_command(cls):
-        """
-        Log a management command with available information
-
-        The command line run will be recorded in the self.description
-        """
-        audit = cls.create_audit(cls, None)
-        puname = platform.uname()
-        audit.user = os.environ.get('USER', None)
-        audit.pid = os.getpid()
-
-        if 'SUDO_COMMAND' in os.environ:
-            audit.description = os.environ.get('SUDO_COMMAND', None)
-            audit.sudo_user = os.environ.get('SUDO_USER', None)
-        else:
-
-            # Note: this is a work in progress
-            # getting command line arg from a pid is a system specific trick
-            # only supporting linux at this point, adding other OS's can be done later
-            # This is largely for production logging of these commands.
-            if puname[0] == 'Linux':
-                with open('/proc/%s/cmdline' % audit.pid, 'r', encoding='utf-8') as fin:
-                    cmd_args = fin.read()
-                    audit.description = cmd_args.replace('\0', ' ')
-            elif puname[0] == 'Darwin':
-                # mac osx
-                # TODO
-                pass
-            elif puname[0] == 'Windows':
-                # TODO
-                pass
-
-        audit.save()
-
-
-setattr(AuditEvent, 'audit_command', AuditCommand.audit_command)
-
-
 def audit_login(sender, **kwargs):
     AuditEvent.audit_login(kwargs["request"], kwargs["user"], True)  # success
 
@@ -540,7 +489,6 @@ def wrap_audit_event(event):
         'NavigationEventAudit': NavigationEventAudit,
         'AccessAudit': AccessAudit,
         'ModelActionAudit': ModelActionAudit,
-        'AuditCommand': AuditCommand,
     }.get(doc_type, None)
     if not cls:
         raise ValueError(f"Unknow doc type for audit event: {doc_type}")
