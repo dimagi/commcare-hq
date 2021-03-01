@@ -27,7 +27,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description, prop.fhir_resource_prop_path, prop.deprecated);
                     propObj.description.subscribe(changeSaveButton);
-                    propObj.fhirRsourcePropPath.subscribe(changeSaveButton);
+                    propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
                     self.properties.push(propObj);
@@ -38,7 +38,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, fhirRsourcePropPath, deprecated) {
+    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, fhirResourcePropPath, deprecated) {
         var self = {};
         self.name = name;
         self.expanded = ko.observable(true);
@@ -47,7 +47,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.caseType = caseType;
         self.dataType = ko.observable(dataType);
         self.description = ko.observable(description);
-        self.fhirRsourcePropPath = ko.observable(fhirRsourcePropPath);
+        self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.deprecated = ko.observable(deprecated || false);
 
         self.toggle = function () {
@@ -89,7 +89,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
-                            'fhir_resource_prop_path': element.fhirRsourcePropPath(),
+                            'fhir_resource_prop_path': element.fhirResourcePropPath(),
                             'deprecated': element.deprecated(),
                         };
                         postProperties.push(data);
@@ -173,7 +173,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
-                prop.fhirRsourcePropPath.subscribe(changeSaveButton);
+                prop.fhirResourcePropPath.subscribe(changeSaveButton);
                 prop.deprecated.subscribe(changeSaveButton);
                 self.newPropertyName(undefined);
                 self.casePropertyList.push(prop);
