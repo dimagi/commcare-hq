@@ -21,8 +21,8 @@ from corehq.apps.accounting.utils import (
     is_accounting_admin,
 )
 from corehq.apps.accounting.views import (
-    TriggerDowngradeView,
     TriggerAutopaymentsView,
+    TriggerDowngradeView,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -94,7 +94,6 @@ from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     UploadConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
@@ -1048,11 +1047,6 @@ class MessagingTab(UITab):
 
     @property
     @memoized
-    def show_dashboard(self):
-        return show_messaging_dashboard(self.domain, self.couch_user)
-
-    @property
-    @memoized
     def messages_urls(self):
         messages_urls = []
 
@@ -1207,12 +1201,11 @@ class MessagingTab(UITab):
     def dropdown_items(self):
         result = []
 
-        if self.show_dashboard:
-            result.append(dropdown_dict(_("Dashboard"), is_header=True))
-            result.append(dropdown_dict(
-                _("Dashboard"),
-                url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
-            ))
+        result.append(dropdown_dict(_("Dashboard"), is_header=True))
+        result.append(dropdown_dict(
+            _("Dashboard"),
+            url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
+        ))
 
         if result:
             result.append(self.divider)
@@ -1230,10 +1223,9 @@ class MessagingTab(UITab):
         if result:
             result.append(self.divider)
 
-        view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
         result.append(dropdown_dict(
             _("View All"),
-            url=reverse(view_all_view, args=[self.domain]),
+            url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
         ))
 
         return result
@@ -1242,14 +1234,13 @@ class MessagingTab(UITab):
     def sidebar_items(self):
         items = []
 
-        if self.show_dashboard:
-            items.append((
-                _("Dashboard"),
-                [{
-                    'title': _("Dashboard"),
-                    'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
-                }]
-            ))
+        items.append((
+            _("Dashboard"),
+            [{
+                'title': _("Dashboard"),
+                'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
+            }]
+        ))
 
         for title, urls in (
             (_("Messages"), self.messages_urls),
