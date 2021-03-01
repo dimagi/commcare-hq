@@ -27,7 +27,7 @@
           {% trans "FHIR Resource Type" %}
           <select class="form-control"
                   data-bind="options: fhirResourceTypes,
-                             optionsCaption: 'Select a resource type',
+                             optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
                              value: fhirResourceType,
                             ">
           </select>
