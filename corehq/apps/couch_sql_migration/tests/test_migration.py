@@ -85,7 +85,7 @@ from corehq.util.test_utils import (
 from .. import casedifftool
 from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
-from ..diffrule import ANY
+from ..diffrule import ANY, NOT_DELETED
 from ..management.commands.migrate_domain_from_couch_to_sql import (
     CACHED,
     COMMIT,
@@ -1957,7 +1957,7 @@ class Diff:
     path = attr.ib(default=ANY)
     old = attr.ib(default=ANY)
     new = attr.ib(default=ANY)
-    kind = attr.ib(default=ANY)
+    kind = attr.ib(default=NOT_DELETED)
     reason = attr.ib(default=ANY)
     __hash__ = None
 

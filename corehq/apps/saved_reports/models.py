@@ -690,6 +690,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             )
 
             attach_excel = getattr(self, 'attach_excel', False)
+            excel_files = None
             try:
                 report_text, excel_files = get_scheduled_report_response(
                     self.owner, self.domain, self._id, attach_excel=attach_excel,

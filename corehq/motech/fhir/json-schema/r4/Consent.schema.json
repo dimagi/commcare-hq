@@ -1,0 +1,385 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Consent",
+  "$ref": "#/definitions/Consent",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Consent": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Consent resource",
+              "type": "string",
+              "enum": [
+                "Consent"
+              ]
+            },
+            "identifier": {
+              "description": "Unique identifier for this copy of the Consent Statement.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "Indicates the current state of this consent.",
+              "enum": [
+                "draft",
+                "proposed",
+                "active",
+                "rejected",
+                "inactive",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "category": {
+              "description": "A classification of the type of consents found in the statement. This element supports indexing and retrieval of consent statements.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "patient": {
+              "description": "The patient/healthcare consumer to whom this consent applies.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "Relevant time or time-period when this Consent is applicable.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "dateTime": {
+              "description": "When this  Consent was issued / created / indexed.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_dateTime": {
+              "description": "Extensions for dateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "consentingParty": {
+              "description": "Either the Grantor, which is the entity responsible for granting the rights listed in a Consent Directive or the Grantee, which is the entity responsible for complying with the Consent Directive, including any obligations or limitations on authorizations and enforcement of prohibitions.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "actor": {
+              "description": "Who or what is controlled by this consent. Use group to identify a set of actors by some property they share (e.g. \u0027admitting officers\u0027).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Consent_Actor"
+              }
+            },
+            "action": {
+              "description": "Actions controlled by this consent.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "organization": {
+              "description": "The organization that manages the consent, and the framework within which it is executed.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "sourceAttachment": {
+              "description": "The source on which this consent statement is based. The source might be a scanned original paper form, or a reference to a consent that links back to such a source, a reference to a document repository (e.g. XDS) that stores the original consent document.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "sourceIdentifier": {
+              "description": "The source on which this consent statement is based. The source might be a scanned original paper form, or a reference to a consent that links back to such a source, a reference to a document repository (e.g. XDS) that stores the original consent document.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "sourceReference": {
+              "description": "The source on which this consent statement is based. The source might be a scanned original paper form, or a reference to a consent that links back to such a source, a reference to a document repository (e.g. XDS) that stores the original consent document.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "policy": {
+              "description": "The references to the policies that are included in this consent scope. Policies may be organizational, but are often defined jurisdictionally, or in law.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Consent_Policy"
+              }
+            },
+            "policyRule": {
+              "description": "A referece to the specific computable policy.",
+              "type": "string"
+            },
+            "_policyRule": {
+              "description": "Extensions for policyRule",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "securityLabel": {
+              "description": "A set of security labels that define which resources are controlled by this consent. If more than one label is specified, all resources must have all the specified labels.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "purpose": {
+              "description": "The context of the activities a user is taking - why the user is accessing the data - that are controlled by this consent.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "dataPeriod": {
+              "description": "Clinical or Operational Relevant period of time that bounds the data controlled by this consent.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "data": {
+              "description": "The resources controlled by this consent, if specific resources are referenced.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Consent_Data"
+              }
+            },
+            "except": {
+              "description": "An exception to the base policy of this consent. An exception can be an addition or removal of access permissions.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Consent_Except"
+              }
+            }
+          },
+          "required": [
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Consent_Actor": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "role": {
+              "description": "How the individual is involved in the resources content that is described in the consent.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reference": {
+              "description": "The resource that identifies the actor. To identify a actors by type, use group to identify a set of actors by some property they share (e.g. \u0027admitting officers\u0027).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "reference",
+            "role"
+          ]
+        }
+      ]
+    },
+    "Consent_Policy": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "authority": {
+              "description": "Entity or Organization having regulatory jurisdiction or accountability for  enforcing policies pertaining to Consent Directives.",
+              "type": "string"
+            },
+            "_authority": {
+              "description": "Extensions for authority",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "uri": {
+              "description": "The references to the policies that are included in this consent scope. Policies may be organizational, but are often defined jurisdictionally, or in law.",
+              "type": "string"
+            },
+            "_uri": {
+              "description": "Extensions for uri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "Consent_Data": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "meaning": {
+              "description": "How the resource reference is interpreted when testing consent restrictions.",
+              "enum": [
+                "instance",
+                "related",
+                "dependents",
+                "authoredby"
+              ],
+              "type": "string"
+            },
+            "_meaning": {
+              "description": "Extensions for meaning",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reference": {
+              "description": "A reference to a specific resource that defines which resources are covered by this consent.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "reference"
+          ]
+        }
+      ]
+    },
+    "Consent_Except": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "type": {
+              "description": "Action  to take - permit or deny - when the exception conditions are met.",
+              "enum": [
+                "deny",
+                "permit"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "The timeframe in this exception is valid.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "actor": {
+              "description": "Who or what is controlled by this Exception. Use group to identify a set of actors by some property they share (e.g. \u0027admitting officers\u0027).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Consent_Actor1"
+              }
+            },
+            "action": {
+              "description": "Actions controlled by this Exception.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "securityLabel": {
+              "description": "A set of security labels that define which resources are controlled by this exception. If more than one label is specified, all resources must have all the specified labels.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "purpose": {
+              "description": "The context of the activities a user is taking - why the user is accessing the data - that are controlled by this exception.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "class": {
+              "description": "The class of information covered by this exception. The type can be a FHIR resource type, a profile on a type, or a CDA document, or some other type that indicates what sort of information the consent relates to.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "code": {
+              "description": "If this code is found in an instance, then the exception applies.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "dataPeriod": {
+              "description": "Clinical or Operational Relevant period of time that bounds the data controlled by this exception.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "data": {
+              "description": "The resources controlled by this exception, if specific resources are referenced.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Consent_Data1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Consent_Actor1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "role": {
+              "description": "How the individual is involved in the resources content that is described in the exception.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reference": {
+              "description": "The resource that identifies the actor. To identify a actors by type, use group to identify a set of actors by some property they share (e.g. \u0027admitting officers\u0027).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "reference",
+            "role"
+          ]
+        }
+      ]
+    },
+    "Consent_Data1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A record of a healthcare consumer’s policy choices, which permits or denies identified recipient(s) or recipient role(s) to perform one or more actions within a given policy context, for specific purposes and periods of time.",
+          "properties": {
+            "meaning": {
+              "description": "How the resource reference is interpreted when testing consent restrictions.",
+              "enum": [
+                "instance",
+                "related",
+                "dependents",
+                "authoredby"
+              ],
+              "type": "string"
+            },
+            "_meaning": {
+              "description": "Extensions for meaning",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reference": {
+              "description": "A reference to a specific resource that defines which resources are covered by this consent.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "reference"
+          ]
+        }
+      ]
+    }
+  }
+}

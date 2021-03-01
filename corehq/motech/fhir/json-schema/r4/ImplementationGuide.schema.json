@@ -1,0 +1,427 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ImplementationGuide",
+  "$ref": "#/definitions/ImplementationGuide",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ImplementationGuide": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A set of rules of how FHIR is used to solve a particular problem. This resource is used to gather all the parts of an implementation guide into a logical whole and to publish a computable definition of all the parts.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ImplementationGuide resource",
+              "type": "string",
+              "enum": [
+                "ImplementationGuide"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this implementation guide when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this implementation guide is (or will be) published. The URL SHOULD include the major version of the implementation guide. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the implementation guide when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the implementation guide author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the implementation guide. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this implementation guide. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this implementation guide is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the implementation guide was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the implementation guide changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the implementation guide.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the implementation guide from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate implementation guide instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the implementation guide is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the implementation guide and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the implementation guide.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "fhirVersion": {
+              "description": "The version of the FHIR specification on which this ImplementationGuide is based - this is the formal version of the specification, without the revision number, e.g. [publication].[major].[minor], which is 3.0.1 for this version.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_fhirVersion": {
+              "description": "Extensions for fhirVersion",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "dependency": {
+              "description": "Another implementation guide that this implementation depends on. Typically, an implementation guide uses value sets, profiles etc.defined in other implementation guides.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImplementationGuide_Dependency"
+              }
+            },
+            "package": {
+              "description": "A logical group of resources. Logical groups can be used when building pages.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImplementationGuide_Package"
+              }
+            },
+            "global": {
+              "description": "A set of profiles that all resources covered by this implementation guide must conform to.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImplementationGuide_Global"
+              }
+            },
+            "binary": {
+              "description": "A binary file that is included in the  implementation guide when it is published.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_binary": {
+              "description": "Extensions for binary",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "page": {
+              "description": "A page / section in the implementation guide. The root page is the implementation guide home page.",
+              "$ref": "#/definitions/ImplementationGuide_Page"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ImplementationGuide_Dependency": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of rules of how FHIR is used to solve a particular problem. This resource is used to gather all the parts of an implementation guide into a logical whole and to publish a computable definition of all the parts.",
+          "properties": {
+            "type": {
+              "description": "How the dependency is represented when the guide is published.",
+              "enum": [
+                "reference",
+                "inclusion"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "uri": {
+              "description": "Where the dependency is located.",
+              "type": "string"
+            },
+            "_uri": {
+              "description": "Extensions for uri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "ImplementationGuide_Package": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of rules of how FHIR is used to solve a particular problem. This resource is used to gather all the parts of an implementation guide into a logical whole and to publish a computable definition of all the parts.",
+          "properties": {
+            "name": {
+              "description": "The name for the group, as used in page.package.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "Human readable text describing the package.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "resource": {
+              "description": "A resource that is part of the implementation guide. Conformance resources (value set, structure definition, capability statements etc.) are obvious candidates for inclusion, but any kind of resource can be included as an example resource.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImplementationGuide_Resource"
+              }
+            }
+          },
+          "required": [
+            "resource"
+          ]
+        }
+      ]
+    },
+    "ImplementationGuide_Resource": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of rules of how FHIR is used to solve a particular problem. This resource is used to gather all the parts of an implementation guide into a logical whole and to publish a computable definition of all the parts.",
+          "properties": {
+            "example": {
+              "description": "Whether a resource is included in the guide as part of the rules defined by the guide, or just as an example of a resource that conforms to the rules and/or help implementers understand the intent of the guide.",
+              "type": "boolean"
+            },
+            "_example": {
+              "description": "Extensions for example",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A human assigned name for the resource. All resources SHOULD have a name, but the name may be extracted from the resource (e.g. ValueSet.name).",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A description of the reason that a resource has been included in the implementation guide.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "acronym": {
+              "description": "A short code that may be used to identify the resource throughout the implementation guide.",
+              "type": "string"
+            },
+            "_acronym": {
+              "description": "Extensions for acronym",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceUri": {
+              "description": "Where this resource is found.",
+              "type": "string"
+            },
+            "_sourceUri": {
+              "description": "Extensions for sourceUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "sourceReference": {
+              "description": "Where this resource is found.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "exampleFor": {
+              "description": "Another resource that this resource is an example for. This is mostly used for resources that are included as examples of StructureDefinitions.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "ImplementationGuide_Global": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of rules of how FHIR is used to solve a particular problem. This resource is used to gather all the parts of an implementation guide into a logical whole and to publish a computable definition of all the parts.",
+          "properties": {
+            "type": {
+              "description": "The type of resource that all instances must conform to.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "profile": {
+              "description": "A reference to the profile that all instances must conform to.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "profile"
+          ]
+        }
+      ]
+    },
+    "ImplementationGuide_Page": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A set of rules of how FHIR is used to solve a particular problem. This resource is used to gather all the parts of an implementation guide into a logical whole and to publish a computable definition of all the parts.",
+          "properties": {
+            "source": {
+              "description": "The source address for the page.",
+              "type": "string"
+            },
+            "_source": {
+              "description": "Extensions for source",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short title used to represent this page in navigational structures such as table of contents, bread crumbs, etc.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "kind": {
+              "description": "The kind of page that this is. Some pages are autogenerated (list, example), and other kinds are of interest so that tools can navigate the user to the page of interest.",
+              "enum": [
+                "page",
+                "example",
+                "list",
+                "include",
+                "directory",
+                "dictionary",
+                "toc",
+                "resource"
+              ],
+              "type": "string"
+            },
+            "_kind": {
+              "description": "Extensions for kind",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "For constructed pages, what kind of resources to include in the list.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "package": {
+              "description": "For constructed pages, a list of packages to include in the page (or else empty for everything).",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_package": {
+              "description": "Extensions for package",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "format": {
+              "description": "The format of the page.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_format": {
+              "description": "Extensions for format",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "page": {
+              "description": "Nested Pages/Sections under this page.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ImplementationGuide_Page"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

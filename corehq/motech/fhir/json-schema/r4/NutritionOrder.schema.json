@@ -1,0 +1,343 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/NutritionOrder",
+  "$ref": "#/definitions/NutritionOrder",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "NutritionOrder": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a NutritionOrder resource",
+              "type": "string",
+              "enum": [
+                "NutritionOrder"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers assigned to this order by the order sender or by the order receiver.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The workflow status of the nutrition order/request.",
+              "enum": [
+                "proposed",
+                "draft",
+                "planned",
+                "requested",
+                "active",
+                "on-hold",
+                "completed",
+                "cancelled",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "patient": {
+              "description": "The person (patient) who needs the nutrition order for an oral diet, nutritional supplement and/or enteral or formula feeding.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "encounter": {
+              "description": "An encounter that provides additional information about the healthcare context in which this request is made.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "dateTime": {
+              "description": "The date and time that this nutrition order was requested.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_dateTime": {
+              "description": "Extensions for dateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "orderer": {
+              "description": "The practitioner that holds legal responsibility for ordering the diet, nutritional supplement, or formula feedings.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "allergyIntolerance": {
+              "description": "A link to a record of allergies or intolerances  which should be included in the nutrition order.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "foodPreferenceModifier": {
+              "description": "This modifier is used to convey order-specific modifiers about the type of food that should be given. These can be derived from patient allergies, intolerances, or preferences such as Halal, Vegan or Kosher. This modifier applies to the entire nutrition order inclusive of the oral diet, nutritional supplements and enteral formula feedings.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "excludeFoodModifier": {
+              "description": "This modifier is used to convey order-specific modifiers about the type of food that should NOT be given. These can be derived from patient allergies, intolerances, or preferences such as No Red Meat, No Soy or No Wheat or  Gluten-Free.  While it should not be necessary to repeat allergy or intolerance information captured in the referenced AllergyIntolerance resource in the excludeFoodModifier, this element may be used to convey additional specificity related to foods that should be eliminated from the patient’s diet for any reason.  This modifier applies to the entire nutrition order inclusive of the oral diet, nutritional supplements and enteral formula feedings.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "oralDiet": {
+              "description": "Diet given orally in contrast to enteral (tube) feeding.",
+              "$ref": "#/definitions/NutritionOrder_OralDiet"
+            },
+            "supplement": {
+              "description": "Oral nutritional products given in order to add further nutritional value to the patient\u0027s diet.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NutritionOrder_Supplement"
+              }
+            },
+            "enteralFormula": {
+              "description": "Feeding provided through the gastrointestinal tract via a tube, catheter, or stoma that delivers nutrition distal to the oral cavity.",
+              "$ref": "#/definitions/NutritionOrder_EnteralFormula"
+            }
+          },
+          "required": [
+            "patient",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "NutritionOrder_OralDiet": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "type": {
+              "description": "The kind of diet or dietary restriction such as fiber restricted diet or diabetic diet.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "schedule": {
+              "description": "The time period and frequency at which the diet should be given.  The diet should be given for the combination of all schedules if more than one schedule is present.",
+              "type": "array",
+              "items": {
+                "$ref": "Timing.schema.json#/definitions/Timing"
+              }
+            },
+            "nutrient": {
+              "description": "Class that defines the quantity and type of nutrient modifications (for example carbohydrate, fiber or sodium) required for the oral diet.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NutritionOrder_Nutrient"
+              }
+            },
+            "texture": {
+              "description": "Class that describes any texture modifications required for the patient to safely consume various types of solid foods.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NutritionOrder_Texture"
+              }
+            },
+            "fluidConsistencyType": {
+              "description": "The required consistency (e.g. honey-thick, nectar-thick, thin, thickened.) of liquids or fluids served to the patient.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "instruction": {
+              "description": "Free text or additional instructions or information pertaining to the oral diet.",
+              "type": "string"
+            },
+            "_instruction": {
+              "description": "Extensions for instruction",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "NutritionOrder_Nutrient": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "modifier": {
+              "description": "The nutrient that is being modified such as carbohydrate or sodium.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "amount": {
+              "description": "The quantity of the specified nutrient to include in diet.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            }
+          }
+        }
+      ]
+    },
+    "NutritionOrder_Texture": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "modifier": {
+              "description": "Any texture modifications (for solid foods) that should be made, e.g. easy to chew, chopped, ground, and pureed.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "foodType": {
+              "description": "The food type(s) (e.g. meats, all foods)  that the texture modification applies to.  This could be all foods types.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "NutritionOrder_Supplement": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "type": {
+              "description": "The kind of nutritional supplement product required such as a high protein or pediatric clear liquid supplement.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "productName": {
+              "description": "The product or brand name of the nutritional supplement such as \"Acme Protein Shake\".",
+              "type": "string"
+            },
+            "_productName": {
+              "description": "Extensions for productName",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "schedule": {
+              "description": "The time period and frequency at which the supplement(s) should be given.  The supplement should be given for the combination of all schedules if more than one schedule is present.",
+              "type": "array",
+              "items": {
+                "$ref": "Timing.schema.json#/definitions/Timing"
+              }
+            },
+            "quantity": {
+              "description": "The amount of the nutritional supplement to be given.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "instruction": {
+              "description": "Free text or additional instructions or information pertaining to the oral supplement.",
+              "type": "string"
+            },
+            "_instruction": {
+              "description": "Extensions for instruction",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "NutritionOrder_EnteralFormula": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "baseFormulaType": {
+              "description": "The type of enteral or infant formula such as an adult standard formula with fiber or a soy-based infant formula.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "baseFormulaProductName": {
+              "description": "The product or brand name of the enteral or infant formula product such as \"ACME Adult Standard Formula\".",
+              "type": "string"
+            },
+            "_baseFormulaProductName": {
+              "description": "Extensions for baseFormulaProductName",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "additiveType": {
+              "description": "Indicates the type of modular component such as protein, carbohydrate, fat or fiber to be provided in addition to or mixed with the base formula.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "additiveProductName": {
+              "description": "The product or brand name of the type of modular component to be added to the formula.",
+              "type": "string"
+            },
+            "_additiveProductName": {
+              "description": "Extensions for additiveProductName",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "caloricDensity": {
+              "description": "The amount of energy (calories) that the formula should provide per specified volume, typically per mL or fluid oz.  For example, an infant may require a formula that provides 24 calories per fluid ounce or an adult may require an enteral formula that provides 1.5 calorie/mL.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "routeofAdministration": {
+              "description": "The route or physiological path of administration into the patient\u0027s gastrointestinal  tract for purposes of providing the formula feeding, e.g. nasogastric tube.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "administration": {
+              "description": "Formula administration instructions as structured data.  This repeating structure allows for changing the administration rate or volume over time for both bolus and continuous feeding.  An example of this would be an instruction to increase the rate of continuous feeding every 2 hours.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NutritionOrder_Administration"
+              }
+            },
+            "maxVolumeToDeliver": {
+              "description": "The maximum total quantity of formula that may be administered to a subject over the period of time, e.g. 1440 mL over 24 hours.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "administrationInstruction": {
+              "description": "Free text formula administration, feeding instructions or additional instructions or information.",
+              "type": "string"
+            },
+            "_administrationInstruction": {
+              "description": "Extensions for administrationInstruction",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "NutritionOrder_Administration": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
+          "properties": {
+            "schedule": {
+              "description": "The time period and frequency at which the enteral formula should be delivered to the patient.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "quantity": {
+              "description": "The volume of formula to provide to the patient per the specified administration schedule.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "rateSimpleQuantity": {
+              "description": "The rate of administration of formula via a feeding pump, e.g. 60 mL per hour, according to the specified schedule.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "rateRatio": {
+              "description": "The rate of administration of formula via a feeding pump, e.g. 60 mL per hour, according to the specified schedule.",
+              "$ref": "Ratio.schema.json#/definitions/Ratio"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

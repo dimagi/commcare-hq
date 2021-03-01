@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Narrative",
+  "$ref": "#/definitions/Narrative",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Narrative": {
+      "allOf": [
+        {
+          "$ref": "Element#/definitions/Element"
+        },
+        {
+          "description": "A human-readable formatted text, including images.",
+          "properties": {
+            "status": {
+              "description": "The status of the narrative - whether it\u0027s entirely generated (from just the defined data or the extensions too), or whether a human authored it and it may contain additional data.",
+              "enum": [
+                "generated",
+                "extensions",
+                "additional",
+                "empty"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "div": {
+              "description": "The actual narrative content, a stripped down version of XHTML.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "div"
+          ]
+        }
+      ]
+    }
+  }
+}

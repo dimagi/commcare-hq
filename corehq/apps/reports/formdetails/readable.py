@@ -244,7 +244,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                             absolute_data=absolute_data,
                         ),
                     )
-                    for entry in node
+                    for entry in node if entry or children
                 ],
                 **question_data
             )

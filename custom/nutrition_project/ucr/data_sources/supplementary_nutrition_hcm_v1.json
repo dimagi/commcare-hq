@@ -54,7 +54,7 @@
                 "type": "property_path",
                 "property_path": [
                   "form",
-                  "lunch_served_check"
+                  "food_served_check"
                 ]
               },
               "property_value": "yes"
@@ -66,7 +66,7 @@
                 "type": "property_path",
                 "property_path": [
                   "form",
-                  "lunch_served_to_adolescents_check"
+                  "food_served_to_adolescents_check"
                 ]
               },
               "property_value": "yes"

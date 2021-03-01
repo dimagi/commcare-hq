@@ -5,16 +5,16 @@
 #
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2017
-# Gladys Teos <info@enestranslations.com>, 2020
+# Gladys Teos <info@enestranslations.com>, 2021
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-10 22:30+0000\n"
+"POT-Creation-Date: 2021-02-17 20:30+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -242,10 +242,8 @@ msgid "None"
 msgstr "Ninguna"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:230
-#, fuzzy
-#| msgid "Data Parent"
 msgid "Parent"
-msgstr "Padre de Datos"
+msgstr "Padre"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:279
 msgid "Unknown menu"
@@ -922,7 +920,7 @@ msgstr "Propiedad del Caso"
 msgid "of Case Type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:363
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:380
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js:52
 msgid "Latest saved"
 msgstr ""

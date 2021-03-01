@@ -24,6 +24,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionDatum,
     Stack,
     Text,
+    Hint,
 )
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
@@ -161,9 +162,18 @@ class RemoteRequestFactory(object):
     def _build_query_prompts(self):
         prompts = []
         for prop in self.module.search_config.properties:
+            text = Text(locale_id=id_strings.search_property_locale(self.module, prop.name))
+            if prop.hint:
+                display = Display(
+                    text=text,
+                    hint=Hint(text=Text(locale_id=id_strings.search_property_hint_locale(self.module, prop.name)))
+                )
+            else:
+                display = Display(text=text)
+
             kwargs = {
                 'key': prop.name,
-                'display': Display(text=Text(locale_id=id_strings.search_property_locale(self.module, prop.name))),
+                'display': display
             }
             if prop.appearance and self.app.enable_search_prompt_appearance:
                 kwargs['appearance'] = prop.appearance

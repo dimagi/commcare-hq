@@ -1,0 +1,244 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Specimen",
+  "$ref": "#/definitions/Specimen",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Specimen": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A sample to be used for analysis.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Specimen resource",
+              "type": "string",
+              "enum": [
+                "Specimen"
+              ]
+            },
+            "identifier": {
+              "description": "Id for specimen.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "accessionIdentifier": {
+              "description": "The identifier assigned by the lab when accessioning specimen(s). This is not necessarily the same as the specimen identifier, depending on local lab procedures.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The availability of the specimen.",
+              "enum": [
+                "available",
+                "unavailable",
+                "unsatisfactory",
+                "entered-in-error"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The kind of material that forms the specimen.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "Where the specimen came from. This may be from the patient(s) or from the environment or a device.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "receivedTime": {
+              "description": "Time when specimen was received for processing or testing.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_receivedTime": {
+              "description": "Extensions for receivedTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "parent": {
+              "description": "Reference to the parent (source) specimen which is used when the specimen was either derived from or a component of another specimen.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "request": {
+              "description": "Details concerning a test or procedure request that required a specimen to be collected.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "collection": {
+              "description": "Details concerning the specimen collection.",
+              "$ref": "#/definitions/Specimen_Collection"
+            },
+            "processing": {
+              "description": "Details concerning processing and processing steps for the specimen.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Specimen_Processing"
+              }
+            },
+            "container": {
+              "description": "The container holding the specimen.  The recursive nature of containers; i.e. blood in tube in tray in rack is not addressed here.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Specimen_Container"
+              }
+            },
+            "note": {
+              "description": "To communicate any details or issues about the specimen or during the specimen collection. (for example: broken vial, sent with patient, frozen).",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            }
+          },
+          "required": [
+            "subject",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Specimen_Collection": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A sample to be used for analysis.",
+          "properties": {
+            "collector": {
+              "description": "Person who collected the specimen.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "collectedDateTime": {
+              "description": "Time when specimen was collected from subject - the physiologically relevant time.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_collectedDateTime": {
+              "description": "Extensions for collectedDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "collectedPeriod": {
+              "description": "Time when specimen was collected from subject - the physiologically relevant time.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "quantity": {
+              "description": "The quantity of specimen collected; for instance the volume of a blood sample, or the physical measurement of an anatomic pathology sample.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "method": {
+              "description": "A coded value specifying the technique that is used to perform the procedure.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "bodySite": {
+              "description": "Anatomical location from which the specimen was collected (if subject is a patient). This is the target site.  This element is not used for environmental specimens.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "Specimen_Processing": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A sample to be used for analysis.",
+          "properties": {
+            "description": {
+              "description": "Textual description of procedure.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "procedure": {
+              "description": "A coded value specifying the procedure used to process the specimen.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "additive": {
+              "description": "Material used in the processing step.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "timeDateTime": {
+              "description": "A record of the time or period when the specimen processing occurred.  For example the time of sample fixation or the period of time the sample was in formalin.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_timeDateTime": {
+              "description": "Extensions for timeDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "timePeriod": {
+              "description": "A record of the time or period when the specimen processing occurred.  For example the time of sample fixation or the period of time the sample was in formalin.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          }
+        }
+      ]
+    },
+    "Specimen_Container": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A sample to be used for analysis.",
+          "properties": {
+            "identifier": {
+              "description": "Id for container. There may be multiple; a manufacturer\u0027s bar code, lab assigned identifier, etc. The container ID may differ from the specimen id in some circumstances.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "description": {
+              "description": "Textual description of the container.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of container associated with the specimen (e.g. slide, aliquot, etc.).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "capacity": {
+              "description": "The capacity (volume or other measure) the container may contain.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "specimenQuantity": {
+              "description": "The quantity of specimen in the container; may be volume, dimensions, or other appropriate measurements, depending on the specimen type.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "additiveCodeableConcept": {
+              "description": "Introduced substance to preserve, maintain or enhance the specimen. Examples: Formalin, Citrate, EDTA.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "additiveReference": {
+              "description": "Introduced substance to preserve, maintain or enhance the specimen. Examples: Formalin, Citrate, EDTA.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

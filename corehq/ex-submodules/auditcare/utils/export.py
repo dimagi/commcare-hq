@@ -5,8 +5,9 @@ from django.contrib.auth.models import User
 from django.utils.datastructures import OrderedSet
 
 from auditcare.models import NavigationEventAudit, wrap_audit_event
-from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.users.models import WebUser
 
 
 def navigation_event_ids_by_user(user, start_date=None, end_date=None):
