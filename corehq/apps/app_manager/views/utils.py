@@ -340,7 +340,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             ))
     else:
         master_build = master_app_id_or_build
-    master_app_id = master_build.master_id
+    master_app_id = master_build.origin_id
 
     previous = app.get_latest_build_from_upstream(master_app_id)
     if (
