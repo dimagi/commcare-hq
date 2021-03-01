@@ -11,6 +11,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.motech.fhir.models import FHIRResourceProperty
 from corehq.util.quickcache import quickcache
 
 
@@ -128,7 +129,8 @@ def get_case_property_description_dict(domain):
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,
-                       description=None, group=None, deprecated=None):
+                       description=None, group=None, deprecated=None,
+                       fhir_resource_prop_path=None, fhir_resource_type=None):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -150,6 +152,16 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.full_clean()
     except ValidationError as e:
         return str(e)
+
+    if fhir_resource_prop_path and fhir_resource_type:
+        try:
+            fhir_resource_prop = FHIRResourceProperty.objects.get(case_property=prop,
+                resource_type=fhir_resource_type)
+        except FHIRResourceProperty.DoesNotExist:
+            fhir_resource_prop = FHIRResourceProperty(case_property=prop, resource_type=fhir_resource_type)
+        fhir_resource_prop.jsonpath = fhir_resource_prop_path
+        fhir_resource_prop.save()
+
     prop.save()
 
 

@@ -52,7 +52,7 @@ logging = get_task_logger(__name__)
 
 
 @periodic_task(
-    run_every=crontab(day_of_month=27),
+    run_every=crontab(day_of_month=27, hour=6, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def clean_logs():
