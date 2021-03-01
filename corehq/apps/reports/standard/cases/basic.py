@@ -65,19 +65,19 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        case_onwer_filters = []
+        case_owner_filters = []
 
         if (
             self.request.can_access_all_locations
             and EMWF.show_project_data(mobile_user_and_group_slugs)
         ):
-            case_onwer_filters.append(all_project_data_filter(self.domain, mobile_user_and_group_slugs))
+            case_owner_filters.append(all_project_data_filter(self.domain, mobile_user_and_group_slugs))
 
         if (
             self.request.can_access_all_locations
             and EMWF.show_deactivated_data(mobile_user_and_group_slugs)
         ):
-            case_onwer_filters.append(deactivated_case_owners(self.domain))
+            case_owner_filters.append(deactivated_case_owners(self.domain))
 
         # Only show explicit matches
         if (
@@ -86,9 +86,9 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             or EMWF.selected_group_ids(mobile_user_and_group_slugs)
         ):
             track_es_report_load(self.domain, self.slug, len(self.case_owners))
-            case_onwer_filters.append(case_es.owner(self.case_owners))
+            case_owner_filters.append(case_es.owner(self.case_owners))
 
-        query = query.OR(*case_onwer_filters)
+        query = query.OR(*case_owner_filters)
 
         if not self.request.can_access_all_locations:
             query = query_location_restricted_cases(query, self.request)
