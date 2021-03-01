@@ -76,11 +76,9 @@ branches:
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
-  - nh/motech/ghost  # Norman Mar 1
-  - nh/resp_head  # Norman Mar 1
-  - nh/fhir/repeater+nh/dhis2+mk/fhir  # Norman Mar 1
+  # - nh/fhir/repeater+nh/dhis2+mk/fhir  # Norman Mar 1
   - mk/fhir/data-dictionary # MK Feb 26
   - mk/fhir/api # MK Feb 26
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
-  - nh/fhir/repeater  # Norman Mar 1
+  # - nh/fhir/repeater  # Norman Mar 1
 submodules: {}
