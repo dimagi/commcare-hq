@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='requestlog',
             name='response_headers',
-            field=jsonfield.fields.JSONField(blank=True),
+            field=jsonfield.fields.JSONField(blank=True, null=True),
         ),
     ]

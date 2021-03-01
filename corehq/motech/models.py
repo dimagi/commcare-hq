@@ -246,7 +246,7 @@ class RequestLog(models.Model):
     request_body = models.TextField(blank=True, null=True)
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True, db_index=True)
-    response_headers = jsonfield.JSONField(blank=True)
+    response_headers = jsonfield.JSONField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
 
     class Meta:
