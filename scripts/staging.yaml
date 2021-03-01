@@ -74,6 +74,7 @@ branches:
   - mk/fhir/api # MK Feb 26
   - jls/remove-autolaunch+adil-uddin/feature/USH-632-pagination-updates
   - jls/remove-autolaunch # Jenny Feb 9
+  - nh/master+adil-uddin/feature/USH-462-HQ-Properties-Change  # Norman Mar 1
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - solleks:cdg/accessible_combobox2 # Charlie/Steph Feb 5
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
