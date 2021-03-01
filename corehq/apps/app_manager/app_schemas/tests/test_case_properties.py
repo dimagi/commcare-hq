@@ -10,7 +10,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     _CaseTypeEquivalence,
     _CaseTypeRef,
     get_case_properties,
-    _replace_properties_with_attributes
 )
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -44,17 +43,6 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
                 'bar': '/data/question2',
             })
             self.assertCaseProperties(factory.app, 'house', ['foo', 'bar'])
-
-    def test_owner_id_maps_to_attribute(self):
-        factory = AppFactory()
-        # Create form1 which uses case type 'house'
-        module1, form1 = factory.new_module(Module, 'open_case', 'house')
-        # Form1 updates house.owner_id
-        factory.form_requires_case(form1, case_type='house', update={
-            'owner_id': 'new_owner'
-        })
-        # Verify that the actual case property is '@owner_id', not 'owner_id'
-        self.assertCaseProperties(factory.app, 'house', ['@owner_id'])
 
     def test_case_sharing(self):
         factory1 = AppFactory()
@@ -193,15 +181,3 @@ class DocTests(SimpleTestCase):
     def test_doctests(self):
         results = doctest.testmod(corehq.apps.app_manager.app_schemas.case_properties)
         self.assertEqual(results.failed, 0)
-
-
-class ReplacePropertyWithAttributesTests(SimpleTestCase):
-    def test_replaces_owner_id_with_attribute(self):
-        case_properties = {'owner_id'}
-        _replace_properties_with_attributes(case_properties)
-        self.assertSetEqual(case_properties, {'@owner_id'})
-
-    def test_replacement_preserves_other_names(self):
-        case_properties = {'@one', 'owner_id', '@two'}
-        _replace_properties_with_attributes(case_properties)
-        self.assertSetEqual(case_properties, {'@one', '@owner_id', '@two'})

@@ -36,7 +36,7 @@
               {{ idp.name }}
             </td>
             <td>
-              {{ idp.email_domains|join:", " }}
+              {{ idp.get_email_domains|join:", " }}
             </td>
             <td>
               {% if idp.is_active %}

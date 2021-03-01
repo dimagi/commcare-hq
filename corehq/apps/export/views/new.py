@@ -320,7 +320,10 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     page_title = ugettext_lazy("Create OData Case Feed")
 
     def create_new_export_instance(self, schema, export_settings=None):
-        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
+        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         clean_odata_columns(export_instance)
         return export_instance
 

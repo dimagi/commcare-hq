@@ -118,20 +118,18 @@ class IdentityProvider(models.Model):
         self.date_sp_rollover_cert_expiration = None
         self.save()
 
-    @property
-    def email_domains(self):
+    def get_email_domains(self):
         return AuthenticatedEmailDomain.objects.filter(
             identity_provider=self
         ).values_list('email_domain', flat=True).all()
 
-    @property
-    def sso_exempt_users(self):
+    def get_sso_exempt_users(self):
         return UserExemptFromSingleSignOn.objects.filter(
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
 
     @classmethod
-    def domain_has_identity_provider(cls, domain):
+    def domain_has_editable_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)
         return cls.objects.filter(owner=owner, is_editable=True).exists()
 
