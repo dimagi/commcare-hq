@@ -81,5 +81,4 @@ branches:
   - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - nh/motech/ghost  # Norman Mar 1
   - nh/resp_head  # Norman Mar 1
-  - nh/fhir/repeater  # Norman Mar 1
 submodules: {}
