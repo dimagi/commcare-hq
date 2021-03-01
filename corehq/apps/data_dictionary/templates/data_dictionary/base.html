@@ -17,10 +17,23 @@
   {% registerurl 'data_dictionary_json' domain %}
   {% registerurl 'update_case_property' domain %}
   {% initial_page_data 'typeChoices' question_types %}
+  {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   <div data-bind="saveButton: saveButton"></div>
   <div class="row">
     <div class="col-md-10">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
+      {% if fhir_integration_enabled %}
+        <div class="form-inline" data-bind="visible: fhirResourceTypes().length">
+          {% trans "FHIR Resource Type" %}
+          <select class="form-control"
+                  data-bind="options: fhirResourceTypes,
+                             optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
+                             value: fhirResourceType,
+                            ">
+          </select>
+        </div>
+        <br />
+      {% endif %}
       <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
         <i class="fa fa-cloud-download"></i>
         {% trans "Export to Excel" %}
@@ -37,6 +50,9 @@
         <th>{% trans "Case Property" %}</th>
         <th>{% trans "Data Type" %}</th>
         <th>{% trans "Description" %}</th>
+        {% if fhir_integration_enabled %}
+          <th>{% trans "FHIR Resource Property Path" %}</th>
+        {% endif %}
         <th></th>
         </thead>
         <tbody data-bind="sortable: casePropertyList">
@@ -47,6 +63,9 @@
           <td>{% trans "Case Property Group" %}</td>
           <td></td>
           <td></td>
+          {% if fhir_integration_enabled %}
+            <td></td>
+          {% endif %}
         </tr>
         <!-- /ko -->
         <!-- ko if: !isGroup -->
@@ -72,6 +91,11 @@
                               placeholder: '{% trans "Click here to add a description" %}',
                             "></textarea>
           </td>
+          {% if fhir_integration_enabled %}
+          <td>
+            <input class="form-control" data-bind="value: $data.fhirRsourcePropPath"></input>
+          </td>
+          {% endif %}
           <!-- ko if: !deprecated() -->
           <td><button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button></td>
           <!-- /ko -->

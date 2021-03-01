@@ -41,9 +41,16 @@ class CaseType(models.Model):
             return case_type_obj
 
     def save(self, *args, **kwargs):
-        from .util import get_data_dict_case_types
+        from .util import get_data_dict_case_types, get_case_type_obj
         get_data_dict_case_types.clear(self.domain)
+        get_case_type_obj.clear(self.domain, self.name)
         return super(CaseType, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        from .util import get_data_dict_case_types, get_case_type_obj
+        get_data_dict_case_types.clear(self.domain)
+        get_case_type_obj.clear(self.domain, self.name)
+        return super().delete(*args, **kwargs)
 
 
 class CaseProperty(models.Model):
