@@ -29,6 +29,7 @@ DELETABLE_COUCH_DOC_TYPES = {
     'HqDeploy': (MAIN_DB,),
     'ILSGatewayConfig': (MAIN_DB,),
     'Invitation': (settings.USERS_GROUPS_DB,),
+    'ModelActionAudit': ('auditcare',),
     'RegistrationRequest': (MAIN_DB,),
     'StandaloneTranslationDoc': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),

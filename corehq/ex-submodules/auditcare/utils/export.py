@@ -101,8 +101,6 @@ def write_generic_log_event(writer, event):
     elif event.doc_type == 'AccessAudit':
         action = event.access_type
         resource = event.path_info
-    elif event.doc_type == 'ModelActionAudit':
-        resource = f'{event.object_type}:{event.object_uuid}'
 
     writer.writerow([
         event.event_date, event.doc_type, event.user, getattr(event, 'domain', ''),

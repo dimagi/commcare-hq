@@ -173,8 +173,6 @@ JAR_SIGN = {
     "key_pass": "onetwothreefourfive",
 }
 
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
-
 AUDIT_ADMIN_VIEWS = False
 
 SECRET_KEY = 'secrettravis'

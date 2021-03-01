@@ -7,21 +7,11 @@ from auditcare.views import (
     audited_logout,
     audited_views,
     export_all,
-    model_histories,
-    model_instance_history,
-    single_model_history,
 )
 
 urlpatterns = [
     url(r'^auditor/export/$', export_all, name='export_all_audits'),
-    url(r'^auditor/models/$', model_histories, name='model_histories'),
     url(r'^auditor/views/$', audited_views, name='audit_views'),
-    url(r'^auditor/models/(?P<model_name>\w+)/$', single_model_history, name='single_model_history'),
-    url(
-        r'^auditor/models/(?P<model_name>\w+)/(?P<model_uuid>.*)/$',
-        model_instance_history,
-        name='model_instance_history'
-    ),
 
     # directly overriding due to wrapped functions causing serious problems with tests
     url(r'^accounts/login/$', audited_login, {'template_name': login_template()}, name='auth_login'),

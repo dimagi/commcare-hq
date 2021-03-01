@@ -6,7 +6,6 @@ from argparse import ArgumentTypeError
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
@@ -14,7 +13,6 @@ from django.views.decorators.csrf import csrf_protect
 
 from auditcare import models
 from auditcare.decorators.login import lockout_response, log_request
-from auditcare.inspect import history_for_doc
 from auditcare.models import AccessAudit
 from auditcare.utils import login_template
 from auditcare.utils.export import write_export_from_all_log_events
@@ -99,49 +97,3 @@ def audited_logout(request, *args, **kwargs):
     # call the logout function
     response = LogoutView.as_view(*args, **kwargs)(request)
     return response
-
-
-@login_required()
-@user_passes_test(lambda u: u.is_superuser)
-def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
-    # it's for a particular model
-    context = {}
-    db = AccessAudit.get_db()
-
-    if ContentType.objects.filter(name=model_name).count() == 0:
-        # it's couchdbkit
-        obj = db.get(model_uuid)
-    else:
-        obj = ContentType.objects.filter(name=model_name)[0].model_class().objects.get(id=model_uuid)
-
-    context['change_history'] = history_for_doc(obj)
-    context['model'] = model_name
-    context['model_uuid'] = model_uuid
-    return render(request, 'auditcare/model_instance_history.html', context)
-
-
-@login_required()
-@user_passes_test(lambda u: u.is_superuser)
-def single_model_history(request, model_name, *args, **kwargs):
-    # it's for a particular model
-    context = {}
-    db = AccessAudit.get_db()
-    vals = db.view(
-        'auditcare/model_actions_by_id', group=True, startkey=[model_name, ''], endkey=[model_name, 'z']
-    ).all()
-    context['instances_dict'] = {x['key'][1]: x['value'] for x in vals}
-    context['model'] = model_name
-    return render(request, 'auditcare/single_model_changes.html', context)
-
-
-@login_required()
-@user_passes_test(lambda u: u.is_superuser)
-def model_histories(request, *args, **kwargs):
-    """
-    Looks at all the audit model histories and shows for a given model
-    """
-    db = AccessAudit.get_db()
-    vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
-    # do a dict comprehension here because we know all the keys in this reduce are unique
-    context = {'model_dict': {x['value'][0]: x['value'] for x in vals}}
-    return render(request, 'auditcare/model_changes.html', context)
