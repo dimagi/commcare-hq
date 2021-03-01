@@ -94,7 +94,6 @@ class TestCaseListReport(TestCase):
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
         expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-5']
         queried_case_ids = [case['_id'] for case in data]
-        sorted(queried_case_ids)
         self.assertCountEqual(expected_case_ids, queried_case_ids)
 
     def test_with_deactivated_slug(self):
@@ -105,7 +104,6 @@ class TestCaseListReport(TestCase):
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
         expected_case_ids = ['id-1']
         queried_case_ids = [case['_id'] for case in data]
-        sorted(queried_case_ids)
         self.assertCountEqual(expected_case_ids, queried_case_ids)
 
     def test_with_web_user_slug(self):
@@ -116,7 +114,6 @@ class TestCaseListReport(TestCase):
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
         expected_case_ids = ['id-4']
         queried_case_ids = [case['_id'] for case in data]
-        sorted(queried_case_ids)
         self.assertCountEqual(expected_case_ids, queried_case_ids)
 
     def test_with_multiple_slugs(self):
@@ -127,7 +124,6 @@ class TestCaseListReport(TestCase):
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
         expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-4', 'id-5']
         queried_case_ids = [case['_id'] for case in data]
-        sorted(queried_case_ids)
         self.assertCountEqual(expected_case_ids, queried_case_ids)
 
     def test_with_slugs_and_user_ids(self):
@@ -138,5 +134,4 @@ class TestCaseListReport(TestCase):
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
         expected_case_ids = ['id-1', 'id-2', 'id-3']
         queried_case_ids = [case['_id'] for case in data]
-        sorted(queried_case_ids)
         self.assertCountEqual(expected_case_ids, queried_case_ids)
