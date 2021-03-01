@@ -63,7 +63,7 @@ class TestCaseListAPI(TestCase):
         for external_id, name, properties, team_id in [
                 ('mattie', "Mattie Ross", {}, good_id),
                 ('rooster', "Reuben Cogburn", {"alias": "Rooster"}, good_id),
-                ('laboeuf', "LaBoeuf", {}, good_id),
+                ('laboeuf', "LaBoeuf", {"alias": ""}, good_id),
                 ('chaney', "Tom Chaney", {"alias": "The Coward"}, bad_id),
                 ('ned', "Ned Pepper", {"alias": "Lucky Ned"}, bad_id),
         ]:
@@ -112,6 +112,11 @@ class TestCaseListAPI(TestCase):
     ("date_opened.gt=1878-02-18&date_opened.lt=1878-02-20", ["laboeuf"]),
     ("date_opened.gt=1878-02-19T11:00:00&date_opened.lt=1878-02-19T13:00:00", ["laboeuf"]),
     ("date_opened.lt=1878-02-18&date_opened.gt=1878-02-19", []),
+    ("property.alias=Rooster", ["rooster"]),
+    ("property.alias=rooster", []),
+    ('property.foo {"test": "json"}=bar', []),  # This is escaped as expected
+    ('property.foo={"test": "json"}', []),  # This is escaped as expected
+    ("case_type=person&property.alias=", ["mattie", "laboeuf"]),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()

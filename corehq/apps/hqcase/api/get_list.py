@@ -12,7 +12,7 @@ from .core import UserError, serialize_es_case
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
-
+CUSTOM_PROPERTY_PREFIX = 'property.'
 
 def _to_boolean(val):
     return val.lower() not in [''] + list(FALSE_STRINGS)
@@ -78,8 +78,18 @@ def get_list(domain, params):
              .sort("@indexed_on"))
 
     for k, v in params.items():
-        if k not in FILTERS:
+        if k.startswith(CUSTOM_PROPERTY_PREFIX):
+            query = query.filter(_get_custom_property_filter(k, v))
+        elif k in FILTERS:
+            query = query.filter(FILTERS[k](v))
+        else:
             raise UserError(f"'{k}' is not a valid parameter.")
-        query = query.filter(FILTERS[k](v))
 
     return [serialize_es_case(case) for case in query.run().hits]
+
+
+def _get_custom_property_filter(k, v):
+    prop = k[len(CUSTOM_PROPERTY_PREFIX):]
+    if v == "":
+        return case_search.case_property_missing(prop)
+    return case_search.exact_case_property_text_query(prop, v)
