@@ -10,7 +10,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.motech.fhir.models import FHIRResourceProperty
 from corehq.util.quickcache import quickcache
 
 
@@ -133,6 +132,8 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     """
     Takes a case property to update and returns an error if there was one
     """
+    from corehq.motech.fhir.models import FHIRResourceProperty
+
     if not name:
         return ugettext('Case property must have a name')
 
