@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/CareTeam",
+  "id": "file:CareTeam.schema.json",
   "$ref": "#/definitions/CareTeam",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "CareTeam": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "The Care Team includes all the people and organizations who plan to participate in the coordination and delivery of care for a patient.",
@@ -113,7 +113,7 @@
     "CareTeam_Participant": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The Care Team includes all the people and organizations who plan to participate in the coordination and delivery of care for a patient.",

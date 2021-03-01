@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Bundle",
+  "id": "file:Bundle.schema.json",
   "$ref": "#/definitions/Bundle",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Bundle": {
       "allOf": [
         {
-          "$ref": "Resource#/definitions/Resource"
+          "$ref": "Resource.schema.json#/definitions/Resource"
         },
         {
           "description": "A container for a collection of resources.",
@@ -79,7 +79,7 @@
     "Bundle_Link": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A container for a collection of resources.",
@@ -107,7 +107,7 @@
     "Bundle_Entry": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A container for a collection of resources.",
@@ -150,7 +150,7 @@
     "Bundle_Search": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A container for a collection of resources.",
@@ -184,7 +184,7 @@
     "Bundle_Request": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A container for a collection of resources.",
@@ -250,7 +250,7 @@
     "Bundle_Response": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A container for a collection of resources.",
