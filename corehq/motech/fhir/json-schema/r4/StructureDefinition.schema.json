@@ -1,0 +1,365 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/StructureDefinition",
+  "$ref": "#/definitions/StructureDefinition",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "StructureDefinition": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A definition of a FHIR structure. This resource is used to describe the underlying resources, data types defined in FHIR, and also for describing extensions and constraints on resources and data types.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a StructureDefinition resource",
+              "type": "string",
+              "enum": [
+                "StructureDefinition"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this structure definition when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this structure definition is (or will be) published. The URL SHOULD include the major version of the structure definition. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this structure definition when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the structure definition when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the structure definition author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the structure definition. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the structure definition.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this structure definition. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this structure definition is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the structure definition was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the structure definition changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the structure definition.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the structure definition from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate structure definition instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the structure definition is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this structure definition is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the structure definition and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the structure definition.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "keyword": {
+              "description": "A set of key words or terms from external terminologies that may be used to assist with indexing and searching of templates.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "fhirVersion": {
+              "description": "The version of the FHIR specification on which this StructureDefinition is based - this is the formal version of the specification, without the revision number, e.g. [publication].[major].[minor], which is 3.0.1 for this version.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_fhirVersion": {
+              "description": "Extensions for fhirVersion",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "mapping": {
+              "description": "An external specification that the content is mapped to.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StructureDefinition_Mapping"
+              }
+            },
+            "kind": {
+              "description": "Defines the kind of structure that this definition is describing.",
+              "enum": [
+                "primitive-type",
+                "complex-type",
+                "resource",
+                "logical"
+              ],
+              "type": "string"
+            },
+            "_kind": {
+              "description": "Extensions for kind",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "abstract": {
+              "description": "Whether structure this definition describes is abstract or not  - that is, whether the structure is not intended to be instantiated. For Resources and Data types, abstract types will never be exchanged  between systems.",
+              "type": "boolean"
+            },
+            "_abstract": {
+              "description": "Extensions for abstract",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contextType": {
+              "description": "If this is an extension, Identifies the context within FHIR resources where the extension can be used.",
+              "enum": [
+                "resource",
+                "datatype",
+                "extension"
+              ],
+              "type": "string"
+            },
+            "_contextType": {
+              "description": "Extensions for contextType",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "context": {
+              "description": "Identifies the types of resource or data type elements to which the extension can be applied.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_context": {
+              "description": "Extensions for context",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "contextInvariant": {
+              "description": "A set of rules as Fluent Invariants about when the extension can be used (e.g. co-occurrence variants for the extension).",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_contextInvariant": {
+              "description": "Extensions for contextInvariant",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "type": {
+              "description": "The type this structure describes. If the derivation kind is \u0027specialization\u0027 then this is the master definition for a type, and there is always one of these (a data type, an extension, a resource, including abstract ones). Otherwise the structure definition is a constraint on the stated type (and in this case, the type cannot be an abstract type).",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "baseDefinition": {
+              "description": "An absolute URI that is the base structure from which this type is derived, either by specialization or constraint.",
+              "type": "string"
+            },
+            "_baseDefinition": {
+              "description": "Extensions for baseDefinition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "derivation": {
+              "description": "How the type relates to the baseDefinition.",
+              "enum": [
+                "specialization",
+                "constraint"
+              ],
+              "type": "string"
+            },
+            "_derivation": {
+              "description": "Extensions for derivation",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "snapshot": {
+              "description": "A snapshot view is expressed in a stand alone form that can be used and interpreted without considering the base StructureDefinition.",
+              "$ref": "#/definitions/StructureDefinition_Snapshot"
+            },
+            "differential": {
+              "description": "A differential view is expressed relative to the base StructureDefinition - a statement of differences that it applies.",
+              "$ref": "#/definitions/StructureDefinition_Differential"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "StructureDefinition_Mapping": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A definition of a FHIR structure. This resource is used to describe the underlying resources, data types defined in FHIR, and also for describing extensions and constraints on resources and data types.",
+          "properties": {
+            "identity": {
+              "description": "An Internal id that is used to identify this mapping set when specific mappings are made.",
+              "type": "string",
+              "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+            },
+            "_identity": {
+              "description": "Extensions for identity",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "uri": {
+              "description": "An absolute URI that identifies the specification that this mapping is expressed to.",
+              "type": "string"
+            },
+            "_uri": {
+              "description": "Extensions for uri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A name for the specification that is being mapped to.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "comment": {
+              "description": "Comments about this mapping, including version notes, issues, scope limitations, and other important notes for usage.",
+              "type": "string"
+            },
+            "_comment": {
+              "description": "Extensions for comment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "StructureDefinition_Snapshot": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A definition of a FHIR structure. This resource is used to describe the underlying resources, data types defined in FHIR, and also for describing extensions and constraints on resources and data types.",
+          "properties": {
+            "element": {
+              "description": "Captures constraints on each element within the resource.",
+              "type": "array",
+              "items": {
+                "$ref": "ElementDefinition.schema.json#/definitions/ElementDefinition"
+              }
+            }
+          },
+          "required": [
+            "element"
+          ]
+        }
+      ]
+    },
+    "StructureDefinition_Differential": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A definition of a FHIR structure. This resource is used to describe the underlying resources, data types defined in FHIR, and also for describing extensions and constraints on resources and data types.",
+          "properties": {
+            "element": {
+              "description": "Captures constraints on each element within the resource.",
+              "type": "array",
+              "items": {
+                "$ref": "ElementDefinition.schema.json#/definitions/ElementDefinition"
+              }
+            }
+          },
+          "required": [
+            "element"
+          ]
+        }
+      ]
+    }
+  }
+}

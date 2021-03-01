@@ -265,7 +265,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         questions = form.get_questions(['en'])
         self.assertEqual([], questions)
 
-    def save_to_case_in_groups(self):
+    def test_save_to_case_in_groups(self):
         """Ensure that save to case questions have the correct group and repeat context
         when there are no other questions in that group
 

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Money",
+  "$ref": "#/definitions/Money",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Money": {
+      "allOf": [
+        {
+          "$ref": "Quantity#/definitions/Quantity"
+        },
+        {
+          "description": "An amount of economic utility in some recognized currency.",
+          "properties": {}
+        }
+      ]
+    }
+  }
+}

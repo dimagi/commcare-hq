@@ -1,0 +1,504 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/CodeSystem",
+  "$ref": "#/definitions/CodeSystem",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "CodeSystem": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a CodeSystem resource",
+              "type": "string",
+              "enum": [
+                "CodeSystem"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this code system when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this code system is (or will be) published. The URL SHOULD include the major version of the code system. For more information see [Technical and Business Versions](resource.html#versions). This is used in [Coding]{datatypes.html#Coding}.system.",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this code system when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the code system when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the code system author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence. This is used in [Coding]{datatypes.html#Coding}.version.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the code system. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the code system.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this code system. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this code system is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the code system was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the code system changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the code system.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "description": {
+              "description": "A free text natural language description of the code system from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate code system instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the code system is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "purpose": {
+              "description": "Explaination of why this code system is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the code system and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the code system.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "caseSensitive": {
+              "description": "If code comparison is case sensitive when codes within this system are compared to each other.",
+              "type": "boolean"
+            },
+            "_caseSensitive": {
+              "description": "Extensions for caseSensitive",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueSet": {
+              "description": "Canonical URL of value set that contains the entire code system.",
+              "type": "string"
+            },
+            "_valueSet": {
+              "description": "Extensions for valueSet",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "hierarchyMeaning": {
+              "description": "The meaning of the hierarchy of concepts.",
+              "enum": [
+                "grouped-by",
+                "is-a",
+                "part-of",
+                "classified-with"
+              ],
+              "type": "string"
+            },
+            "_hierarchyMeaning": {
+              "description": "Extensions for hierarchyMeaning",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "compositional": {
+              "description": "True If code system defines a post-composition grammar.",
+              "type": "boolean"
+            },
+            "_compositional": {
+              "description": "Extensions for compositional",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "versionNeeded": {
+              "description": "This flag is used to signify that the code system has not (or does not) maintain the definitions, and a version must be specified when referencing this code system.",
+              "type": "boolean"
+            },
+            "_versionNeeded": {
+              "description": "Extensions for versionNeeded",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "content": {
+              "description": "How much of the content of the code system - the concepts and codes it defines - are represented in this resource.",
+              "enum": [
+                "not-present",
+                "example",
+                "fragment",
+                "complete"
+              ],
+              "type": "string"
+            },
+            "_content": {
+              "description": "Extensions for content",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "count": {
+              "description": "The total number of concepts defined by the code system. Where the code system has a compositional grammar, the count refers to the number of base (primitive) concepts.",
+              "type": "number",
+              "pattern": "[0]|([1-9][0-9]*)"
+            },
+            "_count": {
+              "description": "Extensions for count",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "filter": {
+              "description": "A filter that can be used in a value set compose statement when selecting concepts using a filter.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CodeSystem_Filter"
+              }
+            },
+            "property": {
+              "description": "A property defines an additional slot through which additional information can be provided about a concept.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CodeSystem_Property"
+              }
+            },
+            "concept": {
+              "description": "Concepts that are in the code system. The concept definitions are inherently hierarchical, but the definitions must be consulted to determine what the meaning of the hierarchical relationships are.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CodeSystem_Concept"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "CodeSystem_Filter": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
+          "properties": {
+            "code": {
+              "description": "The code that identifies this filter when it is used in the instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A description of how or why the filter is used.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "operator": {
+              "description": "A list of operators that can be used with the filter.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_operator": {
+              "description": "Extensions for operator",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "value": {
+              "description": "A description of what the value for the filter should be.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CodeSystem_Property": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
+          "properties": {
+            "code": {
+              "description": "A code that is used to identify the property. The code is used internally (in CodeSystem.concept.property.code) and also externally, such as in property filters.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "uri": {
+              "description": "Reference to the formal meaning of the property. One possible source of meaning is the [Concept Properties](codesystem-concept-properties.html) code system.",
+              "type": "string"
+            },
+            "_uri": {
+              "description": "Extensions for uri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A description of the property- why it is defined, and how its value might be used.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of the property value. Properties of type \"code\" contain a code defined by the code system (e.g. a reference to anotherr defined concept).",
+              "enum": [
+                "code",
+                "Coding",
+                "string",
+                "integer",
+                "boolean",
+                "dateTime"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CodeSystem_Concept": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
+          "properties": {
+            "code": {
+              "description": "A code - a text symbol - that uniquely identifies the concept within the code system.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "display": {
+              "description": "A human readable string that is the recommended default way to present this concept to a user.",
+              "type": "string"
+            },
+            "_display": {
+              "description": "Extensions for display",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "The formal definition of the concept. The code system resource does not make formal definitions required, because of the prevalence of legacy systems. However, they are highly recommended, as without them there is no formal meaning associated with the concept.",
+              "type": "string"
+            },
+            "_definition": {
+              "description": "Extensions for definition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "designation": {
+              "description": "Additional representations for the concept - other languages, aliases, specialized purposes, used for particular purposes, etc.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CodeSystem_Designation"
+              }
+            },
+            "property": {
+              "description": "A property value for this concept.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CodeSystem_Property1"
+              }
+            },
+            "concept": {
+              "description": "Defines children of a concept to produce a hierarchy of concepts. The nature of the relationships is variable (is-a/contains/categorizes) - see hierarchyMeaning.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CodeSystem_Concept"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CodeSystem_Designation": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
+          "properties": {
+            "language": {
+              "description": "The language this designation is defined for.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_language": {
+              "description": "Extensions for language",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "use": {
+              "description": "A code that details how this designation would be used.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "value": {
+              "description": "The text value for this designation.",
+              "type": "string"
+            },
+            "_value": {
+              "description": "Extensions for value",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    },
+    "CodeSystem_Property1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
+          "properties": {
+            "code": {
+              "description": "A code that is a reference to CodeSystem.property.code.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueCode": {
+              "description": "The value of this property.",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*",
+              "type": "string"
+            },
+            "_valueCode": {
+              "description": "Extensions for valueCode",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueCoding": {
+              "description": "The value of this property.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "valueString": {
+              "description": "The value of this property.",
+              "type": "string"
+            },
+            "_valueString": {
+              "description": "Extensions for valueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueInteger": {
+              "description": "The value of this property.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_valueInteger": {
+              "description": "Extensions for valueInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueBoolean": {
+              "description": "The value of this property.",
+              "type": "boolean"
+            },
+            "_valueBoolean": {
+              "description": "Extensions for valueBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDateTime": {
+              "description": "The value of this property.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_valueDateTime": {
+              "description": "Extensions for valueDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

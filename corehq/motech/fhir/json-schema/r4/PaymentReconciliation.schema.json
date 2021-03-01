@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/PaymentReconciliation",
+  "$ref": "#/definitions/PaymentReconciliation",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "PaymentReconciliation": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "This resource provides payment details and claim references supporting a bulk payment.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a PaymentReconciliation resource",
+              "type": "string",
+              "enum": [
+                "PaymentReconciliation"
+              ]
+            },
+            "identifier": {
+              "description": "The Response business identifier.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "The status of the resource instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "The period of time for which payments have been gathered into this bulk payment for settlement.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "created": {
+              "description": "The date when the enclosed suite of services were performed or completed.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_created": {
+              "description": "Extensions for created",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "organization": {
+              "description": "The Insurer who produced this adjudicated response.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "request": {
+              "description": "Original request resource reference.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "outcome": {
+              "description": "Transaction status: error, complete.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "disposition": {
+              "description": "A description of the status of the adjudication.",
+              "type": "string"
+            },
+            "_disposition": {
+              "description": "Extensions for disposition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "requestProvider": {
+              "description": "The practitioner who is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "requestOrganization": {
+              "description": "The organization which is responsible for the services rendered to the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "detail": {
+              "description": "List of individual settlement amounts and the corresponding transaction.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PaymentReconciliation_Detail"
+              }
+            },
+            "form": {
+              "description": "The form to be used for printing the content.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "total": {
+              "description": "Total payment amount.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "processNote": {
+              "description": "Suite of notes.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PaymentReconciliation_ProcessNote"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "PaymentReconciliation_Detail": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides payment details and claim references supporting a bulk payment.",
+          "properties": {
+            "type": {
+              "description": "Code to indicate the nature of the payment, adjustment, funds advance, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "request": {
+              "description": "The claim or financial resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "response": {
+              "description": "The claim response resource.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "submitter": {
+              "description": "The Organization which submitted the claim or financial transaction.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "payee": {
+              "description": "The organization which is receiving the payment.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "date": {
+              "description": "The date of the invoice or financial resource.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "amount": {
+              "description": "Amount paid for this detail.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "PaymentReconciliation_ProcessNote": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "This resource provides payment details and claim references supporting a bulk payment.",
+          "properties": {
+            "type": {
+              "description": "The note purpose: Print/Display.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "text": {
+              "description": "The note text.",
+              "type": "string"
+            },
+            "_text": {
+              "description": "Extensions for text",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

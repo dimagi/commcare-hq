@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/AppointmentResponse",
+  "$ref": "#/definitions/AppointmentResponse",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "AppointmentResponse": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A reply to an appointment request for a patient and/or practitioner(s), such as a confirmation or rejection.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a AppointmentResponse resource",
+              "type": "string",
+              "enum": [
+                "AppointmentResponse"
+              ]
+            },
+            "identifier": {
+              "description": "This records identifiers associated with this appointment response concern that are defined by business processes and/ or used to refer to it when a direct URL reference to the resource itself is not appropriate.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "appointment": {
+              "description": "Appointment that this response is replying to.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "start": {
+              "description": "Date/Time that the appointment is to take place, or requested new start time.",
+              "type": "string"
+            },
+            "_start": {
+              "description": "Extensions for start",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "end": {
+              "description": "This may be either the same as the appointment request to confirm the details of the appointment, or alternately a new time to request a re-negotiation of the end time.",
+              "type": "string"
+            },
+            "_end": {
+              "description": "Extensions for end",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "participantType": {
+              "description": "Role of participant in the appointment.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "actor": {
+              "description": "A Person, Location/HealthcareService or Device that is participating in the appointment.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "participantStatus": {
+              "description": "Participation status of the participant. When the status is declined or tentative if the start/end times are different to the appointment, then these times should be interpreted as a requested time change. When the status is accepted, the times can either be the time of the appointment (as a confirmation of the time) or can be empty.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_participantStatus": {
+              "description": "Extensions for participantStatus",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "comment": {
+              "description": "Additional comments about the appointment.",
+              "type": "string"
+            },
+            "_comment": {
+              "description": "Extensions for comment",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "appointment",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

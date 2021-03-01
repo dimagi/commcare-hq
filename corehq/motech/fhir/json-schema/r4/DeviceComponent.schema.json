@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/DeviceComponent",
+  "$ref": "#/definitions/DeviceComponent",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "DeviceComponent": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The characteristics, operational status and capabilities of a medical-related component of a medical device.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a DeviceComponent resource",
+              "type": "string",
+              "enum": [
+                "DeviceComponent"
+              ]
+            },
+            "identifier": {
+              "description": "The locally assigned unique identification by the software. For example: handle ID.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "type": {
+              "description": "The component type as defined in the object-oriented or metric nomenclature partition.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "lastSystemChange": {
+              "description": "The timestamp for the most recent system change which includes device configuration or setting change.",
+              "type": "string"
+            },
+            "_lastSystemChange": {
+              "description": "Extensions for lastSystemChange",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "source": {
+              "description": "The link to the source Device that contains administrative device information such as manufacture, serial number, etc.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "parent": {
+              "description": "The link to the parent resource. For example: Channel is linked to its VMD parent.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "operationalStatus": {
+              "description": "The current operational status of the device. For example: On, Off, Standby, etc.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "parameterGroup": {
+              "description": "The parameter group supported by the current device component that is based on some nomenclature, e.g. cardiovascular.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "measurementPrinciple": {
+              "description": "The physical principle of the measurement. For example: thermal, chemical, acoustical, etc.",
+              "enum": [
+                "other",
+                "chemical",
+                "electrical",
+                "impedance",
+                "nuclear",
+                "optical",
+                "thermal",
+                "biological",
+                "mechanical",
+                "acoustical",
+                "manual"
+              ],
+              "type": "string"
+            },
+            "_measurementPrinciple": {
+              "description": "Extensions for measurementPrinciple",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "productionSpecification": {
+              "description": "The production specification such as component revision, serial number, etc.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DeviceComponent_ProductionSpecification"
+              }
+            },
+            "languageCode": {
+              "description": "The language code for the human-readable text string produced by the device. This language code will follow the IETF language tag. Example: en-US.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          },
+          "required": [
+            "identifier",
+            "type",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "DeviceComponent_ProductionSpecification": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The characteristics, operational status and capabilities of a medical-related component of a medical device.",
+          "properties": {
+            "specType": {
+              "description": "The specification type, such as, serial number, part number, hardware revision, software revision, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "componentId": {
+              "description": "The internal component unique identification. This is a provision for manufacture specific standard components using a private OID. 11073-10101 has a partition for private OID semantic that the manufacturer can make use of.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "productionSpec": {
+              "description": "The printable string defining the component.",
+              "type": "string"
+            },
+            "_productionSpec": {
+              "description": "Extensions for productionSpec",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

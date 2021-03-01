@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/OperationOutcome",
+  "$ref": "#/definitions/OperationOutcome",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "OperationOutcome": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A collection of error, warning or information messages that result from a system action.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a OperationOutcome resource",
+              "type": "string",
+              "enum": [
+                "OperationOutcome"
+              ]
+            },
+            "issue": {
+              "description": "An error, warning or information message that results from a system action.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OperationOutcome_Issue"
+              }
+            }
+          },
+          "required": [
+            "issue",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "OperationOutcome_Issue": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A collection of error, warning or information messages that result from a system action.",
+          "properties": {
+            "severity": {
+              "description": "Indicates whether the issue indicates a variation from successful processing.",
+              "enum": [
+                "fatal",
+                "error",
+                "warning",
+                "information"
+              ],
+              "type": "string"
+            },
+            "_severity": {
+              "description": "Extensions for severity",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "Describes the type of the issue. The system that creates an OperationOutcome SHALL choose the most applicable code from the IssueType value set, and may additional provide its own code for the error in the details element.",
+              "enum": [
+                "invalid",
+                "structure",
+                "required",
+                "value",
+                "invariant",
+                "security",
+                "login",
+                "unknown",
+                "expired",
+                "forbidden",
+                "suppressed",
+                "processing",
+                "not-supported",
+                "duplicate",
+                "not-found",
+                "too-long",
+                "code-invalid",
+                "extension",
+                "too-costly",
+                "business-rule",
+                "conflict",
+                "incomplete",
+                "transient",
+                "lock-error",
+                "no-store",
+                "exception",
+                "timeout",
+                "throttled",
+                "informational"
+              ],
+              "type": "string"
+            },
+            "_code": {
+              "description": "Extensions for code",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "details": {
+              "description": "Additional details about the error. This may be a text description of the error, or a system code that identifies the error.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "diagnostics": {
+              "description": "Additional diagnostic information about the issue.  Typically, this may be a description of how a value is erroneous, or a stack dump to help trace the issue.",
+              "type": "string"
+            },
+            "_diagnostics": {
+              "description": "Extensions for diagnostics",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "location": {
+              "description": "For resource issues, this will be a simple XPath limited to element names, repetition indicators and the default child access that identifies one of the elements in the resource that caused this issue to be raised.  For HTTP errors, will be \"http.\" + the parameter name.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_location": {
+              "description": "Extensions for location",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "expression": {
+              "description": "A simple FHIRPath limited to element names, repetition indicators and the default child access that identifies one of the elements in the resource that caused this issue to be raised.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_expression": {
+              "description": "Extensions for expression",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

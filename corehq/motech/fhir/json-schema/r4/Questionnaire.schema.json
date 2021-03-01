@@ -1,0 +1,588 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Questionnaire",
+  "$ref": "#/definitions/Questionnaire",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Questionnaire": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A structured set of questions intended to guide the collection of answers from end-users. Questionnaires provide detailed control over order, presentation, phraseology and grouping to allow coherent, consistent data collection.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Questionnaire resource",
+              "type": "string",
+              "enum": [
+                "Questionnaire"
+              ]
+            },
+            "url": {
+              "description": "An absolute URI that is used to identify this questionnaire when it is referenced in a specification, model, design or an instance. This SHALL be a URL, SHOULD be globally unique, and SHOULD be an address at which this questionnaire is (or will be) published. The URL SHOULD include the major version of the questionnaire. For more information see [Technical and Business Versions](resource.html#versions).",
+              "type": "string"
+            },
+            "_url": {
+              "description": "Extensions for url",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "identifier": {
+              "description": "A formal identifier that is used to identify this questionnaire when it is represented in other formats, or referenced in a specification, model, design or an instance.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "version": {
+              "description": "The identifier that is used to identify this version of the questionnaire when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the questionnaire author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available. There is also no expectation that versions can be placed in a lexicographical sequence.",
+              "type": "string"
+            },
+            "_version": {
+              "description": "Extensions for version",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "name": {
+              "description": "A natural language name identifying the questionnaire. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "title": {
+              "description": "A short, descriptive, user-friendly title for the questionnaire.",
+              "type": "string"
+            },
+            "_title": {
+              "description": "Extensions for title",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "status": {
+              "description": "The status of this questionnaire. Enables tracking the life-cycle of the content.",
+              "enum": [
+                "draft",
+                "active",
+                "retired",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "experimental": {
+              "description": "A boolean value to indicate that this questionnaire is authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.",
+              "type": "boolean"
+            },
+            "_experimental": {
+              "description": "Extensions for experimental",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "date": {
+              "description": "The date  (and optionally time) when the questionnaire was published. The date must change if and when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the questionnaire changes.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_date": {
+              "description": "Extensions for date",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "publisher": {
+              "description": "The name of the individual or organization that published the questionnaire.",
+              "type": "string"
+            },
+            "_publisher": {
+              "description": "Extensions for publisher",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "description": {
+              "description": "A free text natural language description of the questionnaire from a consumer\u0027s perspective.",
+              "type": "string"
+            },
+            "_description": {
+              "description": "Extensions for description",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "purpose": {
+              "description": "Explaination of why this questionnaire is needed and why it has been designed as it has.",
+              "type": "string"
+            },
+            "_purpose": {
+              "description": "Extensions for purpose",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "approvalDate": {
+              "description": "The date on which the resource content was approved by the publisher. Approval happens once when the content is officially approved for usage.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_approvalDate": {
+              "description": "Extensions for approvalDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "lastReviewDate": {
+              "description": "The date on which the resource content was last reviewed. Review happens periodically after approval, but doesn\u0027t change the original approval date.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?"
+            },
+            "_lastReviewDate": {
+              "description": "Extensions for lastReviewDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "effectivePeriod": {
+              "description": "The period during which the questionnaire content was or is planned to be in active use.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "useContext": {
+              "description": "The content was developed with a focus and intent of supporting the contexts that are listed. These terms may be used to assist with indexing and searching for appropriate questionnaire instances.",
+              "type": "array",
+              "items": {
+                "$ref": "UsageContext.schema.json#/definitions/UsageContext"
+              }
+            },
+            "jurisdiction": {
+              "description": "A legal or geographic region in which the questionnaire is intended to be used.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "contact": {
+              "description": "Contact details to assist a user in finding and communicating with the publisher.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactDetail.schema.json#/definitions/ContactDetail"
+              }
+            },
+            "copyright": {
+              "description": "A copyright statement relating to the questionnaire and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the questionnaire.",
+              "type": "string"
+            },
+            "_copyright": {
+              "description": "Extensions for copyright",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "An identifier for this question or group of questions in a particular terminology such as LOINC.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "subjectType": {
+              "description": "The types of subjects that can be the subject of responses created for the questionnaire.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_subjectType": {
+              "description": "Extensions for subjectType",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "item": {
+              "description": "A particular question, question grouping or display text that is part of the questionnaire.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Questionnaire_Item"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Questionnaire_Item": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of questions intended to guide the collection of answers from end-users. Questionnaires provide detailed control over order, presentation, phraseology and grouping to allow coherent, consistent data collection.",
+          "properties": {
+            "linkId": {
+              "description": "An identifier that is unique within the Questionnaire allowing linkage to the equivalent item in a QuestionnaireResponse resource.",
+              "type": "string"
+            },
+            "_linkId": {
+              "description": "Extensions for linkId",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "definition": {
+              "description": "A reference to an [[[ElementDefinition]]] that provides the details for the item. If a definition is provided, then the following element values can be inferred from the definition: \n\n* code (ElementDefinition.code)\n* type (ElementDefinition.type)\n* required (ElementDefinition.min)\n* repeats (ElementDefinition.max)\n* maxLength (ElementDefinition.maxLength)\n* options (ElementDefinition.binding)\n\nAny information provided in these elements on a Questionnaire Item overrides the information from the definition.",
+              "type": "string"
+            },
+            "_definition": {
+              "description": "Extensions for definition",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "code": {
+              "description": "A terminology code that corresponds to this group or question (e.g. a code from LOINC, which defines many questions and answers).",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "prefix": {
+              "description": "A short label for a particular group, question or set of display text within the questionnaire used for reference by the individual completing the questionnaire.",
+              "type": "string"
+            },
+            "_prefix": {
+              "description": "Extensions for prefix",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "text": {
+              "description": "The name of a section, the text of a question or text content for a display item.",
+              "type": "string"
+            },
+            "_text": {
+              "description": "Extensions for text",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "type": {
+              "description": "The type of questionnaire item this is - whether text for display, a grouping of other items or a particular type of data to be captured (string, integer, coded choice, etc.).",
+              "enum": [
+                "group",
+                "display",
+                "boolean",
+                "decimal",
+                "integer",
+                "date",
+                "dateTime",
+                "time",
+                "string",
+                "text",
+                "url",
+                "choice",
+                "open-choice",
+                "attachment",
+                "reference",
+                "quantity"
+              ],
+              "type": "string"
+            },
+            "_type": {
+              "description": "Extensions for type",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "enableWhen": {
+              "description": "A constraint indicating that this item should only be enabled (displayed/allow answers to be captured) when the specified condition is true.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Questionnaire_EnableWhen"
+              }
+            },
+            "required": {
+              "description": "An indication, if true, that the item must be present in a \"completed\" QuestionnaireResponse.  If false, the item may be skipped when answering the questionnaire.",
+              "type": "boolean"
+            },
+            "_required": {
+              "description": "Extensions for required",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "repeats": {
+              "description": "An indication, if true, that the item may occur multiple times in the response, collecting multiple answers answers for questions or multiple sets of answers for groups.",
+              "type": "boolean"
+            },
+            "_repeats": {
+              "description": "Extensions for repeats",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "readOnly": {
+              "description": "An indication, when true, that the value cannot be changed by a human respondent to the Questionnaire.",
+              "type": "boolean"
+            },
+            "_readOnly": {
+              "description": "Extensions for readOnly",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "maxLength": {
+              "description": "The maximum number of characters that are permitted in the answer to be considered a \"valid\" QuestionnaireResponse.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))"
+            },
+            "_maxLength": {
+              "description": "Extensions for maxLength",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "options": {
+              "description": "A reference to a value set containing a list of codes representing permitted answers for a \"choice\" or \"open-choice\" question.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "option": {
+              "description": "One of the permitted answers for a \"choice\" or \"open-choice\" question.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Questionnaire_Option"
+              }
+            },
+            "initialBoolean": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "type": "boolean"
+            },
+            "_initialBoolean": {
+              "description": "Extensions for initialBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialDecimal": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?",
+              "type": "number"
+            },
+            "_initialDecimal": {
+              "description": "Extensions for initialDecimal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialInteger": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_initialInteger": {
+              "description": "Extensions for initialInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialDate": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_initialDate": {
+              "description": "Extensions for initialDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialDateTime": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_initialDateTime": {
+              "description": "Extensions for initialDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialTime": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?",
+              "type": "string"
+            },
+            "_initialTime": {
+              "description": "Extensions for initialTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialString": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "type": "string"
+            },
+            "_initialString": {
+              "description": "Extensions for initialString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialUri": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "type": "string"
+            },
+            "_initialUri": {
+              "description": "Extensions for initialUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "initialAttachment": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "initialCoding": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "initialQuantity": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "initialReference": {
+              "description": "The value that should be defaulted when initially rendering the questionnaire for user input.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "item": {
+              "description": "Text, questions and other groups to be nested beneath a question or group.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Questionnaire_Item"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Questionnaire_EnableWhen": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of questions intended to guide the collection of answers from end-users. Questionnaires provide detailed control over order, presentation, phraseology and grouping to allow coherent, consistent data collection.",
+          "properties": {
+            "question": {
+              "description": "The linkId for the question whose answer (or lack of answer) governs whether this item is enabled.",
+              "type": "string"
+            },
+            "_question": {
+              "description": "Extensions for question",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "hasAnswer": {
+              "description": "An indication that this item should be enabled only if the specified question is answered (hasAnswer\u003dtrue) or not answered (hasAnswer\u003dfalse).",
+              "type": "boolean"
+            },
+            "_hasAnswer": {
+              "description": "Extensions for hasAnswer",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerBoolean": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "type": "boolean"
+            },
+            "_answerBoolean": {
+              "description": "Extensions for answerBoolean",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerDecimal": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?",
+              "type": "number"
+            },
+            "_answerDecimal": {
+              "description": "Extensions for answerDecimal",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerInteger": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_answerInteger": {
+              "description": "Extensions for answerInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerDate": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_answerDate": {
+              "description": "Extensions for answerDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerDateTime": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_answerDateTime": {
+              "description": "Extensions for answerDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerTime": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?",
+              "type": "string"
+            },
+            "_answerTime": {
+              "description": "Extensions for answerTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerString": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "type": "string"
+            },
+            "_answerString": {
+              "description": "Extensions for answerString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerUri": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "type": "string"
+            },
+            "_answerUri": {
+              "description": "Extensions for answerUri",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "answerAttachment": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "answerCoding": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "answerQuantity": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "answerReference": {
+              "description": "An answer that the referenced question must match in order for the item to be enabled.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Questionnaire_Option": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A structured set of questions intended to guide the collection of answers from end-users. Questionnaires provide detailed control over order, presentation, phraseology and grouping to allow coherent, consistent data collection.",
+          "properties": {
+            "valueInteger": {
+              "description": "A potential answer that\u0027s allowed as the answer to this question.",
+              "pattern": "-?([0]|([1-9][0-9]*))",
+              "type": "number"
+            },
+            "_valueInteger": {
+              "description": "Extensions for valueInteger",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueDate": {
+              "description": "A potential answer that\u0027s allowed as the answer to this question.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1]))?)?",
+              "type": "string"
+            },
+            "_valueDate": {
+              "description": "Extensions for valueDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueTime": {
+              "description": "A potential answer that\u0027s allowed as the answer to this question.",
+              "pattern": "([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?",
+              "type": "string"
+            },
+            "_valueTime": {
+              "description": "Extensions for valueTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueString": {
+              "description": "A potential answer that\u0027s allowed as the answer to this question.",
+              "type": "string"
+            },
+            "_valueString": {
+              "description": "Extensions for valueString",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valueCoding": {
+              "description": "A potential answer that\u0027s allowed as the answer to this question.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

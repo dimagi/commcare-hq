@@ -1,8 +1,8 @@
 <partial>
   <remote-request>
     <post url="https://www.example.com/a/test_domain/phone/claim-case/"
-          relevant="(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0) and (instance('groups')/groups/group)">
-      <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+          relevant="(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (instance('groups')/groups/group)">
+      <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
     </post>
     <command id="search_command.{module_id}">
       <display>
@@ -42,7 +42,7 @@
           </display>
         </prompt>
       </query>
-      <datum id="case_id"
+      <datum id="search_case_id"
              nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name]"
              value="./@case_id"
              detail-confirm="{module_id}_case_long"
@@ -50,7 +50,7 @@
     </session>
     <stack>
       <push>
-        <rewind value="instance('commcaresession')/session/data/case_id"/>
+        <rewind value="instance('commcaresession')/session/data/search_case_id"/>
       </push>
     </stack>
   </remote-request>

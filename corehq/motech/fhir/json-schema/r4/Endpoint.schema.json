@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Endpoint",
+  "$ref": "#/definitions/Endpoint",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Endpoint": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The technical details of an endpoint that can be used for electronic services, such as for web services providing XDS.b or a REST endpoint for another FHIR server. This may include any security context information.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Endpoint resource",
+              "type": "string",
+              "enum": [
+                "Endpoint"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier for the organization that is used to identify the endpoint across multiple disparate systems.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "active | suspended | error | off | test.",
+              "enum": [
+                "active",
+                "suspended",
+                "error",
+                "off",
+                "entered-in-error",
+                "test"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "connectionType": {
+              "description": "A coded value that represents the technical details of the usage of this endpoint, such as what WSDLs should be used in what way. (e.g. XDS.b/DICOM/cds-hook).",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "name": {
+              "description": "A friendly name that this endpoint can be referred to with.",
+              "type": "string"
+            },
+            "_name": {
+              "description": "Extensions for name",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "managingOrganization": {
+              "description": "The organization that manages this endpoint (even if technically another organisation is hosting this in the cloud, it is the organisation associated with the data).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "contact": {
+              "description": "Contact details for a human to contact about the subscription. The primary use of this for system administrator troubleshooting.",
+              "type": "array",
+              "items": {
+                "$ref": "ContactPoint.schema.json#/definitions/ContactPoint"
+              }
+            },
+            "period": {
+              "description": "The interval during which the endpoint is expected to be operational.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "payloadType": {
+              "description": "The payload type describes the acceptable content that can be communicated on the endpoint.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "payloadMimeType": {
+              "description": "The mime type to send the payload in - e.g. application/fhir+xml, application/fhir+json. If the mime type is not specified, then the sender could send any content (including no content depending on the connectionType).",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+              }
+            },
+            "_payloadMimeType": {
+              "description": "Extensions for payloadMimeType",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "address": {
+              "description": "The uri that describes the actual end-point to connect to.",
+              "type": "string"
+            },
+            "_address": {
+              "description": "Extensions for address",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "header": {
+              "description": "Additional headers / information to send as part of the notification.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_header": {
+              "description": "Extensions for header",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            }
+          },
+          "required": [
+            "payloadType",
+            "connectionType",
+            "resourceType"
+          ]
+        }
+      ]
+    }
+  }
+}

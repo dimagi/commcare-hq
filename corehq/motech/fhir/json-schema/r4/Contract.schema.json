@@ -1,0 +1,545 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Contract",
+  "$ref": "#/definitions/Contract",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Contract": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Contract resource",
+              "type": "string",
+              "enum": [
+                "Contract"
+              ]
+            },
+            "identifier": {
+              "description": "Unique identifier for this Contract.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "status": {
+              "description": "The status of the resource instance.",
+              "type": "string",
+              "pattern": "[^\\s]+([\\s]?[^\\s]+)*"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "issued": {
+              "description": "When this  Contract was issued.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_issued": {
+              "description": "Extensions for issued",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "applies": {
+              "description": "Relevant time or time-period when this Contract is applicable.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "subject": {
+              "description": "The target entity impacted by or of interest to parties to the agreement.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "topic": {
+              "description": "The matter of concern in the context of this agreement.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "authority": {
+              "description": "A formally or informally recognized grouping of people, principals, organizations, or jurisdictions formed for the purpose of achieving some form of collective action such as the promulgation, administration and enforcement of contracts and policies.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "domain": {
+              "description": "Recognized governance framework or system operating with a circumscribed scope in accordance with specified principles, policies, processes or procedures for managing rights, actions, or behaviors of parties or principals relative to resources.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "type": {
+              "description": "Type of Contract such as an insurance policy, real estate contract, a will, power of attorny, Privacy or Security policy , trust framework agreement, etc.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subType": {
+              "description": "More specific type or specialization of an overarching or more general contract such as auto insurance, home owner  insurance, prenupial agreement, Advanced-Directive, or privacy consent.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "action": {
+              "description": "Action stipulated by this Contract.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "actionReason": {
+              "description": "Reason for action stipulated by this Contract.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "decisionType": {
+              "description": "The type of decision made by a grantor with respect to an offer made by a grantee.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "contentDerivative": {
+              "description": "The minimal content derived from the basal information source at a specific stage in its lifecycle.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "securityLabel": {
+              "description": "A set of security labels that define which resources are controlled by this consent. If more than one label is specified, all resources must have all the specified labels.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "agent": {
+              "description": "An actor taking a role in an activity for which it can be assigned some degree of responsibility for the activity taking place.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Agent"
+              }
+            },
+            "signer": {
+              "description": "Parties with legal standing in the Contract, including the principal parties, the grantor(s) and grantee(s), which are any person or organization bound by the contract, and any ancillary parties, which facilitate the execution of the contract such as a notary or witness.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Signer"
+              }
+            },
+            "valuedItem": {
+              "description": "Contract Valued Item List.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_ValuedItem"
+              }
+            },
+            "term": {
+              "description": "One or more Contract Provisions, which may be related and conveyed as a group, and may contain nested groups.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Term"
+              }
+            },
+            "bindingAttachment": {
+              "description": "Legally binding Contract: This is the signed and legally recognized representation of the Contract, which is considered the \"source of truth\" and which would be the basis for legal action related to enforcement of this Contract.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "bindingReference": {
+              "description": "Legally binding Contract: This is the signed and legally recognized representation of the Contract, which is considered the \"source of truth\" and which would be the basis for legal action related to enforcement of this Contract.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "friendly": {
+              "description": "The \"patient friendly language\" versionof the Contract in whole or in parts. \"Patient friendly language\" means the representation of the Contract and Contract Provisions in a manner that is readily accessible and understandable by a layperson in accordance with best practices for communication styles that ensure that those agreeing to or signing the Contract understand the roles, actions, obligations, responsibilities, and implication of the agreement.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Friendly"
+              }
+            },
+            "legal": {
+              "description": "List of Legal expressions or representations of this Contract.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Legal"
+              }
+            },
+            "rule": {
+              "description": "List of Computable Policy Rule Language Representations of this Contract.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Rule"
+              }
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Contract_Agent": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "actor": {
+              "description": "Who or what parties are assigned roles in this Contract.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "role": {
+              "description": "Role type of agent assigned roles in this Contract.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            }
+          },
+          "required": [
+            "actor"
+          ]
+        }
+      ]
+    },
+    "Contract_Signer": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "type": {
+              "description": "Role of this Contract signer, e.g. notary, grantee.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "party": {
+              "description": "Party which is a signator to this Contract.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "signature": {
+              "description": "Legally binding Contract DSIG signature contents in Base64.",
+              "type": "array",
+              "items": {
+                "$ref": "Signature.schema.json#/definitions/Signature"
+              }
+            }
+          },
+          "required": [
+            "signature",
+            "type",
+            "party"
+          ]
+        }
+      ]
+    },
+    "Contract_ValuedItem": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "entityCodeableConcept": {
+              "description": "Specific type of Contract Valued Item that may be priced.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "entityReference": {
+              "description": "Specific type of Contract Valued Item that may be priced.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "identifier": {
+              "description": "Identifies a Contract Valued Item instance.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "effectiveTime": {
+              "description": "Indicates the time during which this Contract ValuedItem information is effective.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_effectiveTime": {
+              "description": "Extensions for effectiveTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "quantity": {
+              "description": "Specifies the units by which the Contract Valued Item is measured or counted, and quantifies the countable or measurable Contract Valued Item instances.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "unitPrice": {
+              "description": "A Contract Valued Item unit valuation measure.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "factor": {
+              "description": "A real number that represents a multiplier used in determining the overall value of the Contract Valued Item delivered. The concept of a Factor allows for a discount or surcharge multiplier to be applied to a monetary amount.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factor": {
+              "description": "Extensions for factor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "points": {
+              "description": "An amount that expresses the weighting (based on difficulty, cost and/or resource intensiveness) associated with the Contract Valued Item delivered. The concept of Points allows for assignment of point values for a Contract Valued Item, such that a monetary amount can be assigned to each point.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_points": {
+              "description": "Extensions for points",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "net": {
+              "description": "Expresses the product of the Contract Valued Item unitQuantity and the unitPriceAmt. For example, the formula: unit Quantity * unit Price (Cost per Point) * factor Number  * points \u003d net Amount. Quantity, factor and points are assumed to be 1 if not supplied.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            }
+          }
+        }
+      ]
+    },
+    "Contract_Term": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "identifier": {
+              "description": "Unique identifier for this particular Contract Provision.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "issued": {
+              "description": "When this Contract Provision was issued.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_issued": {
+              "description": "Extensions for issued",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "applies": {
+              "description": "Relevant time or time-period when this Contract Provision is applicable.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "type": {
+              "description": "Type of Contract Provision such as specific requirements, purposes for actions, obligations, prohibitions, e.g. life time maximum benefit.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subType": {
+              "description": "Subtype of this Contract Provision, e.g. life time maximum payment for a contract term for specific valued item, e.g. disability payment.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "topic": {
+              "description": "The matter of concern in the context of this provision of the agrement.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "action": {
+              "description": "Action stipulated by this Contract Provision.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "actionReason": {
+              "description": "Reason or purpose for the action stipulated by this Contract Provision.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "securityLabel": {
+              "description": "A set of security labels that define which terms are controlled by this condition.",
+              "type": "array",
+              "items": {
+                "$ref": "Coding.schema.json#/definitions/Coding"
+              }
+            },
+            "agent": {
+              "description": "An actor taking a role in an activity for which it can be assigned some degree of responsibility for the activity taking place.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Agent1"
+              }
+            },
+            "text": {
+              "description": "Human readable form of this Contract Provision.",
+              "type": "string"
+            },
+            "_text": {
+              "description": "Extensions for text",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "valuedItem": {
+              "description": "Contract Provision Valued Item List.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_ValuedItem1"
+              }
+            },
+            "group": {
+              "description": "Nested group of Contract Provisions.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Contract_Term"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Contract_Agent1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "actor": {
+              "description": "The agent assigned a role in this Contract Provision.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "role": {
+              "description": "Role played by the agent assigned this role in the execution of this Contract Provision.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            }
+          },
+          "required": [
+            "actor"
+          ]
+        }
+      ]
+    },
+    "Contract_ValuedItem1": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "entityCodeableConcept": {
+              "description": "Specific type of Contract Provision Valued Item that may be priced.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "entityReference": {
+              "description": "Specific type of Contract Provision Valued Item that may be priced.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "identifier": {
+              "description": "Identifies a Contract Provision Valued Item instance.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "effectiveTime": {
+              "description": "Indicates the time during which this Contract Term ValuedItem information is effective.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_effectiveTime": {
+              "description": "Extensions for effectiveTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "quantity": {
+              "description": "Specifies the units by which the Contract Provision Valued Item is measured or counted, and quantifies the countable or measurable Contract Term Valued Item instances.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "unitPrice": {
+              "description": "A Contract Provision Valued Item unit valuation measure.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "factor": {
+              "description": "A real number that represents a multiplier used in determining the overall value of the Contract Provision Valued Item delivered. The concept of a Factor allows for a discount or surcharge multiplier to be applied to a monetary amount.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factor": {
+              "description": "Extensions for factor",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "points": {
+              "description": "An amount that expresses the weighting (based on difficulty, cost and/or resource intensiveness) associated with the Contract Provision Valued Item delivered. The concept of Points allows for assignment of point values for a Contract ProvisionValued Item, such that a monetary amount can be assigned to each point.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_points": {
+              "description": "Extensions for points",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "net": {
+              "description": "Expresses the product of the Contract Provision Valued Item unitQuantity and the unitPriceAmt. For example, the formula: unit Quantity * unit Price (Cost per Point) * factor Number  * points \u003d net Amount. Quantity, factor and points are assumed to be 1 if not supplied.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            }
+          }
+        }
+      ]
+    },
+    "Contract_Friendly": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "contentAttachment": {
+              "description": "Human readable rendering of this Contract in a format and representation intended to enhance comprehension and ensure understandability.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "contentReference": {
+              "description": "Human readable rendering of this Contract in a format and representation intended to enhance comprehension and ensure understandability.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Contract_Legal": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "contentAttachment": {
+              "description": "Contract legal text in human renderable form.",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "contentReference": {
+              "description": "Contract legal text in human renderable form.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Contract_Rule": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
+          "properties": {
+            "contentAttachment": {
+              "description": "Computable Contract conveyed using a policy rule language (e.g. XACML, DKAL, SecPal).",
+              "$ref": "Attachment.schema.json#/definitions/Attachment"
+            },
+            "contentReference": {
+              "description": "Computable Contract conveyed using a policy rule language (e.g. XACML, DKAL, SecPal).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

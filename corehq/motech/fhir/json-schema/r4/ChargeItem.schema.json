@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ChargeItem",
+  "$ref": "#/definitions/ChargeItem",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ChargeItem": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "The resource ChargeItem describes the provision of healthcare provider products for a certain patient, therefore referring not only to the product, but containing in addition details of the provision, like date, time, amounts and participating organizations and persons. Main Usage of the ChargeItem is to enable the billing process and internal cost allocation.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a ChargeItem resource",
+              "type": "string",
+              "enum": [
+                "ChargeItem"
+              ]
+            },
+            "identifier": {
+              "description": "Identifiers assigned to this event performer or other systems.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "definition": {
+              "description": "References the source of pricing information, rules of application for the code this ChargeItem uses.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "_definition": {
+              "description": "Extensions for definition",
+              "type": "array",
+              "items": {
+                "$ref": "Element.schema.json#/definitions/Element"
+              }
+            },
+            "status": {
+              "description": "The current state of the ChargeItem.",
+              "enum": [
+                "planned",
+                "billable",
+                "not-billable",
+                "aborted",
+                "billed",
+                "entered-in-error",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "partOf": {
+              "description": "ChargeItems can be grouped to larger ChargeItems covering the whole set.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "code": {
+              "description": "A code that identifies the charge, like a billing code.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "The individual or set of individuals the action is being or was performed on.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "context": {
+              "description": "The encounter or episode of care that establishes the context for this event.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "occurrenceDateTime": {
+              "description": "Date/time(s) or duration when the charged service was applied.",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+              "type": "string"
+            },
+            "_occurrenceDateTime": {
+              "description": "Extensions for occurrenceDateTime",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "occurrencePeriod": {
+              "description": "Date/time(s) or duration when the charged service was applied.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "occurrenceTiming": {
+              "description": "Date/time(s) or duration when the charged service was applied.",
+              "$ref": "Timing.schema.json#/definitions/Timing"
+            },
+            "participant": {
+              "description": "Indicates who or what performed or participated in the charged service.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ChargeItem_Participant"
+              }
+            },
+            "performingOrganization": {
+              "description": "The organization requesting the service.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "requestingOrganization": {
+              "description": "The organization performing the service.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "quantity": {
+              "description": "Quantity of which the charge item has been serviced.",
+              "$ref": "Quantity.schema.json#/definitions/Quantity"
+            },
+            "bodysite": {
+              "description": "The anatomical location where the related service has been applied.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "factorOverride": {
+              "description": "Factor overriding the factor determined by the rules associated with the code.",
+              "type": "number",
+              "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+            },
+            "_factorOverride": {
+              "description": "Extensions for factorOverride",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "priceOverride": {
+              "description": "Total price of the charge overriding the list price associated with the code.",
+              "$ref": "Money.schema.json#/definitions/Money"
+            },
+            "overrideReason": {
+              "description": "If the list price or the rule based factor associated with the code is overridden, this attribute can capture a text to indicate the  reason for this action.",
+              "type": "string"
+            },
+            "_overrideReason": {
+              "description": "Extensions for overrideReason",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "enterer": {
+              "description": "The device, practitioner, etc. who entered the charge item.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "enteredDate": {
+              "description": "Date the charge item was entered.",
+              "type": "string",
+              "pattern": "-?[0-9]{4}(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
+            },
+            "_enteredDate": {
+              "description": "Extensions for enteredDate",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "reason": {
+              "description": "Describes why the event occurred in coded or textual form.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "service": {
+              "description": "Indicated the rendered service that caused this charge.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "account": {
+              "description": "Account into which this ChargeItems belongs.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "note": {
+              "description": "Comments made about the event by the performer, subject or other participants.",
+              "type": "array",
+              "items": {
+                "$ref": "Annotation.schema.json#/definitions/Annotation"
+              }
+            },
+            "supportingInformation": {
+              "description": "Further information supporting the this charge.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "subject",
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "ChargeItem_Participant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "The resource ChargeItem describes the provision of healthcare provider products for a certain patient, therefore referring not only to the product, but containing in addition details of the provision, like date, time, amounts and participating organizations and persons. Main Usage of the ChargeItem is to enable the billing process and internal cost allocation.",
+          "properties": {
+            "role": {
+              "description": "Describes the type of performance or participation(e.g. primary surgeon, anaesthesiologiest, etc.).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "actor": {
+              "description": "The device, practitioner, etc. who performed or participated in the service.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "actor"
+          ]
+        }
+      ]
+    }
+  }
+}

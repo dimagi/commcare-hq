@@ -1,0 +1,377 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Encounter",
+  "$ref": "#/definitions/Encounter",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Encounter": {
+      "allOf": [
+        {
+          "$ref": "DomainResource#/definitions/DomainResource"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "resourceType": {
+              "description": "This is a Encounter resource",
+              "type": "string",
+              "enum": [
+                "Encounter"
+              ]
+            },
+            "identifier": {
+              "description": "Identifier(s) by which this encounter is known.",
+              "type": "array",
+              "items": {
+                "$ref": "Identifier.schema.json#/definitions/Identifier"
+              }
+            },
+            "status": {
+              "description": "planned | arrived | triaged | in-progress | onleave | finished | cancelled +.",
+              "enum": [
+                "planned",
+                "arrived",
+                "triaged",
+                "in-progress",
+                "onleave",
+                "finished",
+                "cancelled",
+                "entered-in-error",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "statusHistory": {
+              "description": "The status history permits the encounter resource to contain the status history without needing to read through the historical versions of the resource, or even have the server store them.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Encounter_StatusHistory"
+              }
+            },
+            "class": {
+              "description": "inpatient | outpatient | ambulatory | emergency +.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "classHistory": {
+              "description": "The class history permits the tracking of the encounters transitions without needing to go  through the resource history.\n\nThis would be used for a case where an admission starts of as an emergency encounter, then transisions into an inpatient scenario. Doing this and not restarting a new encounter ensures that any lab/diagnostic results can more easily follow the patient and not require re-processing and not get lost or cancelled during a kindof discharge from emergency to inpatient.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Encounter_ClassHistory"
+              }
+            },
+            "type": {
+              "description": "Specific type of encounter (e.g. e-mail consultation, surgical day-care, skilled nursing, rehabilitation).",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "priority": {
+              "description": "Indicates the urgency of the encounter.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "subject": {
+              "description": "The patient ro group present at the encounter.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "episodeOfCare": {
+              "description": "Where a specific encounter should be classified as a part of a specific episode(s) of care this field should be used. This association can facilitate grouping of related encounters together for a specific purpose, such as government reporting, issue tracking, association via a common problem.  The association is recorded on the encounter as these are typically created after the episode of care, and grouped on entry rather than editing the episode of care to append another encounter to it (the episode of care could span years).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "incomingReferral": {
+              "description": "The referral request this encounter satisfies (incoming referral).",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "participant": {
+              "description": "The list of people responsible for providing the service.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Encounter_Participant"
+              }
+            },
+            "appointment": {
+              "description": "The appointment that scheduled this encounter.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "period": {
+              "description": "The start and end time of the encounter.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "length": {
+              "description": "Quantity of time the encounter lasted. This excludes the time during leaves of absence.",
+              "$ref": "Duration.schema.json#/definitions/Duration"
+            },
+            "reason": {
+              "description": "Reason the encounter takes place, expressed as a code. For admissions, this can be used for a coded admission diagnosis.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "diagnosis": {
+              "description": "The list of diagnosis relevant to this encounter.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Encounter_Diagnosis"
+              }
+            },
+            "account": {
+              "description": "The set of accounts that may be used for billing for this Encounter.",
+              "type": "array",
+              "items": {
+                "$ref": "Reference.schema.json#/definitions/Reference"
+              }
+            },
+            "hospitalization": {
+              "description": "Details about the admission to a healthcare service.",
+              "$ref": "#/definitions/Encounter_Hospitalization"
+            },
+            "location": {
+              "description": "List of locations where  the patient has been during this encounter.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Encounter_Location"
+              }
+            },
+            "serviceProvider": {
+              "description": "An organization that is in charge of maintaining the information of this Encounter (e.g. who maintains the report or the master service catalog item, etc.). This MAY be the same as the organization on the Patient record, however it could be different. This MAY not be not the Service Delivery Location\u0027s Organization.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "partOf": {
+              "description": "Another Encounter of which this encounter is a part of (administratively or in time).",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          },
+          "required": [
+            "resourceType"
+          ]
+        }
+      ]
+    },
+    "Encounter_StatusHistory": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "status": {
+              "description": "planned | arrived | triaged | in-progress | onleave | finished | cancelled +.",
+              "enum": [
+                "planned",
+                "arrived",
+                "triaged",
+                "in-progress",
+                "onleave",
+                "finished",
+                "cancelled",
+                "entered-in-error",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "The time that the episode was in the specified status.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          },
+          "required": [
+            "period"
+          ]
+        }
+      ]
+    },
+    "Encounter_ClassHistory": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "class": {
+              "description": "inpatient | outpatient | ambulatory | emergency +.",
+              "$ref": "Coding.schema.json#/definitions/Coding"
+            },
+            "period": {
+              "description": "The time that the episode was in the specified class.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          },
+          "required": [
+            "period",
+            "class"
+          ]
+        }
+      ]
+    },
+    "Encounter_Participant": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "type": {
+              "description": "Role of participant in encounter.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "period": {
+              "description": "The period of time that the specified participant participated in the encounter. These can overlap or be sub-sets of the overall encounter\u0027s period.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            },
+            "individual": {
+              "description": "Persons involved in the encounter other than the patient.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            }
+          }
+        }
+      ]
+    },
+    "Encounter_Diagnosis": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "condition": {
+              "description": "Reason the encounter takes place, as specified using information from another resource. For admissions, this is the admission diagnosis. The indication will typically be a Condition (with other resources referenced in the evidence.detail), or a Procedure.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "role": {
+              "description": "Role that this diagnosis has within the encounter (e.g. admission, billing, discharge …).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "rank": {
+              "description": "Ranking of the diagnosis (for each role type).",
+              "type": "number",
+              "pattern": "[1-9][0-9]*"
+            },
+            "_rank": {
+              "description": "Extensions for rank",
+              "$ref": "Element.schema.json#/definitions/Element"
+            }
+          },
+          "required": [
+            "condition"
+          ]
+        }
+      ]
+    },
+    "Encounter_Hospitalization": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "preAdmissionIdentifier": {
+              "description": "Pre-admission identifier.",
+              "$ref": "Identifier.schema.json#/definitions/Identifier"
+            },
+            "origin": {
+              "description": "The location from which the patient came before admission.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "admitSource": {
+              "description": "From where patient was admitted (physician referral, transfer).",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "reAdmission": {
+              "description": "Whether this hospitalization is a readmission and why if known.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            },
+            "dietPreference": {
+              "description": "Diet preferences reported by the patient.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "specialCourtesy": {
+              "description": "Special courtesies (VIP, board member).",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "specialArrangement": {
+              "description": "Any special requests that have been made for this hospitalization encounter, such as the provision of specific equipment or other things.",
+              "type": "array",
+              "items": {
+                "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+              }
+            },
+            "destination": {
+              "description": "Location to which the patient is discharged.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "dischargeDisposition": {
+              "description": "Category or kind of location after discharge.",
+              "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+            }
+          }
+        }
+      ]
+    },
+    "Encounter_Location": {
+      "allOf": [
+        {
+          "$ref": "BackboneElement#/definitions/BackboneElement"
+        },
+        {
+          "description": "An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.",
+          "properties": {
+            "location": {
+              "description": "The location where the encounter takes place.",
+              "$ref": "Reference.schema.json#/definitions/Reference"
+            },
+            "status": {
+              "description": "The status of the participants\u0027 presence at the specified location during the period specified. If the participant is is no longer at the location, then the period will have an end date/time.",
+              "enum": [
+                "planned",
+                "active",
+                "reserved",
+                "completed"
+              ],
+              "type": "string"
+            },
+            "_status": {
+              "description": "Extensions for status",
+              "$ref": "Element.schema.json#/definitions/Element"
+            },
+            "period": {
+              "description": "Time period during which the patient was present at the location.",
+              "$ref": "Period.schema.json#/definitions/Period"
+            }
+          },
+          "required": [
+            "location"
+          ]
+        }
+      ]
+    }
+  }
+}

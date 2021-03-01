@@ -183,6 +183,7 @@ ADD_CAPTCHA_FIELD_TO_FORMS = False
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+    'corehq.apps.sso.backends.SsoBackend',
 ]
 
 PASSWORD_HASHERS = (
@@ -257,7 +258,7 @@ HQ_APPS = (
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
-    'corehq.apps.hqwebapp',
+    'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
     'corehq.apps.linked_domain',
@@ -1900,6 +1901,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'polio_rdc', 'ucr', 'data_sources', 'users.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 
@@ -2000,6 +2002,8 @@ DOMAIN_MODULE_MAP = {
     'inddex-reports': 'custom.inddex',
     'inddex-multilingual': 'custom.inddex',
     'inddex-multi-vn': 'custom.inddex',
+    'iita-fcms-nigeria': 'custom.inddex',
+    'cambodia-arch-3-study': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }
