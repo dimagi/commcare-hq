@@ -55,8 +55,11 @@ def get_view(request, domain, resource_type, resource_id):
     except CaseNotFound:
         return JsonResponse(status=400, data={'message': f"Could not find resource with ID {resource_id}"})
 
-    if case.type not in (FHIRResourceType.objects.filter(domain=domain, name=resource_type).
-                         values_list('case_type__name', flat=True)):
+    if not FHIRResourceType.objects.filter(
+            domain=domain,
+            name=resource_type,
+            case_type__name=case.type
+    ).exists():
         return JsonResponse(status=400, data={'message': "Invalid Resource Type"})
     response = {
         'resourceType': resource_type,
