@@ -26,7 +26,7 @@ from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
 
 # Bandit does not catch any references to mark_safe using this,
-# so please use it with caution, and only on segments that contain user input
+# so please use it with caution, and only on segments that do not contain user input
 mark_safe_lazy = lazy(mark_safe, str)
 
 
