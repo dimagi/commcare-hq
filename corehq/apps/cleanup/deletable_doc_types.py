@@ -13,6 +13,7 @@ MAIN_DB = None
 DELETABLE_COUCH_DOC_TYPES = {
     'ApiUser': (MAIN_DB,),
     'ApplicationAccess': (MAIN_DB,),
+    'AuditCommand': ('auditcare',),
     'SurveyKeyword': (MAIN_DB,),
     'SurveyKeywordAction': (MAIN_DB,),
     'CaseReminder': (MAIN_DB,),
