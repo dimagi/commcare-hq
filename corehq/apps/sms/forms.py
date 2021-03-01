@@ -1172,7 +1172,7 @@ class InitiateAddSMSBackendForm(Form):
                 InlineField('action'),
                 Div(InlineField('hq_api_id', css_class="ko-select2"), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
-                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
+                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),  # nosec: no user input
                     css_class='btn-primary',
                     type='submit',
                     style="margin-left:5px;"
