@@ -1,13 +1,18 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from corehq.apps.domain.forms import NoAutocompleteMixin
-from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
-from corehq.apps.consumer_user.models import ConsumerUser
-from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
+from django.utils.translation import ugettext_lazy as _
+
+from corehq.apps.consumer_user.const import (
+    CONSUMER_INVITATION_ACCEPTED,
+    CONSUMER_INVITATION_STATUS,
+)
+from corehq.apps.consumer_user.models import (
+    ConsumerUser,
+    ConsumerUserCaseRelationship,
+)
+from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.hqcase.utils import update_case
-from corehq.apps.consumer_user.const import CONSUMER_INVITATION_STATUS
-from corehq.apps.consumer_user.const import CONSUMER_INVITATION_ACCEPTED
 
 
 class ConsumerUserAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -26,9 +31,6 @@ class ConsumerUserAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         username = self.cleaned_data.get('username')
         if username is None:
             raise ValidationError(_('Please enter a valid email address.'))
-
-        if self.invitation and self.invitation.email != username:
-            raise ValidationError(_('Email is not same as the one that the invitation has been sent'))
 
         password = self.cleaned_data.get('password')
         if not password:
