@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.db.models.sql.subqueries import DeleteQuery
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -51,23 +50,26 @@ MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
 _soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
+DELETE_CHUNK_SIZE = 5000
+
 
 @periodic_task(
-    run_every=crontab(day_of_month=27, hour=6, minute=0),
+    run_every=crontab(hour=6, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
-def raw_delete_logs():
+def delete_old_request_logs():
     """
-    Drop MOTECH logs older than 90 days.
-
-    Does not notify pre_delete and post_delete signal listeners. Does
-    not respect cascade delete.
-
-    Runs on the 27th of every month.
+    Delete RequestLogs older than 90 days.
     """
     ninety_days_ago = datetime.utcnow() - timedelta(days=90)
-    queryset = RequestLog.objects.filter(timestamp__lt=ninety_days_ago)
-    DeleteQuery(RequestLog).delete_qs(queryset, using='default')
+    while True:
+        queryset = (RequestLog.objects
+                    .filter(timestamp__lt=ninety_days_ago)
+                    .values_list('id', flat=True)[:DELETE_CHUNK_SIZE])
+        id_list = list(queryset)
+        deleted, __ = RequestLog.objects.filter(id__in=id_list).delete()
+        if not deleted:
+            return
 
 
 @periodic_task(

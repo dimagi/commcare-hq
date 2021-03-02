@@ -20,14 +20,14 @@ from ..const import (
     RECORD_PENDING_STATE,
 )
 from ..models import FormRepeater, RepeaterStub
-from ..tasks import process_repeater_stub, raw_delete_logs
+from ..tasks import process_repeater_stub, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
                'naoi', 'deich']
 
 
-class TestRawDeleteLogs(TestCase):
+class TestDeleteOldRequestLogs(TestCase):
 
     def tearDown(self):
         RequestLog.objects.filter(domain=DOMAIN).delete()
@@ -36,7 +36,7 @@ class TestRawDeleteLogs(TestCase):
         log = RequestLog.objects.create(domain=DOMAIN)
         log.timestamp = datetime.utcnow() - timedelta(days=91)
         log.save()  # Replace the value set by auto_now_add=True
-        raw_delete_logs.apply()
+        delete_old_request_logs.apply()
 
         count = RequestLog.objects.filter(domain=DOMAIN).count()
         self.assertEqual(count, 0)
@@ -45,18 +45,31 @@ class TestRawDeleteLogs(TestCase):
         log = RequestLog.objects.create(domain=DOMAIN)
         log.timestamp = datetime.utcnow() - timedelta(days=89)
         log.save()
-        raw_delete_logs.apply()
+        delete_old_request_logs.apply()
 
         count = RequestLog.objects.filter(domain=DOMAIN).count()
         self.assertGreater(count, 0)
 
-    def test_num_queries(self):
+    def test_num_queries_per_chunk(self):
         log = RequestLog.objects.create(domain=DOMAIN)
         log.timestamp = datetime.utcnow() - timedelta(days=91)
         log.save()
 
-        with self.assertNumQueries(1):
-            raw_delete_logs.apply()
+        with self.assertNumQueries(5):
+            delete_old_request_logs.apply()
+
+    def test_num_queries_chunked(self):
+        for __ in range(10):
+            log = RequestLog.objects.create(domain=DOMAIN)
+            log.timestamp = datetime.utcnow() - timedelta(days=91)
+            log.save()
+
+        with patch('corehq.motech.repeaters.tasks.DELETE_CHUNK_SIZE', 2):
+            with self.assertNumQueries(21):
+                delete_old_request_logs.apply()
+
+        count = RequestLog.objects.filter(domain=DOMAIN).count()
+        self.assertEqual(count, 0)
 
 
 class TestProcessRepeaterStub(TestCase):
