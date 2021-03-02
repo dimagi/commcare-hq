@@ -1,18 +1,22 @@
+from django.contrib.auth.models import User
+from django.core.signing import TimestampSigner
 from django.test import TestCase
 from django.test.client import Client
-from corehq.apps.consumer_user.models import ConsumerUserInvitation
-from django.urls import reverse
-from django.contrib.auth.models import User
-from corehq.apps.consumer_user.models import ConsumerUser
-from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from mock import patch
-from corehq.apps.hqcase.utils import update_case
-from django.core.signing import TimestampSigner
-from corehq.apps.data_interfaces.tests.util import create_case
 from django.test.utils import override_settings
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
+from mock import patch
+
 from corehq.apps.consumer_user.const import CONSUMER_INVITATION_CASE_TYPE
+from corehq.apps.consumer_user.models import (
+    ConsumerUser,
+    ConsumerUserCaseRelationship,
+    ConsumerUserInvitation,
+)
+from corehq.apps.data_interfaces.tests.util import create_case
+from corehq.apps.hqcase.utils import update_case
 
 
 def register_url(invitation):
@@ -37,11 +41,11 @@ class RegisterTestCase(TestCase):
         self.client = Client()
 
     def tearDown(self):
-        super().tearDown()
         ConsumerUserCaseRelationship.objects.all().delete()
         ConsumerUserInvitation.objects.all().delete()
         ConsumerUser.objects.all().delete()
         User.objects.all().delete()
+        super().tearDown()
 
     def test_register_get(self):
         invitation = ConsumerUserInvitation.objects.create(case_id='1', domain='1', invited_by='I',
@@ -147,11 +151,11 @@ class LoginTestCase(TestCase):
         self.client = Client()
 
     def tearDown(self):
-        super().tearDown()
         ConsumerUserCaseRelationship.objects.all().delete()
         ConsumerUserInvitation.objects.all().delete()
         ConsumerUser.objects.all().delete()
         User.objects.all().delete()
+        super().tearDown()
 
     def test_login_get(self):
         response = self.client.get(self.login_url)
@@ -197,11 +201,11 @@ class SignalTestCase(TestCase):
         self.domain = 'consumer-invitation-test'
 
     def tearDown(self):
-        super().tearDown()
         ConsumerUserCaseRelationship.objects.all().delete()
         ConsumerUserInvitation.objects.all().delete()
         ConsumerUser.objects.all().delete()
         User.objects.all().delete()
+        super().tearDown()
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email(self):
@@ -255,10 +259,10 @@ class DomainsAndCasesTestCase(TestCase):
         self.url = reverse('consumer_user:domain_and_cases_list')
 
     def tearDown(self):
-        super().tearDown()
         ConsumerUserCaseRelationship.objects.all().delete()
         ConsumerUser.objects.all().delete()
         User.objects.all().delete()
+        super().tearDown()
 
     def test_domains_and_cases_get(self):
         email = 'b@b.com'
@@ -306,9 +310,9 @@ class ChangeContactDetailsTestCase(TestCase):
         self.url = reverse('consumer_user:change_contact_details')
 
     def tearDown(self):
-        super().tearDown()
         ConsumerUser.objects.all().delete()
         User.objects.all().delete()
+        super().tearDown()
 
     def test_change_contact_details_get(self):
         email = 'b2@b2.com'
