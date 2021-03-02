@@ -13,6 +13,7 @@ class CaseUpdateCommand(BaseCommand):
     """
 
     def __init__(self):
+        self.output_file = None
         self.extra_options = {}
 
     def case_block(self):
@@ -27,11 +28,25 @@ class CaseUpdateCommand(BaseCommand):
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
         return case_ids
 
+    def log_data(self, domain, command, case_type, total_cases, num_updated, failed_cases, loc_id=None):
+        if self.output_file is not None:
+            with open(self.output_file, "a") as output_file:
+                num_case_updated_str = "{} {}: Updated {} out of the {} {} cases".format(domain, command,
+                                                                                         num_updated, total_cases,
+                                                                                         case_type)
+                if loc_id is not None:
+                    num_case_updated_str += f" in this location:{loc_id}"
+                output_file.write(num_case_updated_str)
+                for case in failed_cases:
+                    output_file.write(case)
+                output_file.close()
+
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('case_type')
         parser.add_argument('--username', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
+        parser.add_argument('--output-file', type=str, default=None)
 
     def handle(self, domain, case_type, **options):
         domains = {domain}
@@ -44,6 +59,8 @@ class CaseUpdateCommand(BaseCommand):
                 raise Exception("The username you entered is invalid")
         else:
             user_id = SYSTEM_USER_ID
+
+        self.output_file = options["output_file"]
 
         options.pop("and_linked")
         options.pop("username")
