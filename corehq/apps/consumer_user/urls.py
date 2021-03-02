@@ -1,6 +1,14 @@
 from django.urls import path
-from .views import login_view, register_view, success_view, logout_view, change_password_view, \
-    domains_and_cases_list_view, change_contact_details_view
+
+from .views import (
+    change_contact_details_view,
+    change_password_view,
+    domains_and_cases_list_view,
+    login_view,
+    logout_view,
+    register_view,
+    success_view,
+)
 
 app_name = 'consumer_user'
 

@@ -1,20 +1,23 @@
-from celery.task import task
 from django.conf import settings
-from dimagi.utils.web import get_url_base
-from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes
-from django.urls import reverse
-from corehq.apps.consumer_user.models import ConsumerUserInvitation
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from django.utils.http import urlsafe_base64_encode
 from django.core.signing import TimestampSigner
-from corehq.apps.hqcase.utils import update_case
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
-from .const import CONSUMER_INVITATION_SENT
-from .const import CONSUMER_INVITATION_STATUS
+
+from celery.task import task
+
+from dimagi.utils.web import get_url_base
+
+from corehq.apps.consumer_user.models import ConsumerUserInvitation
+from corehq.apps.hqcase.utils import update_case
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+
+from .const import CONSUMER_INVITATION_SENT, CONSUMER_INVITATION_STATUS
 
 
-@task(serializer='pickle', queue=settings.CELERY_MAIN_QUEUE, ignore_result=True)
+@task
 def create_new_invitation(case_id, domain, opened_by, email):
     invitation = ConsumerUserInvitation.create_invitation(case_id, domain, opened_by, email)
     url = '%s%s' % (get_url_base(),
@@ -27,6 +30,7 @@ def create_new_invitation(case_id, domain, opened_by, email):
     email_context = {
         'link': url,
     }
+    print(url)
     send_html_email_async.delay(
         _('Beneficiary Registration'),
         email,
