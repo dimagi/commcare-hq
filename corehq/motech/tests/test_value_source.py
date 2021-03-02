@@ -251,18 +251,24 @@ class DirectionTests(SimpleTestCase):
         self.assertTrue(value_source.can_export)
 
 
-class AsJsonObjectTests(SimpleTestCase):
+class TestAsValueSourceSchema(SimpleTestCase):
 
-    def test_constant_value_schema_validates_constant_string(self):
-        json_object = as_value_source({"value": "spam"})
-        self.assertIsInstance(json_object, ConstantValue)
-
-    def test_case_property_constant_value(self):
-        json_object = as_value_source({
-            "case_property": "spam",
+    def test_as_constant_value(self):
+        value_source = as_value_source({
             "value": "spam",
         })
-        self.assertIsInstance(json_object, CasePropertyConstantValue)
+        self.assertIsInstance(value_source, ConstantValue)
+
+    def test_as_case_property_constant_value(self):
+        value_source = as_value_source({
+            "value": "spam",
+            "case_property": "spam",
+        })
+        self.assertIsInstance(value_source, CasePropertyConstantValue)
+
+    def test_type_error(self):
+        with self.assertRaises(TypeError):
+            as_value_source({})
 
 
 class FormUserAncestorLocationFieldTests(SimpleTestCase):
@@ -363,12 +369,6 @@ class TestSupercaseValueSourceValidation(SimpleTestCase):
                 'supercase_value_source': {},
             })
 
-    def test_supercase_value_source_missing(self):
-        with self.assertRaises(TypeError):
-            as_value_source({
-                'supercase_value_source': {},
-            })
-
 
 class TestSubcaseValueSourceValidation(SimpleTestCase):
 
@@ -397,10 +397,6 @@ class TestSubcaseValueSourceValidation(SimpleTestCase):
             as_value_source({
                 'subcase_value_source': {},
             })
-
-    def test_subcase_value_source_missing(self):
-        with self.assertRaises(TypeError):
-            as_value_source({})
 
 
 class AsValueSourceTests(SimpleTestCase):
