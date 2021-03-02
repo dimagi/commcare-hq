@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.reports.tasks import _get_question_id_for_attachment, _find_path_to_question_id
+from corehq.apps.reports.tasks import _get_question_id_for_attachment
 
 
 class GetQuestionIdTests(SimpleTestCase):
