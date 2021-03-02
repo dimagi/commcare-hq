@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ValueSet",
+  "id": "file:ValueSet.schema.json",
   "$ref": "#/definitions/ValueSet",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ValueSet": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -176,7 +176,7 @@
     "ValueSet_Compose": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -222,7 +222,7 @@
     "ValueSet_Include": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -278,7 +278,7 @@
     "ValueSet_Concept": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -314,7 +314,7 @@
     "ValueSet_Designation": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -347,7 +347,7 @@
     "ValueSet_Filter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -396,7 +396,7 @@
     "ValueSet_Expansion": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -457,7 +457,7 @@
     "ValueSet_Parameter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
@@ -528,7 +528,7 @@
     "ValueSet_Contains": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A value set specifies a set of codes drawn from one or more code systems.",
