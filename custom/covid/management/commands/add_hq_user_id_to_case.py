@@ -28,12 +28,14 @@ class Command(CaseUpdateCommand):
         case_ids = self.find_case_ids_by_type(domain, case_type)
         accessor = CaseAccessors(domain)
         case_blocks = []
+        failed_cases = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
             username_of_associated_mobile_workers = case.get_case_property('username')
             try:
                 normalized_username = normalize_username(username_of_associated_mobile_workers, domain)
             except ValidationError:
+                failed_cases.append(f"ValidationError: invalid username associated with case:{case.case_id}")
                 skip_count += 1
                 continue
             user_id_of_mobile_worker = username_to_user_id(normalized_username)
@@ -48,3 +50,5 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+        self.log_data(domain, "add_hq_user_id_to_case", case_type, len(case_ids), total, failed_cases)
