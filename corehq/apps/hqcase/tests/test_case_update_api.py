@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 
 from django.test import TestCase
 from django.urls import reverse
@@ -19,7 +18,6 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.util.test_utils import privilege_enabled
 
-from ..api.core import serialize_case
 from ..utils import submit_case_blocks
 
 

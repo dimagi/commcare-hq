@@ -14,6 +14,7 @@ DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 CUSTOM_PROPERTY_PREFIX = 'property.'
 
+
 def _to_boolean(val):
     return val.lower() not in [''] + list(FALSE_STRINGS)
 

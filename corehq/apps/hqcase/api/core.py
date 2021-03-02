@@ -70,5 +70,3 @@ class SubmissionError(Exception):
     def __init__(self, msg, form_id):
         self.form_id = form_id
         super().__init__(msg)
-
-

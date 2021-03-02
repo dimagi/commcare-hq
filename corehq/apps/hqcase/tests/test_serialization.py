@@ -7,14 +7,14 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup
 
 from ..api.core import serialize_case, serialize_es_case
 from ..utils import submit_case_blocks
