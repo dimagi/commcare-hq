@@ -973,7 +973,7 @@ class XForm(WrappedNode):
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False):
+                      exclude_select_with_itemsets=False, include_fixtures=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -987,9 +987,9 @@ class XForm(WrappedNode):
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
+        :param include_fixtures: add fixture data for questions that we can infer it from
         """
         from corehq.apps.app_manager.util import first_elem
-
         def _get_select_question_option(item):
             translation = self._get_label_text(item, langs)
             try:
@@ -1050,6 +1050,14 @@ class XForm(WrappedNode):
             }
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
+
+            if include_fixtures and cnode.node.find('{f}itemset').exists():
+                itemset_node = cnode.node.find('{f}itemset')
+                question['fixture_data'] = {
+                    'nodeset': itemset_node.attrib.get('nodeset'),
+                    'label_ref': itemset_node.find('{f}label').attrib.get('ref'),
+                    'value_ref': itemset_node.find('{f}value').attrib.get('ref'),
+                }
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
