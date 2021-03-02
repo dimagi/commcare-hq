@@ -1,4 +1,4 @@
-(function($) {
+(function ($) {
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US
         renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
@@ -144,7 +144,7 @@
     // Tigrinya
     $.calendarsPicker.regionalOptions['tir'] = {
         renderer: $.calendarsPicker.regionalOptions[''].renderer,
-        prevText: 'ዝሓለፈ/ሕሉፍ',
+        prevText: 'ዝሓለፈ',
         prevStatus: 'ናይ ዝሓለፈ ወርሒ አርኢ',
         prevJumpText: '&lt;&lt;',
         prevJumpStatus: 'ናይ ዝሓለፈ ዓመት አርኢ',
@@ -152,22 +152,22 @@
         nextStatus: 'ቐጻሊ ወርሒ አርኢ',
         nextJumpText: '&gt;&gt;',
         nextJumpStatus: 'ቐጻሊ ዓመት አርኢ',
-        currentText: 'ህሉው/ሕዚ',
+        currentText: 'ህሉው',
         currentStatus: 'ናይ ሕዚ ወርሒ አርኢ',
-        todayText: 'ሎሚ/ሎማዓንቲ',
-        todayStatus: 'ናይ ሎሚ/ሎማዓንቲ ወርሒ አርኢ',
-        clearText: 'ሰርዝ/አጥፍእ',
-        clearStatus: 'ኩሎም ዕለታት ሰርዝ/አጥፍእ',
+        todayText: 'ሎሚ',
+        todayStatus: 'ናይ ሎሚ',
+        clearText: 'ሰርዝ',
+        clearStatus: 'ኩሎም ዕለታት ሰርዝ',
         closeText: 'ዕጸው',
-        closeStatus: 'ዕለት መምረፂ ዕጸው/ምዕጻው',
-        yearStatus: 'ዓመት ቐይሪ/ሮ',
+        closeStatus: 'ዕለት መምረፂ ዕጸው',
+        yearStatus: 'ዓመት ቐይሪ',
         earlierText: '&#160;&#160;▲',
         laterText: '&#160;&#160;▼',
-        monthStatus: 'ወርሒ ቐይሪ/ሮ',
+        monthStatus: 'ወርሒ ቐይሪ',
         weekText: 'ሰሙን',
         weekStatus: 'ሰሙን ዓመት',
-        dayStatus: 'DD M d yyyy ምረፂ/ፅ',
-        defaultStatus: 'ዕለት ምረፂ/ፅ',
+        dayStatus: 'DD M d yyyy ምረፂ',
+        defaultStatus: 'ዕለት ምረፂ',
         isRTL: false,
     };
     $.calendars.calendars.ethiopian.prototype.regionalOptions['tir'] = {
