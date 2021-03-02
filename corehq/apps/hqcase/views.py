@@ -20,6 +20,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.pillows.case_search import domain_needs_search_index
 
 from .api.core import SubmissionError, UserError, serialize_case
 from .api.get_list import get_list
@@ -85,7 +86,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_individual_get(request, case_id)
-    if request.method == 'GET' and not case_id:
+    if request.method == 'GET' and not case_id and domain_needs_search_index(domain):
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
@@ -103,7 +104,10 @@ def _handle_individual_get(request, case_id):
 
 
 def _handle_list_view(request):
-    cases = get_list(request.domain, request.GET.dict())
+    try:
+        cases = get_list(request.domain, request.GET.dict())
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse(cases)
 
 
