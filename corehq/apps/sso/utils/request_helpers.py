@@ -23,3 +23,7 @@ def get_request_data(request):
         'get_data': request.GET.copy(),
         'post_data': request.POST.copy(),
     }
+
+
+def is_request_using_sso(request):
+    return bool(hasattr(request, 'session') and request.session.get('samlSessionIndex', None))
