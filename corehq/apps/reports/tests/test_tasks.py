@@ -9,7 +9,7 @@ class GetQuestionIdTests(SimpleTestCase):
         form = {'attachment': 'my_attachment'}
 
         result = _get_question_id_for_attachment(form, 'my_attachment')
-        self.assertEqual(result, 'attach9ment')
+        self.assertEqual(result, 'attachment')
 
     def test_returns_question_id_when_found_in_nested_form(self):
         nested_form = {'attachment': 'my_attachment'}
