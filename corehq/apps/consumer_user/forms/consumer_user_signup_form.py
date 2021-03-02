@@ -1,13 +1,17 @@
-from django.forms import ModelForm
-from django.forms import PasswordInput
 from django.contrib.auth.models import User
-from corehq.apps.consumer_user.models import ConsumerUser
-from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
-from corehq.apps.hqcase.utils import update_case
 from django.core.exceptions import ValidationError
+from django.forms import ModelForm, PasswordInput
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.consumer_user.const import CONSUMER_INVITATION_STATUS
-from corehq.apps.consumer_user.const import CONSUMER_INVITATION_ACCEPTED
+
+from corehq.apps.consumer_user.const import (
+    CONSUMER_INVITATION_ACCEPTED,
+    CONSUMER_INVITATION_STATUS,
+)
+from corehq.apps.consumer_user.models import (
+    ConsumerUser,
+    ConsumerUserCaseRelationship,
+)
+from corehq.apps.hqcase.utils import update_case
 
 
 class ConsumerUserSignUpForm(ModelForm):

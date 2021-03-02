@@ -1,30 +1,34 @@
 import json
+from datetime import datetime, timedelta
 
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
-from django.core.signing import TimestampSigner
-from django.core.signing import BadSignature
-from django.core.signing import SignatureExpired
-from datetime import timedelta, datetime
-from django.http import HttpResponseRedirect
-from django.http import HttpResponse
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from .forms.change_contact_details_form import ChangeContactDetailsForm
-from .forms.consumer_user_signup_form import ConsumerUserSignUpForm
-from .forms.consumer_user_authentication_form import ConsumerUserAuthenticationForm
-from django.views.decorators.debug import sensitive_post_parameters
-from two_factor.views import LoginView
-from corehq.apps.consumer_user.models import ConsumerUser
-from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
-from corehq.apps.consumer_user.models import ConsumerUserInvitation
-from corehq.apps.domain.decorators import two_factor_exempt
-from .decorators import consumer_user_login_required
 from django.utils.http import urlsafe_base64_decode
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from django.utils.translation import ugettext as _
+from django.views.decorators.debug import sensitive_post_parameters
+
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from two_factor.views import LoginView
+
+from corehq.apps.consumer_user.models import (
+    ConsumerUser,
+    ConsumerUserCaseRelationship,
+    ConsumerUserInvitation,
+)
+from corehq.apps.domain.decorators import two_factor_exempt
+
 from ..users.models import CouchUser
+from .decorators import consumer_user_login_required
+from .forms.change_contact_details_form import ChangeContactDetailsForm
+from .forms.consumer_user_authentication_form import (
+    ConsumerUserAuthenticationForm,
+)
+from .forms.consumer_user_signup_form import ConsumerUserSignUpForm
 
 
 class ConsumerUserLoginView(LoginView):
