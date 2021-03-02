@@ -144,6 +144,28 @@ class IdentityProvider(models.Model):
         owner = BillingAccount.get_account_by_domain(domain)
         return cls.objects.filter(owner=owner, is_editable=True).exists()
 
+    @classmethod
+    def get_active_identity_provider_by_username(cls, username):
+        """
+        Returns the active Identity Provider associated with a user's email
+        domain or None.
+        :param username: (string)
+        :return: IdentityProvider or None
+        """
+        try:
+            email_domain = username.split('@')[1]
+        except IndexError:
+            # malformed email
+            return None
+        try:
+            authenticated_email_domain = AuthenticatedEmailDomain.objects.get(
+                email_domain=email_domain
+            )
+            idp = authenticated_email_domain.identity_provider
+        except AuthenticatedEmailDomain.DoesNotExist:
+            return None
+        return idp if idp.is_active else None
+
 
 class AuthenticatedEmailDomain(models.Model):
     """
