@@ -1053,11 +1053,14 @@ class XForm(WrappedNode):
 
             if include_fixtures and cnode.node.find('{f}itemset').exists():
                 itemset_node = cnode.node.find('{f}itemset')
-                question['fixture_data'] = {
-                    'nodeset': itemset_node.attrib.get('nodeset'),
-                    'label_ref': itemset_node.find('{f}label').attrib.get('ref'),
-                    'value_ref': itemset_node.find('{f}value').attrib.get('ref'),
+                fixture_data = {
+                    'nodeset': itemset_node.attrib.get('nodeset')
                 }
+                if itemset_node.find('{f}label').exists():
+                    fixture_data['label_ref'] = itemset_node.find('{f}label').attrib.get('ref')
+                if itemset_node.find('{f}value').exists():
+                    fixture_data['value_ref'] = itemset_node.find('{f}value').attrib.get('ref')
+                question['fixture_data'] = fixture_data
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
