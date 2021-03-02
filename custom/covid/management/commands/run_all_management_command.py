@@ -8,7 +8,7 @@ from django.core.management import call_command
 DEVICE_ID = __name__ + ".run_all_management_command"
 
 
-def run_command(command, *args, location=None, inactive_location=None):
+def run_command(command, *args, location=None, inactive_location=None, output_file=None):
     try:
         if inactive_location is not None:
             call_command(command, *args, location=location, inactive_location=inactive_location)
@@ -26,6 +26,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('csv_file')
         parser.add_argument('--only-inactive', action='store_true', default=False)
+        parser.add_argument('--output-file', type=str, default=None)
 
     def handle(self, csv_file, **options):
         domains = []
@@ -41,6 +42,12 @@ class Command(BaseCommand):
                     locations['active']['traveler'] = (row['traveler_active_location_id'])
                 locations['inactive'] = row['inactive_location_id']
                 location_ids[row['domain']] = locations
+
+        output_file_name = options["output_file"]
+        if output_file_name:
+            with open(output_file_name, "x") as output_file:
+                output_file.write(f"Updated {len(domains)} domains")
+                output_file.close()
 
         if len(set(domains)) != len(domains):
             domains = set(domains)
