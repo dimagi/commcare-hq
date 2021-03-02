@@ -1,5 +1,4 @@
 from corehq.apps.sso import certificates
-from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.tests import generator as accounting_gen
 
 from corehq.util.test_utils import unit_testing_only
