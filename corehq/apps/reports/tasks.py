@@ -380,16 +380,16 @@ def _get_question_id_for_attachment(form, attachment_name):
     if question_id_components is None:
         question_id_components = _find_path_to_question_id(form, attachment_name, use_basename=True)
 
-    try:
+    if question_id_components is not None:
         return str('-'.join(question_id_components))
-    except TypeError:
+    else:
         return None
 
 
 def _find_path_to_question_id(form, attachment_name, use_basename=False):
     """
     Returns the list of keys used to find attachment_name in the form (None if not found)
-    use_basename
+    use_basename only applies to values that are an absolute path
     """
     if not isinstance(form, dict):
         # Recursive calls should always give `form` a form value.
