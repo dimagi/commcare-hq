@@ -1,4 +1,9 @@
 from django.conf import settings
+from corehq.apps.sso.exceptions import SingleSignOnError
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    TrustedIdentityProvider,
+)
 
 
 def get_request_data(request):
@@ -27,3 +32,45 @@ def get_request_data(request):
 
 def is_request_using_sso(request):
     return bool(hasattr(request, 'session') and request.session.get('samlSessionIndex', None))
+
+
+def is_request_blocked_from_viewing_domain_due_to_sso(request, domain_obj):
+    """
+    Checks whether a given request is allowed to view a domain.
+
+    :param request: HttpRequest
+    :param domain_obj: Domain object
+    :return: Boolean (True if request is blocked)
+    """
+    if not is_request_using_sso(request):
+        # Request is not using SSO, so it's never blocked
+        return False
+
+    username = request.user.username
+    idp = IdentityProvider.get_active_identity_provider_by_username(username)
+    if not idp:
+        raise SingleSignOnError(
+            f"User {username} was authenticated via SSO, but does not appear "
+            f"to be associated with an Identity Provider!"
+        )
+
+    if domain_obj.name in idp.get_active_projects():
+        # The domain is owned by the owner of the Identity Provider
+        return False
+
+    if TrustedIdentityProvider.objects.filter(
+        domain=domain_obj.name, identity_provider=idp
+    ).exists():
+        # An administrator of this domain has trusted this Identity Provider
+        return False
+
+    if domain_obj.creating_user == username:
+        # The user created this domain and thus should never be blocked.
+        # However, a Trust was not yet established. Since the current user
+        # owns this domain, a Trust will be created automatically and a message
+        # will be displayed to the user.
+        # todo mechanism for displaying message to user
+        return False
+
+    # None of the above criteria was met so the user is definitely blocked!
+    return True
