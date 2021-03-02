@@ -9,63 +9,26 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from auditcare import models
-from auditcare.models import AccessAudit, AuditEvent, ModelActionAudit
+from auditcare.models import AccessAudit, AuditEvent
 from auditcare.tests.testutils import delete_all, get_latest_access
-from auditcare.utils import _thread_locals
 
 
 class AuthenticationTestCase(TestCase):
 
     def setUp(self):
         super(AuthenticationTestCase, self).setUp()
-        if hasattr(_thread_locals, 'user'):
-            delattr(_thread_locals, 'user')
         User.objects.all().delete()
         delete_all(AuditEvent, 'auditcare/all_events')
         self.client = Client()
         self._createUser()
 
     def _createUser(self):
-        model_count = ModelActionAudit.view(
-            "auditcare/model_actions_by_id", include_docs=True, reduce=False
-        ).count()
-        total_count = AuditEvent.view("auditcare/all_events").count()
-
         usr = User()
         usr.username = 'mockmock@mockmock.com'
         usr.set_password('mockmock')
         usr.first_name = 'mocky'
         usr.last_name = 'mock'
         usr.save()
-
-        model_count2 = ModelActionAudit.view(
-            "auditcare/model_actions_by_id", include_docs=True, reduce=False
-        ).count()
-        total_count2 = AuditEvent.view("auditcare/all_events").count()
-
-        self.assertEqual(model_count + 1, model_count2)
-        self.assertEqual(total_count + 1, total_count2)
-
-    @freeze_time(datetime.datetime.utcnow(), as_arg=True)
-    def testModifyUser(frozen_time, self):
-        model_count = ModelActionAudit.view(
-            "auditcare/model_actions_by_id", include_docs=True, reduce=False
-        ).count()
-        total_count = AuditEvent.view("auditcare/all_events").count()
-
-        usr = User.objects.get(username='mockmock@mockmock.com')
-        usr.first_name = 'aklsjfl'
-        frozen_time.tick(datetime.timedelta(seconds=1))
-        usr.save()
-        frozen_time.tick(datetime.timedelta(seconds=1))
-
-        model_count2 = ModelActionAudit.view(
-            "auditcare/model_actions_by_id", include_docs=True, reduce=False
-        ).count()
-        total_count2 = AuditEvent.view("auditcare/all_events").count()
-
-        self.assertEqual(model_count + 1, model_count2)
-        self.assertEqual(total_count + 1, total_count2)
 
     def testLogin(self):
         #login

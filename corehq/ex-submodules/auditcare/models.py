@@ -1,6 +1,3 @@
-import copy
-import hashlib
-import json
 import logging
 import uuid
 from datetime import datetime
@@ -10,7 +7,6 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 
-from auditcare import utils
 from auditcare.signals import user_login_failed
 from dimagi.ext.couchdbkit import (
     DateTimeProperty,
@@ -94,217 +90,6 @@ class AuditEvent(Document):
             audit.user = user.username
             audit.description = ''
         return audit
-
-
-class ModelActionAudit(AuditEvent):
-    """
-    Audit event to track the modification or editing of an auditable model
-
-    For django models:
-        the object_type will be the contenttype
-        the object_uuid will be the model instance's PK
-        the revision_id will be whatever is decided by the app
-
-    for couch models:
-        the object_type will be the doc_type
-        the object_uuid will be theh doc's doc_id
-        the revision_id will be the _rev as emitted by the
-
-    """
-    object_type = StringProperty()
-    object_uuid = StringProperty()
-    revision_checksum = StringProperty()
-    revision_id = StringProperty()
-    # the instance data of the model at this rev.  So at any given moment, the
-    # CURRENT instance of this model will be equal to this.
-    archived_data = DictProperty()
-
-    # PRIOR values are stored here so as to show the delta of data.
-    removed = DictProperty()  # data/properties removed in this revision.
-    added = DictProperty()  # data/properties added in this revision
-    changed = DictProperty()  # data/properties changed in this revision
-
-    next_id = StringProperty()  # the doc_id of the next revision
-    prev_id = StringProperty()  # the doc_id of the previous revision
-
-    def next(self):
-        if self.next_id is not None:
-            return self.__class__.get(self.next_id)
-        else:
-            return None
-
-    def prev(self):
-        if self.prev_id is not None:
-            return self.__class__.get(self.prev_id)
-        else:
-            return None
-
-    @property
-    def summary(self):
-        return "%s ID: %s" % (self.object_type, self.object_uuid)
-
-    class Meta(object):
-        app_label = 'auditcare'
-
-    @classmethod
-    def calculate_checksum(cls, instance_json, is_django=False):
-        if is_django:
-            json_string = json.dumps(instance_json)
-        else:
-            instance_copy = copy.deepcopy(instance_json)
-            #if instance_copy.has_key('_rev'):
-            #if it's an existing version, then save it
-            instance_copy.pop('_rev')
-            json_string = json.dumps(instance_copy)
-        return hashlib.sha1(json_string.encode('utf-8')).hexdigest()
-
-    def compute_changes(self, save=False):
-        """
-        Instance method to compute the deltas for a given audit instance.
-        Assumes two things:
-        1:  self.archived_data must be set
-        2:  self.prev_id must be set too.
-
-        returns None
-        """
-        if self.prev_id is None:
-            log.error("Error, trying to compute changes where a previous pointer isn't set")
-            return None
-        if self.archived_data is None:
-            log.error("Error, trying to compute changes when the archived_data for CURRENT has not been set")
-            return None
-        prev_rev = self.prev()
-
-        if prev_rev.revision_checksum == self.revision_checksum:
-            #sanity check, do nothing at no changes
-            return None
-        removed, added, changed = utils.dict_diff(self.archived_data, prev_rev.to_json()['archived_data'])
-        self.removed = removed
-        self.added = added
-        self.changed = changed
-        if save:
-            self.save()
-
-    def resolved_changed_fields(self, filters=None, excludes=None):
-        """
-        Generator for changed field values yielding (field_key, (from_val, to_val))
-
-        This answers the question 'Field X was changed from_val to to_val'
-        """
-        changed, added, removed = self.get_changed_fields(filters=filters, excludes=excludes)
-        #returns generated tuples of (field, (from_val, to_val))
-        for ckey in changed:
-            #get self's archived value, which is the "old" value
-            prior_val = self.changed[ckey]
-            next_val = self.archived_data[ckey]
-            if next_val != prior_val:
-                yield (ckey, (prior_val, next_val))
-
-    def get_changed_fields(self, filters=None, excludes=None):
-        """
-        Gets all the changed fields for an audit event.
-
-        Returns a tuple of field KEYS that lets you access the changed fields
-        and also get the values from them programmatically later.
-        """
-        changed_keys = list(self.changed)
-        added_keys = list(self.added)
-        removed_keys = list(self.removed)
-
-        if filters:
-            are_changed = [x for x in filters if x in changed_keys]
-            are_added = [x for x in filters if x in added_keys]
-            are_removed = [x for x in filters if x in removed_keys]
-        else:
-            are_changed = changed_keys[:]
-            are_added = added_keys[:]
-            are_removed = removed_keys[:]
-
-        if excludes:
-            final_changed = [x for x in are_changed if x not in excludes]
-            final_added = [x for x in are_added if x not in excludes]
-            final_removed = [x for x in are_removed if x not in excludes]
-        else:
-            final_changed = are_changed
-            final_added = are_added
-            final_removed = are_removed
-
-        return final_changed, final_added, final_removed
-
-    @classmethod
-    def _save_model_audit(cls, audit, instance_id, instance_json, revision_id, model_class_name, is_django=False):
-        """
-
-        """
-
-        db = AuditEvent.get_db()
-        prior_revs = db.view(
-            'auditcare/model_actions_by_id',
-            key=[model_class_name, instance_id],
-            reduce=False,
-        ).all()
-
-        audit.description += "Save %s" % (model_class_name)
-        audit.object_type = model_class_name
-        audit.object_uuid = instance_id
-        audit.archived_data = instance_json
-        audit.revision_checksum = cls.calculate_checksum(instance_json, is_django=is_django)
-
-        if len(prior_revs) == 0:
-            if is_django:
-                audit.revision_id = "1"
-            else:
-                audit.revision_id = revision_id
-            audit.save()
-        else:
-            #this has been archived before.  Get the last one and compare the checksum.
-            sorted_revs = sorted(prior_revs, key=lambda x: x['value']['event_date'])
-            #last_rev = sorted_revs[-1]['value']['rev']
-            last_checksum = sorted_revs[-1]['value']['checksum']
-            if is_django:
-                #for django models, increment an integral counter.
-                try:
-                    audit.revision_id = str(len(prior_revs) + 1)  # str(int(last_rev) + 1)
-                except Exception:
-                    log.error("Error, last revision for object %s is not an integer, resetting to one")
-                    audit.revision_id = "1"
-            else:
-                #for django set the revision id to the current document's revision id.
-                audit.revision_id = revision_id
-
-            if last_checksum == audit.revision_checksum:
-                #no actual changes made on this save, do nothing
-                log.debug("No data change, not creating audit event")
-            else:
-                audit.next_id = None  # this is the head
-                audit.prev_id = sorted_revs[-1]['id']
-                audit.compute_changes(save=False)
-                audit.save()
-
-    @classmethod
-    def audit_django_save(cls, model_class, instance, instance_json, user):
-        audit = cls.create_audit(cls, user)
-        instance_id = str(instance.id)
-        revision_id = None
-        cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
-
-    @classmethod
-    def audit_couch_save(cls, model_class, instance, instance_json, user):
-        audit = cls.create_audit(cls, user)
-        instance_id = instance._id
-        revision_id = instance._rev
-        cls._save_model_audit(
-            audit,
-            instance_id,
-            instance_json,
-            revision_id,
-            model_class.__name__,
-            is_django=False,
-        )
-
-
-setattr(AuditEvent, 'audit_django_save', ModelActionAudit.audit_django_save)
-setattr(AuditEvent, 'audit_couch_save', ModelActionAudit.audit_couch_save)
 
 
 class NavigationEventAudit(AuditEvent):
@@ -488,7 +273,6 @@ def wrap_audit_event(event):
     cls = {
         'NavigationEventAudit': NavigationEventAudit,
         'AccessAudit': AccessAudit,
-        'ModelActionAudit': ModelActionAudit,
     }.get(doc_type, None)
     if not cls:
         raise ValueError(f"Unknow doc type for audit event: {doc_type}")

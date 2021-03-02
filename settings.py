@@ -747,11 +747,6 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_MODEL_SAVE = [
-    'corehq.apps.app_manager.Application',
-    'corehq.apps.app_manager.RemoteApp',
-]
-
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
     'corehq.apps.hqadmin.views.users.AuthenticateAs',
