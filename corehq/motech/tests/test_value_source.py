@@ -1,5 +1,6 @@
 import doctest
 from datetime import datetime, timedelta
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
@@ -8,8 +9,16 @@ import attr
 from schema import Use
 
 import corehq.motech.value_source
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.form_processor.interfaces.processor import ProcessedForms
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    XFormInstanceSQL,
+)
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
@@ -30,8 +39,8 @@ from corehq.motech.value_source import (
     SupercaseValueSource,
     ValueSource,
     as_value_source,
-    get_form_question_values,
     get_case_trigger_info_for_case,
+    get_form_question_values,
 )
 
 
@@ -420,16 +429,17 @@ class AsValueSourceTests(SimpleTestCase):
         self.assertEqual(value_source.test_value, "10")
 
 
+@use_sql_backend
 class TestSubcaseValueSourceSetExternalValue(TestCase):
 
     domain = 'lincoln-montana'
 
     def setUp(self):
         now = datetime.utcnow()
-        owner_id = str(uuid4())
-        self.host_case_id = str(uuid4())
-        self.host_case = CommCareCase(
-            _id=self.host_case_id,
+        owner_id = uuid4().hex
+        self.host_case_id = uuid4().hex
+        case = CommCareCaseSQL(
+            case_id=self.host_case_id,
             domain=self.domain,
             type='person',
             name='Ted',
@@ -437,44 +447,50 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
             modified_on=now,
             server_modified_on=now,
         )
-        self.host_case.save()
+        self.host_case = _create_case(case, now)
 
-        self.ext_case_1 = CommCareCase(
-            case_id='111111111',
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
             domain=self.domain,
             type='person_name',
             name='Theodore',
-            given_names='Theodore John',
-            family_name='Kaczynski',
-            indices=[CommCareCaseIndex(
-                identifier='host',
-                referenced_type='person',
-                referenced_id=self.host_case_id,
-                relationship='extension',
-            )],
+            case_json={
+                'given_names': 'Theodore John',
+                'family_name': 'Kaczynski',
+            },
             owner_id=owner_id,
             modified_on=now,
             server_modified_on=now,
         )
-        self.ext_case_1.save()
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='host',
+            referenced_type='person',
+            referenced_id=self.host_case_id,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION,
+        )
+        self.ext_case_1 = _create_case_with_index(case, index, now)
 
-        self.ext_case_2 = CommCareCase(
-            case_id='222222222',
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
             domain=self.domain,
             type='person_name',
             name='Unabomber',
-            given_names='Unabomber',
-            indices=[CommCareCaseIndex(
-                identifier='host',
-                referenced_type='person',
-                referenced_id=self.host_case_id,
-                relationship='extension',
-            )],
+            case_json={
+                'given_names': 'Unabomber',
+            },
             owner_id=owner_id,
             modified_on=now,
             server_modified_on=now,
         )
-        self.ext_case_2.save()
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='host',
+            referenced_type='person',
+            referenced_id=self.host_case_id,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION,
+        )
+        self.ext_case_2 = _create_case_with_index(case, index, now)
 
     def tearDown(self):
         self.ext_case_1.delete()
@@ -509,15 +525,13 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
             value_source = as_value_source(value_source_config)
             value_source.set_external_value(external_data, case_trigger_info)
 
-        self.assertEqual(external_data, {
-            'name': [
-                {'text': 'Ted'},
-                {'given': ['Theodore John'], 'family': 'Kaczynski'},
-                {'given': ['Unabomber']},
-            ],
-        })
+        name = external_data['name']
+        self.assertIn({'text': 'Ted'}, name)
+        self.assertIn({'given': ['Theodore John'], 'family': 'Kaczynski'}, name)
+        self.assertIn({'given': ['Unabomber']}, name)
 
 
+@use_sql_backend
 class TestSupercaseValueSourceSetExternalValue(TestCase):
 
     domain = 'quarantinewhile'
@@ -525,10 +539,10 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
     def setUp(self):
         now = datetime.utcnow()
         yesterday = now - timedelta(days=1)
-        owner_id = str(uuid4())
-        self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCase(
-            _id=self.parent_case_id,
+        owner_id = uuid4().hex
+        self.parent_case_id = uuid4().hex
+        case = CommCareCaseSQL(
+            case_id=self.parent_case_id,
             domain=self.domain,
             type='person',
             name='Joe',
@@ -536,41 +550,47 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
             modified_on=yesterday,
             server_modified_on=yesterday,
         )
-        self.parent_case.save()
+        self.parent_case = _create_case(case, now)
 
-        self.child_case_1 = CommCareCase(
-            case_id='111111111',
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
             domain=self.domain,
             type='temperature',
-            value='36.2',
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-                relationship='child',
-            )],
+            case_json={
+                'value': '36.2',
+            },
             owner_id=owner_id,
             modified_on=yesterday,
             server_modified_on=yesterday,
         )
-        self.child_case_1.save()
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD,
+        )
+        self.child_case_1 = _create_case_with_index(case, index, now)
 
-        self.child_case_2 = CommCareCase(
-            case_id='222222222',
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
             domain=self.domain,
             type='temperature',
-            value='36.6',
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-                relationship='child',
-            )],
+            case_json={
+                'value': '36.6',
+            },
             owner_id=owner_id,
             modified_on=now,
             server_modified_on=now,
         )
-        self.child_case_2.save()
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD,
+        )
+        self.child_case_2 = _create_case_with_index(case, index, now)
 
     def tearDown(self):
         self.child_case_1.delete()
@@ -634,3 +654,32 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
 def test_doctests():
     results = doctest.testmod(corehq.motech.value_source, optionflags=doctest.ELLIPSIS)
     assert results.failed == 0
+
+
+def _create_case(case, utc_datetime) -> CommCareCaseSQL:
+    form = XFormInstanceSQL(
+        form_id=uuid4().hex,
+        xmlns='http://example.com/motech/test-value-source',
+        received_on=utc_datetime,
+        user_id=case.owner_id,
+        domain=case.domain,
+    )
+    transaction = CaseTransaction(
+        type=CaseTransaction.TYPE_FORM,
+        form_id=uuid4().hex,
+        case=case,
+        server_date=utc_datetime,
+    )
+    with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+        case.track_create(transaction)
+        processed_forms = ProcessedForms(form, [])
+        FormProcessorSQL.save_processed_models(processed_forms, [case])
+    return CaseAccessorSQL.get_case(case.case_id)
+
+
+def _create_case_with_index(case, index, server_date) -> CommCareCaseSQL:
+    case = _create_case(case, server_date)
+    index.case = case
+    case.track_create(index)
+    CaseAccessorSQL.save_case(case)
+    return case
