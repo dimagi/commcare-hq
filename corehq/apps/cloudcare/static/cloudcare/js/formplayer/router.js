@@ -162,6 +162,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         var urlObject = Util.currentUrlToObject();
         urlObject.setCasesPerPage(casesPerPage);
         Util.setUrlToObject(urlObject);
+        Util.savePerPageLimitCookie('cases', casesPerPage);
         API.listMenus();
     });
 

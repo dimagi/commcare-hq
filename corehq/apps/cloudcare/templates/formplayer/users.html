@@ -24,7 +24,7 @@
       <tbody>
       </tbody>
     </table>
-    <% if (endPage && pageCount > 1) { %>
+    <% if (endPage) { %>
       {% block pagination_templates %}
         {% include 'formplayer/pagination.html' %}
       {% endblock %}

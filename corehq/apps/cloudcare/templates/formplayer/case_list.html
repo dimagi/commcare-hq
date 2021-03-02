@@ -62,7 +62,7 @@
     </div>
     <% } %>
 
-    <% if (endPage && pageCount > 1) { %>
+    <% if (!hasNoItems) { %>
       {% block pagination_templates %}
         {% include 'formplayer/pagination.html' %}
       {% endblock %}

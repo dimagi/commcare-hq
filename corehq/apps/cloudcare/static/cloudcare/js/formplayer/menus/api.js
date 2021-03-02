@@ -93,7 +93,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         defer.reject();
                     },
                 };
-                var casesPerPage = Number(params.casesPerPage) || 10;
+                var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
                 options.data = JSON.stringify({
                     "username": user.username,
                     "restoreAs": user.restoreAs,
@@ -106,7 +106,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "menu_session_id": params.sessionId,
                     "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
-                    "cases_per_page": params.casesPerPage,
+                    "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
                     "useLiveQuery": user.useLiveQuery,

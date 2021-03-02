@@ -72,7 +72,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         childView: UserRowView,
         childViewContainer: 'tbody',
         template: _.template($("#restore-as-view-template").html() || ""),
-        limit: 10,
+        limit: parseInt($.cookie("users-per-page-limit")) || 10,
         maxPagesShown: 10,
         initialize: function (options) {
             this.model = new Backbone.Model({
@@ -178,6 +178,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.limit = Number(rowCount);
             this.fetchUsers();
             this.model.set('page', 1);
+            Util.savePerPageLimitCookie('users', this.limit);
         },
     });
 

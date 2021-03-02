@@ -364,7 +364,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
-            var casesPerPage = Number(Util.currentUrlToObject().casesPerPage) || 10;
+            var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,

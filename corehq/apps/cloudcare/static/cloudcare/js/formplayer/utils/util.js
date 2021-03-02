@@ -215,7 +215,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.casesPerPage = null;
             this.queryData = null;
             this.forceManualAction = null;
         };
@@ -224,7 +223,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.casesPerPage = null;
             this.queryData = null;
             this.forceManualAction = null;
         };
@@ -239,7 +237,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             this.page = null;
             this.search = null;
-            this.casesPerPage = null;
             this.queryData = null;
             this.sortIndex = null;
             this.forceManualAction = null;
@@ -255,7 +252,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             steps: self.steps,
             page: self.page,
             search: self.search,
-            casesPerPage: self.casesPerPage,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
@@ -273,7 +269,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'steps': data.steps,
             'page': data.page,
             'search': data.search,
-            'casesPerPage': data.casesPerPage,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
@@ -326,6 +321,16 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             return result;
         };
     }
+
+    Util.savePerPageLimitCookie = function (name, perPageLimit) {
+        var savedPath = window.location.pathname;
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        $.cookie(name + '-per-page-limit', perPageLimit, {
+            expires: 365,
+            path: savedPath,
+            secure: initialPageData.get('secure_cookies'),
+        });
+    };
 
     return Util;
 });
