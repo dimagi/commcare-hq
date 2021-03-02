@@ -1,6 +1,6 @@
 from django.db import models
 
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
 
@@ -127,6 +127,17 @@ class IdentityProvider(models.Model):
         return UserExemptFromSingleSignOn.objects.filter(
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
+
+    def get_active_projects(self):
+        """
+        Returns a list of active domains/project spaces for this identity
+        provider.
+        :return: list of strings (domain names)
+        """
+        return list(Subscription.visible_objects.filter(
+            account=self.owner,
+            is_active=True
+        ).values_list('subscriber__domain', flat=True))
 
     @classmethod
     def domain_has_editable_identity_provider(cls, domain):
