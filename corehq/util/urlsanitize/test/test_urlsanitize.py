@@ -6,28 +6,33 @@ from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, CannotRe
 RAISE = object()
 RETURN = object()
 
-GOOGLE_IP = ipaddress.ip_address(socket.gethostbyname('google.com'))
+GOOGLE_IP = SUITE = None  # set in setup_module
 
-SUITE = [
-    ('https://google.com/', (RETURN, GOOGLE_IP)),
-    ('http://google.com/', (RETURN, GOOGLE_IP)),
-    ('http://google.com', (RETURN, GOOGLE_IP)),
-    ('http://foo.example.com/', (RAISE, CannotResolveHost())),
-    ('http://localhost/', (RAISE, PossibleSSRFAttempt('is_loopback'))),
-    ('http://Localhost/', (RAISE, PossibleSSRFAttempt('is_loopback'))),
-    ('http://169.254.169.254/latest/meta-data', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://2852039166/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://7147006462/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://0xA9.0xFE.0xA9.0xFE/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://0x41414141A9FEA9FE/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://0xA9FEA9FE/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://0251.0376.0251.0376/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://0251.00376.000251.0000376/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://169.254.169.254.xip.io/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-    ('http://10.124.10.11', (RAISE, PossibleSSRFAttempt('is_private'))),
-    ('some-non-url', (RAISE, InvalidURL())),
-]
+
+def setup_module():
+    global GOOGLE_IP, SUITE
+
+    GOOGLE_IP = ipaddress.ip_address(socket.gethostbyname('google.com'))
+    SUITE = [
+        ('https://google.com/', (RETURN, GOOGLE_IP)),
+        ('http://google.com/', (RETURN, GOOGLE_IP)),
+        ('http://google.com', (RETURN, GOOGLE_IP)),
+        ('http://foo.example.com/', (RAISE, CannotResolveHost())),
+        ('http://localhost/', (RAISE, PossibleSSRFAttempt('is_loopback'))),
+        ('http://Localhost/', (RAISE, PossibleSSRFAttempt('is_loopback'))),
+        ('http://169.254.169.254/latest/meta-data', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://2852039166/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://7147006462/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://0xA9.0xFE.0xA9.0xFE/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://0x41414141A9FEA9FE/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://0xA9FEA9FE/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://0251.0376.0251.0376/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://0251.00376.000251.0000376/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://169.254.169.254.xip.io/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
+        ('http://10.124.10.11', (RAISE, PossibleSSRFAttempt('is_private'))),
+        ('some-non-url', (RAISE, InvalidURL())),
+    ]
 
 
 def test_example_suite():
