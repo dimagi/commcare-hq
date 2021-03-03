@@ -78,19 +78,19 @@ def get_list(domain, params):
              .start(start)
              .sort("@indexed_on"))
 
-    for k, v in params.items():
-        if k.startswith(CUSTOM_PROPERTY_PREFIX):
-            query = query.filter(_get_custom_property_filter(k, v))
-        elif k in FILTERS:
-            query = query.filter(FILTERS[k](v))
+    for key, val in params.items():
+        if key.startswith(CUSTOM_PROPERTY_PREFIX):
+            query = query.filter(_get_custom_property_filter(key, val))
+        elif key in FILTERS:
+            query = query.filter(FILTERS[key](val))
         else:
-            raise UserError(f"'{k}' is not a valid parameter.")
+            raise UserError(f"'{key}' is not a valid parameter.")
 
     return [serialize_es_case(case) for case in query.run().hits]
 
 
-def _get_custom_property_filter(k, v):
-    prop = k[len(CUSTOM_PROPERTY_PREFIX):]
-    if v == "":
+def _get_custom_property_filter(key, val):
+    prop = key[len(CUSTOM_PROPERTY_PREFIX):]
+    if val == "":
         return case_search.case_property_missing(prop)
-    return case_search.exact_case_property_text_query(prop, v)
+    return case_search.exact_case_property_text_query(prop, val)
