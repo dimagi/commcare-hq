@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.util import extract_instance_id_from_nodeset_ref
 from corehq.apps.app_manager.xform import (
     ItextValue,
     WrappedNode,
@@ -52,6 +53,32 @@ class XFormParsingTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(instances, {
             'country': 'jr://fixture/item-list:country'
         })
+
+    def test_extract_instance_id_from_nodeset(self):
+        self.assertEqual(
+            'country',
+            extract_instance_id_from_nodeset_ref("instance('country')/country_list/country"),
+        )
+        self.assertEqual(
+            'first',
+            extract_instance_id_from_nodeset_ref("instance('first')/instance('second')country_list/country"),
+        )
+        self.assertEqual(
+            None,
+            extract_instance_id_from_nodeset_ref("foo('country')/country_list/country"),
+        )
+        self.assertEqual(
+            None,
+            extract_instance_id_from_nodeset_ref("foo/country_list/country"),
+        )
+        self.assertEqual(
+            None,
+            extract_instance_id_from_nodeset_ref(""),
+        )
+        self.assertEqual(
+            None,
+            extract_instance_id_from_nodeset_ref(None),
+        )
 
 
 class ItextValueTest(SimpleTestCase):
