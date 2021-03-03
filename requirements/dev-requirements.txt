@@ -129,7 +129,7 @@ django-cte==1.1.4
     # via -r base-requirements.in
 django-debug-toolbar==3.1
     # via -r dev-requirements.in
-django-extensions==3.1.0
+django-extensions==3.1.1
     # via -r dev-requirements.in
 django-formtools==2.1
     # via
