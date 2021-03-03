@@ -1,6 +1,8 @@
 import ipaddress
 import socket
 
+from testil import eq, assert_raises
+
 from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, CannotResolveHost, InvalidURL
 
 RAISE = object()
@@ -38,18 +40,15 @@ def setup_module():
 def test_example_suite():
     for input_url, (result, value) in SUITE:
         print(input_url)
+
         if result is RETURN:
-            assert sanitize_user_input_url(input_url) == value, \
-                f"sanitize_url({input_url!r}) should be {value!r} was {sanitize_user_input_url(input_url)}"
+            eq(sanitize_user_input_url(input_url), value)
         elif result is RAISE:
-            try:
-                sanitize_user_input_url(input_url)
-            except value.__class__ as e:
-                if value.__class__ == PossibleSSRFAttempt:
-                    assert e.reason == value.reason, \
-                        f"sanitize_url({input_url!r} should raise {value.__class__.__name__}({value.reason}) raised {value.__class__.__name__}({e.reason})"
-                else:
-                    assert str(e) == str(value), \
-                        f"sanitize_url({input_url!r} should raise {value.__class__.__name__}({str(value)}) raised {value.__class__.__name__}({str(e)})"
+            if type(value) == PossibleSSRFAttempt:
+                with assert_raises(PossibleSSRFAttempt, msg=lambda e: eq(e.reason, value.reason)):
+                    sanitize_user_input_url(input_url)
+            else:
+                with assert_raises(type(value), msg=str(value)):
+                    sanitize_user_input_url(input_url)
         else:
             raise Exception("result in suite should be RETURN or RAISE")
