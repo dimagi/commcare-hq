@@ -31,7 +31,7 @@ def _make_date_filter(date_filter, param):
     def filter_fn(val):
         try:
             # If it's only a date, don't turn it into a datetime
-            val = datetime.date.fromisoformat(val)
+            val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
         except ValueError:
             try:
                 val = parse(val)

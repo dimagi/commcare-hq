@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from .core import UserError
+from .core import SubmissionError, UserError
 
 
 def is_simple_dict(d):
