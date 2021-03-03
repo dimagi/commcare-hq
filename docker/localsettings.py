@@ -235,7 +235,7 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     COMPRESS_OFFLINE = False
 
     FORMPLAYER_URL = 'http://formplayer:8080'
-    FORMPLAYER_URL_JS = 'http://localhost:8080'
+    FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10

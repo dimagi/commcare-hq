@@ -7,7 +7,7 @@ from dimagi.utils.web import get_url_base
 def get_formplayer_url(for_js=False):
     if for_js:
         # use different URL for JS if supplied - required for Docker usage
-        return getattr(settings, 'FORMPLAYER_URL_JS', settings.FORMPLAYER_URL)
+        return getattr(settings, 'FORMPLAYER_URL_WEBAPPS', settings.FORMPLAYER_URL)
     formplayer_url = settings.FORMPLAYER_URL
     if not formplayer_url.startswith('http'):
         formplayer_url = '{}{}'.format(get_url_base(), formplayer_url)
