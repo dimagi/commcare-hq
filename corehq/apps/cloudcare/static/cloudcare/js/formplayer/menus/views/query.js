@@ -8,22 +8,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
     // special format handled by CaseSearch API
     var encodeValue = function (model, value) {
-        if (!value) {
+            if (!value) {
+                return value;
+            }
+            if (model.get("input") === "daterange") {
+                return "__range__" + value.replace(separator, "__");
+            }
             return value;
-        }
-        if (model.get("input") === "daterange") {
-            return "__range__" + value.replace(separator, "__");
-        }
-        return value;
-    }, decodeValue = function (model, value) {
-        if (!value) {
+        }, decodeValue = function (model, value) {
+            if (!value) {
+                return value;
+            }
+            if (model.get("input") === "daterange") {
+                return value.replace("__range__", "").replace("__", separator);
+            }
             return value;
-        }
-        if (model.get("input") === "daterange") {
-            return value.replace("__range__", "").replace("__", separator);
-        }
-        return value;
-    };
+        };
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
