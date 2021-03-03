@@ -96,6 +96,19 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
 
+    def test_case_on_other_domain(self):
+        case_id = str(uuid.uuid4())
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            case_type='player',
+            case_name='Judit Polgár',
+            create=True,
+            update={}
+        ).as_text()], domain='other_domain')
+        res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.json()['error'], f"Case '{case_id}' not found")
+
     def test_create_case(self):
         res = self._create_case({
             # notable exclusions: case_id, date_opened, date_modified

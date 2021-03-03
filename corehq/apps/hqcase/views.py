@@ -98,6 +98,8 @@ def case_api(request, domain, case_id=None):
 def _handle_individual_get(request, case_id):
     try:
         case = CaseAccessors(request.domain).get_case(case_id)
+        if case.domain != request.domain:
+            raise CaseNotFound()
     except CaseNotFound:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     return JsonResponse(serialize_case(case))
