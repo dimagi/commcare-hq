@@ -30,7 +30,6 @@ def create_new_invitation(case_id, domain, opened_by, email):
     email_context = {
         'link': url,
     }
-    print(url)
     send_html_email_async.delay(
         _('Beneficiary Registration'),
         email,
