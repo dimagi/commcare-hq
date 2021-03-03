@@ -34,8 +34,6 @@ services:
       service: formplayer
     environment:
         COMMCARE_HOST: "http://web:8000"
-        COMMCARE_ALTERNATE_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
-        EXTERNAL_REQUEST_MODE: "replace-host"
     links:
       - postgres
       - redis
