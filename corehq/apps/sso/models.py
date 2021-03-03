@@ -4,6 +4,7 @@ from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.util.quickcache import quickcache
 
 
 class IdentityProviderType:
@@ -140,6 +141,7 @@ class IdentityProvider(models.Model):
             is_active=True
         ).values_list('subscriber__domain', flat=True))
 
+    @quickcache(['self.slug', 'domain'])
     def is_domain_an_active_member(self, domain):
         """
         Checks whether the given Domain is an Active Member of the current
@@ -157,6 +159,7 @@ class IdentityProvider(models.Model):
             subscriber__domain=domain,
         ).exists()
 
+    @quickcache(['self.slug', 'domain'])
     def does_domain_trust_this_idp(self, domain):
         """
         Checks whether the given Domain trusts this Identity Provider.
