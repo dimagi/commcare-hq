@@ -971,6 +971,22 @@ class XForm(WrappedNode):
 
         return list(self.translations().keys())
 
+    def get_external_instances(self):
+        """
+        Get a dictionary of all "external" instances, like:
+        {
+          "country": "jr://fixture/item-list:country"
+        }
+        """
+        instance_nodes = self.model_node.findall('{f}instance')
+        instance_dict = {}
+        for instance_node in instance_nodes:
+            instance_id = instance_node.attrib.get('id')
+            src = instance_node.attrib.get('src')
+            if instance_id and src:
+                instance_dict[instance_id] = src
+        return instance_dict
+
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False,
                       exclude_select_with_itemsets=False, include_fixtures=False):

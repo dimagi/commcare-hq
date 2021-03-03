@@ -46,6 +46,13 @@ class XFormParsingTest(SimpleTestCase, TestXmlMixin):
         original.normalize_itext()
         self.assertXmlEqual(original.render(), self.get_xml('itext_form_normalized'))
 
+    def test_get_external_instances(self):
+        form_with_fixtures = XForm(self.get_xml('form_with_fixtures').decode('utf-8'))
+        instances = form_with_fixtures.get_external_instances()
+        self.assertEqual(instances, {
+            'country': 'jr://fixture/item-list:country'
+        })
+
 
 class ItextValueTest(SimpleTestCase):
 
