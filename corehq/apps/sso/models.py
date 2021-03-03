@@ -140,6 +140,38 @@ class IdentityProvider(models.Model):
             is_active=True
         ).values_list('subscriber__domain', flat=True))
 
+    def is_domain_an_active_member(self, domain):
+        """
+        Checks whether the given Domain is an Active Member of the current
+        Identity Provider.
+
+        An "Active Member" is defined by having an active Subscription that
+        belongs to the BillingAccount owner of this IdentityProvider.
+
+        :param domain: String (the Domain name)
+        :return: Boolean (True if Domain is an Active Member)
+        """
+        return Subscription.visible_objects.filter(
+            account=self.owner,
+            is_active=True,
+            subscriber__domain=domain,
+        ).exists()
+
+    def does_domain_trust_this_idp(self, domain):
+        """
+        Checks whether the given Domain trusts this Identity Provider.
+        :param domain: String (the Domain name)
+        :return: Boolean (True if Domain trusts this Identity Provider)
+        """
+        is_active_member = self.is_domain_an_active_member(domain)
+        if not is_active_member:
+            # Since this Domain is not an Active Member, check whether an
+            # administrator of this domain has trusted this Identity Provider
+            return TrustedIdentityProvider.objects.filter(
+                domain=domain, identity_provider=self
+            ).exists()
+        return is_active_member
+
     @classmethod
     def domain_has_editable_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)

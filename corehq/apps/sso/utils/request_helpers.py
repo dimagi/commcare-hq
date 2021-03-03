@@ -2,7 +2,6 @@ from django.conf import settings
 from corehq.apps.sso.exceptions import SingleSignOnError
 from corehq.apps.sso.models import (
     IdentityProvider,
-    TrustedIdentityProvider,
 )
 
 
@@ -54,14 +53,7 @@ def is_request_blocked_from_viewing_domain_due_to_sso(request, domain_obj):
             f"to be associated with an Identity Provider!"
         )
 
-    if domain_obj.name in idp.get_active_projects():
-        # The domain is owned by the owner of the Identity Provider
-        return False
-
-    if TrustedIdentityProvider.objects.filter(
-        domain=domain_obj.name, identity_provider=idp
-    ).exists():
-        # An administrator of this domain has trusted this Identity Provider
+    if idp.does_domain_trust_this_idp(domain_obj.name):
         return False
 
     if domain_obj.creating_user == username:
