@@ -6,7 +6,6 @@ from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
 class BulkFetchException(Exception):

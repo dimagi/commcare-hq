@@ -11,11 +11,10 @@ from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
-from auditcare import models
-from auditcare.decorators.login import lockout_response, log_request
-from auditcare.models import AccessAudit
-from auditcare.utils import login_template
-from auditcare.utils.export import write_export_from_all_log_events
+from .decorators.login import lockout_response, log_request
+from .models import AccessAudit, ACCESS_LOGOUT
+from .utils import login_template
+from .utils.export import write_export_from_all_log_events
 
 from corehq.util.argparse_types import date_type
 
@@ -82,7 +81,7 @@ def audited_logout(request, *args, **kwargs):
     ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
     attempt = AccessAudit()
     attempt.doc_type = AccessAudit.__name__
-    attempt.access_type = models.ACCESS_LOGOUT
+    attempt.access_type = ACCESS_LOGOUT
     attempt.user_agent = ua
     attempt.user = user.username
     attempt.session_key = request.session.session_key

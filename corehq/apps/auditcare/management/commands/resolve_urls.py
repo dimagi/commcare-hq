@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 
-from auditcare.utils import show_urls
-
 import urls
+
+from ...utils import show_urls
 
 
 class Command(BaseCommand):

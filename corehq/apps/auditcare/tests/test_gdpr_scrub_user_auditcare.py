@@ -1,9 +1,10 @@
 from django.core import management
 from django.test import TestCase
 
-from auditcare.models import NavigationEventAudit
-from auditcare.utils.export import navigation_event_ids_by_user
 from dimagi.utils.couch.database import iter_bulk_delete
+
+from ..models import NavigationEventAudit
+from ..utils.export import navigation_event_ids_by_user
 
 
 class TestGDPRScrubUserAuditcare(TestCase):

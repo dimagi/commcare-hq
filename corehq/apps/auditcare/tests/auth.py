@@ -1,5 +1,4 @@
-import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -8,9 +7,9 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
-from auditcare import models
-from auditcare.models import AccessAudit, AuditEvent
-from auditcare.tests.testutils import delete_all, get_latest_access
+from .. import models
+from ..models import AccessAudit, AuditEvent
+from .testutils import delete_all, get_latest_access
 
 
 class AuthenticationTestCase(TestCase):
@@ -58,9 +57,9 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(latest_audit.access_type, models.ACCESS_FAILED)
         self.assertEqual(latest_audit.failures_since_start, 1)
 
-    @freeze_time(datetime.datetime.utcnow(), as_arg=True)
+    @freeze_time(datetime.utcnow(), as_arg=True)
     def testRepeatedFailedLogin(frozen_time, self):
-        from auditcare.decorators import login
+        from ..decorators import login
         login.FAILURE_LIMIT = 3
         login.LOCK_OUT_AT_FAILURE = True
         login.COOLOFF_TIME = timedelta(seconds=4)
@@ -93,8 +92,8 @@ class AuthenticationTestCase(TestCase):
             next_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
             self.assertEqual(next_audit.access_type, models.ACCESS_FAILED)
             self.assertEqual(next_audit.failures_since_start, n + start_failures)
-            frozen_time.tick(datetime.timedelta(seconds=1))
-        frozen_time.tick(datetime.timedelta(seconds=3))
+            frozen_time.tick(timedelta(seconds=1))
+        frozen_time.tick(timedelta(seconds=3))
         self.client.post(reverse('auth_login'), {
             'username': 'mockmock@mockmock.com',
             'password': 'wrongwrong',
