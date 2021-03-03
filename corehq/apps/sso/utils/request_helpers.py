@@ -30,7 +30,7 @@ def get_request_data(request):
 
 
 def is_request_using_sso(request):
-    return bool(hasattr(request, 'session') and request.session.get('samlSessionIndex', None))
+    return bool(hasattr(request, 'session') and request.session.get('samlSessionIndex'))
 
 
 def is_request_blocked_from_viewing_domain_due_to_sso(request, domain_obj):
