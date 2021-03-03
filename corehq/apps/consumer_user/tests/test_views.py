@@ -9,7 +9,10 @@ from django.utils.http import urlsafe_base64_encode
 
 from mock import patch
 
-from corehq.apps.consumer_user.const import CONSUMER_INVITATION_CASE_TYPE
+from corehq.apps.consumer_user.const import (
+    CONSUMER_INVITATION_CASE_TYPE,
+    CONSUMER_INVITATION_STATUS,
+)
 from corehq.apps.consumer_user.models import (
     ConsumerUser,
     ConsumerUserCaseRelationship,
@@ -230,12 +233,17 @@ class SignalTestCase(TestCase):
                         case_properties={'email': 'email@changed.in'})
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(send_html_email_async.call_count, 2)
+            # Updating the case again with status other than sent or accepted should send email again
+            update_case(self.domain, case.case_id,
+                        case_properties={CONSUMER_INVITATION_STATUS: 'resend'})
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 3)
+            self.assertEqual(send_html_email_async.call_count, 3)
             # Closing the case should make invitation inactive
             update_case(self.domain, case.case_id, None, True)
-            self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 3)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=False).count(),
                              ConsumerUserInvitation.objects.count())
-            self.assertEqual(send_html_email_async.call_count, 2)
+            self.assertEqual(send_html_email_async.call_count, 3)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email_other_casetype(self):
