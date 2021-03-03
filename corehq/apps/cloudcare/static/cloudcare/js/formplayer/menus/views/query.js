@@ -4,7 +4,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var separator = " to ";
+
+    // special format handled by CaseSearch API
+    var separator = " to ",
+    encodeDateRange = function (value) {
+        return "__range__" + value.replace(separator, "__");
+    }, decodeDateRange = function (value) {
+        return value.replace("__range__", "").replace("__", separator);
+    };
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
@@ -32,7 +39,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialize: function () {
             // If input doesn't have a default value, check to see if there's a sticky value from user's last search
             if (!this.options.model.get('value')) {
-                this.options.model.set('value', hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')]);
+                var stickyValue = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')];
+                if (stickyValue && this.options.model.get("input") == "daterange") {
+                    stickyValue = decodeDateRange(stickyValue);
+                }
+                this.options.model.set('value', stickyValue);
             }
         },
 
@@ -63,10 +74,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             var self = this;
             this.ui.dateRange.on('cancel.daterangepicker', function () {
-                $(this).val('');
+                $(this).val('').trigger('change');
             });
             this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD'));
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD')).trigger('change');
             });
         },
     });
@@ -109,8 +120,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 var answer = null;
                 if (this.value !== '') {
                     if (model[index].get('input') === 'daterange') {
-                        // special format handled by CaseSearch API
-                        answer = "__range__" + this.value.replace(separator, "__");
+                        answer = encodeDateRange(this.value);
                     } else {
                         answer = this.value;
                     }
