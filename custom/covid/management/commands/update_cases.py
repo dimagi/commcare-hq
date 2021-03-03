@@ -38,7 +38,7 @@ class CaseUpdateCommand(BaseCommand):
                     num_case_updated_str += f" in this location:{loc_id}"
                 output_file.write(num_case_updated_str)
                 for case in failed_cases:
-                    output_file.write(case)
+                    output_file.write(domain + ": " + case)
                 output_file.close()
 
     def add_arguments(self, parser):
