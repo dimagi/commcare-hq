@@ -62,6 +62,8 @@ def is_request_blocked_from_viewing_domain_due_to_sso(request, domain_obj):
         # owns this domain, a Trust will be created automatically and a message
         # will be displayed to the user.
         # todo mechanism for displaying message to user
+        # todo remember to handle clearing quickcache for
+        #  does_domain_trust_this_idp
         return False
 
     # None of the above criteria was met so the user is definitely blocked!
