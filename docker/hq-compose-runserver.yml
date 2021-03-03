@@ -75,8 +75,6 @@ services:
     extends:
       file: hq-compose-services.yml
       service: kafka
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: "kafka"
 
   minio:
     extends:
