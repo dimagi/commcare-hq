@@ -68,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 locale: {
                     format: 'YYYY-MM-DD',
                     separator: separator,
-                    cancelLabel: 'Clear',
+                    cancelLabel: gettext('Clear'),
                 },
                 autoUpdateInput: false,
             });
