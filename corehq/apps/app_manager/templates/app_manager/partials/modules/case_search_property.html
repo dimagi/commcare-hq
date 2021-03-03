@@ -1,14 +1,17 @@
 {% load i18n %}
 
 <tr>
-  <td class="col-sm-4">
+  <td class="text-center">
+    <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
+  </td>
+  <td>
     <input class="form-control" type="text" data-bind="value: name"/>
   </td>
-  <td class="col-sm-6">
+  <td>
     <input class="form-control" type="text" data-bind="value: label"/>
   </td>
   {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled %}
-  <td class="col-sm-2">
+  <td>
     <button type="button"
             class="btn btn-default"
             data-bind="
@@ -17,9 +20,6 @@
       <i class="fa fa-pencil"></i>
       {% trans "Configure" %}
     </button>
-  </td>
-  {% endif %}
-  <td class="col-sm-2">
     <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + uniqueId}">
       <div class="modal-dialog modal-md">
         <div class="modal-content">
@@ -147,7 +147,8 @@
       </div>
     </div>
   </td>
-  <td class="col-sm-1">
+  {% endif %}
+  <td>
     <i style="cursor: pointer;" class="fa fa-remove"
        data-bind="click: $parent.removeProperty"></i>
   </td>
