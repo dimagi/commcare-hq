@@ -90,7 +90,7 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
             "helping-earth-001",
             is_active=True
         )
-        enterprise_plan = generator.get_enterprise_plan_for_tests()
+        enterprise_plan = generator.get_enterprise_plan()
         Subscription.new_domain_subscription(
             account=cls.account,
             domain=cls.domain.name,

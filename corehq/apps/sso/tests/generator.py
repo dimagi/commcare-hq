@@ -47,7 +47,7 @@ def get_billing_account_for_idp():
 
 
 @unit_testing_only
-def get_enterprise_plan_for_tests():
+def get_enterprise_plan():
     enterprise_plan = SoftwarePlan.objects.create(
         name="Helping Earth INGO Enterprise Plan",
         description="Enterprise plan for Helping Earth",
