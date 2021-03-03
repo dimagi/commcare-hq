@@ -180,32 +180,36 @@ AUDIT_ADMIN_VIEWS = False
 SECRET_KEY = 'secrettravis'
 
 # No logging
+
 LOCAL_LOGGING_CONFIG = {
-    'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
-        }
-    },
     'loggers': {
         '': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
         },
-        'pillowtop': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+        'django': {
+            'handler': 'console',
+            'level': 'ERROR',
+            'propagate': False,
         },
         'notify': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
         },
+        'kafka': {
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
+        },
+        'commcare_auth': {
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
+        }
     }
 }
-
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
