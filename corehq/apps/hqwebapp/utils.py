@@ -17,8 +17,11 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from corehq.util.view_utils import get_request
 from custom.nic_compliance.utils import get_raw_password
+
+from django.utils.functional import lazy
+from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 logger = logging.getLogger(__name__)
 
@@ -126,3 +129,7 @@ def update_session_language(req, old_lang, new_lang):
         req.session[LANGUAGE_SESSION_KEY] = new_lang
         # and activate it for the current thread so the response page is translated too
         activate(new_lang)
+
+
+mark_safe_lazy = lazy(mark_safe, str)
+format_html_lazy = lazy(format_html, str)
