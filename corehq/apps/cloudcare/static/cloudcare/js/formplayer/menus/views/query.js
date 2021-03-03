@@ -15,7 +15,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 return "__range__" + value.replace(separator, "__");
             }
             return value;
-        }, decodeValue = function (model, value) {
+        },
+        decodeValue = function (model, value) {
             if (!value) {
                 return value;
             }
