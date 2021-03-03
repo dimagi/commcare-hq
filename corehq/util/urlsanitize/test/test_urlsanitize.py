@@ -53,7 +53,3 @@ def test_example_suite():
                         f"sanitize_url({input_url!r} should raise {value.__class__.__name__}({str(value)}) raised {value.__class__.__name__}({str(e)})"
         else:
             raise Exception("result in suite should be RETURN or RAISE")
-
-
-if __name__ == '__main__':
-    test_example_suite()
