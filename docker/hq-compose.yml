@@ -38,9 +38,12 @@ services:
   formplayer:
     image: dimagi/formplayer
     environment:
-      WEB_HOST: "dockerhost"
+      COMMCARE_HOST: "http://host.docker.internal:8000"
+      COMMCARE_ALTERNATE_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
+      AUTH_KEY: "secretkey"
     expose:
-      - "8010"
+      - "8080"
+      - "8081"
 
   postgres:
     image: dimagi/docker-postgresql
