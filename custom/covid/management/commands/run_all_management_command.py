@@ -11,11 +11,12 @@ DEVICE_ID = __name__ + ".run_all_management_command"
 def run_command(command, *args, location=None, inactive_location=None, output_file=None):
     try:
         if inactive_location is not None:
-            call_command(command, *args, location=location, inactive_location=inactive_location)
+            call_command(command, *args, location=location, inactive_location=inactive_location,
+                         output_file=output_file)
         elif location is not None:
-            call_command(command, *args, location=location)
+            call_command(command, *args, location=location, output_file=output_file)
         else:
-            call_command(command, *args)
+            call_command(command, *args, output_file=output_file)
     except Exception as e:
         return False, command, args, e
     return True, command, args, None
@@ -59,7 +60,7 @@ class Command(BaseCommand):
         pool = Pool(20)
         if options["only_inactive"]:
             for domain in domains:
-                kwargs = {'inactive_location': location_ids[domain]['inactive']}
+                kwargs = {'inactive_location': location_ids[domain]['inactive'], 'output_file': output_file_name}
                 if 'traveler' in location_ids[domain]['active']:
                     kwargs['location'] = location_ids[domain]['active']['traveler']
                 jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact',
@@ -68,13 +69,16 @@ class Command(BaseCommand):
             total_jobs.extend(jobs)
         else:
             for domain in domains:
-                kwargs = {}
+                kwargs = {'output_file': output_file_name}
                 if 'traveler' in location_ids[domain]['active']:
                     kwargs['location'] = location_ids[domain]['active']['traveler']
                 jobs.append(pool.spawn(run_command, 'update_case_index_relationship', domain, 'contact', **kwargs))
-                jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin'))
-                jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation'))
-                jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin'))
+                jobs.append(pool.spawn(run_command, 'add_hq_user_id_to_case', domain, 'checkin',
+                                       output_file=output_file_name))
+                jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'investigation',
+                                       output_file=output_file_name))
+                jobs.append(pool.spawn(run_command, 'update_owner_ids', domain, 'checkin',
+                                       output_file=output_file_name))
             pool.join()
             total_jobs.extend(jobs)
 
@@ -83,9 +87,9 @@ class Command(BaseCommand):
             for domain in domains:
                 for location in location_ids[domain]['active'].values():
                     jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'patient',
-                                                  location=location))
+                                                  location=location, output_file=output_file_name))
                     jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
-                                                  location=location))
+                                                  location=location, output_file=output_file_name))
             second_pool.join()
             total_jobs.extend(jobs)
 
