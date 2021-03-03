@@ -9,14 +9,13 @@ DEVICE_ID = __name__ + ".run_all_management_command"
 
 
 def run_command(command, *args, location=None, inactive_location=None, output_file=None):
+    kwargs = {'output_file': output_file}
     try:
         if inactive_location is not None:
-            call_command(command, *args, location=location, inactive_location=inactive_location,
-                         output_file=output_file)
-        elif location is not None:
-            call_command(command, *args, location=location, output_file=output_file)
-        else:
-            call_command(command, *args, output_file=output_file)
+            kwargs['inactive_location'] = inactive_location
+        if location is not None:
+            kwargs['location'] = location
+        call_command(command, *args, **kwargs)
     except Exception as e:
         return False, command, args, e
     return True, command, args, None
@@ -86,10 +85,11 @@ class Command(BaseCommand):
             second_pool = Pool(20)
             for domain in domains:
                 for location in location_ids[domain]['active'].values():
+                    kwargs = {'location': location, 'output_file': output_file_name}
                     jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'patient',
-                                                  location=location, output_file=output_file_name))
+                                                  **kwargs))
                     jobs.append(second_pool.spawn(run_command, 'add_assignment_cases', domain, 'contact',
-                                                  location=location, output_file=output_file_name))
+                                                  **kwargs))
             second_pool.join()
             total_jobs.extend(jobs)
 
