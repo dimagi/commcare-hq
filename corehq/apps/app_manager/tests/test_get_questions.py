@@ -298,6 +298,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             "comment": None,
             "constraint": None,
             "fixture_data": {
+                "instance": "jr://fixture/item-list:country",
                 "nodeset": "instance('country')/country_list/country",
                 "label_ref": "name",
                 "value_ref": "id",
