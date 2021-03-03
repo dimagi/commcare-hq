@@ -29,10 +29,9 @@ def should_skip(case, traveler_location_id, inactive_location):
 
 def needs_update(case):
     index = case.indices[0]
-    return index.relationship == "child" and (
-        index.referenced_type == "patient"
-        or index.referenced_type == "'patient'"
-    )
+    if index.referenced_type == "'patient'":
+        return True
+    return index.relationship == "child" and index.referenced_type == "patient"
 
 
 def get_owner_id(case_type):
