@@ -3,6 +3,7 @@ from django.db import models
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 
 
 class IdentityProviderType:
@@ -152,10 +153,9 @@ class IdentityProvider(models.Model):
         :param username: (string)
         :return: IdentityProvider or None
         """
-        try:
-            email_domain = username.split('@')[1]
-        except IndexError:
-            # malformed email
+        email_domain = get_email_domain_from_username(username)
+        if not email_domain:
+            # malformed username/email
             return None
         try:
             authenticated_email_domain = AuthenticatedEmailDomain.objects.get(
