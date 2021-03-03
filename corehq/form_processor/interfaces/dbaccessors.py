@@ -276,6 +276,11 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
+    def get_case_ids_that_exist(domain, case_ids):
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
     def get_case_xform_ids(case_id):
         raise NotImplementedError
 
@@ -416,6 +421,9 @@ class CaseAccessors(object):
             chunk = list([_f for _f in chunk if _f])
             for case in self.get_cases(chunk):
                 yield case
+
+    def get_case_ids_that_exist(self, case_ids):
+        return self.db_accessor.get_case_ids_that_exist(self.domain, case_ids)
 
     def get_case_xform_ids(self, case_id):
         return self.db_accessor.get_case_xform_ids(case_id)

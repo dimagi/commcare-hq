@@ -83,7 +83,7 @@ To register your module as the RequireJS entry point, add the `requirejs_main` t
 near the top but outside of any other block:
 
 ```
-{% requirejs main 'data_dictionary/js/data_dictionary' %}
+{% requirejs_main 'data_dictionary/js/data_dictionary' %}
 ```
 
 Some pages don't have any unique logic but do rely on other modules. These are usually pages that use some common
@@ -92,7 +92,7 @@ widgets but don't have custom UI interactions.
 If your page only relies on a single js module, you can use that as the module's entry point:
 
 ```
-{% requirejs main 'locations/js/widgets' %}
+{% requirejs_main 'locations/js/widgets' %}
 ```
 
 If your page relies on multiple modules, it still needs one entry point. You can handle this by making a module
@@ -111,7 +111,7 @@ hqDefine("sms/js/gateway_list", [
 Then in your HTML page:
 
 ```
-{% requirejs main 'sms/js/gateway_list' %}
+{% requirejs_main 'sms/js/gateway_list' %}
 ```
 
 The exception to the above is if your page inherits from a page that doesn't use RequireJS.

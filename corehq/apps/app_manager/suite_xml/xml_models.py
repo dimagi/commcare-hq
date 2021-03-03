@@ -213,10 +213,15 @@ class PracticeUserRestoreResource(AbstractResource):
 
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_image', 'media_audio')
+    ORDER = ('text', 'media_image', 'media_audio', 'hint')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+    hint = NodeField('hint', 'self')
+
+
+class Hint(Display):
+    ROOT_NAME = 'hint'
 
 
 class Itemset(XmlObject):
@@ -842,7 +847,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node)
+                s = etree.tostring(field.template.node, encoding='utf-8')
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:

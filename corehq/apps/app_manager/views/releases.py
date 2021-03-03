@@ -52,6 +52,7 @@ from corehq.apps.app_manager.exceptions import (
     BuildConflictException,
     ModuleIdMissingException,
     PracticeUserException,
+    XFormValidationFailed,
 )
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
@@ -308,6 +309,10 @@ def save_copy(request, domain, app_id):
         except BuildConflictException:
             return JsonResponse({
                 'error': _("There is already a version build in progress. Please wait.")
+            }, status=400)
+        except XFormValidationFailed:
+            return JsonResponse({
+                'error': _("Unable to validate forms.")
             }, status=400)
         finally:
             # To make a RemoteApp always available for building

@@ -63,9 +63,11 @@ class HandleShadowChildModulesTest(TestCase):
         )
 
         # Calling the command again should not make new modules
+        shadow_child_module_id = app.modules[3].unique_id
         handle_shadow_child_modules(app, app.get_module_by_unique_id(self.shadow_module.unique_id))
         app = Application.get(app.get_id)
         self.assertEqual(len(app.modules), 4)
+        self.assertEqual(app.modules[3].unique_id, shadow_child_module_id)
 
     def test_deletes_module_child_removed(self):
         # Create new module

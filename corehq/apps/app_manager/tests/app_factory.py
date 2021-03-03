@@ -58,14 +58,11 @@ class AppFactory(object):
         module.unique_id = '{}_module'.format(slug)
         module.case_type = case_type
 
-        def get_unique_id(module_or_form):
-            return module_or_form if isinstance(module_or_form, str) else module_or_form.unique_id
-
         if parent_module:
-            module.root_module_id = get_unique_id(parent_module)
+            module.root_module_id = self.unique_id(parent_module)
 
         if case_list_form:
-            module.case_list_form.form_id = get_unique_id(case_list_form)
+            module.case_list_form.form_id = self.unique_id(case_list_form)
 
         self.slugs[module.unique_id] = slug
 
@@ -77,10 +74,12 @@ class AppFactory(object):
     def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module, case_list_form)
 
-    def new_shadow_module(self, slug, source_module, with_form=True, shadow_module_version=2):
+    def new_shadow_module(self, slug, source_module, with_form=True, shadow_module_version=2, parent_module=None):
         module = self.app.add_module(ShadowModule.new_module('{} module'.format(slug), None))
         module.unique_id = '{}_module'.format(slug)
         module.source_module_id = source_module.unique_id
+        if parent_module:
+            module.root_module_id = self.unique_id(parent_module)
         module.shadow_module_version = shadow_module_version
         self.slugs[module.unique_id] = slug
         return (module, self.new_form(module)) if with_form else module
@@ -104,6 +103,9 @@ class AppFactory(object):
         form = module.new_shadow_form('{} form {}'.format(slug, index), None)
         form.unique_id = '{}_form_{}'.format(slug, index)
         return form
+
+    def unique_id(self, module_or_form):
+        return module_or_form if isinstance(module_or_form, str) else module_or_form.unique_id
 
     @staticmethod
     def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):

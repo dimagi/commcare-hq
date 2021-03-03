@@ -1,3 +1,1 @@
-from .login import watch_login
-from .login import watch_logout
-
+from .login import watch_login, watch_logout  # noqa: F401
