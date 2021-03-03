@@ -298,11 +298,11 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             "comment": None,
             "constraint": None,
             "fixture_data": {
-                "instance": "jr://fixture/item-list:country",
+                "instance_id": "country",
+                "instance_ref": "jr://fixture/item-list:country",
                 "nodeset": "instance('country')/country_list/country",
                 "label_ref": "name",
                 "value_ref": "id",
-
             },
             "group": None,
             "hashtagValue": "#form/lookup-table",

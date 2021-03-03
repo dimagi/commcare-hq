@@ -1005,7 +1005,8 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
-        from corehq.apps.app_manager.util import first_elem
+        from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
+
         def _get_select_question_option(item):
             translation = self._get_label_text(item, langs)
             try:
@@ -1032,6 +1033,7 @@ class XForm(WrappedNode):
         # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self._get_control_nodes()
         leaf_data_nodes = self._get_leaf_data_nodes()
+        external_instances = self.get_external_instances()
 
         for cnode in control_nodes:
             node = cnode.node
@@ -1069,13 +1071,20 @@ class XForm(WrappedNode):
 
             if include_fixtures and cnode.node.find('{f}itemset').exists():
                 itemset_node = cnode.node.find('{f}itemset')
+                nodeset = itemset_node.attrib.get('nodeset')
                 fixture_data = {
-                    'nodeset': itemset_node.attrib.get('nodeset')
+                    'nodeset': nodeset,
                 }
                 if itemset_node.find('{f}label').exists():
                     fixture_data['label_ref'] = itemset_node.find('{f}label').attrib.get('ref')
                 if itemset_node.find('{f}value').exists():
                     fixture_data['value_ref'] = itemset_node.find('{f}value').attrib.get('ref')
+
+                fixture_id = extract_instance_id_from_nodeset_ref(nodeset)
+                if fixture_id:
+                    fixture_data['instance_id'] = fixture_id
+                    fixture_data['instance_ref'] = external_instances.get(fixture_id)
+
                 question['fixture_data'] = fixture_data
 
             if cnode.items is not None:
