@@ -673,5 +673,5 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     # note: for simplicity, this only returns the first instance ref in the event there are multiple.
     # if that's ever a problem this method could be changed in the future to return a list
     if nodeset:
-        matches = re.findall("instance\('(.*?)'\)", nodeset)
+        matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
