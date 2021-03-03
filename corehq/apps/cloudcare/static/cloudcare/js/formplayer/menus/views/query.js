@@ -4,13 +4,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var separator = " to ";
 
     // special format handled by CaseSearch API
-    var separator = " to ",
-    encodeDateRange = function (value) {
-        return "__range__" + value.replace(separator, "__");
-    }, decodeDateRange = function (value) {
-        return value.replace("__range__", "").replace("__", separator);
+    var encodeValue = function (model, value) {
+        if (!value) {
+            return value;
+        }
+        if (model.get("input") === "daterange") {
+            return "__range__" + value.replace(separator, "__");
+        }
+        return value;
+    }, decodeValue = function (model, value) {
+        if (!value) {
+            return value;
+        }
+        if (model.get("input") === "daterange") {
+            return value.replace("__range__", "").replace("__", separator);
+        }
+        return value;
     };
 
     var QueryView = Marionette.View.extend({
@@ -40,10 +52,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // If input doesn't have a default value, check to see if there's a sticky value from user's last search
             if (!this.options.model.get('value')) {
                 var stickyValue = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')];
-                if (stickyValue && this.options.model.get("input") == "daterange") {
-                    stickyValue = decodeDateRange(stickyValue);
-                }
-                this.options.model.set('value', stickyValue);
+                this.options.model.set('value', decodeValue(this.options.model, stickyValue));
             }
         },
 
@@ -117,14 +126,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 answers = {},
                 model = this.parentModel;
             $fields.each(function (index) {
-                var answer = null;
                 if (this.value !== '') {
-                    if (model[index].get('input') === 'daterange') {
-                        answer = encodeDateRange(this.value);
-                    } else {
-                        answer = this.value;
-                    }
-                    answers[model[index].get('id')] = answer;
+                    answers[model[index].get('id')] = encodeValue(model[index], this.value);
                 }
             });
             return answers;
