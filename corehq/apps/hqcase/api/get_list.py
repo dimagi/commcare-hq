@@ -16,7 +16,7 @@ CUSTOM_PROPERTY_PREFIX = 'property.'
 
 
 def _to_boolean(val):
-    return val.lower() not in [''] + list(FALSE_STRINGS)
+    return not (val == '' or val.lower() in FALSE_STRINGS)
 
 
 def _to_int(val, param_name):
