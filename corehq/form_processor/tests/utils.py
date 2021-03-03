@@ -397,3 +397,9 @@ def create_case_with_index(case, index) -> CommCareCaseSQL:
     case.track_create(index)
     CaseAccessorSQL.save_case(case)
     return case
+
+
+def delete_all_xforms_and_cases(domain):
+    assert settings.UNIT_TESTING
+    FormProcessorTestUtils.delete_all_xforms(domain)
+    FormProcessorTestUtils.delete_all_cases(domain)

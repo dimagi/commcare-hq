@@ -12,6 +12,7 @@ from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import (
     create_case,
     create_case_with_index,
+    delete_all_xforms_and_cases,
     use_sql_backend,
 )
 from corehq.motech.const import (
@@ -486,9 +487,7 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
         self.ext_case_2 = create_case_with_index(case, index)
 
     def tearDown(self):
-        self.ext_case_1.delete()
-        self.ext_case_2.delete()
-        self.host_case.delete()
+        delete_all_xforms_and_cases(self.domain)
 
     def test_set_external_data(self):
         value_source_configs = [{
@@ -586,9 +585,7 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
         self.child_case_2 = create_case_with_index(case, index)
 
     def tearDown(self):
-        self.child_case_1.delete()
-        self.child_case_2.delete()
-        self.parent_case.delete()
+        delete_all_xforms_and_cases(self.domain)
 
     def test_set_external_data(self):
         value_source_configs = [{
