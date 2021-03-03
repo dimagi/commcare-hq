@@ -103,7 +103,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.4.13/data
 
   kafka:
-      image: wurstmeister/kafka:0.8.2.2-1
+      image: wurstmeister/kafka:2.13-2.6.0
       ports:
         - "9092:9092"
       environment:
