@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ProcedureRequest",
+  "id": "file:ProcedureRequest.schema.json",
   "$ref": "#/definitions/ProcedureRequest",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ProcedureRequest": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A record of a request for diagnostic investigations, treatments, or operations to be performed.",
@@ -216,7 +216,7 @@
     "ProcedureRequest_Requester": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A record of a request for diagnostic investigations, treatments, or operations to be performed.",

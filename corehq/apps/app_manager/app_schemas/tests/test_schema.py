@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from django.test import SimpleTestCase
 
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.app_schemas.session_schema import (
 )
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.util.test_utils import flag_enabled
 
 
 @patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
@@ -298,13 +300,6 @@ class SchemaTest(SimpleTestCase):
                     "phone_number": {},
                 },
             })
-
-    def test_casedb_schema_maps_owner_id_to_attribute_with_name(self):
-        form = self.add_form("owner_case_type", {"owner_id": "new_owner"})
-        schema = get_casedb_schema(form)
-        structure = schema['subsets'][0]['structure']
-        self.assertIn('@owner_id', structure)
-        self.assertEqual(structure['@owner_id']['name'], 'owner_id')
 
     # -- helpers --
 
