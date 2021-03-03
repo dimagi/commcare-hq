@@ -106,8 +106,7 @@ class BouncedEmail(models.Model):
 
         for email_address in list_of_emails:
             if (BLOCKED_EMAIL_DOMAIN_RECIPIENTS.enabled(email_address)
-                or cls.is_bad_email_format(email_address)
-            ):
+                    or cls.is_bad_email_format(email_address)):
                 bad_emails.add(email_address)
 
         list_of_emails = set(list_of_emails).difference(bad_emails)
@@ -241,3 +240,65 @@ class NullJsonField(JSONField):
     def pre_init(self, value, obj):
         value = super(NullJsonField, self).pre_init(value, obj)
         return self.get_default() if value is None else value
+
+
+class ForeignValue:
+    """Property descriptor for Django foreign key refs with a primitive value
+
+    This is useful for cases where the object referenced by the foreign
+    key holds a single primitive value named `value`. It eliminates
+    boilerplate indirection imposed by the foreign key, allowing the
+    value to be referenced as a simple attribute.
+    """
+
+    def __init__(self, foreign_key: models.ForeignKey, truncate=False):
+        self.fk = foreign_key
+        self.truncate = truncate
+
+    def __set_name__(self, owner, name):
+        other_names = getattr(owner, "_ForeignValue_names", [])
+        owner._ForeignValue_names = other_names + [name]
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        fobj = getattr(obj, self.fk.name)
+        return fobj.value if fobj is not None else None
+
+    def __set__(self, obj, value):
+        if value is None:
+            if getattr(obj, self.fk.name) is not None:
+                setattr(obj, self.fk.name, None)
+            return
+        model = self.fk.related_model
+        if self.truncate:
+            maxlen = model._meta.get_field("value").max_length
+            value = value[:maxlen]
+        fobj, _ = model.objects.get_or_create(value=value)
+        setattr(obj, self.fk.name, fobj)
+
+    @staticmethod
+    def get_names(cls):
+        """Get a list of ForeignValue attribute names of the given class
+
+        Raises `AttributeError` if the class has no `ForeignValue` attributes.
+        """
+        return cls._ForeignValue_names
+
+
+def foreign_value_init(cls):
+    """Class decorator that adds a ForeignValue-compatible __init__ method
+
+    Use this on classes with `ForeignValue` attributes that want to
+    accept values for those attributes passed to their constructor.
+    """
+    def __init__(self, *args, **kw):
+        values = {n: kw.pop(n) for n in names if n in kw}
+        super_init(self, *args, **kw)
+        for name, value in values.items():
+            setattr(self, name, value)
+
+    names = ForeignValue.get_names(cls)
+    super_init = cls.__init__
+    cls.__init__ = __init__
+    return cls
