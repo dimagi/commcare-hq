@@ -31,7 +31,6 @@ def setup_module():
         ('http://0251.0376.0251.0376/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
         ('http://0251.00376.000251.0000376/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
         ('http://169.254.169.254.xip.io/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
-        ('http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/', (RAISE, PossibleSSRFAttempt('is_link_local'))),
         ('http://10.124.10.11', (RAISE, PossibleSSRFAttempt('is_private'))),
         ('some-non-url', (RAISE, InvalidURL())),
     ]
@@ -52,3 +51,15 @@ def test_example_suite():
                     sanitize_user_input_url(input_url)
         else:
             raise Exception("result in suite should be RETURN or RAISE")
+
+
+def test_rebinding():
+    """
+    this test doesn't do much, it just checks that a known rebinding endpoint
+    and checks the output is one of the two expected values
+    """
+    url = 'http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/'
+    try:
+        eq(sanitize_user_input_url(url), ipaddress.IPv4Address('8.8.8.8'))  # this is one possible output
+    except PossibleSSRFAttempt as e:
+        eq(e.reason, 'is_link_local')
