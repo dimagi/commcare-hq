@@ -215,6 +215,22 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
         self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
 
+    def test_update_case_on_other_domain(self):
+        case_id = str(uuid.uuid4())
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            case_type='player',
+            case_name='Judit Polgár',
+            create=True,
+            update={}
+        ).as_text()], domain='other_domain')
+
+        res = self._update_case(case_id, {
+            '@owner_id': 'stealing_this_case',
+        })
+        self.assertEqual(res.json()['error'], f"No case found with ID '{case_id}'")
+        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+
     def test_create_child_case(self):
         parent_case = self._make_case()
         res = self._create_case({
