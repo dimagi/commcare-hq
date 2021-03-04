@@ -64,6 +64,7 @@ class CaseUpdateCommand(BaseCommand):
 
         options.pop("and_linked")
         options.pop("username")
+        options.pop("output_file", None)
         self.extra_options = options
 
         for domain in sorted(domains):
