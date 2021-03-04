@@ -50,6 +50,8 @@ def as_text(value):
 
 
 def as_json_text(value):
+    if value is None:
+        return ''
     if isinstance(value, dict):
         try:
             return stdlib_json.dumps(value, indent=2)

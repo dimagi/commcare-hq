@@ -258,6 +258,12 @@ class TestRequestLogFormatting(TestCase):
         template_value = pp_json(request_log.request_body)
         self.assertEqual(template_value, "{'hello': Decimal('1.0')}")
 
+    def test_request_body_none(self):
+        entry = self.get_entry(request_body=None)
+        request_log = RequestLog.log(level=logging.DEBUG, log_entry=entry)
+        template_value = pp_json(request_log.request_body)
+        self.assertEqual(template_value, '')
+
     @staticmethod
     def get_entry(request_body):
         return RequestLogEntry(
