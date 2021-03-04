@@ -1,5 +1,13 @@
+from django_prbac.models import Role
+
+from corehq.apps.accounting.models import (
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwarePlanVisibility,
+    SoftwareProductRate,
+    SoftwarePlanVersion,
+)
 from corehq.apps.sso import certificates
-from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.tests import generator as accounting_gen
 
 from corehq.util.test_utils import unit_testing_only
@@ -35,4 +43,24 @@ def get_billing_account_for_idp():
     dimagi_user = accounting_gen.create_arbitrary_web_user_name(is_dimagi=True)
     return accounting_gen.billing_account(
         dimagi_user, billing_contact, is_customer_account=True
+    )
+
+
+@unit_testing_only
+def get_enterprise_plan():
+    enterprise_plan = SoftwarePlan.objects.create(
+        name="Helping Earth INGO Enterprise Plan",
+        description="Enterprise plan for Helping Earth",
+        edition=SoftwarePlanEdition.ENTERPRISE,
+        visibility=SoftwarePlanVisibility.INTERNAL,
+        is_customer_software_plan=True,
+    )
+    first_product_rate = SoftwareProductRate.objects.create(
+        monthly_fee=3000,
+        name="HQ Enterprise"
+    )
+    return SoftwarePlanVersion.objects.create(
+        plan=enterprise_plan,
+        role=Role.objects.first(),
+        product_rate=first_product_rate
     )
