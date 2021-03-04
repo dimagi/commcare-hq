@@ -78,7 +78,6 @@ branches:
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - nh/fhir/repeater  # Norman Mar 1
   - ap/fix-filters-in-case-list-report # Amit Mar 1
-  - revert-28931-mjr/owner_id_fix  # Matt Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - kev/repeat-add-new-translation # Kevin Mar 2
   - jls/web-apps-sticky-date-range # Jenny March 3
