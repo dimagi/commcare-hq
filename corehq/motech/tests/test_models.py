@@ -9,9 +9,13 @@ from mock import Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
-from corehq.motech.models import ConnectionSettings, RequestLog, RequestLogEntry
+from corehq.motech.models import (
+    ConnectionSettings,
+    RequestLog,
+    RequestLogEntry,
+)
 from corehq.motech.requests import get_basic_requests
-from corehq.util import as_text
+from corehq.util import as_json_text, as_text
 
 TEST_API_URL = 'http://example.com:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -67,7 +71,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             domain=TEST_DOMAIN,
             log_level=logging.INFO,
             payload_id=None,
-            request_body=as_text(request_body),
+            request_body=as_json_text(request_body),
             request_error=self.error_message,
             request_headers=self.request_headers,
             request_method=self.request_method,
