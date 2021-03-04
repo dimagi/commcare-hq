@@ -153,15 +153,20 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     except ValidationError as e:
         return str(e)
 
-    if fhir_resource_prop_path and fhir_resource_type:
-        try:
-            fhir_resource_prop = FHIRResourceProperty.objects.get(case_property=prop,
-                resource_type=fhir_resource_type)
-        except FHIRResourceProperty.DoesNotExist:
-            fhir_resource_prop = FHIRResourceProperty(case_property=prop, resource_type=fhir_resource_type)
-        fhir_resource_prop.jsonpath = fhir_resource_prop_path
-        fhir_resource_prop.save()
-
+    if fhir_resource_type:
+        if fhir_resource_prop_path:
+            try:
+                fhir_resource_prop = FHIRResourceProperty.objects.get(case_property=prop,
+                                                                      resource_type=fhir_resource_type)
+            except FHIRResourceProperty.DoesNotExist:
+                fhir_resource_prop = FHIRResourceProperty(case_property=prop, resource_type=fhir_resource_type)
+            fhir_resource_prop.jsonpath = fhir_resource_prop_path
+            fhir_resource_prop.save()
+        elif fhir_resource_prop_path == "":
+            try:
+                FHIRResourceProperty.objects.get(case_property=prop, resource_type=fhir_resource_type).delete()
+            except FHIRResourceProperty.DoesNotExist:
+                pass
     prop.save()
 
 
