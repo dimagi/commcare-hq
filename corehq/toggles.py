@@ -1964,7 +1964,7 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
-    """
+    """,
     help_link="https://confluence.dimagi.com/display/ccinternal/One+Phone+Number+-+Multiple+Contacts"
 )
 
