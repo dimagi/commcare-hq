@@ -5,16 +5,14 @@ services:
     extends:
       file: hq-compose.yml
       service: formplayer
-    environment:
-      WEB_HOST: "dockerhost"
     links:
       - postgres
-      - couch
       - redis
     expose:
-      - 8010
+      - 8080
     ports:
-      - "8010:8010"
+      - "8080:8080"
+      - "8081:8081"
 
   postgres:
     extends:

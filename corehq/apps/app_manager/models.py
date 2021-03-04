@@ -1171,13 +1171,14 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
                 timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
+                      include_groups=False, include_translations=False, include_fixtures=False):
         try:
             return XForm(self.source).get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
                 include_translations=include_translations,
+                include_fixtures=include_fixtures,
             )
         except XFormException as e:
             raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))

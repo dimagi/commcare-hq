@@ -96,10 +96,12 @@ def _set_logging_levels(levels):
     import logging
     for path, level in levels.items():
         logging.getLogger(path).setLevel(level)
+
+
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
     'alembic': 'WARNING',
-    'auditcare': 'INFO',
+    'corehq.apps.auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',

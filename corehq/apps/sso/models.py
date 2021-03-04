@@ -1,8 +1,10 @@
 from django.db import models
 
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.util.quickcache import quickcache
 
 
 class IdentityProviderType:
@@ -128,10 +130,76 @@ class IdentityProvider(models.Model):
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
 
+    def get_active_projects(self):
+        """
+        Returns a list of active domains/project spaces for this identity
+        provider.
+        :return: list of strings (domain names)
+        """
+        return list(Subscription.visible_objects.filter(
+            account=self.owner,
+            is_active=True
+        ).values_list('subscriber__domain', flat=True))
+
+    @quickcache(['self.slug', 'domain'])
+    def is_domain_an_active_member(self, domain):
+        """
+        Checks whether the given Domain is an Active Member of the current
+        Identity Provider.
+
+        An "Active Member" is defined by having an active Subscription that
+        belongs to the BillingAccount owner of this IdentityProvider.
+
+        :param domain: String (the Domain name)
+        :return: Boolean (True if Domain is an Active Member)
+        """
+        return Subscription.visible_objects.filter(
+            account=self.owner,
+            is_active=True,
+            subscriber__domain=domain,
+        ).exists()
+
+    @quickcache(['self.slug', 'domain'])
+    def does_domain_trust_this_idp(self, domain):
+        """
+        Checks whether the given Domain trusts this Identity Provider.
+        :param domain: String (the Domain name)
+        :return: Boolean (True if Domain trusts this Identity Provider)
+        """
+        is_active_member = self.is_domain_an_active_member(domain)
+        if not is_active_member:
+            # Since this Domain is not an Active Member, check whether an
+            # administrator of this domain has trusted this Identity Provider
+            return TrustedIdentityProvider.objects.filter(
+                domain=domain, identity_provider=self
+            ).exists()
+        return is_active_member
+
     @classmethod
     def domain_has_editable_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)
         return cls.objects.filter(owner=owner, is_editable=True).exists()
+
+    @classmethod
+    def get_active_identity_provider_by_username(cls, username):
+        """
+        Returns the active Identity Provider associated with a user's email
+        domain or None.
+        :param username: (string)
+        :return: IdentityProvider or None
+        """
+        email_domain = get_email_domain_from_username(username)
+        if not email_domain:
+            # malformed username/email
+            return None
+        try:
+            authenticated_email_domain = AuthenticatedEmailDomain.objects.get(
+                email_domain=email_domain
+            )
+            idp = authenticated_email_domain.identity_provider
+        except AuthenticatedEmailDomain.DoesNotExist:
+            return None
+        return idp if idp.is_active else None
 
 
 class AuthenticatedEmailDomain(models.Model):

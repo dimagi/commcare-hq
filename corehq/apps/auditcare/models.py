@@ -7,7 +7,6 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 
-from auditcare.signals import user_login_failed
 from dimagi.ext.couchdbkit import (
     DateTimeProperty,
     DictProperty,
@@ -17,6 +16,8 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.web import get_ip
+
+from .signals import user_login_failed
 
 log = logging.getLogger(__name__)
 

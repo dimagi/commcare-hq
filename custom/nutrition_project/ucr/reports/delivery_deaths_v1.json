@@ -5,11 +5,11 @@
   "server_environment": [
     "india"
   ],
-  "report_id": "static-hcm_report_v1",
-  "data_source_table": "static-suppl_nutrition_hcm_v1",
+  "report_id": "static-delivery-deaths_v1",
+  "data_source_table": "static-record_a_delivery_v1",
   "config": {
-    "title": "Total days HCM provided V1 (Static)",
-    "description": "Total days HCM provided per flw per month",
+    "title": "Delivery Deaths V1 (Static)",
+    "description": "Delivery Deaths per flw per month",
     "visible": true,
     "aggregation_columns": [
       "supervisor_id",
@@ -40,6 +40,37 @@
           "type": "location"
         },
         "datatype": "string"
+      },
+      {
+        "type": "pre",
+        "field": "mother_safe_and_alive",
+        "slug": "mother_safe_and_alive",
+        "datatype": "string",
+        "pre_value": "no"
+      },
+      {
+        "type": "pre",
+        "field": "female_death_type",
+        "slug": "female_death_type",
+        "datatype": "string",
+        "pre_value": "delivery"
+      },
+      {
+        "display": "Residential Status",
+        "slug": "residential_status",
+        "type": "choice_list",
+        "field": "residential_status",
+        "datatype": "string",
+        "choices": [
+          {
+            "display": "Temporary",
+            "value": "temp_resident"
+          },
+          {
+            "display": "Permanent",
+            "value": "permanent_resident"
+          }
+        ]
       }
     ],
     "columns": [
@@ -65,24 +96,10 @@
         "aggregation": "simple"
       },
       {
-        "display": "Number of Children eligible",
-        "column_id": "number_of_children",
-        "type": "field",
-        "field": "number_of_children",
-        "aggregation": "max"
-      },
-      {
-        "display": "Number of Adolescent Beneficiaries eligible",
-        "column_id": "number_of_adolescent_beneficiaries",
-        "type": "field",
-        "field": "number_of_adolescent_beneficiaries",
-        "aggregation": "max"
-      },
-      {
         "display": "Count",
         "column_id": "count",
         "type": "field",
-        "field": "day",
+        "field": "doc_id",
         "aggregation": "count_unique"
       }
     ]
