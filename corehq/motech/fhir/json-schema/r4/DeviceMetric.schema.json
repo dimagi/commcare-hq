@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/DeviceMetric",
+  "id": "file:DeviceMetric.schema.json",
   "$ref": "#/definitions/DeviceMetric",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "DeviceMetric": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Describes a measurement, calculation or setting capability of a medical device.",
@@ -108,7 +108,7 @@
     "DeviceMetric_Calibration": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Describes a measurement, calculation or setting capability of a medical device.",

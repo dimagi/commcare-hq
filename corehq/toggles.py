@@ -1238,14 +1238,6 @@ INBOUND_SMS_LENIENCY = StaticToggle(
 )
 
 
-HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
-    'hide_messaging_dashboard',
-    "Hide messaging dashboard from users who are not superusers.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-
 WHATSAPP_MESSAGING = StaticToggle(
     'whatsapp_messaging',
     "Default SMS to send messages via Whatsapp, where available",
@@ -2038,5 +2030,13 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
     'COVID: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+FHIR_INTEGRATION = StaticToggle(
+    'fhir_integration',
+    'FHIR: Enable setting up FHIR integration',
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN]
 )

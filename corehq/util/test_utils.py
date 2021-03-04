@@ -160,6 +160,18 @@ class flag_disabled(flag_enabled):
     enabled = False
 
 
+def privilege_enabled(privilege_name):
+    """Enable an individual privilege for tests"""
+    from django_prbac.utils import has_privilege
+
+    def patched(request, slug, **assignment):
+        if slug == privilege_name:
+            return True
+        return has_privilege(request, slug, **assignment)
+
+    return mock.patch('django_prbac.decorators.has_privilege', new=patched)
+
+
 class DocTestMixin(object):
     """To be mixed in with a TestCase"""
 
