@@ -2,10 +2,10 @@ import csv
 
 from django.core.management.base import BaseCommand, CommandError
 
-from auditcare.utils.export import get_users_to_export, write_log_events
-
 from corehq.apps.domain.models import Domain
 from corehq.util.argparse_types import date_type
+
+from ...utils.export import get_users_to_export, write_log_events
 
 
 class Command(BaseCommand):

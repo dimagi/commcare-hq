@@ -1,7 +1,6 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
 import logging
-
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -11,9 +10,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import RequestContext
 
-from auditcare import models
-from auditcare.models import AccessAudit
 from dimagi.utils.web import get_ip
+
+from .. import models
+from ..models import AccessAudit
 
 # see if the user has overridden the failure limit
 FAILURE_LIMIT = getattr(settings, 'AXES_LOGIN_FAILURE_LIMIT', 3)

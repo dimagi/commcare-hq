@@ -5,8 +5,8 @@ from django.conf import settings
 from django.contrib import admin
 from django.utils.deprecation import MiddlewareMixin
 
-from auditcare.decorators import watch_login, watch_logout
-from auditcare.models import AuditEvent
+from .decorators import watch_login, watch_logout
+from .models import AuditEvent
 
 log = logging.getLogger(__name__)
 

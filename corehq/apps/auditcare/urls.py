@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.conf.urls import url
 
-from auditcare.utils import login_template, logout_template
-from auditcare.views import (
+from .utils import login_template, logout_template
+from .views import (
     audited_login,
     audited_logout,
     audited_views,
