@@ -42,7 +42,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         SSOExemptUsersAdminAsyncHandler,
     ]
 
-    @use_datetimepicker
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
