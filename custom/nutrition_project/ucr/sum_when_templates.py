@@ -1,4 +1,6 @@
-from corehq.apps.userreports.reports.sum_when_templates import SumWhenTemplateSpec
+from corehq.apps.userreports.reports.sum_when_templates import (
+    SumWhenTemplateSpec,
+)
 from corehq.apps.userreports.specs import TypeProperty
 
 
