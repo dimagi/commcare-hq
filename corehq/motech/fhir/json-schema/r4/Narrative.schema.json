@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Narrative",
+  "id": "file:Narrative.schema.json",
   "$ref": "#/definitions/Narrative",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Narrative": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "A human-readable formatted text, including images.",

@@ -81,7 +81,6 @@ _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
 
 # required by auditcare tests
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
 AUDIT_ADMIN_VIEWS = False
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True

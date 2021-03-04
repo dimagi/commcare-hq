@@ -5,8 +5,9 @@ from django.contrib.auth.models import User
 from django.utils.datastructures import OrderedSet
 
 from auditcare.models import NavigationEventAudit, wrap_audit_event
-from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.users.models import WebUser
 
 
 def navigation_event_ids_by_user(user, start_date=None, end_date=None):
@@ -100,8 +101,6 @@ def write_generic_log_event(writer, event):
     elif event.doc_type == 'AccessAudit':
         action = event.access_type
         resource = event.path_info
-    elif event.doc_type == 'ModelActionAudit':
-        resource = f'{event.object_type}:{event.object_uuid}'
 
     writer.writerow([
         event.event_date, event.doc_type, event.user, getattr(event, 'domain', ''),

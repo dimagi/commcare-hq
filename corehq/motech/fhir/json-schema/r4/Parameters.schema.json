@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Parameters",
+  "id": "file:Parameters.schema.json",
   "$ref": "#/definitions/Parameters",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Parameters": {
       "allOf": [
         {
-          "$ref": "Resource#/definitions/Resource"
+          "$ref": "Resource.schema.json#/definitions/Resource"
         },
         {
           "description": "This special resource type is used to represent an operation request and response (operations.html). It has no other use, and there is no RESTful endpoint associated with it.",
@@ -26,7 +26,7 @@
     "Parameters_Parameter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This special resource type is used to represent an operation request and response (operations.html). It has no other use, and there is no RESTful endpoint associated with it.",

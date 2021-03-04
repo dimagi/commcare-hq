@@ -19,9 +19,9 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
+    all_project_data_filter,
+    deactivated_case_owners,
     get_case_owners,
-    query_all_project_data,
-    query_deactivated_data,
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
@@ -65,25 +65,30 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if self.request.can_access_all_locations and (
-                EMWF.show_all_data(mobile_user_and_group_slugs)
-                or EMWF.no_filters_selected(mobile_user_and_group_slugs)
+        case_owner_filters = []
+
+        if (
+            self.request.can_access_all_locations
+            and EMWF.show_project_data(mobile_user_and_group_slugs)
         ):
-            pass
+            case_owner_filters.append(all_project_data_filter(self.domain, mobile_user_and_group_slugs))
 
-        elif (self.request.can_access_all_locations
-              and EMWF.show_project_data(mobile_user_and_group_slugs)):
-            query = query_all_project_data(
-                query, self.domain, mobile_user_and_group_slugs
-            )
+        if (
+            self.request.can_access_all_locations
+            and EMWF.show_deactivated_data(mobile_user_and_group_slugs)
+        ):
+            case_owner_filters.append(deactivated_case_owners(self.domain))
 
-        elif (self.request.can_access_all_locations
-              and EMWF.show_deactivated_data(mobile_user_and_group_slugs)):
-            query = query_deactivated_data(query, self.domain)
-
-        else:  # Only show explicit matches
+        # Only show explicit matches
+        if (
+            EMWF.selected_user_ids(mobile_user_and_group_slugs)
+            or EMWF.selected_user_types(mobile_user_and_group_slugs)
+            or EMWF.selected_group_ids(mobile_user_and_group_slugs)
+        ):
             track_es_report_load(self.domain, self.slug, len(self.case_owners))
-            query = query.owner(self.case_owners)
+            case_owner_filters.append(case_es.owner(self.case_owners))
+
+        query = query.OR(*case_owner_filters)
 
         if not self.request.can_access_all_locations:
             query = query_location_restricted_cases(query, self.request)
