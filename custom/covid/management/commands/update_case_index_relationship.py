@@ -29,7 +29,10 @@ def should_skip(case, traveler_location_id, inactive_location):
 
 def needs_update(case):
     index = case.indices[0]
-    return index.referenced_type == "patient" and index.relationship == "child"
+    return index.relationship == "child" and (
+        index.referenced_type == "patient"
+        or index.referenced_type == "'patient'"
+    )
 
 
 def get_owner_id(case_type):
@@ -47,7 +50,7 @@ class Command(CaseUpdateCommand):
             create=False,
             case_id=case.case_id,
             owner_id=owner_id,
-            index={index.identifier: (index.referenced_type, index.referenced_id, "extension")},
+            index={index.identifier: ("patient", index.referenced_id, "extension")},
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):

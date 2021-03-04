@@ -4,7 +4,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.postgres.forms import SimpleArrayField
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -31,12 +31,9 @@ from corehq.apps.users.models import CouchUser, HQApiKey
 
 
 class HQPasswordChangeForm(PasswordChangeForm):
-
     new_password1 = forms.CharField(label=_('New password'),
                                     widget=forms.PasswordInput(),
-                                    help_text=mark_safe("""
-                                    <span data-bind="text: passwordHelp, css: color">
-                                    """))
+                                    help_text='<span data-bind="text: passwordHelp, css: color">')
 
     def __init__(self, user, *args, **kwargs):
 
@@ -288,7 +285,7 @@ class HQApiKeyForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    mark_safe('<i class="fa fa-plus"></i> {}'.format(ugettext_lazy("Generate New API Key"))),
+                    format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
                     css_class='btn btn-primary',
                     type='submit'
                 )
