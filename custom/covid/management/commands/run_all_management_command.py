@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
         output_file_name = options["output_file"]
         if output_file_name:
-            with open(output_file_name, "x") as output_file:
+            with open(output_file_name, "a") as output_file:
                 output_file.write(f"Updated {len(domains)} domains")
                 output_file.close()
 
