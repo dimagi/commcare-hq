@@ -162,7 +162,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
-    'auditcare.middleware.AuditMiddleware',
+    'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
@@ -183,6 +183,7 @@ ADD_CAPTCHA_FIELD_TO_FORMS = False
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+    'corehq.apps.sso.backends.SsoBackend',
 ]
 
 PASSWORD_HASHERS = (
@@ -236,7 +237,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'auditcare',
+    'corehq.apps.auditcare',
     'casexml.apps.case',
     'corehq.apps.casegroups',
     'corehq.apps.case_migrations',
@@ -746,11 +747,6 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_MODEL_SAVE = [
-    'corehq.apps.app_manager.Application',
-    'corehq.apps.app_manager.RemoteApp',
-]
-
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
     'corehq.apps.hqadmin.views.users.AuthenticateAs',
@@ -1900,6 +1896,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'polio_rdc', 'ucr', 'data_sources', 'users.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 

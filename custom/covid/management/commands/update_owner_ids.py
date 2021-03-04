@@ -36,7 +36,11 @@ class Command(CaseUpdateCommand):
             if owner_id in locations_objects:
                 location_obj = locations_objects[owner_id]
             else:
-                location_obj = SQLLocation.objects.get(location_id=owner_id)
+                try:
+                    location_obj = SQLLocation.objects.get(location_id=owner_id)
+                except SQLLocation.DoesNotExist:
+                    skip_count += 1
+                    continue
                 locations_objects[owner_id] = location_obj
             if location_obj:
                 children = location_obj.get_children()

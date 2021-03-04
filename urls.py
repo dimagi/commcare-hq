@@ -98,7 +98,7 @@ for url_module in extension_points.domain_specific_urls():
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
-    url(r'^auditcare/', include('auditcare.urls')),
+    url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^api/', include(user_api_urlpatterns)),

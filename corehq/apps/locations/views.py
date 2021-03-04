@@ -7,7 +7,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_http_methods
@@ -147,11 +147,13 @@ def check_pending_locations_import(redirect=False):
                     # redirect to import status page
                     return HttpResponseRedirect(status_url)
                 else:
-                    messages.warning(request, mark_safe(
-                        _("Organizations can't be edited until "
-                          "<a href='{}''>current bulk upload</a> "
-                          "has finished.").format(status_url)
-                    ))
+                    warning_message = format_html(
+                        _("Organizations can't be edited until the "
+                          "<a href='{}'>current bulk upload</a> "
+                          "has finished."),
+                        status_url
+                    )
+                    messages.warning(request, warning_message)
                     return view_fn(request, domain, *args, **kwargs)
             else:
                 return view_fn(request, domain, *args, **kwargs)
@@ -782,9 +784,7 @@ class EditLocationView(BaseEditLocationView):
             name = _("View {name} <small>{type}</small>")
         else:
             name = _("Edit {name} <small>{type}</small>")
-        return mark_safe(name.format(
-            name=self.location.name, type=self.location.location_type_name
-        ))
+        return format_html(name, name=self.location.name, type=self.location.location_type_name)
 
     @property
     def can_edit_commcare_users(self):

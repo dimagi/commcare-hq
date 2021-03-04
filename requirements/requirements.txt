@@ -57,7 +57,7 @@ concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
-cryptography==3.3.1
+cryptography==3.4.6
     # via pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
@@ -73,7 +73,7 @@ decorator==4.0.11
     # via
     #   -r base-requirements.in
     #   datadog
-    #   jsonpath-rw
+    #   jsonpath-ng
 defusedxml==0.5.0
     # via
     #   -r base-requirements.in
@@ -242,7 +242,7 @@ jsonobject==0.9.9
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
-jsonpath-rw==1.4.0
+https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -290,7 +290,7 @@ pillow==7.2.0
 ply==3.11
     # via
     #   eulxml
-    #   jsonpath-rw
+    #   jsonpath-ng
 polib==1.1.0
     # via -r base-requirements.in
 prometheus-client==0.7.1
@@ -342,7 +342,7 @@ python-imap==1.0.0
     # via -r base-requirements.in
 python-levenshtein==0.12.0
     # via -r base-requirements.in
-python-magic==0.4.18
+python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
@@ -408,7 +408,6 @@ simplejson==3.17.2
 six==1.15.0
     # via
     #   -r base-requirements.in
-    #   cryptography
     #   django-braces
     #   django-simple-captcha
     #   django-statici18n
@@ -423,7 +422,7 @@ six==1.15.0
     #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
-    #   jsonpath-rw
+    #   jsonpath-ng
     #   mock
     #   protobuf
     #   pyopenssl

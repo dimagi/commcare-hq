@@ -50,19 +50,26 @@ MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
 _soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
+DELETE_CHUNK_SIZE = 5000
+
 
 @periodic_task(
-    run_every=crontab(day_of_month=27),
+    run_every=crontab(hour=6, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
-def clean_logs():
+def delete_old_request_logs():
     """
-    Drop MOTECH logs older than 90 days.
-
-    Runs on the 27th of every month.
+    Delete RequestLogs older than 90 days.
     """
-    ninety_days_ago = datetime.now() - timedelta(days=90)
-    RequestLog.objects.filter(timestamp__lt=ninety_days_ago).delete()
+    ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+    while True:
+        queryset = (RequestLog.objects
+                    .filter(timestamp__lt=ninety_days_ago)
+                    .values_list('id', flat=True)[:DELETE_CHUNK_SIZE])
+        id_list = list(queryset)
+        deleted, __ = RequestLog.objects.filter(id__in=id_list).delete()
+        if not deleted:
+            return
 
 
 @periodic_task(

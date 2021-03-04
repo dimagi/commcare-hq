@@ -13,7 +13,7 @@ class CaseUpdateCommand(BaseCommand):
     """
 
     def __init__(self):
-        self.location = None
+        self.extra_options = {}
 
     def case_block(self):
         raise NotImplementedError()
@@ -45,8 +45,10 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
-        self.location = options.get('location')
+        options.pop("and_linked")
+        options.pop("username")
+        self.extra_options = options
 
-        for domain in domains:
+        for domain in sorted(domains):
             print(f"Processing {domain}")
             self.update_cases(domain, case_type, user_id)

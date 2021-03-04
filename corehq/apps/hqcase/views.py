@@ -1,18 +1,26 @@
+import json
+
 from django.contrib import messages
-from django.http.response import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from soil import DownloadBase
 
-from corehq.apps.domain.decorators import require_superuser_or_contractor
-from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.hqcase.tasks import (
-    delete_exploded_case_task,
-    explode_case_task,
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import (
+    api_auth,
+    require_superuser_or_contractor,
 )
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.utils import should_use_sql_backend
+
+from .api import SubmissionError, UserError, handle_case_update, serialize_case
+from .tasks import delete_exploded_case_task, explode_case_task
 
 
 class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
@@ -62,3 +70,50 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         res = delete_exploded_case_task.delay(self.domain, explosion_id)
         download.set_task(res)
         return redirect('hq_soil_download', self.domain, download.download_id)
+
+
+# TODO switch to @require_can_edit_data
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@api_auth
+@require_superuser_or_contractor
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+def case_api(request, domain, case_id=None):
+    if request.method == 'POST' and not case_id:
+        return _handle_case_update(request)
+    if request.method == 'PUT' and case_id:
+        return _handle_case_update(request, case_id)
+    return JsonResponse({'error': "Request method not allowed"}, status=405)
+
+
+def _handle_case_update(request, case_id=None):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+
+    try:
+        xform, case_or_cases = handle_case_update(
+            domain=request.domain,
+            data=data,
+            user=request.couch_user,
+            device_id=request.META.get('HTTP_USER_AGENT'),
+            case_id=case_id,
+        )
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except SubmissionError as e:
+        return JsonResponse({
+            'error': str(e),
+            '@form_id': e.form_id,
+        }, status=400)
+
+    if isinstance(case_or_cases, list):
+        return JsonResponse({
+            '@form_id': xform.form_id,
+            'cases': [serialize_case(case) for case in case_or_cases],
+        })
+    return JsonResponse({
+        '@form_id': xform.form_id,
+        'case': serialize_case(case_or_cases),
+    })

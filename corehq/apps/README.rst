@@ -20,6 +20,10 @@ app_manager
    UI and tooling for configuring and releasing CommCare applications.
    Form Builder, for configuring forms themselves, is called here but
    is primarily stored in the separate `Vellum <https://github.com/dimagi/Vellum/>`_ repo.
+auditcare
+    A couch-based set of auditing tools. All page views in CommCare HQ are recorded in auditcare.
+    This backs the User Audit Log report, which allows admins to view a given user's historical actions.
+    Doing non-user-based queries is prohibitively slow.
 cloudcare
    Web Apps, a web-based interface for data entry, with essentially the same functionality
    as CommCare Mobile, but available via HQ to both web and mobile users. This app contains the HQ

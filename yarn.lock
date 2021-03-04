@@ -502,6 +502,13 @@ backbone.marionette@4.1.3:
   dependencies:
     backbone.radio "^2.0.0"
 
+"backbone.marionette@^4.0.0, 4.0.0-beta.1":
+  version "4.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-4.0.0-beta.1.tgz#793528fc5c60620200e2440e6dcd04ba16c3aab3"
+  integrity sha1-eTUo/FxgYgIA4kQObc0EuhbDqrM=
+  dependencies:
+    backbone.radio "^2.0.0"
+
 backbone.radio@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/backbone.radio/-/backbone.radio-2.0.0.tgz#bbe8672b373e313f99f36d2fbcf583fe77d04f42"
@@ -3595,6 +3602,13 @@ marionette.approuter@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/marionette.approuter/-/marionette.approuter-1.0.2.tgz#bd45b801762fea4ec5caa9505640413596cc432c"
   integrity sha512-XjcKb1Y6KROCmdZxO/rtOdRhd3Hfrs+7zWjtfiuCFS3VZa2IQjNgKUuIGmaKDZte2AmKRRMaPvXMh22nKYFh8A==
+
+marionette.templatecache@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/marionette.templatecache/-/marionette.templatecache-1.0.0.tgz#579b9a53b1b6428f8f0a0071cff2175a2d71e65b"
+  integrity sha1-V5uaU7G2Qo+PCgBxz/IXWi1x5ls=
+  dependencies:
+    backbone.marionette "^4.0.0, 4.0.0-beta.1"
 
 markdown-it@12.0.4:
   version "12.0.4"
