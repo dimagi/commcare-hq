@@ -5,11 +5,14 @@ from django.utils.translation import ugettext as _
 
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.userreports.const import AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE
+from corehq.apps.userreports.const import (
+    AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.specs import (
     AgeInMonthsBucketsColumn,
     AggregateDateColumn,
+    ArrayAggLastValueReportColumn,
     ExpandedColumn,
     ExpressionColumn,
     FieldColumn,
@@ -22,7 +25,6 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
-    ArrayAggLastValueReportColumn,
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
     AdultFemaleMigrantDeathSpec,
@@ -31,50 +33,49 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     AgeAtDeathRangeResidentSpec,
     CCSPhaseNullTemplateSpec,
     CCSPhaseTemplateSpec,
-    ComplementaryFeedingTemplateSpec,
     ClosedOnNullTemplateSpec,
+    ComplementaryFeedingTemplateSpec,
     FemaleAgeAtDeathSpec,
     FemaleDeathTypeMigrantSpec,
     FemaleDeathTypeResidentSpec,
     OpenDisabilityTypeSpec,
-    OpenFemaleSpec,
     OpenFemaleDisabledSpec,
-    OpenFemaleHHCasteSpec,
     OpenFemaleHHCasteNotSpec,
+    OpenFemaleHHCasteSpec,
     OpenFemaleHHMinoritySpec,
-    OpenFemaleMigrantSpec,
     OpenFemaleMigrantDistinctFromSpec,
+    OpenFemaleMigrantSpec,
     OpenFemaleResidentSpec,
+    OpenFemaleSpec,
     OpenMaleDisabledSpec,
-    OpenMaleHHCasteSpec,
     OpenMaleHHCasteNotSpec,
+    OpenMaleHHCasteSpec,
     OpenMaleHHMinoritySpec,
-    OpenMaleMigrantSpec,
     OpenMaleMigrantDistinctFromSpec,
+    OpenMaleMigrantSpec,
     OpenMaleResidentSpec,
     OpenPregnantMigrantSpec,
     OpenPregnantResidentSpec,
-    ReachedReferralHealthProblemSpec,
     ReachedReferralHealthProblem2ProblemsSpec,
     ReachedReferralHealthProblem3ProblemsSpec,
     ReachedReferralHealthProblem5ProblemsSpec,
-    ReferralHealthProblemSpec,
+    ReachedReferralHealthProblemSpec,
     ReferralHealthProblem2ProblemsSpec,
     ReferralHealthProblem3ProblemsSpec,
     ReferralHealthProblem5ProblemsSpec,
+    ReferralHealthProblemSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
 )
-
 from custom.nutrition_project.ucr.sum_when_templates import (
-    ChildDeliverySpec,
-    ChildWeighedSpec,
-    ChildLowBirthWeightSpec,
     ChildDeathSpec,
+    ChildDeliverySpec,
+    ChildLowBirthWeightSpec,
+    ChildWeighedSpec,
+    GenderAndResidentTypeSpec,
+    NutritionCenterOpenTodaySpec,
     WomanDeathSpec,
     WomanDeathTypeSpec,
-    ResidentTypeSpec,
-    NutritionCenterOpenTodaySpec,
 )
 
 
@@ -197,7 +198,7 @@ class SumWhenTemplateFactory(object):
         ChildDeathSpec.type.choices[0]: ChildDeathSpec,
         WomanDeathSpec.type.choices[0]: WomanDeathSpec,
         WomanDeathTypeSpec.type.choices[0]: WomanDeathTypeSpec,
-        ResidentTypeSpec.type.choices[0]: ResidentTypeSpec,
+        GenderAndResidentTypeSpec.type.choices[0]: GenderAndResidentTypeSpec,
         NutritionCenterOpenTodaySpec.type.choices[0]: NutritionCenterOpenTodaySpec,
     }
 

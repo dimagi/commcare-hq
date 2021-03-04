@@ -1,4 +1,6 @@
-from corehq.apps.userreports.reports.sum_when_templates import SumWhenTemplateSpec
+from corehq.apps.userreports.reports.sum_when_templates import (
+    SumWhenTemplateSpec,
+)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -33,8 +35,8 @@ class WomanDeathTypeSpec(SumWhenTemplateSpec):
     expression = "gender = 'F' AND residential_status = ? AND female_death_type = ?"
 
 
-class ResidentTypeSpec(SumWhenTemplateSpec):
-    type = TypeProperty("india-nutrition-project_resident_type")
+class GenderAndResidentTypeSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_gender_and_resident_type")
     expression = "gender = ? AND residential_status = ?"
 
 
