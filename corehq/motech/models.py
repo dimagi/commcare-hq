@@ -1,12 +1,12 @@
 import json
 import re
-from typing import Callable, Optional, Any
+from typing import Any, Callable, Optional
 
-import attr
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+import attr
 import jsonfield
 
 import corehq.motech.auth
@@ -32,7 +32,7 @@ from corehq.motech.const import (
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
-from corehq.util import as_text
+from corehq.util import as_json_text, as_text
 
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
@@ -262,7 +262,7 @@ class RequestLog(models.Model):
             request_url=log_entry.url,
             request_headers=log_entry.headers,
             request_params=log_entry.params,
-            request_body=as_text(log_entry.data),
+            request_body=as_json_text(log_entry.data),
             request_error=log_entry.error,
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
