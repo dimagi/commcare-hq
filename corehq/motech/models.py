@@ -230,7 +230,7 @@ class RequestLog(models.Model):
     """
     Store API requests and responses to analyse errors and keep an audit trail
     """
-    domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
+    domain = models.CharField(max_length=126, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     log_level = models.IntegerField(null=True)
     # payload_id is set for requests that are caused by a payload (e.g.
