@@ -1085,7 +1085,7 @@ class XForm(WrappedNode):
                     fixture_data['instance_id'] = fixture_id
                     fixture_data['instance_ref'] = external_instances.get(fixture_id)
 
-                question['fixture_data'] = fixture_data
+                question['data_source'] = fixture_data
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]

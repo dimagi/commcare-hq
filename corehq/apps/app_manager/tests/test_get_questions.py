@@ -297,7 +297,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         self.assertEqual(questions[0], {
             "comment": None,
             "constraint": None,
-            "fixture_data": {
+            "data_source": {
                 "instance_id": "country",
                 "instance_ref": "jr://fixture/item-list:country",
                 "nodeset": "instance('country')/country_list/country",
