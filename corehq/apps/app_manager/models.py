@@ -35,7 +35,7 @@ from django.utils.translation import ugettext_lazy
 import qrcode
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
-from jsonpath_rw import jsonpath, parse
+from jsonpath_ng import jsonpath, parse
 from lxml import etree
 from memoized import memoized
 
@@ -139,7 +139,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xform import validate_xform
-from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath
+from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath, CaseClaimXpath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
@@ -1098,7 +1098,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding="unicode"))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding='utf-8'))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -1171,13 +1171,14 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
                 timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
+                      include_groups=False, include_translations=False, include_fixtures=False):
         try:
             return XForm(self.source).get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
                 include_translations=include_translations,
+                include_fixtures=include_fixtures,
             )
         except XFormException as e:
             raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))
@@ -2088,6 +2089,7 @@ class CaseSearchProperty(DocumentSchema):
     appearance = StringProperty()
     input_ = StringProperty()
     default_value = StringProperty()
+    hint = DictProperty()
 
     itemset = SchemaProperty(Itemset)
 
@@ -2102,16 +2104,31 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    session_var = StringProperty(default="case_id")
     command_label = DictProperty(default={'en': 'Search All Cases'})
+    again_label = DictProperty(default={'en': 'Search Again'})
     properties = SchemaListProperty(CaseSearchProperty)
-    auto_launch = BooleanProperty(default=False)
-    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
+    default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
+    default_relevant = BooleanProperty(default=True)
+    additional_relevant = StringProperty()
     search_filter = StringProperty()
     search_button_display_condition = StringProperty()
-    include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+
+    @property
+    def case_session_var(self):
+        return "search_case_id"
+
+    def get_relevant(self):
+        relevant = self.additional_relevant or ""
+        if self.default_relevant:
+            default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+            if relevant:
+                relevant = f"({default_condition}) and ({relevant})"
+            else:
+                relevant = default_condition
+        return relevant
 
 
 class ParentSelect(DocumentSchema):
@@ -4968,6 +4985,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
+    @time_method()
     def create_suite(self, build_profile_id=None):
         self.assert_app_v2()
         return SuiteGenerator(self, build_profile_id).generate_suite()

@@ -19,6 +19,10 @@ env:
     - secure: "GmJzDwP60bUWKzIWnhg4j8TkA/IQsM5Ulx+frkPkrZmLnmLZN5K6cWqruZLl/mB6VFvnuGNBwaYq5ADMD8LpIt8LYlmHZ/zOaE04ti3rOvaOHxG+ncMkloeeke+82ismFZsI/X15F4yawUKR74lnAS5u8BfY2P+Jqko1D+15WKg="
     # DATADOG_API_KEY
     - secure: "IDSCI7WXoTowmqcPM6Ip5I8iNu+utvLgzhpuI55Imi0kT6DEgqhYmRzHGY2AfSNKlhClYiGSGzWfqub3/0KyxXSkJB7VcqPQR6CToRfR9zgnu92e9yqmOwMsi5wXxQ0ZRt8l2Oh+WiTtLjGwkD3bvUAHDq2fk9bU7aE03562MTE="
+    # DOCKER_USERNAME
+    - secure: "YJYYdkYEzN33IwHGMhFy8NIKy5fm3IjCSngwYSLTF2wwmtVTdDSObQbRwvU8zN7aziAbyYvfDQjrQZ+XG8q7RhcirqBkV8Odvzc+OxyRqw2m5Rmr6IU/Cjdja5BXuKuZBlmNmh0fzZguH7EwteAh8lKwzPs+05WCbjZ2cA5YupE="
+    # DOCKER_PASSWORD
+    - secure: "P6wHEvcVIStEeWPVyS7DY5dEEhCTxMlQ0K6e35Q/4tj1kBvrVMquCs1r5i6TWSpVSYrEePvMabqRljShpyKJhjSJCyP4BkqXVsu9VWpI29qROEZeIGMxu2X80LfpPsvxhZeQ9dGtIUyUgSRxgwnSNI1m8Tzk8vptuDD3bX26NCQ="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -26,7 +30,6 @@ before_install:
   - sudo mv -v docker-compose /usr/local/bin/
 install:
   - mkdir -p $TRAVIS_BUILD_DIR/docker-volumes
-  - .travis/setup_icds.sh
 before_script:
   - docker version
   - docker-compose version
@@ -35,6 +38,7 @@ script:
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
   - export DATADOG_API_KEY=$DATADOG_API_KEY
+  - if [[ "$DOCKER_USERNAME" && "$DOCKER_PASSWORD" ]]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
   - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10 --max-test-time=29
 after_success:
   # create symlink so artifacts are available

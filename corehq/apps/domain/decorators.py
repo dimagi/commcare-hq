@@ -25,6 +25,10 @@ from oauth2_provider.oauth2_backends import get_oauthlib_core
 from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
+from corehq.apps.sso.utils.request_helpers import (
+    is_request_blocked_from_viewing_domain_due_to_sso,
+    is_request_using_sso,
+)
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -50,6 +54,7 @@ from corehq.toggles import (
     IS_CONTRACTOR,
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
+    ENTERPRISE_SSO,
 )
 from corehq.util.soft_assert import soft_assert
 from django_digest.decorators import httpdigest
@@ -102,6 +107,12 @@ def login_and_domain_required(view_func):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
+            elif (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
+                  and is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj)):
+                # Important! Make sure this is always the final check prior
+                # to returning call_view() below
+                # todo, show more user-friendly view
+                return HttpResponseForbidden()
             else:
                 return call_view()
         elif user.is_superuser:
@@ -111,6 +122,12 @@ def login_and_domain_required(view_func):
                 return no_permissions(req, message=msg)
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
+            if (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
+                    and is_request_using_sso(req)):
+                # We will not support SSO for superusers at this time
+                return HttpResponseForbidden(
+                    "SSO support is not currently available for superusers."
+                )
             return call_view()
         elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
             from corehq.apps.users.views import DomainRequestView
@@ -355,6 +372,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                     "formplayer_auth:not_enabled_for_request", request.path
                 )
                 return HttpResponseForbidden()
+            request.auth_type = authtype  # store auth type on request for access in views
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
@@ -534,7 +552,7 @@ def check_lockout(fn):
             return fn(request, *args, **kwargs)
 
         user = CouchUser.get_by_username(username)
-        if user and user.is_locked_out() and user.supports_lockout():
+        if user and user.is_locked_out():
             return json_response({"error": _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)

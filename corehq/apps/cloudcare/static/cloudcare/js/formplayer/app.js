@@ -5,6 +5,7 @@
  */
 
 hqDefine("cloudcare/js/formplayer/app", function () {
+    Marionette.setRenderer(Marionette.TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
     var showError = hqImport('cloudcare/js/util').showError;
     var showHTMLError = hqImport('cloudcare/js/util').showHTMLError;

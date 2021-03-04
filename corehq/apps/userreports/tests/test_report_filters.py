@@ -4,6 +4,7 @@ from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 
+from corehq.apps.userreports.datatypes import DATA_TYPE_DATETIME, DATA_TYPE_DATE
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -414,6 +415,28 @@ class PreFilterTestCase(SimpleTestCase):
                     'empty_field = :empty_field_slug OR empty_field IS NULL'
                 )
 
+    def test_pre_filter_value_empty_date_types(self):
+        pre_values = ['', None]
+        operators = ['', '=']
+        date_types = [DATA_TYPE_DATE, DATA_TYPE_DATETIME]
+        for pre_value in pre_values:
+            for operator in operators:
+                for datatype in date_types:
+                    filter_ = {
+                        'type': 'pre',
+                        'field': 'empty_field',
+                        'slug': 'empty_field_slug',
+                        'datatype': datatype,
+                        'pre_value': pre_value,
+                        'pre_operator': operator
+                    }
+                    filter_value = PreFilterValue(filter_, {'operand': pre_value, 'operator': operator})
+                    self.assertEqual(filter_value.to_sql_values(), {})
+                    self.assertEqual(
+                        str(filter_value.to_sql_filter().build_expression()),
+                        'empty_field IS NULL'
+                    )
+
     def test_pre_filter_value_exists(self):
         pre_values = ['', None]
         operator = '!='
@@ -433,6 +456,27 @@ class PreFilterTestCase(SimpleTestCase):
                 str(filter_value.to_sql_filter().build_expression()),
                 'exists_field != :exists_field_slug'
             )
+
+    def test_pre_filter_value_exists_date_types(self):
+        pre_values = ['', None]
+        operator = '!='
+        date_types = [DATA_TYPE_DATE, DATA_TYPE_DATETIME]
+        for pre_value in pre_values:
+            for datatype in date_types:
+                filter_ = {
+                    'type': 'pre',
+                    'field': 'exists_field',
+                    'slug': 'exists_field_slug',
+                    'datatype': datatype,
+                    'pre_value': pre_value,
+                    'pre_operator': operator
+                }
+                filter_value = PreFilterValue(filter_, {'operand': pre_value, 'operator': operator})
+                self.assertEqual(filter_value.to_sql_values(), {})
+                self.assertEqual(
+                    str(filter_value.to_sql_filter().build_expression()),
+                    'exists_field IS NOT NULL'
+                )
 
     def test_pre_filter_value_array(self):
         pre_value = ['yes', 'maybe']

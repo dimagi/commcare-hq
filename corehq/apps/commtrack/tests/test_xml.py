@@ -27,9 +27,9 @@ from dimagi.utils.parsing import json_format_date, json_format_datetime
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.commtrack.models import (
-    CommtrackConfig,
-    ConsumptionConfig,
-    StockRestoreConfig,
+    SQLCommtrackConfig,
+    SQLConsumptionConfig,
+    SQLStockRestoreConfig,
 )
 from corehq.apps.commtrack.tests import util
 from corehq.apps.commtrack.tests.data.balances import (
@@ -77,14 +77,15 @@ class XMLTest(TestCase):
         util.bootstrap_location_types(self.domain.name)
         util.bootstrap_products(self.domain.name)
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
-        self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
-        self.ct_settings.consumption_config = ConsumptionConfig(
+        self.ct_settings = SQLCommtrackConfig.for_domain(self.domain.name)
+        self.ct_settings.sqlconsumptionconfig = SQLConsumptionConfig(
             min_transactions=0,
             min_window=0,
             optimal_window=60,
-            min_periods=0,
         )
         self.ct_settings.save()
+        self.ct_settings.sqlconsumptionconfig.commtrack_settings = self.ct_settings
+        self.ct_settings.sqlconsumptionconfig.save()
         self.domain = Domain.get(self.domain._id)
 
         self.loc = make_loc('loc1')
@@ -147,12 +148,12 @@ class CommTrackOTATest(XMLTest):
 
     def test_ota_consumption(self):
         self.ct_settings.sync_consumption_fixtures = True
-        self.ct_settings.consumption_config = ConsumptionConfig(
+        self.ct_settings.sqlconsumptionconfig = SQLConsumptionConfig(
             min_transactions=0,
             min_window=0,
             optimal_window=60,
         )
-        self.ct_settings.ota_restore_config = StockRestoreConfig(
+        self.ct_settings.sqlstockrestoreconfig = SQLStockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'}
         )
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
@@ -189,12 +190,12 @@ class CommTrackOTATest(XMLTest):
 
     def test_force_consumption(self):
         self.ct_settings.sync_consumption_fixtures = True
-        self.ct_settings.consumption_config = ConsumptionConfig(
+        self.ct_settings.sqlconsumptionconfig = SQLConsumptionConfig(
             min_transactions=0,
             min_window=0,
             optimal_window=60,
         )
-        self.ct_settings.ota_restore_config = StockRestoreConfig(
+        self.ct_settings.sqlstockrestoreconfig = SQLStockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'},
         )
         set_default_monthly_consumption_for_domain(self.domain.name, 5)
@@ -203,14 +204,14 @@ class CommTrackOTATest(XMLTest):
         balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(0, len(balance_blocks))
 
-        self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
+        self.ct_settings.sqlstockrestoreconfig.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
         self._save_settings_and_clear_cache()
 
         balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         # with no data, there should be no consumption block
         self.assertEqual(0, len(balance_blocks))
 
-        self.ct_settings.ota_restore_config.use_dynamic_product_list = True
+        self.ct_settings.sqlstockrestoreconfig.use_dynamic_product_list = True
         self._save_settings_and_clear_cache()
 
         balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
@@ -223,6 +224,7 @@ class CommTrackOTATest(XMLTest):
         # since the commtrack settings object is stored as a memoized property on the domain
         # we need to refresh that as well
         self.ct_settings.save()
+        self.ct_settings.sqlstockrestoreconfig.save()
         self.domain = Domain.get(self.domain._id)
 
 

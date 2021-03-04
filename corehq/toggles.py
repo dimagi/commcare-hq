@@ -690,8 +690,6 @@ UCR_SUM_WHEN_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
-        "Feature still being fine tuned so should be used cautiously. "
-        "Do not enable if you don't fully understand the use and impact of it."
     ),
     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
@@ -740,6 +738,25 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
+    'ush_dont_close_patient_extensions',
+    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
+    Enabling this results in 'closing patient type cases will not close its contact type
+    extension cases'. Designed for specific USH domain use-case
+    """
+)
+
+DISABLE_WEB_APPS = StaticToggle(
+    'disable_web_apps',
+    'Disable access to Web Apps UI',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Disable+access+to+Web+Apps+UI',
+)
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
@@ -760,9 +777,21 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
-    'Allow case claim to be automatically launched in web apps',
+    '''
+        Support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results"
+    ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+WEBAPPS_STICKY_SEARCH = StaticToggle(
+    'webapps_sticky_search',
+    'COVID: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 
@@ -875,9 +904,10 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
-    "Allow domain to override default length of inactivity timeout",
+    "COVID: Allow domain to override default length of inactivity timeout",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Allow+domain+to+override+default+length+of+inactivity+timeout",
 )
 
 # not referenced in code directly but passed through to vellum
@@ -1205,14 +1235,6 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     "WARNING: This wil be rolled out slowly; do not enable on your own.",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
-)
-
-
-HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
-    'hide_messaging_dashboard',
-    "Hide messaging dashboard from users who are not superusers.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 
@@ -1546,14 +1568,6 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
-    'MULTI_MASTER_BYPASS_VERSION_CHECK',
-    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
-)
-
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
@@ -1883,14 +1897,16 @@ REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
     'COVID: Allow refer case repeaters to be setup',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'COVID: Enable usage of AWS Connect Dialer',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
 )
 
 HMAC_CALLOUT = StaticToggle(
@@ -1903,6 +1919,14 @@ HMAC_CALLOUT = StaticToggle(
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
     'COVID: Enable retrieving OTPs from a GAEN Server',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
+)
+
+PARALLEL_USER_IMPORTS = StaticToggle(
+    'parallel_user_imports',
+    'COVID: Process user imports in parallel on a dedicated queue',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -1921,7 +1945,8 @@ RESTRICT_LOGIN_AS = StaticToggle(
     For example, if web user a@a.com has this permission set on their role,
     they can only login as mobile users who have the custom property
     "login_as_user" set to "a@a.com".
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/Limited+Login+As",
 )
 
 ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
@@ -1939,7 +1964,8 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/One+Phone+Number+-+Multiple+Contacts"
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
@@ -1964,7 +1990,7 @@ DEFAULT_EXPORT_SETTINGS = StaticToggle(
     'default_export_settings',
     'Allow enterprise admin to set default export settings',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_USER],
     description="""
     Allows an enterprise admin to set default export settings for all domains under the enterprise account.
     """
@@ -1999,4 +2025,19 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_OTHER],
     default_randomness=0.001
+)
+
+PRIME_FORMPLAYER_DBS = StaticToggle(
+    'prime_formplayer_dbs',
+    'COVID: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+FHIR_INTEGRATION = StaticToggle(
+    'fhir_integration',
+    'FHIR: Enable setting up FHIR integration',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN]
 )

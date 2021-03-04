@@ -63,12 +63,11 @@ NOSE_PLUGINS = [
 for key, value in {
     'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
     'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
-
     'NOSE_IGNORE_FILES': '^localsettings',
+    'NOSE_EXCLUDE_DIRS': 'scripts',
 
-    'NOSE_EXCLUDE_DIRS': ';'.join([
-        'scripts',
-    ]),
+    'DD_DOGSTATSD_DISABLE': 'true',
+    'DD_TRACE_ENABLED': 'false',
 }.items():
     os.environ.setdefault(key, value)
 del key, value
@@ -82,7 +81,6 @@ _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
 
 # required by auditcare tests
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
 AUDIT_ADMIN_VIEWS = False
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
@@ -98,10 +96,12 @@ def _set_logging_levels(levels):
     import logging
     for path, level in levels.items():
         logging.getLogger(path).setLevel(level)
+
+
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
     'alembic': 'WARNING',
-    'auditcare': 'INFO',
+    'corehq.apps.auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',

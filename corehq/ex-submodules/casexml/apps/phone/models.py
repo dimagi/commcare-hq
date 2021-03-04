@@ -445,6 +445,7 @@ def synclog_to_sql_object(synclog_json_object):
             is_formplayer=synclog_json_object.is_formplayer,
             case_count=synclog_json_object.case_count(),
             request_user_id=synclog_json_object.request_user_id,
+            auth_type=synclog_json_object.auth_type,
         )
     field_mapping = [
         ('previous_log_id', 'previous_synclog_id'),
@@ -484,6 +485,7 @@ class SyncLogSQL(models.Model):
     is_formplayer = models.BooleanField(null=True, db_index=True)
     case_count = models.IntegerField(null=True)
     request_user_id = models.CharField(max_length=255, null=True)
+    auth_type = models.CharField(max_length=128, null=True)
 
     def save(self, *args, **kwargs):
         super(SyncLogSQL, self).save(*args, **kwargs)
@@ -636,6 +638,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     closed_cases = SetProperty(six.text_type)
     extensions_checked = BooleanProperty(default=False)
     device_id = StringProperty()
+    auth_type = StringProperty()
 
     _purged_cases = None
 

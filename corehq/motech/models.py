@@ -1,7 +1,8 @@
 import json
 import re
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
+import attr
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -32,6 +33,21 @@ from corehq.motech.const import (
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util import as_text
+
+
+@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+class RequestLogEntry:
+    domain: str
+    payload_id: str
+    method: str
+    url: str
+    headers: dict
+    params: dict
+    data: Any
+    error: str
+    response_status: int
+    response_headers: dict
+    response_body: str
 
 
 class ConnectionSettings(models.Model):
@@ -214,7 +230,7 @@ class RequestLog(models.Model):
     """
     Store API requests and responses to analyse errors and keep an audit trail
     """
-    domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
+    domain = models.CharField(max_length=126, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     log_level = models.IntegerField(null=True)
     # payload_id is set for requests that are caused by a payload (e.g.
@@ -230,13 +246,14 @@ class RequestLog(models.Model):
     request_body = models.TextField(blank=True, null=True)
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True, db_index=True)
+    response_headers = jsonfield.JSONField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'dhis2_jsonapilog'
 
     @staticmethod
-    def log(level, log_entry):
+    def log(level: int, log_entry: RequestLogEntry):
         return RequestLog.objects.create(
             domain=log_entry.domain,
             log_level=level,
@@ -248,5 +265,6 @@ class RequestLog(models.Model):
             request_body=as_text(log_entry.data),
             request_error=log_entry.error,
             response_status=log_entry.response_status,
+            response_headers=log_entry.response_headers,
             response_body=as_text(log_entry.response_body),
         )

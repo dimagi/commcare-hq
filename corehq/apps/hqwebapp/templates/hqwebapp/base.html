@@ -93,6 +93,15 @@
       {% endcompress %}
     {% endif %}
 
+    {% if request.use_datetimepicker %}
+      {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "datetimepicker/build/jquery.datetimepicker.min.css" %}" />
+      {% endcompress %}
+    {% endif %}
+
     {% if request.use_jquery_ui %}
       {% compress css %}
         <link type="text/css"
@@ -475,6 +484,13 @@
     {% if request.use_timepicker and not requirejs_main %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_datetimepicker and not requirejs_main %}
+      {% compress js %}
+        <script src="{% static 'jquery-mousewheel/jquery.mousewheel.js' %}"></script>
+        <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

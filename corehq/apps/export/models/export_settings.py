@@ -28,7 +28,6 @@ class DefaultExportSettings(models.Model):
                                       choices=ExportFileType.CHOICES)
     forms_auto_convert = models.BooleanField(default=True)
     forms_auto_format_cells = models.BooleanField(default=False)
-    forms_include_duplicates = models.BooleanField(default=False)
     forms_expand_checkbox = models.BooleanField(default=False)
 
     # Cases Exports
@@ -37,5 +36,15 @@ class DefaultExportSettings(models.Model):
     cases_auto_convert = models.BooleanField(default=True)
 
     # OData Exports
-    odata_include_duplicates = models.BooleanField(default=False)
     odata_expand_checkbox = models.BooleanField(default=False)
+
+    def as_dict(self):
+        return {
+            "forms_filetype": self.forms_filetype,
+            "forms_auto_convert": self.forms_auto_convert,
+            "forms_auto_format_cells": self.forms_auto_format_cells,
+            "forms_expand_checkbox": self.forms_expand_checkbox,
+            "cases_filetype": self.cases_filetype,
+            "cases_auto_convert": self.cases_auto_convert,
+            "odata_expand_checkbox": self.odata_expand_checkbox
+        }
