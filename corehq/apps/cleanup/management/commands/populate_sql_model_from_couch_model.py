@@ -199,7 +199,7 @@ class PopulateSQLCommand(BaseCommand):
                 logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
                 self.diff_count += 1
                 if exit:
-                    exit(1)
+                    sys.exit(1)
         except self.sql_class().DoesNotExist:
             pass    # ignore, the difference in total object count has already been displayed
 

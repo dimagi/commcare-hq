@@ -164,7 +164,8 @@ class BouncedEmail(models.Model):
             if cls.is_email_over_limits(remaining_email):
                 bad_emails.add(remaining_email)
 
-        return bad_emails
+        from corehq.util.email_event_utils import get_emails_to_never_bounce
+        return bad_emails.difference(get_emails_to_never_bounce())
 
 
 class TransientBounceEmail(models.Model):

@@ -1,30 +1,21 @@
 import datetime
 
-from django.urls import reverse
 from django.conf import settings
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 
 from dimagi.utils.web import get_url_base
+from corehq.apps.sso.utils import url_helpers
 
 
 def get_saml2_config(identity_provider):
     sp_settings = {
-        "entityId": "{}{}".format(
-            get_url_base(),
-            reverse("sso_saml_metadata", args=(identity_provider.slug,))
-        ),
+        "entityId": url_helpers.get_saml_entity_id(identity_provider),
         "assertionConsumerService": {
-            "url": "{}{}".format(
-                get_url_base(),
-                reverse("sso_saml_acs", args=(identity_provider.slug,))
-            ),
+            "url": url_helpers.get_saml_acs_url(identity_provider),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_POST,
         },
         "singleLogoutService": {
-            "url": "{}{}".format(
-                get_url_base(),
-                reverse("sso_saml_sls", args=(identity_provider.slug,))
-            ),
+            "url": url_helpers.get_saml_sls_url(identity_provider),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
         "attributeConsumingService": {

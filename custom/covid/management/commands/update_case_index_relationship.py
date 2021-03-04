@@ -15,10 +15,16 @@ BATCH_SIZE = 100
 DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
-def should_skip(case, traveler_location_id):
-    if traveler_location_id is None:
-        return len(case.indices) != 1
-    return len(case.indices) != 1 or case.get_case_property('owner_id') == traveler_location_id
+def should_skip(case, traveler_location_id, inactive_location):
+    if len(case.indices) != 1:
+        return True
+    if case.type == 'contact' and case.get_case_property('has_index_case') == 'no':
+        return True
+    if traveler_location_id and case.get_case_property('owner_id') == traveler_location_id:
+        return True
+    if inactive_location and case.get_case_property('owner_id') != inactive_location:
+        return True
+    return False
 
 
 def needs_update(case):
@@ -45,15 +51,16 @@ class Command(CaseUpdateCommand):
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
+        inactive_location = self.extra_options['inactive_location']
         accessor = CaseAccessors(domain)
         case_ids = accessor.get_case_ids_in_domain(case_type)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
-        traveler_location_id = self.location
+        traveler_location_id = self.extra_options['location']
 
         case_blocks = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
-            if should_skip(case, traveler_location_id):
+            if should_skip(case, traveler_location_id, inactive_location):
                 skip_count += 1
             elif needs_update(case):
                 owner_id = get_owner_id(case_type)
@@ -70,3 +77,4 @@ class Command(CaseUpdateCommand):
     def add_arguments(self, parser):
         super().add_arguments(parser)
         parser.add_argument('--location', type=str, default=None)
+        parser.add_argument('--inactive-location', type=str, default=None)
