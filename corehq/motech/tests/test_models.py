@@ -1,13 +1,15 @@
 import json
 import logging
+from decimal import Decimal
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 import requests
 from mock import Mock, patch
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
-from corehq.motech.models import ConnectionSettings, RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLog, RequestLogEntry
 from corehq.motech.requests import get_basic_requests
 from corehq.util import as_text
 
@@ -226,3 +228,44 @@ class NotifyAddressesTests(SimpleTestCase):
         cs.notify_addresses_str = "admin@example.com,,, ,  user@example.com"
         self.assertEqual(cs.notify_addresses, ["admin@example.com",
                                                "user@example.com"])
+
+
+class TestRequestLogFormatting(TestCase):
+    """
+    Tests the formatting of the value that shows up in the RequestLog
+    details page.
+    """
+
+    def test_request_body_dict(self):
+        entry = self.get_entry(request_body={'hello': 'world!'})
+        request_log = RequestLog.log(level=logging.DEBUG, log_entry=entry)
+        template_value = pp_json(request_log.request_body)
+        self.assertEqual(template_value, '{\n  "hello": "world!"\n}')
+
+    def test_request_body_str(self):
+        entry = self.get_entry(request_body='hello, world!')
+        request_log = RequestLog.log(level=logging.DEBUG, log_entry=entry)
+        template_value = pp_json(request_log.request_body)
+        self.assertEqual(template_value, 'hello, world!')
+
+    def test_request_body_unserializable(self):
+        entry = self.get_entry(request_body={'hello': Decimal('1.0')})
+        request_log = RequestLog.log(level=logging.DEBUG, log_entry=entry)
+        template_value = pp_json(request_log.request_body)
+        self.assertEqual(template_value, "{'hello': Decimal('1.0')}")
+
+    @staticmethod
+    def get_entry(request_body):
+        return RequestLogEntry(
+            domain=TEST_DOMAIN,
+            payload_id='c0ffee',
+            method='POST',
+            url='https://example.com/api/',
+            headers={},
+            params={},
+            data=request_body,
+            error='',
+            response_status=200,
+            response_headers={},
+            response_body='OK',
+        )
