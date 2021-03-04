@@ -55,7 +55,10 @@ class Command(CaseUpdateCommand):
     def update_cases(self, domain, case_type, user_id):
         inactive_location = self.extra_options['inactive_location']
         accessor = CaseAccessors(domain)
-        case_ids = accessor.get_case_ids_in_domain(case_type)
+        if case_type == 'contact':
+            case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type)
+        else:
+            case_ids = accessor.get_case_ids_in_domain(case_type)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
         traveler_location_id = self.extra_options['location']
 
