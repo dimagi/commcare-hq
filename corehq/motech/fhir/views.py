@@ -12,7 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.fhir.const import FHIR_VERSIONS
 from corehq.motech.fhir.models import FHIRResourceType, build_fhir_resource
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
-from corehq.util.view_utils import absolute_reverse
+from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .forms import FHIRRepeaterForm
 
@@ -43,12 +43,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
-    try:
-        case = CaseAccessors(domain).get_case(resource_id)
-        if case.is_deleted:
-            return JsonResponse(status=400, data={'message': f"Resource with ID {resource_id} was removed"})
-    except CaseNotFound:
-        return JsonResponse(status=400, data={'message': f"Could not find resource with ID {resource_id}"})
+    case = get_case_or_404(domain, resource_id)
 
     if not FHIRResourceType.objects.filter(
             domain=domain,
