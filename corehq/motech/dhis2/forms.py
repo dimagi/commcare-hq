@@ -129,7 +129,7 @@ class DataSetMapForm(forms.ModelForm):
                 crispy.Field('period'),
                 crispy.Field('period_column'),
                 crispy.Field('attribute_option_combo_id'),
-                crispy.Field('complete_date'),
+                crispy.Field('complete_date', css_class='date-picker'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
