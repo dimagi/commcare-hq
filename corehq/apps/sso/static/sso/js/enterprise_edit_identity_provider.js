@@ -27,7 +27,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         $('#sso-exempt-user-manager').koApplyBindings(ssoExemptUserManager);
         ssoExemptUserManager.init();
 
-        var $expDate =$("#id_date_idp_cert_expiration"),
+        var $expDate = $("#id_date_idp_cert_expiration"),
             initialDate = $expDate.val();
         $expDate.datetimepicker({
             date: initialDate,
