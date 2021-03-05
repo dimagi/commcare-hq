@@ -1,23 +1,28 @@
 import json
 import os
+from itertools import zip_longest
 from typing import Optional, Union
 
 from django.conf import settings
 from django.db import models
 
 from jsonfield import JSONField
+from jsonschema import RefResolver, ValidationError, validate
 
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.util import get_case_type_obj
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     ValueSource,
     as_value_source,
 )
+from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
+
+from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 
 
 class FHIRResourceType(models.Model):
@@ -31,7 +36,10 @@ class FHIRResourceType(models.Model):
 
     # `template` offers a way to define a FHIR resource if it cannot be
     # built using only mapped case properties.
-    template = JSONField(null=True, blank=True, default=None)
+    template = JSONField(default=dict)
+
+    class Meta:
+        unique_together = ('case_type', 'fhir_version')
 
     def __str__(self):
         return self.name
@@ -49,12 +57,8 @@ class FHIRResourceType(models.Model):
         '#/definitions/Patient'
 
         """
-        ver = dict(FHIR_VERSIONS)[self.fhir_version].lower()
-        schema_file = f'{self.name}.schema.json'
-        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
-                            'json-schema', ver, schema_file)
         try:
-            with open(path, 'r') as file:
+            with open(self._schema_file, 'r') as file:
                 return json.load(file)
         except FileNotFoundError:
             raise ConfigurationError(
@@ -64,11 +68,34 @@ class FHIRResourceType(models.Model):
 
     @classmethod
     def get_names(cls, version=FHIR_VERSION_4_0_1):
-        ver = dict(FHIR_VERSIONS)[version].lower()
-        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
-                            'json-schema', ver)
+        schema_dir = get_schema_dir(version)
         ext = len('.schema.json')
-        return [n[:-ext] for n in os.listdir(path)]
+        return [n[:-ext] for n in os.listdir(schema_dir)]
+
+    def validate_resource(self, fhir_resource):
+        schema = self.get_json_schema()
+        resolver = RefResolver(base_uri=f'file://{self._schema_file}',
+                               referrer=schema)
+        try:
+            validate(fhir_resource, schema, resolver=resolver)
+        except ValidationError as err:
+            raise ConfigurationError(
+                f'Validation failed for resource {fhir_resource!r}: {err}'
+            ) from err
+
+    @property
+    def _schema_file(self):
+        return os.path.join(self._schema_dir, f'{self.name}.schema.json')
+
+    @property
+    def _schema_dir(self):
+        return get_schema_dir(self.fhir_version)
+
+
+def get_schema_dir(version):
+    ver = dict(FHIR_VERSIONS)[version].lower()
+    return os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                        'json-schema', ver)
 
 
 class FHIRResourceProperty(models.Model):
@@ -143,33 +170,139 @@ class FHIRResourceProperty(models.Model):
         return as_value_source(value_source_config)
 
 
-def build_fhir_resource(case, version=FHIR_VERSION_4_0_1):
-    case_type = CaseType.objects.get(
-        domain=case.domain,
-        name=case.type,
-    )
-    info = get_case_trigger_info(case, case_type)
+def build_fhir_resource(
+    case: Union[CommCareCase, CommCareCaseSQL],
+    fhir_version: str = FHIR_VERSION_4_0_1,
+) -> Optional[dict]:
+    """
+    Builds a FHIR resource using data from ``case``. Returns ``None`` if
+    mappings do not exist.
+
+    Used by the FHIR API.
+    """
+    try:
+        info = get_case_trigger_info(case)
+    except AssertionError:
+        return None
+    return _build_fhir_resource(info, fhir_version)
+
+
+def build_fhir_resource_for_info(
+    info: CaseTriggerInfo,
+    fhir_version: str,
+) -> Optional[dict]:
+    """
+    Builds a FHIR resource using data from ``info``. Returns ``None`` if
+    mappings do not exist, or if there is no data to forward.
+
+    Used by ``FHIRRepeater``.
+    """
+    return _build_fhir_resource(info, fhir_version, skip_empty=True)
+
+
+def _build_fhir_resource(
+    info: CaseTriggerInfo,
+    fhir_version: str,
+    *,
+    skip_empty: bool = False,
+) -> Optional[dict]:
+    case_type = get_case_type_obj(info.domain, info.type)
+    if not case_type:
+        return None
+
     resource_type = (FHIRResourceType.objects
                      .prefetch_related('properties__case_property')
-                     .get(case_type=case_type, fhir_version=version))
-    fhir_resource = resource_type.template or {}
+                     .get(case_type=case_type, fhir_version=fhir_version))
+    fhir_resource = {}
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()
         value_source.set_external_value(fhir_resource, info)
+    if not fhir_resource and skip_empty:
+        return None
+    fhir_resource = deepmerge({
+        **resource_type.template,
+        'id': info.case_id,
+        'resourceType': resource_type.name,  # Always required
+    }, fhir_resource)
+    resource_type.validate_resource(fhir_resource)
     return fhir_resource
 
 
 def get_case_trigger_info(
-        case: Union[CommCareCase, CommCareCaseSQL],
-        case_type: CaseType,
+    case: Union[CommCareCase, CommCareCaseSQL],
+    case_block: Optional[dict] = None,
+    form_question_values: Optional[dict] = None,
 ) -> CaseTriggerInfo:
     """
-    CaseTriggerInfo packages case (and form) data for use by ValueSource
+    Returns ``CaseTriggerInfo`` instance for ``case``.
+
+    Ignores case properties that aren't in the Data Dictionary.
+
+    ``CaseTriggerInfo`` packages case (and form) data for use by
+    ``ValueSource``.
     """
+    if case_block is None:
+        case_block = {}
+    else:
+        assert case_block['@case_id'] == case.case_id
+    if form_question_values is None:
+        form_question_values = {}
+
+    case_create = case_block.get('create') or {}
+    case_update = case_block.get('update') or {}
+
+    case_type = get_case_type_obj(case.domain, case.type)
+    assert case_type, f'CaseType not found for case type {case.type!r}'
     prop_names = [p.name for p in case_type.properties.all()]
+    extra_fields = {p: case.get_case_property(p) for p in prop_names}
+    # Include external_id because `get_bundle_entries()` uses it
+    # to determine whether to PUT or POST.
+    extra_fields['external_id'] = case.get_case_property('external_id')
+
     return CaseTriggerInfo(
         domain=case.domain,
         case_id=case.case_id,
         type=case.type,
-        updates={p: case.get_case_property(p) for p in prop_names},
+        name=case.name,
+        owner_id=case.owner_id,
+        modified_by=case.modified_by,
+        updates={**case_create, **case_update},
+        created='create' in case_block if case_block else None,
+        closed='close' in case_block if case_block else None,
+        extra_fields=extra_fields,
+        form_question_values=form_question_values,
     )
+
+
+def deepmerge(a, b):
+    """
+    Merges ``b`` into ``a``.
+
+    >>> foo = {'one': {'two': 2, 'three': 42}}
+    >>> bar = {'one': {'three': 3}}
+    >>> {**foo, **bar}
+    {'one': {'three': 3}}
+    >>> deepmerge(foo, bar)
+    {'one': {'two': 2, 'three': 3}}
+
+    Dicts and lists are recursed. Other data types are replaced.
+
+    >>> foo = {'one': [{'two': 2}, 42]}
+    >>> bar = {'one': [{'three': 3}]}
+    >>> deepmerge(foo, bar)
+    {'one': [{'two': 2, 'three': 3}, 42]}
+
+    """
+    if isinstance(a, dict) and isinstance(b, dict):
+        for key in b:
+            if key in a:
+                a[key] = deepmerge(a[key], b[key])
+            else:
+                a[key] = b[key]
+        return a
+    elif isinstance(a, list) and isinstance(b, list):
+        return list(deepmerge(aa, bb) for aa, bb in zip_longest(a, b))
+    elif b is None:
+        return a
+    else:
+        return b

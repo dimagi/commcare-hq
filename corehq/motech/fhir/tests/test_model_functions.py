@@ -2,13 +2,18 @@ from uuid import uuid4
 
 from django.test import TestCase
 
+from nose.tools import assert_equal
+
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.fhir.models import (
+from ..const import FHIR_VERSION_4_0_1
+from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
-    build_fhir_resource,
+    _build_fhir_resource,
+    deepmerge,
     get_case_trigger_info,
+    build_fhir_resource,
 )
 
 DOMAIN = 'test-domain'
@@ -35,11 +40,11 @@ class TestGetCaseTriggerInfo(TestCase):
                 'vier': 4, 'vyf': 5, 'ses': 6,
             }
         )
-        info = get_case_trigger_info(case, self.case_type)
+        info = get_case_trigger_info(case)
         for name in ('een', 'twee', 'drie'):
-            self.assertIn(name, info.updates)
+            self.assertIn(name, info.extra_fields)
         for name in ('vier', 'vyf', 'ses'):
-            self.assertNotIn(name, info.updates)
+            self.assertNotIn(name, info.extra_fields)
 
 
 class TestBuildFHIRResource(TestCase):
@@ -47,24 +52,28 @@ class TestBuildFHIRResource(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.set_up_case_type()
-        cls.set_up_resource_type()
+        case_type = CaseType.objects.create(domain=DOMAIN, name='mother')
+        resource_type = FHIRResourceType.objects.create(
+            domain=DOMAIN,
+            case_type=case_type,
+            name='Patient',
+        )
+        for name, jsonpath in [
+            ('name', '$.name[0].text'),
+            ('first_name', '$.name[0].given[0]'),
+            ('honorific', '$.name[0].prefix[0]'),
+            ('date_of_birth', '$.birthDate'),
+        ]:
+            prop = CaseProperty.objects.create(case_type=case_type, name=name)
+            FHIRResourceProperty.objects.create(
+                resource_type=resource_type,
+                case_property=prop,
+                jsonpath=jsonpath,
+            )
 
-    @classmethod
-    def set_up_case_type(cls):
-        cls.case_type = CaseType.objects.create(domain=DOMAIN, name='mother')
-
-        cls.name = CaseProperty.objects.create(
-            case_type=cls.case_type, name='name')
-        cls.first_name = CaseProperty.objects.create(
-            case_type=cls.case_type, name='first_name')
-        cls.honorific = CaseProperty.objects.create(
-            case_type=cls.case_type, name='honorific')
-        cls.date_of_birth = CaseProperty.objects.create(
-            case_type=cls.case_type, name='date_of_birth')
-
+        cls.case_id = str(uuid4())
         cls.case = CommCareCaseSQL(
-            case_id=str(uuid4()),
+            case_id=cls.case_id,
             domain=DOMAIN,
             type='mother',
             name='Mehter Plethwih',
@@ -77,48 +86,51 @@ class TestBuildFHIRResource(TestCase):
         )
 
     @classmethod
-    def set_up_resource_type(cls):
-        resource_type = FHIRResourceType.objects.create(
-            case_type=cls.case_type,
-            name='Patient',
-        )
-        FHIRResourceProperty.objects.create(
-            resource_type=resource_type,
-            case_property=cls.name,
-            jsonpath='$.name[0].text',
-        )
-        FHIRResourceProperty.objects.create(
-            resource_type=resource_type,
-            case_property=cls.first_name,
-            jsonpath='$.name[0].given[0]',
-        )
-        FHIRResourceProperty.objects.create(
-            resource_type=resource_type,
-            case_property=cls.honorific,
-            jsonpath='$.name[0].prefix[0]',
-        )
-        FHIRResourceProperty.objects.create(
-            resource_type=resource_type,
-            case_property=cls.date_of_birth,
-            jsonpath='$.birthDate',
-        )
-
-    @classmethod
     def tearDownClass(cls):
-        cls.case_type.delete()
+        CaseType.objects.filter(domain=DOMAIN, name='mother').delete()
         super().tearDownClass()
 
     def test_build_fhir_resource(self):
         resource = build_fhir_resource(self.case)
         self.assertEqual(resource, {
+            'id': self.case_id,
             'name': [{
                 'text': 'Mehter Plethwih',
                 'prefix': ['Mehter'],
                 'given': ['Plethwih'],
             }],
             'birthDate': '1970-01-01',
+            'resourceType': 'Patient',
         })
 
     def test_num_queries(self):
-        with self.assertNumQueries(5):
-            build_fhir_resource(self.case)
+        info = get_case_trigger_info(self.case)
+        with self.assertNumQueries(3):
+            _build_fhir_resource(info, FHIR_VERSION_4_0_1)
+
+
+def test_deepmerge():
+    for a, b, expected in [
+        ('foo', 'bar', 'bar'),
+        (['foo'], ['bar'], ['bar']),
+        ({'foo': 1}, {'bar': 2}, {'foo': 1, 'bar': 2}),
+        ([1, 2], [3], [3, 2]),
+
+        ({'foo': [1, 2]}, {'foo': [3]}, {'foo': [3, 2]}),
+        ({'foo': (1, 2)}, {'foo': (3,)}, {'foo': (3,)}),
+        ({'foo': [1]}, {'foo': [3, 2]}, {'foo': [3, 2]}),
+
+        ({'foo': {'bar': 1}}, {'foo': {'baz': 2}},
+         {'foo': {'bar': 1, 'baz': 2}}),
+
+        ({'foo': None}, {'foo': 1}, {'foo': 1}),
+        ({'foo': 1}, {'foo': None}, {'foo': 1}),  # Don't replace with None ...
+        ({'foo': [1]}, {'foo': [None, None]},  # ... unless it's all you've got
+         {'foo': [1, None]}),
+    ]:
+        yield check_deepmerge, a, b, expected
+
+
+def check_deepmerge(a, b, expected):
+    result = deepmerge(a, b)
+    assert_equal(result, expected)
