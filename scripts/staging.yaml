@@ -80,5 +80,4 @@ branches:
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - kev/repeat-add-new-translation # Kevin Mar 2
   - jls/web-apps-sticky-date-range # Jenny March 3
-  - ap/fix-location-filtering-in-case-list-report # Amit March 5
 submodules: {}
