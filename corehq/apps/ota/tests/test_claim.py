@@ -115,7 +115,8 @@ class CaseClaimTests(TestCase):
     @run_with_all_backends
     def test_claim_case_other_domain(self):
         malicious_domain = 'malicious_domain'
-        create_domain(malicious_domain)
+        domain_obj = create_domain(malicious_domain)
+        self.addCleanup(domain_obj.delete)
         claim_id = claim_case(malicious_domain, self.user.user_id, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         with self.assertRaises(CaseNotFound):
