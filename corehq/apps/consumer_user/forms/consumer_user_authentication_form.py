@@ -39,7 +39,7 @@ class ConsumerUserAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         consumer_user = ConsumerUser.objects.get_or_create(user=self.user_cache)
         if self.invitation and not self.invitation.accepted:
             self.invitation.accept()
-            ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.case_id,
+            ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.demographic_case_id,
                                                         domain=self.invitation.domain,
                                                         consumer_user=consumer_user[0])
             update_case(self.invitation.domain,

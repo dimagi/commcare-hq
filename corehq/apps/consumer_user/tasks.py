@@ -18,8 +18,8 @@ from .const import CONSUMER_INVITATION_SENT, CONSUMER_INVITATION_STATUS
 
 
 @task
-def create_new_invitation(case_id, domain, opened_by, email):
-    invitation = ConsumerUserInvitation.create_invitation(case_id, domain, opened_by, email)
+def create_new_invitation(case_id, domain, demographic_case_id, opened_by, email):
+    invitation = ConsumerUserInvitation.create_invitation(case_id, domain, demographic_case_id, opened_by, email)
     url = '%s%s' % (get_url_base(),
                     reverse('consumer_user:consumer_user_register',
                             kwargs={
