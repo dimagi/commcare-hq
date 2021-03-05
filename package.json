@@ -84,6 +84,7 @@
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
         "requirejs": "2.3.6",
         "select2": "4.0.0",
+        "select-woo": "1.0.1",
         "topojson": "3.0.2",
         "uglify-js": "2.8.29",
         "ui-select": "npm:ui-select#0.13.2",

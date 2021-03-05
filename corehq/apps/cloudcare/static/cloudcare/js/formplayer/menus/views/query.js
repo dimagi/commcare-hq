@@ -46,12 +46,30 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
+        onBeforeRender: function() {
+            // Remove focus from any selectWoos that already exist because
+            // they will be replaced in onRender. When overwritten selectWoos
+            // think they have focus, they can respond to keypresses and
+            // spontaneously pop up and hide part of the HQ container.
+            if (this.selectWoos) {
+                this.selectWoos.forEach(function (selectWoo) {
+                    selectWoo.trigger('blur');
+                });
+            }
+        },
+
         onRender: function () {
-            this.ui.valueDropdown.select2({
+            var selectW = this.ui.valueDropdown.selectWoo({
                 allowClear: true,
                 placeholder: " ",   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
+            if (selectW.length > 0) {
+                if (!this.selectWoos) {
+                    this.selectWoos = [];
+                }
+                this.selectWoos.push(selectW.data('select2'));
+            }
             this.ui.hqHelp.hqHelp();
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -140,12 +158,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     if (choices) {
                         var $field = $($fields.get(i)),
                             value = parseInt(response.models[i].get('value'));
-                        $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
+                        $field.selectWoo('close');    // force close dropdown, the set below can interfere with this when clearing selection
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
                         });
-                        $field.trigger('change.select2');
+                        $field.trigger('change.selectWoo');
                     }
                 }
                 self.setStickyQueryInputs();
@@ -157,7 +175,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 fields = $(".query-field");
             fields.each(function () {
                 this.value = '';
-                $(this).trigger('change.select2');
+                $(this).trigger('change.selectWoo');
             });
             self.setStickyQueryInputs();
         },
