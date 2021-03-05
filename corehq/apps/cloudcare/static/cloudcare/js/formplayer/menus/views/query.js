@@ -46,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
-        onBeforeRender: function() {
+        onBeforeRender: function () {
             // Remove focus from any selectWoos that already exist because
             // they will be replaced in onRender. When overwritten selectWoos
             // think they have focus, they can respond to keypresses and
