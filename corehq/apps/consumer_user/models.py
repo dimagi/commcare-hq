@@ -31,6 +31,7 @@ class ConsumerUserCaseRelationship(models.Model):
 class ConsumerUserInvitation(models.Model):
     email = models.EmailField()
     case_id = models.CharField(max_length=255)
+    demographic_case_id = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
     accepted = models.BooleanField(default=False)
     invited_by = models.CharField(max_length=255)
@@ -46,9 +47,10 @@ class ConsumerUserInvitation(models.Model):
         self.save(update_fields=['accepted'])
 
     @classmethod
-    def create_invitation(cls, case_id, domain, opened_by, email):
+    def create_invitation(cls, case_id, domain, demographic_case_id, opened_by, email):
         instance = cls(case_id=case_id,
                        domain=domain,
+                       demographic_case_id=demographic_case_id,
                        invited_by=opened_by,
                        email=email)
         instance.save()

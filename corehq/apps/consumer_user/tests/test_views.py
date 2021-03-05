@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.core.signing import TimestampSigner
 from django.test import TestCase
@@ -8,6 +10,9 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from mock import patch
+
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.consumer_user.const import (
     CONSUMER_INVITATION_CASE_TYPE,
@@ -20,6 +25,7 @@ from corehq.apps.consumer_user.models import (
 )
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.hqcase.utils import update_case
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 def register_url(invitation):
@@ -61,8 +67,8 @@ class RegisterTestCase(TestCase):
 
     def test_register_consumer(self):
         email = 'a@a.com'
-        invitation = ConsumerUserInvitation.objects.create(case_id='2', domain='1', invited_by='I',
-                                                           email=email)
+        invitation = ConsumerUserInvitation.objects.create(case_id='2', domain='1', demographic_case_id='3',
+                                                           invited_by='I', email=email)
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
         post_data = {
@@ -79,7 +85,7 @@ class RegisterTestCase(TestCase):
         consumer_user = ConsumerUser.objects.get(user=created_user)
         user_case = ConsumerUserCaseRelationship.objects.get(consumer_user=consumer_user)
         invitation.refresh_from_db()
-        self.assertEqual(user_case.case_id, invitation.case_id)
+        self.assertEqual(user_case.case_id, invitation.demographic_case_id)
         self.assertEqual(user_case.domain, invitation.domain)
         self.assertTrue(invitation.accepted)
 
@@ -202,8 +208,11 @@ class SignalTestCase(TestCase):
 
     def setUp(self):
         self.domain = 'consumer-invitation-test'
+        self.factory = CaseFactory(self.domain)
 
     def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
         ConsumerUserCaseRelationship.objects.all().delete()
         ConsumerUserInvitation.objects.all().delete()
         ConsumerUser.objects.all().delete()
@@ -212,13 +221,24 @@ class SignalTestCase(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email(self):
-        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async, create_case(
-            self.domain,
-            CONSUMER_INVITATION_CASE_TYPE,
-            owner_id='comm_care',
-            update={'email': 'testing@testing.in'}
-        ) as case:
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
+            result = self.factory.create_or_update_case(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                                  relationship=CASE_INDEX_EXTENSION)
+                    ],
+                    attrs={
+                        'create': True,
+                        'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                        'owner_id': 'comm_care',
+                        'update': {'email': 'testing@testing.in'}
+                    }
+                )
+            )
             # Creating new comm care case creates a new ConsumerUserInvitation
+            case = result[0]
             customer_invitation = ConsumerUserInvitation.objects.get(case_id=case.case_id, domain=case.domain)
             self.assertEqual(customer_invitation.email, case.get_case_property('email'))
             self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
