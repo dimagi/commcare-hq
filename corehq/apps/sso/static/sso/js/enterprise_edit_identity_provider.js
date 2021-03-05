@@ -4,7 +4,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     'underscore',
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
-    'jquery-mousewheel',
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
     $,
     ko,
@@ -27,7 +27,10 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         $('#sso-exempt-user-manager').koApplyBindings(ssoExemptUserManager);
         ssoExemptUserManager.init();
 
-        // todo find different widget for this field
-        // $("#id_date_idp_cert_expiration").datetimepicker();
+        var $expDate =$("#id_date_idp_cert_expiration"),
+            initialDate = $expDate.val();
+        $expDate.datetimepicker({
+            date: initialDate,
+        });
     });
 });
