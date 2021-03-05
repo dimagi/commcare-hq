@@ -1,16 +1,19 @@
 from collections import namedtuple
 
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
-from datetime import datetime
-
+from datetime import datetime, timedelta
 
 SmsAndDict = namedtuple('SmsAndDict', ['sms', 'sms_dict'])
 
 
-def create_fake_sms(domain):
+def create_fake_sms(domain, randomize=False):
+    if not randomize:
+        message_date = datetime(2016, 1, 1, 12, 0)
+    else:
+        message_date = datetime.now()
     event = MessagingEvent.objects.create(
         domain=domain,
-        date=datetime(2016, 1, 1, 12, 0),
+        date=message_date,
         source=MessagingEvent.SOURCE_OTHER,
         source_id=None,
         content_type=MessagingEvent.CONTENT_SMS,
@@ -25,7 +28,7 @@ def create_fake_sms(domain):
     )
     subevent = MessagingSubEvent.objects.create(
         parent=event,
-        date=datetime(2016, 1, 1, 12, 0),
+        date=message_date,
         recipient_type=MessagingEvent.RECIPIENT_CASE,
         recipient_id=None,
         content_type=MessagingEvent.CONTENT_SMS,
@@ -43,7 +46,7 @@ def create_fake_sms(domain):
     # everything makes it to elasticsearch
     sms_dict = dict(
         domain=domain,
-        date=datetime(2016, 1, 1, 12, 0),
+        date=message_date,
         couch_recipient_doc_type='CommCareCase',
         couch_recipient='fake-case-id',
         phone_number='99912345678',
@@ -61,11 +64,11 @@ def create_fake_sms(domain):
         messaging_subevent_id=subevent.pk,
         text='test sms text',
         raw_text='raw text',
-        datetime_to_process=datetime(2016, 1, 1, 11, 59),
+        datetime_to_process=message_date - timedelta(minutes=1),
         processed=True,
         num_processing_attempts=1,
-        queued_timestamp=datetime(2016, 1, 1, 11, 58),
-        processed_timestamp=datetime(2016, 1, 1, 12, 1),
+        queued_timestamp=message_date - timedelta(minutes=2),
+        processed_timestamp=message_date + timedelta(minutes=1),
         domain_scope=domain,
         ignore_opt_out=False,
         backend_message_id='fake-backend-message-id',
