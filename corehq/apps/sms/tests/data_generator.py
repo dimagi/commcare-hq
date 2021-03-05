@@ -1,3 +1,4 @@
+import random
 from collections import namedtuple
 
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
@@ -9,18 +10,27 @@ SmsAndDict = namedtuple('SmsAndDict', ['sms', 'sms_dict'])
 def create_fake_sms(domain, randomize=False):
     if not randomize:
         message_date = datetime(2016, 1, 1, 12, 0)
+        source = MessagingEvent.SOURCE_OTHER
+        status = MessagingEvent.STATUS_COMPLETED
+        content_type = MessagingEvent.CONTENT_SMS
+        recipient_type = MessagingEvent.RECIPIENT_CASE
     else:
         message_date = datetime.now()
+        source = random.choice(MessagingEvent.SOURCE_CHOICES)[0]
+        status = random.choice(MessagingEvent.STATUS_CHOICES)[0]
+        content_type = random.choice(MessagingEvent.CONTENT_CHOICES)[0]
+        recipient_type = random.choice(MessagingEvent.RECIPIENT_CHOICES)[0]
+
     event = MessagingEvent.objects.create(
         domain=domain,
         date=message_date,
-        source=MessagingEvent.SOURCE_OTHER,
+        source=source,
         source_id=None,
-        content_type=MessagingEvent.CONTENT_SMS,
+        content_type=content_type,
         app_id=None,
         form_unique_id=None,
         form_name=None,
-        status=MessagingEvent.STATUS_COMPLETED,
+        status=status,
         error_code=None,
         additional_error_text=None,
         recipient_type=None,
@@ -29,15 +39,15 @@ def create_fake_sms(domain, randomize=False):
     subevent = MessagingSubEvent.objects.create(
         parent=event,
         date=message_date,
-        recipient_type=MessagingEvent.RECIPIENT_CASE,
+        recipient_type=recipient_type,
         recipient_id=None,
-        content_type=MessagingEvent.CONTENT_SMS,
+        content_type=content_type,
         app_id=None,
         form_unique_id=None,
         form_name=None,
         xforms_session=None,
         case_id=None,
-        status=MessagingEvent.STATUS_COMPLETED,
+        status=status,
         error_code=None,
         additional_error_text=None
     )
