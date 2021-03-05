@@ -3,6 +3,7 @@ from gevent.pool import Pool
 
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
+from datetime import datetime
 
 
 DEVICE_ID = __name__ + ".run_all_management_command"
@@ -44,6 +45,7 @@ class Command(BaseCommand):
                 location_ids[row['domain']] = locations
 
         output_file_name = options["output_file"]
+        start_time = datetime.utcnow()
         if output_file_name:
             with open(output_file_name, "a") as output_file:
                 output_file.write(f"Updated {len(domains)} domains")
@@ -99,3 +101,9 @@ class Command(BaseCommand):
                 print("SUCCESS: {} command for {}".format(command, args))
             else:
                 print("COMMAND FAILED: {} while running {} for {})".format(exception, command, args))
+
+        if output_file_name:
+            with open(output_file_name, "a") as output_file:
+                output_file.write(f"Script start time: {start_time}")
+                output_file.write(f"Script end time: {datetime.utcnow()}")
+                output_file.close()
