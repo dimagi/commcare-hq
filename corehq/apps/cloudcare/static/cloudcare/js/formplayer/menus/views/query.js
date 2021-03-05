@@ -1,10 +1,33 @@
-/*global DOMPurify, Marionette */
+/*global DOMPurify, Marionette*/
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var separator = " to ";
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        Utils = hqImport("cloudcare/js/form_entry/utils"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
+    // special format handled by CaseSearch API
+    var encodeValue = function (model, value) {
+            if (!value) {
+                return value;
+            }
+            if (model.get("input") === "daterange") {
+                return "__range__" + value.replace(separator, "__");
+            }
+            return value;
+        },
+        decodeValue = function (model, value) {
+            if (!value) {
+                return value;
+            }
+            if (model.get("input") === "daterange") {
+                return value.replace("__range__", "").replace("__", separator);
+            }
+            return value;
+        };
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
@@ -32,7 +55,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialize: function () {
             // If input doesn't have a default value, check to see if there's a sticky value from user's last search
             if (!this.options.model.get('value')) {
-                this.options.model.set('value', hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')]);
+                var stickyValue = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')];
+                this.options.model.set('value', decodeValue(this.options.model, stickyValue));
             }
         },
 
@@ -40,10 +64,94 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             valueDropdown: 'select.query-field',
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
+            queryField: '.query-field',
         },
 
         modelEvents: {
             'change': 'render',
+        },
+
+        geocoderItemCallback: function (addressTopic) {
+            return function (item) {
+                var broadcastObj = Utils.getBroadcastObject(item);
+                $.publish(addressTopic, broadcastObj);
+                return item.place_name;
+            };
+        },
+
+        geocoderOnClearCallback: function (addressTopic) {
+            return function () {
+                $.publish(addressTopic, Const.NO_ANSWER);
+            };
+        },
+
+        updateReceiver: function (element) {
+            return function (_event, broadcastObj) {
+                // e.g. format is home-state, home-zipcode, home-us_state||country
+                var receiveExpression = element.data().receive;
+                var receiveField = receiveExpression.split("-")[1];
+                var value = null;
+                if (broadcastObj === undefined || broadcastObj === Const.NO_ANSWER) {
+                    value = Const.NO_ANSWER;
+                } else if (broadcastObj[receiveField]) {
+                    value = broadcastObj[receiveField];
+                } else {
+                    // match home-us_state||country style
+                    var fields = receiveField.split('||');
+                    $.each(fields, function (i, field) {
+                        if (broadcastObj[field] !== undefined) {
+                            value = broadcastObj[field];
+                            return false;
+                        }
+                    });
+                }
+                if (element.is('input')) {
+                    element.val(value);
+                }
+                else {
+                    // Set lookup table option by label
+                    var option = element.find("option").filter(function (_) {
+                        return $(this).text() === value;
+                    });
+                    if (option.length > 1) {
+                        option.attr('selected', true);
+                    }
+                }
+            };
+        },
+
+        onAttach: function () {
+            var self = this;
+            this.ui.queryField.each(function () {
+                // Set geocoder receivers to subscribe
+                var receiveExpression = $(this).data().receive;
+                if (receiveExpression !== undefined && receiveExpression !== "") {
+                    var topic = receiveExpression.split("-")[0];
+                    $.subscribe(topic, self.updateReceiver($(this)));
+                }
+                // Set geocoder address publish
+                var addressTopic = $(this).data().address;
+                if (addressTopic !== undefined && addressTopic !== "") {
+                    // set this up as mapbox input
+                    var inputId = addressTopic + "_mapbox";
+                    if (!initialPageData.get("has_geocoder_privs")) {
+                        $("#" + inputId).addClass('unsupported alert alert-warning');
+                        $("#" + inputId).text(gettext(
+                            "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                        );
+                        return true;
+                    }
+                    Utils.renderMapboxInput(
+                        inputId,
+                        self.geocoderItemCallback(addressTopic),
+                        self.geocoderOnClearCallback(addressTopic),
+                        initialPageData
+                    );
+                    var divEl = $('.mapboxgl-ctrl-geocoder');
+                    divEl.css("max-width", "none");
+                    divEl.css("width", "100%");
+                }
+            });
         },
 
         onRender: function () {
@@ -57,16 +165,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 locale: {
                     format: 'YYYY-MM-DD',
                     separator: separator,
-                    cancelLabel: 'Clear',
+                    cancelLabel: gettext('Clear'),
                 },
                 autoUpdateInput: false,
             });
-            var self = this;
             this.ui.dateRange.on('cancel.daterangepicker', function () {
-                $(this).val('');
+                $(this).val('').trigger('change');
             });
             this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD'));
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD')).trigger('change');
             });
         },
     });
@@ -106,15 +213,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 answers = {},
                 model = this.parentModel;
             $fields.each(function (index) {
-                var answer = null;
                 if (this.value !== '') {
-                    if (model[index].get('input') === 'daterange') {
-                        // special format handled by CaseSearch API
-                        answer = "__range__" + this.value.replace(separator, "__");
-                    } else {
-                        answer = this.value;
+                    if (model[index].get('input') === 'address') {
+                        // skip geocoder address
+                        return true;
                     }
-                    answers[model[index].get('id')] = answer;
+                    answers[model[index].get('id')] = encodeValue(model[index], this.value);
                 }
             });
             return answers;
