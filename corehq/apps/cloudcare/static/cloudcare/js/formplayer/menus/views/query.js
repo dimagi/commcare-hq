@@ -183,6 +183,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         submitAction: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
+
+            // Workaround for selectWoo. Elements are kept alive indefinitely
+            // by a keydown handler on the document, so we remove them on
+            // submission.
+            $(document).off('keydown');
         },
 
         setStickyQueryInputs: function () {

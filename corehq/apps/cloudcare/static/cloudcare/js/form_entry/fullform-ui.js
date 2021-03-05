@@ -305,6 +305,11 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.submitForm = function () {
             $.publish('formplayer.' + Const.SUBMIT, self);
+
+            // Workaround for selectWoo. Elements are kept alive indefinitely
+            // by a keydown handler on the document, so we remove them on
+            // submission.
+            $(document).off('keydown');
         };
 
         self.nextQuestion = function () {
