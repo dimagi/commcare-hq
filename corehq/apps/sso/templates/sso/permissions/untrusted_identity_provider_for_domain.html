@@ -1,0 +1,16 @@
+{% extends 'hqwebapp/base_page.html' %}
+{% load i18n %}
+
+{% block page_content %}
+  <p>
+    {% blocktrans %}
+      The identity provider used to authenticate your account, {{ identity_provider }},
+      is not trusted by this project space.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Please contact a project administrator to restore access.
+    {% endblocktrans %}
+  </p>
+{% endblock %}

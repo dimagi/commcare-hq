@@ -29,6 +29,9 @@ from corehq.apps.sso.utils.request_helpers import (
     is_request_blocked_from_viewing_domain_due_to_sso,
     is_request_using_sso,
 )
+from corehq.apps.sso.utils.view_helpers import (
+    render_untrusted_identity_provider_for_domain_view,
+)
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -111,8 +114,7 @@ def login_and_domain_required(view_func):
                   and is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj)):
                 # Important! Make sure this is always the final check prior
                 # to returning call_view() below
-                # todo, show more user-friendly view
-                return HttpResponseForbidden()
+                return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
             else:
                 return call_view()
         elif user.is_superuser:
