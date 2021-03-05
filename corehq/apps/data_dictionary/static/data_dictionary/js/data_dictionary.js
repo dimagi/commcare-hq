@@ -6,6 +6,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/main",
     "analytix/js/google",
     "hqwebapp/js/knockout_bindings.ko",
+    "hqwebapp/js/widgets", // fhirResourceType selection
 ], function (
     $,
     ko,
@@ -89,7 +90,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
-                            'fhir_resource_prop_path': element.fhirResourcePropPath(),
+                            'fhir_resource_prop_path': (
+                                element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
                         };
                         postProperties.push(data);
