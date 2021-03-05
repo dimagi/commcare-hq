@@ -1,4 +1,4 @@
-/*global DOMPurify, Marionette */
+/*global DOMPurify, Marionette, moment */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
@@ -90,7 +90,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
-            this.ui.dateRange.on('change', function(ev, picker) {
+            this.ui.dateRange.on('change', function() {
                 // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
                 var $input = $(this),
                     oldValue = $input.val(),
