@@ -34,6 +34,7 @@
         "bootstrap-switch": "3.3.2",
         "bootstrap-timepicker": "0.5.1",
         "bootstrap3-typeahead": "bassjobsen/Bootstrap-3-Typeahead#~3.1.1",
+        "calendars": "kbwood/calendars#2.1.2",
         "clipboard": "1.5.15",
         "crypto-js": "4.0.0",
         "css-grid-polyfill-binaries": "FremyCompany/css-grid-polyfill-binaries#1.1.1",
