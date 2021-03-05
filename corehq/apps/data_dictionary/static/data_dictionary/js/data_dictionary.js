@@ -89,7 +89,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
-                            'fhir_resource_prop_path': element.fhirResourcePropPath(),
+                            'fhir_resource_prop_path': (
+                                element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
                         };
                         postProperties.push(data);
