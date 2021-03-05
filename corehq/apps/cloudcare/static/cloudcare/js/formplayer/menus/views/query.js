@@ -3,11 +3,12 @@
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var separator = " to ";
-    var Const = hqImport("cloudcare/js/form_entry/const"),
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        separator = " to ",
+        dateFormat = "YYYY-MM-DD";
 
     // special format handled by CaseSearch API
     var encodeValue = function (model, value) {
@@ -163,7 +164,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.hqHelp.hqHelp();
             this.ui.dateRange.daterangepicker({
                 locale: {
-                    format: 'YYYY-MM-DD',
+                    format: dateFormat,
                     separator: separator,
                     cancelLabel: gettext('Clear'),
                 },
@@ -173,7 +174,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 $(this).val('').trigger('change');
             });
             this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('YYYY-MM-DD') + separator + picker.endDate.format('YYYY-MM-DD')).trigger('change');
+                $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
+            });
+            this.ui.dateRange.on('change', function(ev, picker) {
+                // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
+                var $input = $(this),
+                    oldValue = $input.val(),
+                    parts = _.map(oldValue.split(separator), function (v) { return moment(v); }),
+                    newValue = '';
+                if (parts.length === 2 && _.every(parts, function (part) { return part.isValid(); })) {
+                    newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
+                }
+                if (oldValue !== newValue) {
+                    $input.val(newValue).trigger('change');
+                }
             });
         },
     });
