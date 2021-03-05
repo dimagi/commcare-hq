@@ -101,6 +101,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         return query
 
     @property
+    @memoized
     def es_results(self):
         try:
             return self._build_query().run().raw
