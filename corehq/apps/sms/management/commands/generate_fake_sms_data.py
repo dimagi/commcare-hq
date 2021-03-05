@@ -15,4 +15,4 @@ class Command(BaseCommand):
     def handle(self, domain, num_messages, **kwargs):
         for i in range(num_messages):
             create_fake_sms(domain, randomize=True)
-        print(f'successfully created {num_messages} messages in {domain}' )
+        print(f'successfully created {num_messages} messages in {domain}')
