@@ -15,7 +15,9 @@ architect==0.5.6
 argparse==1.4.0
     # via unittest2
 attrs==18.2.0
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   jsonschema
 babel==2.8.0
     # via
     #   django-phonenumber-field
@@ -272,7 +274,9 @@ idna==2.10
 imagesize==1.2.0
     # via sphinx
 importlib-metadata==2.0.0
-    # via flake8
+    # via
+    #   flake8
+    #   jsonschema
 intervaltree==3.1.0
     # via ddtrace
 ipdb==0.11
@@ -315,6 +319,8 @@ jsonobject==0.9.9
     #   git-build-branch
     #   jsonobject-couchdbkit
 https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+    # via -r base-requirements.in
+jsonschema==3.2.0
     # via -r base-requirements.in
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -442,6 +448,8 @@ pyphen==0.9.5
     # via weasyprint
 pyrepl==0.9.0
     # via fancycompleter
+pyrsistent==0.17.3
+    # via jsonschema
 pysocks==1.7.1
     # via twilio
 pystache==0.5.4
@@ -558,6 +566,7 @@ six==1.15.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
+    #   jsonschema
     #   mock
     #   packaging
     #   protobuf
@@ -708,6 +717,7 @@ setuptools==50.3.0
     #   gunicorn
     #   ipdb
     #   ipython
+    #   jsonschema
     #   protobuf
     #   python-levenshtein
     #   python-termstyle
