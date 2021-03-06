@@ -789,6 +789,8 @@ class IndexedFormBaseValidator(FormBaseValidator):
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
+        if 'case_name' in all_names:
+            all_names.remove('case_name')
         subcase_names = subcase_names or []
         errors = []
 
