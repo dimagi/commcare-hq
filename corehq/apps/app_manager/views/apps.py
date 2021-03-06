@@ -474,14 +474,14 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
         messages.error(request, _("Creating linked app failed. {}").format(error))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[from_domain, app_id]))
 
-    linked_app = create_linked_app(from_domain, from_app.master_id, to_domain, link_app_name)
+    linked_app = create_linked_app(from_domain, from_app.origin_id, to_domain, link_app_name)
     try:
         update_linked_app(linked_app, from_app, request.couch_user.get_id)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={},
-                                                 args=[from_domain, from_app.master_id]))
+                                                 args=[from_domain, from_app.origin_id]))
 
     messages.success(request, _('Application successfully copied and linked.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[to_domain, linked_app.get_id]))
