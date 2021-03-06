@@ -176,7 +176,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
-            this.ui.dateRange.on('change', function() {
+            this.ui.dateRange.on('change', function () {
                 // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
                 var $input = $(this),
                     oldValue = $input.val(),
