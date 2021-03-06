@@ -175,8 +175,13 @@ class RemoteRequestFactory(object):
                 'key': prop.name,
                 'display': display
             }
+            if not prop.appearance or prop.itemset.nodeset:
+                kwargs['receive'] = prop.receiver_expression
             if prop.appearance and self.app.enable_search_prompt_appearance:
-                kwargs['appearance'] = prop.appearance
+                if prop.appearance == 'address':
+                    kwargs['input_'] = prop.appearance
+                else:
+                    kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
             if prop.default_value and self.app.enable_default_value_expression:
