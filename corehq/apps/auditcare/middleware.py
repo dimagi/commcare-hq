@@ -1,11 +1,8 @@
 import logging
-import traceback
 
 from django.conf import settings
-from django.contrib import admin
 from django.utils.deprecation import MiddlewareMixin
 
-from .decorators import watch_login, watch_logout
 from .models import AuditEvent
 
 log = logging.getLogger(__name__)
@@ -46,31 +43,6 @@ class AuditMiddleware(MiddlewareMixin):
                 self.active = False
         else:
             self.active = True
-
-        #from django-axes
-        #http://code.google.com/p/django-axes/source/browse/axes/middleware.py
-        # watch the admin login page
-        # and the regular auth login page
-
-        #import traceback
-        #log.error(traceback.print_stack())
-        #and monitor logouts
-        traces = traceback.format_stack(limit=5)
-
-        def is_test_trace(item):
-            if item.find('/django/test/') > 0:
-                return True
-            if item.find('/django/contrib/auth/tests/') > 0:
-                return True
-            return False
-
-        is_tests = list(filter(is_test_trace, traces))
-        if len(is_tests) == 0:
-            log.debug("Middleware is running in a running context")
-            admin.site.login = watch_login(admin.site.login)
-            admin.site.logout = watch_logout(admin.site.logout)
-        else:
-            log.debug("Middleware is running in a test context, disabling monkeypatch")
 
     @staticmethod
     def do_process_view(request, view_func, view_args, view_kwargs, extra={}):
