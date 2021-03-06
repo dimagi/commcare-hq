@@ -1,4 +1,5 @@
 import logging
+from types import FunctionType
 
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
@@ -52,7 +53,7 @@ class AuditMiddleware(MiddlewareMixin):
             or getattr(settings, "AUDIT_VIEWS", False)
         ):
 
-            if hasattr(view_func, 'func_name'):  # is this just a plain jane __builtin__.function
+            if isinstance(view_func, FunctionType):
                 fqview = "%s.%s" % (view_func.__module__, view_func.__name__)
             else:
                 #just assess it from the classname for the class based view
