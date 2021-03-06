@@ -415,6 +415,18 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return self.get_payload(None, _get_test_form(domain))
 
 
+class FormDictPayloadGenerator(BasePayloadGenerator):
+    format_name = 'form_dict'
+    format_label = _('Python dictionary')
+
+    def get_payload(self, repeat_record, form) -> dict:
+        return form.to_json()
+
+    @property
+    def content_type(self):
+        return 'application/x-python'
+
+
 class UserPayloadGenerator(BasePayloadGenerator):
 
     @property
