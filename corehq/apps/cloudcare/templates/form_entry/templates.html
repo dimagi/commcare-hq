@@ -222,7 +222,8 @@
       </div>
     </div>
     <div class="panel-footer">
-      <button class="btn btn-default btn-xs add" href="#" data-bind="click: newRepeat">{% trans "Add new repeat" %}</button>
+      <button class="btn btn-default btn-xs add" href="#" data-bind="click: newRepeat, template: { afterRender: afterRender }"
+              id="repeat-add-new">{% trans "Add new repeat" %}</button>
     </div>
 
   </div>
