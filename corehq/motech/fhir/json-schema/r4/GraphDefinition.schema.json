@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/GraphDefinition",
+  "id": "file:GraphDefinition.schema.json",
   "$ref": "#/definitions/GraphDefinition",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "GraphDefinition": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
@@ -153,7 +153,7 @@
     "GraphDefinition_Link": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
@@ -216,7 +216,7 @@
     "GraphDefinition_Target": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",
@@ -259,7 +259,7 @@
     "GraphDefinition_Compartment": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal computable definition of a graph of resources - that is, a coherent set of resources that form a graph by following references. The Graph Definition resource defines a set and makes rules about the set.",

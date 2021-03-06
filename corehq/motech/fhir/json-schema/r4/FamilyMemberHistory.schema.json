@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/FamilyMemberHistory",
+  "id": "file:FamilyMemberHistory.schema.json",
   "$ref": "#/definitions/FamilyMemberHistory",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "FamilyMemberHistory": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Significant health events and conditions for a person related to the patient relevant in the context of care for the patient.",
@@ -216,7 +216,7 @@
     "FamilyMemberHistory_Condition": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Significant health events and conditions for a person related to the patient relevant in the context of care for the patient.",

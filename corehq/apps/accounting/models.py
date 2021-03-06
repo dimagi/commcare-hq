@@ -1360,6 +1360,10 @@ class Subscription(models.Model):
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
+
+        date_end is a date in the future and only applies to the NEW
+        subscription. The current subscription will always end immediately
+        (today) and the date_start of the new subscription will always be today.
         """
         from corehq.apps.analytics.tasks import track_workflow
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL

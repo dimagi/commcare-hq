@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/CodeSystem",
+  "id": "file:CodeSystem.schema.json",
   "$ref": "#/definitions/CodeSystem",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "CodeSystem": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
@@ -239,7 +239,7 @@
     "CodeSystem_Filter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
@@ -291,7 +291,7 @@
     "CodeSystem_Property": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
@@ -344,7 +344,7 @@
     "CodeSystem_Concept": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
@@ -402,7 +402,7 @@
     "CodeSystem_Designation": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
@@ -435,7 +435,7 @@
     "CodeSystem_Property1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A code system resource specifies a set of codes drawn from one or more code systems.",
