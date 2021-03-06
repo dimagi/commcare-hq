@@ -154,8 +154,6 @@ class NavigationEventAudit(AuditEvent):
             log.error("NavigationEventAudit.audit_view error: %s", ex)
 
 
-setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
-
 ACCESS_LOGIN = 'login'
 ACCESS_LOGOUT = 'logout'
 ACCESS_FAILED = 'login_failed'

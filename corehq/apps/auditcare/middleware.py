@@ -4,7 +4,7 @@ from types import FunctionType
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
-from .models import AuditEvent
+from .models import NavigationEventAudit
 
 log = logging.getLogger(__name__)
 
@@ -17,67 +17,26 @@ class AuditMiddleware(MiddlewareMixin):
         is instantiated on the request object.
         """
         super(AuditMiddleware, self).__init__(get_response)
-        self.active = False
-        self.log_admin = True
-
-        if hasattr(settings, "AUDIT_ADMIN_VIEWS"):
-            self.log_admin = settings.AUDIT_ADMIN_VIEWS
+        self.active = any(getattr(settings, name, False) for name in [
+            "AUDIT_ALL_VIEWS", "AUDIT_VIEWS", "AUDIT_MODULES"
+        ])
+        self.audit_modules = tuple(settings.AUDIT_MODULES)
+        self.audit_views = set(settings.AUDIT_VIEWS)
 
         if not getattr(settings, 'AUDIT_ALL_VIEWS', False):
-            if not hasattr(settings, "AUDIT_VIEWS"):
+            if not self.audit_views:
                 log.warning(
                     "You do not have the AUDIT_VIEWS settings variable setup. "
                     "If you want to setup central view call audit events, "
                     "please add the property and populate it with fully "
                     "qualified view names."
                 )
-            elif not hasattr(settings, "AUDIT_MODULES"):
+            elif not self.audit_modules:
                 log.warning(
                     "You do not have the AUDIT_MODULES settings variable "
                     "setup. If you want to setup central module audit events, "
                     "please add the property and populate it with module names."
                 )
-
-            if hasattr(settings, "AUDIT_VIEWS") or hasattr(settings, "AUDIT_MODULES"):
-                self.active = True
-            else:
-                self.active = False
-        else:
-            self.active = True
-
-    @staticmethod
-    def do_process_view(request, view_func, view_args, view_kwargs, extra={}):
-        if (
-            getattr(settings, 'AUDIT_MODULES', False)
-            or getattr(settings, 'AUDIT_ALL_VIEWS', False)
-            or getattr(settings, "AUDIT_VIEWS", False)
-        ):
-
-            if isinstance(view_func, FunctionType):
-                fqview = "%s.%s" % (view_func.__module__, view_func.__name__)
-            else:
-                #just assess it from the classname for the class based view
-                fqview = "%s.%s" % (view_func.__module__, view_func.__class__.__name__)
-            if fqview == "django.contrib.staticfiles.views.serve" or fqview == "debug_toolbar.views.debug_media":
-                return None
-
-            def check_modules(view, audit_modules):
-                return any((view.startswith(m) for m in audit_modules))
-
-            audit_doc = None
-
-            if (fqview.startswith('django.contrib.admin')
-                    or fqview.startswith('reversion.admin')) and getattr(settings, "AUDIT_ADMIN_VIEWS", True):
-                audit_doc = AuditEvent.audit_view(request, request.user, view_func, view_kwargs)
-            elif (
-                check_modules(fqview, settings.AUDIT_MODULES)
-                or fqview in settings.AUDIT_VIEWS
-                or getattr(settings, 'AUDIT_ALL_VIEWS', False)
-            ):
-                audit_doc = AuditEvent.audit_view(request, request.user, view_func, view_kwargs, extra=extra)
-            if audit_doc:
-                setattr(request, 'audit_doc', audit_doc)
-        return None
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
@@ -85,7 +44,10 @@ class AuditMiddleware(MiddlewareMixin):
         requisite code.  This is an alternate way to manage audit events rather
         than using the decorator.
         """
-        AuditMiddleware.do_process_view(request, view_func, view_args, view_kwargs)
+        if self.active and self.should_audit(view_func):
+            audit_doc = NavigationEventAudit.audit_view(request, request.user, view_func, view_kwargs)
+            if audit_doc:
+                setattr(request, 'audit_doc', audit_doc)
         return None
 
     def process_response(self, request, response):
@@ -107,3 +69,19 @@ class AuditMiddleware(MiddlewareMixin):
             audit_doc.status_code = response.status_code
             audit_doc.save()
         return response
+
+    def should_audit(self, view_func):
+        fn = view_func if isinstance(view_func, FunctionType) else view_func.__class__
+        fqview = f"{view_func.__module__}.{fn.__name__}"
+        if (fqview == "django.contrib.staticfiles.views.serve"
+                or fqview == "debug_toolbar.views.debug_media"):
+            return False
+        return (
+            getattr(settings, 'AUDIT_ALL_VIEWS', False)
+            or fqview in self.audit_views
+            or fqview.startswith(self.audit_modules)
+            or (
+                getattr(settings, "AUDIT_ADMIN_VIEWS", True)
+                and fqview.startswith(('django.contrib.admin', 'reversion.admin'))
+            )
+        )

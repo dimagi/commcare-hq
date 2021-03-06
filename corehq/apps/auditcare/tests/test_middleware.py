@@ -107,7 +107,7 @@ Settings = Config(
 
 @contextmanager
 def make_middleware(settings=Settings):
-    with patch.object(mod.AuditEvent, "audit_view", fake_audit), \
+    with patch.object(mod.NavigationEventAudit, "audit_view", fake_audit), \
             patch.object(mod, "settings", settings):
         yield mod.AuditMiddleware()
 
