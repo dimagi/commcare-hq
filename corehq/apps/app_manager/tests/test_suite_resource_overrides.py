@@ -23,7 +23,7 @@ class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
 
     def test_overrides(self):
         forms = list(self.factory.app.get_module(0).get_forms())
-        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.origin_id, {
             forms[0].unique_id: '123',
             forms[1].unique_id: '456',
         })
@@ -53,7 +53,7 @@ class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
 
     def test_duplicate_overrides_raises(self):
         forms = list(self.factory.app.get_module(0).get_forms())
-        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.origin_id, {
             forms[0].unique_id: '123',
             forms[1].unique_id: '456',
             forms[2].unique_id: '456',
@@ -63,17 +63,17 @@ class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
 
     def test_copy_xform_resource_overrides(self):
         forms = list(self.factory.app.get_module(0).get_forms())
-        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.origin_id, {
             forms[0].unique_id: '123',
             forms[1].unique_id: '456',
         })
 
-        copy_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+        copy_xform_resource_overrides(self.factory.app.domain, self.factory.app.origin_id, {
             forms[0].unique_id: '321',
             '123': '987',
         })
 
-        overrides = get_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id)
+        overrides = get_xform_resource_overrides(self.factory.app.domain, self.factory.app.origin_id)
         self.assertEqual({o.pre_id: o.post_id for o in overrides.values()}, {
             forms[0].unique_id: '123',
             forms[1].unique_id: '456',
