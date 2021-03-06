@@ -1846,7 +1846,7 @@ class FormExportDataSchema(ExportDataSchema):
         xform_schema = cls._generate_schema_from_xform(
             xform,
             app.langs,
-            app.master_id,  # If it's not a copy, must be current
+            app.origin_id,  # If it's not a copy, must be current
             app.version,
         )
 
@@ -2155,18 +2155,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.master_id,  # If not copy, must be current app
+            app.origin_id,  # If not copy, must be current app
             app.version,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
-                app.master_id,
+                app.origin_id,
                 app.version,
             ))
 
         case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
-            app.master_id,
+            app.origin_id,
             app.version,
         ))
         case_schemas.append(current_schema)

@@ -102,7 +102,7 @@ def get_form_list(domain):
             for m in latest_app.get_modules():
                 for f in m.get_forms():
                     form_list.append({
-                        "code": get_combined_id(latest_app.master_id, f.unique_id),
+                        "code": get_combined_id(latest_app.origin_id, f.unique_id),
                         "name": f.full_path_name,
                     })
     return form_list
