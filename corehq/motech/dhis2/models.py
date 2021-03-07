@@ -157,14 +157,17 @@ class SQLDataValueMap(models.Model):
 
 
 @quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
-def get_info_for_columns(dataset_map: SQLDataSetMap) -> Dict[str, dict]:
+def get_info_for_columns(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+) -> Dict[str, dict]:
+
     info_for_columns = {
         dvm.column: {
-            **model_to_dict(dvm, exclude=['id', 'dataset_map']),
+            **_datavalue_map_to_dict(dvm),
             'is_org_unit': False,
             'is_period': False,
         }
-        for dvm in dataset_map.datavalue_maps.all()
+        for dvm in _iter_datavalue_maps(dataset_map)
     }
     if dataset_map.org_unit_column:
         info_for_columns[dataset_map.org_unit_column] = {
@@ -177,6 +180,20 @@ def get_info_for_columns(dataset_map: SQLDataSetMap) -> Dict[str, dict]:
             'is_period': True,
         }
     return info_for_columns
+
+
+def _datavalue_map_to_dict(datavalue_map):
+    try:
+        return model_to_dict(datavalue_map, exclude=['id', 'dataset_map'])
+    except AttributeError:
+        return datavalue_map
+
+
+def _iter_datavalue_maps(dataset_map):
+    try:
+        return dataset_map.datavalue_maps.all()
+    except AttributeError:
+        return dataset_map.datavalue_maps
 
 
 def get_datavalues(
