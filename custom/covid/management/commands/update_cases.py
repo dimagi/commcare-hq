@@ -36,9 +36,9 @@ class CaseUpdateCommand(BaseCommand):
                                                                                          case_type)
                 if loc_id is not None:
                     num_case_updated_str += f" in this location:{loc_id}"
-                output_file.write(num_case_updated_str)
+                output_file.write(num_case_updated_str + '\n')
                 for error in errors:
-                    output_file.write(domain + ": " + error)
+                    output_file.write(domain + ": " + error + '\n')
                 output_file.close()
 
     def add_arguments(self, parser):

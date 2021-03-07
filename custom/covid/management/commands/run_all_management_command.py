@@ -48,7 +48,7 @@ class Command(BaseCommand):
         start_time = datetime.utcnow()
         if output_file_name:
             with open(output_file_name, "a") as output_file:
-                output_file.write(f"Updated {len(domains)} domains")
+                output_file.write(f"Updated {len(domains)} domains \n")
                 output_file.close()
 
         if len(set(domains)) != len(domains):
@@ -104,6 +104,6 @@ class Command(BaseCommand):
 
         if output_file_name:
             with open(output_file_name, "a") as output_file:
-                output_file.write(f"Script start time: {start_time}")
-                output_file.write(f"Script end time: {datetime.utcnow()}")
+                output_file.write(f"Script start time: {start_time}\n")
+                output_file.write(f"Script end time: {datetime.utcnow()}\n")
                 output_file.close()
