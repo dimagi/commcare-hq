@@ -239,31 +239,20 @@ class AccessAudit(AuditEvent):
         audit.save()
 
 
-setattr(AuditEvent, 'audit_login', AccessAudit.audit_login)
-setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
-setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
+def audit_login(sender, *, request, user, **kwargs):
+    AccessAudit.audit_login(request, user)  # success
 
 
-def audit_login(sender, **kwargs):
-    AuditEvent.audit_login(kwargs["request"], kwargs["user"], True)  # success
+def audit_logout(sender, *, request, user, **kwargs):
+    AccessAudit.audit_logout(request, user)
 
 
-if user_logged_in:
-    user_logged_in.connect(audit_login)
+def audit_login_failed(sender, *, request, username, **kwargs):
+    AccessAudit.audit_login_failed(request, username)
 
 
-def audit_logout(sender, **kwargs):
-    AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
-
-
-if user_logged_out:
-    user_logged_out.connect(audit_logout)
-
-
-def audit_login_failed(sender, **kwargs):
-    AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
-
-
+user_logged_in.connect(audit_login)
+user_logged_out.connect(audit_logout)
 user_login_failed.connect(audit_login_failed)
 
 
