@@ -201,15 +201,24 @@ def get_datavalues(
     ucr_row: dict,
 ) -> List[dict]:
     """
-    Returns rows of "dataElement", "categoryOptionCombo", "value", and
-    optionally "period", "orgUnit" and "comment" for ``dataset_map``
-    where ``ucr_row`` looks like::
+    Given a ``ucr_row`` that looks like ... ::
 
         {
-            "org_unit_id": "ABC",
+            "org_unit_id": "ghi45678901",
             "data_element_cat_option_combo_1": 123,
             "data_element_cat_option_combo_2": 456,
             "data_element_cat_option_combo_3": 789,
+        }
+
+    ... returns rows of data values that look like ::
+
+        {
+            "dataElement": "abc45678901",
+            "value": 123,
+            "categoryOptionCombo": "def45678901",  /* optional */
+            "period": 202101,  /* optional */
+            "orgUnit": "ghi45678901",  /* optional */
+            "comment": "A comment"  /* optional */
         }
 
     """
