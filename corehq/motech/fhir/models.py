@@ -286,7 +286,11 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
             FHIRResourceType.objects
             .select_related('case_type')
             .prefetch_related('properties__case_property')
-            .get(case_type__name=case.type, fhir_version=fhir_version)
+            .get(
+                domain=case.domain,
+                case_type__name=case.type,
+                fhir_version=fhir_version,
+            )
         )
     except FHIRResourceType.DoesNotExist:
         return None
