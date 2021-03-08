@@ -1,4 +1,7 @@
 from testil import eq
+
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.messages import get_messages
 from django.test import TestCase, RequestFactory, override_settings
 
 from corehq.apps.accounting.models import Subscription
@@ -8,6 +11,9 @@ from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProvider,
     TrustedIdentityProvider,
+)
+from corehq.apps.sso.utils.message_helpers import (
+    get_success_message_for_trusted_idp,
 )
 from corehq.apps.sso.utils.request_helpers import (
     get_request_data,
@@ -135,6 +141,7 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
         generator.create_request_session(self.request, use_sso=True)
+        MessageMiddleware().process_request(self.request)  # add support for messages
         self.request.user = self.user
 
     def tearDown(self):
@@ -221,14 +228,57 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
             )
         )
 
-    def test_returns_false_if_user_created_domain(self):
+    def test_auto_trust_for_domains_created_by_user(self):
         """
         If a user is the creating_user of a domain, then their request should
-        not be blocked.
+        not be blocked. A TrustedIdentityProvider relationship should
+        automatically be created between the domain and the user's
+        Identity Provider. Additionally, a success message should then
+        be added through django messages informing the user that the
+        domain now trusts the Identity Provider.
         """
+        # check that no trust exists yet
+        self.assertFalse(
+            TrustedIdentityProvider.objects.filter(
+                domain=self.domain_created_by_user.name,
+                identity_provider=self.idp,
+            ).exists()
+        )
+
+        # check that the request is not blocked for a domain created by a user
         self.assertFalse(
             is_request_blocked_from_viewing_domain_due_to_sso(
                 self.request,
+                self.domain_created_by_user
+            )
+        )
+
+        # check that a trust now exists
+        trust = TrustedIdentityProvider.objects.get(
+            domain=self.domain_created_by_user.name,
+            identity_provider=self.idp,
+        )
+        self.assertTrue(trust.acknowledged_by, self.user.username)
+
+        # and that the request is still not blocked
+        self.assertFalse(
+            is_request_blocked_from_viewing_domain_due_to_sso(
+                self.request,
+                self.domain_created_by_user
+            )
+        )
+
+        # check that the catch comes from does_domain_trust_this_idp
+        self.assertTrue(self.idp.does_domain_trust_this_idp(
+            self.domain_created_by_user.name
+        ))
+
+        # also check that a message was added to the request
+        messages = list(get_messages(self.request))
+        self.assertEqual(
+            str(messages[0]),
+            get_success_message_for_trusted_idp(
+                self.idp,
                 self.domain_created_by_user
             )
         )
