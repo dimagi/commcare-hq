@@ -130,6 +130,9 @@ def test_case_list_queries(self, querystring, expected):
     ("limit=10000", "You cannot request more than 5000 cases per request."),
     ("date_opened.lt=bad-datetime", "Cannot parse datetime 'bad-datetime'"),
     ("date_opened.lt=2020-02-30", "Cannot parse datetime '2020-02-30'"),
+    ("password=1234", "The following parameters were not recognized: password"),
+    ("case_name.gte=a", "The following parameters were not recognized: case_name.gte"),
+    ("date_opened=2020-01-30", "'date_opened' is not a valid parameter."),
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
