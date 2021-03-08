@@ -201,6 +201,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 execute: execute,
                 selections: steps,
             };
+            this.page = null;
+            this.search = null;
         };
 
         this.setForceManualAction = function (force) {
