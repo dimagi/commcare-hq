@@ -3,6 +3,7 @@ import itertools
 import json
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
@@ -11,6 +12,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
+from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
+from corehq.motech.fhir.models import FHIRResourceType, FHIRResourceProperty
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, RateDefinition
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -68,19 +71,34 @@ def generate_data_dictionary(request, domain):
 @toggles.DATA_DICTIONARY.required_decorator()
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
+    fhir_resource_type_by_case_type = {}
+    fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
+        fhir_resource_type_by_case_type = {
+            ft.case_type: ft.name
+            for ft in fhir_resource_types
+        }
+        fhir_resource_prop_by_case_prop = {
+            fr.case_property: fr.jsonpath
+            for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
+                resource_type__in=fhir_resource_types)
+        }
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
     for case_type in queryset:
         p = {
             "name": case_type.name,
+            "fhir_resource_type": fhir_resource_type_by_case_type.get(case_type),
             "properties": [],
         }
         for prop in case_type.properties.all():
             p['properties'].append({
                 "description": prop.description,
+                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
                 "data_type": prop.data_type,
                 "group": prop.group,
@@ -97,17 +115,35 @@ def data_dictionary_json(request, domain, case_type_name=None):
 @toggles.DATA_DICTIONARY.required_decorator()
 def update_case_property(request, domain):
     property_list = json.loads(request.POST.get('properties'))
+    fhir_resource_type = request.POST.get('fhir_resource_type')
+    fhir_resource_type_obj = None
+    case_type = request.POST.get('case_type')
     errors = []
+    if fhir_resource_type and case_type:
+        case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+        try:
+            fhir_resource_type_obj = FHIRResourceType.objects.get(case_type=case_type_obj, domain=domain)
+        except FHIRResourceType.DoesNotExist:
+            fhir_resource_type_obj = FHIRResourceType(case_type=case_type_obj, domain=domain)
+        fhir_resource_type_obj.name = fhir_resource_type
+        try:
+            fhir_resource_type_obj.save()
+        except ValidationError as e:
+            errors.append(str(e))
+
     for property in property_list:
         case_type = property.get('caseType')
         name = property.get('name')
         description = property.get('description')
+        fhir_resource_prop_path = property.get('fhir_resource_prop_path')
         data_type = property.get('data_type')
         group = property.get('group')
         deprecated = property.get('deprecated')
-        error = save_case_property(name, case_type, domain, data_type, description, group, deprecated)
+        error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
+                                   fhir_resource_prop_path, fhir_resource_type_obj)
         if error:
             errors.append(error)
+
     if errors:
         return JsonResponse({"status": "failed", "errors": errors}, status=400)
     else:
@@ -183,8 +219,14 @@ class DataDictionaryView(BaseProjectDataView):
     @property
     def main_context(self):
         main_context = super(DataDictionaryView, self).main_context
+        fhir_integration_enabled = toggles.FHIR_INTEGRATION.enabled(self.domain)
+        if fhir_integration_enabled:
+            main_context.update({
+                'fhir_resource_types': SUPPORTED_FHIR_RESOURCE_TYPES,
+            })
         main_context.update({
             'question_types': [{'value': k, 'display': v} for k, v in PROPERTY_TYPE_CHOICES if k],
+            'fhir_integration_enabled': fhir_integration_enabled,
         })
         return main_context
 
