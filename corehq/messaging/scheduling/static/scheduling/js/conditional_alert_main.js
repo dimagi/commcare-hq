@@ -38,12 +38,12 @@ hqDefine("scheduling/js/conditional_alert_main", [
 
         var conditionalWarningMsg = initialPageData.get('warning_msg');
 
-        if (conditionalWarningMsg){
+        if (conditionalWarningMsg) {
             $("#conditional-warning-msg").text(conditionalWarningMsg);
             $("#conditional-alert-warning-modal").modal("show");
 
             $("#conditional-alert-yes-btn").click(function () {
-                $("#confirmationFlag").val("finalSubmit")
+                $("#confirmationFlag").val("finalSubmit");
                 $("#conditional-alert-form").submit();
             });
         }
