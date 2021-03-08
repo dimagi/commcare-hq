@@ -119,7 +119,7 @@ django-bulk-update==2.2.0
     # via -r base-requirements.in
 django-celery-results==1.0.4
     # via -r base-requirements.in
-django-compressor==2.1
+django-compressor==2.4
     # via -r base-requirements.in
 django-countries==4.6
     # via -r base-requirements.in
@@ -519,7 +519,7 @@ requests==2.24.0
     #   stripe
     #   tinys3
     #   twilio
-rjsmin==1.0.12
+rjsmin==1.1.0
     # via django-compressor
 s3transfer==0.3.3
     # via boto3
@@ -541,6 +541,7 @@ six==1.15.0
     # via
     #   -r base-requirements.in
     #   django-braces
+    #   django-compressor
     #   django-simple-captcha
     #   django-statici18n
     #   django-transfer
