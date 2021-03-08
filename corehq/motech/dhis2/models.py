@@ -280,7 +280,7 @@ def get_dataset(
     if dataset_map.attribute_option_combo_id:
         dataset['attributeOptionCombo'] = dataset_map.attribute_option_combo_id
     if dataset_map.complete_date:
-        dataset['completeDate'] = dataset_map.complete_date
+        dataset['completeDate'] = str(dataset_map.complete_date)
     return dataset
 
 
