@@ -54,9 +54,7 @@ def test_is_request_using_sso_true():
     Testing the successful criteria for an sso request.
     """
     request = RequestFactory().get('/sso/test')
-    request.session = {
-        'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
-    }
+    generator.create_request_session(request, use_sso=True)
     eq(is_request_using_sso(request), True)
 
 
@@ -65,7 +63,7 @@ def test_is_request_using_sso_false_with_session():
     Testing the usual case for non-sso requests.
     """
     request = RequestFactory().get('/sso/test')
-    request.session = {}
+    generator.create_request_session(request)
     eq(is_request_using_sso(request), False)
 
 
@@ -136,9 +134,7 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
-        self.request.session = {
-            'samlSessionIndex': '_7c84c96e-8774-4e64-893c-06f91d285100',
-        }
+        generator.create_request_session(self.request, use_sso=True)
         self.request.user = self.user
 
     def tearDown(self):
