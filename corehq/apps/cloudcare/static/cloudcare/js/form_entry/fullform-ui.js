@@ -459,15 +459,15 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             $.publish('formplayer.dirty');
         };
 
-        self.afterRender = function () {
-            var addNewRepeatKey = 'repeat.dialog.add.new';
+        self.getTranslation = function (translationKey, defaultTranslation) {
             if (self.parent.translations) {
-                var addNewRepeatTranslation = ko.toJS(self.parent.translations[addNewRepeatKey]);
+                var addNewRepeatTranslation = ko.toJS(self.parent.translations[translationKey]);
                 if (addNewRepeatTranslation) {
-                    $('#repeat-add-new').html(addNewRepeatTranslation);
+                    return addNewRepeatTranslation;
                 }
             }
-        }
+            return defaultTranslation;
+        };
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
