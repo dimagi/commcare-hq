@@ -66,7 +66,6 @@ branches:
   - smh/bulk-upload-web-users # Steph Feb 22
   - jls/web-apps-sticky-date-range+sr/geocoder  # Norman Mar 4
   - sr/geocoder  # Sravan Feb 25
-  - dependabot/pip/requirements/django-compressor-2.4 # Graham Feb 25
   - jls/remove-autolaunch+adil-uddin/feature/USH-632-pagination-updates
   - jls/remove-autolaunch # Jenny Feb 9
   - nh/master+adil-uddin/feature/USH-462-HQ-Properties-Change  # Norman Mar 1
