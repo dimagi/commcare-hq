@@ -196,6 +196,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 inputs: queryDict,
                 execute: execute,
             };
+            this.page = null;
         };
 
         this.setForceManualAction = function (force) {
