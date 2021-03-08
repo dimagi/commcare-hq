@@ -202,16 +202,19 @@ class DataSetMapForm(forms.ModelForm):
         if cleaned_data.get('period'):
             period_validators = {
                 SEND_FREQUENCY_WEEKLY: RegexValidator(r'^\d{4}W\d{1,2}$', _(
-                    'Please enter a valid week period in the format yyyyWn '
-                    '(e.g. "2004W10" for week 10, 2004).'
+                    '"Frequency" is set to "Weekly". Please enter a valid '
+                    'week period in the format yyyyWn (e.g. "2004W10" for '
+                    'week 10, 2004).'
                 )),
                 SEND_FREQUENCY_MONTHLY: RegexValidator(r'^\d{6}$', _(
-                    'Please enter a valid month period in the format yyyyMM '
-                    '(e.g. "200403" for March 2004).'
+                    '"Frequency" is set to "Monthly". Please enter a valid '
+                    'month period in the format yyyyMM (e.g. "200403" for '
+                    'March 2004).'
                 )),
                 SEND_FREQUENCY_QUARTERLY: RegexValidator(r'^\d{4}Q\d$', _(
-                    'Please enter a valid quarter period in the format yyyyQn '
-                    '(e.g. "2004Q1" for January-March 2004).'
+                    '"Frequency" is set to "Quarterly". Please enter a valid '
+                    'quarter period in the format yyyyQn (e.g. "2004Q1" for '
+                    'January-March 2004).'
                 )),
             }
             validate_period = period_validators[cleaned_data.get('frequency')]
