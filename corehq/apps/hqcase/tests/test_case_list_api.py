@@ -21,7 +21,7 @@ from corehq.util.test_utils import (
 )
 
 from ..api.core import UserError
-from ..api.get_list import get_list
+from ..api.get_list import get_list, MAX_PAGE_SIZE
 from ..utils import submit_case_blocks
 
 
@@ -127,7 +127,7 @@ def test_case_list_queries(self, querystring, expected):
 
 @generate_cases([
     ("limit=nolimitz", "'nolimitz' is not a valid value for 'limit'"),
-    ("limit=10000", "You cannot request more than 5000 cases per request."),
+    (f"limit={MAX_PAGE_SIZE + 2}", f"You cannot request more than {MAX_PAGE_SIZE} cases per request."),
     ("date_opened.lt=bad-datetime", "Cannot parse datetime 'bad-datetime'"),
     ("date_opened.lt=2020-02-30", "Cannot parse datetime '2020-02-30'"),
 ], TestCaseListAPI)
