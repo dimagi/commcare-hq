@@ -1,9 +1,9 @@
 from contextlib import ContextDecorator
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from django.utils import translation
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext, ugettext_lazy
 from django.utils.translation.trans_real import translation as get_translations
 
 from ...utils.translation import mark_safe_lazy, format_html_lazy
@@ -25,11 +25,31 @@ class custom_translations(ContextDecorator):
         def lookup(id):
             return self.translation_mapping.get(id) or old_gettext(id)
 
-        self.patcher = patch.object(translations, 'gettext', MagicMock(side_effect=lookup))
+        self.patcher = patch.object(translations, 'gettext', lookup)
         self.patcher.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.patcher.stop()
+
+
+class TestCustomTranslationsDecorator(SimpleTestCase):
+    @custom_translations({'Hello World': 'Hello Mundo'})
+    def test_does_not_change_default_translation(self):
+        self.assertEqual(ugettext('Hello World'), 'Hello World')
+
+    @custom_translations({'Hello World': 'Hello Mundo'})
+    def test_creates_translation_for_custom_language(self):
+        with translation.override(CUSTOM_LANGUAGE):
+            self.assertEqual(ugettext('Hello World'), 'Hello Mundo')
+
+    @custom_translations({
+        'TranslationOne': 'TranslationUno',
+        'TranslationTwo': 'TranslationDos'
+    })
+    def test_handles_multiple_translations(self):
+        with translation.override(CUSTOM_LANGUAGE):
+            self.assertEqual(ugettext('TranslationOne'), 'TranslationUno')
+            self.assertEqual(ugettext('TranslationTwo'), 'TranslationDos')
 
 
 class TestLazyMarkSafe(SimpleTestCase):
