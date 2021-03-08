@@ -32,13 +32,14 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
         DuplicateValidator(domain, 'username', all_specs),
         UsernameLengthValidator(domain),
         CustomDataValidator(domain),
-        EmailValidator(domain),
+        EmailValidator(domain, 'email'),
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain)
     ]
     if is_web_user_import:
-        return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs)]
+        return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
+                             EmailValidator(domain, 'username')]
     else:
         return validators + [
             UsernameValidator(domain),
@@ -233,15 +234,19 @@ class CustomDataValidator(ImportValidator):
 
 
 class EmailValidator(ImportValidator):
-    error_message = _("User has an invalid email address")
+    error_message = _("User has an invalid email address for their {}")
+
+    def __init__(self, domain, column_id):
+        super().__init__(domain)
+        self.column_id = column_id
 
     def validate_spec(self, spec):
-        email = spec.get('email')
+        email = spec.get(self.column_id)
         if email:
             try:
                 validate_email(email)
             except ValidationError:
-                return self.error_message
+                return self.error_message.format(self.column_id)
 
 
 class RoleValidator(ImportValidator):
