@@ -43,3 +43,28 @@ class GenderAndResidentTypeSpec(SumWhenTemplateSpec):
 class NutritionCenterOpenTodaySpec(SumWhenTemplateSpec):
     type = TypeProperty("india-nutrition-project_nutrition_center_open_today")
     expression = "nutrition_center_open_today = ?"
+
+
+class OnTimeVisitCheckSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_on_time_visit_check")
+    expression = "on_time_visit_check = ?"
+
+
+class BreastfeedingSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_breastfeeding")
+    expression = "breastfeeding = ?"
+
+
+class ImmediateBreastfeedingInitiatedSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_immediate_breastfeeding_initiated")
+    expression = "immediate_breastfeeding_initiated = ?"
+
+
+class ComplementaryFeedingStartedCheckSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_cf_started_check")
+    expression = "cf_started_check = ?"
+
+
+class LatestBMICategorySpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_latest_bmi_category")
+    expression = "latest_bmi_category = ?"
