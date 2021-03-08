@@ -3,7 +3,7 @@ from django.views.decorators.http import require_GET
 
 from corehq import toggles
 from corehq.apps.domain.decorators import (
-    login_and_domain_required,
+    login_or_api_key,
     require_superuser,
 )
 from corehq.form_processor.exceptions import CaseNotFound
@@ -14,7 +14,7 @@ from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 
 @require_GET
-@login_and_domain_required
+@login_or_api_key
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
@@ -39,7 +39,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 
 
 @require_GET
-@login_and_domain_required
+@login_or_api_key
 @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
 def search_view(request, domain, fhir_version_name, resource_type):
