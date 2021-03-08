@@ -175,6 +175,14 @@ class IdentityProvider(models.Model):
             ).exists()
         return is_active_member
 
+    def clear_domain_caches(self, domain):
+        """
+        Clear all caches associated with a Domain and this IdentityProvider
+        :param domain: String (the Domain name)
+        """
+        IdentityProvider.does_domain_trust_this_idp.clear(self, domain)
+        IdentityProvider.is_domain_an_active_member.clear(self, domain)
+
     @classmethod
     def domain_has_editable_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)
