@@ -1,8 +1,5 @@
 from functools import wraps
 from datetime import datetime, timedelta
-from rest_framework.views import APIView
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -849,6 +846,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return ConditionalAlertCriteriaForm(self.domain, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        submit_form = request.POST["confirmationFlag"]
         if self.async_response is not None:
             return self.async_response
 
@@ -876,6 +874,27 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                     "does not have access to inbound SMS"
                 )
 
+            # list of fields that are getting changed everytime a request came manually from django form.
+            changed_schedule_fields = [
+                'send_time_type', 'repeat', 'stop_type', 'use_user_data_filter',
+                'start_offset_type', 'start_day_of_week', 'visit_window_position',
+                'capture_custom_metadata_item', 'stop_date_case_property_enabled'
+            ]
+
+            user_changed_data = self.schedule_form.changed_data
+            edit_mode = kwargs.get('edit_mode')
+            if (
+                ((user_changed_data != changed_schedule_fields) or self.criteria_form.has_changed())
+                and edit_mode and not submit_form
+            ):
+
+                case_type = self.criteria_form.cleaned_data.get('case_type')
+                case_count = CaseES().domain(self.domain).case_type(case_type).count()
+
+                warning_msg = _(f'This update may alert {case_count} cases. Are you sure you want to proceed?')
+                kwargs.update({'warning_msg': warning_msg})
+                return self.get(request, *args, **kwargs)
+
             with transaction.atomic():
                 if self.rule:
                     rule = self.rule
@@ -890,15 +909,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            # list of fields that are getting changed everytime a request came manually from django form.
-            changed_schedule_fields = [
-                'send_time_type', 'repeat', 'stop_type', 'use_user_data_filter',
-                'start_offset_type', 'start_day_of_week', 'visit_window_position',
-                'capture_custom_metadata_item', 'stop_date_case_property_enabled'
-            ]
-            user_changed_data = self.schedule_form.changed_data
-            if (user_changed_data != changed_schedule_fields) or self.criteria_form.has_changed():
-                initiate_messaging_rule_run(rule)
+            initiate_messaging_rule_run(rule)
 
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
@@ -964,6 +975,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
         return self.rule.get_schedule()
 
     def dispatch(self, request, *args, **kwargs):
+        kwargs.update({'edit_mode': True})
         with get_conditional_alert_edit_critical_section(self.rule_id):
             if self.rule.locked_for_editing:
                 messages.warning(request, _("Please allow the rule to finish processing before editing."))
@@ -1075,24 +1087,3 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
-
-
-class CountCasesBasedOnCaseTypeView(APIView):
-    urlname = 'count_cases_by_case_type'
-
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(CountCasesBasedOnCaseTypeView, self).dispatch(*args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        try:
-            domain = kwargs.get("domain")
-            case_type = request.GET.get("case_type")
-            case_count = CaseES().domain(domain).case_type(case_type).count()
-            resp = JsonResponse({"case_count": case_count})
-        except Exception as e:
-            messages.error(request, str(e))
-            resp = JsonResponse({"error": _("Try Again")})
-            resp.status_code = 400
-
-        return resp

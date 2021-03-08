@@ -33,43 +33,19 @@ hqDefine("scheduling/js/conditional_alert_main", [
         var basicInformation = basicInformationTab(name);
         // setup tab
         basicInformation.setRuleTabVisibility();
+
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
-        $("#conditional-alert-save-btn").click(function () {
-            if (!name) {
+
+        var conditionalWarningMsg = initialPageData.get('warning_msg');
+
+        if (conditionalWarningMsg){
+            $("#conditional-warning-msg").text(conditionalWarningMsg);
+            $("#conditional-alert-warning-modal").modal("show");
+
+            $("#conditional-alert-yes-btn").click(function () {
+                $("#confirmationFlag").val("finalSubmit")
                 $("#conditional-alert-form").submit();
-            } else {
-                var caseType = $("#id_criteria-case_type").val();
-                var caseCountUrl = initialPageData.reverse(
-                    "count_cases_by_case_type"
-                );
-
-                $("#conditional-alert-save-btn").disableButton();
-                $.ajax({
-                    type: "GET",
-                    url: caseCountUrl,
-                    data: { case_type: caseType },
-                    success: function (data) {
-                        $("#case-count").text(data.case_count);
-                        $("#conditional-alert-warning-modal").modal("show");
-                    },
-                    error: function (data) {
-                        $("#conditional-alert-save-btn")
-                            .removeClass("btn-primary")
-                            .addClass("btn-danger");
-
-                        $("#conditional-alert-save-btn").text(
-                            data.responseJSON.error
-                        );
-                    },
-                    complete: function () {
-                        $("#conditional-alert-save-btn").enableButton();
-                    },
-                });
-
-                $("#conditional-alert-yes-btn").click(function () {
-                    $("#conditional-alert-form").submit();
-                });
-            }
-        });
+            });
+        }
     });
 });
