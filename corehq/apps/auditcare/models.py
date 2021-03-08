@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.auth.signals import (
     user_logged_in,
     user_logged_out,
-    user_login_failed,
+    #user_login_failed,
 )
 from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
@@ -255,7 +255,7 @@ def audit_login_failed(sender, *, request, credentials, **kwargs):
 
 user_logged_in.connect(audit_login)
 user_logged_out.connect(audit_logout)
-user_login_failed.connect(audit_login_failed)
+#user_login_failed.connect(audit_login_failed)  FIXME
 
 
 def wrap_audit_event(event):
