@@ -44,7 +44,7 @@
                   </div>
                 </div>
                 {% if js_options.default_value_expression_enabled %}
-                <div class="form-group">
+                <div class="form-group" data-bind="visible: appearance() != 'address'">
                   <label class="control-label col-xs-12 col-sm-3">
                     {% trans "Default Value Expression" %}
                   </label>
