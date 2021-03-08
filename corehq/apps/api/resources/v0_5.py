@@ -1108,3 +1108,6 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             "content_type": ('exact',),
             "status": ('exact',),
         }
+        ordering = [
+            'date',
+        ]
