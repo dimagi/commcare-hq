@@ -63,6 +63,37 @@ class TestAuditMiddleware(SimpleTestCase):
             ware.process_view(self.request, serve, ARGS, KWARGS)
         self.assert_no_audit(self.request)
 
+    def test_process_response_without_audit_doc(self):
+        with configured_middleware() as ware:
+            ware(self.request)
+        assert not hasattr(self.request, "audit_doc")
+
+    def test_process_response_with_audit_doc_with_user(self):
+        self.request.audit_doc = audit_doc = fake_audit_doc(user="username")
+        with configured_middleware() as ware:
+            ware(self.request)
+        self.assertEqual(audit_doc.status_code, 200)
+        self.assertEqual(audit_doc.user, "username")
+        self.assertEqual(audit_doc.save.count, 1)
+
+    def test_process_response_with_audit_doc_and_audit_user(self):
+        self.request.audit_doc = audit_doc = fake_audit_doc(user=None)
+        self.request.audit_user = "audit_user"
+        with configured_middleware() as ware:
+            ware(self.request)
+        self.assertEqual(audit_doc.status_code, 200)
+        self.assertEqual(audit_doc.user, "audit_user")
+        self.assertEqual(audit_doc.save.count, 1)
+
+    def test_process_response_with_audit_doc_and_couch_user(self):
+        self.request.audit_doc = audit_doc = fake_audit_doc(user=None)
+        self.request.couch_user = Config(username="couch_user")
+        with configured_middleware() as ware:
+            ware(self.request)
+        self.assertEqual(audit_doc.status_code, 200)
+        self.assertEqual(audit_doc.user, "couch_user")
+        self.assertEqual(audit_doc.save.count, 1)
+
     def assert_audit(self, request):
         audit_doc = getattr(request, "audit_doc", None)
         self.assertEqual(audit_doc, EXPECTED_AUDIT, "audit expected")
@@ -106,9 +137,10 @@ Settings = Config(
 
 @contextmanager
 def configured_middleware(settings=Settings):
+    response = Config(status_code=200)
     with patch.object(mod.NavigationEventAudit, "audit_view", fake_audit), \
             patch.object(mod, "settings", settings):
-        yield mod.AuditMiddleware(None)
+        yield mod.AuditMiddleware(lambda request: response)
 
 
 def make_view(name="the_view", module="corehq.apps.auditcare.views"):
@@ -125,3 +157,10 @@ def make_view(name="the_view", module="corehq.apps.auditcare.views"):
 
 def fake_audit(request, user, view_func, view_kwargs, extra={}):
     return Config(user=user, view_kwargs=view_kwargs)
+
+
+def fake_audit_doc(**kwargs):
+    def save():
+        save.count += 1
+    save.count = 0
+    return Config(save=save, **kwargs)
