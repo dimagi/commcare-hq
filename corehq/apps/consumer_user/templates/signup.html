@@ -1,8 +1,49 @@
+{% extends "base_page.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% requirejs_main 'registration/js/login' %}
+
+{% block title %}{% trans "Sign Up" %}{% endblock title %}
+
+{% block background_content %}
+<div class="bg-container">
+  <div class="bg-full-cover-fixed bg-registration b-lazy"
+       data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
+  <div class="bg-overlay"></div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+
+{% compress css %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/registration.less' %}" />
+{% endcompress %}
+{% endblock stylesheets %}
+
 {% block content %}
-  <h2>Sign up</h2>
-  <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <input type="submit" value="Submit">
-  </form>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="reg-form-container sign-in-container">
+        <div class="form-bubble form-bubble-lg">
+          <h2 class="text-center">Sign Up</h2>
+          <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-primary" type="submit">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

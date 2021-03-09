@@ -1,9 +1,14 @@
+{% extends "base_page.html" %}
+{% load i18n %}
+{% block title %}{% trans "Domains And Cases" %}{% endblock %}
+
 {% block content %}
-<h2>Domains and cases</h2>
+<div class="container">
+<h2>Domains And Cases</h2>
 {% if msg %}
     <p style="font-weight:bold">{{ msg }}</p>
 {% endif %}
-<table>
+<table class="table table-bordered">
   <tr>
     <th>Domain</th>
     <th>Cases</th>
@@ -15,5 +20,5 @@
   </tr>
   {% endfor %}
 </table>
-<a href="{% url 'consumer_user:consumer_user_homepage' %}">HomePage</a>
+</div>
 {% endblock %}
