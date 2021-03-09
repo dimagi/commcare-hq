@@ -1,9 +1,13 @@
 """
 These tests were written to check that FormDictPayloadGenerator behaved
-like FormRepeaterJsonPayloadGenerator, but they revealed something I did
-not expect about Decimal case properties when using a Couch backend.
+like FormRepeaterJsonPayloadGenerator, but they also show automatic type
+casting by `jsonobject`_ when using the Couch backend.
 
-TL;DR? Skip to TestCouchDataTypes.test_form_json_decimal.
+The takeaway here is that when configuring integrations for domains on
+Couch, it's important to remember that not all case properties are
+strings when serializing to JSON, or casting to a remote data type.
+
+_jsonobject: https://github.com/dimagi/commcare-hq/blob/9634efa3905/corehq/ex-submodules/dimagi/ext/jsonobject.py#L94-L99
 
 """
 import json
@@ -75,66 +79,45 @@ class DataTypesBase:
         submit_form_locally(builder.as_xml_string(), cls.domain)
         cls.form = FormAccessors(cls.domain).get_form(cls.form_id)
 
-    def test_form_json_integer(self):
-        """
-        When an integer is taken from form JSON or a case block, it is a
-        ``str``. When it is taken from a case property, it is still a ``str``.
-        """
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
+        form_json_gen = FormRepeaterJsonPayloadGenerator(None)
+        cls.form_json_payload_info = cls.get_payload_info(form_json_gen)
 
-        self.assertIsInstance(form_dict['form']['year'], str)
-        self.assertIsInstance(info.form_question_values['/data/year'], str)
-        self.assertIsInstance(info.updates['year'], str)
-        self.assertIsInstance(info.extra_fields['year'], str)
+        form_dict_gen = FormDictPayloadGenerator(None)
+        cls.form_dict_payload_info = cls.get_payload_info(form_dict_gen)
 
-    def test_form_dict_integer(self):
-        """
-        When an integer is taken from form JSON or a case block, it is a
-        ``str``. When it is taken from a case property, it is still a ``str``.
-        """
-        gen = FormDictPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-
-        self.assertIsInstance(form_dict['form']['year'], str)
-        self.assertIsInstance(info.form_question_values['/data/year'], str)
-        self.assertIsInstance(info.updates['year'], str)
-        self.assertIsInstance(info.extra_fields['year'], str)
-
-    def test_form_json_multiplechoice(self):
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-
-        self.assertIsInstance(form_dict['form']['breakfast'], str)
-        self.assertIsInstance(info.form_question_values['/data/breakfast'], str)
-        self.assertIsInstance(info.updates['breakfast'], str)
-        self.assertIsInstance(info.extra_fields['breakfast'], str)
-
-    def test_form_dict_multiplechoice(self):
-        gen = FormDictPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-
-        self.assertIsInstance(form_dict['form']['breakfast'], str)
-        self.assertIsInstance(info.form_question_values['/data/breakfast'], str)
-        self.assertIsInstance(info.updates['breakfast'], str)
-        self.assertIsInstance(info.extra_fields['breakfast'], str)
-
+    @classmethod
     def get_payload_info(
-        self,
+        cls,
         payload_generator: BasePayloadGenerator,
     ) -> Tuple[dict, CaseTriggerInfo]:
 
-        payload = payload_generator.get_payload(None, self.form)
+        payload = payload_generator.get_payload(None, cls.form)
         if isinstance(payload, str):
             payload = json.loads(payload)
         [info] = get_relevant_case_updates_from_form_json(
-            self.domain,
+            cls.domain,
             payload,
             case_types=None,
-            extra_fields=list(self.case_update.keys()),
+            extra_fields=list(cls.case_update.keys()),
             form_question_values=get_form_question_values(payload),
         )
         return payload, info
+
+    def test_string_values_in_common(self):
+        for (payload, info), question, expected_type in [
+            (self.form_json_payload_info, 'year', str),
+            (self.form_dict_payload_info, 'year', str),
+
+            (self.form_json_payload_info, 'breakfast', str),
+            (self.form_dict_payload_info, 'breakfast', str),
+        ]:
+            self.check_payload_info_type(payload, info, question, expected_type)
+
+    def check_payload_info_type(self, payload, info, question, expected_type):
+        self.assertIsInstance(payload['form'][question], str)
+        self.assertIsInstance(info.form_question_values[f'/data/{question}'], str)
+        self.assertIsInstance(info.updates[question], str)
+        self.assertIsInstance(info.extra_fields[question], expected_type)
 
 
 class TestCouchDataTypes(TestCase, DataTypesBase):
@@ -151,54 +134,21 @@ class TestCouchDataTypes(TestCase, DataTypesBase):
         cls.domain_obj = create_couch_domain(COUCH_DOMAIN)
         cls.set_up_form()
 
-    def test_form_json_decimal(self):
-        """
-        When a decimal is taken from form JSON or a case block, it is a
-        ``str``. When it is taken from a case property, it is a ``Decimal``.
+    def test_nonstring_values_in_couch(self):
+        for (payload, info), question, expected_type in [
+            (self.form_json_payload_info, 'price', Decimal),
+            (self.form_dict_payload_info, 'price', Decimal),
 
-        This only happens when using a Couch backend. Strings are
-        converted by `jsonobject`_.
+            (self.form_json_payload_info, 'album_release', date),
+            (self.form_dict_payload_info, 'album_release', date),
 
-        .. _jsonobject: https://github.com/dimagi/commcare-hq/blob/9634efa3905/corehq/ex-submodules/dimagi/ext/jsonobject.py#L94-L99
+            (self.form_json_payload_info, 'breakfast_oclock', time),
+            (self.form_dict_payload_info, 'breakfast_oclock', time),
 
-        """
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-
-        # Test value from form_json
-        self.assertIsInstance(form_dict['form']['price'], str)
-        self.assertIsInstance(info.form_question_values['/data/price'], str)
-        # Test value from case block
-        self.assertIsInstance(info.updates['price'], str)
-        # Test value from case property
-        self.assertIsInstance(info.extra_fields['price'], Decimal)
-
-    def test_form_dict_decimal(self):
-        gen = FormDictPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-
-        self.assertIsInstance(form_dict['form']['price'], str)
-        self.assertIsInstance(info.form_question_values['/data/price'], str)
-        self.assertIsInstance(info.updates['price'], str)
-        self.assertIsInstance(info.extra_fields['price'], Decimal)
-
-    def test_form_json_date(self):
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-        self.assertIsInstance(info.updates['album_release'], str)
-        self.assertIsInstance(info.extra_fields['album_release'], date)
-
-    def test_form_json_time(self):
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-        self.assertIsInstance(info.updates['breakfast_oclock'], str)
-        self.assertIsInstance(info.extra_fields['breakfast_oclock'], time)
-
-    def test_form_json_datetime(self):
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
-        self.assertIsInstance(info.updates['breakfast_exactly'], str)
-        self.assertIsInstance(info.extra_fields['breakfast_exactly'], datetime)
+            (self.form_json_payload_info, 'breakfast_exactly', datetime),
+            (self.form_dict_payload_info, 'breakfast_exactly', datetime),
+        ]:
+            self.check_payload_info_type(payload, info, question, expected_type)
 
 
 class TestSqlDataTypes(TestCase, DataTypesBase):
@@ -220,24 +170,21 @@ class TestSqlDataTypes(TestCase, DataTypesBase):
         FormAccessorSQL.hard_delete_forms(SQL_DOMAIN, [cls.form_id])
         super().tearDownClass()
 
-    def test_form_json_decimal(self):
-        """
-        Case properties of CommCareCaseSQL behave as you would expect.
-        """
-        gen = FormRepeaterJsonPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
+    def test_string_values_in_sql(self):
+        for (payload, info), question, expected_type in [
+            (self.form_json_payload_info, 'price', str),
+            (self.form_dict_payload_info, 'price', str),
 
-        # Test value from case block
-        self.assertIsInstance(info.updates['price'], str)
-        # Test value from case property
-        self.assertIsInstance(info.extra_fields['price'], str)
+            (self.form_json_payload_info, 'album_release', str),
+            (self.form_dict_payload_info, 'album_release', str),
 
-    def test_form_dict_decimal(self):
-        gen = FormDictPayloadGenerator(None)
-        form_dict, info = self.get_payload_info(gen)
+            (self.form_json_payload_info, 'breakfast_oclock', str),
+            (self.form_dict_payload_info, 'breakfast_oclock', str),
 
-        self.assertIsInstance(info.updates['price'], str)
-        self.assertIsInstance(info.extra_fields['price'], str)
+            (self.form_json_payload_info, 'breakfast_exactly', str),
+            (self.form_dict_payload_info, 'breakfast_exactly', str),
+        ]:
+            self.check_payload_info_type(payload, info, question, expected_type)
 
 
 def create_couch_domain(name):
