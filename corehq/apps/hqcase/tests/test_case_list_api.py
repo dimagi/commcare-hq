@@ -130,6 +130,9 @@ def test_case_list_queries(self, querystring, expected):
     (f"limit={MAX_PAGE_SIZE + 2}", f"You cannot request more than {MAX_PAGE_SIZE} cases per request."),
     ("date_opened.lt=bad-datetime", "Cannot parse datetime 'bad-datetime'"),
     ("date_opened.lt=2020-02-30", "Cannot parse datetime '2020-02-30'"),
+    ("password=1234", "'password' is not a valid parameter."),
+    ("case_name.gte=a", "'case_name.gte' is not a valid parameter."),
+    ("date_opened=2020-01-30", "'date_opened' is not a valid parameter."),
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
