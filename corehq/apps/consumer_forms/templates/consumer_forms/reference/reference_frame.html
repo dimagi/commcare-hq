@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <title>CommCare iframe Demo</title>
+   <script>
+     window.addEventListener('message', function (e) {
+       const mainWindow = e.source;
+       console.log(e.data);
+       const newName = 'bobby' + e.data;
+       mainWindow.postMessage(result, event.origin);
+     });
+   </script>
+ </head>
+ <body>
+   <label for="name">Change Case Name:</label>
+   <input id='name' />
+   <button id='send' >Save</button>
+</body>
+</html>

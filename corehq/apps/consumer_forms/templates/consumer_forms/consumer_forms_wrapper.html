@@ -13,6 +13,11 @@
   <p>This page is intentionally unstyled since the goal is for end-users to customize their own forms.</p>
   <h2>Case List</h2>
   <ul id="data-display"></ul>
+  <iframe
+    id="sandboxed"
+    src="{% url 'consumer_forms:consumer_form_iframe' domain %}">
+  </iframe>
+
 </div>
 </body>
 {{ link_url|json_script:'commcare-data-url' }}
