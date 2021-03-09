@@ -12,7 +12,6 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
         "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
-        "jquery-mousewheel": "jquery-mousewheel/jquery.mousewheel",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },

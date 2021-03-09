@@ -68,12 +68,17 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     YearRangeTemplateSpec,
 )
 from custom.nutrition_project.ucr.sum_when_templates import (
+    BreastfeedingSpec,
     ChildDeathSpec,
     ChildDeliverySpec,
     ChildLowBirthWeightSpec,
     ChildWeighedSpec,
+    ComplementaryFeedingStartedCheckSpec,
     GenderAndResidentTypeSpec,
+    ImmediateBreastfeedingInitiatedSpec,
+    LatestBMICategorySpec,
     NutritionCenterOpenTodaySpec,
+    OnTimeVisitCheckSpec,
     WomanDeathSpec,
     WomanDeathTypeSpec,
 )
@@ -200,6 +205,11 @@ class SumWhenTemplateFactory(object):
         WomanDeathTypeSpec.type.choices[0]: WomanDeathTypeSpec,
         GenderAndResidentTypeSpec.type.choices[0]: GenderAndResidentTypeSpec,
         NutritionCenterOpenTodaySpec.type.choices[0]: NutritionCenterOpenTodaySpec,
+        OnTimeVisitCheckSpec.type.choices[0]: OnTimeVisitCheckSpec,
+        BreastfeedingSpec.type.choices[0]: BreastfeedingSpec,
+        ImmediateBreastfeedingInitiatedSpec.type.choices[0]: ImmediateBreastfeedingInitiatedSpec,
+        ComplementaryFeedingStartedCheckSpec.type.choices[0]: ComplementaryFeedingStartedCheckSpec,
+        LatestBMICategorySpec.type.choices[0]: LatestBMICategorySpec,
     }
 
     @classmethod

@@ -1,23 +1,25 @@
 from django.conf.urls import url
 
 from corehq.motech.dhis2.views import (
+    AddDhis2EntityRepeaterView,
+    AddDhis2RepeaterView,
+    EditDhis2EntityRepeaterView,
+    EditDhis2RepeaterView,
     config_dhis2_entity_repeater,
     config_dhis2_repeater,
 )
-from corehq.motech.openmrs.views import config_openmrs_repeater
+from corehq.motech.openmrs.views import (
+    AddOpenmrsRepeaterView,
+    EditOpenmrsRepeaterView,
+    config_openmrs_repeater,
+)
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
-    AddDhis2EntityRepeaterView,
-    AddDhis2RepeaterView,
     AddFormRepeaterView,
-    AddOpenmrsRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
-    EditDhis2EntityRepeaterView,
-    EditDhis2RepeaterView,
     EditFormRepeaterView,
-    EditOpenmrsRepeaterView,
     EditRepeaterView,
     drop_repeater,
     pause_repeater,
