@@ -72,16 +72,16 @@ class AuditMiddleware(MiddlewareMixin):
 
     def should_audit(self, view_func):
         fn = view_func if isinstance(view_func, FunctionType) else view_func.__class__
-        fqview = f"{view_func.__module__}.{fn.__name__}"
-        if (fqview == "django.contrib.staticfiles.views.serve"
-                or fqview == "debug_toolbar.views.debug_media"):
+        view_name = f"{view_func.__module__}.{fn.__name__}"
+        if (view_name == "django.contrib.staticfiles.views.serve"
+                or view_name == "debug_toolbar.views.debug_media"):
             return False
         return (
             getattr(settings, 'AUDIT_ALL_VIEWS', False)
-            or fqview in self.audit_views
-            or fqview.startswith(self.audit_modules)
+            or view_name in self.audit_views
+            or view_name.startswith(self.audit_modules)
             or (
                 getattr(settings, "AUDIT_ADMIN_VIEWS", True)
-                and fqview.startswith(('django.contrib.admin', 'reversion.admin'))
+                and view_name.startswith(('django.contrib.admin', 'reversion.admin'))
             )
         )
