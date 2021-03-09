@@ -62,10 +62,11 @@ class TestAuditMiddleware(SimpleTestCase):
         self.assert_no_audit(req)
 
     def assert_audit(self, request):
-        self.assertEqual(request.audit_doc, EXPECTED_AUDIT)
+        audit_doc = getattr(request, "audit_doc", None)
+        self.assertEqual(audit_doc, EXPECTED_AUDIT, "audit expected")
 
     def assert_no_audit(self, request):
-        self.assertFalse(hasattr(request, "audit_doc"))
+        self.assertFalse(hasattr(request, "audit_doc"), "unexpected audit")
 
 
 def test_make_view_function():
