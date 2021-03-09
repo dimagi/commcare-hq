@@ -5,6 +5,10 @@ from dateutil.parser import parse
 
 from dimagi.utils.parsing import FALSE_STRINGS
 
+from corehq.apps.case_search.filter_dsl import (
+    CaseFilterError,
+    build_filter_from_xpath,
+)
 from corehq.apps.es import case_search
 from corehq.apps.es import cases as case_es
 
@@ -82,6 +86,8 @@ def get_list(domain, params):
     for key, val in params.items():
         if key.startswith(CUSTOM_PROPERTY_PREFIX):
             query = query.filter(_get_custom_property_filter(key, val))
+        elif key == 'xpath':
+            query = query.filter(_get_xpath_filter(domain, val))
         elif key in FILTERS:
             query = query.filter(FILTERS[key](val))
         else:
@@ -95,3 +101,10 @@ def _get_custom_property_filter(key, val):
     if val == "":
         return case_search.case_property_missing(prop)
     return case_search.exact_case_property_text_query(prop, val)
+
+
+def _get_xpath_filter(domain, xpath):
+    try:
+        return build_filter_from_xpath(domain, xpath)
+    except CaseFilterError as e:
+        raise UserError(f'Bad XPath: {e}')
