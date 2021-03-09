@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm, PasswordInput
+from django.forms import CharField, ModelForm, PasswordInput
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.consumer_user.const import (
@@ -16,9 +16,12 @@ from corehq.apps.hqcase.utils import update_case
 
 class ConsumerUserSignUpForm(ModelForm):
 
+    email = CharField(required=True)
+
     def __init__(self, *args, **kwargs):
         self.invitation = kwargs.pop('invitation', None)
         super().__init__(*args, **kwargs)
+        self.fields['email'].label = 'Email Address'
         for key in self.fields:
             self.fields[key].required = True
 
