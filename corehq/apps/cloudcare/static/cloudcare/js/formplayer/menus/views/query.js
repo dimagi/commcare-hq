@@ -113,6 +113,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 if (element.is('input')) {
                     element.val(value);
+                    element.change();
                 }
                 else {
                     // Set lookup table option by label
