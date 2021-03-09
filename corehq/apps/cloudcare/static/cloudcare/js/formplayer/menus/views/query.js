@@ -122,7 +122,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     });
                     if (option.length === 1) {
                         option.attr('selected', true);
-                        element.trigger('change.select2')
+                        element.trigger('change.select2');
                     }
                 }
             };
@@ -282,7 +282,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             self.setStickyQueryInputs();
             // clear geocoder input if any
-            $('.mapboxgl-ctrl-geocoder--button').click()
+            $('.mapboxgl-ctrl-geocoder--button').click();
         },
 
         submitAction: function (e) {
