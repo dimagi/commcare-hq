@@ -170,27 +170,35 @@ def update_case_property_description(request, domain):
 
 
 def _export_data_dictionary(domain):
+    def generate_prop_dict(case_prop):
+        prop_dict = {
+            _('Case Property'): case_prop.name,
+            _('Group'): case_prop.group,
+            _('Data Type'): case_prop.data_type,
+            _('Description'): case_prop.description,
+            _('Deprecated'): case_prop.deprecated
+        }
+        return prop_dict
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
-    export_data = {}
+    case_prop_data = {}
     for case_type in queryset:
-        export_data[case_type.name or _("No Name")] = [{
-            _('Case Property'): prop.name,
-            _('Group'): prop.group,
-            _('Data Type'): prop.data_type,
-            _('Description'): prop.description,
-            _('Deprecated'): prop.deprecated
-        } for prop in case_type.properties.all()]
-    headers = (_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated'))
+        case_prop_data[case_type.name or _("No Name")] = [
+            generate_prop_dict(prop)
+            for prop in case_type.properties.all()
+        ]
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
-    header_table = [(tab_name, [headers]) for tab_name in export_data]
+    header_table = []
+    case_prop_headers = (_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated'))
+    for tab_name in case_prop_data:
+        header_table.append((tab_name, [case_prop_headers]))
     writer.open(header_table=header_table, file=outfile)
-    for tab_name, tab in export_data.items():
+    for tab_name, tab in case_prop_data.items():
         tab_rows = []
         for row in tab:
-            tab_rows.append([row.get(header, '') for header in headers])
+            tab_rows.append([row.get(header, '') for header in case_prop_headers])
         writer.write([(tab_name, tab_rows)])
     writer.close()
     return outfile
