@@ -62,7 +62,7 @@ class TestAuditMiddleware(TestCase):
         self.assert_no_audit(req)
 
     def assert_audit(self, request):
-        self.assertEquals(request.audit_doc, EXPECTED_AUDIT)
+        self.assertEqual(request.audit_doc, EXPECTED_AUDIT)
 
     def assert_no_audit(self, request):
         self.assertFalse(hasattr(request, "audit_doc"))
