@@ -65,8 +65,6 @@ branches:
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - smh/bulk-upload-web-users # Steph Feb 22
   - sr/geocoder  # Sravan Feb 25
-  - jls/remove-autolaunch+adil-uddin/feature/USH-632-pagination-updates
-  - jls/remove-autolaunch # Jenny Feb 9
   - nh/master+adil-uddin/feature/USH-462-HQ-Properties-Change  # Norman Mar 1
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
@@ -78,4 +76,5 @@ branches:
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - kev/repeat-add-new-translation # Kevin Mar 2
+  - jls/case-search-parent-props # Jenny March 9
 submodules: {}
