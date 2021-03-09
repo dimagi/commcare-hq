@@ -71,19 +71,20 @@ def generate_data_dictionary(request, domain):
 @toggles.DATA_DICTIONARY.required_decorator()
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
-    fhir_resource_type_by_case_type = {}
+    fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(domain)
+        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(
+            domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
     for case_type in queryset:
         p = {
             "name": case_type.name,
-            "fhir_resource_type": fhir_resource_type_by_case_type.get(case_type),
+            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "properties": [],
         }
         for prop in case_type.properties.all():
@@ -101,7 +102,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 def _load_fhir_resource_mappings(domain):
     fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
-    fhir_resource_type_by_case_type = {
+    fhir_resource_type_name_by_case_type = {
         ft.case_type: ft.name
         for ft in fhir_resource_types
     }
@@ -110,7 +111,7 @@ def _load_fhir_resource_mappings(domain):
         for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
             resource_type__in=fhir_resource_types)
     }
-    return fhir_resource_type_by_case_type, fhir_resource_prop_by_case_prop
+    return fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop
 
 
 # atomic decorator is a performance optimization for looped saves
