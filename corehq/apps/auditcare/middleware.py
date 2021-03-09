@@ -2,21 +2,20 @@ import logging
 from types import FunctionType
 
 from django.conf import settings
-from django.utils.deprecation import MiddlewareMixin
 
 from .models import NavigationEventAudit
 
 log = logging.getLogger(__name__)
 
 
-class AuditMiddleware(MiddlewareMixin):
+class AuditMiddleware:
 
-    def __init__(self, get_response=None):
+    def __init__(self, get_response):
         """
         Audit middleware needs to be enabled on site after the login/user info
         is instantiated on the request object.
         """
-        super(AuditMiddleware, self).__init__(get_response)
+        self.get_response = get_response
         self.active = any(getattr(settings, name, False) for name in [
             "AUDIT_ALL_VIEWS", "AUDIT_VIEWS", "AUDIT_MODULES"
         ])
@@ -47,10 +46,10 @@ class AuditMiddleware(MiddlewareMixin):
         if self.active and self.should_audit(view_func):
             audit_doc = NavigationEventAudit.audit_view(request, request.user, view_func, view_kwargs)
             if audit_doc:
-                setattr(request, 'audit_doc', audit_doc)
+                request.audit_doc = audit_doc
         return None
 
-    def process_response(self, request, response):
+    def __call__(self, request):
         """
         For auditing views, we need to verify on the response whether or not the
         permission was granted, we infer this from the status code. Update the
@@ -59,6 +58,7 @@ class AuditMiddleware(MiddlewareMixin):
         We also need to add the user field when it was not initially inferred from the sessionid,
         such as when using Api Key, Basic Auth, Digest Auth, or HMAC auth.
         """
+        response = self.get_response(request)
         audit_doc = getattr(request, 'audit_doc', None)
         if audit_doc:
             if not audit_doc.user:

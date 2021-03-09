@@ -109,7 +109,7 @@ Settings = Config(
 def make_middleware(settings=Settings):
     with patch.object(mod.NavigationEventAudit, "audit_view", fake_audit), \
             patch.object(mod, "settings", settings):
-        yield mod.AuditMiddleware()
+        yield mod.AuditMiddleware(None)
 
 
 def make_view(name, module="corehq.apps.auditcare.views", is_class=False):
