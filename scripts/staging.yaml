@@ -67,7 +67,6 @@ branches:
   - sr/geocoder  # Sravan Feb 25
   - nh/master+adil-uddin/feature/USH-462-HQ-Properties-Change  # Norman Mar 1
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
-  - jls/master+adil-uddin/feature/USH-632-pagination-updates
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - nh/fhir/repeater+mk/fhir  # Norman Mar 6
