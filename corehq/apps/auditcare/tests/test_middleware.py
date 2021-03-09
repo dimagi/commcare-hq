@@ -97,8 +97,8 @@ def test_make_admin_view_class():
     eq(func.__module__, "django.contrib.admin")
 
 
-ARGS = ()
-KWARGS = {"del": "mar"}
+ARGS = ()  # positional view args are not audited, therefore are empty
+KWARGS = {"non": "empty", "and": "audited", "view": "kwargs"}
 EXPECTED_AUDIT = Config(user="username", view_kwargs=KWARGS)
 Settings = Config(
     AUDIT_MODULES=default_settings.AUDIT_MODULES,
