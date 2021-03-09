@@ -118,10 +118,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 else {
                     // Set lookup table option by label
                     var option = element.find("option").filter(function (_) {
-                        return $(this).text() === value;
+                        return $(this).text().trim() === value;
                     });
-                    if (option.length > 1) {
+                    if (option.length === 1) {
                         option.attr('selected', true);
+                        element.trigger('change.select2')
                     }
                 }
             };
