@@ -9,11 +9,18 @@
        const newName = 'bobby' + e.data;
        mainWindow.postMessage(result, event.origin);
      });
+
    </script>
  </head>
  <body>
    <label for="name">Change Case Name:</label>
    <input id='name' />
-   <button id='send' >Save</button>
+   <button id='save' >Save</button>
+   <script>
+     document.getElementById("save").addEventListener('click', function (e) {
+       const newName = document.getElementById("name").value;
+       console.log('changing name to: ', newName);
+     });
+   </script>
 </body>
 </html>
