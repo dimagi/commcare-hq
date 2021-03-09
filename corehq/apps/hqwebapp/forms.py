@@ -58,13 +58,11 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
         cleaned_data = super(EmailAuthenticationForm, self).clean()
         if not user:
-            try:
-                ConsumerUser.objects.get(user=self.user_cache)
+            consumer_user = ConsumerUser.objects.get_or_none(user=self.user_cache)
+            if consumer_user:
                 EmailAuthenticationForm.create_web_user_from_consumer_user(username,
                                                                            password,
                                                                            get_ip(self.request))
-            except ConsumerUser.DoesNotExist:
-                self.get_invalid_login_error()
         return cleaned_data
 
     @staticmethod
