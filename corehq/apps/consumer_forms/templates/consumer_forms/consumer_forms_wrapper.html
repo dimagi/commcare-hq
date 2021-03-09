@@ -14,17 +14,21 @@
   <h2>Case List</h2>
   <ul id="data-display"></ul>
   <iframe
-    id="sandboxed"
+    id="sandboxed-frame"
+    sandbox="allow-scripts"
     src="{% url 'consumer_forms:consumer_form_iframe' domain %}">
   </iframe>
-
 </div>
 </body>
 {{ link_url|json_script:'commcare-data-url' }}
+{{ link_data|json_script:'commcare-data' }}
 {{ domain|json_script:'domain' }}
 <script>
   // or you could fetch this from the API
   const linkUrl= JSON.parse(document.getElementById('commcare-data-url').textContent);
+  const linkDataText = document.getElementById('commcare-data').textContent;
+  const linkData = JSON.parse(linkDataText);
+  const sandboxedFrame = document.getElementById('sandboxed-frame');
 
   const renderData = function (commcareData) {
     console.log(commcareData);
@@ -47,5 +51,25 @@
       }
     );
 
+  // wire messages back from the iframe
+  window.addEventListener('message',
+    function (e) {
+      // from https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/
+      // Sandboxed iframes which lack the 'allow-same-origin'
+      // header have "null" rather than a valid origin. This means you still
+      // have to be careful about accepting data via the messaging API you
+      // create. Check that source, and validate those inputs!
+      if (e.origin === "null" && e.source === sandboxedFrame.contentWindow) {
+        if (e.data === 'frame-loaded') {
+          // todo: this might be a privacy vulnerability since this content will be available to
+          // any other window that is listening.
+          sandboxedFrame.contentWindow.postMessage(linkData, '*');
+        } else {
+          // this is where you would post an update back to HQ
+          console.log('back in the main window', e.data);
+        }
+      }
+    }
+  );
 </script>
 </html>

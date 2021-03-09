@@ -3,11 +3,13 @@
  <head>
    <title>CommCare iframe Demo</title>
    <script>
-     window.addEventListener('message', function (e) {
-       const mainWindow = e.source;
-       console.log(e.data);
-       const newName = 'bobby' + e.data;
-       mainWindow.postMessage(result, event.origin);
+     window.addEventListener('message', function (messageEvent) {
+       document.getElementById("name").value = messageEvent.data[0].name;
+       const mainWindow = messageEvent.source;
+       document.getElementById("save").addEventListener('click', function (clickEvent) {
+         const newName = document.getElementById("name").value;
+         mainWindow.postMessage(newName, messageEvent.origin);
+       });
      });
 
    </script>
@@ -17,9 +19,10 @@
    <input id='name' />
    <button id='save' >Save</button>
    <script>
-     document.getElementById("save").addEventListener('click', function (e) {
-       const newName = document.getElementById("name").value;
-       console.log('changing name to: ', newName);
+     window.addEventListener("DOMContentLoaded", function() {
+       // signal the parent that iframe content is loaded.
+       // https://stackoverflow.com/a/13888738/8207
+       window.parent.postMessage("frame-loaded", "*");
      });
    </script>
 </body>

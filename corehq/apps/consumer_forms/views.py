@@ -14,6 +14,7 @@ def consumer_form_reference(request, domain, link_id):
     return render(request, template_name='consumer_forms/consumer_forms_wrapper.html', context={
         'domain': domain,
         'link_url': link.get_url(),
+        'link_data': link.get_data(),
     })
 
 @xframe_options_sameorigin
