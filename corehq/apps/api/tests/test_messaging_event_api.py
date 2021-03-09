@@ -4,7 +4,6 @@ from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import (
     MessagingEventResource
 )
-from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.tests.data_generator import create_fake_sms
 
 
@@ -38,7 +37,7 @@ class TestMessagingEventResource(APIResourceTest):
             "source": "OTH",
             "source_id": None,
             "status": "CMP"
-          }
+        }
 
     def test_get_list_simple(self):
         self._create_sms_messages(2, randomize=False)
