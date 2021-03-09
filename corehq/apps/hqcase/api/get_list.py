@@ -63,6 +63,7 @@ FILTERS.update(chain(*[
     _to_date_filters('server_last_modified', case_es.server_modified_range),
     _to_date_filters('date_opened', case_es.opened_range),
     _to_date_filters('date_closed', case_es.closed_range),
+    _to_date_filters('indexed_on', case_search.indexed_on),
 ]))
 
 
