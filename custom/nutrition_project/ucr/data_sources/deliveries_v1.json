@@ -145,6 +145,23 @@
       },
       {
         "type": "expression",
+        "column_id": "mother_safe_and_alive",
+        "display_name": "mother_safe_and_alive",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "delivery_details",
+              "mother_safe_and_alive"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
         "column_id": "female_death_type",
         "display_name": "female_death_type",
         "datatype": "string",
