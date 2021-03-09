@@ -19,6 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
+from corehq.apps.sms.models import MessagingEvent
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -1086,4 +1087,27 @@ class ODataFormResource(BaseODataResource):
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
+        ]
+
+
+class MessagingEventResource(HqBaseResource, ModelResource):
+
+    class Meta(object):
+        queryset = MessagingEvent.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'messaging-event'
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authorization = DomainAuthorization()
+        paginator_class = NoCountingPaginator
+        filtering = {
+            # this is needed for the domain filtering but any values passed in via the URL get overridden
+            "domain": ('exact',),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            "source": ('exact',),
+            "content_type": ('exact',),
+            "status": ('exact',),
+        }
+        ordering = [
+            'date',
         ]
