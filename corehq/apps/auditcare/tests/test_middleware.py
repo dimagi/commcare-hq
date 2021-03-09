@@ -33,7 +33,7 @@ class TestAuditMiddleware(SimpleTestCase):
         self.assert_audit(self.request)
 
     def test_generic_view_class_is_audited_with_audit_all_views_setting(self):
-        func = make_view("TheView")
+        func = make_view("ClassView")
         settings = Settings(AUDIT_ALL_VIEWS=True)
         with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
@@ -46,7 +46,7 @@ class TestAuditMiddleware(SimpleTestCase):
         self.assert_audit(self.request)
 
     def test_audit_modules_setting(self):
-        func = make_view("TheView", "corehq.apps.reports")
+        func = make_view("ClassView", "corehq.apps.reports")
         with configured_middleware() as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
@@ -109,8 +109,8 @@ def test_make_view_function():
 
 
 def test_make_view_class():
-    func = make_view("TheView")
-    eq(func.__class__.__name__, "TheView")
+    func = make_view("ClassView")
+    eq(func.__class__.__name__, "ClassView")
     eq(func.__module__, "corehq.apps.auditcare.views")
 
 
@@ -121,8 +121,8 @@ def test_make_admin_view_function():
 
 
 def test_make_admin_view_class():
-    func = make_view("TheView", "django.contrib.admin")
-    eq(func.__class__.__name__, "TheView")
+    func = make_view("ClassView", "django.contrib.admin")
+    eq(func.__class__.__name__, "ClassView")
     eq(func.__module__, "django.contrib.admin")
 
 
