@@ -2,35 +2,35 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from django.conf import settings as default_settings
-from django.test import TestCase
+from django.test import SimpleTestCase
 from testil import Config, eq
 
 from .. import middleware as mod
 
 
-class TestAuditMiddleware(TestCase):
+class TestAuditMiddleware(SimpleTestCase):
 
     def test_generic_view_not_audited_with_default_settings(self):
-        req, func = make_view("TheView")
+        req, func = make_view()
         with make_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_no_audit(req)
 
     def test_admin_view_is_audited_with_default_settings(self):
-        req, func = make_view("TheView", "django.contrib.admin")
+        req, func = make_view(module="django.contrib.admin")
         with make_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_generic_view_is_audited_with_audit_all_views_setting(self):
-        req, func = make_view("TheView")
+        req, func = make_view()
         settings = Settings(AUDIT_ALL_VIEWS=True)
         with make_middleware(settings) as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_generic_view_class_is_audited_with_audit_all_views_setting(self):
-        req, func = make_view("TheView", is_class=True)
+        req, func = make_view("TheView")
         settings = Settings(AUDIT_ALL_VIEWS=True)
         with make_middleware(settings) as ware:
             ware.process_view(req, func, ARGS, KWARGS)
@@ -69,14 +69,14 @@ class TestAuditMiddleware(TestCase):
 
 
 def test_make_view_function():
-    req, func = make_view("the_view")
+    req, func = make_view()
     eq(req.user, "username")
     eq(func.__name__, "the_view")
     eq(func.__module__, "corehq.apps.auditcare.views")
 
 
 def test_make_view_class():
-    req, func = make_view("TheView", is_class=True)
+    req, func = make_view("TheView")
     eq(req.user, "username")
     eq(func.__class__.__name__, "TheView")
     eq(func.__module__, "corehq.apps.auditcare.views")
@@ -90,7 +90,7 @@ def test_make_admin_view_function():
 
 
 def test_make_admin_view_class():
-    req, func = make_view("TheView", "django.contrib.admin", is_class=True)
+    req, func = make_view("TheView", "django.contrib.admin")
     eq(req.user, "username")
     eq(func.__class__.__name__, "TheView")
     eq(func.__module__, "django.contrib.admin")
@@ -112,7 +112,8 @@ def make_middleware(settings=Settings):
         yield mod.AuditMiddleware(None)
 
 
-def make_view(name, module="corehq.apps.auditcare.views", is_class=False):
+def make_view(name="the_view", module="corehq.apps.auditcare.views"):
+    is_class = name[0].isupper()
     if is_class:
         view_func = type(name, (), {})()
     else:
