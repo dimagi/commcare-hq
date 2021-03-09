@@ -12,52 +12,52 @@ class TestAuditMiddleware(SimpleTestCase):
 
     def test_generic_view_not_audited_with_default_settings(self):
         req, func = make_view()
-        with make_middleware() as ware:
+        with configured_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_no_audit(req)
 
     def test_admin_view_is_audited_with_default_settings(self):
         req, func = make_view(module="django.contrib.admin")
-        with make_middleware() as ware:
+        with configured_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_generic_view_is_audited_with_audit_all_views_setting(self):
         req, func = make_view()
         settings = Settings(AUDIT_ALL_VIEWS=True)
-        with make_middleware(settings) as ware:
+        with configured_middleware(settings) as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_generic_view_class_is_audited_with_audit_all_views_setting(self):
         req, func = make_view("TheView")
         settings = Settings(AUDIT_ALL_VIEWS=True)
-        with make_middleware(settings) as ware:
+        with configured_middleware(settings) as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_audit_views_setting(self):
         req, func = make_view("ChangeMyPasswordView", "corehq.apps.settings.views")
-        with make_middleware() as ware:
+        with configured_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_audit_modules_setting(self):
         req, func = make_view("TheView", "corehq.apps.reports")
-        with make_middleware() as ware:
+        with configured_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_audit(req)
 
     def test_debug_media_view_not_audited(self):
         req, func = make_view("debug_media", "debug_toolbar.views")
-        with make_middleware() as ware:
+        with configured_middleware() as ware:
             ware.process_view(req, func, ARGS, KWARGS)
         self.assert_no_audit(req)
 
     def test_staticfiles_not_audited(self):
         from django.contrib.staticfiles.views import serve
         req = Config(user="username")
-        with make_middleware() as ware:
+        with configured_middleware() as ware:
             ware.process_view(req, serve, ARGS, KWARGS)
         self.assert_no_audit(req)
 
@@ -107,7 +107,7 @@ Settings = Config(
 
 
 @contextmanager
-def make_middleware(settings=Settings):
+def configured_middleware(settings=Settings):
     with patch.object(mod.NavigationEventAudit, "audit_view", fake_audit), \
             patch.object(mod, "settings", settings):
         yield mod.AuditMiddleware(None)
