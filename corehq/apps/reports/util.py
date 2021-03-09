@@ -217,13 +217,7 @@ def _report_user_dict(user):
                         else username)
         first = user.get('first_name', '')
         last = user.get('last_name', '')
-        full_name = ("%s %s" % (first, last)).strip()
-
-        def parts():
-            yield '%s' % html.escape(raw_username)
-            if full_name:
-                yield ' "%s"' % html.escape(full_name)
-        username_in_report = safestring.mark_safe(''.join(parts()))
+        username_in_report = _get_username_html_fragment(raw_username, first, last)
         info = SimplifiedUserInfo(
             user_id=user.get('_id', ''),
             username_in_report=username_in_report,
@@ -235,6 +229,16 @@ def _report_user_dict(user):
             group_ids = user['__group_ids']
             info.__group_ids = group_ids if isinstance(group_ids, list) else [group_ids]
         return info
+
+
+def _get_username_html_fragment(username, first='', last=''):
+    full_name = ("%s %s" % (first, last)).strip()
+
+    def parts():
+        yield '%s' % html.escape(username)
+        if full_name:
+            yield ' "%s"' % html.escape(full_name)
+    return safestring.mark_safe(''.join(parts()))
 
 
 def get_simplified_users(user_es_query):
