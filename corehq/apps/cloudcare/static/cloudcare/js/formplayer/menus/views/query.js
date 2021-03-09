@@ -249,6 +249,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 $(this).trigger('change.select2');
             });
             self.setStickyQueryInputs();
+            // clear geocoder input if any
+            $('.mapboxgl-ctrl-geocoder--button').click()
         },
 
         submitAction: function (e) {
