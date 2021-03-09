@@ -77,16 +77,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
-        fhir_resource_type_by_case_type = {
-            ft.case_type: ft.name
-            for ft in fhir_resource_types
-        }
-        fhir_resource_prop_by_case_prop = {
-            fr.case_property: fr.jsonpath
-            for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
-                resource_type__in=fhir_resource_types)
-        }
+        fhir_resource_type_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
     for case_type in queryset:
@@ -106,6 +97,20 @@ def data_dictionary_json(request, domain, case_type_name=None):
             })
         props.append(p)
     return JsonResponse({'case_types': props})
+
+
+def _load_fhir_resource_mappings(domain):
+    fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
+    fhir_resource_type_by_case_type = {
+        ft.case_type: ft.name
+        for ft in fhir_resource_types
+    }
+    fhir_resource_prop_by_case_prop = {
+        fr.case_property: fr.jsonpath
+        for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
+            resource_type__in=fhir_resource_types)
+    }
+    return fhir_resource_type_by_case_type, fhir_resource_prop_by_case_prop
 
 
 # atomic decorator is a performance optimization for looped saves
