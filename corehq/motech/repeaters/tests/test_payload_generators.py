@@ -7,6 +7,7 @@ TL;DR? Skip to TestCouchDataTypes.test_form_json_decimal.
 
 """
 import json
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Tuple
 from uuid import uuid4
@@ -44,16 +45,19 @@ class DataTypesBase:
     def set_up_form(cls):
         cls.form_id = uuid4().hex
         user_id = uuid4().hex
-        case_update = {
+        cls.case_update = {
             'year': '1970',
             'breakfast': 'spam egg spam spam bacon spam',
-            'decimal': '4.4',
+            'price': '2.40',
+            'album_release': '1972-09-08',
+            'breakfast_oclock': '09:00:00',
+            'breakfast_exactly': '1972-09-08T09:00:00.000Z',
         }
         builder = FormSubmissionBuilder(
             form_id=cls.form_id,
             form_properties={
                 'name': 'spam',
-                **case_update,
+                **cls.case_update,
             },
             case_blocks=[CaseBlock(
                 case_id=uuid4().hex,
@@ -61,7 +65,7 @@ class DataTypesBase:
                 case_type='sketch',
                 case_name='spam',
                 owner_id=user_id,
-                update=case_update
+                update=cls.case_update
             )],
             metadata=TestFormMetadata(
                 domain=cls.domain,
@@ -82,7 +86,7 @@ class DataTypesBase:
         self.assertIsInstance(form_dict['form']['year'], str)
         self.assertIsInstance(info.form_question_values['/data/year'], str)
         self.assertIsInstance(info.updates['year'], str)
-        self.assertIsInstance(info.extra_fields['year'], str)  # <--
+        self.assertIsInstance(info.extra_fields['year'], str)
 
     def test_form_dict_integer(self):
         """
@@ -95,7 +99,7 @@ class DataTypesBase:
         self.assertIsInstance(form_dict['form']['year'], str)
         self.assertIsInstance(info.form_question_values['/data/year'], str)
         self.assertIsInstance(info.updates['year'], str)
-        self.assertIsInstance(info.extra_fields['year'], str)  # <--
+        self.assertIsInstance(info.extra_fields['year'], str)
 
     def test_form_json_multiplechoice(self):
         gen = FormRepeaterJsonPayloadGenerator(None)
@@ -127,7 +131,7 @@ class DataTypesBase:
             self.domain,
             payload,
             case_types=None,
-            extra_fields=['year', 'breakfast', 'decimal'],
+            extra_fields=list(self.case_update.keys()),
             form_question_values=get_form_question_values(payload),
         )
         return payload, info
@@ -152,27 +156,49 @@ class TestCouchDataTypes(TestCase, DataTypesBase):
         When a decimal is taken from form JSON or a case block, it is a
         ``str``. When it is taken from a case property, it is a ``Decimal``.
 
-        This only happens when using a Couch backend.
+        This only happens when using a Couch backend. Strings are
+        converted by `jsonobject`_.
+
+        .. _jsonobject: https://github.com/dimagi/commcare-hq/blob/9634efa3905/corehq/ex-submodules/dimagi/ext/jsonobject.py#L94-L99
+
         """
         gen = FormRepeaterJsonPayloadGenerator(None)
         form_dict, info = self.get_payload_info(gen)
 
         # Test value from form_json
-        self.assertIsInstance(form_dict['form']['decimal'], str)
-        self.assertIsInstance(info.form_question_values['/data/decimal'], str)
+        self.assertIsInstance(form_dict['form']['price'], str)
+        self.assertIsInstance(info.form_question_values['/data/price'], str)
         # Test value from case block
-        self.assertIsInstance(info.updates['decimal'], str)
+        self.assertIsInstance(info.updates['price'], str)
         # Test value from case property
-        self.assertIsInstance(info.extra_fields['decimal'], Decimal)  # <-- Did you know that?
+        self.assertIsInstance(info.extra_fields['price'], Decimal)
 
     def test_form_dict_decimal(self):
         gen = FormDictPayloadGenerator(None)
         form_dict, info = self.get_payload_info(gen)
 
-        self.assertIsInstance(form_dict['form']['decimal'], str)
-        self.assertIsInstance(info.form_question_values['/data/decimal'], str)
-        self.assertIsInstance(info.updates['decimal'], str)
-        self.assertIsInstance(info.extra_fields['decimal'], Decimal)  # <-- Same
+        self.assertIsInstance(form_dict['form']['price'], str)
+        self.assertIsInstance(info.form_question_values['/data/price'], str)
+        self.assertIsInstance(info.updates['price'], str)
+        self.assertIsInstance(info.extra_fields['price'], Decimal)
+
+    def test_form_json_date(self):
+        gen = FormRepeaterJsonPayloadGenerator(None)
+        form_dict, info = self.get_payload_info(gen)
+        self.assertIsInstance(info.updates['album_release'], str)
+        self.assertIsInstance(info.extra_fields['album_release'], date)
+
+    def test_form_json_time(self):
+        gen = FormRepeaterJsonPayloadGenerator(None)
+        form_dict, info = self.get_payload_info(gen)
+        self.assertIsInstance(info.updates['breakfast_oclock'], str)
+        self.assertIsInstance(info.extra_fields['breakfast_oclock'], time)
+
+    def test_form_json_datetime(self):
+        gen = FormRepeaterJsonPayloadGenerator(None)
+        form_dict, info = self.get_payload_info(gen)
+        self.assertIsInstance(info.updates['breakfast_exactly'], str)
+        self.assertIsInstance(info.extra_fields['breakfast_exactly'], datetime)
 
 
 class TestSqlDataTypes(TestCase, DataTypesBase):
@@ -202,16 +228,16 @@ class TestSqlDataTypes(TestCase, DataTypesBase):
         form_dict, info = self.get_payload_info(gen)
 
         # Test value from case block
-        self.assertIsInstance(info.updates['decimal'], str)
+        self.assertIsInstance(info.updates['price'], str)
         # Test value from case property
-        self.assertIsInstance(info.extra_fields['decimal'], str)  # <-- not Decimal
+        self.assertIsInstance(info.extra_fields['price'], str)
 
     def test_form_dict_decimal(self):
         gen = FormDictPayloadGenerator(None)
         form_dict, info = self.get_payload_info(gen)
 
-        self.assertIsInstance(info.updates['decimal'], str)
-        self.assertIsInstance(info.extra_fields['decimal'], str)  # <--
+        self.assertIsInstance(info.updates['price'], str)
+        self.assertIsInstance(info.extra_fields['price'], str)
 
 
 def create_couch_domain(name):
