@@ -103,8 +103,6 @@ class TestAuditMiddleware(SimpleTestCase):
         with configured_middleware(settings, get_response) as ware:
             ware(self.request)
         audit_doc = self.request.audit_doc
-        self.assertEqual(audit_doc.status_code, 200)
-        self.assertEqual(audit_doc.user, "username")
         self.assertEqual(audit_doc.save_count, 1)
 
     def test_should_save_audit_doc_on_error(self):
@@ -171,12 +169,12 @@ Settings = Config(
 )
 
 
+def default_get_response(request):
+    return Config(status_code=200)
+
+
 @contextmanager
-def configured_middleware(settings=Settings, get_response=None):
-    response = Config(status_code=200)
-    if get_response is None:
-        def get_response(request):
-            return response
+def configured_middleware(settings=Settings, get_response=default_get_response):
     with patch.object(mod.NavigationEventAudit, "audit_view", fake_audit), \
             patch.object(mod, "settings", settings):
         yield mod.AuditMiddleware(get_response)

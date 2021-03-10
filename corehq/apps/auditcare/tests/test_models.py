@@ -1,4 +1,4 @@
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, SimpleTestCase
 from testil import Config
 
 from corehq.apps.auditcare.models import NavigationEventAudit
@@ -6,7 +6,7 @@ from corehq.apps.auditcare.models import NavigationEventAudit
 from .test_middleware import make_view
 
 
-class TestNavigationEventAudit(TestCase):
+class TestNavigationEventAudit(SimpleTestCase):
 
     def setUp(self):
         self.request = RequestFactory().get("/path", {"key": "value"})
@@ -15,6 +15,4 @@ class TestNavigationEventAudit(TestCase):
     def test_audit_view_should_not_save(self):
         view = make_view()
         event = NavigationEventAudit.audit_view(self.request, "username", view, {})
-        if event._id is not None:
-            self.addCleanup(event.delete)
         self.assertIsNone(event._id)
