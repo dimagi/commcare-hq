@@ -141,7 +141,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             }
         )
 
-    def test_remove_object_raises_error_if_no_email_domain_exists(self):
+    def test_remove_object_fails_if_no_email_domain_exists(self):
         """
         Ensure that the remove_object() raises an error when trying to remove
         an email domain which does not have an AuthenticatedEmailDomain
