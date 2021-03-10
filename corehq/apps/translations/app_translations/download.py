@@ -2,7 +2,6 @@ import re
 from collections import OrderedDict
 
 from django.utils.encoding import force_text
-from django.utils.safestring import mark_safe
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
@@ -352,7 +351,7 @@ def get_form_question_label_name_media(langs, form):
                         part = part.replace('&', '&amp;')
                         part = part.replace('<', '&lt;')
                         part = part.replace('>', '&gt;')
-                        value += mark_safe(part)
+                        value += part
                 itext_items[text_id][(lang, value_form)] = value
 
     app = form.get_app()
