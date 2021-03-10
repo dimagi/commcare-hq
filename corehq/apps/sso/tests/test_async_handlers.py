@@ -75,6 +75,10 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
         super().tearDown()
 
     def test_get_linked_objects(self):
+        """
+        Ensure that get_linked_objects() returns all AuthenticatedEmailDomains
+        associated with a given IdentityProvider.
+        """
         AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com'
@@ -94,6 +98,11 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_add_object_raises_error_if_conflict_with_idp(self):
+        """
+        Ensure that add_object() raises an error if the email domain specified
+        in objectName already has an AuthenticatedEmailDomain relationship
+        with the IdentityProvider.
+        """
         AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com'
@@ -104,6 +113,10 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             handler.add_object()
 
     def test_add_object_raises_error_if_conflict_with_another_idp(self):
+        """
+        Ensure that add_object() raises an error if the email domain
+        in objectName is already associated with another IdentityProvider.
+        """
         AuthenticatedEmailDomain.objects.create(
             identity_provider=self.other_idp,
             email_domain='vwx.link'
@@ -114,6 +127,11 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             handler.add_object()
 
     def test_add_object_response(self):
+        """
+        Ensure that add_object_response correctly creates an
+        AuthenticatedEmailDomain relationship for the email domain in objectName
+        and returns a response that is formatted as expected.
+        """
         self.request.POST = self._get_post_data('vaultwax.com')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         self.assertEqual(
@@ -124,12 +142,22 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_remove_object_raises_error_if_no_email_domain_exists(self):
+        """
+        Ensure that the remove_object() raises an error when trying to remove
+        an email domain which does not have an AuthenticatedEmailDomain
+        relationship with any IdentityProvider.
+        """
         self.request.POST = self._get_post_data('vaultwax.com')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
 
     def test_remove_object_removes_email_domain(self):
+        """
+        Ensure that the remove_object_response successfully removes the
+        AuthenticatedEmailDomain relationship with the IdentityProvider and
+        returns a response formatted as expected.
+        """
         AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com',
@@ -183,6 +211,10 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         super().tearDown()
 
     def test_get_linked_objects(self):
+        """
+        Ensure that all SSO exempt users for a given Identity Provider
+        are returned in get_linked_objects().
+        """
         UserExemptFromSingleSignOn.objects.create(
             email_domain=self.email_domain,
             username='b@vaultwax.com'
@@ -207,12 +239,19 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_missing_email_domain_in_username_raises_error(self):
+        """
+        Ensure that a badly formatted email passed to objectName raises
+        an error.
+        """
         self.request.POST = self._get_post_data('bademail')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.email_domain
 
     def test_add_object_raises_errors_if_username_exists(self):
+        """
+        Ensure that add_object() prevents adding duplicate entries.
+        """
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
             email_domain=self.email_domain
@@ -223,18 +262,30 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             handler.add_object()
 
     def test_add_object_raises_errors_if_email_domain_is_linked_to_different_idp(self):
+        """
+        Ensure that add_object() prevents adding users whose email domains
+        are associated with a different IdentityProvider
+        """
         self.request.POST = self._get_post_data('b@vwx.link')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
 
     def test_add_object_raises_errors_if_email_domain_does_not_exist(self):
+        """
+        Ensure that add_object() prevents adding users whose email domains
+        are not associated with any IdentityProvider.
+        """
         self.request.POST = self._get_post_data('b@dimagi.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
 
     def test_add_object_response(self):
+        """
+        Ensure that add_object_response correctly adds the SSO exempt user
+        and returns an expected result.
+        """
         self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         self.assertEqual(
@@ -245,12 +296,21 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_remove_object_raises_error_if_username_does_not_exist(self):
+        """
+        Ensure that remove_object() raises an error if objectName includes a
+        user that does not have a UserExemptFromSingleSignOn relationship.
+        """
         self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
 
     def test_remove_object_raises_error_if_username_is_not_linked_to_idp(self):
+        """
+        Ensure that remove_object() raises an error if objectName includes a
+        user that belongs to another IdentityProvider that is not the current
+        IdentityProvider.
+        """
         UserExemptFromSingleSignOn.objects.create(
             username='b@vwx.link',
             email_domain=self.other_email_domain
@@ -261,6 +321,11 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             handler.remove_object()
 
     def test_remove_object_raises_error_if_idp_is_editable_and_only_one_username(self):
+        """
+        Ensure that remove_object() raises an error if the IdentityProvider is
+        editable and there is only one UserExemptFromSingleSignOn relationship
+        left for that IdentityProvider.
+        """
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
             email_domain=self.email_domain
@@ -273,6 +338,10 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             handler.remove_object()
 
     def test_remove_object_response(self):
+        """
+        Ensure that remove_object_response correctly removes the user specified
+        in objectName and returns a response that is formatted as expected.
+        """
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
             email_domain=self.email_domain
