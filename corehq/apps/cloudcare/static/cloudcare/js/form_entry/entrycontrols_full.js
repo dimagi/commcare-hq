@@ -245,41 +245,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             self.rawAnswer(item.place_name);
             self.editing = false;
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                var broadcastObj = {
-                    full: item.place_name,
-                };
-                item.context.forEach(function (contextValue) {
-                    try {
-                        if (contextValue.id.startsWith('postcode')) {
-                            broadcastObj.zipcode = contextValue.text;
-                        } else if (contextValue.id.startsWith('place')) {
-                            broadcastObj.city = contextValue.text;
-                        } else if (contextValue.id.startsWith('country')) {
-                            broadcastObj.country = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.country_short = contextValue.short_code;
-                            }
-                        } else if (contextValue.id.startsWith('region')) {
-                            broadcastObj.region = contextValue.text;
-                            // TODO: Deprecate state_short and state_long.
-                            broadcastObj.state_long = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.state_short = contextValue.short_code.replace('US-', '');
-                            }
-                            // If US region, it's actually a state so add us_state.
-                            if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
-                                broadcastObj.us_state = contextValue.text;
-                                broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
-                            }
-                        }
-                    } catch (err) {
-                        // Swallow error, broadcast best effort. Consider logging.
-                    }
-                });
-                // street composed of (optional) number and street name.
-                broadcastObj.street = item.address || '';
-                broadcastObj.street += ' ' + item.text;
-
+                var broadcastObj = Utils.getBroadcastObject(item);
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
             // The default full address returned to the search bar
@@ -306,22 +272,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 });
             }
 
-            var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
-            var geocoder = new MapboxGeocoder({
-                accessToken: initialPageData.get("mapbox_access_token"),
-                types: 'address',
-                enableEventLogging: false,
-                getItemValue: self.geocoderItemCallback,
-            });
-            if (defaultGeocoderLocation.coordinates) {
-                geocoder.setProximity(defaultGeocoderLocation.coordinates);
-            }
-            geocoder.on('clear', self.geocoderOnClearCallback);
-            geocoder.addTo('#' + self.entryId);
-            // Must add the form-control class to the input created by mapbox in order to edit.
-            var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
-            inputEl.addClass('form-control');
-            inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+            Utils.renderMapboxInput(
+                self.entryId,
+                self.geocoderItemCallback,
+                self.geocoderOnClearCallback,
+                initialPageData
+            );
         };
 
         self._inputOnKeyDown = function (event) {
