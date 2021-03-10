@@ -35,6 +35,8 @@ from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 
 
+FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
+
 data_dictionary_rebuild_rate_limiter = RateLimiter(
     feature_key='data_dictionary_rebuilds_per_user',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
@@ -71,28 +73,20 @@ def generate_data_dictionary(request, domain):
 @toggles.DATA_DICTIONARY.required_decorator()
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
-    fhir_resource_type_by_case_type = {}
+    fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
-        fhir_resource_type_by_case_type = {
-            ft.case_type: ft.name
-            for ft in fhir_resource_types
-        }
-        fhir_resource_prop_by_case_prop = {
-            fr.case_property: fr.jsonpath
-            for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
-                resource_type__in=fhir_resource_types)
-        }
+        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(
+            domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
     for case_type in queryset:
         p = {
             "name": case_type.name,
-            "fhir_resource_type": fhir_resource_type_by_case_type.get(case_type),
+            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "properties": [],
         }
         for prop in case_type.properties.all():
@@ -106,6 +100,20 @@ def data_dictionary_json(request, domain, case_type_name=None):
             })
         props.append(p)
     return JsonResponse({'case_types': props})
+
+
+def _load_fhir_resource_mappings(domain):
+    fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
+    fhir_resource_type_name_by_case_type = {
+        ft.case_type: ft.name
+        for ft in fhir_resource_types
+    }
+    fhir_resource_prop_by_case_prop = {
+        fr.case_property: fr.jsonpath
+        for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
+            resource_type__in=fhir_resource_types)
+    }
+    return fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop
 
 
 # atomic decorator is a performance optimization for looped saves
@@ -164,27 +172,60 @@ def update_case_property_description(request, domain):
 
 
 def _export_data_dictionary(domain):
+    def generate_prop_dict(case_prop, fhir_resource_prop):
+        prop_dict = {
+            _('Case Property'): case_prop.name,
+            _('Group'): case_prop.group,
+            _('Data Type'): case_prop.data_type,
+            _('Description'): case_prop.description,
+            _('Deprecated'): case_prop.deprecated
+        }
+        if export_fhir_data:
+            prop_dict[_('FHIR Resource Property')] = fhir_resource_prop
+        return prop_dict
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
-    export_data = {}
+    case_type_data = {}
+    case_prop_data = {}
+    fhir_resource_prop_by_case_prop = {}
+    export_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
+    case_type_headers = [_('Case Type'), _('FHIR Resource Type')]
+    case_prop_headers = [_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated')]
+
+    if export_fhir_data:
+        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(
+            domain
+        )
+        case_type_data[FHIR_RESOURCE_TYPE_MAPPING_SHEET] = [{
+            _('Case Type'): case_type.name,
+            _('FHIR Resource Type'): fhir_resource_type
+        } for case_type, fhir_resource_type in fhir_resource_type_name_by_case_type.items()]
+
     for case_type in queryset:
-        export_data[case_type.name or _("No Name")] = [{
-            _('Case Property'): prop.name,
-            _('Group'): prop.group,
-            _('Data Type'): prop.data_type,
-            _('Description'): prop.description,
-            _('Deprecated'): prop.deprecated
-        } for prop in case_type.properties.all()]
-    headers = (_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated'))
+        case_prop_data[case_type.name or _("No Name")] = [
+            generate_prop_dict(prop, fhir_resource_prop_by_case_prop.get(prop))
+            for prop in case_type.properties.all()
+        ]
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
-    header_table = [(tab_name, [headers]) for tab_name in export_data]
+    header_table = []
+    if export_fhir_data:
+        header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
+        case_prop_headers.append(_('FHIR Resource Property'))
+    for tab_name in case_prop_data:
+        header_table.append((tab_name, [case_prop_headers]))
     writer.open(header_table=header_table, file=outfile)
-    for tab_name, tab in export_data.items():
+    if export_fhir_data:
+        rows = [
+            [row.get(header, '') for header in case_type_headers]
+            for row in case_type_data[FHIR_RESOURCE_TYPE_MAPPING_SHEET]
+        ]
+        writer.write([(FHIR_RESOURCE_TYPE_MAPPING_SHEET, rows)])
+    for tab_name, tab in case_prop_data.items():
         tab_rows = []
         for row in tab:
-            tab_rows.append([row.get(header, '') for header in headers])
+            tab_rows.append([row.get(header, '') for header in case_prop_headers])
         writer.write([(tab_name, tab_rows)])
     writer.close()
     return outfile
