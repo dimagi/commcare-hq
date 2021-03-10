@@ -54,6 +54,7 @@ class Command(CaseUpdateCommand):
             case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[location_id])
 
         case_blocks = []
+        errors = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
             if case.get_case_property('current_status') == 'closed':
@@ -61,6 +62,9 @@ class Command(CaseUpdateCommand):
             elif needs_update(case):
                 new_owner_id = find_owner_id(case, accessor)
                 if new_owner_id is None:
+                    invalid_id = case.get_case_property('assigned_to_primary_checkin_case_id')
+                    errors.append("CaseNotFound: case:{} no matching case for this case's "
+                                  "assigned_to_primary_checkin_case_id:{}".format(case.case_id, invalid_id))
                     skip_count += 1
                 else:
                     if case.get_case_property('is_assigned_primary') == 'yes':
@@ -75,6 +79,8 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+        self.log_data(domain, "add_assignment_cases", case_type, len(case_ids), total, errors, loc_id=location_id)
 
     def add_arguments(self, parser):
         super().add_arguments(parser)

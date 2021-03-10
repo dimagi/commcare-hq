@@ -675,10 +675,10 @@ def delete_domain_permission_mirror(request, domain, mirror):
 @require_superuser
 @require_POST
 def create_domain_permission_mirror(request, domain):
-    form = CreateDomainPermissionsMirrorForm(request.POST)
+    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
     if form.is_valid():
         mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        mirror_domain = Domain.get_by_name(form.cleaned_data.get("mirror_domain"))
+        mirror_domain = Domain.get_by_name(mirror_domain_name)
         if mirror_domain is not None:
             mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
             mirror.save()
@@ -688,8 +688,8 @@ def create_domain_permission_mirror(request, domain):
             message = _('Please enter a valid project space.')
             messages.error(request, message.format())
     else:
-        message = _('An error occurred while trying to add the project space.')
-        messages.error(request, message.format())
+        for field, message in form.errors.items():
+            messages.error(request, message)
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 

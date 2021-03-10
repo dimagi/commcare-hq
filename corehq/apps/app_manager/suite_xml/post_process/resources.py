@@ -90,7 +90,7 @@ class ResourceOverrideHelper(PostProcessor):
         """
         Applies manual overrides of resource ids.
         """
-        overrides_by_pre_id = get_xform_resource_overrides(self.app.domain, self.app.master_id)
+        overrides_by_pre_id = get_xform_resource_overrides(self.app.domain, self.app.origin_id)
         resources = getattr(self.suite, FormResourceContributor.section_name)
         for resource in resources:
             if resource.id in overrides_by_pre_id:

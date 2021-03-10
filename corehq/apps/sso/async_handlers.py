@@ -11,6 +11,7 @@ from corehq.apps.sso.models import (
     IdentityProvider,
     UserExemptFromSingleSignOn,
 )
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 
 
 class Select2IdentityProviderHandler(BaseSelect2AsyncHandler):
@@ -173,7 +174,7 @@ class SSOExemptUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
     @property
     @memoized
     def email_domain(self):
-        try:
-            return self.username.split('@')[1]
-        except IndexError:
+        email_domain = get_email_domain_from_username(self.username)
+        if not email_domain:
             raise AsyncHandlerError("Please enter in a valid email.")
+        return email_domain

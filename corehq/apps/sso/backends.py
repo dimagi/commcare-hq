@@ -2,6 +2,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 
 
 class SsoBackend(ModelBackend):
@@ -24,9 +25,8 @@ class SsoBackend(ModelBackend):
             request.sso_login_error = f"This Identity Provider {idp_slug} is not active."
             return None
 
-        try:
-            email_domain = username.split('@', 1)[1]
-        except IndexError:
+        email_domain = get_email_domain_from_username(username)
+        if not email_domain:
             # not a valid username
             request.sso_login_error = f"Username {username} is not valid."
             return None

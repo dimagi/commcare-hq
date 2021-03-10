@@ -93,6 +93,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             response.appId = urlObject.appId;
 
+             if (response.notification) {
+                FormplayerFrontend.getChannel().request("handleNotification", response.notification);
+             }
+
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
             menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
@@ -220,6 +224,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         var options = {
             'appId': urlObject.appId,
             'steps': urlObject.steps,
+            'queryData': urlObject.queryData,
         };
         hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
     });
