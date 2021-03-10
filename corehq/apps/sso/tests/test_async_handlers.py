@@ -48,6 +48,17 @@ class BaseAsyncHandlerTest(TestCase):
         cls.account.delete()
         super().tearDownClass()
 
+    def _get_post_data(self, object_name=None):
+        """
+        The data that will populate request.POST in all the tests below.
+        :param object_name: the parameter that will be in POST.objectName
+        :return: dict for request.POST
+        """
+        return {
+            'requestContext[idpSlug]': self.idp_one.slug,
+            'objectName': object_name,
+        }
+
 
 class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
@@ -69,9 +80,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             identity_provider=self.idp_one,
             email_domain='vaultwax.nl'
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-        }
+        self.request.POST = self._get_post_data()
         handler = IdentityProviderAdminAsyncHandler(self.request)
         self.assertEqual(
             handler.get_linked_objects(),
@@ -86,10 +95,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             identity_provider=self.idp_one,
             email_domain='vaultwax.com'
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('vaultwax.com')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
@@ -99,19 +105,13 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             identity_provider=self.idp_two,
             email_domain='vwx.link'
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'vwx.link',
-        }
+        self.request.POST = self._get_post_data('vwx.link')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
 
     def test_add_object_response(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('vaultwax.com')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         self.assertEqual(
             handler.add_object_response,
@@ -121,10 +121,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_remove_object_raises_error_if_no_email_domain_exists(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('vaultwax.com')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
@@ -134,10 +131,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             identity_provider=self.idp_one,
             email_domain='vaultwax.com',
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('vaultwax.com')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         self.assertEqual(
             handler.get_linked_objects(),
@@ -190,9 +184,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             email_domain=self.email_domain,
             username='c@vaultwax.com'
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-        }
+        self.request.POST = self._get_post_data()
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         self.assertEqual(
             handler.get_linked_objects(),
@@ -203,10 +195,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_missing_email_domain_in_username_raises_error(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'bademail',
-        }
+        self.request.POST = self._get_post_data('bademail')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.email_domain
@@ -216,37 +205,25 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             username='b@vaultwax.com',
             email_domain=self.email_domain
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
 
     def test_add_object_raises_errors_if_email_domain_is_linked_to_different_idp(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vwx.link',
-        }
+        self.request.POST = self._get_post_data('b@vwx.link')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
 
     def test_add_object_raises_errors_if_email_domain_does_not_exist(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@dimagi.com',
-        }
+        self.request.POST = self._get_post_data('b@dimagi.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.add_object()
 
     def test_add_object_response(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         self.assertEqual(
             handler.add_object_response,
@@ -256,10 +233,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         )
 
     def test_remove_object_raises_error_if_username_does_not_exist(self):
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
@@ -269,10 +243,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             username='b@vwx.link',
             email_domain=self.email_domain_two
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vwx.link',
-        }
+        self.request.POST = self._get_post_data('b@vwx.link')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
@@ -284,10 +255,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         )
         self.idp_one.is_editable = True
         self.idp_one.save()
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
@@ -297,10 +265,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             username='b@vaultwax.com',
             email_domain=self.email_domain
         )
-        self.request.POST = {
-            'requestContext[idpSlug]': self.idp_one.slug,
-            'objectName': 'b@vaultwax.com',
-        }
+        self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         self.assertEqual(
             handler.get_linked_objects(),
