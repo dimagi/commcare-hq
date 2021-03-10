@@ -57,11 +57,7 @@ def get_export(export_type, domain, export_id=None, username=None):
 def get_default_export_settings_for_user(username, domain):
     """
     Only creates settings if the the subscription level supports it
-    Currently only available to Enterprise accounts with the DEFAULT_EXPORT_SETTINGS FF enabled
     """
-    if not toggles.DEFAULT_EXPORT_SETTINGS.enabled(username):
-        return None
-
     settings = None
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     # currently only available for enterprise customers
