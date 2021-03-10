@@ -26,7 +26,7 @@ class CaseType(models.Model):
         unique_together = ('domain', 'name')
 
     def __str__(self):
-        return self.name or repr(self)
+        return self.name or super().__str__()
 
     @classmethod
     def get_or_create(cls, domain, case_type):
