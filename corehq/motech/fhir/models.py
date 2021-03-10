@@ -247,8 +247,9 @@ def get_case_trigger_info(
     case_update = case_block.get('update') or {}
     case_property_names = _get_case_property_names(resource_type)
     extra_fields = {
-        p: str(case.get_case_property(p))  # Cast as `str` because
-        # CouchDB can return `Decimal` case properties.
+        # CouchDB (via jsonobject) casts case properties as `Decimal`,
+        # `date`, `time` and `datetime` but SQL stores them as `str`.
+        p: _str_or_none(case.get_case_property(p))  # Standardize.
         for p in case_property_names
     }
     return CaseTriggerInfo(
@@ -278,6 +279,10 @@ def _get_case_property_names(resource_type):
         if hasattr(value_source, 'case_property'):
             case_property_names.append(value_source.case_property)
     return case_property_names
+
+
+def _str_or_none(value):
+    return None if value is None else str(value)
 
 
 def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
