@@ -157,6 +157,10 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             identity_provider=cls.idp,
             email_domain='vaultwax.com',
         )
+        cls.email_domain_secondary = AuthenticatedEmailDomain.objects.create(
+            identity_provider=cls.idp,
+            email_domain='vaultwax.nl',
+        )
         cls.other_email_domain = AuthenticatedEmailDomain.objects.create(
             identity_provider=cls.other_idp,
             email_domain='vwx.link',
@@ -187,6 +191,10 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             email_domain=self.email_domain,
             username='c@vaultwax.com'
         )
+        UserExemptFromSingleSignOn.objects.create(
+            email_domain=self.email_domain_secondary,
+            username='d@vaultwax.nl'
+        )
         self.request.POST = self._get_post_data()
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         self.assertEqual(
@@ -194,6 +202,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             [
                 'b@vaultwax.com',
                 'c@vaultwax.com',
+                'd@vaultwax.nl',
             ]
         )
 
