@@ -26,11 +26,10 @@ class BaseSSOFormTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.account = generator.get_billing_account_for_idp()
-        cls.domain = Domain(
-            name="vaultwax-001",
+        cls.domain = Domain.get_or_create_with_name(
+            "vaultwax-001",
             is_active=True
         )
-        cls.domain.save()
         cls.accounting_admin = WebUser.create(
             cls.domain.name, 'jadmin@dimagi.com', 'testpwd', None, None
         )
