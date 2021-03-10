@@ -20,11 +20,10 @@ class BaseAsyncHandlerTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.account = generator.get_billing_account_for_idp()
-        cls.domain = Domain(
-            name="vaultwax-001",
+        cls.domain = Domain.get_or_create_with_name(
+            "vaultwax-001",
             is_active=True
         )
-        cls.domain.save()
         cls.idp_one = IdentityProvider.objects.create(
             owner=cls.account,
             name='Azure AD for Vault Wax',
