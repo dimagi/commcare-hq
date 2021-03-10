@@ -223,7 +223,6 @@ class GetInfoForColumnsTests(TestCase):
         )
 
     def tearDown(self):
-        get_info_for_columns.clear(self.sqldataset_map)
         self.sqldataset_map.delete()
         self.dataset_map.delete()
         self.connection_settings.delete()

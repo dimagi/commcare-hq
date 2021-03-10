@@ -99,6 +99,10 @@ class DataSetMap(Document):
         if self.connection_settings_id:
             return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
+    @property
+    def pk(self):
+        return self._id
+
 
 class SQLDataSetMap(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
@@ -156,7 +160,7 @@ class SQLDataValueMap(models.Model):
         return self.column
 
 
-@quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
+@quickcache(['dataset_map.domain', 'dataset_map.pk'])
 def get_info_for_columns(
     dataset_map: Union[DataSetMap, SQLDataSetMap],
 ) -> Dict[str, dict]:
