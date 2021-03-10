@@ -4,6 +4,7 @@ from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import (
     MessagingEventResource
 )
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.tests.data_generator import create_fake_sms
 
 
@@ -24,7 +25,7 @@ class TestMessagingEventResource(APIResourceTest):
         return {
             "additional_error_text": None,
             "app_id": None,
-            "content_type": "SMS",
+            "content_type": MessagingEvent.CONTENT_SMS,
             "date": "2016-01-01T12:00:00",
             "domain": "qwerty",
             "error_code": None,
@@ -34,9 +35,9 @@ class TestMessagingEventResource(APIResourceTest):
             "recipient_id": None,
             "recipient_type": None,
             "resource_uri": "",
-            "source": "OTH",
+            "source": MessagingEvent.SOURCE_OTHER,
             "source_id": None,
-            "status": "CMP"
+            "status": MessagingEvent.STATUS_COMPLETED,
         }
 
     def test_get_list_simple(self):
@@ -55,12 +56,8 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         ordered_data = json.loads(response.content)['objects']
         self.assertEqual(5, len(ordered_data))
-        previous_date = None
-        for result in ordered_data:
-            current_date = result['date']
-            if previous_date:
-                self.assertTrue(previous_date < current_date)
-            previous_date = current_date
+        dates = [r['date'] for r in ordered_data]
+        self.assertEqual(dates, sorted(dates))
 
         response = self._assert_auth_get_resource(f'{self.list_endpoint}?order_by=-date')
         self.assertEqual(response.status_code, 200)
