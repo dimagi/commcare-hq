@@ -115,6 +115,12 @@ class FHIRResourceProperty(models.Model):
     # do what you need.
     value_source_config = JSONField(null=True, blank=True, default=None)
 
+    def __str__(self):
+        jsonpath = self.value_source_jsonpath
+        if jsonpath.startswith('$.'):
+            jsonpath = jsonpath[2:]
+        return f'{self.resource_type.name}.{jsonpath}'
+
     def save(self, *args, **kwargs):
         if (
             self.case_property
@@ -139,15 +145,12 @@ class FHIRResourceProperty(models.Model):
         return self.resource_type.case_type
 
     @property
-    def case_property_name(self) -> Optional[str]:
-        if self.case_property:
-            return self.case_property.name
-        if (
-            self.value_source_config
-            and 'case_property' in self.value_source_config
-        ):
-            return self.value_source_config['case_property']
-        return None
+    def value_source_jsonpath(self) -> str:
+        if self.jsonpath:
+            return self.jsonpath
+        if 'jsonpath' in self.value_source_config:
+            return self.value_source_config['jsonpath']
+        return ''
 
     def get_value_source(self) -> ValueSource:
         """
