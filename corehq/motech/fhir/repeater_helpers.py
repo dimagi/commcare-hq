@@ -3,7 +3,7 @@ from typing import List, Tuple
 from django.conf import settings
 from django.contrib.sites.models import Site
 
-from requests import Response
+from requests import HTTPError, Response
 
 from casexml.apps.case.mock import CaseBlock
 
@@ -35,9 +35,15 @@ def register_patients(
             json=resource,
             raise_for_status=True,
         )
-        _set_external_id(info, response.json()['id'], repeater_id)
-        # Don't append `resource` to `info_resource_list_to_send`
-        # because the remote service has all its data now.
+        try:
+            _set_external_id(info, response.json()['id'], repeater_id)
+            # Don't append `resource` to `info_resource_list_to_send`
+            # because the remote service has all its data now.
+        except (ValueError, KeyError) as err:
+            # The remote service returned a 2xx response, but did not
+            # return JSON, or the JSON does not include an ID.
+            msg = 'Unable to parse response from remote FHIR service'
+            raise HTTPError(msg, response=response) from err
     return info_resource_list_to_send
 
 
