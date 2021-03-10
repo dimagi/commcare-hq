@@ -1,17 +1,15 @@
-{% extends "base_page.html" %}
+{% extends "consumer_user_base.html" %}
 {% load i18n two_factor %}
-{% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
+{% load static %}
 
-{% requirejs_main 'registration/js/login' %}
-
-{% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
+{% block title %}{% trans "Log In" %}{% endblock title %}
 
 {% block background_content %}
 <div class="bg-container">
-  <div class="bg-full-cover-fixed bg-registration b-lazy"
-       data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
+  <div class="bg-full-cover-fixed bg-registration b-lazy b-loaded"
+       style="background-image: url({% static 'hqwebapp/images/molly.jpg' %});"></div>
   <div class="bg-overlay"></div>
 </div>
 {% endblock %}
@@ -88,7 +86,7 @@
           {% if this_is_not_me %}
           <div style="margin-top:10px">
             <a href="{{ this_is_not_me }}">
-              This is not me!
+              {% trans "This is not me!" %}
             </a>
           </div>
 
