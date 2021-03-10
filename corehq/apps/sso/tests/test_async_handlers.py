@@ -157,7 +157,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             identity_provider=cls.idp,
             email_domain='vaultwax.com',
         )
-        cls.email_domain_two = AuthenticatedEmailDomain.objects.create(
+        cls.other_email_domain = AuthenticatedEmailDomain.objects.create(
             identity_provider=cls.other_idp,
             email_domain='vwx.link',
         )
@@ -244,7 +244,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
     def test_remove_object_raises_error_if_username_is_not_linked_to_idp(self):
         UserExemptFromSingleSignOn.objects.create(
             username='b@vwx.link',
-            email_domain=self.email_domain_two
+            email_domain=self.other_email_domain
         )
         self.request.POST = self._get_post_data('b@vwx.link')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
