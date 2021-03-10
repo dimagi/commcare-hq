@@ -5,10 +5,12 @@ from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
+from couchforms.const import TAG_FORM, TAG_META
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -110,7 +112,14 @@ class FHIRRepeater(CaseRepeater):
 
         case_trigger_info_list = []
         for case_block in case_blocks:
-            case = cases_by_id[case_block['@case_id']]
+            try:
+                case = cases_by_id[case_block['@case_id']]
+            except KeyError:
+                form_id = form_json[TAG_FORM][TAG_META]['instanceID']
+                raise CaseNotFound(
+                    f"Form {form_id!r} touches case {case_block['@case_id']!r} "
+                    "but that case is not found."
+                )
             try:
                 resource_type = resource_types_by_case_type[case.type]
             except KeyError:
