@@ -52,7 +52,7 @@ ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
 LOCAL_LOGGING_CONFIG = {
     'loggers': {
-        'auditcare': {
+        'corehq.apps.auditcare': {
             'handlers': ['null'],
             'level': 'WARNING',
         },

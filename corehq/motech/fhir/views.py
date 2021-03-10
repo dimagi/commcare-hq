@@ -1,16 +1,44 @@
 from django.http import JsonResponse
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
-from corehq.apps.domain.decorators import (
-    login_or_api_key,
-    require_superuser,
-)
+from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.fhir.const import FHIR_VERSIONS
-from corehq.motech.fhir.models import FHIRResourceType, build_fhir_resource
+from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import absolute_reverse, get_case_or_404
+
+from .const import FHIR_VERSIONS
+from .forms import FHIRRepeaterForm
+from .models import FHIRResourceType, build_fhir_resource
+
+
+class AddFHIRRepeaterView(AddRepeaterView):
+    urlname = 'add_fhir_repeater'
+    repeater_form_class = FHIRRepeaterForm
+    page_title = _('Forward Cases to a FHIR API')
+    page_name = _('Forward Cases to a FHIR API')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super().set_repeater_attr(repeater, cleaned_data)
+        repeater.fhir_version = (self.add_repeater_form
+                                 .cleaned_data['fhir_version'])
+        return repeater
+
+
+class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
+    urlname = 'edit_fhir_repeater'
+    page_title = _('Edit FHIR Repeater')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
 
 
 @require_GET

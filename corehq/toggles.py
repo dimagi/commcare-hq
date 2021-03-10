@@ -1238,14 +1238,6 @@ INBOUND_SMS_LENIENCY = StaticToggle(
 )
 
 
-HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
-    'hide_messaging_dashboard',
-    "Hide messaging dashboard from users who are not superusers.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-
 WHATSAPP_MESSAGING = StaticToggle(
     'whatsapp_messaging',
     "Default SMS to send messages via Whatsapp, where available",
@@ -1972,7 +1964,8 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/One+Phone+Number+-+Multiple+Contacts"
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
