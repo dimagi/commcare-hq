@@ -36,7 +36,12 @@ class CaseSearchES(CaseES):
 
     @property
     def builtin_filters(self):
-        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
+        return [
+            case_property_filter,
+            blacklist_owner_id,
+            external_id,
+            indexed_on,
+        ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
@@ -268,6 +273,14 @@ def _base_property_query(case_property_name, query):
 
 def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
+
+
+def external_id(external_id):
+    return filters.term('external_id', external_id)
+
+
+def indexed_on(gt=None, gte=None, lt=None, lte=None, eq=None):
+    return filters.date_range('@indexed_on', gt=None, gte=None, lt=None, lte=None, eq=None)
 
 
 def flatten_result(hit, include_score=False):
