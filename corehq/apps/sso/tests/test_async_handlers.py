@@ -24,22 +24,25 @@ class BaseAsyncHandlerTest(TestCase):
             "vaultwax-001",
             is_active=True
         )
-        cls.idp_one = IdentityProvider.objects.create(
+        # this Identity Provider will be the main subject of the test
+        cls.idp = IdentityProvider.objects.create(
             owner=cls.account,
             name='Azure AD for Vault Wax',
             slug='vaultwax',
             created_by='someadmin@dimagi.com',
             last_modified_by='someadmin@dimagi.com',
         )
-        cls.idp_one.create_service_provider_certificate()
-        cls.idp_two = IdentityProvider.objects.create(
+        cls.idp.create_service_provider_certificate()
+        
+        # secondary Identity Provider to test some edge cases
+        cls.other_idp = IdentityProvider.objects.create(
             owner=cls.account,
             name='Azure AD for VWX',
             slug='vwx',
             created_by='someadmin@dimagi.com',
             last_modified_by='someadmin@dimagi.com',
         )
-        cls.idp_two.create_service_provider_certificate()
+        cls.other_idp.create_service_provider_certificate()
 
     @classmethod
     def tearDownClass(cls):
@@ -55,7 +58,7 @@ class BaseAsyncHandlerTest(TestCase):
         :return: dict for request.POST
         """
         return {
-            'requestContext[idpSlug]': self.idp_one.slug,
+            'requestContext[idpSlug]': self.idp.slug,
             'objectName': object_name,
         }
 
@@ -73,11 +76,11 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def test_get_linked_objects(self):
         AuthenticatedEmailDomain.objects.create(
-            identity_provider=self.idp_one,
+            identity_provider=self.idp,
             email_domain='vaultwax.com'
         )
         AuthenticatedEmailDomain.objects.create(
-            identity_provider=self.idp_one,
+            identity_provider=self.idp,
             email_domain='vaultwax.nl'
         )
         self.request.POST = self._get_post_data()
@@ -92,7 +95,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def test_add_object_raises_error_if_conflict_with_idp(self):
         AuthenticatedEmailDomain.objects.create(
-            identity_provider=self.idp_one,
+            identity_provider=self.idp,
             email_domain='vaultwax.com'
         )
         self.request.POST = self._get_post_data('vaultwax.com')
@@ -102,7 +105,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def test_add_object_raises_error_if_conflict_with_another_idp(self):
         AuthenticatedEmailDomain.objects.create(
-            identity_provider=self.idp_two,
+            identity_provider=self.other_idp,
             email_domain='vwx.link'
         )
         self.request.POST = self._get_post_data('vwx.link')
@@ -128,7 +131,7 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def test_remove_object_removes_email_domain(self):
         AuthenticatedEmailDomain.objects.create(
-            identity_provider=self.idp_one,
+            identity_provider=self.idp,
             email_domain='vaultwax.com',
         )
         self.request.POST = self._get_post_data('vaultwax.com')
@@ -151,11 +154,11 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
     def setUpClass(cls):
         super().setUpClass()
         cls.email_domain = AuthenticatedEmailDomain.objects.create(
-            identity_provider=cls.idp_one,
+            identity_provider=cls.idp,
             email_domain='vaultwax.com',
         )
         cls.email_domain_two = AuthenticatedEmailDomain.objects.create(
-            identity_provider=cls.idp_two,
+            identity_provider=cls.other_idp,
             email_domain='vwx.link',
         )
 
@@ -168,8 +171,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
         self.request.method = 'POST'
-        self.idp_one.is_editable = False
-        self.idp_one.save()
+        self.idp.is_editable = False
+        self.idp.save()
 
     def tearDown(self):
         UserExemptFromSingleSignOn.objects.all().delete()
@@ -253,8 +256,8 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
             username='b@vaultwax.com',
             email_domain=self.email_domain
         )
-        self.idp_one.is_editable = True
-        self.idp_one.save()
+        self.idp.is_editable = True
+        self.idp.save()
         self.request.POST = self._get_post_data('b@vaultwax.com')
         handler = SSOExemptUsersAdminAsyncHandler(self.request)
         with self.assertRaises(AsyncHandlerError):
