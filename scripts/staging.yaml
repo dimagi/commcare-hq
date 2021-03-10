@@ -69,7 +69,6 @@ branches:
   - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
-  - nh/fhir/repeater+mk/fhir  # Norman Mar 6
   - mk/fhir/data-dictionary # MK Feb 26
   - mk/fhir/api # MK Feb 26
   - mk/fhir/data-dictionary-upload # MK Mar 9
