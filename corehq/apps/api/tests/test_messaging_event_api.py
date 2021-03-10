@@ -56,12 +56,8 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         ordered_data = json.loads(response.content)['objects']
         self.assertEqual(5, len(ordered_data))
-        previous_date = None
-        for result in ordered_data:
-            current_date = result['date']
-            if previous_date:
-                self.assertTrue(previous_date < current_date)
-            previous_date = current_date
+        dates = [r['date'] for r in ordered_data]
+        self.assertEqual(dates, sorted(dates))
 
         response = self._assert_auth_get_resource(f'{self.list_endpoint}?order_by=-date')
         self.assertEqual(response.status_code, 200)
