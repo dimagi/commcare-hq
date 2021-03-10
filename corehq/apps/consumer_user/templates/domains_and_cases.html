@@ -1,24 +1,22 @@
-{% extends "base_page.html" %}
+{% extends "consumer_user_base.html" %}
 {% load i18n %}
+
 {% block title %}{% trans "Domains And Cases" %}{% endblock %}
 
 {% block content %}
 <div class="container">
-<h2>Domains And Cases</h2>
-{% if msg %}
-    <p style="font-weight:bold">{{ msg }}</p>
-{% endif %}
-<table class="table table-bordered">
-  <tr>
-    <th>Domain</th>
-    <th>Cases</th>
-  </tr>
-  {% for dict in domains_and_cases %}
-  <tr>
-    <td>{{dict.domain}}</td>
-    <td>{{dict.case_id}}</td>
-  </tr>
-  {% endfor %}
-</table>
+  <h2>{% trans "Domains And Cases" %}</h2>
+  <table class="table table-bordered">
+    <tr>
+      <th>{% trans "Domain" %}</th>
+      <th>{% trans "Cases" %}</th>
+    </tr>
+    {% for dict in domains_and_cases %}
+    <tr>
+      <td>{{dict.domain}}</td>
+      <td>{{dict.case_id}}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </div>
 {% endblock %}

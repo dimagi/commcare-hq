@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 
+from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
@@ -68,6 +69,7 @@ class ConsumerUserLoginView(LoginView):
             extra_context['this_is_not_me'] = '%s%s' % (this_is_not_me,
                                                         '?create_user=1')
             context.update(extra_context)
+        context.update({'hide_menu': True})
         return context
 
 
@@ -110,7 +112,8 @@ def register_view(request, invitation):
             return HttpResponseRedirect(url)
     else:
         form = ConsumerUserSignUpForm()
-    return render(request, 'signup.html', {'form': form})
+    return render(request, 'signup.html', {'form': form,
+                                           'hide_menu': True})
 
 
 @two_factor_exempt
@@ -151,16 +154,14 @@ def change_password_view(request):
     if consumer_user:
         if request.method == 'POST':
             form = PasswordChangeForm(user=request.user, data=request.POST)
-            msg = None
             if form.is_valid():
                 form.save()
                 couch_user = CouchUser.from_django_user(request.user)
                 if couch_user:
                     couch_user.last_password_set = datetime.utcnow()
                     couch_user.save()
-                msg = _('Updated successfully')
-            return render(request, 'change_password.html', {'form': form,
-                                                            'msg': msg})
+                messages.success(request, _('Updated Successfully'))
+            return render(request, 'change_password.html', {'form': form})
         else:
             form = PasswordChangeForm(user=request.user)
             return render(request, 'change_password.html', {'form': form})
@@ -188,10 +189,9 @@ def change_contact_details_view(request):
             form = ChangeContactDetailsForm(request.POST, instance=request.user)
             if form.is_valid():
                 form.save()
-                msg = _('Updated successfully')
+                messages.success(request, _('Updated Successfully'))
         else:
             form = ChangeContactDetailsForm(instance=request.user)
-        return render(request, 'change_contact_details.html', {'form': form,
-                                                               'msg': msg})
+        return render(request, 'change_contact_details.html', {'form': form})
     else:
         return HttpResponse(status=404)
