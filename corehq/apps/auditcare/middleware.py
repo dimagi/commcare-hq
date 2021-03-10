@@ -58,16 +58,11 @@ class AuditMiddleware:
         We also need to add the user field when it was not initially inferred from the sessionid,
         such as when using Api Key, Basic Auth, Digest Auth, or HMAC auth.
         """
-        response = self.get_response(request)
-        audit_doc = getattr(request, 'audit_doc', None)
-        if audit_doc:
-            if not audit_doc.user:
-                if hasattr(request, 'audit_user'):
-                    audit_doc.user = request.audit_user
-                elif hasattr(request, 'couch_user'):
-                    audit_doc.user = request.couch_user.username
-            audit_doc.status_code = response.status_code
-            audit_doc.save()
+        response = None
+        try:
+            response = self.get_response(request)
+        finally:
+            self._update_audit(request, response)
         return response
 
     def should_audit(self, view_func):
@@ -85,3 +80,15 @@ class AuditMiddleware:
                 and view_name.startswith(('django.contrib.admin', 'reversion.admin'))
             )
         )
+
+    def _update_audit(self, request, response):
+        audit_doc = getattr(request, 'audit_doc', None)
+        if audit_doc:
+            if not audit_doc.user:
+                if hasattr(request, 'audit_user'):
+                    audit_doc.user = request.audit_user
+                elif hasattr(request, 'couch_user'):
+                    audit_doc.user = request.couch_user.username
+            if response is not None:
+                audit_doc.status_code = response.status_code
+            audit_doc.save()

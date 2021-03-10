@@ -150,10 +150,9 @@ class NavigationEventAudit(AuditEvent):
             audit.session_key = request.session.session_key
             audit.extra = extra
             audit.view_kwargs = view_kwargs
-            audit.save()
             return audit
-        except Exception as ex:
-            log.error("NavigationEventAudit.audit_view error: %s", ex)
+        except Exception:
+            log.exception("NavigationEventAudit.audit_view error")
 
 
 ACCESS_LOGIN = 'login'
