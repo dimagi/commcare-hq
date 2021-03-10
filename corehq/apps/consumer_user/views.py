@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 
 from django.contrib import messages
@@ -184,7 +183,6 @@ def domains_and_cases_list_view(request):
 def change_contact_details_view(request):
     consumer_user = ConsumerUser.objects.get_or_none(user=request.user)
     if consumer_user:
-        msg = None
         if request.method == 'POST':
             form = ChangeContactDetailsForm(request.POST, instance=request.user)
             if form.is_valid():
