@@ -14,8 +14,9 @@ from ..const import (
 )
 from ..models import (
     DataSetMap,
-    get_date_range,
     SQLDataSetMap,
+    SQLDataValueMap,
+    get_date_range,
     get_info_for_columns,
     get_period,
     get_previous_month,
@@ -234,3 +235,56 @@ class GetInfoForColumnsTests(TestCase):
     def test_sql(self):
         info_for_columns = get_info_for_columns(self.sqldataset_map)
         self.assertEqual(info_for_columns, self.expected_sql_value)
+
+
+class TestDifferentDataSetMaps(TestCase):
+    domain = 'test-domain'
+
+    def setUp(self):
+        self.map_1 = SQLDataSetMap.objects.create(
+            domain=self.domain,
+            ucr_id='c0ffee',
+            day_to_send=1,
+        )
+        SQLDataValueMap.objects.create(
+            dataset_map=self.map_1,
+            column='foo',
+            data_element_id='bar',
+            comment='foo bar'
+        )
+        self.map_2 = SQLDataSetMap.objects.create(
+            domain=self.domain,
+            ucr_id='c0ffee',
+            day_to_send=1,
+        )
+        SQLDataValueMap.objects.create(
+            dataset_map=self.map_2,
+            column='spam',
+            data_element_id='bacon',
+            comment='spam spam'
+        )
+
+    def tearDown(self):
+        self.map_1.delete()
+        self.map_2.delete()
+
+    def test_caching(self):
+        info_1 = get_info_for_columns(self.map_1)
+        info_2 = get_info_for_columns(self.map_2)
+        self.assertNotEqual(info_1, info_2)
+        self.assertEqual(info_1, {'foo': {
+            'column': 'foo',
+            'data_element_id': 'bar',
+            'category_option_combo_id': '',
+            'comment': 'foo bar',
+            'is_org_unit': False,
+            'is_period': False,
+        }})
+        self.assertEqual(info_2, {'spam': {
+            'column': 'spam',
+            'data_element_id': 'bacon',
+            'category_option_combo_id': '',
+            'comment': 'spam spam',
+            'is_org_unit': False,
+            'is_period': False,
+        }})
