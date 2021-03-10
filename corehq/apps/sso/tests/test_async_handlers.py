@@ -152,6 +152,21 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
         with self.assertRaises(AsyncHandlerError):
             handler.remove_object()
 
+    def test_remove_object_fails_if_email_domain_is_related_to_other_idp(self):
+        """
+        Ensure that remove_object() fails when trying to remove an email domain
+        that is related to another IdentityProvider that is not the current
+        IdentityProvider.
+        """
+        AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.other_idp,
+            email_domain='vwx.link'
+        )
+        self.request.POST = self._get_post_data('vwx.link')
+        handler = IdentityProviderAdminAsyncHandler(self.request)
+        with self.assertRaises(AsyncHandlerError):
+            handler.remove_object()
+
     def test_remove_object_removes_email_domain(self):
         """
         Ensure that the remove_object_response successfully removes the
