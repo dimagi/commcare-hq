@@ -33,7 +33,7 @@ class BaseAsyncHandlerTest(TestCase):
             last_modified_by='someadmin@dimagi.com',
         )
         cls.idp.create_service_provider_certificate()
-        
+
         # secondary Identity Provider to test some edge cases
         cls.other_idp = IdentityProvider.objects.create(
             owner=cls.account,
