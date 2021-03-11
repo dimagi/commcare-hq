@@ -65,10 +65,10 @@ class TestHandleLogout(TestCase):
         self.assertEqual(log_entry.path, '/logout')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
 
-    def test_no_user_is_logged_with_unknown_user(self):
+    def test_no_user_is_logged_with_empty_user_id(self):
         handle_logout('any_source', self.request, user=None)
 
-        unknown_logouts = UserAccessLog.objects.filter(user_id='unknown_user')
+        unknown_logouts = UserAccessLog.objects.filter(user_id='')
         self.assertEqual(unknown_logouts.count(), 1)
 
 

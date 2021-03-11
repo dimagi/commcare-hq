@@ -5,8 +5,6 @@ from corehq.apps.hqwebapp.models import UserAccessLog
 
 from dimagi.utils.web import get_ip
 
-UNKNOWN_USER = 'unknown_user'
-
 
 @receiver(user_login_failed)
 def handle_failed_login(sender, credentials, request, token_failure=False, **kwargs):
@@ -20,7 +18,9 @@ def handle_login(sender, request, user, **kwargs):
 
 @receiver(user_logged_out)
 def handle_logout(sender, request, user, **kwargs):
-    user_id = user.username if user else UNKNOWN_USER
+    # User can be None when the user is not authorized.
+    # See: https://docs.djangoproject.com/en/3.1/ref/contrib/auth/#django.contrib.auth.signals.user_logged_out
+    user_id = user.username if user else ''
     _handle_access_event(UserAccessLog.TYPE_LOGOUT, request, user_id)
 
 
