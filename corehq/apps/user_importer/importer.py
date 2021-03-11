@@ -675,8 +675,16 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         status_row['flag'] = 'updated'
 
             else:
-                create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
-                status_row['flag'] = 'invited'
+                if remove:
+                    try:
+                        invitation = Invitation.objects.get(domain=domain, email=username)
+                    except Invitation.DoesNotExist:
+                        raise UserUploadError(_("Could not remove an invite that does not exist"))
+                    invitation.delete()
+                    status_row['flag'] = 'updated'
+                else:
+                    create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
+                    status_row['flag'] = 'invited'
 
             if role_updated:
                 log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
