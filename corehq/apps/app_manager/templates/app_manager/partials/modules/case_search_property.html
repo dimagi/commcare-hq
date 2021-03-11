@@ -44,7 +44,7 @@
                   </div>
                 </div>
                 {% if js_options.default_value_expression_enabled %}
-                <div class="form-group">
+                <div class="form-group" data-bind="visible: appearance() != 'address'">
                   <label class="control-label col-xs-12 col-sm-3">
                     {% trans "Default Value Expression" %}
                   </label>
@@ -67,6 +67,9 @@
                         <option value="daterange">{% trans "Date Range" %}</option>
                         <option value="barcode_scan">{% trans "Barcode" %}</option>
                         <option value="fixture">{% trans "Lookup Table Selection" %}</option>
+                        {% if js_options.has_geocoder_privs %}
+                          <option value="address">{% trans "Geocoder Broadcast" %}</option>
+                        {% endif %}
                       </select>
                     </div>
                   </div>
@@ -107,6 +110,19 @@
                   </div>
                 </div>
                 </fieldset>
+                {% if js_options.has_geocoder_privs %}
+                    <fieldset data-bind="visible: appearance() == 'fixture' || appearance() == ''">
+                      <legend>{% trans "Advanced Options" %}</legend>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Geocoder Receiver Expression" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
+                          <input class="form-control" type="text" data-bind="value: receiverExpression"/>
+                        </div>
+                      </div>
+                  </fieldset>
+                {% endif %}
                 <fieldset data-bind="visible: appearance() == 'fixture'">
                   <legend>{% trans "Advanced Lookup Table Options" %}</legend>
                   <div class="form-group">
