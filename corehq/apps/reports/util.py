@@ -7,7 +7,9 @@ from importlib import import_module
 
 from django.conf import settings
 from django.http import Http404
-from django.utils import html, safestring
+from django.utils import html
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 import pytz
@@ -231,14 +233,15 @@ def _report_user_dict(user):
         return info
 
 
+# TODO: This is very similar code to what exists in apps/users/util/user_display_string
 def _get_username_html_fragment(username, first='', last=''):
     full_name = ("%s %s" % (first, last)).strip()
 
-    def parts():
-        yield '%s' % html.escape(username)
-        if full_name:
-            yield ' "%s"' % html.escape(full_name)
-    return safestring.mark_safe(''.join(parts()))
+    result = mark_safe(html.escape(username))  # nosec: escaped
+    if full_name:
+        result = format_html('{} "{}"', result, full_name)
+
+    return result
 
 
 def get_simplified_users(user_es_query):
