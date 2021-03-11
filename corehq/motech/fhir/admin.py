@@ -34,6 +34,8 @@ class FHIRResourcePropertyAdmin(admin.ModelAdmin):
     list_filter = ('resource_type__domain',)
     list_select_related = ('resource_type', 'resource_type__case_type')
 
+    readonly_fields = ('resource_type', 'case_property')
+
     def has_add_permission(self, request):
         # Domains are difficult to manage with this interface. Create
         # using the Data Dictionary, and edit in Admin.
