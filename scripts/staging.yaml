@@ -70,8 +70,8 @@ branches:
   - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
   - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - mk/fhir/data-dictionary # MK Feb 26
-  - mk/fhir/api # MK Feb 26
-  - mk/fhir/data-dictionary-upload # MK Mar 9
+  - mk/fhir/api-2 # MK Feb 26
+  - mk/fhir/data-dictionary-upload-2 # MK Mar 9
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - kev/repeat-add-new-translation # Kevin Mar 2
