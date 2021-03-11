@@ -121,17 +121,20 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
                                              else datetime.utcnow() + timedelta(days=30))
         self.idp.save()
 
+    def _get_post_data(self, name=None, is_editable=False, is_active=False, slug=None):
+        return {
+            'name': name if name is not None else self.idp.name,
+            'is_editable': is_editable,
+            'is_active': is_active,
+            'slug': slug or self.idp.slug,
+        }
+
     def test_bad_slug_update_is_invalid(self, *args):
         """
         Ensure that if passed a bad slug, EditIdentityProviderAdminForm raises
         a ValidationError and does not validate.
         """
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_editable,
-            'is_active': self.idp.is_active,
-            'slug': 'bad slug',
-        }
+        post_data = self._get_post_data(slug='bad slug')
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
@@ -151,12 +154,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
         )
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_editable,
-            'is_active': self.idp.is_active,
-            'slug': second_idp.slug,
-        }
+        post_data = self._get_post_data(slug=second_idp.slug)
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
@@ -169,12 +167,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         when EditIdentityProviderAdminForm validates and calls
         update_identity_provider().
         """
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_editable,
-            'is_active': self.idp.is_active,
-            'slug': 'vaultwax-2',
-        }
+        post_data = self._get_post_data(slug='vaultwax-2')
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         self.assertTrue(edit_idp_form.is_valid())
         edit_idp_form.update_identity_provider(self.accounting_admin)
@@ -190,21 +183,11 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         of the IdentityProvider when EditIdentityProviderAdminForm
         validates and update_identity_provider() is called.
         """
-        bad_post_data = {
-            'name': '',
-            'is_editable': self.idp.is_active,
-            'is_active': self.idp.is_editable,
-            'slug': self.idp.slug,
-        }
+        bad_post_data = self._get_post_data(name='')
         bad_edit_idp_form = EditIdentityProviderAdminForm(self.idp, bad_post_data)
         self.assertFalse(bad_edit_idp_form.is_valid())
 
-        post_data = {
-            'name': 'new name test',
-            'is_editable': self.idp.is_active,
-            'is_active': self.idp.is_editable,
-            'slug': self.idp.slug,
-        }
+        post_data = self._get_post_data(name='new name test')
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         self.assertTrue(edit_idp_form.is_valid())
         edit_idp_form.update_identity_provider(self.accounting_admin)
@@ -219,12 +202,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         calling update_identity_provider() updates the `is_editable` field on
         the IdentityProvider as expected.
         """
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': True,
-            'is_active': self.idp.is_active,
-            'slug': self.idp.slug,
-        }
+        post_data = self._get_post_data(is_editable=True)
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
@@ -254,12 +232,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         calling update_identity_provider() updates the `is_active` field on
         the IdentityProvider as expected.
         """
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_active,
-            'is_active': True,
-            'slug': self.idp.slug,
-        }
+        post_data = self._get_post_data(is_active=True)
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
 
