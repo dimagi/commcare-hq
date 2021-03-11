@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from corehq.apps.hqwebapp.models import UserAccessLog
 
 from corehq.apps.hqwebapp.login_handlers import handle_failed_login, \
-    handle_login, handle_logout, handle_access_event
+    handle_login, handle_logout, _handle_access_event
 
 
 class TestLoginAccessHandler(TestCase):
@@ -12,13 +12,13 @@ class TestLoginAccessHandler(TestCase):
         factory = RequestFactory()
         request = factory.post('/login')
 
-        handle_access_event('some_event', request, 'test_user')
+        _handle_access_event('some_event', request, 'test_user')
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertIsNone(log_entry.user_agent)
 
     def test_missing_request_logs_empty_attributes(self):
-        handle_access_event('some_event', None, 'test_user')
+        _handle_access_event('some_event', None, 'test_user')
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertIsNone(log_entry.ip)
