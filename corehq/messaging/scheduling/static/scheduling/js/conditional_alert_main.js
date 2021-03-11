@@ -33,6 +33,19 @@ hqDefine("scheduling/js/conditional_alert_main", [
         var basicInformation = basicInformationTab(name);
         // setup tab
         basicInformation.setRuleTabVisibility();
+
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
+
+        var conditionalWarningMsg = initialPageData.get('warning_msg');
+
+        if (conditionalWarningMsg) {
+            $("#conditional-warning-msg").text(conditionalWarningMsg);
+            $("#conditional-alert-warning-modal").modal("show");
+
+            $("#conditional-alert-yes-btn").click(function () {
+                $("#confirmationFlag").val("finalSubmit");
+                $("#conditional-alert-form").submit();
+            });
+        }
     });
 });
