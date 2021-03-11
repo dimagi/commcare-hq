@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -29,15 +30,6 @@
             "property_name": "xmlns"
           },
           "property_value": "http://openrosa.org/formdesigner/F8AE9C85-38E3-4B84-BD16-0198C4907FD9"
-        },
-        {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "expression": {
-            "type": "property_name",
-            "property_name": "app_id"
-          },
-          "property_value": "b3c758f7c79e47e3a503115894f18503"
         }
       ]
     },
