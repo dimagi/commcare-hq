@@ -10,7 +10,6 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.toggles import DEFAULT_EXPORT_SETTINGS
 from corehq.apps.export.models.export_settings import ExportFileType
 
 
@@ -118,7 +117,7 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_signup_message": self.account.restrict_signup_message,
         }
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.username):
+        if self.export_settings:
             kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
@@ -142,31 +141,30 @@ class EnterpriseSettingsForm(forms.Form):
             )
         )
 
-        if DEFAULT_EXPORT_SETTINGS.enabled(self.username):
-            self.helper.layout.append(
-                crispy.Div(
-                    crispy.Fieldset(
-                        _("Edit Default Form Export Settings"),
-                        crispy.Div(
-                            crispy.Field('forms_filetype'),
-                        ),
-                        PrependedText('forms_auto_convert', ''),
-                        PrependedText('forms_auto_format_cells', ''),
-                        PrependedText('forms_expand_checkbox', ''),
+        self.helper.layout.append(
+            crispy.Div(
+                crispy.Fieldset(
+                    _("Edit Default Form Export Settings"),
+                    crispy.Div(
+                        crispy.Field('forms_filetype'),
                     ),
-                    crispy.Fieldset(
-                        _("Edit Default Case Export Settings"),
-                        crispy.Div(
-                            crispy.Field('cases_filetype')
-                        ),
-                        PrependedText('cases_auto_convert', ''),
+                    PrependedText('forms_auto_convert', ''),
+                    PrependedText('forms_auto_format_cells', ''),
+                    PrependedText('forms_expand_checkbox', ''),
+                ),
+                crispy.Fieldset(
+                    _("Edit Default Case Export Settings"),
+                    crispy.Div(
+                        crispy.Field('cases_filetype')
                     ),
-                    crispy.Fieldset(
-                        _("Edit Default OData Export Settings"),
-                        PrependedText('odata_expand_checkbox', ''),
-                    ),
-                )
+                    PrependedText('cases_auto_convert', ''),
+                ),
+                crispy.Fieldset(
+                    _("Edit Default OData Export Settings"),
+                    PrependedText('odata_expand_checkbox', ''),
+                ),
             )
+        )
 
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -190,7 +188,7 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.username):
+        if self.export_settings:
             # forms
             self.export_settings.forms_filetype = self.cleaned_data.get(
                 'forms_filetype',
