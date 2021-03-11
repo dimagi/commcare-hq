@@ -46,14 +46,16 @@ class TestHandleLogin(TestCase):
 
 
 class TestHandleLogout(TestCase):
+    def setUp(self):
+        factory = RequestFactory()
+        self.request = factory.post('/logout')
+
     @freeze_time('2020-01-02 03:20:15')
     def test_logout_stores_correct_fields_in_database(self):
-        factory = RequestFactory()
         user = User(username='test_user')
-        request = factory.post('/logout')
-        request.META['HTTP_USER_AGENT'] = 'Mozilla'
+        self.request.META['HTTP_USER_AGENT'] = 'Mozilla'
 
-        handle_logout('any_source', request, user)
+        handle_logout('any_source', self.request, user)
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertEqual(log_entry.action, 'logout')
@@ -62,6 +64,12 @@ class TestHandleLogout(TestCase):
         self.assertEqual(log_entry.user_agent.value, 'Mozilla')
         self.assertEqual(log_entry.path, '/logout')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
+
+    def test_no_user_is_logged_with_unknown_user(self):
+        handle_logout('any_source', self.request, user=None)
+
+        unknown_logouts = UserAccessLog.objects.filter(user_id='unknown_user')
+        self.assertEqual(unknown_logouts.count(), 1)
 
 
 class TestHandleFailedLogin(TestCase):
