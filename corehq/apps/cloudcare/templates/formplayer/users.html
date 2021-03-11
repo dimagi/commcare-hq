@@ -24,40 +24,11 @@
       <tbody>
       </tbody>
     </table>
-    <nav class="module-pagination-container text-right">
-      <ul class="pagination">
-        <!-- Render Previous button -->
-        <% if (page === 1) { %>
-        <li class="disabled">
-          <% } else { %>
-        <li>
-          <% } %>
-          <a class="js-user-previous">
-            <span>&laquo;</span>
-          </a>
-        </li>
-
-        <!-- Render page buttons -->
-        <% for (var i = pagesToShow.start; i < pagesToShow.end; i++) { %>
-        <% if (i + 1 === page) { %>
-        <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
-        <% } else { %>
-        <li class="js-page" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
-        <% } %>
-        <% } %>
-
-        <!-- Render Next buttons -->
-        <% if (page === totalPages) { %>
-        <li class="disabled">
-          <% } else { %>
-        <li>
-          <% } %>
-          <a class="js-user-next">
-            <span>&raquo;</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
+    <% if (endPage) { %>
+      {% block pagination_templates %}
+        {% include 'formplayer/pagination.html' %}
+      {% endblock %}
+    <% } %>
   </div>
 </script>
 
