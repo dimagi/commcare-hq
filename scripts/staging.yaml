@@ -76,5 +76,5 @@ branches:
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - kev/repeat-add-new-translation # Kevin Mar 2
   - gh/remove-export-settings-ff # Graham March 11
-  - challabeehyv:consumer_user_poc # Farid March 11
+  # - challabeehyv:consumer_user_poc # Farid March 11
 submodules: {}
