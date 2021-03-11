@@ -128,14 +128,8 @@ def update_case_property(request, domain):
     case_type = request.POST.get('case_type')
     errors = []
     if fhir_resource_type and case_type:
-        case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
         try:
-            fhir_resource_type_obj = FHIRResourceType.objects.get(case_type=case_type_obj, domain=domain)
-        except FHIRResourceType.DoesNotExist:
-            fhir_resource_type_obj = FHIRResourceType(case_type=case_type_obj, domain=domain)
-        fhir_resource_type_obj.name = fhir_resource_type
-        try:
-            fhir_resource_type_obj.save()
+            fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
         except ValidationError as e:
             errors.append(str(e))
 
@@ -156,6 +150,17 @@ def update_case_property(request, domain):
         return JsonResponse({"status": "failed", "errors": errors}, status=400)
     else:
         return JsonResponse({"status": "success"})
+
+
+def _update_fhir_resource_type(domain, case_type, fhir_resource_type):
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+    try:
+        fhir_resource_type_obj = FHIRResourceType.objects.get(case_type=case_type_obj, domain=domain)
+    except FHIRResourceType.DoesNotExist:
+        fhir_resource_type_obj = FHIRResourceType(case_type=case_type_obj, domain=domain)
+    fhir_resource_type_obj.name = fhir_resource_type
+    fhir_resource_type_obj.save()
+    return fhir_resource_type_obj
 
 
 @login_and_domain_required
@@ -349,15 +354,49 @@ class UploadDataDictionaryView(BaseProjectDataView):
 def _process_bulk_upload(bulk_file, domain):
     filename = make_temp_file(bulk_file.read(), file_extention_from_filename(bulk_file.name))
     errors = []
+    import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
+    fhir_resource_type_by_case_type = {}
+    expected_columns_in_prop_sheet = 5
+
+    if import_fhir_data:
+        expected_columns_in_prop_sheet = 6
+        fhir_resource_type_by_case_type = {
+            ft.case_type.name: ft
+            for ft in FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
+        }
+
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
+            if worksheet.title == FHIR_RESOURCE_TYPE_MAPPING_SHEET:
+                if import_fhir_data:
+                    errors.extend(_process_fhir_resource_type_mapping_sheet(domain, worksheet))
+                continue
             case_type = worksheet.title
             for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
-                if len(row) < 5:
+                if len(row) < expected_columns_in_prop_sheet:
                     error = _('Not enough columns')
                 else:
-                    name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
-                    error = save_case_property(name, case_type, domain, data_type, description, group, deprecated)
+                    if import_fhir_data:
+                        name, group, data_type, description, deprecated, fhir_resource_prop_path = [
+                            cell.value for cell in row[:6]]
+                        fhir_resource_type = fhir_resource_type_by_case_type[case_type]
+                        error = save_case_property(name, case_type, domain, data_type, description, group,
+                                                   deprecated, fhir_resource_prop_path, fhir_resource_type)
+                    else:
+                        name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
+                        error = save_case_property(name, case_type, domain, data_type, description, group,
+                                                   deprecated)
                 if error:
                     errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
+    return errors
+
+
+def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
+    errors = []
+    for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
+        if len(row) < 2:
+            errors.append(_('Not enough columns'))
+        else:
+            case_type, fhir_resource_type = [cell.value for cell in row[:2]]
+            _update_fhir_resource_type(domain, case_type, fhir_resource_type)
     return errors
