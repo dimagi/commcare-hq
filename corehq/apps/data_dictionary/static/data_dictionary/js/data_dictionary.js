@@ -42,7 +42,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description,
-            fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
         self.expanded = ko.observable(true);
