@@ -128,8 +128,11 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             }
         });
         // street composed of (optional) number and street name.
-        broadcastObj.street = mapboxResult.address || '';
-        broadcastObj.street += ' ' + mapboxResult.text;
+        if (mapboxResult.address && mapboxResult.text) {
+          broadcastObj.street = mapboxResult.address + ' ' + mapboxResult.text;
+        } else {
+          broadcastObj.street = mapboxResult.address || mapboxResult.text;
+        }
         return broadcastObj;
     };
 
