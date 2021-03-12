@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 from unittest.mock import Mock, patch
 
 from corehq.apps.settings.views import EnableMobilePrivilegesView
+from corehq.apps.users.models import CouchUser
 
 
 class EnableMobilePrivilegesViewTests(SimpleTestCase):
@@ -12,6 +13,7 @@ class EnableMobilePrivilegesViewTests(SimpleTestCase):
         """
         view = EnableMobilePrivilegesView()
         view.get_context_data = Mock(return_value={})
+        CouchUser.get_by_username = Mock()
         view.render_to_response = lambda x: x
         mock_request = Mock()
         mock_request.user.username = "test"
