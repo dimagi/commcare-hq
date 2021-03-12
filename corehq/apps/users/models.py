@@ -2226,19 +2226,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 "There was no linked supply point for the location."
             )
 
-    def add_location_delegate(self, location):
-        """
-        Add a single location to the delgate case access.
-
-        This will dynamically create a supply point if the supply point isn't found.
-        """
-        # todo: the dynamic supply point creation is bad and should be removed.
-        sp = SupplyInterface(self.domain).get_or_create_by_location(location)
-
-        if not location.location_type_object.administrative:
-            from corehq.apps.commtrack.util import submit_mapping_case_block
-            submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
-
     def submit_location_block(self, caseblock, source):
         from corehq.apps.hqcase.utils import submit_case_blocks
 
@@ -2249,25 +2236,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,
         )
-
-    def remove_location_delegate(self, location):
-        """
-        Remove a single location from the case delagate access.
-        """
-
-        sp = SupplyInterface(self.domain).get_by_location(location)
-
-        mapping = self.get_location_map_case()
-
-        if not location.location_type_object.administrative:
-            if mapping and location.location_id in [loc.location_id for loc in self.locations]:
-                caseblock = CaseBlock.deprecated_init(
-                    create=False,
-                    case_id=mapping._id,
-                    index=self.supply_point_index_mapping(sp, True)
-                )
-
-                self.submit_location_block(caseblock, "remove_location_delegate")
 
     def clear_location_delegates(self):
         """
