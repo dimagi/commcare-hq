@@ -158,7 +158,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
 
 def _update_fhir_resource_property(case_property, fhir_resource_type, fhir_resource_prop_path, remove_path=False):
     from corehq.motech.fhir.models import FHIRResourceProperty
-    if remove_path:
+    if case_property.deprecated or remove_path:
         try:
             FHIRResourceProperty.objects.get(case_property=case_property,
                                              resource_type=fhir_resource_type,
