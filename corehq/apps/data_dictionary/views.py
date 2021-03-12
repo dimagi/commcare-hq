@@ -243,7 +243,7 @@ def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_heade
     header_table = []
     if export_fhir_data:
         header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
-        case_prop_headers.append(_('FHIR Resource Property'))
+        case_prop_headers.extend([_('FHIR Resource Property'), _('Remove Resource Property(Y)')])
     for tab_name in case_prop_data:
         header_table.append((tab_name, [case_prop_headers]))
     return header_table
@@ -360,7 +360,7 @@ def _process_bulk_upload(bulk_file, domain):
     expected_columns_in_prop_sheet = 5
 
     if import_fhir_data:
-        expected_columns_in_prop_sheet = 6
+        expected_columns_in_prop_sheet = 7
         fhir_resource_type_by_case_type = {
             ft.case_type.name: ft
             for ft in FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
@@ -378,11 +378,13 @@ def _process_bulk_upload(bulk_file, domain):
                     error = _('Not enough columns')
                 else:
                     if import_fhir_data:
-                        name, group, data_type, description, deprecated, fhir_resource_prop_path = [
-                            cell.value for cell in row[:6]]
+                        name, group, data_type, description, deprecated, fhir_resource_prop_path, remove_path = [
+                            cell.value for cell in row[:7]]
+                        remove_path = remove_path == 'Y' if remove_path else False
                         fhir_resource_type = fhir_resource_type_by_case_type[case_type]
                         error = save_case_property(name, case_type, domain, data_type, description, group,
-                                                   deprecated, fhir_resource_prop_path, fhir_resource_type)
+                                                   deprecated, fhir_resource_prop_path, fhir_resource_type,
+                                                   remove_path)
                     else:
                         name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
                         error = save_case_property(name, case_type, domain, data_type, description, group,
