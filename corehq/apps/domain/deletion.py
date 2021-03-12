@@ -265,7 +265,7 @@ DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
-    ModelDeletion('locations', 'SQLLocation', 'domain', ['LocationRelation']),
+    ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
     ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
