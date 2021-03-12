@@ -4,7 +4,6 @@ from operator import attrgetter
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
-from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
