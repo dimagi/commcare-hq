@@ -129,9 +129,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         });
         // street composed of (optional) number and street name.
         if (mapboxResult.address && mapboxResult.text) {
-          broadcastObj.street = mapboxResult.address + ' ' + mapboxResult.text;
+            broadcastObj.street = mapboxResult.address + ' ' + mapboxResult.text;
         } else {
-          broadcastObj.street = mapboxResult.address || mapboxResult.text;
+            broadcastObj.street = mapboxResult.address || mapboxResult.text;
         }
         return broadcastObj;
     };
