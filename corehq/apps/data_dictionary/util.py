@@ -150,7 +150,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     except ValidationError as e:
         return str(e)
 
-    if fhir_resource_type:
+    if fhir_resource_type and fhir_resource_prop_path:
         _update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
     prop.save()
 
