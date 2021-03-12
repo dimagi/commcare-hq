@@ -2783,22 +2783,6 @@ class DomainRemovalRecord(DeleteRecord):
         user.save()
 
 
-class UserCache(object):
-
-    def __init__(self):
-        self.cache = {}
-
-    def get(self, user_id):
-        if not user_id:
-            return None
-        if user_id in self.cache:
-            return self.cache[user_id]
-        else:
-            user = CouchUser.get_by_user_id(user_id)
-            self.cache[user_id] = user
-            return user
-
-
 class AnonymousCouchUser(object):
 
     username = "public_user"
