@@ -128,7 +128,7 @@ def get_case_property_description_dict(domain):
 
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, group=None, deprecated=None,
-                       fhir_resource_prop_path=None, fhir_resource_type=None):
+                       fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -152,13 +152,20 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return str(e)
 
     if fhir_resource_type:
-        _update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path)
+        _update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
     prop.save()
 
 
-def _update_fhir_resource_property(case_property, fhir_resource_type, fhir_resource_prop_path):
+def _update_fhir_resource_property(case_property, fhir_resource_type, fhir_resource_prop_path, remove_path=False):
     from corehq.motech.fhir.models import FHIRResourceProperty
-    if fhir_resource_prop_path:
+    if remove_path:
+        try:
+            FHIRResourceProperty.objects.get(case_property=case_property,
+                                             resource_type=fhir_resource_type,
+                                             jsonpath=fhir_resource_prop_path).delete()
+        except FHIRResourceProperty.DoesNotExist:
+            pass
+    elif fhir_resource_prop_path:
         try:
             fhir_resource_prop = FHIRResourceProperty.objects.get(case_property=case_property,
                                                                   resource_type=fhir_resource_type)
@@ -167,12 +174,6 @@ def _update_fhir_resource_property(case_property, fhir_resource_type, fhir_resou
                                                       resource_type=fhir_resource_type)
         fhir_resource_prop.jsonpath = fhir_resource_prop_path
         fhir_resource_prop.save()
-    elif fhir_resource_prop_path == "":
-        try:
-            FHIRResourceProperty.objects.get(case_property=case_property,
-                                             resource_type=fhir_resource_type).delete()
-        except FHIRResourceProperty.DoesNotExist:
-            pass
 
 
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
