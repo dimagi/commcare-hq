@@ -121,8 +121,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         return $(this).text().trim() === value;
                     });
                     if (option.length === 1) {
-                        option.attr('selected', true);
-                        element.trigger('change.select2');
+                        element.val(option.index() - 1).trigger("change");
                     }
                 }
             };
