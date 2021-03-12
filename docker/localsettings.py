@@ -142,7 +142,12 @@ ALLOWED_HOSTS = ['*']
 #FIX_LOGGER_ERROR_OBFUSCATION = True
 
 # faster compressor that doesn't do source maps
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
+COMPRESS_FILTERS = {
+    'js': [
+        'compressor.js.JsCompressor',
+    ],
+    'css': []
+}
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
