@@ -2511,14 +2511,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield web_user
 
     @classmethod
-    def get_users_by_permission(cls, domain, permission):
-        user_ids = cls.ids_by_domain(domain)
-        for user_doc in iter_docs(cls.get_db(), user_ids):
-            web_user = cls.wrap(user_doc)
-            if web_user.has_permission(domain, permission):
-                yield web_user
-
-    @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
