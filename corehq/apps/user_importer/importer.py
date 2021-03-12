@@ -663,16 +663,14 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                                             and user_current_role.get_qualified_id() == role_qualified_id)
                         if role_updated:
                             user.set_role(domain, role_qualified_id)
-                        status_row['flag'] = 'updated'
                         user.save()
 
                     elif not user.is_member_of(domain) and user.is_active:
                         user.add_as_web_user(domain, role=role_qualified_id)
-                        status_row['flag'] = 'updated'
 
                     elif not user.is_member_of(domain) and status == 'Invited':
                         create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
-                        status_row['flag'] = 'updated'
+                status_row['flag'] = 'updated'
 
             else:
                 if remove:
