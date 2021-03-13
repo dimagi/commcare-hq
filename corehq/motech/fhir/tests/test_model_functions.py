@@ -11,8 +11,8 @@ from ..const import FHIR_VERSION_4_0_1
 from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
-    _build_fhir_resource,
     build_fhir_resource,
+    build_fhir_resource_for_info,
     deepmerge,
     get_case_trigger_info,
     get_resource_type_or_none,
@@ -124,7 +124,7 @@ class TestBuildFHIRResource(TestCase):
         with self.assertNumQueries(0):
             info = get_case_trigger_info(self.case, resource_type)
         with self.assertNumQueries(0):
-            _build_fhir_resource(info, resource_type)
+            build_fhir_resource_for_info(info, resource_type)
 
 
 def test_deepmerge():
