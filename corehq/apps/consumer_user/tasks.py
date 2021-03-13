@@ -32,7 +32,7 @@ def create_new_invitation(case_id, domain, demographic_case_id, opened_by, email
     send_html_email_async.delay(
         _('Beneficiary Registration'),
         email,
-        render_to_string('email/registration_email.html', email_context),
-        text_content=render_to_string('email/registration_email.txt', email_context)
+        render_to_string('consumer_user/email/registration_email.html', email_context),
+        text_content=render_to_string('consumer_user/email/registration_email.txt', email_context)
     )
     update_case(domain, case_id, {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_SENT})
