@@ -177,8 +177,8 @@ def build_fhir_resource(
     fhir_version: str = FHIR_VERSION_4_0_1,
 ) -> Optional[dict]:
     """
-    Builds a FHIR resource using data from ``case``. Returns ``None`` if
-    mappings do not exist.
+    Builds a FHIR resource for ``case``. Returns ``None`` if there are
+    no mappings or they return no values.
 
     Used by the FHIR API.
     """
@@ -186,7 +186,7 @@ def build_fhir_resource(
     if resource_type is None:
         return None
     info = get_case_trigger_info(case, resource_type)
-    return _build_fhir_resource(info, resource_type)
+    return build_fhir_resource_for_info(info, resource_type)
 
 
 def build_fhir_resource_for_info(
@@ -194,26 +194,14 @@ def build_fhir_resource_for_info(
     resource_type: FHIRResourceType,
 ) -> Optional[dict]:
     """
-    Builds a FHIR resource using data from ``info``. Returns ``None`` if
-    mappings do not exist, or if there is no data to forward.
-
-    Used by ``FHIRRepeater``.
+    Builds a FHIR resource for ``info``. Returns ``None`` if there are
+    no mappings or they return no values.
     """
-    return _build_fhir_resource(info, resource_type, skip_empty=True)
-
-
-def _build_fhir_resource(
-    info: CaseTriggerInfo,
-    resource_type: FHIRResourceType,
-    *,
-    skip_empty: bool = False,
-) -> Optional[dict]:
-
     fhir_resource = {}
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()
         value_source.set_external_value(fhir_resource, info)
-    if not fhir_resource and skip_empty:
+    if not fhir_resource:
         return None
 
     fhir_resource = deepmerge({
