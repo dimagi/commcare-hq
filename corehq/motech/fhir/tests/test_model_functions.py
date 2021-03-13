@@ -6,6 +6,7 @@ from nose.tools import assert_equal
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.motech.exceptions import ConfigurationError
 
 from ..const import FHIR_VERSION_4_0_1
 from ..models import (
@@ -13,6 +14,7 @@ from ..models import (
     FHIRResourceType,
     _build_fhir_resource,
     build_fhir_resource,
+    build_fhir_resource_for_info,
     deepmerge,
     get_case_trigger_info,
     get_resource_type_or_none,
@@ -99,6 +101,13 @@ class TestBuildFHIRResource(TestCase):
                 'children': ['Hewsos', 'the twins'],
             }
         )
+        cls.empty_case = CommCareCaseSQL(
+            case_id=uuid4().hex,
+            domain=DOMAIN,
+            type='mother',
+            name=None,  # mapped property has no value
+            case_json={'last_name': 'Doe'},  # property not mapped
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -118,13 +127,23 @@ class TestBuildFHIRResource(TestCase):
             'resourceType': 'Patient',
         })
 
+    def test_skip_empty(self):
+        rt = get_resource_type_or_none(self.empty_case, FHIR_VERSION_4_0_1)
+        info = get_case_trigger_info(self.empty_case, rt)
+        resource = build_fhir_resource_for_info(info, rt)
+        self.assertIsNone(resource)
+
+    def test_raise_on_empty(self):
+        with self.assertRaises(ConfigurationError):
+            build_fhir_resource(self.empty_case, FHIR_VERSION_4_0_1)
+
     def test_num_queries(self):
         with self.assertNumQueries(3):
-            resource_type = get_resource_type_or_none(self.case, FHIR_VERSION_4_0_1)
+            rt = get_resource_type_or_none(self.case, FHIR_VERSION_4_0_1)
         with self.assertNumQueries(0):
-            info = get_case_trigger_info(self.case, resource_type)
+            info = get_case_trigger_info(self.case, rt)
         with self.assertNumQueries(0):
-            _build_fhir_resource(info, resource_type)
+            _build_fhir_resource(info, rt)
 
 
 def test_deepmerge():

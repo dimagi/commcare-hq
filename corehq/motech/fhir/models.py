@@ -178,7 +178,8 @@ def build_fhir_resource(
 ) -> Optional[dict]:
     """
     Builds a FHIR resource using data from ``case``. Returns ``None`` if
-    mappings do not exist.
+    mappings do not exist. Raises ``ConfigurationError`` if mappings
+    returned no values; in other words, failed to build a resource.
 
     Used by the FHIR API.
     """
@@ -213,8 +214,11 @@ def _build_fhir_resource(
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()
         value_source.set_external_value(fhir_resource, info)
-    if not fhir_resource and skip_empty:
-        return None
+    if not fhir_resource:
+        if skip_empty:
+            return None
+        else:
+            raise ConfigurationError('Resource has no data')
 
     fhir_resource = deepmerge({
         **resource_type.template,
