@@ -39,7 +39,7 @@ class ConsumerUserLoginView(LoginView):
     )
     invitation = None
     hashed_invitation = None
-    template_name = 'p_login.html'
+    template_name = 'consumer_user/p_login.html'
 
     def get_form_kwargs(self, step=None):
         """
@@ -61,12 +61,11 @@ class ConsumerUserLoginView(LoginView):
         context = super(ConsumerUserLoginView, self).get_context_data(**kwargs)
         if self.hashed_invitation:
             extra_context = {}
-            this_is_not_me = reverse('consumer_user:consumer_user_register',
-                                     kwargs={
-                                         'invitation': self.hashed_invitation
-                                     })
-            extra_context['this_is_not_me'] = '%s%s' % (this_is_not_me,
-                                                        '?create_user=1')
+            go_to_signup = reverse('consumer_user:consumer_user_register',
+                                   kwargs={
+                                       'invitation': self.hashed_invitation
+                                   })
+            extra_context['go_to_signup'] = '%s%s' % (go_to_signup, '?create_user=1')
             context.update(extra_context)
         context.update({'hide_menu': True})
         return context
@@ -111,8 +110,8 @@ def register_view(request, invitation):
             return HttpResponseRedirect(url)
     else:
         form = ConsumerUserSignUpForm()
-    return render(request, 'signup.html', {'form': form,
-                                           'hide_menu': True})
+    return render(request, 'consumer_user/signup.html', {'form': form,
+                                                         'hide_menu': True})
 
 
 @two_factor_exempt
@@ -137,7 +136,7 @@ def login_accept_view(request, invitation):
 
 @consumer_user_login_required
 def success_view(request):
-    return render(request, 'homepage.html')
+    return render(request, 'consumer_user/homepage.html')
 
 
 @consumer_user_login_required
@@ -160,10 +159,10 @@ def change_password_view(request):
                     couch_user.last_password_set = datetime.utcnow()
                     couch_user.save()
                 messages.success(request, _('Updated Successfully'))
-            return render(request, 'change_password.html', {'form': form})
+            return render(request, 'consumer_user/change_password.html', {'form': form})
         else:
             form = PasswordChangeForm(user=request.user)
-            return render(request, 'change_password.html', {'form': form})
+            return render(request, 'consumer_user/change_password.html', {'form': form})
     else:
         return HttpResponse(status=404)
 
@@ -174,7 +173,7 @@ def domains_and_cases_list_view(request):
     if consumer_user:
         qs = ConsumerUserCaseRelationship.objects.filter(consumer_user=consumer_user)
         domains_and_cases = [val for val in qs.values('domain', 'case_id')]
-        return render(request, 'domains_and_cases.html', {'domains_and_cases': domains_and_cases})
+        return render(request, 'consumer_user/domains_and_cases.html', {'domains_and_cases': domains_and_cases})
     else:
         return HttpResponse(status=404)
 
@@ -190,6 +189,6 @@ def change_contact_details_view(request):
                 messages.success(request, _('Updated Successfully'))
         else:
             form = ChangeContactDetailsForm(instance=request.user)
-        return render(request, 'change_contact_details.html', {'form': form})
+        return render(request, 'consumer_user/change_contact_details.html', {'form': form})
     else:
         return HttpResponse(status=404)

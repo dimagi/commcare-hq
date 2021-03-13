@@ -62,7 +62,7 @@ class RegisterTestCase(TestCase):
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'signup.html')
+        self.assertTemplateUsed(response, 'consumer_user/signup.html')
         self.assertFalse(invitation.accepted)
 
     def test_register_consumer(self):
@@ -131,7 +131,7 @@ class RegisterTestCase(TestCase):
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 302)
-        self.assertTemplateNotUsed(response, 'signup.html')
+        self.assertTemplateNotUsed(response, 'consumer_user/signup.html')
 
     def test_register_get_webuser(self):
         email = 'a6@a6.com'
@@ -141,14 +141,14 @@ class RegisterTestCase(TestCase):
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 302)
-        self.assertTemplateNotUsed(response, 'signup.html')
+        self.assertTemplateNotUsed(response, 'consumer_user/signup.html')
         self.assertFalse(invitation.accepted)
 
     def test_register_invalid_invitation(self):
         register_uri = register_url(1000)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 400)
-        self.assertTemplateNotUsed(response, 'signup.html')
+        self.assertTemplateNotUsed(response, 'consumer_user/signup.html')
 
 
 class LoginTestCase(TestCase):
@@ -169,7 +169,7 @@ class LoginTestCase(TestCase):
     def test_login_get(self):
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'p_login.html')
+        self.assertTemplateUsed(response, 'consumer_user/p_login.html')
 
     def test_login_post(self):
         email = 'log@log.in'
@@ -307,7 +307,7 @@ class DomainsAndCasesTestCase(TestCase):
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'domains_and_cases.html')
+        self.assertTemplateUsed(response, 'consumer_user/domains_and_cases.html')
         self.assertEqual(response.context['domains_and_cases'],
                          [{'domain': 'd2', 'case_id': '1'}, {'domain': 'd1', 'case_id': '1'}])
 
@@ -319,7 +319,7 @@ class DomainsAndCasesTestCase(TestCase):
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'domains_and_cases.html')
+        self.assertTemplateUsed(response, 'consumer_user/domains_and_cases.html')
         self.assertEqual(response.context['domains_and_cases'], [])
 
     def test_domains_and_cases_no_user_logged_in(self):
@@ -359,7 +359,7 @@ class ChangeContactDetailsTestCase(TestCase):
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed('change_contact_details.html')
+        self.assertTemplateUsed('consumer_user/change_contact_details.html')
 
     def test_change_contact_details_post(self):
         email = 'b3@b3.com'

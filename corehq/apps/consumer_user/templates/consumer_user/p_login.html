@@ -1,8 +1,7 @@
-{% extends "consumer_user_base.html" %}
+{% extends "consumer_user/consumer_user_base.html" %}
 {% load i18n two_factor %}
 {% load hq_shared_tags %}
 {% load compress %}
-{% load static %}
 
 {% block title %}{% trans "Log In" %}{% endblock title %}
 
@@ -15,11 +14,6 @@
 {% endblock %}
 
 {% block stylesheets %}
-<link type="text/css"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
-
 {% compress css %}
 <link type="text/less"
       rel="stylesheet"
@@ -83,10 +77,10 @@
 
             {% include "two_factor/_wizard_actions.html" %}
           </form>
-          {% if this_is_not_me %}
+          {% if go_to_signup %}
           <div style="margin-top:10px">
-            <a href="{{ this_is_not_me }}">
-              {% trans "This is not me!" %}
+            <a href="{{ go_to_signup }}">
+              {% trans "Sign Up" %}
             </a>
           </div>
 
