@@ -1,14 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
-from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import ugettext as _
 from django.views.decorators.debug import sensitive_post_parameters
 
@@ -18,8 +16,8 @@ from two_factor.views import LoginView
 from corehq.apps.consumer_user.models import (
     ConsumerUser,
     ConsumerUserCaseRelationship,
-    ConsumerUserInvitation,
 )
+from corehq.apps.consumer_user.util import InvitationError, get_invitation_obj
 from corehq.apps.domain.decorators import two_factor_exempt
 
 from ..users.models import CouchUser
@@ -71,27 +69,12 @@ class ConsumerUserLoginView(LoginView):
         return context
 
 
-def get_invitation_object_or_error(invitation):
-    try:
-        decoded_invitation = urlsafe_base64_decode(TimestampSigner().unsign(invitation,
-                                                                            max_age=timedelta(days=30)))
-        invitation_obj = ConsumerUserInvitation.objects.get(id=decoded_invitation)
-        if invitation_obj.accepted:
-            url = reverse('consumer_user:consumer_user_login')
-            return HttpResponseRedirect(url)
-        elif not invitation_obj.active:
-            return HttpResponse(_("Invitation is inactive"), status=400)
-        else:
-            return invitation_obj
-    except (BadSignature, ConsumerUserInvitation.DoesNotExist):
-        return HttpResponse(_("Invalid invitation"), status=400)
-    except SignatureExpired:
-        return HttpResponse(_("Invitation is expired"), status=400)
-
-
 @two_factor_exempt
 def register_view(request, invitation):
-    invitation_obj = get_invitation_object_or_error(invitation)
+    try:
+        invitation_obj = get_invitation_obj(invitation)
+    except InvitationError as err:
+        return HttpResponse(err.msg, status=err.status)
     if isinstance(invitation_obj, HttpResponse):
         return invitation_obj
     email = invitation_obj.email
@@ -128,7 +111,10 @@ def login_view(request, invitation=None):
 
 
 def login_accept_view(request, invitation):
-    invitation_obj = get_invitation_object_or_error(invitation)
+    try:
+        invitation_obj = get_invitation_obj(invitation)
+    except InvitationError as err:
+        return HttpResponse(err.msg, status=err.status)
     if isinstance(invitation_obj, HttpResponse):
         return invitation_obj
     return ConsumerUserLoginView.as_view(invitation=invitation_obj, hashed_invitation=invitation)(request)
