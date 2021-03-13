@@ -211,8 +211,8 @@ class SignalTestCase(TestCase):
         self.factory = CaseFactory(self.domain)
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases()
-        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases(self.domain)
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
         ConsumerUserCaseRelationship.objects.all().delete()
         ConsumerUserInvitation.objects.all().delete()
         ConsumerUser.objects.all().delete()
@@ -220,7 +220,7 @@ class SignalTestCase(TestCase):
         super().tearDown()
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    def test_method_send_email(self):
+    def test_method_send_email_new_case(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
             result = self.factory.create_or_update_case(
                 CaseStructure(
@@ -244,9 +244,55 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_method_send_email_update_other_case_properties(self):
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
+            result = self.factory.create_or_update_case(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                                  relationship=CASE_INDEX_EXTENSION)
+                    ],
+                    attrs={
+                        'create': True,
+                        'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                        'owner_id': 'comm_care',
+                        'update': {'email': 'testing@testing.in'}
+                    }
+                )
+            )
+            case = result[0]
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+            self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case properties other than email should not create a new invitation
             update_case(self.domain, case.case_id,
                         case_properties={'contact_phone_number': '12345'})
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+            self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_method_send_email_update_email(self):
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
+            result = self.factory.create_or_update_case(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                                  relationship=CASE_INDEX_EXTENSION)
+                    ],
+                    attrs={
+                        'create': True,
+                        'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                        'owner_id': 'comm_care',
+                        'update': {'email': 'testing@testing.in'}
+                    }
+                )
+            )
+            case = result[0]
             self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
@@ -256,19 +302,64 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 2)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_method_send_email_resend(self):
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
+            result = self.factory.create_or_update_case(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                                  relationship=CASE_INDEX_EXTENSION)
+                    ],
+                    attrs={
+                        'create': True,
+                        'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                        'owner_id': 'comm_care',
+                        'update': {'email': 'testing@testing.in'}
+                    }
+                )
+            )
+            case = result[0]
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+            self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case again with status other than sent or accepted should send email again
             update_case(self.domain, case.case_id,
                         case_properties={CONSUMER_INVITATION_STATUS: 'resend'})
-            self.assertEqual(ConsumerUserInvitation.objects.count(), 3)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
-            self.assertEqual(send_html_email_async.call_count, 3)
+            self.assertEqual(send_html_email_async.call_count, 2)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_method_send_email_closed_case(self):
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
+            result = self.factory.create_or_update_case(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                                  relationship=CASE_INDEX_EXTENSION)
+                    ],
+                    attrs={
+                        'create': True,
+                        'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                        'owner_id': 'comm_care',
+                        'update': {'email': 'testing@testing.in'}
+                    }
+                )
+            )
+            case = result[0]
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+            self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
             # Closing the case should make invitation inactive
             update_case(self.domain, case.case_id, None, True)
-            self.assertEqual(ConsumerUserInvitation.objects.count(), 3)
+            self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 0)
-            self.assertEqual(ConsumerUserInvitation.objects.filter(active=False).count(),
-                             ConsumerUserInvitation.objects.count())
-            self.assertEqual(send_html_email_async.call_count, 3)
+            self.assertEqual(ConsumerUserInvitation.objects.filter(active=False).count(), 1)
+            self.assertEqual(send_html_email_async.call_count, 1)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_method_send_email_other_casetype(self):
