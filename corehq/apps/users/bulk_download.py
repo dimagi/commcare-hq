@@ -56,6 +56,22 @@ def get_devices(user):
     )])
 
 
+def get_location_codes(user, location_cache):
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(user.location_id))
+    except SQLLocation.DoesNotExist:
+        pass
+    for location_id in user.assigned_location_ids:
+        # skip if primary location_id, as it is already added to the start of list above
+        if location_id != user.location_id:
+            try:
+                location_codes.append(location_cache.get(location_id))
+            except SQLLocation.DoesNotExist:
+                pass
+    return location_codes
+
+
 def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition):
     model_data = {}
     uncategorized_data = {}
@@ -71,18 +87,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
             profile = None
     activity = user.reporting_metadata
 
-    location_codes = []
-    try:
-        location_codes.append(location_cache.get(user.location_id))
-    except SQLLocation.DoesNotExist:
-        pass
-    for location_id in user.assigned_location_ids:
-        # skip if primary location_id, as it is already added to the start of list above
-        if location_id != user.location_id:
-            try:
-                location_codes.append(location_cache.get(location_id))
-            except SQLLocation.DoesNotExist:
-                pass
+    location_codes = get_location_codes(user, location_cache)
 
     def _format_date(date):
         return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
@@ -127,18 +132,7 @@ def make_web_user_dict(user, location_cache, domain):
     user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
     role_name = get_user_role_name(domain_membership)
-    location_codes = []
-    try:
-        location_codes.append(location_cache.get(user.location_id))
-    except SQLLocation.DoesNotExist:
-        pass
-    for location_id in user.assigned_location_ids:
-        # skip if primary location_id, as it is already added to the start of list above
-        if location_id != user.location_id:
-            try:
-                location_codes.append(location_cache.get(location_id))
-            except SQLLocation.DoesNotExist:
-                pass
+    location_codes = get_location_codes(user, location_cache)
     return {
         'username': user.username,
         'first_name': user.first_name,
