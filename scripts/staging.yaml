@@ -79,4 +79,5 @@ branches:
   - jls/case-search-parent-props # Jenny March 15
   - smh/add-location-data-web-user-download # Steph Mar 15
   - gh/modify-project-performance-report # Graham March 15
+  - mjr/remove_dead_uglifier # Matt March 15
 submodules: {}
