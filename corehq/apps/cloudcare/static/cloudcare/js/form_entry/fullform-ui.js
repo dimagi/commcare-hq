@@ -459,6 +459,15 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             $.publish('formplayer.dirty');
         };
 
+        self.getTranslation = function (translationKey, defaultTranslation) {
+            if (self.parent.translations) {
+                var addNewRepeatTranslation = ko.toJS(self.parent.translations[translationKey]);
+                if (addNewRepeatTranslation) {
+                    return addNewRepeatTranslation;
+                }
+            }
+            return defaultTranslation;
+        };
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
