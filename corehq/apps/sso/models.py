@@ -227,6 +227,12 @@ class IdentityProvider(models.Model):
 
     @classmethod
     def domain_has_editable_identity_provider(cls, domain):
+        """
+        Check to see that a Domain is associated with an IdentityProvider
+        that is editable.
+        :param domain: (String) Domain name
+        :return: Boolean (True if an editable IdentityProvider exists)
+        """
         owner = BillingAccount.get_account_by_domain(domain)
         return cls.objects.filter(owner=owner, is_editable=True).exists()
 
