@@ -277,7 +277,10 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case properties other than email should not create a new invitation
-            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345'})
+            self.factory.update_case(
+                case.case_id,
+                update={'contact_phone_number': '12345'},
+            )
             self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
@@ -309,7 +312,10 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case again with a changed email address creates a new invitation
-            update_case(self.domain, case.case_id, case_properties={'email': 'email@changed.in'})
+            self.factory.update_case(
+                case.case_id,
+                update={'email': 'email@changed.in'},
+            )
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 2)
@@ -341,7 +347,10 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case again with status other than sent or accepted should send email again
-            update_case(self.domain, case.case_id, case_properties={CONSUMER_INVITATION_STATUS: 'resend'})
+            self.factory.update_case(
+                case.case_id,
+                update={CONSUMER_INVITATION_STATUS: 'resend'},
+            )
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 2)
@@ -373,7 +382,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Closing the case should make invitation inactive
-            update_case(self.domain, case.case_id, None, True)
+            self.factory.close_case(case.case_id)
             self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 0)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=False).count(), 1)
