@@ -39,8 +39,13 @@ def create_new_consumer_user_invitation(
         invitation.make_inactive()
         if ConsumerUserCaseRelationship.objects.filter(case_id=demographic_case_id, domain=domain).exists():
             return
-    invitation = ConsumerUserInvitation.create_invitation(
-        invitation_case_id, domain, demographic_case_id, opened_by, email
+
+    invitation = ConsumerUserInvitation.objects.create(
+        case_id=invitation_case_id,
+        domain=domain,
+        demographic_case_id=demographic_case_id,
+        invited_by=opened_by,
+        email=email,
     )
     email_context = {
         'link':
