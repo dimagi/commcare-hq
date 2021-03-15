@@ -413,6 +413,20 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
+        if toggles.ENTERPRISE_SSO.enabled_for_request(self.request):
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.editable_user.username
+            )
+            ctx.update({
+                'has_untrusted_identity_provider': (
+                    not IdentityProvider.does_domain_trust_user(
+                        self.domain,
+                        self.editable_user.username
+                    )
+                ),
+                'idp_name': idp.name if idp else '',
+            })
+
         return ctx
 
     @method_decorator(always_allow_project_access)
@@ -426,6 +440,25 @@ class EditWebUserView(BaseEditUserView):
     def post(self, request, *args, **kwargs):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
+
+        if (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
+                and self.request.POST['form_type'] == 'trust-identity-provider'):
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.editable_user.username
+            )
+            if idp:
+                idp.create_trust_with_domain(
+                    self.domain,
+                    self.request.user.username
+                )
+                messages.success(
+                    self.request,
+                    _('Your project space "{domain}" now trusts the SSO '
+                      'Identity Provider "{idp_name}".').format(
+                        domain=self.domain,
+                        idp_name=idp.name,
+                    )
+                )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
