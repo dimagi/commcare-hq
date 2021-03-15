@@ -12,21 +12,25 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
-from django.conf import settings
 from django.utils.dateparse import parse_date
+from django.utils.translation import ugettext as _
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
+    MAX_RELATED_CASES,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
     SYSTEM_PROPERTIES,
     VALUE,
 )
+from corehq.apps.case_search.exceptions import (
+    TooManyRelatedCasesException,
+    UnsupportedQueryException,
+)
 from corehq.apps.es.cases import CaseES, owner
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
 
@@ -67,6 +71,31 @@ class CaseSearchES(CaseES):
                             queries.SHOULD if positive_clause else clause))
         else:
             return self.add_query(exact_case_property_text_query(case_property_name, value), clause)
+
+    def related_case_property_query(self, domain, path, value):
+        """
+        Search for property in a related case.
+
+        Supports a single-level path, e.g., parent/property_name
+
+        Does not support fuzziness.
+        """
+        try:
+            (identifier, prop) = path.split("/")
+        except ValueError:
+            raise UnsupportedQueryException(
+                _("Multi-level related case queries are unsupported: {}").format(path),
+            )
+
+        # TODO: DRY up with _parent_property_lookup?
+        new_query = f'{prop} = "{value}"'
+        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+        if es_query.count() > MAX_RELATED_CASES:
+            # TODO: Make formplayer display this to user
+            raise TooManyRelatedCasesException()
+        ids = es_query.scroll_ids()
+
+        return self.filter(reverse_index_case_query(ids, identifier))
 
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
