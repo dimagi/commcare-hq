@@ -1,5 +1,8 @@
 from django.contrib.auth.models import User
+from django.core.signing import TimestampSigner
 from django.db import models
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from corehq.util.models import GetOrNoneManager
 
@@ -50,3 +53,8 @@ class ConsumerUserInvitation(models.Model):
         )
         instance.save()
         return instance
+
+    def signature(self):
+        """Creates an encrypted key that can be used in a URL to accept this invitation
+        """
+        return TimestampSigner().sign(urlsafe_base64_encode(force_bytes(self.pk)))
