@@ -59,10 +59,9 @@ class ConsumerUserLoginView(LoginView):
         context = super(ConsumerUserLoginView, self).get_context_data(**kwargs)
         if self.hashed_invitation:
             extra_context = {}
-            go_to_signup = reverse('consumer_user:consumer_user_register',
-                                   kwargs={
-                                       'invitation': self.hashed_invitation
-                                   })
+            go_to_signup = reverse(
+                'consumer_user:consumer_user_register', kwargs={'invitation': self.hashed_invitation}
+            )
             extra_context['go_to_signup'] = '%s%s' % (go_to_signup, '?create_user=1')
             context.update(extra_context)
         context.update({'hide_menu': True})
@@ -80,10 +79,7 @@ def register_view(request, invitation):
     email = invitation_obj.email
     create_user = request.GET.get('create_user', False)
     if create_user != '1' and User.objects.filter(username=email).exists():
-        url = reverse('consumer_user:consumer_user_login_with_invitation',
-                      kwargs={
-                          'invitation': invitation
-                      })
+        url = reverse('consumer_user:consumer_user_login_with_invitation', kwargs={'invitation': invitation})
         return HttpResponseRedirect(url)
     if request.method == "POST":
         form = ConsumerUserSignUpForm(request.POST, invitation=invitation_obj)
@@ -93,8 +89,7 @@ def register_view(request, invitation):
             return HttpResponseRedirect(url)
     else:
         form = ConsumerUserSignUpForm()
-    return render(request, 'consumer_user/signup.html', {'form': form,
-                                                         'hide_menu': True})
+    return render(request, 'consumer_user/signup.html', {'form': form, 'hide_menu': True})
 
 
 @two_factor_exempt

@@ -9,6 +9,7 @@ from corehq.apps.consumer_user.models import ConsumerUserInvitation
 
 
 class InvitationError(Exception):
+
     def __init__(self, msg, status, *args):
         self.msg = msg
         self.status = status
@@ -16,6 +17,7 @@ class InvitationError(Exception):
 
 
 class InvitationRedirect(InvitationError):
+
     def __init__(self, redirect_to):
         self.redirect_to = redirect_to
         super().__init__('', 302)
@@ -23,8 +25,9 @@ class InvitationRedirect(InvitationError):
 
 def get_invitation_obj(invitation):
     try:
-        decoded_invitation = urlsafe_base64_decode(TimestampSigner().unsign(invitation,
-                                                                            max_age=timedelta(days=30)))
+        decoded_invitation = urlsafe_base64_decode(
+            TimestampSigner().unsign(invitation, max_age=timedelta(days=30))
+        )
         invitation_obj = ConsumerUserInvitation.objects.get(id=decoded_invitation)
         if invitation_obj.accepted:
             url = reverse('consumer_user:consumer_user_login')

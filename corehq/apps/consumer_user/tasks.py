@@ -1,12 +1,10 @@
 from django.core.signing import TimestampSigner
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
 
 from celery.task import task
-from dimagi.utils.web import get_url_base
 
 from corehq.apps.consumer_user.models import (
     ConsumerUserCaseRelationship,
@@ -14,6 +12,7 @@ from corehq.apps.consumer_user.models import (
 )
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.util.view_utils import absolute_reverse
 
 from .const import (
     CONSUMER_INVITATION_ACCEPTED,
@@ -25,10 +24,12 @@ from .const import (
 @task
 def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, closed, status, opened_by, email):
 
-    invitation = ConsumerUserInvitation.objects.filter(case_id=case_id,
-                                                       domain=domain,
-                                                       demographic_case_id=demographic_case_id,
-                                                       active=True).last()
+    invitation = ConsumerUserInvitation.objects.filter(
+        case_id=case_id,
+        domain=domain,
+        demographic_case_id=demographic_case_id,
+        active=True,
+    ).last()
     is_status_sent_or_accepted = status == CONSUMER_INVITATION_SENT or status == CONSUMER_INVITATION_ACCEPTED
     if closed:
         if invitation:
@@ -38,17 +39,14 @@ def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, cl
         return
     elif invitation:
         invitation.make_inactive()
-        if ConsumerUserCaseRelationship.objects.filter(case_id=demographic_case_id,
-                                                       domain=domain).exists():
+        if ConsumerUserCaseRelationship.objects.filter(case_id=demographic_case_id, domain=domain).exists():
             return
     invitation = ConsumerUserInvitation.create_invitation(case_id, domain, demographic_case_id, opened_by, email)
-    url = '%s%s' % (get_url_base(),
-                    reverse('consumer_user:consumer_user_register',
-                            kwargs={
-                                'invitation': TimestampSigner().sign(urlsafe_base64_encode(
-                                    force_bytes(invitation.pk)
-                                ))
-                            }))
+    signed_invitation = TimestampSigner().sign(urlsafe_base64_encode(force_bytes(invitation.pk)))
+    url = absolute_reverse(
+        'consumer_user:consumer_user_register',
+        kwargs={'invitation': signed_invitation},
+    )
     email_context = {
         'link': url,
     }

@@ -29,17 +29,17 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 def register_url(invitation):
-    return reverse('consumer_user:consumer_user_register',
-                   kwargs={'invitation': TimestampSigner().sign(
-                       urlsafe_base64_encode(force_bytes(invitation))
-                   )})
+    return reverse(
+        'consumer_user:consumer_user_register',
+        kwargs={'invitation': TimestampSigner().sign(urlsafe_base64_encode(force_bytes(invitation)))}
+    )
 
 
 def login_accept_url(invitation):
-    return reverse('consumer_user:consumer_user_login_with_invitation',
-                   kwargs={'invitation': TimestampSigner().sign(
-                       urlsafe_base64_encode(force_bytes(invitation))
-                   )})
+    return reverse(
+        'consumer_user:consumer_user_login_with_invitation',
+        kwargs={'invitation': TimestampSigner().sign(urlsafe_base64_encode(force_bytes(invitation)))}
+    )
 
 
 class RegisterTestCase(TestCase):
@@ -57,8 +57,9 @@ class RegisterTestCase(TestCase):
         super().tearDown()
 
     def test_register_get(self):
-        invitation = ConsumerUserInvitation.objects.create(case_id='1', domain='1', invited_by='I',
-                                                           email='a@a.com')
+        invitation = ConsumerUserInvitation.objects.create(
+            case_id='1', domain='1', invited_by='I', email='a@a.com'
+        )
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 200)
@@ -67,8 +68,9 @@ class RegisterTestCase(TestCase):
 
     def test_register_consumer(self):
         email = 'a@a.com'
-        invitation = ConsumerUserInvitation.objects.create(case_id='2', domain='1', demographic_case_id='3',
-                                                           invited_by='I', email=email)
+        invitation = ConsumerUserInvitation.objects.create(
+            case_id='2', domain='1', demographic_case_id='3', invited_by='I', email=email
+        )
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
         post_data = {
@@ -91,8 +93,7 @@ class RegisterTestCase(TestCase):
 
     def test_register_existing_user(self):
         email = 'a1@a1.com'
-        invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I',
-                                                           email=email)
+        invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I', email=email)
         User.objects.create_user(username=email, email=email, password='password')
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
@@ -109,8 +110,7 @@ class RegisterTestCase(TestCase):
 
     def test_register_different_email(self):
         email = 'a2@a2.com'
-        invitation = ConsumerUserInvitation.objects.create(case_id='4', domain='1', invited_by='I',
-                                                           email=email)
+        invitation = ConsumerUserInvitation.objects.create(case_id='4', domain='1', invited_by='I', email=email)
         register_uri = register_url(invitation.id)
         self.assertFalse(invitation.accepted)
         post_data = {
@@ -126,8 +126,9 @@ class RegisterTestCase(TestCase):
         self.assertTrue(invitation.accepted)
 
     def test_register_accepted_invitation(self):
-        invitation = ConsumerUserInvitation.objects.create(case_id='5', domain='1', invited_by='I',
-                                                           email='a@a.com', accepted=True)
+        invitation = ConsumerUserInvitation.objects.create(
+            case_id='5', domain='1', invited_by='I', email='a@a.com', accepted=True
+        )
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 302)
@@ -135,8 +136,7 @@ class RegisterTestCase(TestCase):
 
     def test_register_get_webuser(self):
         email = 'a6@a6.com'
-        invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I',
-                                                           email=email)
+        invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I', email=email)
         User.objects.create_user(username=email, email=email, password='password')
         register_uri = register_url(invitation.id)
         response = self.client.get(register_uri)
@@ -190,8 +190,7 @@ class LoginTestCase(TestCase):
         password = 'password'
         user = User.objects.create_user(username=email, email=email, password=password)
         ConsumerUser.objects.create(user=user)
-        invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I',
-                                                           email=email)
+        invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I', email=email)
         post_data = {
             'auth-username': email,
             'auth-password': password,
@@ -226,14 +225,18 @@ class SignalTestCase(TestCase):
                 CaseStructure(
                     case_id=uuid.uuid4().hex,
                     indices=[
-                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
-                                  relationship=CASE_INDEX_EXTENSION)
+                        CaseIndex(
+                            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                            relationship=CASE_INDEX_EXTENSION
+                        )
                     ],
                     attrs={
                         'create': True,
                         'case_type': CONSUMER_INVITATION_CASE_TYPE,
                         'owner_id': 'comm_care',
-                        'update': {'email': 'testing@testing.in'}
+                        'update': {
+                            'email': 'testing@testing.in'
+                        }
                     }
                 )
             )
@@ -252,14 +255,18 @@ class SignalTestCase(TestCase):
                 CaseStructure(
                     case_id=uuid.uuid4().hex,
                     indices=[
-                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
-                                  relationship=CASE_INDEX_EXTENSION)
+                        CaseIndex(
+                            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                            relationship=CASE_INDEX_EXTENSION
+                        )
                     ],
                     attrs={
                         'create': True,
                         'case_type': CONSUMER_INVITATION_CASE_TYPE,
                         'owner_id': 'comm_care',
-                        'update': {'email': 'testing@testing.in'}
+                        'update': {
+                            'email': 'testing@testing.in'
+                        }
                     }
                 )
             )
@@ -268,8 +275,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case properties other than email should not create a new invitation
-            update_case(self.domain, case.case_id,
-                        case_properties={'contact_phone_number': '12345'})
+            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345'})
             self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
@@ -281,14 +287,18 @@ class SignalTestCase(TestCase):
                 CaseStructure(
                     case_id=uuid.uuid4().hex,
                     indices=[
-                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
-                                  relationship=CASE_INDEX_EXTENSION)
+                        CaseIndex(
+                            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                            relationship=CASE_INDEX_EXTENSION
+                        )
                     ],
                     attrs={
                         'create': True,
                         'case_type': CONSUMER_INVITATION_CASE_TYPE,
                         'owner_id': 'comm_care',
-                        'update': {'email': 'testing@testing.in'}
+                        'update': {
+                            'email': 'testing@testing.in'
+                        }
                     }
                 )
             )
@@ -297,8 +307,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case again with a changed email address creates a new invitation
-            update_case(self.domain, case.case_id,
-                        case_properties={'email': 'email@changed.in'})
+            update_case(self.domain, case.case_id, case_properties={'email': 'email@changed.in'})
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 2)
@@ -310,14 +319,18 @@ class SignalTestCase(TestCase):
                 CaseStructure(
                     case_id=uuid.uuid4().hex,
                     indices=[
-                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
-                                  relationship=CASE_INDEX_EXTENSION)
+                        CaseIndex(
+                            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                            relationship=CASE_INDEX_EXTENSION
+                        )
                     ],
                     attrs={
                         'create': True,
                         'case_type': CONSUMER_INVITATION_CASE_TYPE,
                         'owner_id': 'comm_care',
-                        'update': {'email': 'testing@testing.in'}
+                        'update': {
+                            'email': 'testing@testing.in'
+                        }
                     }
                 )
             )
@@ -326,8 +339,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 1)
             # Updating the case again with status other than sent or accepted should send email again
-            update_case(self.domain, case.case_id,
-                        case_properties={CONSUMER_INVITATION_STATUS: 'resend'})
+            update_case(self.domain, case.case_id, case_properties={CONSUMER_INVITATION_STATUS: 'resend'})
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
             self.assertEqual(send_html_email_async.call_count, 2)
@@ -339,14 +351,18 @@ class SignalTestCase(TestCase):
                 CaseStructure(
                     case_id=uuid.uuid4().hex,
                     indices=[
-                        CaseIndex(CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
-                                  relationship=CASE_INDEX_EXTENSION)
+                        CaseIndex(
+                            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                            relationship=CASE_INDEX_EXTENSION
+                        )
                     ],
                     attrs={
                         'create': True,
                         'case_type': CONSUMER_INVITATION_CASE_TYPE,
                         'owner_id': 'comm_care',
-                        'update': {'email': 'testing@testing.in'}
+                        'update': {
+                            'email': 'testing@testing.in'
+                        }
                     }
                 )
             )
@@ -369,8 +385,9 @@ class SignalTestCase(TestCase):
             'person',
             owner_id='comm_care',
         ) as case:
-            self.assertEqual(ConsumerUserInvitation.objects.filter(case_id=case.case_id,
-                                                                   domain=case.domain).count(), 0)
+            self.assertEqual(
+                ConsumerUserInvitation.objects.filter(case_id=case.case_id, domain=case.domain).count(), 0
+            )
             self.assertEqual(ConsumerUserInvitation.objects.count(), invitation_count)
             send_html_email_async.assert_not_called()
 
@@ -399,8 +416,15 @@ class DomainsAndCasesTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'consumer_user/domains_and_cases.html')
-        self.assertEqual(response.context['domains_and_cases'],
-                         [{'domain': 'd2', 'case_id': '1'}, {'domain': 'd1', 'case_id': '1'}])
+        self.assertEqual(
+            response.context['domains_and_cases'], [{
+                'domain': 'd2',
+                'case_id': '1'
+            }, {
+                'domain': 'd1',
+                'case_id': '1'
+            }]
+        )
 
     def test_domains_and_cases_no_data(self):
         email = 'b1@b1.com'
@@ -443,9 +467,9 @@ class ChangeContactDetailsTestCase(TestCase):
         password = 'password'
         first_name = 'first'
         last_name = 'last'
-        user = User.objects.create_user(username=email, email=email,
-                                        password=password, first_name=first_name,
-                                        last_name=last_name)
+        user = User.objects.create_user(
+            username=email, email=email, password=password, first_name=first_name, last_name=last_name
+        )
         ConsumerUser.objects.create(user=user)
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
@@ -457,15 +481,12 @@ class ChangeContactDetailsTestCase(TestCase):
         password = 'password'
         first_name = 'first'
         last_name = 'last'
-        user = User.objects.create_user(username=email, email=email,
-                                        password=password, first_name=first_name,
-                                        last_name=last_name)
+        user = User.objects.create_user(
+            username=email, email=email, password=password, first_name=first_name, last_name=last_name
+        )
         ConsumerUser.objects.create(user=user)
         self.client.login(username=email, password=password)
-        post_data = {
-            'first_name': 'first_name',
-            'last_name': 'last_name'
-        }
+        post_data = {'first_name': 'first_name', 'last_name': 'last_name'}
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         new_user = User.objects.get(username=email)
@@ -481,9 +502,9 @@ class ChangeContactDetailsTestCase(TestCase):
         password = 'password'
         first_name = 'first'
         last_name = 'last'
-        User.objects.create_user(username=email, email=email,
-                                 password=password, first_name=first_name,
-                                 last_name=last_name)
+        User.objects.create_user(
+            username=email, email=email, password=password, first_name=first_name, last_name=last_name
+        )
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)

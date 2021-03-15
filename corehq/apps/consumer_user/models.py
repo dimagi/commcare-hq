@@ -15,7 +15,10 @@ class ConsumerUserCaseRelationship(models.Model):
     domain = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = ('case_id', 'domain',)
+        unique_together = (
+            'case_id',
+            'domain',
+        )
 
 
 class ConsumerUserInvitation(models.Model):
@@ -38,10 +41,12 @@ class ConsumerUserInvitation(models.Model):
 
     @classmethod
     def create_invitation(cls, case_id, domain, demographic_case_id, opened_by, email):
-        instance = cls(case_id=case_id,
-                       domain=domain,
-                       demographic_case_id=demographic_case_id,
-                       invited_by=opened_by,
-                       email=email)
+        instance = cls(
+            case_id=case_id,
+            domain=domain,
+            demographic_case_id=demographic_case_id,
+            invited_by=opened_by,
+            email=email
+        )
         instance.save()
         return instance

@@ -7,6 +7,7 @@ from corehq.apps.consumer_user.models import ConsumerUser
 
 
 def consumer_user_login_required(view_func):
+
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
@@ -16,4 +17,5 @@ def consumer_user_login_required(view_func):
 
         # User login validated and verified corresponding ConsumerUser exists- it's safe to call the view function
         return view_func(request, *args, **kwargs)
+
     return _inner
