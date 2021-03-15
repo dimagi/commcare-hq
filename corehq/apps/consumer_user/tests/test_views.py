@@ -6,7 +6,6 @@ from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from django.urls import reverse
-from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from mock import patch
@@ -31,14 +30,14 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 def register_url(invitation):
     return reverse(
         'consumer_user:consumer_user_register',
-        kwargs={'invitation': TimestampSigner().sign(urlsafe_base64_encode(force_bytes(invitation)))}
+        kwargs={'invitation': invitation.signature()}
     )
 
 
 def login_accept_url(invitation):
     return reverse(
         'consumer_user:consumer_user_login_with_invitation',
-        kwargs={'invitation': TimestampSigner().sign(urlsafe_base64_encode(force_bytes(invitation)))}
+        kwargs={'invitation': invitation.signature()}
     )
 
 
@@ -60,7 +59,7 @@ class RegisterTestCase(TestCase):
         invitation = ConsumerUserInvitation.objects.create(
             case_id='1', domain='1', invited_by='I', email='a@a.com'
         )
-        register_uri = register_url(invitation.id)
+        register_uri = register_url(invitation)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'consumer_user/signup.html')
@@ -71,7 +70,7 @@ class RegisterTestCase(TestCase):
         invitation = ConsumerUserInvitation.objects.create(
             case_id='2', domain='1', demographic_case_id='3', invited_by='I', email=email
         )
-        register_uri = register_url(invitation.id)
+        register_uri = register_url(invitation)
         self.assertFalse(invitation.accepted)
         post_data = {
             'first_name': 'First',
@@ -95,7 +94,7 @@ class RegisterTestCase(TestCase):
         email = 'a1@a1.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='3', domain='1', invited_by='I', email=email)
         User.objects.create_user(username=email, email=email, password='password')
-        register_uri = register_url(invitation.id)
+        register_uri = register_url(invitation)
         self.assertFalse(invitation.accepted)
         post_data = {
             'first_name': 'First',
@@ -111,7 +110,7 @@ class RegisterTestCase(TestCase):
     def test_register_different_email(self):
         email = 'a2@a2.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='4', domain='1', invited_by='I', email=email)
-        register_uri = register_url(invitation.id)
+        register_uri = register_url(invitation)
         self.assertFalse(invitation.accepted)
         post_data = {
             'first_name': 'First',
@@ -129,7 +128,7 @@ class RegisterTestCase(TestCase):
         invitation = ConsumerUserInvitation.objects.create(
             case_id='5', domain='1', invited_by='I', email='a@a.com', accepted=True
         )
-        register_uri = register_url(invitation.id)
+        register_uri = register_url(invitation)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 302)
         self.assertTemplateNotUsed(response, 'consumer_user/signup.html')
@@ -138,14 +137,17 @@ class RegisterTestCase(TestCase):
         email = 'a6@a6.com'
         invitation = ConsumerUserInvitation.objects.create(case_id='6', domain='1', invited_by='I', email=email)
         User.objects.create_user(username=email, email=email, password='password')
-        register_uri = register_url(invitation.id)
+        register_uri = register_url(invitation)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 302)
         self.assertTemplateNotUsed(response, 'consumer_user/signup.html')
         self.assertFalse(invitation.accepted)
 
     def test_register_invalid_invitation(self):
-        register_uri = register_url(1000)
+        register_uri = reverse(
+            'consumer_user:consumer_user_register',
+            kwargs={'invitation': TimestampSigner().sign(urlsafe_base64_encode(b'1000'))}
+        )
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 400)
         self.assertTemplateNotUsed(response, 'consumer_user/signup.html')
@@ -196,7 +198,7 @@ class LoginTestCase(TestCase):
             'auth-password': password,
             'consumer_user_login_view-current_step': 'auth',
         }
-        response = self.client.post(login_accept_url(invitation.id), post_data)
+        response = self.client.post(login_accept_url(invitation), post_data)
         self.assertEqual(response.status_code, 302)
         invitation.refresh_from_db()
         self.assertTrue(invitation.accepted)

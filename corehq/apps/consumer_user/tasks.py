@@ -1,7 +1,4 @@
-from django.core.signing import TimestampSigner
 from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
 
 from celery.task import task
@@ -42,13 +39,11 @@ def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, cl
         if ConsumerUserCaseRelationship.objects.filter(case_id=demographic_case_id, domain=domain).exists():
             return
     invitation = ConsumerUserInvitation.create_invitation(case_id, domain, demographic_case_id, opened_by, email)
-    signed_invitation = TimestampSigner().sign(urlsafe_base64_encode(force_bytes(invitation.pk)))
-    url = absolute_reverse(
-        'consumer_user:consumer_user_register',
-        kwargs={'invitation': signed_invitation},
-    )
     email_context = {
-        'link': url,
+        'link': absolute_reverse(
+            'consumer_user:consumer_user_register',
+            kwargs={'invitation': invitation.signature()},
+        ),
     }
     send_html_email_async.delay(
         _('Beneficiary Registration'),
