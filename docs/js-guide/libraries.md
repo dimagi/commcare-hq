@@ -1,7 +1,10 @@
 # Third-Party Libraries
 
+This page discusses when to use the major, UI-framework-level, libraries we depend on, along with a few common code
+conventions for these libraries.
+
 ## jQuery
-[jQuery](https://jquery.com/) is available throughout HQ. We use jQuery 3 everywhere except in Web Apps, which depends on [marionette](https://marionettejs.com/) v2, which is only compatible with jQuery 2.
+[jQuery](https://jquery.com/) is available throughout HQ. We use jQuery 3.
 
 Prefix jQuery variables with a `$`:
 ```
@@ -33,8 +36,9 @@ var myModel = function (options) {
 Current total: <span data-bind="text: oTotal"></div>
 ```
 
-## Backbone
-[Backbone](http://backbonejs.org/) is used in Web Apps. It **should not** be used outside of Web Apps.
+## Backbone and Marionette
+[Backbone](http://backbonejs.org/) is used in Web Apps. It **should not** be used outside of Web Apps. Within Web
+Apps, we use [Marionette](http://marionettejs.com/) for most UI management.
 
 ## Angular
 [Angular](https://angularjs.org/) is used only in custom reports for ICDS. It **should not** be used for new code. The angular we do have is Angular 1, which is outdated but is effectively a different framework than later versions of angular, making upgrading non-trivial. It's [unclear](https://toddmotto.com/future-of-angular-1-x#whats-next-for-angular-1x) how long Angular 1 will be supported by its creators.

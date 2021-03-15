@@ -1,0 +1,275 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-death_records_v1",
+    "display_name": "Death Records V1 (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/09B1E7B3-BB57-4A51-8CD3-114F1054F18E"
+        },
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "remove_family_member_group",
+              "member_removal_reason"
+            ]
+          },
+          "property_value": "death"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "username"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "received_on"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "member_case_id",
+        "display_name": "member_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "case_load_member_0",
+            "case",
+            "@case_id"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "residential_status",
+        "display_name": "residential_status",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_residential_status"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "gender",
+        "display_name": "gender",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_gender"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "dob",
+        "display_name": "dob",
+        "datatype": "date",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_dob"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "death_date",
+        "display_name": "death_date",
+        "datatype": "date",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "remove_family_member_group",
+            "death_details_group",
+            "member_death_date"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "age_at_death_yrs",
+        "display_name": "age_at_death_yrs",
+        "datatype": "integer",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "remove_family_member_group",
+            "death_details_group",
+            "age_at_death_yrs"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "female_death_type",
+        "display_name": "female_death_type",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "remove_family_member_group",
+            "death_details_group",
+            "female_death_type"
+          ]
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      },
+      "member_case": {
+        "value_expression": {
+          "type": "identity"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "case_load_member_0",
+            "case",
+            "@case_id"
+          ]
+        }
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

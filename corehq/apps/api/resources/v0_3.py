@@ -58,8 +58,12 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
+        domain = kwargs['domain']
         try:
-            return CaseAccessors(kwargs['domain']).get_case(case_id)
+            case = CaseAccessors(domain).get_case(case_id)
+            if case.domain != domain:
+                raise CaseNotFound
+            return case
         except CaseNotFound:
             raise object_does_not_exist("CommCareCase", case_id)
 

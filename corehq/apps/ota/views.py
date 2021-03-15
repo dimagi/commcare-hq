@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
+from urllib.parse import unquote
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -126,12 +127,12 @@ def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
     """
-    as_user = request.POST.get('commcare_login_as', None)
+    as_user = unquote(request.POST.get('commcare_login_as', ''))
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    case_id = request.POST.get('case_id', None)
-    if case_id is None:
+    case_id = unquote(request.POST.get('case_id', ''))
+    if not case_id:
         return HttpResponse('A case_id is required', status=400)
 
     try:
@@ -140,8 +141,8 @@ def claim(request, domain):
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
-                   host_type=request.POST.get('case_type'),
-                   host_name=request.POST.get('case_name'),
+                   host_type=unquote(request.POST.get('case_type', '')),
+                   host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
@@ -253,7 +254,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     app = get_app_cached(domain, app_id) if app_id else None
     if app:
-        error_response = check_authorization(domain, couch_user, app.master_id)
+        error_response = check_authorization(domain, couch_user, app.origin_id)
         if error_response:
             return error_response, None
     restore_config = RestoreConfig(
@@ -302,8 +303,8 @@ def heartbeat(request, domain, app_build_id):
         # If it's not a valid master app id, find it by talking to couch
         app = get_app_cached(domain, app_build_id)
         notify_exception(request, 'Received an invalid heartbeat request')
-        master_app_id = app.master_id if app else None
-        info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
+        master_app_id = app.origin_id if app else None
+        info = GlobalAppConfig.get_latest_version_info(domain, app.origin_id, build_profile_id)
 
     info["app_id"] = app_id
     if master_app_id:
@@ -390,7 +391,7 @@ def get_recovery_measures_cached(domain, app_id):
 @require_GET
 @toggles.MOBILE_RECOVERY_MEASURES.required_decorator()
 def recovery_measures(request, domain, build_id):
-    app_id = get_app_cached(domain, build_id).master_id
+    app_id = get_app_cached(domain, build_id).origin_id
     response = {
         "latest_apk_version": get_default_build_spec().version,
         "latest_ccz_version": get_latest_released_app_version(domain, app_id),

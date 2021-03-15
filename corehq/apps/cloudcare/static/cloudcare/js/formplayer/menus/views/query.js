@@ -1,7 +1,31 @@
-/*global DOMPurify, Marionette */
+/*global DOMPurify, Marionette, moment */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
+    // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var separator = " to ",
+        dateFormat = "YYYY-MM-DD";
+
+    // special format handled by CaseSearch API
+    var encodeValue = function (model, value) {
+            if (!value) {
+                return value;
+            }
+            if (model.get("input") === "daterange") {
+                return "__range__" + value.replace(separator, "__");
+            }
+            return value;
+        },
+        decodeValue = function (model, value) {
+            if (!value) {
+                return value;
+            }
+            if (model.get("input") === "daterange") {
+                return value.replace("__range__", "").replace("__", separator);
+            }
+            return value;
+        };
 
     var QueryView = Marionette.View.extend({
         tagName: "tr",
@@ -12,22 +36,32 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var imageUri = this.options.model.get('imageUri'),
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
-                initialValue = this.options.model.get('value');
+                value = this.options.model.get('value');
 
             // Initial values are sent from formplayer as strings, but dropdowns expect an integer
-            if (initialValue && this.options.model.get('input') === "select1") {
-                initialValue = parseInt(initialValue);
+            if (value && this.options.model.get('input') === "select1") {
+                value = parseInt(value);
             }
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
-                value: initialValue,
+                value: value,
             };
+        },
+
+        initialize: function () {
+            // If input doesn't have a default value, check to see if there's a sticky value from user's last search
+            if (!this.options.model.get('value')) {
+                var stickyValue = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')];
+                this.options.model.set('value', decodeValue(this.options.model, stickyValue));
+            }
         },
 
         ui: {
             valueDropdown: 'select.query-field',
+            hqHelp: '.hq-help',
+            dateRange: 'input.daterange',
         },
 
         modelEvents: {
@@ -39,6 +73,35 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 allowClear: true,
                 placeholder: " ",   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+            });
+            this.ui.hqHelp.hqHelp();
+            this.ui.dateRange.daterangepicker({
+                locale: {
+                    format: dateFormat,
+                    separator: separator,
+                    cancelLabel: gettext('Clear'),
+                },
+                autoUpdateInput: false,
+            });
+            var self = this;
+            this.ui.dateRange.on('cancel.daterangepicker', function () {
+                $(this).val('').trigger('change');
+            });
+            this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
+            });
+            this.ui.dateRange.on('change', function () {
+                // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
+                var $input = $(this),
+                    oldValue = $input.val(),
+                    parts = _.map(oldValue.split(separator), function (v) { return moment(v); }),
+                    newValue = '';
+                if (parts.length === 2 && _.every(parts, function (part) { return part.isValid(); })) {
+                    newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
+                }
+                if (oldValue !== newValue) {
+                    $input.val(newValue).trigger('change');
+                }
             });
         },
     });
@@ -60,12 +123,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         ui: {
+            clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
+            valueInput: 'input.query-field',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
+            'change @ui.valueInput': 'setStickyQueryInputs',
+            'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
 
@@ -75,7 +142,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model = this.parentModel;
             $fields.each(function (index) {
                 if (this.value !== '') {
-                    answers[model[index].get('id')] = this.value;
+                    answers[model[index].get('id')] = encodeValue(model[index], this.value);
                 }
             });
             return answers;
@@ -109,12 +176,28 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         $field.trigger('change.select2');
                     }
                 }
+                self.setStickyQueryInputs();
             });
+        },
+
+        clearAction: function () {
+            var self = this,
+                fields = $(".query-field");
+            fields.each(function () {
+                this.value = '';
+                $(this).trigger('change.select2');
+            });
+            self.setStickyQueryInputs();
         },
 
         submitAction: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
+        },
+
+        setStickyQueryInputs: function () {
+            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            Util.setStickyQueryInputs(this.getAnswers());
         },
     });
 

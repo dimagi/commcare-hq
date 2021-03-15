@@ -445,7 +445,9 @@ class ApplicationResource(BaseApplicationResource):
                         langs,
                         include_triggers=True,
                         include_groups=True,
-                        include_translations=True),
+                        include_translations=True,
+                        include_fixtures=True,
+                    ),
                     'unique_id': form_unique_id,
                 }
                 dehydrated['forms'].append(form_jvalue)

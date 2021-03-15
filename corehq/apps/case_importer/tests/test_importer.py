@@ -112,6 +112,25 @@ class ImporterTest(TestCase):
                 properties_seen.add(case.get_case_property(prop))
 
     @run_with_all_backends
+    def testCreateCasesWithDuplicateExternalIds(self):
+        config = self._config(['case_id', 'age', 'sex', 'location', 'external_id'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location', 'external_id'],
+            ['case_id-0', 'age-0', 'sex-0', 'location-0', 'external_id-0'],
+            ['case_id-1', 'age-1', 'sex-1', 'location-1', 'external_id-0'],
+            ['case_id-2', 'age-2', 'sex-2', 'location-2', 'external_id-1'],
+        )
+        res = do_import(file, config, self.domain)
+        self.assertEqual(3, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertFalse(res['errors'])
+        case_ids = self.accessor.get_case_ids_in_domain()
+        self.assertItemsEqual(
+            [case.external_id for case in self.accessor.get_cases(case_ids)],
+            ['external_id-0', 'external_id-0', 'external_id-1']
+        )
+
+    @run_with_all_backends
     def testImportNamedColumns(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(

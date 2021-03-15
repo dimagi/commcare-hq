@@ -8,15 +8,30 @@
       <tbody>
       </tbody>
     </table>
-    <button class="btn btn-default" type="submit" id="query-submit-button">
+    <button class="btn btn-default" type="button" id="query-clear-button">
+      <div>{% trans "Clear" %}</div>
+    </button>
+    <button class="btn btn-primary" type="submit" id="query-submit-button">
       <div>{% trans "Submit" %}</div>
     </button>
   </form>
 </script>
 
+
+
 <script type="text/template" id="query-view-item-template">
   <td class="col-sm-2">
-    <div><%- text ? text : "" %></div>
+    <div>
+      <%- text ? text : "" %>
+      <% if (typeof hint !== "undefined" && hint !== null) { %>
+      <div class="hq-help pull-right">
+        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
+          <i class="fa fa-question-circle icon-question-sign"></i>
+        </a>
+      </div>
+      <% } %>
+    </div>
+  </td>
   </td>
   <td class="col-sm-2">
     <% if (input == "select1") { %>
@@ -28,6 +43,8 @@
           </option>
         <% } %>
       <select>
+    <% } else if (input == "daterange") { %>
+      <input type="text" class="daterange query-field form-control" value="<%- value %>">
     <% } else { %>
       <input type="text" class="query-field form-control" value="<%- value %>">
     <% } %>

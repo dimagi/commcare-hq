@@ -348,7 +348,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
 
-        self._send_form_to_es(completion_time=datetime(2013, 7, 2))
+        self._send_form_to_es(received_on=datetime(2013, 7, 2))
 
         results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())

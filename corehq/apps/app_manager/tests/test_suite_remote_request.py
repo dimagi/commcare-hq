@@ -93,7 +93,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         config.default_relevant = True
         self.assertEqual(config.get_relevant(), """
-            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0
+            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         """.strip())
 
         config.default_relevant = False
@@ -103,7 +103,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0) and (double(now()) mod 2 = 0)")
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")
 
     def test_remote_request(self, *args):
         """
@@ -187,30 +187,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ),
             suite.xpath(ref_path)[0]
         )
-
-    def test_case_search_session_var(self, *args):
-        self.module.search_config.session_var = "other_case_id"
-        suite = self.app.create_suite()
-        self.assertXmlPartialEqual('''
-            <partial>
-              <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
-                    relevant="(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/other_case_id]) = 0) and (instance('groups')/groups/group)">
-                <data key="case_id" ref="instance('commcaresession')/session/data/other_case_id"/>
-              </post>
-            </partial>
-        ''', suite, './remote-request[1]/post')
-        self.assertXmlPartialEqual('''
-            <partial>
-              <stack>
-                <push>
-                  <rewind value="instance('commcaresession')/session/data/other_case_id"/>
-                </push>
-              </stack>
-            </partial>
-        ''', suite, './remote-request[1]/stack')
-        suite = parse_normalize(suite, to_string=False)
-        self.assertEqual("other_case_id", suite.xpath("./remote-request[1]/session/datum/@id")[0])
-        self.assertEqual("./@case_id", suite.xpath("./remote-request[1]/session/datum/@value")[0])
 
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
@@ -297,6 +273,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
+    def test_prompt_hint(self, *args):
+        self.module.search_config.properties[0].hint = {'en': 'Search against name'}
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+              <hint>
+                  <text>
+                    <locale id="search_property.m0.name.hint"/>
+                  </text>
+              </hint>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_default_search(self, *args):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
@@ -331,6 +328,40 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt key="name" appearance="barcode_scan">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_daterange(self, *args):
+        """Setting the appearance to "daterange"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].input_ = 'daterange'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

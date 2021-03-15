@@ -1,14 +1,13 @@
+import architect
+
 from collections import namedtuple
 
 from django.contrib.postgres.fields import ArrayField
+from datetime import datetime
 from django.db import models
-
-from tastypie.models import ApiKey
 
 from corehq.util.markup import mark_up_urls
 from corehq.util.quickcache import quickcache
-
-from .signals import *
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
 
@@ -53,3 +52,46 @@ class MaintenanceAlert(models.Model):
             return active_alerts[0]
         else:
             return ''
+
+
+class UserAgent(models.Model):
+    MAX_LENGTH = 255
+
+    value = models.CharField(max_length=MAX_LENGTH, db_index=True)
+
+
+class UserAccessLogManager(models.Manager):
+    def create(self, **obj_data):
+        user_agent = obj_data.pop('user_agent', '')
+        if user_agent:
+            user_agent = user_agent[:UserAgent.MAX_LENGTH]
+            agent_ref, _ = UserAgent.objects.get_or_create(value=user_agent)
+            obj_data['user_agent'] = agent_ref
+
+        return super().create(**obj_data)
+
+
+@architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
+class UserAccessLog(models.Model):
+    TYPE_LOGIN = 'login'
+    TYPE_LOGOUT = 'logout'
+    TYPE_FAILURE = 'failure'
+
+    ACTIONS = (
+        (TYPE_LOGIN, 'Login'),
+        (TYPE_LOGOUT, 'Logout'),
+        (TYPE_FAILURE, 'Login Failure')
+    )
+
+    id = models.BigAutoField(primary_key=True)
+    user_id = models.CharField(max_length=255, db_index=True)
+    action = models.CharField(max_length=20, choices=ACTIONS)
+    ip = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.ForeignKey(UserAgent, null=True, on_delete=models.PROTECT)
+    path = models.CharField(max_length=255, blank=True)
+    timestamp = models.DateTimeField(default=datetime.utcnow)
+
+    objects = UserAccessLogManager()
+
+    def __str__(self):
+        return f'{self.timestamp}: {self.user_id} - {self.action}'

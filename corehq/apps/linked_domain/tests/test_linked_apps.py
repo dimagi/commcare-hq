@@ -221,7 +221,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         # the version of the old app.
         wrapped = self.master1.get_module(0).get_form(0).wrapped_xform()
         wrapped.set_name("Updated form for master1")
-        self.master1.get_module(0).get_form(0).source = etree.tostring(wrapped.xml, encoding="unicode")
+        self.master1.get_module(0).get_form(0).source = etree.tostring(wrapped.xml, encoding='utf-8')
         audio_path = 'jr://file/commcare/scream.mp3'
         self.master1.create_mapping(CommCareAudio(_id='345'), audio_path)
         self.master1.get_module(0).set_audio('en', audio_path)
