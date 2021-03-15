@@ -23,8 +23,8 @@ from corehq.apps.consumer_user.models import (
     ConsumerUserInvitation,
 )
 from corehq.apps.data_interfaces.tests.util import create_case
-from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.tests.locks import reentrant_redis_locks
 
 
 def register_url(invitation):
@@ -286,6 +286,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(send_html_email_async.call_count, 1)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
     def test_method_send_email_update_email(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
             result = self.factory.create_or_update_case(
@@ -321,6 +322,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(send_html_email_async.call_count, 2)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
     def test_method_send_email_resend(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
             result = self.factory.create_or_update_case(
