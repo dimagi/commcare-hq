@@ -209,6 +209,24 @@ class IdentityProvider(models.Model):
         return cls.objects.filter(owner=owner, is_editable=True).exists()
 
     @classmethod
+    @quickcache(['cls.__name__', 'email_domain'])
+    def get_active_identity_provider_by_email_domain(cls, email_domain):
+        """
+        Returns the active Identity Provider associated with a given email
+        domain or None.
+        :param email_domain: (string)
+        :return: IdentityProvider or None
+        """
+        try:
+            authenticated_email_domain = AuthenticatedEmailDomain.objects.get(
+                email_domain=email_domain
+            )
+            idp = authenticated_email_domain.identity_provider
+        except AuthenticatedEmailDomain.DoesNotExist:
+            return None
+        return idp if idp.is_active else None
+
+    @classmethod
     def get_active_identity_provider_by_username(cls, username):
         """
         Returns the active Identity Provider associated with a user's email
@@ -220,14 +238,7 @@ class IdentityProvider(models.Model):
         if not email_domain:
             # malformed username/email
             return None
-        try:
-            authenticated_email_domain = AuthenticatedEmailDomain.objects.get(
-                email_domain=email_domain
-            )
-            idp = authenticated_email_domain.identity_provider
-        except AuthenticatedEmailDomain.DoesNotExist:
-            return None
-        return idp if idp.is_active else None
+        return cls.get_active_identity_provider_by_email_domain(email_domain)
 
 
 class AuthenticatedEmailDomain(models.Model):
