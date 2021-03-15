@@ -222,7 +222,6 @@ class IdentityProvider(models.Model):
                 identity_provider=self,
                 acknowledged_by=username,
             )
-            self.clear_domain_caches(domain)
             return True
         return False
 
@@ -353,3 +352,17 @@ class TrustedIdentityProvider(models.Model):
 
     def __str__(self):
         return f"{self.domain} trusts [{self.identity_provider.name}]"
+
+
+@receiver(pre_save, sender=TrustedIdentityProvider)
+@receiver(pre_delete, sender=TrustedIdentityProvider)
+def clear_caches_when_trust_is_established_or_removed(sender, instance, **kwargs):
+    """
+    Catches the pre-save and pre-delete signals of TrustedIdentityProvider
+    to ensure that we immediately clear the related domain quickcaches
+    for IdentityProvider.
+    :param sender: The sender class (in this case AuthenticatedEmailDomain)
+    :param instance: TrustedIdentityProvider - the instance being saved/deleted
+    :param kwargs:
+    """
+    instance.identity_provider.clear_domain_caches(instance.domain)
