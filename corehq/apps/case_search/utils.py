@@ -113,9 +113,4 @@ class CaseSearchCriteria(object):
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
-
-            if '/' in key:
-                query = f"{key}={value}"
-                self.search_es = self.search_es.xpath_query(self.domain, query)
-            else:
-                self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+            self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
