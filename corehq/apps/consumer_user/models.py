@@ -42,18 +42,6 @@ class ConsumerUserInvitation(models.Model):
         self.accepted = True
         self.save(update_fields=['accepted'])
 
-    @classmethod
-    def create_invitation(cls, case_id, domain, demographic_case_id, opened_by, email):
-        instance = cls(
-            case_id=case_id,
-            domain=domain,
-            demographic_case_id=demographic_case_id,
-            invited_by=opened_by,
-            email=email
-        )
-        instance.save()
-        return instance
-
     def signature(self):
         """Creates an encrypted key that can be used in a URL to accept this invitation
         """
