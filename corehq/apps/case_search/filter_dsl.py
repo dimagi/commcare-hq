@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
 
+from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
     XPathFunctionException,
@@ -46,9 +47,6 @@ def print_ast(node):
             indent -= 1
 
     visit(node, 0)
-
-
-MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
 
 
 OPERATOR_MAPPING = {
