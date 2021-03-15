@@ -196,6 +196,16 @@ class IdentityProvider(models.Model):
             email_domain
         )
 
+    def clear_all_email_domain_caches(self):
+        """
+        Clears the email_domain-related caches of all the email domains
+        associated with this IdentityProvider.
+        """
+        all_email_domains_for_idp = AuthenticatedEmailDomain.objects.filter(
+            identity_provider=self).values_list('email_domain', flat=True)
+        for email_domain in all_email_domains_for_idp:
+            self.clear_email_domain_caches(email_domain)
+
     def create_trust_with_domain(self, domain, username):
         """
         This creates a TrustedIdentityProvider relationship between the Domain
