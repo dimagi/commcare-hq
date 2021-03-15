@@ -31,3 +31,9 @@ FHIR_DATA_TYPE_LIST_OF_STRING = 'fhir_list_of_string'
 FHIR_DATA_TYPES = (
     FHIR_DATA_TYPE_LIST_OF_STRING,
 )
+
+SUPPORTED_FHIR_RESOURCE_TYPES = [
+    'Patient',
+    'DiagnosticReport',
+    'Observation'
+]
