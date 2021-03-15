@@ -70,4 +70,10 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
         render_to_string('consumer_user/email/registration_email.html', email_context),
         text_content=render_to_string('consumer_user/email/registration_email.txt', email_context)
     )
-    update_case(domain, invitation_case_id, {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_SENT})
+
+    update_case(
+        domain=domain,
+        case_id=invitation_case_id,
+        case_properties={CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_SENT},
+        device_id=__name__ + '.create_new_consumer_user_invitation',
+    )
