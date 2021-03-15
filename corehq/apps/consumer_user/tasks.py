@@ -6,8 +6,6 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
 
 from celery.task import task
-
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.consumer_user.models import (
@@ -25,24 +23,14 @@ from .const import (
 
 
 @task
-def create_new_invitation(case):
-    email = case.get_case_property('email')
-    status = case.get_case_property(CONSUMER_INVITATION_STATUS)
-    case_id = case.case_id
-    domain = case.domain
-    opened_by = case.opened_by
-    host_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
-    try:
-        demographic_case_id = host_indices[0].referenced_id
-    except IndexError:
-        return
+def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, closed, status, opened_by, email):
 
     invitation = ConsumerUserInvitation.objects.filter(case_id=case_id,
                                                        domain=domain,
                                                        demographic_case_id=demographic_case_id,
                                                        active=True).last()
     is_status_sent_or_accepted = status == CONSUMER_INVITATION_SENT or status == CONSUMER_INVITATION_ACCEPTED
-    if case.closed:
+    if closed:
         if invitation:
             invitation.make_inactive()
         return
