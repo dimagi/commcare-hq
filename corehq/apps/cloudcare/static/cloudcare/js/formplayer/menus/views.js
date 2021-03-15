@@ -234,7 +234,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         attributes: function () {
             return {
-                "role": "link",
                 "tabindex": "0",
             };
         },
