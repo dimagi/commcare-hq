@@ -30,7 +30,7 @@ def get_invitation_obj(invitation):
             url = reverse('consumer_user:consumer_user_login')
             raise InvitationRedirect(url)
         elif not invitation_obj.active:
-            return InvitationError(_("Invitation is inactive"), status=400)
+            raise InvitationError(_("Invitation is inactive"), status=400)
         else:
             return invitation_obj
     except (BadSignature, ConsumerUserInvitation.DoesNotExist):
