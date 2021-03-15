@@ -240,6 +240,21 @@ class IdentityProvider(models.Model):
             return None
         return cls.get_active_identity_provider_by_email_domain(email_domain)
 
+    @classmethod
+    def does_domain_trust_user(cls, domain, username):
+        """
+        Check to see if the given domain trusts the user's IdentityProvider
+        (if applicable) based on their email domain. If the user has no
+        IdentityProvider, it will also return True.
+        :param domain: (String) name of the domain
+        :param username: (String) username of the user
+        :return: Boolean (True if an IdP trust exists or is not applicable)
+        """
+        idp = cls.get_active_identity_provider_by_username(username)
+        if idp is None:
+            return True
+        return idp.does_domain_trust_this_idp(domain)
+
 
 class AuthenticatedEmailDomain(models.Model):
     """
