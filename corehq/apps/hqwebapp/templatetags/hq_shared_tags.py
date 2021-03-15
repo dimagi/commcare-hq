@@ -40,7 +40,9 @@ def JSON(obj):
     if isinstance(obj, QueryDict):
         obj = dict(obj)
     try:
-        return mark_safe(escape_script_tags(json.dumps(obj, default=json_handler)))
+        return mark_safe(  # nosec: sanitization must be done higher up -- this can contain tags
+            escape_script_tags(json.dumps(obj, default=json_handler))
+        )
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
@@ -135,9 +137,10 @@ def domains_for_user(context, request, selected_domain=None):
     context = {
         'domain_links': domain_links,
         'show_all_projects_link': show_all_projects_link,
-        'current_domain': selected_domain,
     }
-    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request))
+    return mark_safe(  # nosec: render_to_string should have already handled escaping
+        render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request)
+    )
 
 
 @register.simple_tag
@@ -400,10 +403,10 @@ def maintenance_alert(request, dismissable=True):
             '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
             ' hide' if dismissable else '',
             alert.id,
-            mark_safe('''
-                <button class="close" data-dismiss="alert" aria-label="close">&times;</button>
-            ''') if dismissable else '',
-            mark_safe(alert.html),
+            mark_safe(  # nosec: no user input
+                '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
+            ) if dismissable else '',
+            alert.html
         )
     else:
         return ''
@@ -703,8 +706,10 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return mark_safe(render_to_string('hqwebapp/partials/breadcrumbs.html', {
-        'page': page,
-        'section': section,
-        'parents': parents or [],
-    }))
+    return mark_safe(  # nosec: render_to_string handles escaping
+        render_to_string('hqwebapp/partials/breadcrumbs.html', {
+            'page': page,
+            'section': section,
+            'parents': parents or [],
+        })
+    )

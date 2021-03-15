@@ -163,9 +163,9 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     try:
         val = conditional_escape(processors[process](val))
     except KeyError:
-        val = mark_safe(_to_html(val, timeago=timeago))
+        val = _to_html(val, timeago=timeago)
     if format:
-        val = mark_safe(format.format(val))
+        val = format_html(format, val)
 
     return {
         "expr": expr_name,

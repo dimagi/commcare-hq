@@ -177,6 +177,8 @@ def edited_classes(context, label_class, field_class):
 class B3MultiField(LayoutObject):
     template = 'hqwebapp/crispy/multi_field.html'
 
+    # Because fields will be passed as-is to the HTML,
+    # care should be taken to ensure they escape user input appropriately
     def __init__(self, field_label, *fields, **kwargs):
         self.fields = list(fields)
         self.label_html = field_label
@@ -199,8 +201,8 @@ class B3MultiField(LayoutObject):
         for field in self.fields:
             html += render_field(field, form, form_style, context, template_pack=template_pack)
         context.update({
-            'label_html': mark_safe(self.label_html),
-            'field_html': mark_safe(html),
+            'label_html': self.label_html,
+            'field_html': mark_safe(html),  # nosec
             'multifield': self,
             'error_list': errors,
             'help_bubble_text': self.help_bubble_text,
