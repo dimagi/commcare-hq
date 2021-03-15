@@ -1,10 +1,10 @@
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.signals import sql_case_post_save
 
-from .const import CONSUMER_INVITATION_CASE_TYPE
+from .const import CONSUMER_INVITATION_CASE_TYPE, CONSUMER_INVITATION_STATUS
 from .tasks import create_new_consumer_user_invitation
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from .const import CONSUMER_INVITATION_STATUS
 
 
 def send_email_case_changed_receiver(sender, case, **kwargs):
