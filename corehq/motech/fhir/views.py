@@ -10,6 +10,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
@@ -61,7 +62,12 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
             case_type__name=case.type
     ).exists():
         return JsonResponse(status=400, data={'message': "Invalid Resource Type"})
-    resource = build_fhir_resource(case)
+    try:
+        resource = build_fhir_resource(case)
+    except ConfigurationError:
+        return JsonResponse(status=500, data={
+            'message': 'FHIR configuration error. Please notify administrator.'
+        })
     return JsonResponse(resource)
 
 
