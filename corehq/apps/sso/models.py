@@ -279,6 +279,20 @@ class IdentityProvider(models.Model):
         return idp.does_domain_trust_this_idp(domain)
 
 
+@receiver(pre_save, sender=IdentityProvider)
+def clear_caches_when_active_status_changes(sender, instance, **kwargs):
+    """
+    Ensure that all email domain related caches are cleared when an
+    IdentityProvider is modified and the status of 'is_active' has changed.
+    :param sender: The sender class (in this case IdentityProvider)
+    :param instance: IdentityProvider - the instance just saved
+    :param kwargs:
+    """
+    update_fields = kwargs['update_fields'] or []
+    if 'is_active' in update_fields:
+        instance.clear_all_email_domain_caches()
+
+
 class AuthenticatedEmailDomain(models.Model):
     """
     This specifies the email domains that are tied to an Identity Provider and
