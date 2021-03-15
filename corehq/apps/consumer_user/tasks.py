@@ -19,10 +19,11 @@ from .const import (
 
 
 @task
-def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, closed, status, opened_by, email):
-
+def create_new_consumer_user_invitation(
+    domain, invitation_case_id, demographic_case_id, closed, status, opened_by, email
+):
     invitation = ConsumerUserInvitation.objects.filter(
-        case_id=case_id,
+        case_id=invitation_case_id,
         domain=domain,
         demographic_case_id=demographic_case_id,
         active=True,
@@ -38,12 +39,15 @@ def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, cl
         invitation.make_inactive()
         if ConsumerUserCaseRelationship.objects.filter(case_id=demographic_case_id, domain=domain).exists():
             return
-    invitation = ConsumerUserInvitation.create_invitation(case_id, domain, demographic_case_id, opened_by, email)
+    invitation = ConsumerUserInvitation.create_invitation(
+        invitation_case_id, domain, demographic_case_id, opened_by, email
+    )
     email_context = {
-        'link': absolute_reverse(
-            'consumer_user:consumer_user_register',
-            kwargs={'invitation': invitation.signature()},
-        ),
+        'link':
+            absolute_reverse(
+                'consumer_user:consumer_user_register',
+                kwargs={'invitation': invitation.signature()},
+            ),
     }
     send_html_email_async.delay(
         _('Beneficiary Registration'),
@@ -51,4 +55,4 @@ def create_new_consumer_user_invitation(domain, case_id, demographic_case_id, cl
         render_to_string('consumer_user/email/registration_email.html', email_context),
         text_content=render_to_string('consumer_user/email/registration_email.txt', email_context)
     )
-    update_case(domain, case_id, {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_SENT})
+    update_case(domain, invitation_case_id, {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_SENT})
