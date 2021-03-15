@@ -12,11 +12,12 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
-from corehq.util.view_utils import absolute_reverse, get_case_or_404
+from corehq.util.view_utils import get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
 from .models import FHIRResourceType, build_fhir_resource
+from .utils import resource_url
 
 
 class AddFHIRRepeaterView(AddRepeaterView):
@@ -108,7 +109,7 @@ def search_view(request, domain, fhir_version_name, resource_type):
     }
     for case in cases:
         response["entry"].append({
-            "fullUrl": absolute_reverse(get_view, args=(domain, resource_type, case.case_id)),
+            "fullUrl": resource_url(domain, resource_type, case.case_id),
             "search": {
                 "mode": "match"
             }
