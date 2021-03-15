@@ -82,14 +82,7 @@ class CaseSearchES(CaseES):
                 _("Multi-level related case queries are unsupported: {}").format(path),
             )
 
-        # TODO: DRY up with _parent_property_lookup?
-        new_query = f"{prop} = '{value}'"
-        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
-        if es_query.count() > MAX_RELATED_CASES:
-            # TODO: Make formplayer display this to user
-            raise TooManyRelatedCasesException()
-        ids = es_query.scroll_ids()
-
+        ids = case_ids_lookup(domain, prop, value)
         return self.filter(reverse_index_case_query(ids, identifier))
 
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
@@ -238,6 +231,18 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
+
+
+def case_ids_lookup(domain, property_name, value, op='='):
+    """
+    Given a case property "foo" and value "thing", return a generator
+    of all case_ids were `foo = thing` as produced by ``ESQuery.scroll_ids``
+    """
+    new_query = "{} {} '{}'".format(property_name, op, value)
+    es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+    if es_query.count() > MAX_RELATED_CASES:
+        raise TooManyRelatedCasesException()
+    return es_query.scroll_ids()
 
 
 def reverse_index_case_query(case_ids, identifier=None):
