@@ -280,6 +280,52 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         idp = IdentityProvider.objects.get(id=self.idp.id)
         self.assertTrue(idp.is_active)
 
+    def test_cache_cleared_when_is_active_status_changes(self, *args):
+        """
+        Ensure that the cache for get_active_identity_provider_by_email_domain
+        is properly cleared when the status for `is_active` changes.
+        """
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        self.assertFalse(self.idp.is_active)
+        self.assertIsNone(
+            IdentityProvider.get_active_identity_provider_by_email_domain(
+                email_domain.email_domain
+            )
+        )
+
+        # change status of `is_active` to True with form
+        post_data = self._get_post_data(is_active=True)
+        self._fulfill_all_active_requirements()
+        edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
+        edit_idp_form.cleaned_data = post_data
+        self.assertTrue(edit_idp_form.is_valid())
+        updated_idp = edit_idp_form.update_identity_provider(self.accounting_admin)
+        self.assertEqual(
+            IdentityProvider.get_active_identity_provider_by_email_domain(
+                email_domain.email_domain
+            ),
+            updated_idp
+        )
+
+        # change status of `is_active` to False with form
+        new_post_data = self._get_post_data(is_active=False)
+        new_edit_idp_form = EditIdentityProviderAdminForm(self.idp, new_post_data)
+        new_edit_idp_form.cleaned_data = new_post_data
+        self.assertTrue(new_edit_idp_form.is_valid())
+        new_edit_idp_form.update_identity_provider(self.accounting_admin)
+        self.assertIsNone(
+            IdentityProvider.get_active_identity_provider_by_email_domain(
+                email_domain.email_domain
+            )
+        )
+
 
 class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
@@ -427,3 +473,45 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         edit_sso_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
             edit_sso_idp_form.clean_date_idp_cert_expiration()
+
+    def test_cache_cleared_when_is_active_status_changes(self):
+        """
+        Ensure that the cache for get_active_identity_provider_by_email_domain
+        is properly cleared when the status for `is_active` changes.
+        """
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        self.assertFalse(self.idp.is_active)
+        self.assertIsNone(
+            IdentityProvider.get_active_identity_provider_by_email_domain(
+                email_domain.email_domain
+            )
+        )
+
+        post_data = self._get_post_data(is_active=True)
+        sso_enterprise_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(sso_enterprise_form.is_valid())
+        updated_idp = sso_enterprise_form.update_identity_provider(self.accounting_admin)
+
+        self.assertEqual(
+            IdentityProvider.get_active_identity_provider_by_email_domain(
+                email_domain.email_domain
+            ),
+            updated_idp
+        )
+
+        new_data = self._get_post_data(is_active=False)
+        new_sso_form = SSOEnterpriseSettingsForm(self.idp, new_data)
+        self.assertTrue(new_sso_form.is_valid())
+        new_sso_form.update_identity_provider(self.accounting_admin)
+        self.assertIsNone(
+            IdentityProvider.get_active_identity_provider_by_email_domain(
+                email_domain.email_domain
+            )
+        )
