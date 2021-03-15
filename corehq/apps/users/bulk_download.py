@@ -147,14 +147,19 @@ def make_web_user_dict(user, location_cache, domain):
     }
 
 
-def make_invited_web_user_dict(invite):
+def make_invited_web_user_dict(invite, location_cache):
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(invite.supply_point))
+    except SQLLocation.DoesNotExist:
+        pass
     return {
         'username': invite.email,
         'first_name': 'N/A',
         'last_name': 'N/A',
         'email': invite.email,
         'role': invite.get_role_name(),
-        'location_code': '',
+        'location_code': location_codes,
         'status': ugettext('Invited'),
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
@@ -241,7 +246,7 @@ def parse_web_users(domain, task=None, total_count=None):
         if task:
             DownloadBase.set_progress(task, n, total_count)
     for m, invite in enumerate(Invitation.by_domain(domain)):
-        user_dict = make_invited_web_user_dict(invite)
+        user_dict = make_invited_web_user_dict(invite, location_cache)
         user_dicts.append(user_dict)
         if task:
             DownloadBase.set_progress(task, n + m, total_count)
