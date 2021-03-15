@@ -48,10 +48,13 @@ class ConsumerUserSignUpForm(ModelForm):
             if self.invitation:
                 self.invitation.accepted = True
                 self.invitation.save()
-                ConsumerUserCaseRelationship.objects.create(case_id=self.invitation.demographic_case_id,
-                                                            domain=self.invitation.domain,
-                                                            consumer_user=consumer_user)
-                update_case(self.invitation.domain,
-                            self.invitation.case_id,
-                            {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED})
+                ConsumerUserCaseRelationship.objects.create(
+                    case_id=self.invitation.demographic_case_id,
+                    domain=self.invitation.domain,
+                    consumer_user=consumer_user
+                )
+                update_case(
+                    self.invitation.domain, self.invitation.case_id,
+                    {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED}
+                )
         return user

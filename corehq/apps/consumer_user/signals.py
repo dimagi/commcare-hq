@@ -19,15 +19,15 @@ def send_email_case_changed_receiver(sender, case, **kwargs):
     except IndexError:
         return
 
-    create_new_consumer_user_invitation.delay(case.domain, case.case_id,
-                                              demographic_case_id, case.closed,
-                                              case.get_case_property(CONSUMER_INVITATION_STATUS),
-                                              case.opened_by, email)
+    create_new_consumer_user_invitation.delay(
+        case.domain, case.case_id, demographic_case_id, case.closed,
+        case.get_case_property(CONSUMER_INVITATION_STATUS), case.opened_by, email
+    )
 
 
 def connect_signals():
     sql_case_post_save.connect(
         send_email_case_changed_receiver,
         CommCareCaseSQL,
-        dispatch_uid='send_email_case_changed_receiver'
+        dispatch_uid='send_email_case_changed_receiver',
     )
