@@ -16,6 +16,7 @@ from django import template
 from django.template.defaultfilters import yesno
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 
 import pytz
 from jsonobject.exceptions import BadValueError
@@ -83,17 +84,21 @@ def _to_html(val, key=None, level=0, timeago=False):
             return ""
 
     if isinstance(val, dict):
-        ret = "".join(
-            ["<dl %s>" % ("class='well'" if level == 0 else '')]
-            + ["<dt>%s</dt><dd>%s</dd>" % (escape(_key_format(k, v)), recurse(k, v))
-             for k, v in val.items()]
-            + ["</dl>"])
+        ret = format_html(
+            "<dl {}>{}</dl>",
+            mark_safe("class='well'") if level == 0 else '',  # nosec: no user input
+            format_html_join(
+                "",
+                "<dt>{}</dt><dd>{}</dd>",
+                [(_key_format(k, v), recurse(k, v)) for k, v in val.items()]
+            )
+        )
 
     elif _is_list_like(val):
-        ret = "".join(
-            ["<dl>"]
-            + ["<dt>%s</dt><dd>%s</dd>" % (escape(key), recurse(None, v)) for v in val]
-            + ["</dl>"])
+        ret = format_html(
+            "<dl>{}</dl>",
+            format_html_join("", "<dt>{}</dt><dd>{}</dd>", [(key, recurse(None, v)) for v in val])
+        )
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
@@ -102,15 +107,19 @@ def _to_html(val, key=None, level=0, timeago=False):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
-            "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
+        ret = format_html(
+            "<time {} title='{}' datetime='{}'>{}</time>",
+            "class='timeago'" if timeago else "",
+            iso,
+            iso,
+            safe_strftime(val, fmt))
     else:
         if val is None:
             val = '---'
 
         ret = escape(val)
 
-    return mark_safe(ret)
+    return ret
 
 
 def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
