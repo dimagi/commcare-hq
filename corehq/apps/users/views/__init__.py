@@ -7,6 +7,8 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
+
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 from django.contrib import messages
@@ -710,6 +712,7 @@ def paginate_web_users(request, domain):
     )
 
     web_users = [WebUser.wrap(w) for w in result.hits]
+    is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -721,6 +724,11 @@ def paginate_web_users(request, domain):
         'removeUrl': (
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
+        ),
+        'isUntrustedIdentityProvider': (
+            not IdentityProvider.does_domain_trust_user(
+                domain, u.username
+            ) if is_sso_toggle_enabled else False
         ),
     } for u in web_users]
 
