@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_save, pre_delete
+from django.dispatch import receiver
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
@@ -183,6 +185,17 @@ class IdentityProvider(models.Model):
         IdentityProvider.does_domain_trust_this_idp.clear(self, domain)
         IdentityProvider.is_domain_an_active_member.clear(self, domain)
 
+    @staticmethod
+    def clear_email_domain_caches(email_domain):
+        """
+        Clears all caches associated with a given email_domain
+        :param email_domain: String (email domain)
+        """
+        IdentityProvider.get_active_identity_provider_by_email_domain.clear(
+            IdentityProvider,
+            email_domain
+        )
+
     def create_trust_with_domain(self, domain, username):
         """
         This creates a TrustedIdentityProvider relationship between the Domain
@@ -269,6 +282,20 @@ class AuthenticatedEmailDomain(models.Model):
 
     def __str__(self):
         return f"{self.email_domain} authenticated by [{self.identity_provider.name}]"
+
+
+@receiver(pre_save, sender=AuthenticatedEmailDomain)
+@receiver(pre_delete, sender=AuthenticatedEmailDomain)
+def clear_caches_for_email_domain(sender, instance, **kwargs):
+    """
+    Catches the pre-save and pre-delete signals of AuthenticatedEmailDomain
+    to ensure that we immediately clear the related email-domain quickcaches
+    for IdentityProvider.
+    :param sender: The sender class (in this case AuthenticatedEmailDomain)
+    :param instance: AuthenticatedEmailDomain - the instance being saved/deleted
+    :param kwargs:
+    """
+    IdentityProvider.clear_email_domain_caches(instance.email_domain)
 
 
 class UserExemptFromSingleSignOn(models.Model):
