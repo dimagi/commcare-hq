@@ -4,3 +4,11 @@ class CaseSearchException(Exception):
 
 class CaseSearchNotEnabledException(CaseSearchException):
     pass
+
+
+class TooManyRelatedCasesException(CaseSearchException):
+    pass
+
+
+class UnsupportedQueryException(CaseSearchException):
+    pass
