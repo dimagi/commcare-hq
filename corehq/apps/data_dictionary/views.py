@@ -103,14 +103,14 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 
 def _load_fhir_resource_mappings(domain):
-    fhir_resource_types = FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
+    fhir_resource_types = FHIRResourceType.objects.select_related('case_type').filter(domain=domain)
     fhir_resource_type_name_by_case_type = {
         ft.case_type: ft.name
         for ft in fhir_resource_types
     }
     fhir_resource_prop_by_case_prop = {
         fr.case_property: fr.jsonpath
-        for fr in FHIRResourceProperty.objects.prefetch_related('case_property').filter(
+        for fr in FHIRResourceProperty.objects.select_related('case_property').filter(
             resource_type__in=fhir_resource_types)
     }
     return fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop
