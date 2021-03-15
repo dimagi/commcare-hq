@@ -61,12 +61,8 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
             case_type__name=case.type
     ).exists():
         return JsonResponse(status=400, data={'message': "Invalid Resource Type"})
-    response = {
-        'resourceType': resource_type,
-        'id': resource_id
-    }
-    response.update(build_fhir_resource(case))
-    return JsonResponse(response)
+    resource = build_fhir_resource(case)
+    return JsonResponse(resource)
 
 
 @require_GET
