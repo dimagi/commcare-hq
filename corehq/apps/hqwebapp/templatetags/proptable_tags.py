@@ -84,16 +84,16 @@ def _to_html(val, key=None, level=0, timeago=False):
 
     if isinstance(val, dict):
         ret = "".join(
-            ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (_key_format(k, v), recurse(k, v))
-             for k, v in val.items()] +
-            ["</dl>"])
+            ["<dl %s>" % ("class='well'" if level == 0 else '')]
+            + ["<dt>%s</dt><dd>%s</dd>" % (escape(_key_format(k, v)), recurse(k, v))
+             for k, v in val.items()]
+            + ["</dl>"])
 
     elif _is_list_like(val):
         ret = "".join(
-            ["<dl>"] +
-            ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
-            ["</dl>"])
+            ["<dl>"]
+            + ["<dt>%s</dt><dd>%s</dd>" % (escape(key), recurse(None, v)) for v in val]
+            + ["</dl>"])
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
