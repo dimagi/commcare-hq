@@ -674,6 +674,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     if domain_has_privilege(domain, privileges.LOCATIONS):
                         membership = user.get_domain_membership(domain)
                         if membership.location_id is None and len(location_codes) != 0:
+                            # if the primary location is not set, add the first location_id from location codes
                             user.set_location(domain, location_codes[0])
                         location_cache = SiteCodeToLocationCache(domain)
                         location_ids = find_location_id(location_codes, location_cache)
@@ -691,11 +692,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         if role_updated:
                             user.set_role(domain, role_qualified_id)
                         user.save()
-
-                    elif not user.is_member_of(domain) and user.is_active:
-                        user.add_as_web_user(domain, role=role_qualified_id)
-
-                    elif not user.is_member_of(domain) and status == 'Invited':
+                    else:
                         create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                          user.location_id)
                 status_row['flag'] = 'updated'
