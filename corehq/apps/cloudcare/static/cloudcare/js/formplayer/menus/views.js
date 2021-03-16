@@ -393,6 +393,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
+
+    // this method takes current page number on which user has clicked and total possible pages
+    // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
     var paginateOptions = function (currentPage, totalPages) {
         var maxPages = 5;
         // ensure current page isn't out of range
