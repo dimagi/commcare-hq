@@ -79,7 +79,7 @@ PROJECT_ACCESS = 'project_access'
 
 APP_USER_PROFILES = 'app_user_profiles'
 
-DEFAULT_EXPORT_SETTINGS = 'default_export_settinngs'
+DEFAULT_EXPORT_SETTINGS = 'default_export_settings'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
