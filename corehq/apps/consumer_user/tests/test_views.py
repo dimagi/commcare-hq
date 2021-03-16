@@ -30,14 +30,14 @@ from corehq.tests.locks import reentrant_redis_locks
 def register_url(invitation):
     return reverse(
         'consumer_user:consumer_user_register',
-        kwargs={'invitation': invitation.signature()}
+        kwargs={'signed_invitation_id': invitation.signature()}
     )
 
 
 def login_accept_url(invitation):
     return reverse(
         'consumer_user:consumer_user_login_with_invitation',
-        kwargs={'invitation': invitation.signature()}
+        kwargs={'signed_invitation_id': invitation.signature()}
     )
 
 
@@ -146,7 +146,7 @@ class RegisterTestCase(TestCase):
     def test_register_invalid_invitation(self):
         register_uri = reverse(
             'consumer_user:consumer_user_register',
-            kwargs={'invitation': TimestampSigner().sign(urlsafe_base64_encode(b'1000'))}
+            kwargs={'signed_invitation_id': TimestampSigner().sign(urlsafe_base64_encode(b'1000'))}
         )
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 400)
