@@ -15,20 +15,20 @@ from no_exceptions.exceptions import Http400
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.apps.consumer_user.models import (
-    ConsumerUser,
-    ConsumerUserCaseRelationship,
-    ConsumerUserInvitation,
-)
 from corehq.apps.domain.decorators import two_factor_exempt
+from corehq.apps.users.models import CouchUser
 
-from ..users.models import CouchUser
 from .decorators import consumer_user_login_required
 from .forms.change_contact_details_form import ChangeContactDetailsForm
 from .forms.consumer_user_authentication_form import (
     ConsumerUserAuthenticationForm,
 )
 from .forms.consumer_user_signup_form import ConsumerUserSignUpForm
+from .models import (
+    ConsumerUser,
+    ConsumerUserCaseRelationship,
+    ConsumerUserInvitation,
+)
 
 
 class ConsumerUserLoginView(LoginView):
