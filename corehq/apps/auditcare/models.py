@@ -2,6 +2,8 @@ import logging
 import uuid
 from datetime import datetime
 
+import architect
+
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.auth.signals import (
     user_logged_in,
@@ -107,6 +109,7 @@ class AuditEvent(models.Model):
         return audit
 
 
+@architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
 @foreign_value_init
 class NavigationEventAudit(AuditEvent):
     """
@@ -183,6 +186,7 @@ ACCESS_CHOICES = (
 )
 
 
+@architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
 @foreign_value_init
 class AccessAudit(AuditEvent):
     access_type = models.CharField(max_length=16, choices=ACCESS_CHOICES)

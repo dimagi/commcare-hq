@@ -2,8 +2,13 @@
 
 import corehq.apps.auditcare.models
 import corehq.util.models
+from architect.commands import partition
 from django.db import migrations, models
 import django.db.models.deletion
+
+
+def add_partitions(apps, schema_editor):
+    partition.run({'module': 'corehq.apps.auditcare.models'})
 
 
 class Migration(migrations.Migration):
@@ -108,4 +113,5 @@ class Migration(migrations.Migration):
                 'index_together': {('user', 'event_date')},
             },
         ),
+        migrations.RunPython(add_partitions, lambda *a: None),
     ]
