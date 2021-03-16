@@ -706,6 +706,15 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     invitation.delete()
                     status_row['flag'] = 'updated'
                 else:
+                    if status == "Invited":
+                        try:
+                            invitation = Invitation.objects.get(domain=domain, email=username)
+                        except Invitation.DoesNotExist:
+                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
+                                                    " {web_user} is not yet invited.").format(web_user=username))
+                        if invitation.email_marked_as_bounced() and invitation.email == username:
+                            raise UserUploadError(_("The email has bounced for this user's invite. Please try "
+                                                    "again with a different username").format(web_user=username))
                     create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
                     status_row['flag'] = 'invited'
 
