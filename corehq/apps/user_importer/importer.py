@@ -670,20 +670,20 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     else:
                         user.delete_domain_membership(domain)
                         user.save()
-                if domain_has_privilege(domain, privileges.LOCATIONS):
-                    membership = user.get_domain_membership(domain)
-                    if membership.location_id is None and len(location_codes) != 0:
-                        user.set_location(domain, location_codes[0])
-                    location_cache = SiteCodeToLocationCache(domain)
-                    location_ids = find_location_id(location_codes, location_cache)
-                    locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
-                                                                                     membership.location_id,
-                                                                                     membership.assigned_location_ids)
-                    if primary_loc_removed:
-                        user.unset_location(domain)
-                    if locations_updated:
-                        user.reset_locations(domain, location_ids)
                 else:
+                    if domain_has_privilege(domain, privileges.LOCATIONS):
+                        membership = user.get_domain_membership(domain)
+                        if membership.location_id is None and len(location_codes) != 0:
+                            user.set_location(domain, location_codes[0])
+                        location_cache = SiteCodeToLocationCache(domain)
+                        location_ids = find_location_id(location_codes, location_cache)
+                        locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
+                                                                                         membership.location_id,
+                                                                                         membership.assigned_location_ids)
+                        if primary_loc_removed:
+                            user.unset_location(domain)
+                        if locations_updated:
+                            user.reset_locations(domain, location_ids)
                     if user.is_member_of(domain):
                         user_current_role = user.get_role(domain=domain)
                         role_updated = not (user_current_role
