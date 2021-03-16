@@ -112,7 +112,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     });
                 }
                 // lookup DOM element again, in case the element got rerendered
-                var domElement = $('*[data-receive="' + receiveExpression + '"]')
+                var domElement = $('*[data-receive="' + receiveExpression + '"]');
                 if (domElement.is('input')) {
                     domElement.val(value);
                     domElement.change();
