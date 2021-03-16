@@ -286,6 +286,49 @@ class SignalTestCase(TestCase):
             self.assertEqual(send_html_email_async.call_count, 1)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_multiple_invitations_same_demographic_case(self):
+        # Only create a single invitation for one demographic case
+        parent_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=uuid.uuid4().hex,
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id=parent_id, attrs={'create': True}),
+                        relationship=CASE_INDEX_EXTENSION
+                    )
+                ],
+                attrs={
+                    'create': True,
+                    'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                    'owner_id': 'comm_care',
+                    'update': {
+                        'email': 'testing@testing.in'
+                    }
+                }
+            ),
+            CaseStructure(
+                case_id=uuid.uuid4().hex,
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id=parent_id, attrs={'create': True}),
+                        relationship=CASE_INDEX_EXTENSION
+                    )
+                ],
+                attrs={
+                    'create': True,
+                    'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                    'owner_id': 'comm_care',
+                    'update': {
+                        'email': 'testing2@testing.in'
+                    }
+                }
+            )
+        ])
+        self.assertEqual(ConsumerUserInvitation.objects.count(), 1)
+        self.assertEqual(ConsumerUserInvitation.objects.first().email, "testing@testing.in")
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @reentrant_redis_locks()
     def test_method_send_email_update_email(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
@@ -424,7 +467,7 @@ class DomainsAndCasesTestCase(TestCase):
         user = User.objects.create_user(username=email, email=email, password=password)
         consumer_user = ConsumerUser.objects.create(user=user)
         ConsumerUserCaseRelationship.objects.create(consumer_user=consumer_user, case_id='1', domain='d1')
-        ConsumerUserCaseRelationship.objects.create(consumer_user=consumer_user, case_id='1', domain='d2')
+        ConsumerUserCaseRelationship.objects.create(consumer_user=consumer_user, case_id='2', domain='d2')
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -432,7 +475,7 @@ class DomainsAndCasesTestCase(TestCase):
         self.assertEqual(
             response.context['domains_and_cases'], [{
                 'domain': 'd2',
-                'case_id': '1'
+                'case_id': '2'
             }, {
                 'domain': 'd1',
                 'case_id': '1'
