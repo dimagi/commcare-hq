@@ -81,6 +81,7 @@ API_LIST = (
         v0_5.ODataFormResource,
         LookupTableResource,
         LookupTableItemResource,
+        v0_5.MessagingEventResource,
     )),
 )
 

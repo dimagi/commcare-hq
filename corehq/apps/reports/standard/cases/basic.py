@@ -84,6 +84,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             EMWF.selected_user_ids(mobile_user_and_group_slugs)
             or EMWF.selected_user_types(mobile_user_and_group_slugs)
             or EMWF.selected_group_ids(mobile_user_and_group_slugs)
+            or EMWF.selected_location_ids(mobile_user_and_group_slugs)
         ):
             track_es_report_load(self.domain, self.slug, len(self.case_owners))
             case_owner_filters.append(case_es.owner(self.case_owners))

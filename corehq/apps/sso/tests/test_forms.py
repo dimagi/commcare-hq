@@ -26,11 +26,10 @@ class BaseSSOFormTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.account = generator.get_billing_account_for_idp()
-        cls.domain = Domain(
-            name="vaultwax-001",
+        cls.domain = Domain.get_or_create_with_name(
+            "vaultwax-001",
             is_active=True
         )
-        cls.domain.save()
         cls.accounting_admin = WebUser.create(
             cls.domain.name, 'jadmin@dimagi.com', 'testpwd', None, None
         )
@@ -51,6 +50,10 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         super().tearDownClass()
 
     def test_bad_slug_is_invalid(self):
+        """
+        Ensure that a poorly formatted slug raises a ValidationError and the
+        CreateIdentityProviderForm does not validate.
+        """
         post_data = {
             'owner': self.account.id,
             'name': 'test idp',
@@ -63,6 +66,10 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         self.assertFalse(create_idp_form.is_valid())
 
     def test_created_identity_provider(self):
+        """
+        Ensure that a valid CreateIdentityProviderForm successfully creates an
+        IdentityProvider.
+        """
         post_data = {
             'owner': self.account.id,
             'name': 'Azure AD for Vault Wax',
@@ -114,13 +121,20 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
                                              else datetime.utcnow() + timedelta(days=30))
         self.idp.save()
 
-    def test_bad_slug_update_is_invalid(self, *args):
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_editable,
-            'is_active': self.idp.is_active,
-            'slug': 'bad slug',
+    def _get_post_data(self, name=None, is_editable=False, is_active=False, slug=None):
+        return {
+            'name': name if name is not None else self.idp.name,
+            'is_editable': is_editable,
+            'is_active': is_active,
+            'slug': slug or self.idp.slug,
         }
+
+    def test_bad_slug_update_is_invalid(self, *args):
+        """
+        Ensure that if passed a bad slug, EditIdentityProviderAdminForm raises
+        a ValidationError and does not validate.
+        """
+        post_data = self._get_post_data(slug='bad slug')
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
@@ -128,6 +142,11 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertFalse(edit_idp_form.is_valid())
 
     def test_slug_update_conflict(self, *args):
+        """
+        Ensure that if another IdentityProvider exists with the same slug,
+        EditIdentityProviderAdminForm raises a ValidationError and does not
+        validate.
+        """
         second_idp = IdentityProvider.objects.create(
             owner=self.account,
             name='Azure AD for VWX',
@@ -135,12 +154,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
         )
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_editable,
-            'is_active': self.idp.is_active,
-            'slug': second_idp.slug,
-        }
+        post_data = self._get_post_data(slug=second_idp.slug)
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
@@ -148,12 +162,12 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertFalse(edit_idp_form.is_valid())
 
     def test_slug_and_last_modified_by_updates(self, *args):
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_editable,
-            'is_active': self.idp.is_active,
-            'slug': 'vaultwax-2',
-        }
+        """
+        Ensure that the `slug` and `last_modified_by` fields properly update
+        when EditIdentityProviderAdminForm validates and calls
+        update_identity_provider().
+        """
+        post_data = self._get_post_data(slug='vaultwax-2')
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         self.assertTrue(edit_idp_form.is_valid())
         edit_idp_form.update_identity_provider(self.accounting_admin)
@@ -164,21 +178,16 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertNotEqual(idp.created_by, self.accounting_admin.username)
 
     def test_name_updates_and_is_required(self, *args):
-        bad_post_data = {
-            'name': '',
-            'is_editable': self.idp.is_active,
-            'is_active': self.idp.is_editable,
-            'slug': self.idp.slug,
-        }
+        """
+        Ensure that the `name` field is both required and updates the name
+        of the IdentityProvider when EditIdentityProviderAdminForm
+        validates and update_identity_provider() is called.
+        """
+        bad_post_data = self._get_post_data(name='')
         bad_edit_idp_form = EditIdentityProviderAdminForm(self.idp, bad_post_data)
         self.assertFalse(bad_edit_idp_form.is_valid())
 
-        post_data = {
-            'name': 'new name test',
-            'is_editable': self.idp.is_active,
-            'is_active': self.idp.is_editable,
-            'slug': self.idp.slug,
-        }
+        post_data = self._get_post_data(name='new name test')
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         self.assertTrue(edit_idp_form.is_valid())
         edit_idp_form.update_identity_provider(self.accounting_admin)
@@ -187,12 +196,13 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertEqual(idp.name, post_data['name'])
 
     def test_is_editable_has_met_requirements_and_value_updates(self, *args):
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': True,
-            'is_active': self.idp.is_active,
-            'slug': self.idp.slug,
-        }
+        """
+        Ensure that the requirements for `is_editable` are met in order for
+        EditIdentityProviderAdminForm to validate and that once it is valid,
+        calling update_identity_provider() updates the `is_editable` field on
+        the IdentityProvider as expected.
+        """
+        post_data = self._get_post_data(is_editable=True)
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
@@ -216,12 +226,13 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertTrue(idp.is_editable)
 
     def test_is_active_has_met_requirements_and_value_updates(self, *args):
-        post_data = {
-            'name': self.idp.name,
-            'is_editable': self.idp.is_active,
-            'is_active': True,
-            'slug': self.idp.slug,
-        }
+        """
+        Ensure that the requirements for `is_active` are met in order for
+        EditIdentityProviderAdminForm to validate and that once it is valid,
+        calling update_identity_provider() updates the `is_active` field on
+        the IdentityProvider as expected.
+        """
+        post_data = self._get_post_data(is_active=True)
         edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
         edit_idp_form.cleaned_data = post_data
 
@@ -305,6 +316,13 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         }
 
     def test_is_active_triggers_required_fields_and_updates(self):
+        """
+        Test that if `is_active` is set to true, then related required fields
+        raise ValidationErrors if left blank. Once the requirements are met and
+        SSOEnterpriseSettingsForm validates, ensure that
+        update_identity_provider() updates the `is_active` field on
+        the IdentityProvider as expected.
+        """
         post_data = self._get_post_data(
             is_active=True, no_entity_id=True, no_login_url=True,
             no_logout_url=True, no_certificate=True, no_certificate_date=True
@@ -359,6 +377,11 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         )
 
     def test_last_modified_by_and_fields_update_when_not_active(self):
+        """
+        Ensure that fields properly update and that `last_modified_by` updates
+        as expected when SSOEnterpriseSettingsForm validates and
+        update_identity_provider() is called.
+        """
         email_domain = AuthenticatedEmailDomain.objects.create(
             identity_provider=self.idp,
             email_domain='vaultwax.com',
@@ -387,6 +410,11 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         )
 
     def test_date_idp_cert_expiration_with_bad_value(self):
+        """
+        Ensure that SSOEnterpriseSettingsForm raises a ValidationError if
+        `date_idp_cert_expiration` is provided with a incorrectly formatted date
+        string.
+        """
         post_data = {
             'is_active': self.idp.is_active,
             'entity_id': self.idp.entity_id,

@@ -1,12 +1,12 @@
 import json
 import re
-from typing import Callable, Optional, Any
+from typing import Any, Callable, Optional
 
-import attr
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+import attr
 import jsonfield
 
 import corehq.motech.auth
@@ -32,7 +32,7 @@ from corehq.motech.const import (
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
-from corehq.util import as_text
+from corehq.util import as_json_text, as_text
 
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
@@ -230,7 +230,7 @@ class RequestLog(models.Model):
     """
     Store API requests and responses to analyse errors and keep an audit trail
     """
-    domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
+    domain = models.CharField(max_length=126, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     log_level = models.IntegerField(null=True)
     # payload_id is set for requests that are caused by a payload (e.g.
@@ -262,7 +262,7 @@ class RequestLog(models.Model):
             request_url=log_entry.url,
             request_headers=log_entry.headers,
             request_params=log_entry.params,
-            request_body=as_text(log_entry.data),
+            request_body=as_json_text(log_entry.data),
             request_error=log_entry.error,
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
