@@ -226,7 +226,11 @@ class ESQuery(object):
             debug_host=query.debug_host,
             es_instance_alias=self.es_instance_alias,
         )
-        return ESQuerySet(raw, deepcopy(query))
+        return self._queryset_cls(raw, deepcopy(query))
+
+    @property
+    def _queryset_cls(self):
+        return ESQuerySet
 
     def _clean_before_run(self, include_hits=False):
         query = deepcopy(self)
@@ -248,7 +252,7 @@ class ESQuery(object):
         for r in result:
             if include_id:
                 r['_source']['_id'] = r.get('_id', None)
-            yield ESQuerySet.normalize_result(query, r)
+            yield self._queryset_cls.normalize_result(query, r)
 
     @property
     def _filters(self):

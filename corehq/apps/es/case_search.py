@@ -26,6 +26,7 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.apps.es.es_query import ESQuerySet
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
@@ -33,6 +34,10 @@ from . import filters, queries
 
 class CaseSearchES(CaseES):
     index = "case_search"
+
+    @property
+    def _queryset_cls(self):
+        return CaseSearchQuerySet
 
     @property
     def builtin_filters(self):
@@ -139,6 +144,16 @@ class CaseSearchES(CaseES):
             desc,
             reset_sort=False
         )
+
+
+class CaseSearchQuerySet(ESQuerySet):
+    @staticmethod
+    def normalize_result(query, result):
+        """Return the doc from an item in the query response."""
+        raw = ESQuerySet.normalize_result(query, result)
+        if query._exclude_source or query._legacy_fields:
+            return raw
+        return flatten_result(raw)
 
 
 def case_property_filter(case_property_name, value):

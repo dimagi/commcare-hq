@@ -17,6 +17,7 @@ from corehq.apps.es.case_search import (
 from corehq.elastic import get_es_new, SIZE_LIMIT
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
+from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
@@ -432,3 +433,67 @@ class TestCaseSearchLookups(TestCase):
             ['c2', 'c3']
         )
         config.delete()
+
+from corehq.apps.domain.shortcuts import create_domain
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+
+class TestCaseSearchESvCaseES(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'case_v_case_search'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.case_type = 'person'
+        FormProcessorTestUtils.delete_all_cases()
+        cls.elasticsearch = get_es_new()
+        ensure_index_deleted(CASE_INDEX)
+        ensure_index_deleted(CASE_SEARCH_INDEX)
+        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(get_es_new(), CASE_INDEX_INFO)
+
+    @classmethod
+    def _make_cases(cls):
+        cls.case_accessor = CaseAccessors(cls.domain)
+        cls.parent_case_id = str(uuid.uuid4())
+        case_id = str(uuid.uuid4())
+        xform, cases = submit_case_blocks([
+            CaseBlock(
+                case_id=cls.parent_case_id,
+                case_type='player',
+                case_name='Elizabeth Harmon',
+                external_id='1',
+                owner_id='methuen_home',
+                create=True,
+                update={
+                    'sport': 'chess',
+                    'rank': '1600',
+                    'dob': '1948-11-02',
+                }
+            ).as_text(),
+            CaseBlock(
+                case_id=case_id,
+                case_type='match',
+                case_name='Harmon/Luchenko',
+                owner_id='harmon',
+                external_id='14',
+                create=True,
+                update={
+                    'winner': 'Harmon',
+                    'accuracy': '84.3',
+                },
+                index={
+                    'parent': IndexAttrs(case_type='player', case_id=cls.parent_case_id, relationship='child')
+                },
+            ).as_text()
+        ], domain=cls.domain)
+        cls.parent_case = cls.case_accessor.get_case(cls.parent_case_id)
+        cls.case = cls.case_accessor.get_case(case_id)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        ensure_index_deleted(CASE_INDEX)
+        ensure_index_deleted(CASE_SEARCH_INDEX)
+        super().tearDownClass()
