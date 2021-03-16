@@ -1,7 +1,6 @@
 from corehq.apps.users.models import DomainMembershipError
 from django import template
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 
 from corehq.tabs.config import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
@@ -104,7 +103,7 @@ class MainMenuNode(template.Node):
             'tabs': visible_tabs,
             'role_rev': role_rev
         })
-        return mark_safe(render_to_string('tabs/menu_main.html', flat))
+        return render_to_string('tabs/menu_main.html', flat)
 
 
 @register.tag(name="format_main_menu")
@@ -143,7 +142,7 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    return mark_safe(render_to_string(
+    return render_to_string(
         'hqwebapp/partials/navigation_left_sidebar.html',
         {'sections': sections}
-    ))
+    )
