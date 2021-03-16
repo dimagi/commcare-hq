@@ -1904,7 +1904,8 @@ HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'COVID: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
 )
 
 GAEN_OTP_SERVER = StaticToggle(
