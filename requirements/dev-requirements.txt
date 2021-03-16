@@ -203,7 +203,7 @@ dnspython==1.15.0
     # via
     #   -r base-requirements.in
     #   email-validator
-docutils==0.15.2
+docutils==0.16
     # via
     #   -r dev-requirements.in
     #   recommonmark
@@ -248,7 +248,7 @@ ghdiff==0.4
     # via -r base-requirements.in
 gipc==1.1.0
     # via -r base-requirements.in
-git-build-branch==0.1.9
+git-build-branch==0.1.10
     # via -r dev-requirements.in
 gnureadline==6.3.8
     # via -r dev-requirements.in
