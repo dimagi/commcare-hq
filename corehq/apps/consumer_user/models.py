@@ -16,14 +16,8 @@ class ConsumerUser(models.Model):
 
 class ConsumerUserCaseRelationship(models.Model):
     consumer_user = models.ForeignKey(ConsumerUser, on_delete=models.CASCADE)
-    case_id = models.CharField(max_length=255)
+    case_id = models.CharField(max_length=255, unique=True)
     domain = models.CharField(max_length=255)
-
-    class Meta:
-        unique_together = (
-            'case_id',
-            'domain',
-        )
 
 
 class ConsumerUserInvitation(models.Model):
@@ -35,6 +29,15 @@ class ConsumerUserInvitation(models.Model):
     invited_by = models.CharField(max_length=255)
     invited_on = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['demographic_case_id'],
+                condition=models.Q(accepted=False, active=True),
+                name="multiple_open_invites",
+            )
+        ]
 
     def make_inactive(self):
         self.active = False

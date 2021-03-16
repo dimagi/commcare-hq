@@ -26,6 +26,13 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
     status = invitation_case.get_case_property(CONSUMER_INVITATION_STATUS)
     keep_open_status = [CONSUMER_INVITATION_SENT, CONSUMER_INVITATION_ACCEPTED]
 
+    if ConsumerUserInvitation.objects.filter(
+        demographic_case_id=demographic_case_id, active=True, accepted=False
+    ).exists():
+        # If there is currently an open, unaccepted inviation for the same demographic case, do nothing
+        # TODO: tell the app user about this
+        return
+
     try:
         invitation = ConsumerUserInvitation.objects.get(
             case_id=invitation_case_id,
