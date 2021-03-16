@@ -12,7 +12,7 @@ wheel==0.36.2
 transifex-client==0.12.4
 modernize
 pdbpp
-gnureadline==6.3.8
+gnureadline==8.0.0
 git-build-branch
 
 # documentation
