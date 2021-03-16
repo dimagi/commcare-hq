@@ -1,8 +1,10 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.core.signing import TimestampSigner
 from django.db import models
 from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 from corehq.util.models import GetOrNoneManager
 
@@ -46,3 +48,10 @@ class ConsumerUserInvitation(models.Model):
         """Creates an encrypted key that can be used in a URL to accept this invitation
         """
         return TimestampSigner().sign(urlsafe_base64_encode(force_bytes(self.pk)))
+
+    @classmethod
+    def from_signed_id(cls, signed_invitation_id):
+        invitation_id = urlsafe_base64_decode(
+            TimestampSigner().unsign(signed_invitation_id, max_age=timedelta(days=30))
+        )
+        return cls.objects.get(pk=invitation_id)

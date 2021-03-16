@@ -4,20 +4,22 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
+from django.core.signing import BadSignature, SignatureExpired
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.debug import sensitive_post_parameters
 
+from no_exceptions.exceptions import Http400
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
 from corehq.apps.consumer_user.models import (
     ConsumerUser,
     ConsumerUserCaseRelationship,
+    ConsumerUserInvitation,
 )
-from corehq.apps.consumer_user.util import InvitationError, get_invitation_obj
 from corehq.apps.domain.decorators import two_factor_exempt
 
 from ..users.models import CouchUser
@@ -60,7 +62,7 @@ class ConsumerUserLoginView(LoginView):
         if self.hashed_invitation:
             extra_context = {}
             go_to_signup = reverse(
-                'consumer_user:consumer_user_register', kwargs={'invitation': self.hashed_invitation}
+                'consumer_user:consumer_user_register', kwargs={'signed_invitation_id': self.hashed_invitation}
             )
             extra_context['go_to_signup'] = '%s%s' % (go_to_signup, '?create_user=1')
             context.update(extra_context)
@@ -69,24 +71,26 @@ class ConsumerUserLoginView(LoginView):
 
 
 @two_factor_exempt
-def register_view(request, invitation):
-    try:
-        invitation_obj = get_invitation_obj(invitation)
-    except InvitationError as err:
-        return HttpResponse(err.msg, status=err.status)
-    if isinstance(invitation_obj, HttpResponse):
-        return invitation_obj
-    email = invitation_obj.email
+def register_view(request, signed_invitation_id):
+
+    invitation = _get_invitation_or_400(signed_invitation_id)
+
+    if invitation.accepted:
+        return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
+
+    email = invitation.email
     create_user = request.GET.get('create_user', False)
     if create_user != '1' and User.objects.filter(username=email).exists():
-        url = reverse('consumer_user:consumer_user_login_with_invitation', kwargs={'invitation': invitation})
+        url = reverse(
+            'consumer_user:consumer_user_login_with_invitation',
+            kwargs={'signed_invitation_id': signed_invitation_id}
+        )
         return HttpResponseRedirect(url)
     if request.method == "POST":
-        form = ConsumerUserSignUpForm(request.POST, invitation=invitation_obj)
+        form = ConsumerUserSignUpForm(request.POST, invitation=invitation)
         if form.is_valid():
             form.save()
-            url = reverse('consumer_user:consumer_user_login')
-            return HttpResponseRedirect(url)
+            return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
     else:
         form = ConsumerUserSignUpForm()
     return render(request, 'consumer_user/signup.html', {'form': form, 'hide_menu': True})
@@ -94,9 +98,9 @@ def register_view(request, invitation):
 
 @two_factor_exempt
 @sensitive_post_parameters('auth-password')
-def login_view(request, invitation=None):
-    if invitation:
-        return login_accept_view(request, invitation)
+def login_view(request, signed_invitation_id=None):
+    if signed_invitation_id:
+        return login_accept_view(request, signed_invitation_id)
     if request.user and request.user.is_authenticated:
         consumer_user = ConsumerUser.objects.get_or_none(user=request.user)
         if consumer_user:
@@ -105,14 +109,12 @@ def login_view(request, invitation=None):
     return ConsumerUserLoginView.as_view()(request)
 
 
-def login_accept_view(request, invitation):
-    try:
-        invitation_obj = get_invitation_obj(invitation)
-    except InvitationError as err:
-        return HttpResponse(err.msg, status=err.status)
-    if isinstance(invitation_obj, HttpResponse):
-        return invitation_obj
-    return ConsumerUserLoginView.as_view(invitation=invitation_obj, hashed_invitation=invitation)(request)
+def login_accept_view(request, signed_invitation_id):
+    invitation = _get_invitation_or_400(signed_invitation_id)
+    if invitation.accepted:
+        return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
+
+    return ConsumerUserLoginView.as_view(invitation=invitation, hashed_invitation=signed_invitation_id)(request)
 
 
 @consumer_user_login_required
@@ -173,3 +175,17 @@ def change_contact_details_view(request):
         return render(request, 'consumer_user/change_contact_details.html', {'form': form})
     else:
         return HttpResponse(status=404)
+
+
+def _get_invitation_or_400(signed_invitation_id):
+    try:
+        invitation = ConsumerUserInvitation.from_signed_id(signed_invitation_id)
+    except (BadSignature, ConsumerUserInvitation.DoesNotExist):
+        raise Http400(_("Invitation Not Found"))
+    except SignatureExpired:
+        raise Http400(_("Invitation expired"))
+
+    if not invitation.active:
+        raise Http400(_("Invitation expired"))
+
+    return invitation

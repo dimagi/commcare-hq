@@ -61,7 +61,7 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
         'link':
             absolute_reverse(
                 'consumer_user:consumer_user_register',
-                kwargs={'invitation': new_invitation.signature()},
+                kwargs={'signed_invitation_id': new_invitation.signature()},
             ),
     }
     send_html_email_async.delay(
