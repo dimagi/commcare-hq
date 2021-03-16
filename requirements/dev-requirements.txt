@@ -203,7 +203,7 @@ dnspython==1.15.0
     # via
     #   -r base-requirements.in
     #   email-validator
-docutils==0.15.2
+docutils==0.16
     # via
     #   -r dev-requirements.in
     #   recommonmark
