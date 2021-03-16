@@ -302,6 +302,20 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         invite.send_activation_email()
 
 
+def find_location_id(location_codes, location_cache):
+    location_ids = []
+    for code in location_codes:
+        loc = get_location_from_site_code(code, location_cache)
+        location_ids.append(loc.location_id)
+    return location_ids
+
+
+def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
+    locations_updated = set(assigned_loc_ids) != set(location_ids)
+    primary_location_removed = (loc_id and not location_ids or loc_id not in location_ids)
+    return locations_updated, primary_location_removed
+
+
 def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     domain_info_by_domain = {}
@@ -479,16 +493,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
                     # the user's information is updated, or none of it
-                    location_ids = []
-                    for code in location_codes:
-                        loc = get_location_from_site_code(code, domain_info.location_cache)
-                        location_ids.append(loc.location_id)
-
-                    locations_updated = set(user.assigned_location_ids) != set(location_ids)
-                    primary_location_removed = (user.location_id and not location_ids or
-                                                user.location_id not in location_ids)
-
-                    if primary_location_removed:
+                    location_ids = find_location_id(location_codes, domain_info.location_cache)
+                    locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
+                                                                                     user.location_id,
+                                                                                     user.assigned_location_ids)
+                    if primary_loc_removed:
                         user.unset_location(commit=False)
                     if locations_updated:
                         user.reset_locations(location_ids, commit=False)
@@ -662,23 +671,15 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         user.delete_domain_membership(domain)
                         user.save()
                 if domain_has_privilege(domain, privileges.LOCATIONS):
-                    domain_membership = user.get_domain_membership(domain)
-                    if domain_membership.location_id is None and len(location_codes) != 0:
+                    membership = user.get_domain_membership(domain)
+                    if membership.location_id is None and len(location_codes) != 0:
                         user.set_location(domain, location_codes[0])
                     location_cache = SiteCodeToLocationCache(domain)
-                    # Do this here so that we validate the location code before we
-                    # save any other information to the user, this way either all of
-                    # the user's information is updated, or none of it
-                    location_ids = []
-                    for code in location_codes:
-                        loc = get_location_from_site_code(code, location_cache)
-                        location_ids.append(loc.location_id)
-
-                    locations_updated = set(domain_membership.assigned_location_ids) != set(location_ids)
-                    primary_location_removed = (domain_membership.location_id and not location_ids
-                                                or domain_membership.location_id not in location_ids)
-
-                    if primary_location_removed:
+                    location_ids = find_location_id(location_codes, location_cache)
+                    locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
+                                                                                     membership.location_id,
+                                                                                     membership.assigned_location_ids)
+                    if primary_loc_removed:
                         user.unset_location(domain)
                     if locations_updated:
                         user.reset_locations(domain, location_ids)
