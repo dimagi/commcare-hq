@@ -1820,9 +1820,10 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'Require explicit permissions to access mobile app endpoints',
+    'COVID: Require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
 )
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
