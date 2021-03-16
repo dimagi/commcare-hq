@@ -626,6 +626,11 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
         role = row.get('role', None)
         status = row.get('status')
+        location_codes = row.get('location_code') or []
+        if location_codes and not isinstance(location_codes, list):
+            location_codes = [location_codes]
+        # ignore empty
+        location_codes = [code for code in location_codes if code]
 
         try:
             remove = spec_value_to_boolean_or_none(row, 'remove')
@@ -656,6 +661,27 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     else:
                         user.delete_domain_membership(domain)
                         user.save()
+                if domain_has_privilege(domain, privileges.LOCATIONS):
+                    domain_membership = user.get_domain_membership(domain)
+                    if domain_membership.location_id is None and len(location_codes) != 0:
+                        user.set_location(domain, location_codes[0])
+                    location_cache = SiteCodeToLocationCache(domain)
+                    # Do this here so that we validate the location code before we
+                    # save any other information to the user, this way either all of
+                    # the user's information is updated, or none of it
+                    location_ids = []
+                    for code in location_codes:
+                        loc = get_location_from_site_code(code, location_cache)
+                        location_ids.append(loc.location_id)
+
+                    locations_updated = set(domain_membership.assigned_location_ids) != set(location_ids)
+                    primary_location_removed = (domain_membership.location_id and not location_ids
+                                                or domain_membership.location_id not in location_ids)
+
+                    if primary_location_removed:
+                        user.unset_location(domain)
+                    if locations_updated:
+                        user.reset_locations(domain, location_ids)
                 else:
                     if user.is_member_of(domain):
                         user_current_role = user.get_role(domain=domain)
@@ -669,7 +695,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         user.add_as_web_user(domain, role=role_qualified_id)
 
                     elif not user.is_member_of(domain) and status == 'Invited':
-                        create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
+                        create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                         user.location_id)
                 status_row['flag'] = 'updated'
 
             else:
