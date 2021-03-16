@@ -111,17 +111,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         }
                     });
                 }
-                if (element.is('input')) {
-                    element.val(value);
-                    element.change();
+                // lookup DOM element again, in case the element got rerendered
+                var domElement = $('*[data-receive="' + receiveExpression + '"]')
+                if (domElement.is('input')) {
+                    domElement.val(value);
+                    domElement.change();
                 }
                 else {
                     // Set lookup table option by label
-                    var option = element.find("option").filter(function (_) {
+                    var option = domElement.find("option").filter(function (_) {
                         return $(this).text().trim() === value;
                     });
                     if (option.length === 1) {
-                        element.val(String(option.index() - 1)).trigger("change");
+                        domElement.val(String(option.index() - 1)).trigger("change");
                     }
                 }
             };
