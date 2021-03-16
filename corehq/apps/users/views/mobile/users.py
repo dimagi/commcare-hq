@@ -1008,6 +1008,25 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return self.render_form("failure")
 
 
+def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun):
+    context = {
+        'bulk_upload': {
+            "help_site": {
+                "address": BULK_MOBILE_HELP_SITE,
+                "name": _("CommCare Help Site"),
+            },
+            "download_url": reverse(download_url, args=(domain,)),
+            "adjective": _(adjective),
+            "plural_noun": _(plural_noun),
+        },
+        'show_secret_settings': request_params.get("secret", False),
+    }
+    context.update({
+        'bulk_upload_form': get_bulk_upload_form(context),
+    })
+    return context
+
+
 class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
@@ -1020,23 +1039,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     @property
     def page_context(self):
         request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
-        context = {
-            'bulk_upload': {
-                "help_site": {
-                    "address": BULK_MOBILE_HELP_SITE,
-                    "name": _("CommCare Help Site"),
-                },
-                "download_url": reverse(
-                    "download_commcare_users", args=(self.domain,)),
-                "adjective": _("mobile worker"),
-                "plural_noun": _("mobile workers"),
-            },
-            'show_secret_settings': request_params.get("secret", False),
-        }
-        context.update({
-            'bulk_upload_form': get_bulk_upload_form(context),
-        })
-        return context
+        return get_user_upload_context(self.domain, request_params, "download_commcare_users", "mobile worker",
+                                       "mobile workers")
 
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
