@@ -43,6 +43,7 @@ from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 required_headers = set(['username'])
+web_required_headers = set(['username', 'role'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
@@ -57,7 +58,7 @@ old_headers = {
 }
 
 
-def check_headers(user_specs):
+def check_headers(user_specs, is_web_upload=False):
     messages = []
     headers = set(user_specs.fieldnames)
 
@@ -69,9 +70,11 @@ def check_headers(user_specs):
                     old_name=old_name, new_name=new_name
                 ))
             headers.discard(old_name)
-
     illegal_headers = headers - allowed_headers
-    missing_headers = required_headers - headers
+    if is_web_upload:
+        missing_headers = web_required_headers - headers
+    else:
+        missing_headers = required_headers - headers
 
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
