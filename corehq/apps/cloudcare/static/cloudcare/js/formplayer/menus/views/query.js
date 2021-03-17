@@ -124,8 +124,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     });
                     if (option.length === 1) {
                         domElement.val(String(option.index() - 1)).trigger("change");
-                    }
-                    else {
+                    } else {
                         domElement.val("-1").trigger('change');
                     }
                 }
