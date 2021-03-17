@@ -27,7 +27,7 @@ class ConsumerUserInvitation(models.Model):
     domain = models.CharField(max_length=255)
     accepted = models.BooleanField(default=False)
     invited_by = models.CharField(max_length=255)
-    invited_on = models.DateTimeField(auto_now=True)
+    invited_on = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
 
     class Meta:

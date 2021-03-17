@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User
 from django.core.signing import TimestampSigner
@@ -22,7 +23,9 @@ from corehq.apps.consumer_user.models import (
     ConsumerUserCaseRelationship,
     ConsumerUserInvitation,
 )
+from corehq.apps.consumer_user.tasks import expire_unused_invitations
 from corehq.apps.data_interfaces.tests.util import create_case
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.tests.locks import reentrant_redis_locks
 
@@ -571,3 +574,81 @@ class ChangeContactDetailsTestCase(TestCase):
         self.client.login(username=email, password=password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
+
+
+class ExpireConsumerUserInvitations(TestCase):
+    def setUp(self):
+        self.domain = 'consumer-invitation-test'
+        self.factory = CaseFactory(self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases(self.domain)
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        ConsumerUserInvitation.objects.all().delete()
+        ConsumerUser.objects.all().delete()
+        User.objects.all().delete()
+        super().tearDown()
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
+    def test_expired(self):
+        result = self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=uuid.uuid4().hex,
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                        relationship=CASE_INDEX_EXTENSION
+                    )
+                ],
+                attrs={
+                    'create': True,
+                    'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                    'owner_id': 'comm_care',
+                    'update': {
+                        'email': 'testing@testing.in'
+                    }
+                }
+            )
+        )
+        case = result[0]
+        invitation = ConsumerUserInvitation.objects.get(case_id=case.case_id, domain=case.domain)
+        invitation.invited_on = datetime.utcnow() - timedelta(days=32)
+        invitation.save(update_fields=['invited_on'])
+
+        expire_unused_invitations()
+        invitation.refresh_from_db()
+        self.assertFalse(invitation.active)
+
+        case = CaseAccessors(case.domain).get_case(case.case_id)
+        self.assertTrue(case.closed)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
+    def test_not_expired(self):
+        result = self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=uuid.uuid4().hex,
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True}),
+                        relationship=CASE_INDEX_EXTENSION
+                    )
+                ],
+                attrs={
+                    'create': True,
+                    'case_type': CONSUMER_INVITATION_CASE_TYPE,
+                    'owner_id': 'comm_care',
+                    'update': {
+                        'email': 'testing@testing.in'
+                    }
+                }
+            )
+        )
+        case = result[0]
+        expire_unused_invitations()
+        invitation = ConsumerUserInvitation.objects.get(case_id=case.case_id, domain=case.domain)
+        self.assertTrue(invitation.active)
+
+        case = CaseAccessors(case.domain).get_case(case.case_id)
+        self.assertFalse(case.closed)
