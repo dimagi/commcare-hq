@@ -661,10 +661,13 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     ) % {'username': user.username, 'new_username': username})
                 if remove:
                     if not user or not user.is_member_of(domain):
-                        raise UserUploadError(_(
-                            "You cannot remove a web user that is not a member of this project. "
-                            "{username} is not a member.").format(username=username)
-                        )
+                        try:
+                            invitation = Invitation.objects.get(domain=domain, email=username)
+                        except Invitation.DoesNotExist:
+                            raise UserUploadError(_(
+                                "You cannot remove a web user that is not a member of invited to this project. "
+                                "{username} is not a member or invited.").format(username=username))
+                        invitation.delete()
                     elif username == upload_user.username:
                         raise UserUploadError(_("You cannot remove a yourself from a domain via bulk upload"))
                     else:
