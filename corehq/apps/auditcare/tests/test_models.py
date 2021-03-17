@@ -1,8 +1,10 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import RequestFactory
+from django.test.utils import override_settings
 from testil import Config, eq
 
 import corehq.apps.auditcare.models as mod
@@ -10,6 +12,9 @@ from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
 
 from .test_middleware import make_view
 from .testutils import AuditcareTest
+from ..utils import to_django_header
+
+TRACE_HEADER = "X-Test-Trace-Id"
 
 
 class TestAccessAudit(AuditcareTest):
@@ -64,6 +69,20 @@ class TestAccessAudit(AuditcareTest):
         self.assertEqual(event.user, None)
         self.assertEqual(event.description, "Logout: ")
 
+    @override_settings(AUDIT_TRACE_ID_HEADER=TRACE_HEADER)
+    def test_audit_trace_id_header(self):
+        trace_id = "Root=1-67891233-abcdef012345678912345678"
+        headers = {to_django_header(TRACE_HEADER): trace_id}
+        request = make_request("/a/block/login", **headers)
+
+        # HACK verify that the header was set correctly
+        assert TRACE_HEADER in request.headers, request.headers
+
+        with intercept_save(AccessAudit) as cfg, patch_trace_id_header():
+            AccessAudit.audit_login(request, None)
+            event = cfg.obj
+        self.assertEqual(event.trace_id, trace_id)
+
 
 class TestNavigationEventAudit(AuditcareTest):
 
@@ -76,6 +95,17 @@ class TestNavigationEventAudit(AuditcareTest):
         self.assertEqual(event.domain, "block")
         self.assertEqual(event.request_path, f"{path}?key=value")
         self.assertEqual(event.description, "melvin@test.com")
+        self.assertNotIn(to_django_header(TRACE_HEADER), event.headers)
+        event.save()
+
+    @override_settings(AUDIT_TRACE_ID_HEADER=TRACE_HEADER)
+    def test_audit_trace_id_header(self):
+        trace_id = "Root=1-67891233-abcdef012345678912345678"
+        with patch_trace_id_header():
+            view = make_view()
+            request = make_request(**{to_django_header(TRACE_HEADER): trace_id})
+            event = NavigationEventAudit.audit_view(request, "melvin@test.com", view, {})
+        self.assertEqual(event.headers[to_django_header(TRACE_HEADER)], trace_id)
         event.save()
 
     def test_audit_view_should_not_save(self):
@@ -98,10 +128,10 @@ def test_get_domain():
     yield test, cfg(path="/a/block/path", request_domain="xx")
 
 
-def make_request(path="/path", session_key="abc"):
-    request = RequestFactory().get(path, {"key": "value"})
-    request.META["HTTP_ACCEPT"] = "html"
-    request.META["HTTP_USER_AGENT"] = "Mozilla"
+def make_request(path="/path", session_key="abc", **headers):
+    headers.setdefault("HTTP_ACCEPT", "html")
+    headers.setdefault("HTTP_USER_AGENT", "Mozilla")
+    request = RequestFactory().get(path, {"key": "value"}, **headers)
     request.session = Config(session_key=session_key)
     return request
 
@@ -120,3 +150,22 @@ def intercept_save(cls):
     real_save = cls.save
     with patch.object(cls, "save", save):
         yield config
+
+
+@contextmanager
+def patch_trace_id_header():
+    def assert_not_installed():
+        assert AccessAudit.trace_id_header is None, AccessAudit.trace_id_header
+        assert django_header not in mod.STANDARD_HEADER_KEYS, \
+            (django_header, mod.STANDARD_HEADER_KEYS)
+
+    from .. import install_trace_id_header
+    django_header = to_django_header(settings.AUDIT_TRACE_ID_HEADER)
+    assert_not_installed()
+    install_trace_id_header()
+    try:
+        yield
+    finally:
+        AccessAudit.trace_id_header = None
+        mod.STANDARD_HEADER_KEYS.remove(django_header)
+        assert_not_installed()

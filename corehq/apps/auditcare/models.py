@@ -42,6 +42,7 @@ STANDARD_HEADER_KEYS = [
     'HTTP_ACCEPT_LANGUAGE',
     'CONTENT_TYPE',
     'HTTP_ACCEPT_ENCODING',
+    # settings.AUDIT_TRACE_ID_HEADER (django-ified) will be added here
 ]
 
 
@@ -165,6 +166,10 @@ class AccessAudit(AuditEvent):
     http_accept_fk = models.ForeignKey(
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
+    trace_id = models.CharField(max_length=127, null=True, blank=True)
+
+    # Optional (django-ified) settings.AUDIT_TRACE_ID_HEADER set by AuditcareConfig
+    trace_id_header = None
 
     @property
     def description(self):
@@ -176,6 +181,8 @@ class AccessAudit(AuditEvent):
         audit = super().create_audit(request, user)
         audit.http_accept = request.META.get('HTTP_ACCEPT')
         audit.access_type = access_type
+        if cls.trace_id_header is not None:
+            audit.trace_id = request.META.get(cls.trace_id_header)
         return audit
 
     @classmethod

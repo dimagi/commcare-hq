@@ -90,6 +90,7 @@ class Migration(migrations.Migration):
                     ],
                     max_length=1
                 )),
+                ('trace_id', models.CharField(blank=True, max_length=127, null=True)),
                 ('http_accept_fk', models.ForeignKey(
                     db_index=False,
                     null=True,
