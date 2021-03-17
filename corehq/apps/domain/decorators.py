@@ -428,10 +428,10 @@ basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=Fal
 def get_auth_decorator_map(require_domain=True, allow_sessions=True):
     # get a mapped set of decorators for different auth types with the specified parameters
     return {
-        'digest': login_or_digest_ex(require_domain=require_domain, allow_sessions=allow_sessions),
-        'basic': login_or_basic_ex(require_domain=require_domain, allow_sessions=allow_sessions),
-        'api_key': login_or_api_key_ex(require_domain=require_domain, allow_sessions=allow_sessions),
-        'oauth2': login_or_oauth2_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        DIGEST: login_or_digest_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        BASIC: login_or_basic_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        API_KEY: login_or_api_key_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        OAUTH2: login_or_oauth2_ex(require_domain=require_domain, allow_sessions=allow_sessions),
     }
 
 
