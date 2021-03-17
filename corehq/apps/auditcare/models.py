@@ -65,6 +65,7 @@ class ViewName(models.Model):
 class AuditEvent(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.CharField(max_length=255, null=True, blank=True)
+    domain = models.CharField(max_length=126, null=True, blank=True)
     event_date = models.DateTimeField(default=getdate, db_index=True)
     path = models.CharField(max_length=255, blank=True, default='')
 
@@ -78,14 +79,18 @@ class AuditEvent(models.Model):
 
     class Meta:
         abstract = True
-        index_together = [("user", "event_date")]
+        index_together = [
+            ("user", "event_date"),
+            ("domain", "event_date"),
+        ]
 
     def __str__(self):
         return "[%s] %s" % (self.doc_type, self.description)
 
     @classmethod
-    def create_audit(cls, user):
+    def create_audit(cls, request, user):
         audit = cls()
+        audit.domain = get_domain(request)
         if isinstance(user, AnonymousUser):
             audit.user = None
         elif user is None:
@@ -122,17 +127,13 @@ class NavigationEventAudit(AuditEvent):
         return self.user or ""
 
     @cached_property
-    def domain(self):
-        return get_domain_from_url(self.path)
-
-    @cached_property
     def request_path(self):
         return f"{self.path}?{self.params}"
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs, extra={}):
         try:
-            audit = cls.create_audit(user)
+            audit = cls.create_audit(request, user)
             if request.GET:
                 audit.path = request.path
                 audit.params = "&".join(f"{x}={request.GET[x]}" for x in request.GET)
@@ -187,7 +188,7 @@ class AccessAudit(AuditEvent):
     @classmethod
     def create_audit(cls, request, user, access_type):
         '''Creates an instance of a Access log.'''
-        audit = super().create_audit(user)
+        audit = super().create_audit(request, user)
         audit.ip_address = get_ip(request) or ''
         audit.http_accept = request.META.get('HTTP_ACCEPT')
         audit.path = request.META.get('PATH_INFO', '')
@@ -227,6 +228,18 @@ def audit_login_failed(sender, *, request, credentials, **kwargs):
 user_logged_in.connect(audit_login)
 user_logged_out.connect(audit_logout)
 #user_login_failed.connect(audit_login_failed)  FIXME
+
+
+def get_domain(request):
+    domain = get_domain_from_url(request.path)
+    domain2 = getattr(request, "domain", None)
+    if domain2:
+        if not domain:
+            domain = domain2
+        elif domain != domain2:
+            log.error("domain mismatch for request %s: %r != %r",
+                request.path, domain, domain2)
+    return domain
 
 
 def wrap_audit_event(event):

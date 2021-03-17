@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import RequestFactory
-from testil import Config
+from testil import Config, eq
 
 import corehq.apps.auditcare.models as mod
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
@@ -20,6 +20,7 @@ class TestAccessAudit(AuditcareTest):
             event = cfg.obj
         self.assertEqual(event.user, "melvin@test.com")
         self.assertEqual(event.path, "/a/block/login")
+        self.assertEqual(event.domain, "block")
         self.assertEqual(event.ip_address, "127.0.0.1")
         self.assertEqual(event.http_accept, "html")
         self.assertEqual(event.user_agent, "Mozilla")
@@ -34,6 +35,7 @@ class TestAccessAudit(AuditcareTest):
             event = cfg.obj
         self.assertEqual(event.user, "melvin@test.com")
         self.assertEqual(event.path, "/a/block/login")
+        self.assertEqual(event.domain, "block")
         self.assertEqual(event.ip_address, "127.0.0.1")
         self.assertEqual(event.http_accept, "html")
         self.assertEqual(event.user_agent, "Mozilla")
@@ -47,6 +49,7 @@ class TestAccessAudit(AuditcareTest):
             event = cfg.obj
         self.assertEqual(event.user, "melvin@test.com")
         self.assertEqual(event.path, "/accounts/logout")
+        self.assertEqual(event.domain, None)
         self.assertEqual(event.ip_address, "127.0.0.1")
         self.assertEqual(event.http_accept, "html")
         self.assertEqual(event.user_agent, "Mozilla")
@@ -64,11 +67,14 @@ class TestAccessAudit(AuditcareTest):
 
 class TestNavigationEventAudit(AuditcareTest):
 
-    def test_should_create_event_with_path(self):
-        view = make_view()
-        event = NavigationEventAudit.audit_view(make_request(), "melvin@test.com", view, {})
-        self.assertEqual(event.path, "/path")
-        self.assertEqual(event.request_path, "/path?key=value")
+    def test_audit_view_should_set_properties(self):
+        path = "/a/block/path"
+        view = make_view(path)
+        request = make_request(path)
+        event = NavigationEventAudit.audit_view(request, "melvin@test.com", view, {})
+        self.assertEqual(event.path, path)
+        self.assertEqual(event.domain, "block")
+        self.assertEqual(event.request_path, f"{path}?key=value")
         self.assertEqual(event.description, "melvin@test.com")
         event.save()
 
@@ -76,6 +82,20 @@ class TestNavigationEventAudit(AuditcareTest):
         view = make_view()
         event = NavigationEventAudit.audit_view(make_request(), "melvin@test.com", view, {})
         self.assertIsNone(event.id)
+
+
+def test_get_domain():
+    def test(cfg):
+        request = make_request(cfg.path)
+        if "request_domain" in cfg:
+            request.domain = cfg.request_domain
+        eq(mod.get_domain(request), cfg.expect)
+
+    cfg = Config(expect="block")
+    yield test, cfg(path="/path", expect=None)
+    yield test, cfg(path="/a/block/path")
+    yield test, cfg(path="/path", request_domain="block")
+    yield test, cfg(path="/a/block/path", request_domain="xx")
 
 
 def make_request(path="/path", session_key="abc"):
