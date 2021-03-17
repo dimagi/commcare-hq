@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
 
+from corehq.apps.case_search.exceptions import TooManyRelatedCasesException
 from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
     XPathFunctionException,
@@ -12,6 +13,7 @@ from corehq.apps.case_search.xpath_functions import (
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_ids_lookup,
     case_property_missing,
     case_property_range_query,
     exact_case_property_text_query,
@@ -46,9 +48,6 @@ def print_ast(node):
             indent -= 1
 
     visit(node, 0)
-
-
-MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
 
 
 OPERATOR_MAPPING = {
@@ -87,7 +86,12 @@ def build_filter_from_ast(domain, node):
 
         # fetch the ids of the highest level cases that match the case_property
         # i.e. all the cases which have `property = 'value'`
-        ids = _parent_property_lookup(node)
+        try:
+            ids = _parent_property_lookup(node)
+        except TooManyRelatedCasesException as e:
+            raise CaseFilterError(
+                _("The related case lookup you are trying to perform would return too many cases: {}").format(e),
+            )
 
         # get the related case path we need to walk, i.e. `parent/grandparent/property`
         n = node.left
@@ -116,14 +120,7 @@ def build_filter_from_ast(domain, node):
         """
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
-        new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
-        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
-        if es_query.count() > MAX_RELATED_CASES:
-            raise CaseFilterError(
-                _("The related case lookup you are trying to perform would return too many cases"),
-                new_query
-            )
-        return es_query.scroll_ids()
+        return case_ids_lookup(domain, serialize(node.left.right), node.right, node.op)
 
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`

@@ -37,6 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.case_search.exceptions import TooManyRelatedCasesException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -106,6 +107,8 @@ def search(request, domain):
 
     try:
         hits = search_es.run().raw_hits
+    except TooManyRelatedCasesException:
+        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     except Exception as e:
         notify_exception(request, str(e), details=dict(
             exception_type=type(e),
