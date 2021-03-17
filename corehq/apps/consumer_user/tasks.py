@@ -29,7 +29,7 @@ def handle_consumer_user_invitations(domain, invitation_case_id, demographic_cas
 
     if not invitation_case.closed and ConsumerUserInvitation.objects.filter(
         demographic_case_id=demographic_case_id, active=True, accepted=False
-    ).exists():
+    ).exclude(case_id=invitation_case_id).exists():
         # If there is currently an open, unaccepted invitation for the same demographic case, do nothing
         update_case(
             domain=domain,

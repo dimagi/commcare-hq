@@ -361,7 +361,10 @@ class SignalTestCase(TestCase):
             # Updating the case again with a changed email address creates a new invitation
             self.factory.update_case(
                 case.case_id,
-                update={'email': 'email@changed.in'},
+                update={
+                    'email': 'email@changed.in',
+                    CONSUMER_INVITATION_STATUS: 'resend',
+                },
             )
             self.assertEqual(ConsumerUserInvitation.objects.count(), 2)
             self.assertEqual(ConsumerUserInvitation.objects.filter(active=True).count(), 1)
