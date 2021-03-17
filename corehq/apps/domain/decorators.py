@@ -22,7 +22,6 @@ from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
 
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
 from corehq.apps.sso.utils.request_helpers import (
@@ -45,8 +44,8 @@ from corehq.apps.domain.auth import (
     basicauth,
     determine_authtype_from_request,
     formplayer_as_user_auth,
-    formplayer_auth,
     get_username_and_password_from_request,
+    HQApiKeyAuthentication,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
