@@ -68,16 +68,6 @@ class TestAccessAudit(AuditcareTest):
         latest_audit = get_latest_access(USERNAME)
         self.assertEqual(latest_audit.access_type, models.ACCESS_LOGOUT)
 
-    def test_logout_unauthenticated_user(self):
-        raise SkipTest("unauthenticated user logout causes a 500 error unlreated to what this is testing")
-        self.create_web_user()
-
-        self.client.post(reverse('logout'))
-        logout_count = AccessAudit.objects.filter(user=USERNAME).count()
-        self.assertEqual(1, logout_count)
-        latest_audit = get_latest_access(USERNAME)
-        self.assertEqual(latest_audit.access_type, models.ACCESS_LOGOUT)
-
 
 def get_latest_access(username):
     return AccessAudit.objects.filter(user=username).order_by("-event_date")[:1][0]
