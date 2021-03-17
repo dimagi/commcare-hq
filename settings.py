@@ -534,7 +534,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    "corehq.apps.locations.fixtures.related_locations_fixture_generator",
 ]
 
 ### Shared drive settings ###

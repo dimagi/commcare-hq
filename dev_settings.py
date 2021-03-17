@@ -95,6 +95,7 @@ COMPRESS_FILTERS = {
     ],
     'css': []
 }
+
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
 #  make celery synchronous

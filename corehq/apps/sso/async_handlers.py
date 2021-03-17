@@ -86,7 +86,8 @@ class IdentityProviderAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
 
     def remove_object(self):
         existing_email_domain = AuthenticatedEmailDomain.objects.filter(
-            email_domain=self.email_domain
+            email_domain=self.email_domain,
+            identity_provider=self.identity_provider,
         )
         if not existing_email_domain.exists():
             raise AsyncHandlerError(

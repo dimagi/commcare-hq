@@ -650,14 +650,6 @@ VISIT_SCHEDULER = StaticToggle(
 )
 
 
-MONITOR_2FA_CHANGES = StaticToggle(
-    'monitor_2fa_changes',
-    'Monitor 2FA activity for SAAS-11210 ticket',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -1638,15 +1630,6 @@ SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
-RELATED_LOCATIONS = StaticToggle(
-    'related_locations',
-    'REACH: Enable experimental location many-to-many mappings',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
-)
-
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
@@ -1829,9 +1812,10 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'Require explicit permissions to access mobile app endpoints',
+    'COVID: Require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
 )
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
@@ -1913,7 +1897,8 @@ HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'COVID: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
 )
 
 GAEN_OTP_SERVER = StaticToggle(
