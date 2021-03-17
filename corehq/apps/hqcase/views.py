@@ -15,7 +15,7 @@ from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
-)
+    allow_cors)
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
@@ -81,6 +81,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 
 @waf_allow('XSS_BODY')
 @csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
 @api_auth
 @require_can_edit_data
 @CASE_API_V0_6.required_decorator()

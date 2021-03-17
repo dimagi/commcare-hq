@@ -692,3 +692,21 @@ def track_domain_request(calculated_prop):
         return _wrapped
 
     return _dec
+
+
+def allow_cors(allowed_methods):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped_view(request, *args, **kwargs):
+            if request.method == "OPTIONS":
+                response = HttpResponse(allowed_methods)
+                response['Access-Control-Allow-Origin'] = '*'
+                response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+                response['Allow'] = allowed_methods
+                return response
+            response = view_func(request, *args, **kwargs)
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            return response
+        return wrapped_view
+    return decorator
