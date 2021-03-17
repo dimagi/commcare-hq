@@ -127,7 +127,8 @@ def get_case_property_description_dict(domain):
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,
-                       description=None, group=None, deprecated=None):
+                       description=None, group=None, deprecated=None,
+                       fhir_resource_prop_path=None, fhir_resource_type=None):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -149,7 +150,29 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.full_clean()
     except ValidationError as e:
         return str(e)
+
+    if fhir_resource_type:
+        _update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path)
     prop.save()
+
+
+def _update_fhir_resource_property(case_property, fhir_resource_type, fhir_resource_prop_path):
+    from corehq.motech.fhir.models import FHIRResourceProperty
+    if fhir_resource_prop_path:
+        try:
+            fhir_resource_prop = FHIRResourceProperty.objects.get(case_property=case_property,
+                                                                  resource_type=fhir_resource_type)
+        except FHIRResourceProperty.DoesNotExist:
+            fhir_resource_prop = FHIRResourceProperty(case_property=case_property,
+                                                      resource_type=fhir_resource_type)
+        fhir_resource_prop.jsonpath = fhir_resource_prop_path
+        fhir_resource_prop.save()
+    elif fhir_resource_prop_path == "":
+        try:
+            FHIRResourceProperty.objects.get(case_property=case_property,
+                                             resource_type=fhir_resource_type).delete()
+        except FHIRResourceProperty.DoesNotExist:
+            pass
 
 
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
