@@ -26,7 +26,7 @@ def get_performance_threshold(domain_name):
 
 
 class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
-                                               'is_performing', 'previous_stub', 'next_stub'])):
+                                               'is_performing', 'one_month_ago_stub', 'two_months_ago_stub'])):
 
     @property
     def is_active(self):
@@ -34,7 +34,8 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
 
     @property
     def is_newly_performing(self):
-        return self.is_performing and (self.previous_stub is None or not self.previous_stub.is_performing)
+        return self.is_performing and \
+            (self.one_month_ago_stub is None or not self.one_month_ago_stub.is_performing)
 
     @property
     def delta_forms(self):
@@ -42,11 +43,13 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
 
     @property
     def num_forms_submitted_previous_month(self):
-        return self.previous_stub.num_forms_submitted if self.previous_stub else 0
+        return self.one_month_ago_stub.num_forms_submitted if self.one_month_ago_stub else 0
 
     @property
     def delta_forms_previous_month(self):
-        return self.num_forms_submitted - self.num_forms_submitted_previous_month
+        num_forms_submitted_two_months_ago = self.two_months_ago_stub.num_forms_submitted \
+            if self.two_months_ago_stub else 0
+        return self.num_forms_submitted_previous_month - num_forms_submitted_two_months_ago
 
 
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
@@ -60,7 +63,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                  performance_threshold, previous_summary=None,
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
-        self._next_summary = None
         self._is_final = None
 
         base_queryset = MALTRow.objects.filter(
@@ -100,9 +102,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             delta_high_performers=delta_high_performers,
             delta_low_performers=delta_low_performers,
         )
-
-    def set_next_month_summary(self, next_month_summary):
-        self._next_summary = next_month_summary
 
     def set_percent_active(self):
         self.total_users_by_month = self.inactive + self.number_of_active_users
@@ -152,8 +151,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 username=raw_username(row['username']),
                 num_forms_submitted=row['total_num_forms'],
                 is_performing=row['total_num_forms'] >= self.performance_threshold,
-                previous_stub=None,
-                next_stub=None,
+                one_month_ago_stub=None,
+                two_months_ago_stub=None,
             ) for row in self._user_stat_from_malt
         }
 
@@ -170,8 +169,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             raise Exception("User stubs accessed before finalized. "
                             "Please call finalize() before calling this method.")
         if self._previous_summary:
-            previous_stubs = self._previous_summary._get_all_user_stubs()
-            next_stubs = self._next_summary._get_all_user_stubs() if self._next_summary else {}
+            one_month_ago_stubs = self._previous_summary._get_all_user_stubs()
+            two_months_ago_summary = self._previous_summary._previous_summary
+            two_months_ago_stubs = two_months_ago_summary._get_all_user_stubs() if two_months_ago_summary else {}
             user_stubs = self._get_all_user_stubs()
             ret = []
             for user_stub in user_stubs.values():
@@ -180,18 +180,18 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                     username=user_stub.username,
                     num_forms_submitted=user_stub.num_forms_submitted,
                     is_performing=user_stub.is_performing,
-                    previous_stub=previous_stubs.get(user_stub.user_id),
-                    next_stub=next_stubs.get(user_stub.user_id),
+                    one_month_ago_stub=one_month_ago_stubs.get(user_stub.user_id),
+                    two_months_ago_stub=two_months_ago_stubs.get(user_stub.user_id),
                 ))
-            for missing_user_id in set(previous_stubs.keys()) - set(user_stubs.keys()):
-                previous_stub = previous_stubs[missing_user_id]
+            for missing_user_id in set(one_month_ago_stubs.keys()) - set(user_stubs.keys()):
+                one_month_ago_stub = one_month_ago_stubs[missing_user_id]
                 ret.append(UserActivityStub(
-                    user_id=previous_stub.user_id,
-                    username=previous_stub.username,
+                    user_id=one_month_ago_stub.user_id,
+                    username=one_month_ago_stub.username,
                     num_forms_submitted=0,
                     is_performing=False,
-                    previous_stub=previous_stub,
-                    next_stub=next_stubs.get(missing_user_id),
+                    one_month_ago_stub=one_month_ago_stub,
+                    two_months_ago_stub=two_months_ago_stubs.get(missing_user_id),
                 ))
             return ret
 
@@ -327,15 +327,9 @@ class ProjectHealthDashboard(ProjectReport):
                 active_not_deleted_users=active_not_deleted_users,
             )
             six_month_summary.append(this_month_summary)
-            if last_month_summary is not None:
-                last_month_summary.set_next_month_summary(this_month_summary)
+            this_month_summary.finalize()
+            this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
-
-        # these steps have to be done in a second outer loop so that 'next month summary' is available
-        # whenever it is needed
-        for summary in six_month_summary:
-            summary.finalize()
-            summary.set_percent_active()
 
         return six_month_summary[1:]
 
