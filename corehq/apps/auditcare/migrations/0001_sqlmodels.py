@@ -54,7 +54,6 @@ class Migration(migrations.Migration):
                 ('view_kwargs', corehq.util.models.NullJsonField(default=dict, null=True)),
                 ('headers', corehq.util.models.NullJsonField(default=dict, null=True)),
                 ('status_code', models.SmallIntegerField(default=0)),
-                ('extra', corehq.util.models.NullJsonField(default=dict, null=True)),
                 ('user_agent_fk', models.ForeignKey(
                     db_index=False,
                     null=True,
@@ -91,7 +90,6 @@ class Migration(migrations.Migration):
                     ],
                     max_length=1
                 )),
-                ('failures_since_start', models.SmallIntegerField(null=True)),
                 ('http_accept_fk', models.ForeignKey(
                     db_index=False,
                     null=True,

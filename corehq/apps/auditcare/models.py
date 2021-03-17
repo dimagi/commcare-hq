@@ -124,7 +124,6 @@ class NavigationEventAudit(AuditEvent):
     view_kwargs = NullJsonField(default=dict)
     headers = NullJsonField(default=dict)
     status_code = models.SmallIntegerField(default=0)
-    extra = NullJsonField(default=dict)
 
     @property
     def description(self):
@@ -135,7 +134,7 @@ class NavigationEventAudit(AuditEvent):
         return f"{self.path}?{self.params}"
 
     @classmethod
-    def audit_view(cls, request, user, view_func, view_kwargs, extra={}):
+    def audit_view(cls, request, user, view_func, view_kwargs):
         try:
             audit = cls.create_audit(request, user)
             if request.GET:
@@ -148,7 +147,6 @@ class NavigationEventAudit(AuditEvent):
             # it's a bit verbose to go to that extreme, TODO: need to have
             # targeted fields in the META, but due to server differences, it's
             # hard to make it universal.
-            audit.extra = extra
             audit.view_kwargs = view_kwargs
             return audit
         except Exception:
@@ -172,7 +170,6 @@ class AccessAudit(AuditEvent):
     http_accept_fk = models.ForeignKey(
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
-    failures_since_start = models.SmallIntegerField(null=True)
 
     @property
     def description(self):
@@ -229,15 +226,3 @@ def get_domain(request):
             log.error("domain mismatch for request %s: %r != %r",
                 request.path, domain, domain2)
     return domain
-
-
-def wrap_audit_event(event):
-    doc_type = event['doc_type']
-    cls = {
-        'NavigationEventAudit': NavigationEventAudit,
-        'AccessAudit': AccessAudit,
-    }.get(doc_type, None)
-    if not cls:
-        raise ValueError(f"Unknow doc type for audit event: {doc_type}")
-
-    return cls.wrap(event)
