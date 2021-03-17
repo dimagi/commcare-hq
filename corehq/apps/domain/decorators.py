@@ -40,6 +40,7 @@ from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
     FORMPLAYER,
+    OAUTH2,
     basic_or_api_key,
     basicauth,
     determine_authtype_from_request,
@@ -379,6 +380,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
+                OAUTH2: login_or_oauth2_ex(allow_cc_users=True),
             }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
