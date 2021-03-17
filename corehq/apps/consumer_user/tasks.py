@@ -1,13 +1,17 @@
+from datetime import datetime, timedelta
+from collections import defaultdict
+
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from celery.task import task
+from celery.schedules import crontab
+from celery.task import periodic_task, task
 
 from corehq.apps.consumer_user.models import (
     ConsumerUserCaseRelationship,
     ConsumerUserInvitation,
 )
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.hqcase.utils import update_case, bulk_update_cases
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.view_utils import absolute_reverse
@@ -117,3 +121,23 @@ def handle_consumer_user_invitations(domain, invitation_case_id, demographic_cas
         },
         device_id=__name__ + '.handle_consumer_user_invitations',
     )
+
+
+@periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"), queue='background_queue')
+def expire_unused_invitations():
+    expired_invitations = ConsumerUserInvitation.objects.filter(
+        active=True,
+        accepted=False,
+        invited_on__lt=datetime.utcnow() - timedelta(days=30),
+    )
+
+    invitation_case_ids = expired_invitations.values_list('domain', 'case_id')
+    domain_mapped_case_ids = defaultdict(list)
+    for domain, case_id in invitation_case_ids:
+        domain_mapped_case_ids[domain].append(case_id)
+
+    for domain, case_ids in domain_mapped_case_ids.items():
+        case_changes = [(case_id, {CONSUMER_INVITATION_STATUS: "expired"}, True) for case_id in case_ids]
+        bulk_update_cases(domain, case_changes, device_id=__name__ + '.expire_unused_invitations')
+
+    expired_invitations.update(active=False)
