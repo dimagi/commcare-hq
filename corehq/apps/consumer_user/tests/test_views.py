@@ -221,6 +221,7 @@ class SignalTestCase(TestCase):
         super().tearDown()
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
     def test_method_send_email_new_case(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
             result = self.factory.create_or_update_case(
@@ -251,6 +252,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(send_html_email_async.call_count, 1)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
     def test_method_send_email_update_other_case_properties(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
             result = self.factory.create_or_update_case(
@@ -286,6 +288,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(send_html_email_async.call_count, 1)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
     def test_multiple_invitations_same_demographic_case(self):
         # Only create a single invitation for one demographic case
         parent_id = uuid.uuid4().hex
@@ -401,6 +404,7 @@ class SignalTestCase(TestCase):
             self.assertEqual(send_html_email_async.call_count, 2)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @reentrant_redis_locks()
     def test_method_send_email_closed_case(self):
         with patch('corehq.apps.hqwebapp.tasks.send_html_email_async.delay') as send_html_email_async:
             result = self.factory.create_or_update_case(
