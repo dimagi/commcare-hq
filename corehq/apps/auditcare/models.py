@@ -10,7 +10,6 @@ from django.contrib.auth.signals import (
     user_logged_out,
     #user_login_failed,
 )
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.functional import cached_property
 
@@ -74,14 +73,6 @@ class AuditEvent(models.Model):
     def doc_type(self):
         return type(self).__name__
 
-    @property
-    def summary(self):
-        try:
-            ct = ContentType.objects.get(model=self.doc_type.lower())
-            return ct.model_class().objects.get(id=self.id).summary
-        except Exception:
-            return ""
-
     class Meta:
         abstract = True
         index_together = [("user", "event_date")]
@@ -126,10 +117,6 @@ class NavigationEventAudit(AuditEvent):
     session_key = models.CharField(max_length=255, blank=True, null=True)
     status_code = models.SmallIntegerField(default=0)
     extra = NullJsonField(default=dict)
-
-    @property
-    def summary(self):
-        return "%s from %s" % (self.request_path, self.ip_address)
 
     @cached_property
     def domain(self):
@@ -195,10 +182,6 @@ class AccessAudit(AuditEvent):
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
     failures_since_start = models.SmallIntegerField(null=True)
-
-    @property
-    def summary(self):
-        return "%s from %s" % (self.access_type, self.ip_address)
 
     @classmethod
     def create_audit(cls, request, user, access_type):
