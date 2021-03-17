@@ -22,15 +22,15 @@
       </a>
       </td>
       <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}">
-        {% chevron user.delta_forms %} {{ user.delta_forms }} &nbsp;&nbsp;
+        {% chevron user.delta_forms_previous_month %} {{ user.delta_forms_previous_month }} &nbsp;&nbsp;
         <small class="text-muted" title="{% trans 'Number of Forms Submitted Last Month' %}">
-          {{ user.num_forms_submitted }}
+          {{ user.num_forms_submitted_previous_month }}
         </small>
       </td>
       <td title="{% trans 'Change in Forms Submitted Since Last Month' %}">
-        {% chevron user.delta_forms_next_month %} {{ user.delta_forms_next_month }} &nbsp;&nbsp;
+        {% chevron user.delta_forms %} {{ user.delta_forms }} &nbsp;&nbsp;
         <small class="text-muted" title="{% trans 'Number of Forms Submitted This Month' %}">
-          {{ user.num_forms_submitted_next_month }}
+          {{ user.num_forms_submitted }}
         </small>
       </td>
     </tr>
