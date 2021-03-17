@@ -8,10 +8,11 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.toggles import DEFAULT_EXPORT_SETTINGS
 from corehq.apps.export.models.export_settings import ExportFileType
+from corehq.privileges import DEFAULT_EXPORT_SETTINGS
 
 
 class EnterpriseSettingsForm(forms.Form):
@@ -118,7 +119,7 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_signup_message": self.account.restrict_signup_message,
         }
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.username):
+        if self.export_settings and domain_has_privilege(self.domain, DEFAULT_EXPORT_SETTINGS):
             kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
@@ -142,7 +143,7 @@ class EnterpriseSettingsForm(forms.Form):
             )
         )
 
-        if DEFAULT_EXPORT_SETTINGS.enabled(self.username):
+        if domain_has_privilege(self.domain, DEFAULT_EXPORT_SETTINGS):
             self.helper.layout.append(
                 crispy.Div(
                     crispy.Fieldset(
@@ -190,7 +191,7 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.username):
+        if self.export_settings and domain_has_privilege(self.domain, DEFAULT_EXPORT_SETTINGS):
             # forms
             self.export_settings.forms_filetype = self.cleaned_data.get(
                 'forms_filetype',
