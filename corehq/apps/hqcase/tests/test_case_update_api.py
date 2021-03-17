@@ -16,13 +16,14 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import privilege_enabled
+from corehq.util.test_utils import privilege_enabled, flag_enabled
 
 from ..utils import submit_case_blocks
 
 
 @use_sql_backend
 @privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('CASE_API_V0_6')
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
@@ -32,7 +33,7 @@ class TestCaseAPI(TestCase):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None)
-        cls.web_user.is_superuser = True  # in pre-release, this is superuser-only
+        cls.web_user.is_superuser = True
         cls.web_user.save()
         cls.case_accessor = CaseAccessors(cls.domain)
         cls.form_accessor = FormAccessors(cls.domain)
