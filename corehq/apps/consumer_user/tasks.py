@@ -21,7 +21,7 @@ from .const import (
 
 
 @task
-def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_case_id):
+def handle_consumer_user_invitations(domain, invitation_case_id, demographic_case_id):
     invitation_case = CaseAccessors(domain).get_case(invitation_case_id)
     email = invitation_case.get_case_property('email')
     status = invitation_case.get_case_property(CONSUMER_INVITATION_STATUS)
@@ -38,7 +38,7 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
                 CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ERROR,
                 CONSUMER_INVITATION_ERROR: "There is already an open invitation for this case",
             },
-            device_id=__name__ + '.create_new_consumer_user_invitation',
+            device_id=__name__ + '.handle_consumer_user_invitations',
         )
         return
 
@@ -61,7 +61,7 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
                         f" To resend an invitation, set the '{CONSUMER_INVITATION_STATUS}' property to 'resend'."
                     ),
                 },
-                device_id=__name__ + '.create_new_consumer_user_invitation',
+                device_id=__name__ + '.handle_consumer_user_invitations',
             )
             return
         # For any other requests, we'll make a new invitation so we can keep track. Deactivate this one.
@@ -82,7 +82,7 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
                 CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ERROR,
                 CONSUMER_INVITATION_ERROR: "Someone else has already created a user for this case."
             },
-            device_id=__name__ + '.create_new_consumer_user_invitation',
+            device_id=__name__ + '.handle_consumer_user_invitations',
         )
         return
 
@@ -115,5 +115,5 @@ def create_new_consumer_user_invitation(domain, invitation_case_id, demographic_
             CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_SENT,
             CONSUMER_INVITATION_ERROR: "",
         },
-        device_id=__name__ + '.create_new_consumer_user_invitation',
+        device_id=__name__ + '.handle_consumer_user_invitations',
     )

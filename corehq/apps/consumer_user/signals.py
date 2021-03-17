@@ -4,10 +4,10 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.signals import sql_case_post_save
 
 from .const import CONSUMER_INVITATION_CASE_TYPE, CONSUMER_INVITATION_STATUS, CONSUMER_INVITATION_ERROR
-from .tasks import create_new_consumer_user_invitation
+from .tasks import handle_consumer_user_invitations
 
 
-def send_email_case_changed_receiver(sender, case, **kwargs):
+def consumer_user_invitation_case_receiver(sender, case, **kwargs):
     if case.type != CONSUMER_INVITATION_CASE_TYPE:
         return
 
@@ -25,14 +25,14 @@ def send_email_case_changed_receiver(sender, case, **kwargs):
     except IndexError:
         return
 
-    create_new_consumer_user_invitation.delay(
+    handle_consumer_user_invitations.delay(
         case.domain, case.case_id, demographic_case_id,
     )
 
 
 def connect_signals():
     sql_case_post_save.connect(
-        send_email_case_changed_receiver,
+        consumer_user_invitation_case_receiver,
         CommCareCaseSQL,
-        dispatch_uid='send_email_case_changed_receiver',
+        dispatch_uid='consumer_user_invitation_case_receiver',
     )
