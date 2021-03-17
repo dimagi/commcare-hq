@@ -38,16 +38,15 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
 
     @property
     def delta_forms(self):
-        previous_forms = 0 if self.previous_stub is None else self.previous_stub.num_forms_submitted
-        return self.num_forms_submitted - previous_forms
+        return self.num_forms_submitted - self.num_forms_submitted_previous_month
 
     @property
-    def num_forms_submitted_next_month(self):
-        return self.next_stub.num_forms_submitted if self.next_stub else 0
+    def num_forms_submitted_previous_month(self):
+        return self.previous_stub.num_forms_submitted if self.previous_stub else 0
 
     @property
-    def delta_forms_next_month(self):
-        return self.num_forms_submitted_next_month - self.num_forms_submitted
+    def delta_forms_previous_month(self):
+        return self.num_forms_submitted - self.num_forms_submitted_previous_month
 
 
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
@@ -220,8 +219,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         after not performing last month.
         """
         if self._previous_summary:
-            dropouts = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_newly_performing]
-            return sorted(dropouts, key=lambda stub: -stub.delta_forms)
+            new_performers = [stub for stub in self._get_all_user_stubs_with_extra_data()
+                              if stub.is_newly_performing]
+            return sorted(new_performers, key=lambda stub: -stub.delta_forms)
 
 
 def build_worksheet(title, headers, rows):
@@ -352,24 +352,24 @@ class ProjectHealthDashboard(ProjectReport):
     @property
     def export_table(self):
         previous_months_reports = self.previous_months_summary(self.get_number_of_months())
-        last_month = previous_months_reports[-2]
+        this_month = previous_months_reports[-1]
 
         header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
                   'this_month_forms', 'delta_this_month', 'is_performing']
 
         def extract_user_stat(user_list):
-            return [[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
-                    user.num_forms_submitted_next_month, user.delta_forms_next_month,
+            return [[user.user_id, user.username, user.num_forms_submitted_previous_month,
+                    user.delta_forms_previous_month, user.num_forms_submitted, user.delta_forms,
                     user.is_performing] for user in user_list]
 
         return [
             self.export_summary(previous_months_reports),
             build_worksheet(title="Inactive Users", headers=header,
-                            rows=extract_user_stat(last_month.get_dropouts())),
+                            rows=extract_user_stat(this_month.get_dropouts())),
             build_worksheet(title=_("Low Performing Users"), headers=header,
-                            rows=extract_user_stat(last_month.get_unhealthy_users())),
+                            rows=extract_user_stat(this_month.get_unhealthy_users())),
             build_worksheet(title=_("New Performing Users"), headers=header,
-                            rows=extract_user_stat(last_month.get_newly_performing())),
+                            rows=extract_user_stat(this_month.get_newly_performing())),
         ]
 
     @property
