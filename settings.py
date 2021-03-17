@@ -879,11 +879,7 @@ COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
 # using the local DEBUG value (which we don't have access to here yet)
 COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
-# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_FILTERS = {
-    'js': [
-        'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor',
-    ],
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',

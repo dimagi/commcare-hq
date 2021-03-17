@@ -88,14 +88,6 @@ COUCH_DATABASES = {
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
-# Use faster compressor that doesn't do source maps
-COMPRESS_FILTERS = {
-    'js': [
-        'compressor.js.JsCompressor',
-    ],
-    'css': []
-}
-
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
 #  make celery synchronous
