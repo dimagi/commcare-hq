@@ -48,11 +48,11 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(blank=True, max_length=126, null=True)),
                 ('event_date', models.DateTimeField(db_index=True, default=corehq.apps.auditcare.models.getdate)),
                 ('path', models.CharField(blank=True, default='', max_length=255)),
-                ('params', models.CharField(blank=True, default='', max_length=512)),
                 ('ip_address', models.CharField(blank=True, default='', max_length=45)),
+                ('session_key', models.CharField(blank=True, max_length=255, null=True)),
+                ('params', models.CharField(blank=True, default='', max_length=512)),
                 ('view_kwargs', corehq.util.models.NullJsonField(default=dict, null=True)),
                 ('headers', corehq.util.models.NullJsonField(default=dict, null=True)),
-                ('session_key', models.CharField(blank=True, max_length=255, null=True)),
                 ('status_code', models.SmallIntegerField(default=0)),
                 ('extra', corehq.util.models.NullJsonField(default=dict, null=True)),
                 ('user_agent_fk', models.ForeignKey(
@@ -81,6 +81,8 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(blank=True, max_length=126, null=True)),
                 ('event_date', models.DateTimeField(db_index=True, default=corehq.apps.auditcare.models.getdate)),
                 ('path', models.CharField(blank=True, default='', max_length=255)),
+                ('ip_address', models.CharField(blank=True, default='', max_length=45)),
+                ('session_key', models.CharField(blank=True, max_length=255, null=True)),
                 ('access_type', models.CharField(
                     choices=[
                         ('i', 'Login'),
@@ -89,8 +91,6 @@ class Migration(migrations.Migration):
                     ],
                     max_length=1
                 )),
-                ('ip_address', models.CharField(blank=True, default='', max_length=45)),
-                ('session_key', models.CharField(blank=True, max_length=255, null=True)),
                 ('failures_since_start', models.SmallIntegerField(null=True)),
                 ('http_accept_fk', models.ForeignKey(
                     db_index=False,

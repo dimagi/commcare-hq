@@ -68,6 +68,11 @@ class AuditEvent(models.Model):
     domain = models.CharField(max_length=126, null=True, blank=True)
     event_date = models.DateTimeField(default=getdate, db_index=True)
     path = models.CharField(max_length=255, blank=True, default='')
+    ip_address = models.CharField(max_length=45, blank=True, default='')
+    session_key = models.CharField(max_length=255, blank=True, null=True)
+    user_agent_fk = models.ForeignKey(
+        UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
+    user_agent = ForeignValue(user_agent_fk, truncate=True)
 
     @property
     def doc_type(self):
@@ -91,6 +96,10 @@ class AuditEvent(models.Model):
     def create_audit(cls, request, user):
         audit = cls()
         audit.domain = get_domain(request)
+        audit.path = request.path
+        audit.ip_address = get_ip(request)
+        audit.session_key = request.session.session_key
+        audit.user_agent = request.META.get('HTTP_USER_AGENT')
         if isinstance(user, AnonymousUser):
             audit.user = None
         elif user is None:
@@ -109,16 +118,11 @@ class NavigationEventAudit(AuditEvent):
     Audit event to track happenings within the system, ie, view access
     """
     params = models.CharField(max_length=512, blank=True, default='')
-    ip_address = models.CharField(max_length=45, blank=True, default='')
-    user_agent_fk = models.ForeignKey(
-        UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
-    user_agent = ForeignValue(user_agent_fk, truncate=True)
     view_fk = models.ForeignKey(
         ViewName, null=True, db_index=False, on_delete=models.PROTECT)
     view = ForeignValue(view_fk, truncate=True)
     view_kwargs = NullJsonField(default=dict)
     headers = NullJsonField(default=dict)
-    session_key = models.CharField(max_length=255, blank=True, null=True)
     status_code = models.SmallIntegerField(default=0)
     extra = NullJsonField(default=dict)
 
@@ -135,12 +139,7 @@ class NavigationEventAudit(AuditEvent):
         try:
             audit = cls.create_audit(request, user)
             if request.GET:
-                audit.path = request.path
-                audit.params = "&".join(f"{x}={request.GET[x]}" for x in request.GET)
-            else:
-                audit.path = request.path
-            audit.ip_address = get_ip(request)
-            audit.user_agent = request.META.get('HTTP_USER_AGENT')
+                audit.params = request.META.get("QUERY_STRING", "")
             audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)
@@ -149,7 +148,6 @@ class NavigationEventAudit(AuditEvent):
             # it's a bit verbose to go to that extreme, TODO: need to have
             # targeted fields in the META, but due to server differences, it's
             # hard to make it universal.
-            audit.session_key = request.session.session_key
             audit.extra = extra
             audit.view_kwargs = view_kwargs
             return audit
@@ -171,11 +169,6 @@ ACCESS_CHOICES = {
 @foreign_value_init
 class AccessAudit(AuditEvent):
     access_type = models.CharField(max_length=1, choices=ACCESS_CHOICES.items())
-    ip_address = models.CharField(max_length=45, blank=True, default='')
-    session_key = models.CharField(max_length=255, blank=True, null=True)
-    user_agent_fk = models.ForeignKey(
-        UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
-    user_agent = ForeignValue(user_agent_fk, truncate=True)
     http_accept_fk = models.ForeignKey(
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
@@ -189,12 +182,8 @@ class AccessAudit(AuditEvent):
     def create_audit(cls, request, user, access_type):
         '''Creates an instance of a Access log.'''
         audit = super().create_audit(request, user)
-        audit.ip_address = get_ip(request) or ''
         audit.http_accept = request.META.get('HTTP_ACCEPT')
-        audit.path = request.META.get('PATH_INFO', '')
-        audit.user_agent = request.META.get('HTTP_USER_AGENT')
         audit.access_type = access_type
-        audit.session_key = request.session.session_key
         return audit
 
     @classmethod
