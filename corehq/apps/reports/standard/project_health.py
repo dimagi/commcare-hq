@@ -46,7 +46,7 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
 
     @property
     def delta_forms_previous_month(self):
-        return self.previous_stub.delta_forms if self.previous_stub else 0
+        return self.num_forms_submitted - self.num_forms_submitted_previous_month
 
 
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
