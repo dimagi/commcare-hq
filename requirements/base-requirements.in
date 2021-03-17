@@ -19,7 +19,7 @@ django-angular~=2.2.0
 django-braces==1.14.0
 django-bulk-update~=2.0
 django-celery-results~=1.0.0
-django-compressor==2.1
+django-compressor==2.4
 django-countries==4.6
 django-crispy-forms==1.10.0
 django-cte==1.1.4
@@ -66,6 +66,7 @@ jsonobject==0.9.9
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonschema~=3.2
 kafka-python==1.4.7
 kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260

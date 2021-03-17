@@ -1,5 +1,7 @@
 from django_prbac.models import Role
 
+from django.contrib.sessions.middleware import SessionMiddleware
+
 from corehq.apps.accounting.models import (
     SoftwarePlan,
     SoftwarePlanEdition,
@@ -64,3 +66,11 @@ def get_enterprise_plan():
         role=Role.objects.first(),
         product_rate=first_product_rate
     )
+
+
+@unit_testing_only
+def create_request_session(request, use_sso=False):
+    SessionMiddleware().process_request(request)
+    request.session.save()
+    if use_sso:
+        request.session['samlSessionIndex'] = '_7c84c96e-8774-4e64-893c-06f91d285100'

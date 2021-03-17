@@ -175,6 +175,34 @@ class IdentityProvider(models.Model):
             ).exists()
         return is_active_member
 
+    def clear_domain_caches(self, domain):
+        """
+        Clear all caches associated with a Domain and this IdentityProvider
+        :param domain: String (the Domain name)
+        """
+        IdentityProvider.does_domain_trust_this_idp.clear(self, domain)
+        IdentityProvider.is_domain_an_active_member.clear(self, domain)
+
+    def create_trust_with_domain(self, domain, username):
+        """
+        This creates a TrustedIdentityProvider relationship between the Domain
+        and the current Identity Provider.
+        :param domain: String (the Domain name)
+        :param username: String (the username of the user creating this agreement)
+        :return: Boolean (True if a new trust was created, False if it already exists)
+        """
+        if not TrustedIdentityProvider.objects.filter(
+            domain=domain, identity_provider=self
+        ).exists():
+            TrustedIdentityProvider.objects.create(
+                domain=domain,
+                identity_provider=self,
+                acknowledged_by=username,
+            )
+            self.clear_domain_caches(domain)
+            return True
+        return False
+
     @classmethod
     def domain_has_editable_identity_provider(cls, domain):
         owner = BillingAccount.get_account_by_domain(domain)

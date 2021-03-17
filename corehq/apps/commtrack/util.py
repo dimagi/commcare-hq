@@ -173,33 +173,6 @@ def due_date_monthly(day, from_end=False, past_period=0):
     return date(y, m, min(day, monthrange(y, m)[1]))
 
 
-def submit_mapping_case_block(user, index):
-    mapping = user.get_location_map_case()
-
-    if mapping:
-        caseblock = CaseBlock.deprecated_init(
-            create=False,
-            case_id=mapping.case_id,
-            index=index
-        )
-    else:
-        caseblock = CaseBlock.deprecated_init(
-            create=True,
-            case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
-            case_id=location_map_case_id(user),
-            owner_id=user._id,
-            index=index,
-            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
-            user_id=const.COMMTRACK_USERNAME,
-        )
-
-    submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml(), encoding='utf-8'),
-        user.domain,
-        device_id=__name__ + ".submit_mapping_case_block"
-    )
-
-
 def location_map_case_id(user):
     if should_use_sql_backend(user.domain):
         user_id = user.user_id

@@ -3,7 +3,11 @@ import uuid
 from datetime import datetime
 
 from django.contrib.auth.models import AnonymousUser, User
-from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.contrib.auth.signals import (
+    user_logged_in,
+    user_logged_out,
+    #user_login_failed,
+)
 from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 
@@ -16,8 +20,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.web import get_ip
-
-from .signals import user_login_failed
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +90,7 @@ class AuditEvent(Document):
             audit.user = user.username
             audit.description = user.first_name + " " + user.last_name
         else:
-            audit.user = user.username
+            audit.user = user
             audit.description = ''
         return audit
 
@@ -148,13 +150,10 @@ class NavigationEventAudit(AuditEvent):
             audit.session_key = request.session.session_key
             audit.extra = extra
             audit.view_kwargs = view_kwargs
-            audit.save()
             return audit
-        except Exception as ex:
-            log.error("NavigationEventAudit.audit_view error: %s", ex)
+        except Exception:
+            log.exception("NavigationEventAudit.audit_view error")
 
-
-setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
 ACCESS_LOGIN = 'login'
 ACCESS_LOGOUT = 'logout'
@@ -241,32 +240,21 @@ class AccessAudit(AuditEvent):
         audit.save()
 
 
-setattr(AuditEvent, 'audit_login', AccessAudit.audit_login)
-setattr(AuditEvent, 'audit_login_failed', AccessAudit.audit_login_failed)
-setattr(AuditEvent, 'audit_logout', AccessAudit.audit_logout)
+def audit_login(sender, *, request, user, **kwargs):
+    AccessAudit.audit_login(request, user)  # success
 
 
-def audit_login(sender, **kwargs):
-    AuditEvent.audit_login(kwargs["request"], kwargs["user"], True)  # success
+def audit_logout(sender, *, request, user, **kwargs):
+    AccessAudit.audit_logout(request, user)
 
 
-if user_logged_in:
-    user_logged_in.connect(audit_login)
+def audit_login_failed(sender, *, request, credentials, **kwargs):
+    AccessAudit.audit_login_failed(request, credentials["username"])
 
 
-def audit_logout(sender, **kwargs):
-    AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
-
-
-if user_logged_out:
-    user_logged_out.connect(audit_logout)
-
-
-def audit_login_failed(sender, **kwargs):
-    AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
-
-
-user_login_failed.connect(audit_login_failed)
+user_logged_in.connect(audit_login)
+user_logged_out.connect(audit_logout)
+#user_login_failed.connect(audit_login_failed)  FIXME
 
 
 def wrap_audit_event(event):

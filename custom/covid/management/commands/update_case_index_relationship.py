@@ -76,6 +76,8 @@ class Command(CaseUpdateCommand):
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
 
+        self.log_data(domain, "update_case_index_relationship", case_type, len(case_ids), total, [])
+
     def add_arguments(self, parser):
         super().add_arguments(parser)
         parser.add_argument('--location', type=str, default=None)

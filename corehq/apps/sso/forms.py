@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils import url_helpers
 
-TIME_FORMAT = "%Y/%m/%d %H:%M"
+TIME_FORMAT = "%Y/%m/%d %I:%M %p"
 
 
 def _validate_or_raise_slugify_error(slug):
@@ -441,7 +441,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             'logout_url': identity_provider.logout_url,
             'idp_cert_public': identity_provider.idp_cert_public,
             'date_idp_cert_expiration': (
-                identity_provider.date_idp_cert_expiration.strftime(TIME_FORMAT)
+                identity_provider.date_idp_cert_expiration.isoformat()
                 if identity_provider.date_idp_cert_expiration else ''
             ),
         }
@@ -492,7 +492,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
                         'idp_cert_public',
                         crispy.Field(
                             'date_idp_cert_expiration',
-                            placeholder="YYYY/MM/DD HH:MM",
+                            placeholder="YYYY/MM/DD HH:MM AM/PM",
                         ),
                     ),
                     css_class="panel-body"

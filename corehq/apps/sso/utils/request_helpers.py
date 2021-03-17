@@ -1,7 +1,12 @@
 from django.conf import settings
+from django.contrib import messages
+
 from corehq.apps.sso.exceptions import SingleSignOnError
 from corehq.apps.sso.models import (
     IdentityProvider,
+)
+from corehq.apps.sso.utils.message_helpers import (
+    get_success_message_for_trusted_idp,
 )
 
 
@@ -61,9 +66,11 @@ def is_request_blocked_from_viewing_domain_due_to_sso(request, domain_obj):
         # However, a Trust was not yet established. Since the current user
         # owns this domain, a Trust will be created automatically and a message
         # will be displayed to the user.
-        # todo mechanism for displaying message to user
-        # todo remember to handle clearing quickcache for
-        #  does_domain_trust_this_idp
+        if idp.create_trust_with_domain(domain_obj.name, request.user.username):
+            messages.success(
+                request,
+                get_success_message_for_trusted_idp(idp, domain_obj)
+            )
         return False
 
     # None of the above criteria was met so the user is definitely blocked!
