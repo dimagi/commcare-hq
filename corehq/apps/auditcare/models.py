@@ -66,12 +66,15 @@ class AuditEvent(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.CharField(max_length=255, null=True, blank=True)
     event_date = models.DateTimeField(default=getdate, db_index=True)
-    description = models.CharField(max_length=255, blank=True)
     path = models.CharField(max_length=255, blank=True, default='')
 
     @property
     def doc_type(self):
         return type(self).__name__
+
+    @property
+    def description(self):
+        raise NotImplementedError("abstract property")
 
     class Meta:
         abstract = True
@@ -85,16 +88,12 @@ class AuditEvent(models.Model):
         audit = cls()
         if isinstance(user, AnonymousUser):
             audit.user = None
-            audit.description = "[AnonymousAccess] "
         elif user is None:
             audit.user = None
-            audit.description = '[NullUser] '
         elif isinstance(user, User):
             audit.user = user.username
-            audit.description = user.first_name + " " + user.last_name
         else:
             audit.user = user
-            audit.description = ''
         return audit
 
 
@@ -117,6 +116,10 @@ class NavigationEventAudit(AuditEvent):
     session_key = models.CharField(max_length=255, blank=True, null=True)
     status_code = models.SmallIntegerField(default=0)
     extra = NullJsonField(default=dict)
+
+    @property
+    def description(self):
+        return self.user or ""
 
     @cached_property
     def domain(self):
@@ -153,26 +156,20 @@ class NavigationEventAudit(AuditEvent):
             log.exception("NavigationEventAudit.audit_view error")
 
 
-ACCESS_LOGIN = 'login'
-ACCESS_LOGOUT = 'logout'
-ACCESS_FAILED = 'login_failed'
-ACCESS_USER_LOCKOUT = 'user_lockout'
-ACCESS_IP_LOCKOUT = 'ip_lockout'
-ACCESS_PASSWORD = 'password_change'
-ACCESS_CHOICES = (
-    (ACCESS_LOGIN, "Login"),
-    (ACCESS_LOGOUT, "Logout"),
-    (ACCESS_FAILED, "Failed Login"),
-    (ACCESS_USER_LOCKOUT, "User Lockout"),
-    (ACCESS_IP_LOCKOUT, "IP Lockout"),
-    (ACCESS_PASSWORD, "Password Change"),
-)
+ACCESS_LOGIN = 'i'
+ACCESS_LOGOUT = 'o'
+ACCESS_FAILED = 'f'
+ACCESS_CHOICES = {
+    ACCESS_LOGIN: "Login",
+    ACCESS_LOGOUT: "Logout",
+    ACCESS_FAILED: "Login failed",
+}
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
 @foreign_value_init
 class AccessAudit(AuditEvent):
-    access_type = models.CharField(max_length=16, choices=ACCESS_CHOICES)
+    access_type = models.CharField(max_length=1, choices=ACCESS_CHOICES.items())
     ip_address = models.CharField(max_length=45, blank=True, default='')
     session_key = models.CharField(max_length=255, blank=True, null=True)
     user_agent_fk = models.ForeignKey(
@@ -182,6 +179,10 @@ class AccessAudit(AuditEvent):
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
     failures_since_start = models.SmallIntegerField(null=True)
+
+    @property
+    def description(self):
+        return f"{ACCESS_CHOICES[self.access_type]}: {self.user or ''}"
 
     @classmethod
     def create_audit(cls, request, user, access_type):
@@ -203,23 +204,11 @@ class AccessAudit(AuditEvent):
     @classmethod
     def audit_login_failed(cls, request, username, *args, **kwargs):
         audit = cls.create_audit(request, username, ACCESS_FAILED)
-        if username is not None:
-            audit.description = "Login Failure: %s" % (username)
-        else:
-            audit.description = "Login Failure"
         audit.save()
 
     @classmethod
     def audit_logout(cls, request, user):
-        '''Log a logout event'''
         audit = cls.create_audit(request, user, ACCESS_LOGOUT)
-
-        if user == AnonymousUser:
-            audit.description = "Logout anonymous"
-        elif user is None:
-            audit.description = "None"
-        else:
-            audit.description = "Logout %s" % (user.username)
         audit.save()
 
 
