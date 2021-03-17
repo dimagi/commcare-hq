@@ -111,7 +111,7 @@ from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, MONITOR_2FA_CHANGES
+    SECURE_SESSION_TIMEOUT
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -666,13 +666,7 @@ class PrivacySecurityForm(forms.Form):
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
-
-        new_two_factor_auth_setting = self.cleaned_data.get('two_factor_auth', False)
-        if domain.two_factor_auth != new_two_factor_auth_setting and MONITOR_2FA_CHANGES.enabled(domain.name):
-            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
-            status = "ON" if new_two_factor_auth_setting else "OFF"
-            monitor_2fa_soft_assert(False, f'{domain.name} turned 2FA {status}')
-        domain.two_factor_auth = new_two_factor_auth_setting
+        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
 
         domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
