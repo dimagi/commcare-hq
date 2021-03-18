@@ -42,9 +42,6 @@ class TestForeignValue(TestCase):
     def setUp(self):
         self.log = UserAccessLog()
 
-    def tearDown(self):
-        UserAccessLog.user_agent.get_related.cache_clear()
-
     def test_set_foreign_value(self):
         self.log.user_agent = "Mozilla"
         self.assertEqual(self.log.user_agent_fk.value, "Mozilla")

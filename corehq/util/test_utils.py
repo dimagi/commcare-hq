@@ -16,6 +16,7 @@ from unittest import SkipTest, TestCase
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
+from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
 import mock
@@ -470,6 +471,48 @@ def patch_max_test_time(limit):
 
 
 patch_max_test_time.__test__ = False
+
+
+def patch_foreign_value_caches():
+    """Patch django.test to clear ForeignValue.get_related LRU caches
+
+    This complements `django.test.TransactionTestCase` and
+    `django.test.TestCase` automatic database cleanup feature. It is
+    necessary because cached foreign value objects become invalid once
+    the transaction in which they were created is rolled back.
+    """
+    from corehq.util.models import ForeignValue
+
+    def wrap(get_related, cache_clear=None):
+        @wraps(get_related)
+        def monitored_get_related(self):
+            value = get_related(self)
+            if cache_clear is None:
+                if self.cache_size:
+                    value = wrap(value, value.cache_clear)
+            else:
+                clear_funcs.add(cache_clear)
+            return value
+
+        if cache_clear is not None:
+            for name in dir(get_related):
+                if not name.startswith("_"):
+                    value = getattr(get_related, name)
+                    setattr(monitored_get_related, name, value)
+
+        return monitored_get_related
+
+    def post_teardown(self):
+        if clear_funcs:
+            for cache_clear in clear_funcs:
+                cache_clear()
+            clear_funcs.clear()
+        django_post_teardown(self)
+
+    clear_funcs = set()
+    ForeignValue.get_related.func = wrap(ForeignValue.get_related.func)
+    django_post_teardown = TransactionTestCase._post_teardown
+    TransactionTestCase._post_teardown = post_teardown
 
 
 def get_form_ready_to_save(metadata, is_db_test=False):
