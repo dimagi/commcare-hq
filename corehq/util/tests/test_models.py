@@ -42,6 +42,9 @@ class TestForeignValue(TestCase):
     def setUp(self):
         self.log = UserAccessLog()
 
+    def tearDown(self):
+        UserAccessLog.user_agent.get_related.cache_clear()
+
     def test_set_foreign_value(self):
         self.log.user_agent = "Mozilla"
         self.assertEqual(self.log.user_agent_fk.value, "Mozilla")
@@ -75,3 +78,18 @@ class TestForeignValue(TestCase):
         log2.save()
         self.assertNotEqual(self.log.id, log2.id)
         self.assertEqual(self.log.user_agent_fk_id, log2.user_agent_fk_id)
+
+    def test_lru_cache(self):
+        info = UserAccessLog.user_agent.get_related.cache_info()
+        self.assertEqual(info.misses, 0)
+        self.assertEqual(info.hits, 0)
+
+        self.log.user_agent = "Mozilla"
+        info = UserAccessLog.user_agent.get_related.cache_info()
+        self.assertEqual(info.misses, 1)
+        self.assertEqual(info.hits, 0)
+
+        UserAccessLog(user_agent="Mozilla")
+        info = UserAccessLog.user_agent.get_related.cache_info()
+        self.assertEqual(info.misses, 1)
+        self.assertEqual(info.hits, 1)

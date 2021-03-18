@@ -1,8 +1,10 @@
 import datetime
+from collections import namedtuple
+from functools import lru_cache
 
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.utils.functional import cached_property
 from django.db import models
-from collections import namedtuple
 
 from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
 
@@ -249,11 +251,19 @@ class ForeignValue:
     key holds a single primitive value named `value`. It eliminates
     boilerplate indirection imposed by the foreign key, allowing the
     value to be referenced as a simple attribute.
+
+    An LRU cache is used to keep recently fetched related objects in
+    memory rather than fetching from the database each time a new value
+    is set. Pass `cache_size=0` disable the LRU-cache. Note that the
+    cache is used by `__set__`, but not by `__get__` (unless `__set__`
+    was called first); this is optimize for current/known use cases,
+    optimizing `__get__` may make sense for future use cases.
     """
 
-    def __init__(self, foreign_key: models.ForeignKey, truncate=False):
+    def __init__(self, foreign_key: models.ForeignKey, truncate=False, cache_size=1000):
         self.fk = foreign_key
         self.truncate = truncate
+        self.cache_size = cache_size
 
     def __set_name__(self, owner, name):
         other_names = getattr(owner, "_ForeignValue_names", [])
@@ -270,12 +280,23 @@ class ForeignValue:
             if getattr(obj, self.fk.name) is not None:
                 setattr(obj, self.fk.name, None)
             return
-        model = self.fk.related_model
         if self.truncate:
-            maxlen = model._meta.get_field("value").max_length
-            value = value[:maxlen]
-        fobj, _ = model.objects.get_or_create(value=value)
+            value = value[:self.max_length]
+        fobj = self.get_related(value)
         setattr(obj, self.fk.name, fobj)
+
+    @cached_property
+    def max_length(self):
+        return self.fk.related_model._meta.get_field("value").max_length
+
+    @cached_property
+    def get_related(self):
+        def get_related(value):
+            return manager.get_or_create(value=value)[0]
+        manager = self.fk.related_model.objects
+        if self.cache_size:
+            get_related = lru_cache(self.cache_size)(get_related)
+        return get_related
 
     @staticmethod
     def get_names(cls):
