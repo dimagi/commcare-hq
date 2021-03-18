@@ -1,7 +1,11 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+
 <div class="form-actions">
+  <input type="hidden" id="confirmationFlag" name="confirmationFlag" value="">
   <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
-    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-    <a href="{% url 'conditional_alert_list' domain %}" class="btn btn-default">Cancel</a>
+    <button type="submit" class="btn btn-primary" id="conditional-alert-save-btn">{% trans "Save" %}</button>
+    <a href="{% url 'conditional_alert_list' domain %}" class="btn btn-default">{% trans "Cancel" %}</a>
   </div>
+  {% initial_page_data 'warning_msg' warning_msg %}
 </div>
