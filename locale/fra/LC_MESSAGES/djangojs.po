@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-17 20:30+0000\n"
+"POT-Creation-Date: 2021-03-16 12:09+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Rowena Luk <rluk@dimagi.com>, 2021\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -124,7 +124,7 @@ msgstr ""
 msgid "Billed Monthly"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/widgets.js:70
+#: corehq/apps/accounting/static/accounting/js/widgets.js:71
 #: corehq/apps/domain/static/domain/js/pro-bono.js:33
 msgid "Please enter a valid email."
 msgstr "Veuillez entrer une adresse e-mail valide"
@@ -2750,30 +2750,30 @@ msgstr ""
 msgid "An unexpected error occurred!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:212
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:213
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:337
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:355
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:480
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:471
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:508
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:499
 msgid "Please wait..."
 msgstr "Veuillez patienter..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:660
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:651
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2808,6 +2808,11 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:358
 msgid "Page <%=num%>"
 msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:82
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
+msgid "Clear"
+msgstr "Effacer"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
 msgid "Delete incomplete form?"
@@ -3178,10 +3183,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:97
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
-msgid "Clear"
-msgstr "Effacer"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
 #: corehq/apps/reports/static/reports/js/filters/main.js:74
@@ -4242,4 +4243,64 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js:94
 msgid "CommCare HQ was unable to make the request: "
+msgstr ""
+
+#: docs/_build/html/_static/doctools.js:194
+msgid "Permalink to this headline"
+msgstr ""
+
+#: docs/_build/html/_static/doctools.js:200
+msgid "Permalink to this definition"
+msgstr ""
+
+#: docs/_build/html/_static/doctools.js:233
+msgid "Hide Search Matches"
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:131
+#, fuzzy
+#| msgid "Search Only"
+msgid "Searching"
+msgstr "Chercher uniquement"
+
+#: docs/_build/html/_static/searchtools.js:136
+msgid "Preparing search..."
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:295
+#, fuzzy
+#| msgid "Search Reports..."
+msgid "Search Results"
+msgstr "Rechercher rapports..."
+
+#: docs/_build/html/_static/searchtools.js:297
+msgid ""
+"Your search did not match any documents. Please make sure that all words are "
+"spelled correctly and that you've selected enough categories."
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:299
+#, javascript-format
+msgid "Search finished, found %s page(s) matching the search query."
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:353
+msgid ", in "
+msgstr ""
+
+#: node_modules/ace-builds/src-min-noconflict/worker-coffee.js:1
+#: node_modules/ace-builds/src-min/worker-coffee.js:1
+#, fuzzy
+#| msgid "Attachments"
+msgid "arguments"
+msgstr "Pièces jointes"
+
+#: node_modules/ace-builds/src-min-noconflict/worker-coffee.js:1
+#: node_modules/ace-builds/src-min/worker-coffee.js:1
+msgid "RegExp"
+msgstr ""
+
+#: node_modules/ace-builds/src-min-noconflict/worker-coffee.js:1
+#: node_modules/ace-builds/src-min/worker-coffee.js:1
+msgid "Math"
 msgstr ""
