@@ -400,7 +400,7 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
     fhir_resource_type_by_case_type = {}
     for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
         if len(row) < 2:
-            errors.append(_('Not enough columns'))
+            errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
             case_type, fhir_resource_type = [cell.value for cell in row[:2]]
             fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
