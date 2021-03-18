@@ -315,7 +315,7 @@ def find_location_id(location_codes, location_cache):
 
 def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
     locations_updated = set(assigned_loc_ids) != set(location_ids)
-    primary_location_removed = (loc_id and not location_ids or loc_id not in location_ids)
+    primary_location_removed = bool(loc_id and (not location_ids or loc_id not in location_ids))
     return locations_updated, primary_location_removed
 
 
