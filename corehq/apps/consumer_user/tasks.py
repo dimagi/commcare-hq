@@ -55,18 +55,6 @@ def handle_consumer_user_invitations(domain, invitation_case_id, demographic_cas
         )
         if invitation.email == email and status in keep_open_status and not invitation_case.closed:
             # An invitation has already been sent to this address, and this invite has been created, so do nothing
-            update_case(
-                domain=domain,
-                case_id=invitation_case_id,
-                case_properties={
-                    CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ERROR,
-                    CONSUMER_INVITATION_ERROR: (
-                        "An invitation has already been sent to this address."
-                        f" To resend an invitation, set the '{CONSUMER_INVITATION_STATUS}' property to 'resend'."
-                    ),
-                },
-                device_id=__name__ + '.handle_consumer_user_invitations',
-            )
             return
         # For any other requests, we'll make a new invitation so we can keep track. Deactivate this one.
         invitation.make_inactive()
