@@ -37,7 +37,7 @@ class ConsumerUserLoginView(LoginView):
         ('backup', BackupTokenForm),
     )
     invitation = None
-    hashed_invitation = None
+    signed_invitation_id = None
     template_name = 'consumer_user/p_login.html'
 
     @two_factor_exempt
@@ -45,8 +45,8 @@ class ConsumerUserLoginView(LoginView):
     def dispatch(self, request, *args, **kwargs):
         if 'signed_invitation_id' in kwargs:
             # User is using a link from an invitation
-            self.hashed_invitation = kwargs['signed_invitation_id']
-            self.invitation = _get_invitation_or_400(self.hashed_invitation)
+            self.signed_invitation_id = kwargs['signed_invitation_id']
+            self.invitation = _get_invitation_or_400(self.signed_invitation_id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self, step=None):
@@ -67,10 +67,10 @@ class ConsumerUserLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super(ConsumerUserLoginView, self).get_context_data(**kwargs)
-        if self.hashed_invitation:
+        if self.signed_invitation_id:
             extra_context = {}
             go_to_signup = reverse(
-                'consumer_user:consumer_user_register', kwargs={'signed_invitation_id': self.hashed_invitation}
+                'consumer_user:consumer_user_register', kwargs={'signed_invitation_id': self.signed_invitation_id}
             )
             extra_context['go_to_signup'] = '%s%s' % (go_to_signup, '?create_user=1')
             context.update(extra_context)
