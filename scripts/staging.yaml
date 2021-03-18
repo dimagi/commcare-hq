@@ -65,10 +65,6 @@ branches:
   - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - smh/bulk-upload-web-users # Steph Feb 22
   - sr/geocoder  # Sravan Feb 25
-  - nh/master+adil-uddin/feature/USH-462-HQ-Properties-Change  # Norman Mar 1
-  - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
-  - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
-  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
   - mk/fhir/data-dictionary # MK Feb 26
   - mk/fhir/api-2 # MK Feb 26
   - mk/fhir/data-dictionary-upload-2 # MK Mar 9
@@ -82,4 +78,5 @@ branches:
   - gh/replace-ff-with-privilege # Graham March 17
   - fr/consumer-user             # Farid March 17
   - bmb/upgrade-js-xpath  # Biyeun March 18
+  - feature/USH-606-conditional-alert-modal # Jenny March 18
 submodules: {}
