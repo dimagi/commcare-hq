@@ -80,6 +80,7 @@ class Migration(migrations.Migration):
                 ('user', models.CharField(blank=True, max_length=255, null=True)),
                 ('event_date', models.DateTimeField(db_index=True, default=corehq.apps.auditcare.models.getdate)),
                 ('description', models.CharField(blank=True, max_length=255)),
+                ('path', models.CharField(blank=True, default='', max_length=255)),
                 ('access_type', models.CharField(
                     choices=[
                         ('login', 'Login'),
@@ -93,7 +94,6 @@ class Migration(migrations.Migration):
                 )),
                 ('ip_address', models.CharField(blank=True, default='', max_length=45)),
                 ('session_key', models.CharField(blank=True, max_length=255, null=True)),
-                ('path_info', models.CharField(blank=True, default='', max_length=255)),
                 ('failures_since_start', models.SmallIntegerField(null=True)),
                 ('http_accept_fk', models.ForeignKey(
                     db_index=False,

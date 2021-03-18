@@ -68,6 +68,7 @@ class AuditEvent(models.Model):
     user = models.CharField(max_length=255, null=True, blank=True)
     event_date = models.DateTimeField(default=getdate, db_index=True)
     description = models.CharField(max_length=255, blank=True)
+    path = models.CharField(max_length=255, blank=True, default='')
 
     @property
     def doc_type(self):
@@ -115,7 +116,6 @@ class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
     """
-    path = models.CharField(max_length=255, blank=True, default='')
     params = models.CharField(max_length=512, blank=True, default='')
     ip_address = models.CharField(max_length=45, blank=True, default='')
     user_agent_fk = models.ForeignKey(
@@ -198,7 +198,6 @@ class AccessAudit(AuditEvent):
     http_accept_fk = models.ForeignKey(
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
-    path_info = models.CharField(max_length=255, blank=True, default='')
     failures_since_start = models.SmallIntegerField(null=True)
 
     @property
@@ -212,7 +211,7 @@ class AccessAudit(AuditEvent):
         audit = cls.create_audit(cls, user)
         audit.ip_address = get_ip(request) or ''
         audit.http_accept = request.META.get('HTTP_ACCEPT')
-        audit.path_info = request.META.get('PATH_INFO', '')
+        audit.path = request.META.get('PATH_INFO', '')
         audit.user_agent = request.META.get('HTTP_USER_AGENT')
         audit.access_type = 'login'
         audit.description = "Login Success"

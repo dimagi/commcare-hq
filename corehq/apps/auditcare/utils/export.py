@@ -58,7 +58,7 @@ def write_generic_log_event(writer, event):
     else:
         assert event.doc_type == 'AccessAudit'
         action = event.access_type
-        resource = event.path_info
+        resource = event.path
 
     writer.writerow([
         event.event_date,
