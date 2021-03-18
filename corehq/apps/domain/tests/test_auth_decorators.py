@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.test import SimpleTestCase, TestCase, RequestFactory
 
-from corehq.apps.domain.decorators import _login_or_challenge
+from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -166,3 +166,13 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
 
         request = _get_request(self.commcare_django_user)
         self.assertEqual(SUCCESS, test(request))
+
+
+class ApiAuthTest(SimpleTestCase, AuthTestMixin):
+    domain_name = 'api-auth-test'
+
+    def test_api_auth_no_auth(self):
+        decorated_view = api_auth(sample_view)
+        request = _get_request()
+        # result = decorated_view(request, self.domain_name)
+        self.assertForbidden(decorated_view(request, self.domain_name))
