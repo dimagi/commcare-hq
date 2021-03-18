@@ -253,26 +253,27 @@ class TestCaseSearchLookups(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         super(TestCaseSearchLookups, self).tearDown()
 
-    def _make_case(self, domain, case_properties):
+    def _make_case(self, domain, case_properties, index=None):
         # make a case
         case_properties = case_properties or {}
         case_id = case_properties.pop('_id')
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         owner_id = case_properties.pop('owner_id', None)
         case = create_and_save_a_case(
-            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type)
+            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type, index=index)
         return case
 
-    def _bootstrap_cases_in_es_for_domain(self, domain):
+    def _bootstrap_cases_in_es_for_domain(self, domain, input_cases):
+        for case in input_cases:
+            index = case.pop('index', None)
+            self._make_case(domain, case, index=index)
         with patch('corehq.pillows.case_search.domains_needing_search_index',
                    MagicMock(return_value=[domain])):
             CaseSearchReindexerFactory(domain=domain).build().reindex()
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
-        for case in input_cases:
-            self._make_case(domain, case)
-        self._bootstrap_cases_in_es_for_domain(domain)
-        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+        self._bootstrap_cases_in_es_for_domain(domain, input_cases)
         self.assertItemsEqual(
             query.get_ids(),
             output
@@ -350,6 +351,24 @@ class TestCaseSearchLookups(TestCase):
             query,
             None,
             ['c1', 'c3']
+        )
+
+    def test_parent_property_lookup(self):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c3', 'flagship': 'Mermaid', 'size': 'small'},
+            {'_id': 'c4', 'flagship': "Queen Anne's Revenge", 'size': 'medium'},
+            {'_id': 'c1', 'foo': 'redbeard', 'parrot_name': 'molly', 'index': {
+                'parent': ('ship', 'c3')
+            }},
+            {'_id': 'c2', 'foo': 'blackbeard', 'parrot_name': 'polly', 'index': {
+                'parent': ('ship', 'c4')
+            }},
+        ])
+        query = (CaseSearchES().domain(self.domain)
+                 .related_case_property_query(self.domain, "parent/flagship", "Queen Anne's Revenge"))
+        self.assertItemsEqual(
+            query.get_ids(),
+            ['c2']
         )
 
     def test_blacklisted_owner_ids(self):
