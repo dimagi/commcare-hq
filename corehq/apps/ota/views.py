@@ -102,13 +102,14 @@ def search(request, domain):
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
 
-    case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    try:
+        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    except TooManyRelatedCasesException:
+        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     search_es = case_search_criteria.search_es
 
     try:
         hits = search_es.run().raw_hits
-    except TooManyRelatedCasesException:
-        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     except Exception as e:
         notify_exception(request, str(e), details=dict(
             exception_type=type(e),
