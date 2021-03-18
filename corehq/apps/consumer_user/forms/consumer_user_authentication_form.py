@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-
+from corehq.app.consumer_user.models import ConsumerUser
 from corehq.apps.domain.forms import NoAutocompleteMixin
 
 
@@ -26,7 +26,8 @@ class ConsumerUserAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
         cleaned_data = super(ConsumerUserAuthenticationForm, self).clean()
 
+        consumer_user, created = ConsumerUser.objects.get_or_create(user=self.user_cache)
         if self.invitation and not self.invitation.accepted:
-            self.invitation.accept_for_django_user(self.user_cache)
+            self.invitation.accept_for_consumer_user(consumer_user)
 
         return cleaned_data

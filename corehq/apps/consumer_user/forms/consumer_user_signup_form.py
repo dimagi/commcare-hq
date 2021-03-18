@@ -3,16 +3,7 @@ from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm, PasswordInput
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.consumer_user.const import (
-    CONSUMER_INVITATION_ACCEPTED,
-    CONSUMER_INVITATION_ERROR,
-    CONSUMER_INVITATION_STATUS,
-)
-from corehq.apps.consumer_user.models import (
-    ConsumerUser,
-    ConsumerUserCaseRelationship,
-)
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.consumer_user.models import ConsumerUser
 
 
 class ConsumerUserSignUpForm(ModelForm):
@@ -50,19 +41,6 @@ class ConsumerUserSignUpForm(ModelForm):
         if commit:
             user.save()
             consumer_user = ConsumerUser.objects.create(user=user)
-            if self.invitation:
-                self.invitation.accepted = True
-                self.invitation.save()
-                ConsumerUserCaseRelationship.objects.create(
-                    case_id=self.invitation.demographic_case_id,
-                    domain=self.invitation.domain,
-                    consumer_user=consumer_user
-                )
-                update_case(
-                    self.invitation.domain, self.invitation.case_id,
-                    {
-                        CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED,
-                        CONSUMER_INVITATION_ERROR: "",
-                    }
-                )
+            if self.invitation and not self.invitation_accepted:
+                self.invitation.accept_for_consumer_user(consumer_user)
         return user

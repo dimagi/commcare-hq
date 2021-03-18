@@ -49,11 +49,10 @@ class ConsumerUserInvitation(models.Model):
         self.active = False
         self.save(update_fields=['active'])
 
-    def accept_for_django_user(self, django_user):
+    def accept_for_consumer_user(self, consumer_user):
         self.accepted = True
         self.save(update_fields=['accepted'])
 
-        consumer_user, created = ConsumerUser.objects.get_or_create(user=django_user)
         ConsumerUserCaseRelationship.objects.create(
             case_id=self.demographic_case_id,
             domain=self.domain,
