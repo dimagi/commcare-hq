@@ -1,5 +1,9 @@
+import base64
+from functools import wraps
+
 from django.contrib.auth.models import AnonymousUser
 from django.test import SimpleTestCase, TestCase, RequestFactory
+from mock import mock
 
 from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
@@ -168,6 +172,16 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
         self.assertEqual(SUCCESS, test(request))
 
 
+def mock_successful_auth(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    def _outer(fn):
+        @wraps(fn)
+        def inner(request, *args, **kwargs):
+            return fn(request, *args, **kwargs)
+
+        return inner
+    return _outer
+
+
 class ApiAuthTest(SimpleTestCase, AuthTestMixin):
     domain_name = 'api-auth-test'
 
@@ -176,3 +190,11 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         request = _get_request()
         # result = decorated_view(request, self.domain_name)
         self.assertForbidden(decorated_view(request, self.domain_name))
+
+    @mock.patch('corehq.apps.domain.decorators.login_or_oauth2_ex', mock_successful_auth)
+    def test_api_auth_oauth(self):
+        decorated_view = api_auth(sample_view)
+        request = _get_request()
+        # fake oauth header
+        request.META['HTTP_AUTHORIZATION'] = 'bearer myToken'
+        self.assertEqual(SUCCESS, decorated_view(request, self.domain_name))
