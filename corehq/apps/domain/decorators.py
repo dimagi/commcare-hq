@@ -538,7 +538,7 @@ def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        couch_user = CouchUser.get_by_username(user.username)
+        couch_user = getattr(request, 'couch_user', None)
         if not couch_user or not (user.is_authenticated and user.is_active):
             return redirect_for_login_or_domain(request)
 
