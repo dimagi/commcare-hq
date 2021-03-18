@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
@@ -87,7 +88,7 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
     css_class='info',
-    description=mark_safe(
+    description=mark_safe(  # nosec: no user input
         'These features are only available for our services projects. This '
         'may affect support and pricing when the project is transitioned to a '
         'subscription. Limited Use Solutions Feature Flags cannot be enabled '
@@ -213,10 +214,11 @@ class StaticToggle(object):
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
                     messages.warning(
                         request,
-                        mark_safe((
+                        format_html(
                             'This <a href="{}">feature flag</a> should be enabled '
-                            'to access this URL'
-                        ).format(toggle_url)),
+                            'to access this URL',
+                            toggle_url
+                        ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
                 raise Http404()
