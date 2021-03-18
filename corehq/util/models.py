@@ -6,6 +6,8 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from django.db import models
 
+from jsonfield import JSONField as jsonfield_JSONField
+
 from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
 
 AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
@@ -218,7 +220,7 @@ class ComplaintBounceMeta(models.Model):
     destination = ArrayField(models.EmailField(), default=list, blank=True, null=True)
 
 
-class NullJsonField(JSONField):
+class NullJsonField(jsonfield_JSONField):
     """A JSONField that stores null when its value is empty
 
     Any value stored in this field will be discarded and replaced with
