@@ -198,3 +198,7 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         # fake oauth header
         request.META['HTTP_AUTHORIZATION'] = 'bearer myToken'
         self.assertEqual(SUCCESS, decorated_view(request, self.domain_name))
+
+        # also confirm other auth fails (because not mocked)
+        request.META['HTTP_AUTHORIZATION'] = f'basic user:12345'
+        self.assertForbidden(decorated_view(request, self.domain_name))
