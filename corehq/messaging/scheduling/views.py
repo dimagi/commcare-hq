@@ -956,7 +956,6 @@ class EditConditionalAlertView(CreateConditionalAlertView):
         return self.rule.get_schedule()
 
     def dispatch(self, request, *args, **kwargs):
-        kwargs.update({'edit_mode': True})
         with get_conditional_alert_edit_critical_section(self.rule_id):
             if self.rule.locked_for_editing:
                 messages.warning(request, _("Please allow the rule to finish processing before editing."))
