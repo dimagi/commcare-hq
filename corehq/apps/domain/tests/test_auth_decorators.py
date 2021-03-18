@@ -61,7 +61,13 @@ def _get_request(user=AnonymousUser()):
     return request
 
 
-class LoginOrChallengeDBTest(TestCase):
+class AuthTestMixin:
+
+    def assertForbidden(self, result):
+        self.assertNotEqual(SUCCESS, result)
+
+
+class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
     domain_name = 'auth-challenge-test'
 
     @classmethod
@@ -92,9 +98,6 @@ class LoginOrChallengeDBTest(TestCase):
                                            allow_sessions=allow_sessions,
                                            require_domain=require_domain)
         return cc_decorator(sample_view)
-
-    def assertForbidden(self, result):
-        self.assertNotEqual(SUCCESS, result)
 
     def test_no_user_set(self):
         # no matter what, no user = no success
