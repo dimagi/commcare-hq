@@ -90,10 +90,7 @@ class AuditEvent(models.Model):
         return "[%s] %s" % (self.doc_type, self.description)
 
     @classmethod
-    def create_audit(cls, model_class, user):
-        """
-        Returns a premade audit object in memory to be completed by the subclasses.
-        """
+    def create_audit(cls, user):
         audit = cls()
         if isinstance(user, AnonymousUser):
             audit.user = None
@@ -144,9 +141,8 @@ class NavigationEventAudit(AuditEvent):
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs, extra={}):
-        """Creates an instance of a Access log."""
         try:
-            audit = cls.create_audit(cls, user)
+            audit = cls.create_audit(user)
             if request.GET:
                 audit.path = request.path
                 audit.params = "&".join(f"{x}={request.GET[x]}" for x in request.GET)
@@ -205,38 +201,35 @@ class AccessAudit(AuditEvent):
         return "%s from %s" % (self.access_type, self.ip_address)
 
     @classmethod
-    def audit_login(cls, request, user, *args, **kwargs):
-        '''Creates an instance of a Access log.
-        '''
-        audit = cls.create_audit(cls, user)
+    def create_audit(cls, request, user, access_type):
+        '''Creates an instance of a Access log.'''
+        audit = super().create_audit(user)
         audit.ip_address = get_ip(request) or ''
         audit.http_accept = request.META.get('HTTP_ACCEPT')
         audit.path = request.META.get('PATH_INFO', '')
         audit.user_agent = request.META.get('HTTP_USER_AGENT')
-        audit.access_type = 'login'
-        audit.description = "Login Success"
+        audit.access_type = access_type
         audit.session_key = request.session.session_key
+        return audit
+
+    @classmethod
+    def audit_login(cls, request, user, *args, **kwargs):
+        audit = cls.create_audit(request, user, ACCESS_LOGIN)
         audit.save()
 
     @classmethod
     def audit_login_failed(cls, request, username, *args, **kwargs):
-        '''Creates an instance of a Access log.
-        '''
-        audit = cls.create_audit(cls, username)
-        audit.ip_address = get_ip(request)
-        audit.access_type = 'login_failed'
+        audit = cls.create_audit(request, username, ACCESS_FAILED)
         if username is not None:
             audit.description = "Login Failure: %s" % (username)
         else:
             audit.description = "Login Failure"
-        audit.session_key = request.session.session_key
         audit.save()
 
     @classmethod
     def audit_logout(cls, request, user):
         '''Log a logout event'''
-        audit = cls.create_audit(cls, user)
-        audit.ip_address = get_ip(request)
+        audit = cls.create_audit(request, user, ACCESS_LOGOUT)
 
         if user == AnonymousUser:
             audit.description = "Logout anonymous"
@@ -244,8 +237,6 @@ class AccessAudit(AuditEvent):
             audit.description = "None"
         else:
             audit.description = "Logout %s" % (user.username)
-        audit.access_type = 'logout'
-        audit.session_key = request.session.session_key
         audit.save()
 
 

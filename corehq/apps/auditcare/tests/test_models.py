@@ -31,10 +31,10 @@ class TestAccessAudit(AuditcareTest):
             AccessAudit.audit_login_failed(request, "melvin@test.com")
             event = cfg.obj
         self.assertEqual(event.user, "melvin@test.com")
-        self.assertEqual(event.path, "")  # should be set?
+        self.assertEqual(event.path, "/a/block/login")
         self.assertEqual(event.ip_address, "127.0.0.1")
-        self.assertEqual(event.http_accept, None)  # should be set?
-        self.assertEqual(event.user_agent, None)   # should be set?
+        self.assertEqual(event.http_accept, "html")
+        self.assertEqual(event.user_agent, "Mozilla")
         self.assertEqual(event.access_type, "login_failed")
         self.assertEqual(event.session_key, None)
 
@@ -43,10 +43,10 @@ class TestAccessAudit(AuditcareTest):
             AccessAudit.audit_logout(make_request("/accounts/logout"), make_user())
             event = cfg.obj
         self.assertEqual(event.user, "melvin@test.com")
-        self.assertEqual(event.path, "")
+        self.assertEqual(event.path, "/accounts/logout")
         self.assertEqual(event.ip_address, "127.0.0.1")
-        self.assertEqual(event.http_accept, None)
-        self.assertEqual(event.user_agent, None)
+        self.assertEqual(event.http_accept, "html")
+        self.assertEqual(event.user_agent, "Mozilla")
         self.assertEqual(event.access_type, "logout")
         self.assertEqual(event.session_key, "abc")
 
