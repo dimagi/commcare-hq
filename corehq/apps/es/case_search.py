@@ -246,7 +246,7 @@ def case_ids_lookup(domain, property_name, value, op='='):
     new_query = '{} {} "{}"'.format(property_name, op, value)
     es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
     if es_query.count() > MAX_RELATED_CASES:
-        raise TooManyRelatedCasesException()
+        raise TooManyRelatedCasesException(new_query)
     return es_query.scroll_ids()
 
 

@@ -90,7 +90,8 @@ def build_filter_from_ast(domain, node):
             ids = _parent_property_lookup(node)
         except TooManyRelatedCasesException as e:
             raise CaseFilterError(
-                _("The related case lookup you are trying to perform would return too many cases: {}").format(e),
+                _("The related case lookup you are trying to perform would return too many cases"),
+                str(e)
             )
 
         # get the related case path we need to walk, i.e. `parent/grandparent/property`
