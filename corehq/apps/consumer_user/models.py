@@ -4,8 +4,14 @@ from django.contrib.auth.models import User
 from django.core.signing import TimestampSigner
 from django.db import models
 from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
+from corehq.apps.consumer_user.const import (
+    CONSUMER_INVITATION_ACCEPTED,
+    CONSUMER_INVITATION_ERROR,
+    CONSUMER_INVITATION_STATUS,
+)
+from corehq.apps.hqcase.utils import update_case
 from corehq.util.models import GetOrNoneManager
 
 
@@ -43,9 +49,24 @@ class ConsumerUserInvitation(models.Model):
         self.active = False
         self.save(update_fields=['active'])
 
-    def accept(self):
+    def accept_for_django_user(self, django_user):
         self.accepted = True
         self.save(update_fields=['accepted'])
+
+        consumer_user, created = ConsumerUser.objects.get_or_create(user=django_user)
+        ConsumerUserCaseRelationship.objects.create(
+            case_id=self.demographic_case_id,
+            domain=self.domain,
+            consumer_user=consumer_user
+        )
+        update_case(
+            self.domain,
+            self.case_id,
+            {
+                CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED,
+                CONSUMER_INVITATION_ERROR: "",
+            }
+        )
 
     def signature(self):
         """Creates an encrypted key that can be used in a URL to accept this invitation

@@ -35,8 +35,12 @@ class ConsumerUserSignUpForm(ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data['email']
-        if User.objects.filter(username=email).exists():
-            raise ValidationError(_(u'Username "%s" is already in use.' % email))
+        if (
+            User.objects.filter(username=email).exists()
+            or ConsumerUser.objects.filter(user__username=email).exists()
+        ):
+            raise ValidationError(_(u'Username "{username}" is already in use.'), params={"username": email})
+
         return email
 
     def save(self, commit=True):
