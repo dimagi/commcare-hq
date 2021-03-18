@@ -778,8 +778,12 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def page_context(self):
         context = super().page_context
+        case_count = 0
+        if self.rule and self.rule.case_type:
+            case_count = CaseES().domain(self.domain).case_type(self.rule.case_type).count()
         context.update({
             'basic_info_form': self.basic_info_form,
+            'case_count': case_count,
             'criteria_form': self.criteria_form,
             'help_text': self.help_text,
             'schedule_form': self.schedule_form,
@@ -846,7 +850,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return ConditionalAlertCriteriaForm(self.domain, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        submit_form = request.POST["confirmationFlag"]
         if self.async_response is not None:
             return self.async_response
 
@@ -874,27 +877,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                     "does not have access to inbound SMS"
                 )
 
-            # list of fields that are getting changed everytime a request came manually from django form.
-            changed_schedule_fields = [
-                'send_time_type', 'repeat', 'stop_type', 'use_user_data_filter',
-                'start_offset_type', 'start_day_of_week', 'visit_window_position',
-                'capture_custom_metadata_item', 'stop_date_case_property_enabled'
-            ]
-
-            user_changed_data = self.schedule_form.changed_data
-            edit_mode = kwargs.get('edit_mode')
-            if (
-                ((user_changed_data != changed_schedule_fields) or self.criteria_form.has_changed())
-                and edit_mode and not submit_form
-            ):
-
-                case_type = self.criteria_form.cleaned_data.get('case_type')
-                case_count = CaseES().domain(self.domain).case_type(case_type).count()
-
-                warning_msg = _(f'This update may alert {case_count} cases. Are you sure you want to proceed?')
-                kwargs.update({'warning_msg': warning_msg})
-                return self.get(request, *args, **kwargs)
-
             with transaction.atomic():
                 if self.rule:
                     rule = self.rule
@@ -910,7 +892,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
             initiate_messaging_rule_run(rule)
-
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)

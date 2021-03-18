@@ -36,16 +36,17 @@ hqDefine("scheduling/js/conditional_alert_main", [
 
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
 
-        var conditionalWarningMsg = initialPageData.get('warning_msg');
-
-        if (conditionalWarningMsg) {
-            $("#conditional-warning-msg").text(conditionalWarningMsg);
-            $("#conditional-alert-warning-modal").modal("show");
-
-            $("#conditional-alert-yes-btn").click(function () {
-                $("#confirmationFlag").val("finalSubmit");
-                $("#conditional-alert-form").submit();
-            });
-        }
+        $("#conditional-alert-form-save").click(function () {
+            var $form = $("#conditional-alert-form"),
+                $modal = $("#conditional-alert-warning-modal");
+            if ($modal.length) {
+                $modal.find(".btn-primary").off("click").on("click", function () {
+                    $form.submit();
+                });
+                $modal.modal('show');
+                return;
+            }
+            $form.submit();
+        });
     });
 });
