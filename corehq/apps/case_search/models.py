@@ -9,6 +9,7 @@ from django.forms import model_to_dict
 from jsonfield.fields import JSONField
 
 from corehq.util.quickcache import quickcache
+from corehq.util.models import GetOrNoneManager
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
@@ -20,18 +21,6 @@ UNSEARCHABLE_KEYS = (
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
 )
-
-
-class GetOrNoneManager(models.Manager):
-    """
-    Adds get_or_none method to objects
-    """
-
-    def get_or_none(self, **kwargs):
-        try:
-            return self.get(**kwargs)
-        except self.model.DoesNotExist:
-            return None
 
 
 class FuzzyProperties(models.Model):
