@@ -1981,16 +1981,6 @@ APP_ANALYTICS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
 )
 
-DEFAULT_EXPORT_SETTINGS = StaticToggle(
-    'default_export_settings',
-    'Allow enterprise admin to set default export settings',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
-    """
-)
-
 ENTERPRISE_SSO = StaticToggle(
     'enterprise_sso',
     'Enable Enterprise SSO options for the users specified in this list.',
