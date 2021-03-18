@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.consumer_user.const import (
     CONSUMER_INVITATION_ACCEPTED,
+    CONSUMER_INVITATION_ERROR,
     CONSUMER_INVITATION_STATUS,
 )
 from corehq.apps.consumer_user.models import (
@@ -46,6 +47,9 @@ class ConsumerUserAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             )
             update_case(
                 self.invitation.domain, self.invitation.case_id,
-                {CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED}
+                {
+                    CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_ACCEPTED,
+                    CONSUMER_INVITATION_ERROR: "",
+                }
             )
         return cleaned_data
