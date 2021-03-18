@@ -9,7 +9,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.views.decorators.debug import sensitive_post_parameters
 
 from no_exceptions.exceptions import Http400
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
@@ -40,6 +39,15 @@ class ConsumerUserLoginView(LoginView):
     invitation = None
     hashed_invitation = None
     template_name = 'consumer_user/p_login.html'
+
+    @two_factor_exempt
+    # @sensitive_post_parameters('auth-password')
+    def dispatch(self, request, *args, **kwargs):
+        if 'signed_invitation_id' in kwargs:
+            # User is using a link from an invitation
+            self.hashed_invitation = kwargs['signed_invitation_id']
+            self.invitation = _get_invitation_or_400(self.hashed_invitation)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self, step=None):
         """
@@ -94,27 +102,6 @@ def register_view(request, signed_invitation_id):
     else:
         form = ConsumerUserSignUpForm()
     return render(request, 'consumer_user/signup.html', {'form': form, 'hide_menu': True})
-
-
-@two_factor_exempt
-@sensitive_post_parameters('auth-password')
-def login_view(request, signed_invitation_id=None):
-    if signed_invitation_id:
-        return login_accept_view(request, signed_invitation_id)
-    if request.user and request.user.is_authenticated:
-        consumer_user = ConsumerUser.objects.get_or_none(user=request.user)
-        if consumer_user:
-            url = reverse('consumer_user:consumer_user_homepage')
-            return HttpResponseRedirect(url)
-    return ConsumerUserLoginView.as_view()(request)
-
-
-def login_accept_view(request, signed_invitation_id):
-    invitation = _get_invitation_or_400(signed_invitation_id)
-    if invitation.accepted:
-        return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
-
-    return ConsumerUserLoginView.as_view(invitation=invitation, hashed_invitation=signed_invitation_id)(request)
 
 
 @consumer_user_login_required
