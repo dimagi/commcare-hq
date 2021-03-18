@@ -361,16 +361,14 @@ def _process_bulk_upload(bulk_file, domain):
 
     if import_fhir_data:
         expected_columns_in_prop_sheet = 7
-        fhir_resource_type_by_case_type = {
-            ft.case_type.name: ft
-            for ft in FHIRResourceType.objects.prefetch_related('case_type').filter(domain=domain)
-        }
 
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
             if worksheet.title == FHIR_RESOURCE_TYPE_MAPPING_SHEET:
                 if import_fhir_data:
-                    errors.extend(_process_fhir_resource_type_mapping_sheet(domain, worksheet))
+                    _errors, fhir_resource_type_by_case_type = _process_fhir_resource_type_mapping_sheet(
+                        domain, worksheet)
+                    errors.extend(_errors)
                 continue
             case_type = worksheet.title
             for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
@@ -399,10 +397,12 @@ def _process_bulk_upload(bulk_file, domain):
 
 def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
     errors = []
+    fhir_resource_type_by_case_type = {}
     for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
         if len(row) < 2:
             errors.append(_('Not enough columns'))
         else:
             case_type, fhir_resource_type = [cell.value for cell in row[:2]]
-            _update_fhir_resource_type(domain, case_type, fhir_resource_type)
-    return errors
+            fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
+            fhir_resource_type_by_case_type[case_type] = fhir_resource_type_obj
+    return errors, fhir_resource_type_by_case_type
