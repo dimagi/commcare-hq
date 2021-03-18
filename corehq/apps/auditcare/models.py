@@ -9,17 +9,13 @@ from django.contrib.auth.signals import (
     #user_login_failed,
 )
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.utils.functional import cached_property
 
-from dimagi.ext.couchdbkit import (
-    DateTimeProperty,
-    DictProperty,
-    Document,
-    IntegerProperty,
-    StringListProperty,
-    StringProperty,
-)
 from dimagi.utils.web import get_ip
+
+from corehq.apps.domain.utils import get_domain_from_url
+from corehq.util.models import ForeignValue, NullJsonField, foreign_value_init
 
 log = logging.getLogger(__name__)
 
@@ -53,12 +49,27 @@ STANDARD_HEADER_KEYS = [
 ]
 
 
-class AuditEvent(Document):
-    user = StringProperty()  # the user committing the action
-    base_type = StringProperty(default="AuditEvent")  # for subclassing this needs to stay consistent
-    # subclasses will be known directly from the doc_type, so it's not here.
-    event_date = DateTimeProperty(default=getdate)
-    description = StringProperty()  # particular instance details of this audit event
+class UserAgent(models.Model):
+    value = models.CharField(max_length=255, db_index=True)
+
+
+class HttpAccept(models.Model):
+    value = models.CharField(max_length=255, db_index=True)
+
+
+class ViewName(models.Model):
+    value = models.CharField(max_length=255, db_index=True)
+
+
+class AuditEvent(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.CharField(max_length=255, null=True, blank=True)
+    event_date = models.DateTimeField(default=getdate, db_index=True)
+    description = models.CharField(max_length=255, blank=True)
+
+    @property
+    def doc_type(self):
+        return type(self).__name__
 
     @property
     def summary(self):
@@ -68,8 +79,9 @@ class AuditEvent(Document):
         except Exception:
             return ""
 
-    class Meta(object):
-        app_label = 'auditcare'
+    class Meta:
+        abstract = True
+        index_together = [("user", "event_date")]
 
     def __str__(self):
         return "[%s] %s" % (self.doc_type, self.description)
@@ -95,49 +107,50 @@ class AuditEvent(Document):
         return audit
 
 
+@foreign_value_init
 class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
     """
-    request_path = StringProperty()
-    ip_address = StringProperty()
-    user_agent = StringProperty()
-
-    view = StringProperty()  # the fully qualifid view name
-    view_kwargs = DictProperty()
-    headers = DictProperty()  # the request.META?
-    # in the future possibly save some disk space by storing user agent and IP stuff in a separte session document?
-    session_key = StringProperty()
-
-    status_code = IntegerProperty()
-
-    extra = DictProperty()
+    path = models.CharField(max_length=255, blank=True, default='')
+    params = models.CharField(max_length=512, blank=True, default='')
+    ip_address = models.CharField(max_length=45, blank=True, default='')
+    user_agent_fk = models.ForeignKey(
+        UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
+    user_agent = ForeignValue(user_agent_fk, truncate=True)
+    view_fk = models.ForeignKey(
+        ViewName, null=True, db_index=False, on_delete=models.PROTECT)
+    view = ForeignValue(view_fk, truncate=True)
+    view_kwargs = NullJsonField(default=dict)
+    headers = NullJsonField(default=dict)
+    session_key = models.CharField(max_length=255, blank=True, null=True)
+    status_code = models.SmallIntegerField(default=0)
+    extra = NullJsonField(default=dict)
 
     @property
     def summary(self):
         return "%s from %s" % (self.request_path, self.ip_address)
 
-    class Meta(object):
-        app_label = 'auditcare'
-
     @cached_property
     def domain(self):
-        from corehq.apps.domain.utils import get_domain_from_url
-        return get_domain_from_url(self.request_path)
+        return get_domain_from_url(self.path)
+
+    @cached_property
+    def request_path(self):
+        return f"{self.path}?{self.params}"
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs, extra={}):
         """Creates an instance of a Access log."""
         try:
             audit = cls.create_audit(cls, user)
-            audit.description += "View"
-            if len(list(request.GET)) > 0:
-                params = "&".join(f"{x}={request.GET[x]}" for x in request.GET.keys())
-                audit.request_path = f"{request.path}?{params}"
+            if request.GET:
+                audit.path = request.path
+                audit.params = "&".join(f"{x}={request.GET[x]}" for x in request.GET)
             else:
-                audit.request_path = request.path
+                audit.path = request.path
             audit.ip_address = get_ip(request)
-            audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
+            audit.user_agent = request.META.get('HTTP_USER_AGENT')
             audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)
@@ -146,7 +159,6 @@ class NavigationEventAudit(AuditEvent):
             # it's a bit verbose to go to that extreme, TODO: need to have
             # targeted fields in the META, but due to server differences, it's
             # hard to make it universal.
-            #audit.headers = request.META
             audit.session_key = request.session.session_key
             audit.extra = extra
             audit.view_kwargs = view_kwargs
@@ -171,22 +183,19 @@ ACCESS_CHOICES = (
 )
 
 
+@foreign_value_init
 class AccessAudit(AuditEvent):
-    access_type = StringProperty(choices=ACCESS_CHOICES)
-    ip_address = StringProperty()
-    session_key = StringProperty()  # the django auth session key
-
-    user_agent = StringProperty()
-
-    get_data = StringListProperty()
-    post_data = StringListProperty()
-    http_accept = StringProperty()
-    path_info = StringProperty()
-
-    failures_since_start = IntegerProperty()
-
-    class Meta(object):
-        app_label = 'auditcare'
+    access_type = models.CharField(max_length=16, choices=ACCESS_CHOICES)
+    ip_address = models.CharField(max_length=45, blank=True, default='')
+    session_key = models.CharField(max_length=255, blank=True, null=True)
+    user_agent_fk = models.ForeignKey(
+        UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
+    user_agent = ForeignValue(user_agent_fk, truncate=True)
+    http_accept_fk = models.ForeignKey(
+        HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
+    http_accept = ForeignValue(http_accept_fk, truncate=True)
+    path_info = models.CharField(max_length=255, blank=True, default='')
+    failures_since_start = models.SmallIntegerField(null=True)
 
     @property
     def summary(self):
@@ -197,16 +206,13 @@ class AccessAudit(AuditEvent):
         '''Creates an instance of a Access log.
         '''
         audit = cls.create_audit(cls, user)
-        audit.ip_address = get_ip(request)
-        ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
-        audit.http_accept = request.META.get('HTTP_ACCEPT', '<unknown>')
-        audit.path_info = request.META.get('PATH_INFO', '<unknown>')
-        audit.user_agent = ua
+        audit.ip_address = get_ip(request) or ''
+        audit.http_accept = request.META.get('HTTP_ACCEPT')
+        audit.path_info = request.META.get('PATH_INFO', '')
+        audit.user_agent = request.META.get('HTTP_USER_AGENT')
         audit.access_type = 'login'
         audit.description = "Login Success"
         audit.session_key = request.session.session_key
-        audit.get_data = []  # [query2str(request.GET.items())]
-        audit.post_data = []
         audit.save()
 
     @classmethod
