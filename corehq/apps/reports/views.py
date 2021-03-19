@@ -1529,6 +1529,9 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
 
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
     definition = get_default_definition(_sorted_form_metadata_keys(list(meta)), parse_dates=True)
+    definition['received_on']['is_phone_time'] = False
+    definition['server_modified_on']['is_phone_time'] = False
+    definition['last_sync_token']['is_phone_time'] = False
     form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
