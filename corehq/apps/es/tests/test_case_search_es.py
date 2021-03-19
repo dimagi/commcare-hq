@@ -253,27 +253,26 @@ class TestCaseSearchLookups(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         super(TestCaseSearchLookups, self).tearDown()
 
-    def _make_case(self, domain, case_properties, index=None):
+    def _make_case(self, domain, case_properties):
         # make a case
         case_properties = case_properties or {}
         case_id = case_properties.pop('_id')
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         owner_id = case_properties.pop('owner_id', None)
         case = create_and_save_a_case(
-            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type, index=index)
+            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type)
         return case
 
-    def _bootstrap_cases_in_es_for_domain(self, domain, input_cases):
-        for case in input_cases:
-            index = case.pop('index', None)
-            self._make_case(domain, case, index=index)
+    def _bootstrap_cases_in_es_for_domain(self, domain):
         with patch('corehq.pillows.case_search.domains_needing_search_index',
                    MagicMock(return_value=[domain])):
             CaseSearchReindexerFactory(domain=domain).build().reindex()
-        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
-        self._bootstrap_cases_in_es_for_domain(domain, input_cases)
+        for case in input_cases:
+            self._make_case(domain, case)
+        self._bootstrap_cases_in_es_for_domain(domain)
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
         self.assertItemsEqual(
             query.get_ids(),
             output
