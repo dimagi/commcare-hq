@@ -686,9 +686,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                                                                                              membership.location_id,
                                                                                              membership.assigned_location_ids)
                             if primary_loc_removed:
-                                user.unset_location(domain)
+                                user.unset_location(domain, commit=False)
                             if locations_updated:
-                                user.reset_locations(domain, location_ids)
+                                user.reset_locations(domain, location_ids, commit=False)
                         user_current_role = user.get_role(domain=domain)
                         role_updated = not (user_current_role
                                             and user_current_role.get_qualified_id() == role_qualified_id)
