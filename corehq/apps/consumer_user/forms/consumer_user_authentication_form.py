@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.app.consumer_user.models import ConsumerUser
+from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.domain.forms import NoAutocompleteMixin
 
 
