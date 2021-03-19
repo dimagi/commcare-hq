@@ -8,7 +8,9 @@ from django.core.signing import BadSignature, SignatureExpired
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
+from django.views.decorators.debug import sensitive_post_parameters
 
 from no_exceptions.exceptions import Http400
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
@@ -41,7 +43,7 @@ class ConsumerUserLoginView(LoginView):
     template_name = 'consumer_user/p_login.html'
 
     @two_factor_exempt
-    # @sensitive_post_parameters('auth-password')
+    @method_decorator(sensitive_post_parameters('password'))
     def dispatch(self, request, *args, **kwargs):
         if 'signed_invitation_id' in kwargs:
             # User is using a link from an invitation
@@ -79,6 +81,7 @@ class ConsumerUserLoginView(LoginView):
 
 
 @two_factor_exempt
+@sensitive_post_parameters('password')
 def register_view(request, signed_invitation_id):
 
     invitation = _get_invitation_or_400(signed_invitation_id)
