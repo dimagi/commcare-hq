@@ -327,10 +327,12 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
     return _login_or_challenge(
         formplayer_as_user_auth,
-        allow_cc_users=allow_cc_users, allow_sessions=allow_sessions
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
     )
 
 
