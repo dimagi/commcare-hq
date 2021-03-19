@@ -43,12 +43,12 @@ def _parse_date_or_datetime(val):
             return None
 
         # datetime is a subclass of date
-        if isinstance(val, datetime.date):
+        if isinstance(val, datetime.date) or not isinstance(val, str):
             return val
 
         try:
             dt = iso_string_to_datetime(val)
-        except BadValueError:
+        except ValueError:
             try:
                 return DateProperty().wrap(val)
             except BadValueError:
