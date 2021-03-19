@@ -24,7 +24,6 @@ from corehq.apps.case_search.const import (
     SYSTEM_PROPERTIES,
     VALUE,
 )
-from corehq.apps.case_search.exceptions import TooManyRelatedCasesException
 from corehq.apps.es.cases import CaseES, owner
 
 from . import filters, queries
