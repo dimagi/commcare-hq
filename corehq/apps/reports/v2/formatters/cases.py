@@ -90,7 +90,7 @@ class CaseDataFormatter(BaseDataFormatter):
     @property
     def server_last_modified_date(self):
         """Computed metadata"""
-        return self._fmt_dateprop('server_modified_on')
+        return self._fmt_dateprop('server_modified_on', False)
 
     def get_context(self):
         context = {}
@@ -128,11 +128,12 @@ class CaseDataFormatter(BaseDataFormatter):
         return (SPECIAL_CASE_PROPERTIES_MAP[prop]
             .value_getter(self.raw_data))
 
-    def _fmt_dateprop(self, prop):
-        val = report_date_to_json(
+    def _fmt_dateprop(self, prop, is_phonetime=True):
+        return report_date_to_json(
             self.request,
             self.domain,
-            parse_date(self.raw_data[prop])
+            parse_date(self.raw_data[prop]),
+            is_phonetime=is_phonetime
         )
 
     @property
