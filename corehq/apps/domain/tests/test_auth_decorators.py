@@ -191,6 +191,7 @@ def _get_auth_mock(succeed=True):
 mock_successful_auth = _get_auth_mock(succeed=True)
 mock_failed_auth = _get_auth_mock(succeed=False)
 
+
 class ApiAuthTest(SimpleTestCase, AuthTestMixin):
     domain_name = 'api-auth-test'
 
@@ -200,14 +201,14 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         # result = decorated_view(request, self.domain_name)
         self.assertForbidden(decorated_view(request, self.domain_name))
 
-    @mock.patch('corehq.apps.domain.decorators.login_or_oauth2_ex', mock_successful_auth)
-    def test_api_auth_oauth(self):
+    def _do_auth_test(self, auth_header, decorator_to_mock):
         decorated_view = api_auth(sample_view)
         request = _get_request()
-        # fake oauth header
-        request.META['HTTP_AUTHORIZATION'] = 'bearer myToken'
-        self.assertEqual(SUCCESS, decorated_view(request, self.domain_name))
+        request.META['HTTP_AUTHORIZATION'] = auth_header
+        with mock.patch(decorator_to_mock, mock_successful_auth):
+            self.assertEqual(SUCCESS, decorated_view(request, self.domain_name))
+        with mock.patch(decorator_to_mock, mock_failed_auth):
+            self.assertForbidden(decorated_view(request, self.domain_name))
 
-        # also confirm other auth fails (because not mocked)
-        request.META['HTTP_AUTHORIZATION'] = f'basic user:12345'
-        self.assertForbidden(decorated_view(request, self.domain_name))
+    def test_api_auth_oauth(self):
+        self._do_auth_test('bearer myToken', 'corehq.apps.domain.decorators.login_or_oauth2_ex')
