@@ -62,6 +62,11 @@ class UserTime(_HQTZTime):
 
 
 class PhoneTime(_HQTZTime):
+    """Utility for dealing with datetime fields that were originally in the phone TZ
+    such as form.meta.timeEnd.
+
+    This utility transparently handles the timezone migration for legacy couch domains.
+    """
 
     def server_time(self):
         return ServerTime(_adjust_phone_datetime_to_utc(
