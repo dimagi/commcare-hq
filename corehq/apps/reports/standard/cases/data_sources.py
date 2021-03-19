@@ -26,6 +26,8 @@ from corehq.util.view_utils import absolute_reverse
 
 
 class CaseInfo(object):
+    """This class wraps a raw case from ES to provide simpler access
+    to certain properties."""
 
     def __init__(self, report, case):
         """
@@ -65,12 +67,6 @@ class CaseInfo(object):
     @property
     def is_closed(self):
         return self.case['closed']
-
-    def _dateprop(self, prop, iso=True):
-        val = self.report.date_to_json(self.parse_date(self.case[prop]))
-        if iso:
-            val = 'T'.join(val.split(' ')) if val else None
-        return val
 
     @property
     def opened_on(self):
@@ -172,6 +168,9 @@ class CaseInfo(object):
 
 
 class CaseDisplay(CaseInfo):
+    """This class wraps a raw case from ES to provide simpler access
+    to certain properties as well as formatting for properties for use in
+    the UI"""
 
     @property
     def closed_display(self):
@@ -187,23 +186,26 @@ class CaseDisplay(CaseInfo):
         else:
             return "%s (bad ID format)" % self.case_name
 
+    def _dateprop(self, prop):
+        return self.report.date_to_json(self.parse_date(self.case[prop]))
+
     @property
     def opened_on(self):
-        return self._dateprop('opened_on', False)
+        return self._dateprop('opened_on')
     date_opened = opened_on
 
     @property
     def modified_on(self):
-        return self._dateprop('modified_on', False)
+        return self._dateprop('modified_on')
     last_modified = modified_on
 
     @property
     def closed_on(self):
-        return self._dateprop('closed_on', False)
+        return self._dateprop('closed_on')
 
     @property
     def server_last_modified_date(self):
-        return self._dateprop('server_modified_on', False)
+        return self._dateprop('server_modified_on')
 
     @property
     def owner_display(self):
