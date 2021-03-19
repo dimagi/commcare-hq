@@ -13,7 +13,6 @@ from corehq.apps.case_search.xpath_functions import (
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_ids_lookup,
     case_property_missing,
     case_property_range_query,
     exact_case_property_text_query,
@@ -48,6 +47,9 @@ def print_ast(node):
             indent -= 1
 
     visit(node, 0)
+
+
+MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
 
 
 OPERATOR_MAPPING = {
@@ -121,7 +123,13 @@ def build_filter_from_ast(domain, node):
         """
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
-        return case_ids_lookup(domain, serialize(node.left.right), node.right, node.op)
+
+        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
+        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+        if es_query.count() > MAX_RELATED_CASES:
+            raise TooManyRelatedCasesException(new_query)
+
+        return es_query.scroll_ids()
 
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`

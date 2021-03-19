@@ -13,13 +13,11 @@ from corehq.apps.es import case_search as case_search_es
 from warnings import warn
 
 from django.utils.dateparse import parse_date
-from django.utils.translation import ugettext as _
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
-    MAX_RELATED_CASES,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
@@ -220,18 +218,6 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
-
-
-def case_ids_lookup(domain, property_name, value, op='='):
-    """
-    Given a case property "foo" and value "thing", return a generator
-    of all case_ids were `foo = thing` as produced by ``ESQuery.scroll_ids``
-    """
-    new_query = '{} {} "{}"'.format(property_name, op, value)
-    es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
-    if es_query.count() > MAX_RELATED_CASES:
-        raise TooManyRelatedCasesException(new_query)
-    return es_query.scroll_ids()
 
 
 def reverse_index_case_query(case_ids, identifier=None):

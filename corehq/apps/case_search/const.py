@@ -18,9 +18,6 @@ RELEVANCE_SCORE = "commcare_search_score"
 # Added to each case on the index for debugging when a case was added to ES
 INDEXED_ON = '@indexed_on'
 
-# Limit each related case lookup to return 500,000 cases to prevent timeouts
-MAX_RELATED_CASES = 500000
-
 # Properties added to the case search mapping to provide extra information
 SYSTEM_PROPERTIES = [
     CASE_PROPERTIES_PATH,
