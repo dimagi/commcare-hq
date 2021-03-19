@@ -140,11 +140,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
 
     if prop_def.pop('parse_date', None):
         val = _parse_date_or_datetime(val)
-    # is_utc is deprecated in favor of is_phone_time
-    # but preserving here for backwards compatibility
-    # is_utc = False is just reinterpreted as is_phone_time = True
-    is_phone_time = prop_def.pop('is_phone_time',
-                                 not prop_def.pop('is_utc', True))
+    is_phone_time = prop_def.pop('is_phone_time', False)
     if isinstance(val, datetime.datetime):
         if not is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
