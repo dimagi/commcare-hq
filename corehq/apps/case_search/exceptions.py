@@ -8,7 +8,3 @@ class CaseSearchNotEnabledException(CaseSearchException):
 
 class TooManyRelatedCasesException(CaseSearchException):
     pass
-
-
-class UnsupportedQueryException(CaseSearchException):
-    pass

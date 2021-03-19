@@ -37,7 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.exceptions import TooManyRelatedCasesException, UnsupportedQueryException
+from corehq.apps.case_search.exceptions import TooManyRelatedCasesException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -106,9 +106,6 @@ def search(request, domain):
         case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
     except TooManyRelatedCasesException:
         return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
-    except UnsupportedQueryException as e:
-        notify_exception(request, str(e))
-        return HttpResponse(_('Search query could not be understood.'), status=400)
     search_es = case_search_criteria.search_es
 
     try:
