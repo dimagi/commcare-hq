@@ -41,6 +41,6 @@ class ConsumerUserSignUpForm(ModelForm):
         if commit:
             user.save()
             consumer_user = ConsumerUser.objects.create(user=user)
-            if self.invitation and not self.invitation_accepted:
+            if self.invitation and not self.invitation.accepted:
                 self.invitation.accept_for_consumer_user(consumer_user)
         return user
