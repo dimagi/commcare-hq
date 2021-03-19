@@ -27,19 +27,16 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     report_partial_path = "reports/partials/maps.html"
     flush_layout = True
-    #asynchronous = False
+
+    # override on subclass. It must be a dict with keys:
+    # * report: fully qualified path to a ReportDataSource class
+    # * report_params (optional): params to pass to the data source. This get's
+    #     augmented with the `domain` and `request` params.
+    data_source = None
 
     def _get_data(self):
-        adapter = self.data_source['adapter']
-        geo_col = self.data_source.get('geo_column', 'geo')
-
-        try:
-            loader = getattr(self, '_get_data_%s' % adapter)
-        except AttributeError:
-            raise RuntimeError('unknown adapter [%s]' % adapter)
-        data = loader(self.data_source, dict(self.request.GET.items()))
-
-        return self._to_geojson(data, geo_col)
+        data = self._get_data_report(self.data_source, dict(self.request.GET.items()))
+        return self._to_geojson(data, "geo")
 
     def _to_geojson(self, data, geo_col):
         def _parse_geopoint(raw):
@@ -119,7 +116,6 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         DataSource = to_function(params['report'])
 
         assert issubclass(DataSource, ReportDataSource), '[%s] does not implement the ReportDataSource API!' % params['report']
-        assert not issubclass(DataSource, GenericReportView), '[%s] cannot be a ReportView (even if it is also a ReportDataSource)! You must separate your code into a class of each type, or use the "legacyreport" adapater.' % params['report']
 
         return DataSource(config).get_data()
 
