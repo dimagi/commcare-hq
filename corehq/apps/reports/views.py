@@ -1528,7 +1528,7 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         meta['last_sync_token'] = form.last_sync_token
 
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
-    definition = get_default_definition(_sorted_form_metadata_keys(list(meta)))
+    definition = get_default_definition(_sorted_form_metadata_keys(list(meta)), parse_dates=True)
     form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
