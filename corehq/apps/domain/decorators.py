@@ -22,7 +22,6 @@ from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
 
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
 from corehq.apps.sso.utils.request_helpers import (
@@ -41,12 +40,13 @@ from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
     FORMPLAYER,
+    OAUTH2,
     basic_or_api_key,
     basicauth,
     determine_authtype_from_request,
     formplayer_as_user_auth,
-    formplayer_auth,
     get_username_and_password_from_request,
+    HQApiKeyAuthentication,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
@@ -327,10 +327,12 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
     return _login_or_challenge(
         formplayer_as_user_auth,
-        allow_cc_users=allow_cc_users, allow_sessions=allow_sessions
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
     )
 
 
@@ -375,12 +377,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                 )
                 return HttpResponseForbidden()
             request.auth_type = authtype  # store auth type on request for access in views
-            function_wrapper = {
-                BASIC: login_or_basic_ex(allow_cc_users=True),
-                DIGEST: login_or_digest_ex(allow_cc_users=True),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
-            }[authtype]
+            function_wrapper = get_auth_decorator_map(allow_cc_users=True)[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -426,13 +423,19 @@ api_key_auth = login_or_api_key_ex(allow_sessions=False)
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
-def get_auth_decorator_map(require_domain=True, allow_sessions=True):
+def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True):
     # get a mapped set of decorators for different auth types with the specified parameters
+    decorator_function_kwargs = {
+        'allow_cc_users': allow_cc_users,
+        'require_domain': require_domain,
+        'allow_sessions': allow_sessions,
+    }
     return {
-        'digest': login_or_digest_ex(require_domain=require_domain, allow_sessions=allow_sessions),
-        'basic': login_or_basic_ex(require_domain=require_domain, allow_sessions=allow_sessions),
-        'api_key': login_or_api_key_ex(require_domain=require_domain, allow_sessions=allow_sessions),
-        'oauth2': login_or_oauth2_ex(require_domain=require_domain, allow_sessions=allow_sessions),
+        DIGEST: login_or_digest_ex(**decorator_function_kwargs),
+        BASIC: login_or_basic_ex(**decorator_function_kwargs),
+        API_KEY: login_or_api_key_ex(**decorator_function_kwargs),
+        OAUTH2: login_or_oauth2_ex(**decorator_function_kwargs),
+        FORMPLAYER: login_or_formplayer_ex(**decorator_function_kwargs),
     }
 
 
