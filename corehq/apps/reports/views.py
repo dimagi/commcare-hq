@@ -1502,10 +1502,11 @@ def _get_cases_changed_context(domain, form, case_id=None):
         else:
             url = "#"
 
+        keys = _sorted_case_update_keys(list(b))
+        assume_phonetimes = not form.metadata or form.metadata.deviceID != CLOUDCARE_DEVICE_ID
         definition = get_default_definition(
-            _sorted_case_update_keys(list(b)),
-            assume_phonetimes=(not form.metadata or
-                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
+            keys,
+            phonetime_fields=keys if assume_phonetimes else {},
         )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
@@ -1522,17 +1523,19 @@ def _get_cases_changed_context(domain, form, case_id=None):
 
 
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+
     meta = _top_level_tags(form).get('meta', None) or {}
+    phonetime_keys = list(meta)
+
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
-    definition = get_default_definition(_sorted_form_metadata_keys(list(meta)), parse_dates=True)
-    definition['received_on']['is_phone_time'] = False
-    definition['server_modified_on']['is_phone_time'] = False
-    definition['last_sync_token']['is_phone_time'] = False
+    definition = get_default_definition(
+        _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_keys, parse_dates=True
+    )
     form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
