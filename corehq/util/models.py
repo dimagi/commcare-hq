@@ -252,7 +252,9 @@ class ForeignValue:
     This is useful for cases where the object referenced by the foreign
     key holds a single primitive value named `value`. It eliminates
     boilerplate indirection imposed by the foreign key, allowing the
-    value to be referenced as a simple attribute.
+    value to be referenced as a simple attribute. This pattern is used
+    to save space when the set of values is relatively small while each
+    value is much larger than a (usually integer) foreign key.
 
     An LRU cache is used to keep recently fetched related objects in
     memory rather than fetching from the database each time a new value
