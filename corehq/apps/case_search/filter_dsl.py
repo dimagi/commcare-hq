@@ -5,7 +5,6 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
 
-from corehq.apps.case_search.exceptions import TooManyRelatedCasesException
 from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
     XPathFunctionException,
@@ -25,6 +24,10 @@ class CaseFilterError(Exception):
     def __init__(self, message, filter_part):
         self.filter_part = filter_part
         super(CaseFilterError, self).__init__(message)
+
+
+class TooManyRelatedCasesError(CaseFilterError):
+    pass
 
 
 def print_ast(node):
@@ -121,10 +124,9 @@ def build_filter_from_ast(domain, node):
 
         es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
         if es_query.count() > MAX_RELATED_CASES:
-            raise TooManyRelatedCasesException(
-                _("""
-                    The related case lookup you are trying to perform would return too many cases: {}
-                """).format(new_query)
+            raise TooManyRelatedCasesError(
+                _("The related case lookup you are trying to perform would return too many cases"),
+                new_query
             )
 
         return es_query.scroll_ids()
