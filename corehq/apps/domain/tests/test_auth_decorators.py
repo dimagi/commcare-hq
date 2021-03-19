@@ -212,3 +212,25 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
 
     def test_api_auth_oauth(self):
         self._do_auth_test('bearer myToken', 'corehq.apps.domain.decorators.login_or_oauth2_ex')
+
+    def test_api_auth_basic(self):
+        self._do_auth_test('basic user:pass', 'corehq.apps.domain.decorators.login_or_basic_ex')
+
+    def test_api_auth_digest(self):
+        self._do_auth_test('digest user:pass', 'corehq.apps.domain.decorators.login_or_digest_ex')
+
+    def test_api_auth_key(self):
+        self._do_auth_test('ApiKey user:pass', 'corehq.apps.domain.decorators.login_or_api_key_ex')
+
+    def test_api_auth_formplayer(self):
+        # formplayer auth is governed under different rules so can't use the shared function
+        decorator_to_mock = 'corehq.apps.domain.decorators.login_or_formplayer_ex'
+        decorated_view = api_auth(sample_view)
+        request = _get_request()
+        request.META['HTTP_X_MAC_DIGEST'] = 'fomplayerAuth'
+        with mock.patch(decorator_to_mock, mock_successful_auth) as mock_success:
+            # even if formplayer returns successful auth, api_auth rejects it because
+            # allow_formplayer is set to false
+            self.assertForbidden(decorated_view(request, self.domain_name))
+        with mock.patch(decorator_to_mock, mock_failed_auth):
+            self.assertForbidden(decorated_view(request, self.domain_name))
