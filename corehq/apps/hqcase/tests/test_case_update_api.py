@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -16,7 +16,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import privilege_enabled, flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
 
@@ -32,9 +32,10 @@ class TestCaseAPI(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None)
-        cls.web_user.is_superuser = True
-        cls.web_user.save()
+        role = UserRole.get_or_create_with_permissions(
+            cls.domain, Permissions(edit_data=True), 'edit-data'
+        )
+        cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
         cls.case_accessor = CaseAccessors(cls.domain)
         cls.form_accessor = FormAccessors(cls.domain)
 
@@ -47,6 +48,7 @@ class TestCaseAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.web_user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
