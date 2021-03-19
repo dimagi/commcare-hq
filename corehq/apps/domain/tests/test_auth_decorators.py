@@ -2,6 +2,7 @@ import base64
 from functools import wraps
 
 from django.contrib.auth.models import AnonymousUser
+from django.http import HttpResponseForbidden
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from mock import mock
 
@@ -172,15 +173,23 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
         self.assertEqual(SUCCESS, test(request))
 
 
-def mock_successful_auth(allow_cc_users=False, allow_sessions=True, require_domain=True):
-    def _outer(fn):
-        @wraps(fn)
-        def inner(request, *args, **kwargs):
-            return fn(request, *args, **kwargs)
+def _get_auth_mock(succeed=True):
+    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True):
+        def _outer(fn):
+            @wraps(fn)
+            def inner(request, *args, **kwargs):
+                if succeed:
+                    return fn(request, *args, **kwargs)
+                else:
+                    return HttpResponseForbidden()
+            return inner
+        return _outer
 
-        return inner
-    return _outer
+    return mock_auth_decorator
 
+
+mock_successful_auth = _get_auth_mock(succeed=True)
+mock_failed_auth = _get_auth_mock(succeed=False)
 
 class ApiAuthTest(SimpleTestCase, AuthTestMixin):
     domain_name = 'api-auth-test'
