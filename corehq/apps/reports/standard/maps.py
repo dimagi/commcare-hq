@@ -123,29 +123,6 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
         return DataSource(config).get_data()
 
-    def _get_data_legacyreport(self, params, filters):
-        Report = to_function(params['report'])
-        assert issubclass(Report, GenericTabularReport), '[%s] must be a GenericTabularReport!' % params['report']
-
-        # TODO it would be nice to indicate to the report that it was being used in a map context, (so
-        # that it could add a geo column) but it does not seem like reports can be arbitrarily
-        # parameterized in this way
-        report = Report(request=self.request, domain=self.domain, **params.get('report_params', {}))
-
-        def _headers(e, root=[]):
-            if hasattr(e, '__iter__'):
-                if hasattr(e, 'html'):
-                    root = list(root) + [str(e.html)]
-                for sub in e:
-                    for k in _headers(sub, root):
-                        yield k
-            else:
-                yield root + [str(e.html)]
-        headers = ['::'.join(k) for k in _headers(report.headers)]
-
-        for row in report.rows:
-            yield dict(zip(headers, row))
-
     @property
     def report_context(self):
         layers = getattr(settings, 'MAPS_LAYERS', None)
