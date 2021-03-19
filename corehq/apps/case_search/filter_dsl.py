@@ -88,13 +88,7 @@ def build_filter_from_ast(domain, node):
 
         # fetch the ids of the highest level cases that match the case_property
         # i.e. all the cases which have `property = 'value'`
-        try:
-            ids = _parent_property_lookup(node)
-        except TooManyRelatedCasesException as e:
-            raise CaseFilterError(
-                _("The related case lookup you are trying to perform would return too many cases"),
-                str(e)
-            )
+        ids = _parent_property_lookup(node)
 
         # get the related case path we need to walk, i.e. `parent/grandparent/property`
         n = node.left
@@ -127,7 +121,11 @@ def build_filter_from_ast(domain, node):
 
         es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
         if es_query.count() > MAX_RELATED_CASES:
-            raise TooManyRelatedCasesException(new_query)
+            raise TooManyRelatedCasesException(
+                _("""
+                    The related case lookup you are trying to perform would return too many cases: {}
+                """).format(new_query)
+            )
 
         return es_query.scroll_ids()
 
