@@ -37,6 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -101,7 +102,10 @@ def search(request, domain):
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
 
-    case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    try:
+        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    except TooManyRelatedCasesError:
+        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     search_es = case_search_criteria.search_es
 
     try:
