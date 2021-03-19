@@ -227,7 +227,7 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         decorated_view = api_auth(sample_view)
         request = _get_request()
         request.META['HTTP_X_MAC_DIGEST'] = 'fomplayerAuth'
-        with mock.patch(decorator_to_mock, mock_successful_auth) as mock_success:
+        with mock.patch(decorator_to_mock, mock_successful_auth):
             # even if formplayer returns successful auth, api_auth rejects it because
             # allow_formplayer is set to false
             self.assertForbidden(decorated_view(request, self.domain_name))
