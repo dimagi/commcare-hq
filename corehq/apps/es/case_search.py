@@ -73,24 +73,6 @@ class CaseSearchES(CaseES):
         else:
             return self.add_query(exact_case_property_text_query(case_property_name, value), clause)
 
-    def related_case_property_query(self, domain, path, value):
-        """
-        Search for property in a related case.
-
-        Supports a single-level path, e.g., parent/property_name
-
-        Does not support fuzziness.
-        """
-        try:
-            (identifier, prop) = path.split("/")
-        except ValueError:
-            raise UnsupportedQueryException(
-                _("Multi-level related case queries are unsupported: {}").format(path),
-            )
-
-        ids = case_ids_lookup(domain, prop, value)
-        return self.related_cases_filter(ids, identifier)
-
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
         Search for all cases where case property `case_property_name` matches the regular expression in `regex`

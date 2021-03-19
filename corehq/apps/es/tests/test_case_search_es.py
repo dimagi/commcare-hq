@@ -353,24 +353,6 @@ class TestCaseSearchLookups(TestCase):
             ['c1', 'c3']
         )
 
-    def test_parent_property_lookup(self):
-        self._bootstrap_cases_in_es_for_domain(self.domain, [
-            {'_id': 'c3', 'flagship': 'Mermaid', 'size': 'small'},
-            {'_id': 'c4', 'flagship': "Queen Anne's Revenge", 'size': 'medium'},
-            {'_id': 'c1', 'foo': 'redbeard', 'parrot_name': 'molly', 'index': {
-                'parent': ('ship', 'c3')
-            }},
-            {'_id': 'c2', 'foo': 'blackbeard', 'parrot_name': 'polly', 'index': {
-                'parent': ('ship', 'c4')
-            }},
-        ])
-        query = (CaseSearchES().domain(self.domain)
-                 .related_case_property_query(self.domain, "parent/flagship", "Queen Anne's Revenge"))
-        self.assertItemsEqual(
-            query.get_ids(),
-            ['c2']
-        )
-
     def test_blacklisted_owner_ids(self):
         self._assert_query_runs_correctly(
             self.domain,
