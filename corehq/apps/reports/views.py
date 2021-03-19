@@ -1019,6 +1019,7 @@ class CaseDataView(BaseProjectReportSectionView):
         from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
         wrapped_case = get_wrapped_case(self.case_instance)
         timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
         display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
