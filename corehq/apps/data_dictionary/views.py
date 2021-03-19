@@ -131,7 +131,9 @@ def update_case_property(request, domain):
         try:
             fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
         except ValidationError as e:
-            errors.append(str(e))
+            for key, msgs in dict(e).items():
+                for msg in msgs:
+                    errors.append(_("{}: {}").format(key, msg))
 
     for property in property_list:
         case_type = property.get('caseType')
@@ -160,6 +162,7 @@ def _update_fhir_resource_type(domain, case_type, fhir_resource_type):
     except FHIRResourceType.DoesNotExist:
         fhir_resource_type_obj = FHIRResourceType(case_type=case_type_obj, domain=domain)
     fhir_resource_type_obj.name = fhir_resource_type
+    fhir_resource_type_obj.full_clean()
     fhir_resource_type_obj.save()
     return fhir_resource_type_obj
 
@@ -403,6 +406,12 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
             errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
             case_type, fhir_resource_type = [cell.value for cell in row[:2]]
-            fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
-            fhir_resource_type_by_case_type[case_type] = fhir_resource_type_obj
+            try:
+                fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
+            except ValidationError as e:
+                for key, msgs in dict(e).items():
+                    for msg in msgs:
+                        errors.append(_("{}: {}").format(key, msg))
+            else:
+                fhir_resource_type_by_case_type[case_type] = fhir_resource_type_obj
     return errors, fhir_resource_type_by_case_type
