@@ -375,13 +375,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                 )
                 return HttpResponseForbidden()
             request.auth_type = authtype  # store auth type on request for access in views
-            function_wrapper = {
-                BASIC: login_or_basic_ex(allow_cc_users=True),
-                DIGEST: login_or_digest_ex(allow_cc_users=True),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
-                OAUTH2: login_or_oauth2_ex(allow_cc_users=True),
-            }[authtype]
+            function_wrapper = get_auth_decorator_map(allow_cc_users=True)[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
