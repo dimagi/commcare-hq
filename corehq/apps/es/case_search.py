@@ -39,7 +39,6 @@ class CaseSearchES(CaseES):
             blacklist_owner_id,
             external_id,
             indexed_on,
-            related_cases_filter,
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
@@ -149,10 +148,6 @@ def case_property_filter(case_property_name, value):
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
         )
     )
-
-
-def related_cases_filter(ids, identifier):
-    return reverse_index_case_query(ids, identifier)
 
 
 def exact_case_property_text_query(case_property_name, value):

@@ -123,8 +123,8 @@ def build_filter_from_ast(domain, node):
         """
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
-
         new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
+
         es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
         if es_query.count() > MAX_RELATED_CASES:
             raise TooManyRelatedCasesException(new_query)
