@@ -115,6 +115,7 @@ class CaseSearchCriteria(object):
                 value = re.sub(to_remove, '', value)
 
             if '/' in key:
-                self.search_es = self.search_es.related_case_property_query(self.domain, key, value)
+                query = '{} = "{}"'.format(key, value)
+                self.search_es = self.search_es.xpath_query(self.domain, query)
             else:
                 self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
