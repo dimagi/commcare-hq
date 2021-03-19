@@ -27,7 +27,7 @@ from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, lazy
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -114,6 +114,10 @@ from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
     SECURE_SESSION_TIMEOUT
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
+
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
+
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -581,7 +585,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
         required=False,
-        help_text=ugettext_lazy(mark_safe(
+        help_text=mark_safe_lazy(ugettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers."
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -1280,12 +1284,11 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
 
 class HQSetPasswordForm(SetPasswordForm):
-    new_password1 = forms.CharField(label=ugettext_lazy("New password"),
-                                    widget=forms.PasswordInput(
-                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
-                                    help_text=mark_safe("""
-                                    <span data-bind="text: passwordHelp, css: color">
-                                    """))
+    new_password1 = forms.CharField(
+        label=ugettext_lazy("New password"),
+        widget=forms.PasswordInput(attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">')  # nosec: no user input
+    )
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
