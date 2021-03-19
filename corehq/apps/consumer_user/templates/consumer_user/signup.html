@@ -29,6 +29,11 @@
       <div class="reg-form-container sign-in-container">
         <div class="form-bubble form-bubble-lg">
           <h2 class="text-center">{% trans "Sign Up" %}</h2>
+          <p>
+            {% blocktrans %}
+              Thank you for accepting your invitation for <strong>{{domain}}</strong>. By creating an account you will be able to access your personal information stored in this system.
+            {% endblocktrans %}
+          </p>
           <form method="post">
             {% csrf_token %}
             {{ form.as_p }}

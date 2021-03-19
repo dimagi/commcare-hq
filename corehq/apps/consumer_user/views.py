@@ -100,8 +100,16 @@ def register_view(request, signed_invitation_id):
             form.save()
             return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
     else:
-        form = ConsumerUserSignUpForm()
-    return render(request, 'consumer_user/signup.html', {'form': form, 'hide_menu': True})
+        form = ConsumerUserSignUpForm(initial={'email': email})
+    return render(
+        request,
+        'consumer_user/signup.html',
+        {
+            'form': form,
+            'hide_menu': True,
+            'domain': invitation.domain,
+        }
+    )
 
 
 @consumer_user_login_required
