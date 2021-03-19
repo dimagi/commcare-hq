@@ -433,6 +433,7 @@ def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sess
         BASIC: login_or_basic_ex(**decorator_function_kwargs),
         API_KEY: login_or_api_key_ex(**decorator_function_kwargs),
         OAUTH2: login_or_oauth2_ex(**decorator_function_kwargs),
+        FORMPLAYER: login_or_formplayer_ex(**decorator_function_kwargs),
     }
 
 
