@@ -41,12 +41,12 @@ class CaseDataFormatter(BaseDataFormatter):
     @property
     def date_opened(self):
         """Special Case Property date_opened"""
-        return self._fmt_dateprop('opened_on', False)
+        return self._fmt_dateprop('opened_on')
 
     @property
     def last_modified(self):
         """Special Case Property last_modified"""
-        return self._fmt_dateprop('modified_on', False)
+        return self._fmt_dateprop('modified_on')
 
     @property
     def closed_by_username(self):
@@ -90,7 +90,7 @@ class CaseDataFormatter(BaseDataFormatter):
     @property
     def server_last_modified_date(self):
         """Computed metadata"""
-        return self._fmt_dateprop('server_modified_on', False)
+        return self._fmt_dateprop('server_modified_on')
 
     def get_context(self):
         context = {}
@@ -128,15 +128,12 @@ class CaseDataFormatter(BaseDataFormatter):
         return (SPECIAL_CASE_PROPERTIES_MAP[prop]
             .value_getter(self.raw_data))
 
-    def _fmt_dateprop(self, prop, iso=True):
+    def _fmt_dateprop(self, prop):
         val = report_date_to_json(
             self.request,
             self.domain,
             parse_date(self.raw_data[prop])
         )
-        if iso:
-            val = 'T'.join(val.split(' ')) if val else None
-        return val
 
     @property
     @quickcache(['self.owner_id'])
