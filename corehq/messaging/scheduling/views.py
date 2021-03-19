@@ -778,7 +778,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def page_context(self):
         context = super().page_context
-        case_count = 0
+        case_count = None
         if self.rule and self.rule.case_type:
             case_count = CaseES().domain(self.domain).case_type(self.rule.case_type).count()
         context.update({
