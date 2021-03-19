@@ -1573,6 +1573,7 @@ def _top_level_tags(form):
         Returns a OrderedDict of the top level tags found in the xml, in the
         order they are found.
 
+        The actual values are taken from the form JSON data and not from the XML
         """
         to_return = OrderedDict()
 
