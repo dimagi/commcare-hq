@@ -3,6 +3,7 @@ from datetime import timedelta
 from itertools import chain
 
 import attr
+from couchdbkit.ext.django.loading import get_db
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey
 
@@ -13,9 +14,10 @@ from ..models import AccessAudit, NavigationEventAudit
 
 
 def navigation_events_by_user(user, start_date=None, end_date=None):
+    params = {"user": user, "start_date": start_date, "end_date": end_date}
     where = get_date_range_where(start_date, end_date)
     query = NavigationEventAudit.objects.filter(user=user, **where)
-    return AuditWindowQuery(query)
+    return AuditWindowQuery(query, params)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
@@ -42,10 +44,11 @@ def get_users_to_export(username, domain):
 
 
 def get_all_log_events(start_date=None, end_date=None):
+    params = {"start_date": start_date, "end_date": end_date}
     where = get_date_range_where(start_date, end_date)
     return chain(
-        AuditWindowQuery(AccessAudit.objects.filter(**where)),
-        AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
+        AuditWindowQuery(AccessAudit.objects.filter(**where), params),
+        AuditWindowQuery(NavigationEventAudit.objects.filter(**where), params),
     )
 
 
@@ -91,6 +94,7 @@ def get_date_range_where(start_date, end_date):
 @attr.s(cmp=False)
 class AuditWindowQuery:
     query = attr.ib()
+    params = attr.ib()
     window_size = attr.ib(default=10000)
 
     def __iter__(self):
@@ -117,7 +121,41 @@ class AuditWindowQuery:
                 break
 
     def count(self):
-        return self.query.count()
+        return self.query.count() + self.couch_count()
+
+    def couch_count(self):
+        db = get_db("auditcare")
+        if "user" in self.params:
+            view_name = "auditcare/urlpath_by_user_date"
+        else:
+            view_name = "auditcare/all_events"
+            raise NotImplementedError("not yet used")
+        startkey, endkey = _get_couch_view_keys(**self.params)
+        return db.view(
+            view_name,
+            startkey=startkey,
+            endkey=endkey,
+            reduce=False,
+            include_docs=False,
+        ).count()
+
+
+def _get_couch_view_keys(user=None, start_date=None, end_date=None):
+    def date_key(date):
+        return [date.year, date.month, date.day]
+
+    startkey = [user] if user else []
+    if start_date:
+        startkey.extend(date_key(start_date))
+
+    endkey = [user] if user else []
+    if end_date:
+        end = end_date + timedelta(days=1)
+        endkey.extend(date_key(end))
+    else:
+        endkey.append({})
+
+    return startkey, endkey
 
 
 def get_foreign_names(model):

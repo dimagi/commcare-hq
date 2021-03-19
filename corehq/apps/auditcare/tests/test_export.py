@@ -86,6 +86,6 @@ class TestNavigationEventsQueries(AuditcareTest):
 @contextmanager
 def patch_window_size(size):
     with patch.object(AuditWindowQuery.__init__, "__defaults__", (size,)):
-        qry = AuditWindowQuery("ignored")
+        qry = AuditWindowQuery("ignored", {})
         assert qry.window_size == size, f"patch failed ({qry.window_size})"
         yield
