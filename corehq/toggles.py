@@ -834,6 +834,13 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+CASE_API_V0_6 = StaticToggle(
+    'case_api_v0_6',
+    'Enable the v0.6 Case API',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
