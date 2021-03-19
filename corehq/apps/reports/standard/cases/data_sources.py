@@ -74,15 +74,15 @@ class CaseInfo(object):
 
     @property
     def opened_on(self):
-        return self._dateprop('opened_on')
+        return self.case['opened_on']
 
     @property
     def modified_on(self):
-        return self._dateprop('modified_on')
+        return self.case['modified_on']
 
     @property
     def closed_on(self):
-        return self._dateprop('closed_on')
+        return self.case['closed_on']
 
     @property
     def creating_user(self):
@@ -196,6 +196,10 @@ class CaseDisplay(CaseInfo):
     def modified_on(self):
         return self._dateprop('modified_on', False)
     last_modified = modified_on
+
+    @property
+    def closed_on(self):
+        return self._dateprop('closed_on', False)
 
     @property
     def server_last_modified_date(self):
