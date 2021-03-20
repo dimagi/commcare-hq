@@ -78,5 +78,5 @@ branches:
   - fr/consumer-user             # Farid March 17
   - bmb/upgrade-js-xpath  # Biyeun March 18
   - feature/USH-606-conditional-alert-modal # Jenny March 18
-  - dm/sqlauditcare # Daniel March 20
+  - dm/sqlauditcare # Daniel March 20 - NOTE: ask before removing
 submodules: {}
