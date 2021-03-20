@@ -41,7 +41,7 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     FormExportInstance,
 )
-from corehq.apps.export.utils import get_default_export_settings_for_user
+from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
@@ -260,7 +260,7 @@ class CreateNewCustomFormExportView(BaseExportView):
         app_id = request.GET.get('app_id')
         xmlns = request.GET.get('export_tag').strip('"')
 
-        export_settings = get_default_export_settings_for_user(request.user.username, self.domain)
+        export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, app_id, xmlns)
         self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
 
@@ -285,7 +285,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
-        export_settings = get_default_export_settings_for_user(request.user.username, self.domain)
+        export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, None, case_type)
         self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
 
