@@ -790,6 +790,7 @@ OPEN_EXCHANGE_RATES_API_ID = ''
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
+LOCAL_STATICFILES_DIRS = ()
 
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
@@ -1574,6 +1575,8 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
+
+STATICFILES_DIRS += LOCAL_STATICFILES_DIRS
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
