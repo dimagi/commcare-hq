@@ -1969,7 +1969,8 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Allows the user to change the language of the form content while in the form itself in Web Apps
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/Change+Form+Language"
 )
 
 APP_ANALYTICS = StaticToggle(
