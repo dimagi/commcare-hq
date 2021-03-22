@@ -146,25 +146,6 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             }
         )
 
-    def test_cache_cleanup_when_email_domain_is_added(self):
-        """
-        Ensure that the cache for get_active_identity_provider_by_email_domain
-        is cleared properly if an email domain is added.
-        """
-        self.addCleanup(self._cleanup_identity_provider)
-        self.idp.is_active = True
-        self.idp.save()
-        self.assertIsNone(
-            IdentityProvider.get_active_identity_provider_by_email_domain('vaultwax.com')
-        )
-        self.request.POST = self._get_post_data('vaultwax.com')
-        handler = IdentityProviderAdminAsyncHandler(self.request)
-        handler.add_object()
-        self.assertEqual(
-            IdentityProvider.get_active_identity_provider_by_email_domain('vaultwax.com'),
-            self.idp
-        )
-
     def test_remove_object_fails_if_no_email_domain_exists(self):
         """
         Ensure that the remove_object() raises an error when trying to remove
@@ -212,30 +193,6 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
             {
                 'linkedObjects': [],
             }
-        )
-
-    def test_cache_cleanup_when_email_domain_is_removed(self):
-        """
-        Ensure that the cache for get_active_identity_provider_by_email_domain
-        is cleared properly if an AuthenticatedEmailDomain relationship
-        is removed.
-        """
-        self.addCleanup(self._cleanup_identity_provider)
-        self.idp.is_active = True
-        self.idp.save()
-        AuthenticatedEmailDomain.objects.create(
-            identity_provider=self.idp,
-            email_domain='vaultwax.com',
-        )
-        self.assertEqual(
-            IdentityProvider.get_active_identity_provider_by_email_domain('vaultwax.com'),
-            self.idp
-        )
-        self.request.POST = self._get_post_data('vaultwax.com')
-        handler = IdentityProviderAdminAsyncHandler(self.request)
-        handler.remove_object()
-        self.assertIsNone(
-            IdentityProvider.get_active_identity_provider_by_email_domain('vaultwax.com')
         )
 
 
