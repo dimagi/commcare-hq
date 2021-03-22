@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.signals import pre_save, pre_delete
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
@@ -303,11 +303,11 @@ class AuthenticatedEmailDomain(models.Model):
         return f"{self.email_domain} authenticated by [{self.identity_provider.name}]"
 
 
-@receiver(pre_save, sender=AuthenticatedEmailDomain)
-@receiver(pre_delete, sender=AuthenticatedEmailDomain)
+@receiver(post_save, sender=AuthenticatedEmailDomain)
+@receiver(post_delete, sender=AuthenticatedEmailDomain)
 def clear_caches_for_email_domain(sender, instance, **kwargs):
     """
-    Catches the pre-save and pre-delete signals of AuthenticatedEmailDomain
+    Catches the post-save and post-delete signals of AuthenticatedEmailDomain
     to ensure that we immediately clear the related email-domain quickcaches
     for IdentityProvider.
     :param sender: The sender class (in this case AuthenticatedEmailDomain)
@@ -350,11 +350,11 @@ class TrustedIdentityProvider(models.Model):
         return f"{self.domain} trusts [{self.identity_provider.name}]"
 
 
-@receiver(pre_save, sender=TrustedIdentityProvider)
-@receiver(pre_delete, sender=TrustedIdentityProvider)
+@receiver(post_save, sender=TrustedIdentityProvider)
+@receiver(post_delete, sender=TrustedIdentityProvider)
 def clear_caches_when_trust_is_established_or_removed(sender, instance, **kwargs):
     """
-    Catches the pre-save and pre-delete signals of TrustedIdentityProvider
+    Catches the post-save and post-delete signals of TrustedIdentityProvider
     to ensure that we immediately clear the related domain quickcaches
     for IdentityProvider.
     :param sender: The sender class (in this case AuthenticatedEmailDomain)
