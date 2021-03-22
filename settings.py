@@ -855,6 +855,9 @@ OAUTH2_PROVIDER = {
     },
 }
 
+# TODO: WARNING: Can only set this after the migration has run
+# OAUTH2_PROVIDER_APPLICATION_MODEL = 'hqwebapp.HQOAuthApplication'
+
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)

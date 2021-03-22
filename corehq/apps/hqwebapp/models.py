@@ -1,10 +1,11 @@
-import architect
-
 from collections import namedtuple
+from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
-from datetime import datetime
 from django.db import models
+
+import architect
+from oauth2_provider.models import AbstractApplication
 
 from corehq.util.markup import mark_up_urls
 from corehq.util.quickcache import quickcache
@@ -95,3 +96,7 @@ class UserAccessLog(models.Model):
 
     def __str__(self):
         return f'{self.timestamp}: {self.user_id} - {self.action}'
+
+
+class HQOAuthApplication(AbstractApplication):
+    pass
