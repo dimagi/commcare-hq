@@ -9,7 +9,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
-from corehq.util.view_utils import get_case_or_404
+from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
@@ -127,7 +127,8 @@ def _get_fhir_version(fhir_version_name):
 @toggles.FHIR_INTEGRATION.required_decorator()
 def smart_configuration_view(request, domain):
     smart_config = SmartConfiguration(
-        authorization_endpoint="https://todome",
-        token_endpoint="https://todome",
+        # authorization_endpoint=absolute_reverse(SmartAuthView.urlname, kwargs={'domain': domain}),
+        authorization_endpoint=absolute_reverse('oauth2_provider:authorization'),
+        token_endpoint=absolute_reverse('oauth2_provider:token'),
     )
     return JsonResponse(smart_config.to_json())
