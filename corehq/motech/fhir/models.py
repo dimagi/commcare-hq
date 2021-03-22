@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import models
 
 from jsonfield import JSONField
+from jsonobject import JsonObject, ListProperty, StringProperty
 from jsonschema import RefResolver, ValidationError, validate
 
 from casexml.apps.case.models import CommCareCase
@@ -14,12 +15,13 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.fhir import \
+    serializers  # noqa # pylint: disable=unused-import
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     ValueSource,
     as_value_source,
 )
-from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
 
 from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from .validators import validate_supported_type
@@ -334,3 +336,21 @@ def deepmerge(a, b):
         return a
     else:
         return b
+
+
+class SmartConfiguration(JsonObject):
+    """
+    The /.well-known/smart-configuration.json response for a domain.
+    http://hl7.org/fhir/smart-app-launch/conformance/index.html#using-well-known
+    """
+    authorization_endpoint = StringProperty(required=True)
+    token_endpoint = StringProperty(required=True)
+    token_endpoint_auth_methods = ListProperty(
+        StringProperty(choices=["client_secret_post", "client_secret_basic"]), exclude_if_none=True
+    )
+    registration_endpoint = StringProperty(exclude_if_none=True)
+    scopes_supported = ListProperty(StringProperty, exclude_if_none=True)
+    response_types_supported = StringProperty(exclude_if_none=True)
+    management_endpoint = StringProperty(exclude_if_none=True)
+    revokation_endpoint = StringProperty(exclude_if_none=True)
+    capabilities = ListProperty(StringProperty, exclude_if_none=True)

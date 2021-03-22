@@ -4,10 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
-from corehq.apps.domain.decorators import (
-    login_or_api_key,
-    require_superuser,
-)
+from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
@@ -16,7 +13,7 @@ from corehq.util.view_utils import get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
-from .models import FHIRResourceType, build_fhir_resource
+from .models import FHIRResourceType, SmartConfiguration, build_fhir_resource
 from .utils import resource_url
 
 
@@ -124,3 +121,13 @@ def _get_fhir_version(fhir_version_name):
     except IndexError:
         pass
     return fhir_version
+
+
+@require_GET
+@toggles.FHIR_INTEGRATION.required_decorator()
+def smart_configuration_view(request, domain):
+    smart_config = SmartConfiguration(
+        authorization_endpoint="https://todome",
+        token_endpoint="https://todome",
+    )
+    return JsonResponse(smart_config.to_json())
