@@ -849,6 +849,7 @@ OAUTH2_PROVIDER = {
     # 15 minutes to match HIPAA constraints.
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
+    'PKCE_REQUIRED': True,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
     },
