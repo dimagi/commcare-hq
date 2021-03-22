@@ -218,30 +218,7 @@ class ServiceProviderDetailsForm(forms.Form):
         return shown_fields
 
 
-class _UpdateIdentityProviderFormMixin:
-    """
-    A quick mixin for updating the IdentityProvider from a Form in a consistent
-    way. Most critically is that update_fields must be set properly in save()
-    so that the pre_save signal to clear_caches_when_active_status_changes
-    knows when to clear_all_email_domain_caches().
-
-    NOTE: Requires that self.idp be set.
-    """
-
-    def update_identity_provider(self, admin_user):
-        update_fields = ['last_modified_by']
-        for field in self.initial.keys():
-            new_value = self.cleaned_data[field]
-            if getattr(self.idp, field) != new_value:
-                setattr(self.idp, field, new_value)
-                update_fields.append(field)
-
-        self.idp.last_modified_by = admin_user.username
-        self.idp.save(update_fields=update_fields)
-        return self.idp
-
-
-class EditIdentityProviderAdminForm(_UpdateIdentityProviderFormMixin, forms.Form):
+class EditIdentityProviderAdminForm(forms.Form):
     """This is the form used by Accounting admins to modify the IdentityProvider
     configuration
     """
@@ -398,8 +375,18 @@ class EditIdentityProviderAdminForm(_UpdateIdentityProviderFormMixin, forms.Form
                 )
         return is_active
 
+    @transaction.atomic
+    def update_identity_provider(self, admin_user):
+        self.idp.name = self.cleaned_data['name']
+        self.idp.slug = self.cleaned_data['slug']
+        self.idp.is_editable = self.cleaned_data['is_editable']
+        self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.last_modified_by = admin_user.username
+        self.idp.save()
+        return self.idp
 
-class SSOEnterpriseSettingsForm(_UpdateIdentityProviderFormMixin, forms.Form):
+
+class SSOEnterpriseSettingsForm(forms.Form):
     """This form manages fields that enterprise admins can update.
     """
     name = forms.CharField(
@@ -559,3 +546,14 @@ class SSOEnterpriseSettingsForm(_UpdateIdentityProviderFormMixin, forms.Form):
                       "It should be YYYY/MM/DD HH:MM.")
                 )
         return date_idp_cert_expiration
+
+    def update_identity_provider(self, admin_user):
+        self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.entity_id = self.cleaned_data['entity_id']
+        self.idp.login_url = self.cleaned_data['login_url']
+        self.idp.logout_url = self.cleaned_data['logout_url']
+        self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
+        self.idp.date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
+        self.idp.last_modified_by = admin_user.username
+        self.idp.save()
+        return self.idp
