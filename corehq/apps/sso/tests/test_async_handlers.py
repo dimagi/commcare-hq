@@ -51,11 +51,6 @@ class BaseAsyncHandlerTest(TestCase):
         cls.account.delete()
         super().tearDownClass()
 
-    def _cleanup_identity_provider(self):
-        self.idp.is_active = False
-        self.idp.is_editable = False
-        self.idp.save()
-
     def _get_post_data(self, object_name=None):
         """
         The data that will populate request.POST in all the tests below.
@@ -223,8 +218,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
         self.request.method = 'POST'
-        self.idp.is_editable = False
-        self.idp.save()
+        self.idp.refresh_from_db()
 
     def tearDown(self):
         UserExemptFromSingleSignOn.objects.all().delete()
@@ -346,7 +340,6 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         editable and there is only one UserExemptFromSingleSignOn relationship
         left for that IdentityProvider.
         """
-        self.addCleanup(self._cleanup_identity_provider)
         UserExemptFromSingleSignOn.objects.create(
             username='b@vaultwax.com',
             email_domain=self.email_domain
