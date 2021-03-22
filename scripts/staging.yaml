@@ -71,10 +71,8 @@ branches:
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - smh/add-location-data-web-user-download # Steph Mar 15
-  - gh/modify-project-performance-report # Graham March 15
   #- ap/translation-update # Amit March 16
   - ap/escape-html-underscore # Amit March 16
-  - gh/replace-ff-with-privilege # Graham March 17
   - fr/consumer-user             # Farid March 17
   - bmb/upgrade-js-xpath  # Biyeun March 18
   - feature/USH-606-conditional-alert-modal # Jenny March 18
