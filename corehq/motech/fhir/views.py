@@ -131,7 +131,7 @@ def smart_configuration_view(request, domain):
     print(domain)
     smart_config = SmartConfiguration(
         authorization_endpoint=absolute_reverse(SmartAuthView.urlname, kwargs={'domain': domain}),
-        token_endpoint="https://todome",
+        token_endpoint=absolute_reverse('oauth2_provider:token'),
     )
     return JsonResponse(smart_config.to_json())
 
