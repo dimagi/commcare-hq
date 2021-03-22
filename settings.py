@@ -1997,6 +1997,8 @@ DOMAIN_MODULE_MAP = {
     'inddex-multi-vn': 'custom.inddex',
     'iita-fcms-nigeria': 'custom.inddex',
     'cambodia-arch-3-study': 'custom.inddex',
+    'senegal-arch-3-study': 'custom.inddex',
+    'inddex24-dev': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }
