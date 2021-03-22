@@ -460,8 +460,14 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         };
 
         self.getTranslation = function (translationKey, defaultTranslation) {
-            if (self.parent.translations) {
-                var addNewRepeatTranslation = ko.toJS(self.parent.translations[translationKey]);
+            var curParent = self.parent;
+            while (curParent.parent != null) {
+                curParent = curParent.parent;
+            }
+            var translations = curParent.translations;
+
+            if (translations) {
+                var addNewRepeatTranslation = ko.toJS(translations[translationKey]);
                 if (addNewRepeatTranslation) {
                     return addNewRepeatTranslation;
                 }
