@@ -7,6 +7,25 @@ from corehq.apps.hqwebapp.login_handlers import handle_failed_login, \
     handle_login, handle_logout, _handle_access_event
 
 
+class TestAtomicity(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        UserAccessLog.objects.create(user_id='fake_user', action='login', ip='127.0.0.1', path='a')
+
+    def test_b(self):
+        log = UserAccessLog.objects.get(user_id='fake_user')
+        self.assertEqual(log.path, 'a')
+        log.path = 'b'
+        log.save()
+
+    def test_c(self):
+        log = UserAccessLog.objects.get(user_id='fake_user')
+        self.assertEqual(log.path, 'a')
+        log.path = 'c'
+        log.save()
+
+
 class TestLoginAccessHandler(TestCase):
     def test_missing_user_agent_is_set_as_empty(self):
         factory = RequestFactory()
