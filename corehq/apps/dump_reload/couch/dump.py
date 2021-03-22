@@ -56,7 +56,7 @@ class CouchDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
-        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain, self.excludes):
+        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain, self.excludes, self.includes):
             stats += self._dump_docs(doc_class, doc_ids, output_stream)
         return stats
 
@@ -72,11 +72,13 @@ class CouchDataDumper(DataDumper):
         return Counter({model_label: count})
 
 
-def get_doc_ids_to_dump(domain, exclude_doc_types=None):
+def get_doc_ids_to_dump(domain, exclude_doc_types=None, include_doc_types=None):
     """
     :return: A generator of (doc_class, list(doc_ids))
     """
     for id_provider in DOC_PROVIDERS:
+        if include_doc_types and id_provider.doc_type not in include_doc_types:
+            continue
         if exclude_doc_types and id_provider.doc_type in exclude_doc_types:
             continue
 
