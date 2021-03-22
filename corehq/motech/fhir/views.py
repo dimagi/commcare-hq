@@ -1,7 +1,9 @@
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
+
+from oauth2_provider.views.base import AuthorizationView
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_api_key, require_superuser
@@ -9,7 +11,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
-from corehq.util.view_utils import get_case_or_404
+from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
@@ -126,8 +128,18 @@ def _get_fhir_version(fhir_version_name):
 @require_GET
 @toggles.FHIR_INTEGRATION.required_decorator()
 def smart_configuration_view(request, domain):
+    print(domain)
     smart_config = SmartConfiguration(
-        authorization_endpoint="https://todome",
+        authorization_endpoint=absolute_reverse(SmartAuthView.urlname, kwargs={'domain': domain}),
         token_endpoint="https://todome",
     )
     return JsonResponse(smart_config.to_json())
+
+
+class SmartAuthView(AuthorizationView):
+    urlname = "smart_auth_view"
+
+    def get(self, request, domain, *args, **kwargs):
+        if not toggles.FHIR_INTEGRATION.enabled_for_request(request):
+            raise Http404()
+        return super().get(request, *args, **kwargs)

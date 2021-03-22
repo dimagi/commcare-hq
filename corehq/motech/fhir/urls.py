@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from corehq.motech.fhir.views import (
+    SmartAuthView,
     get_view,
     search_view,
     smart_configuration_view,
@@ -11,4 +12,8 @@ urlpatterns = [
     url(r'^fhir/(?P<fhir_version_name>\w+)/(?P<resource_type>\w+)/(?P<resource_id>[\w\-]+)/$', get_view,
         name="fhir_get_view"),
     url(r'^fhir/.well-known/smart-configuration.json', smart_configuration_view, name="smart_configuration_view"),
+
+    # OAuth for SMART
+
+    url(r'^oauth/login', SmartAuthView.as_view(), name=SmartAuthView.urlname)
 ]
