@@ -221,7 +221,7 @@ class TestDumpLoadToggles(SimpleTestCase):
 
     def test_dump_toggles(self):
         dumper = ToggleDumper(self.domain_name, [])
-        users = {'user1', 'user2', 'user3'}
+        users = iter(['user1', 'user2', 'user3'])
 
         output_stream = StringIO()
 

@@ -89,8 +89,7 @@ class ToggleDumper(DataDumper):
 
     def dump(self, output_stream):
         count = 0
-        usernames = get_all_usernames_by_domain(self.domain)
-        for toggle in _get_toggles_to_migrate(self.domain, usernames):
+        for toggle in _get_toggles_to_migrate(self.domain):
             count += 1
             output_stream.write(json.dumps(toggle))
             output_stream.write('\n')
@@ -99,12 +98,13 @@ class ToggleDumper(DataDumper):
         return Counter({'Toggle': count})
 
 
-def _get_toggles_to_migrate(domain, usernames):
+def _get_toggles_to_migrate(domain):
     from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
     from toggle.models import Toggle
     from toggle.shortcuts import namespaced_item
 
     domain_item = namespaced_item(domain, NAMESPACE_DOMAIN)
+    usernames = set(get_all_usernames_by_domain(domain))
 
     for toggle in all_toggles() + all_previews():
         try:
