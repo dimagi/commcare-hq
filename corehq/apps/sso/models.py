@@ -206,6 +206,10 @@ class IdentityProvider(models.Model):
         for email_domain in all_email_domains_for_idp:
             self.clear_email_domain_caches(email_domain)
 
+    def save(self, *args, **kwargs):
+        self.clear_all_email_domain_caches()
+        super().save(*args, **kwargs)
+
     def create_trust_with_domain(self, domain, username):
         """
         This creates a TrustedIdentityProvider relationship between the Domain
@@ -282,20 +286,6 @@ class IdentityProvider(models.Model):
         if idp is None:
             return True
         return idp.does_domain_trust_this_idp(domain)
-
-
-@receiver(pre_save, sender=IdentityProvider)
-def clear_caches_when_active_status_changes(sender, instance, **kwargs):
-    """
-    Ensure that all email domain related caches are cleared when an
-    IdentityProvider is modified and the status of 'is_active' has changed.
-    :param sender: The sender class (in this case IdentityProvider)
-    :param instance: IdentityProvider - the instance just saved
-    :param kwargs:
-    """
-    update_fields = kwargs['update_fields'] or []
-    if 'is_active' in update_fields:
-        instance.clear_all_email_domain_caches()
 
 
 class AuthenticatedEmailDomain(models.Model):
