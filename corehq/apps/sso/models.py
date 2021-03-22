@@ -288,6 +288,21 @@ class IdentityProvider(models.Model):
         return idp.does_domain_trust_this_idp(domain)
 
 
+@receiver(post_save, sender=Subscription)
+@receiver(post_delete, sender=Subscription)
+def clear_caches_when_subscription_status_changes(sender, instance, **kwargs):
+    """
+    Catches the post-save and post-delete signals of Subscription to ensure
+    that if the Subscription status for a domain changes, that the
+    domain-related caches for IdentityProvider are all cleared.
+    :param sender: The sender class (in this case Subscription)
+    :param instance: Subscription - the instance being saved/deleted
+    :param kwargs:
+    """
+    for identity_provider in IdentityProvider.objects.filter(owner=instance.account):
+        identity_provider.clear_domain_caches(instance.subscriber.domain)
+
+
 class AuthenticatedEmailDomain(models.Model):
     """
     This specifies the email domains that are tied to an Identity Provider and
