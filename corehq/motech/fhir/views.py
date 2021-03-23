@@ -2,6 +2,7 @@ import json
 
 from django.http import Http404, HttpResponse, JsonResponse
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
@@ -9,6 +10,7 @@ from oauth2_provider.models import get_access_token_model
 from oauth2_provider.views.base import AuthorizationView, TokenView
 
 from corehq import toggles
+from corehq.apps.consumer_user.decorators import consumer_user_login_required
 from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
 from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -151,6 +153,7 @@ def smart_metadata_view(request, domain, fhir_version_name):
     return JsonResponse(smart_metadata.to_json())
 
 
+@method_decorator([consumer_user_login_required], name="dispatch")
 class SmartAuthView(AuthorizationView):
     urlname = "smart_auth_view"
 
