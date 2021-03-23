@@ -26,7 +26,7 @@ def handle_logout(sender, request, user, **kwargs):
 
 def _handle_access_event(event_type, request, user_id):
     ip_address = ''
-    agent = ''
+    agent = None
     path = ''
 
     if request:

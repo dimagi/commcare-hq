@@ -50,19 +50,11 @@ class AuditMiddleware:
         return None
 
     def __call__(self, request):
-        """
-        For auditing views, we need to verify on the response whether or not the
-        permission was granted, we infer this from the status code. Update the
-        audit document set in the request object.
-
-        We also need to add the user field when it was not initially inferred from the sessionid,
-        such as when using Api Key, Basic Auth, Digest Auth, or HMAC auth.
-        """
         response = None
         try:
             response = self.get_response(request)
         finally:
-            self._update_audit(request, response)
+            self._save_audit(request, response)
         return response
 
     def should_audit(self, view_func):
@@ -81,7 +73,16 @@ class AuditMiddleware:
             )
         )
 
-    def _update_audit(self, request, response):
+    def _save_audit(self, request, response):
+        """
+        Save the audit document set in the request object.
+
+        For auditing views, we need to verify on the response whether or not the
+        permission was granted, we infer this from the status code. We also need
+        to add the user field when it was not initially inferred from the
+        sessionid, such as when using Api Key, Basic Auth, Digest Auth, or HMAC
+        auth.
+        """
         audit_doc = getattr(request, 'audit_doc', None)
         if audit_doc:
             if not audit_doc.user:
