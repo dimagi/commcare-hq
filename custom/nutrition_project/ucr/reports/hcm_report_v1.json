@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -63,6 +64,20 @@
         "type": "field",
         "field": "flw_id",
         "aggregation": "simple"
+      },
+      {
+        "display": "Number of Children eligible",
+        "column_id": "number_of_children",
+        "type": "field",
+        "field": "number_of_children",
+        "aggregation": "max"
+      },
+      {
+        "display": "Number of Adolescent Beneficiaries eligible",
+        "column_id": "number_of_adolescent_beneficiaries",
+        "type": "field",
+        "field": "number_of_adolescent_beneficiaries",
+        "aggregation": "max"
       },
       {
         "display": "Count",

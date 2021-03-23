@@ -9,6 +9,7 @@ def sanitize_user_input_url(url):
 
     raise PossibleSSRFAttempt if the url resolves to a non-public ip address
     raise CannotResolveHost if the url host does not resolve
+    raise InvalidURL if `url` can't be parsed as a URL (i.e. if it doesn't even "look" like a URL)
     """
     parsed_url = urlparse(url)
     hostname = parsed_url.hostname

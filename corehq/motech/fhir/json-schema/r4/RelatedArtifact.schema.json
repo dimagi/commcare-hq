@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/RelatedArtifact",
+  "id": "file:RelatedArtifact.schema.json",
   "$ref": "#/definitions/RelatedArtifact",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "RelatedArtifact": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "Related artifacts such as additional documentation, justification, or bibliographic references.",

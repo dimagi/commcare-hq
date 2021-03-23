@@ -7,12 +7,12 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from dateutil.parser import parse
 from memoized import memoized
 
-from auditcare.models import NavigationEventAudit
-from auditcare.utils.export import navigation_event_ids_by_user
 from dimagi.utils.couch.database import iter_docs
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
 
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.auditcare.utils.export import navigation_event_ids_by_user
 from corehq.apps.es import users as user_es
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher

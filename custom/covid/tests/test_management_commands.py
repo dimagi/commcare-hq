@@ -104,11 +104,22 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(lab_result_case.indices[0].referenced_type, 'patient')
         self.assertEqual(lab_result_case.indices[0].relationship, 'child')
 
+        quoted_lab_result_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, quoted_lab_result_case_id, user_id=self.user_id, owner_id='owner1', case_type='lab_result',
+            index={'patient': ("'patient'", patient_case_id, 'child')}
+        )
+
         call_command('update_case_index_relationship', self.domain, 'lab_result')
 
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
         self.assertEqual(lab_result_case.get_case_property('owner_id'), '-')
+
+        quoted_lab_result_case = self.case_accessor.get_case(quoted_lab_result_case_id)
+        self.assertEqual(quoted_lab_result_case.indices[0].referenced_type, 'patient')
+        self.assertEqual(quoted_lab_result_case.indices[0].relationship, 'extension')
+        self.assertEqual(quoted_lab_result_case.get_case_property('owner_id'), '-')
 
     def test_update_case_index_relationship_with_location(self):
         location_type = LocationType.objects.create(
@@ -223,11 +234,19 @@ class CaseCommandsTest(TestCase):
             case_type='investigation',
         )
 
+        improper_investigation_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, improper_investigation_case_id, user_id=self.user_id, owner_id='fake-test-location',
+            case_type='investigation',
+        )
+
         investigation_case = self.case_accessor.get_case(investigation_case_id)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-parent-location')
 
         call_command('update_owner_ids', self.domain, 'investigation')
 
+        improper_investigation_case = self.case_accessor.get_case(improper_investigation_case_id)
+        self.assertEqual(improper_investigation_case.get_case_property('owner_id'), 'fake-test-location')
         investigation_case = self.case_accessor.get_case(investigation_case_id)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-child-location')
 

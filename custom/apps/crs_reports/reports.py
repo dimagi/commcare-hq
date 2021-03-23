@@ -1,7 +1,7 @@
 from datetime import timedelta
 import datetime
 from django.utils.translation import ugettext_noop
-from django.utils import html
+from django.utils.html import format_html
 from casexml.apps.case.models import CommCareCase
 from django.urls import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
@@ -76,10 +76,11 @@ class HNBCReportDisplay(CaseDisplay):
     def case_link(self):
         case_id, case_name = self.case['_id'], self.case['mother_name']
         try:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug])),
-                html.escape(case_name),
-            ))
+            return format_html(
+                "<a class='ajax_dialog' href='{}'>{}</a>",
+                reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug]),
+                case_name,
+            )
         except NoReverseMatch:
             return "%s (bad ID format)" % case_name
 

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-17 20:30+0000\n"
+"POT-Creation-Date: 2021-03-18 13:46+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -115,7 +115,7 @@ msgstr ""
 msgid "Billed Monthly"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/widgets.js:70
+#: corehq/apps/accounting/static/accounting/js/widgets.js:71
 #: corehq/apps/domain/static/domain/js/pro-bono.js:33
 msgid "Please enter a valid email."
 msgstr "Por favor ingrese un correo electrónico válido."
@@ -1341,7 +1341,7 @@ msgid "Long"
 msgstr "Largo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:421
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:377
 msgid "Decimal"
 msgstr "Decimal"
 
@@ -1557,7 +1557,7 @@ msgstr "Agregue Expresión"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:788
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:744
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:283
@@ -1666,7 +1666,7 @@ msgid "Form has validation errors."
 msgstr "El formulario tiene errores de validación."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:360
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:316
 msgid "Number"
 msgstr "Número"
 
@@ -2733,40 +2733,40 @@ msgstr "Código de barras"
 msgid "Free response"
 msgstr "Respuesta libre"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:351
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:307
 msgid "Not a valid whole number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:354
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:415
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:310
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:371
 msgid "Number is too large"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:392
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:348
 msgid "Phone number or Numeric ID"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:412
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:368
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:538
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:494
 msgid "Please choose an item"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:609
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:565
 msgid "Combobox"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:681
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:637
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:878
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:834
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:885
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:841
 msgid "Could not load map. Please try again later."
 msgstr ""
 
@@ -2810,13 +2810,13 @@ msgstr ""
 msgid "This answer is outside the allowed range."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:15
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:16
 msgid ""
 "Looks like you got logged out because of inactivity, but your work is safe. "
 "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:19
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
@@ -2850,30 +2850,30 @@ msgstr ""
 msgid "An unexpected error occurred!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:212
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:213
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:337
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:355
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:480
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:471
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:508
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:499
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:660
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:651
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2910,9 +2910,20 @@ msgstr ""
 "formulario. Por favor reporte un problema si este mensaje continúa "
 "apareciendo."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:358
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:392
 msgid "Page <%=num%>"
 msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:151
+msgid ""
+"Sorry, this input is not supported because your project doesn't have a "
+"Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:179
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
+msgid "Clear"
+msgstr "Borrar"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
 msgid "Delete incomplete form?"
@@ -2937,6 +2948,10 @@ msgstr "Ingresar como"
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:51
 msgid "Yes, log in as this user"
 msgstr "Sí, ingresar como este usuario"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:117
+msgid "Page <%= num %>"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:21
 msgid "Confirm?"
@@ -3288,10 +3303,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:97
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
-msgid "Clear"
-msgstr "Borrar"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
 #: corehq/apps/reports/static/reports/js/filters/main.js:74
