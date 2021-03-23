@@ -13,7 +13,12 @@ from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
-from .models import FHIRResourceType, SmartConfiguration, build_fhir_resource
+from .models import (
+    FHIRResourceType,
+    SmartConfiguration,
+    build_capability_statement,
+    build_fhir_resource,
+)
 from .utils import resource_url
 
 
@@ -132,3 +137,10 @@ def smart_configuration_view(request, domain):
         token_endpoint=absolute_reverse('oauth2_provider:token'),
     )
     return JsonResponse(smart_config.to_json())
+
+
+@require_GET
+@toggles.FHIR_INTEGRATION.required_decorator()
+def smart_metadata_view(request, domain):
+    smart_metadata = build_capability_statement(domain)
+    return JsonResponse(smart_metadata.to_json())

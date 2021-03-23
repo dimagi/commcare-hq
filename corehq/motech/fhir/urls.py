@@ -4,6 +4,7 @@ from corehq.motech.fhir.views import (
     get_view,
     search_view,
     smart_configuration_view,
+    smart_metadata_view,
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
         name="fhir_get_view"),
 
     url(r'^fhir/.well-known/smart-configuration.json', smart_configuration_view, name="smart_configuration_view"),
+    url(r'^fhir/metadata', smart_metadata_view, name="smart_metadata_view"),
 ]

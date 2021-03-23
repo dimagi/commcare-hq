@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 
 from jsonfield import JSONField
-from jsonobject import JsonObject, ListProperty, StringProperty
+from jsonobject import JsonObject, ListProperty, ObjectProperty, StringProperty
 from jsonschema import RefResolver, ValidationError, validate
 
 from casexml.apps.case.models import CommCareCase
@@ -22,6 +22,7 @@ from corehq.motech.value_source import (
     ValueSource,
     as_value_source,
 )
+from corehq.util.view_utils import absolute_reverse
 
 from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from .validators import validate_supported_type
@@ -354,3 +355,84 @@ class SmartConfiguration(JsonObject):
     management_endpoint = StringProperty(exclude_if_none=True)
     revokation_endpoint = StringProperty(exclude_if_none=True)
     capabilities = ListProperty(StringProperty, exclude_if_none=True)
+
+
+class _Coding(JsonObject):
+    code = StringProperty(exclude_if_none=True)
+    system = StringProperty(exclude_if_none=True)
+
+
+class _CodableConcept(JsonObject):
+    coding = ListProperty(_Coding)
+
+
+class _ExtensionURI(JsonObject):
+    url = StringProperty()
+    valueUri = StringProperty()
+
+
+class _Extension(JsonObject):
+    url = StringProperty()
+    extension = ListProperty(_ExtensionURI)
+
+
+class _RestSecurity(JsonObject):
+    service = ListProperty(
+        _CodableConcept,
+        default=[
+            _CodableConcept(
+                coding=[_Coding(system="http://hl7.org/fhir/restful-security-service", code='SMART-on-FHIR')]
+            )
+        ]
+    )
+    extension = ListProperty(_Extension)
+
+
+class _MetadataRest(JsonObject):
+    mode = StringProperty(required=True, default='server')
+    security = ObjectProperty(_RestSecurity, default=_RestSecurity())
+
+
+class SmartCapabilityStatement(JsonObject):
+    """
+    The /metadata response for a domain which contains the FHIR CapabilityStatement
+    http://hl7.org/fhir/capabilitystatement.html
+    """
+    format = ListProperty(StringProperty(), required=True, default=['json'])
+    status = StringProperty(required=True, default='active')
+    kind = StringProperty(required=True, default='instance')
+    fhirVersion = StringProperty(required=True, default=FHIR_VERSION_4_0_1)
+    rest = ListProperty(_MetadataRest, required=True, default=[_MetadataRest()])
+    acceptUnknown = StringProperty(required=True, default='false')
+    date = StringProperty(required=True, default='2021-03-23')
+
+
+def build_capability_statement(domain):
+    """
+    Builds the FHIR capability statement including the OAuth URL extensions for SMART
+    https://hl7.org/fhir/smart-app-launch/conformance/index.html
+    """
+    from corehq.motech.fhir.views import SmartAuthView, SmartTokenView
+    return SmartCapabilityStatement(
+        rest=[
+            _MetadataRest(
+                security=_RestSecurity(
+                    extension=[
+                        _Extension(
+                            url="http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
+                            extension=[
+                                _ExtensionURI(
+                                    url="token",
+                                    valueUri=absolute_reverse(SmartTokenView.urlname, kwargs={'domain': domain}),
+                                ),
+                                _ExtensionURI(
+                                    url="authorize",
+                                    valueUri=absolute_reverse(SmartAuthView.urlname, kwargs={'domain': domain}),
+                                ),
+                            ]
+                        )
+                    ]
+                )
+            )
+        ]
+    )
