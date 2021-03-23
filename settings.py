@@ -237,7 +237,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'corehq.apps.auditcare',
+    'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
     'corehq.apps.case_migrations',

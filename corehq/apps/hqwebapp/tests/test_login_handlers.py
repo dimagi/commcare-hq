@@ -40,7 +40,7 @@ class TestHandleLogin(TestCase):
         self.assertEqual(log_entry.action, 'login')
         self.assertEqual(log_entry.user_id, 'test_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
+        self.assertEqual(log_entry.user_agent, 'Mozilla')
         self.assertEqual(log_entry.path, '/login')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
 
@@ -61,7 +61,7 @@ class TestHandleLogout(TestCase):
         self.assertEqual(log_entry.action, 'logout')
         self.assertEqual(log_entry.user_id, 'test_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
+        self.assertEqual(log_entry.user_agent, 'Mozilla')
         self.assertEqual(log_entry.path, '/logout')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
 
@@ -86,6 +86,6 @@ class TestHandleFailedLogin(TestCase):
         self.assertEqual(log_entry.action, 'failure')
         self.assertEqual(log_entry.user_id, 'fake_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
+        self.assertEqual(log_entry.user_agent, 'Mozilla')
         self.assertEqual(log_entry.path, '/login')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
