@@ -1987,6 +1987,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
     'vectorlink-senegal': 'custom.abt',
+    'vectorlink-sierra-leone': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
