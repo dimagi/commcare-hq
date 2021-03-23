@@ -93,15 +93,23 @@
           </td>
           {% if fhir_integration_enabled %}
           <td>
-            <input class="form-control" data-bind="value: $data.fhirResourcePropPath"></input>
+            <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
           </td>
           {% endif %}
-          <!-- ko if: !deprecated() -->
-          <td><button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button></td>
-          <!-- /ko -->
-          <!-- ko if: deprecated() -->
-          <td><button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button></td>
-          <!-- /ko -->
+          <td>
+            <!-- ko if: !deprecated() -->
+            <button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button>
+            <!-- /ko -->
+            <!-- ko if: deprecated() -->
+            <button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button>
+            <!-- /ko -->
+            <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
+            <button data-bind="click: removePath" class="btn btn-danger btn-sm">{% trans "Remove Path" %}</button>
+            <!-- /ko -->
+            <!-- ko if: removeFHIRResourcePropertyPath() -->
+            <button data-bind="click: restorePath" class="btn btn-default btn-sm">{% trans "Restore Path" %}</button>
+            <!-- /ko -->
+          </td>
         </tr>
         <!-- /ko -->
         </tbody>
