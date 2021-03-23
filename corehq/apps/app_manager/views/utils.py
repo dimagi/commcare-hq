@@ -515,9 +515,10 @@ def handle_shadow_child_modules(app, shadow_parent):
         new_shadow.is_training_module = source_child.is_training_module
         new_shadow.case_list_form = deepcopy(source_child.case_list_form)
         # Multimedia Properties
-        new_shadow.media_image = deepcopy(source_child.media_image)
-        new_shadow.media_audio = deepcopy(source_child.media_audio)
-        new_shadow.custom_icons = deepcopy(source_child.custom_icons)
+        # deepcopy cannot handle DictProperty, so convert to normal python dict first
+        new_shadow.media_image = deepcopy(dict(source_child.media_image))
+        new_shadow.media_audio = deepcopy(dict(source_child.media_audio))
+        new_shadow.custom_icons = deepcopy(source_child.custom_icons.to_json())
         new_shadow.use_default_image_for_all = source_child.use_default_image_for_all
         new_shadow.use_default_audio_for_all = source_child.use_default_audio_for_all
 
