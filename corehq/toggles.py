@@ -1432,6 +1432,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
     'Allows sending of incremental CSV exports to a particular endpoint',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Incremental+Data+Exports"
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
