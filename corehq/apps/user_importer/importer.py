@@ -656,7 +656,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     "Only users with the edit web users permission can upload web users"
                 ))
 
-            user = CouchUser.get_by_username(username)
+            user = CouchUser.get_by_username(username, strict=True)
             if user:
                 if username and user.username != username:
                     raise UserUploadError(_(
