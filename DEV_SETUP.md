@@ -117,6 +117,10 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
        $ workon cchq
 
+1. Ensure your vitualenv `pip` is up-to-date:
+
+       $ python3 -m pip install --upgrade pip
+
 
 #### Clone repo and install requirements
 
@@ -167,28 +171,54 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 Once you have completed the above steps, you can use Docker to build
 and run all of the service containers. There are detailed instructions
 for setting up Docker in the [docker folder](docker/README.md). But the
-following should cover the needs of most developers:
+following should cover the needs of most developers.
 
+
+1. Install docker packages.
+
+    ```sh
     $ sudo apt install docker.io
     $ pip install docker-compose
     $ sudo adduser $USER docker
+    ```
 
-Log in as yourself again, to activate membership of the "docker" group:
+1. Log in as yourself again to activate membership of the "docker" group and
+   re-activate your virtualenv.
 
+    ```sh
     $ su - $USER
+    $ workon cchq
+    ```
 
-Ensure the Docker service is running:
+1. Ensure the Docker service is running.
 
-    $ sudo service docker status
+    ```sh
+    $ sudo systemctl status docker
+    # if service is not running, execute:
+    $ sudo systemctl start docker
+    ```
 
-Bring up the Docker containers for the services you probably need:
+1. Ensure the elasticsearch config files are world-readable (their containers
+   will fail to start otherwise).
 
-    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+    ```sh
+    chmod 0644 ./docker/files/elasticsearch*.yml
+    ```
 
-or, to detach and run in the background, use the `-d` option:
+1. Bring up the Docker containers.
 
-    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+    ```sh
+    $ ./scripts/docker up
+    # Or, use '-d' option to detach and run in the background:
+    $ ./scripts/docker up -d
+    ```
 
+1. If you are planning on running Formplayer from source, stop the formplayer
+   container.
+
+    ```sh
+    $ ./scripts/docker stop formplayer
+    ```
 
 ### (Optional) Copying data from an existing HQ install
 
