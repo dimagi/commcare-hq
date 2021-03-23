@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
@@ -87,7 +88,7 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
     css_class='info',
-    description=mark_safe(
+    description=mark_safe(  # nosec: no user input
         'These features are only available for our services projects. This '
         'may affect support and pricing when the project is transitioned to a '
         'subscription. Limited Use Solutions Feature Flags cannot be enabled '
@@ -213,10 +214,11 @@ class StaticToggle(object):
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
                     messages.warning(
                         request,
-                        mark_safe((
+                        format_html(
                             'This <a href="{}">feature flag</a> should be enabled '
-                            'to access this URL'
-                        ).format(toggle_url)),
+                            'to access this URL',
+                            toggle_url
+                        ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
                 raise Http404()
@@ -834,6 +836,13 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+CASE_API_V0_6 = StaticToggle(
+    'case_api_v0_6',
+    'Enable the v0.6 Case API',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -1423,6 +1432,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
     'Allows sending of incremental CSV exports to a particular endpoint',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Incremental+Data+Exports"
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1960,7 +1970,8 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Allows the user to change the language of the form content while in the form itself in Web Apps
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/Change+Form+Language"
 )
 
 APP_ANALYTICS = StaticToggle(
@@ -1969,16 +1980,6 @@ APP_ANALYTICS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
-)
-
-DEFAULT_EXPORT_SETTINGS = StaticToggle(
-    'default_export_settings',
-    'Allow enterprise admin to set default export settings',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
-    """
 )
 
 ENTERPRISE_SSO = StaticToggle(

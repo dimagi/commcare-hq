@@ -202,7 +202,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         but are not this month (though are still active).
         """
         if self._previous_summary:
-            unhealthy_users = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_active and not stub.is_performing]
+            unhealthy_users = [stub for stub in self._get_all_user_stubs_with_extra_data()
+                               if stub.is_active and not stub.is_performing]
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
 
     def get_dropouts(self):
@@ -220,8 +221,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         after not performing last month.
         """
         if self._previous_summary:
-            dropouts = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_newly_performing]
-            return sorted(dropouts, key=lambda stub: -stub.delta_forms)
+            new_performers = [stub for stub in self._get_all_user_stubs_with_extra_data()
+                              if stub.is_newly_performing]
+            return sorted(new_performers, key=lambda stub: -stub.delta_forms)
 
 
 def build_worksheet(title, headers, rows):

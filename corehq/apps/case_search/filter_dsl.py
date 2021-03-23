@@ -26,6 +26,10 @@ class CaseFilterError(Exception):
         super(CaseFilterError, self).__init__(message)
 
 
+class TooManyRelatedCasesError(CaseFilterError):
+    pass
+
+
 def print_ast(node):
     """Prints the AST provided by eulxml.xpath.parse
 
@@ -116,13 +120,15 @@ def build_filter_from_ast(domain, node):
         """
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
-        new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
+        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
+
         es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
         if es_query.count() > MAX_RELATED_CASES:
-            raise CaseFilterError(
+            raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
                 new_query
             )
+
         return es_query.scroll_ids()
 
     def _child_case_lookup(case_ids, identifier):
