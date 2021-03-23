@@ -12,6 +12,6 @@ urlpatterns = [
     url(r'^fhir/(?P<fhir_version_name>\w+)/(?P<resource_type>\w+)/(?P<resource_id>[\w\-]+)/$', get_view,
         name="fhir_get_view"),
 
-    url(r'^fhir/.well-known/smart-configuration.json', smart_configuration_view, name="smart_configuration_view"),
+    url(r'^fhir/.well-known/smart-configuration', smart_configuration_view, name="smart_configuration_view"),
     url(r'^fhir/metadata', smart_metadata_view, name="smart_metadata_view"),
 ]
