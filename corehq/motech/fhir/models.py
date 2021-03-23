@@ -403,7 +403,6 @@ class SmartCapabilityStatement(JsonObject):
     kind = StringProperty(required=True, default='instance')
     fhirVersion = StringProperty(required=True, default=FHIR_VERSION_4_0_1)
     rest = ListProperty(_MetadataRest, required=True, default=[_MetadataRest()])
-    acceptUnknown = StringProperty(required=True, default='false')
     date = StringProperty(required=True, default='2021-03-23')
 
 
