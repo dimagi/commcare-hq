@@ -136,7 +136,7 @@ def _get_fhir_version(fhir_version_name):
 
 @require_GET
 @toggles.FHIR_INTEGRATION.required_decorator()
-def smart_configuration_view(request, domain):
+def smart_configuration_view(request, domain, fhir_version_name):
     smart_config = SmartConfiguration(
         authorization_endpoint=absolute_reverse(SmartAuthView.urlname, kwargs={'domain': domain}),
         token_endpoint=absolute_reverse(SmartTokenView.urlname, kwargs={'domain': domain}),
@@ -146,7 +146,7 @@ def smart_configuration_view(request, domain):
 
 @require_GET
 @toggles.FHIR_INTEGRATION.required_decorator()
-def smart_metadata_view(request, domain):
+def smart_metadata_view(request, domain, fhir_version_name):
     smart_metadata = build_capability_statement(domain)
     return JsonResponse(smart_metadata.to_json())
 
