@@ -852,6 +852,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': True,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'launch/patient': 'Access your unique patient ID',
     },
 }
 

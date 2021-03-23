@@ -1,11 +1,15 @@
-from django.http import Http404, JsonResponse
+import json
+
+from django.http import Http404, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from oauth2_provider.views.base import AuthorizationView
+from oauth2_provider.models import get_access_token_model
+from oauth2_provider.views.base import AuthorizationView, TokenView
 
 from corehq import toggles
+from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
 from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -128,10 +132,9 @@ def _get_fhir_version(fhir_version_name):
 @require_GET
 @toggles.FHIR_INTEGRATION.required_decorator()
 def smart_configuration_view(request, domain):
-    print(domain)
     smart_config = SmartConfiguration(
         authorization_endpoint=absolute_reverse(SmartAuthView.urlname, kwargs={'domain': domain}),
-        token_endpoint=absolute_reverse('oauth2_provider:token'),
+        token_endpoint=absolute_reverse(SmartTokenView.urlname, kwargs={'domain': domain}),
     )
     return JsonResponse(smart_config.to_json())
 
@@ -143,3 +146,24 @@ class SmartAuthView(AuthorizationView):
         if not toggles.FHIR_INTEGRATION.enabled_for_request(request):
             raise Http404()
         return super().get(request, *args, **kwargs)
+
+
+class SmartTokenView(TokenView):
+    urlname = "smart_token_view"
+
+    def post(self, request, domain, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+
+        body = json.loads(response.content)
+        access_token = body.get("access_token")
+        token = get_access_token_model().objects.get(token=access_token)
+        if "launch/patient" in token.scope:
+            case_ids = ConsumerUserCaseRelationship.objects.filter(
+                consumer_user__user=token.user,
+                domain=domain,
+            ).values_list('case_id', flat=True)
+            body['patient'] = case_ids[0]
+
+        return HttpResponse(content=json.dumps(body), status=response.status_code)
