@@ -16,7 +16,8 @@ class EnableMobilePrivilegesViewTests(SimpleTestCase):
         mock_request = Mock()
         mock_request.user.username = "test"
 
-        with patch('corehq.apps.settings.views.sign', lambda x: b'foo'):
+        with patch('corehq.apps.settings.views.sign', lambda x: b'foo'),\
+             patch('corehq.apps.users.models.CouchUser.get_by_username'):
             context = view.get(mock_request)
 
         self.assertTrue(isinstance(context['qrcode_64'], str))
