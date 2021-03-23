@@ -1,3 +1,4 @@
+from celery.schedules import crontab
 from celery.task.base import periodic_task
 
 from corehq.preindex.accessors import index_design_doc, get_preindex_designs
@@ -17,4 +18,17 @@ def run_continuous_indexing_task():
 @serial_task('couch-continuous-indexing', timeout=60 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def preindex_couch_views():
     for design in get_preindex_designs():
-        index_design_doc(design)
+        if design.app_label != 'auditcare':
+            index_design_doc(design)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=20), queue=settings.CELERY_PERIODIC_QUEUE)
+def run_continuous_indexing_task_auditcare():
+    preindex_couch_views_auditcare.delay()
+
+
+@serial_task('couch-continuous-indexing-auditcare', timeout=60 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
+def preindex_couch_views_auditcare():
+    for design in get_preindex_designs():
+        if design.app_label == 'auditcare':
+            index_design_doc(design, abort_on_timeout=True)

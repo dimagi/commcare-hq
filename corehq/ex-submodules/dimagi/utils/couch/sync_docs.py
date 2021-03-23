@@ -30,7 +30,7 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
         index_design_docs(db, docid, design_name_)
 
 
-def index_design_docs(db, docid, design_name, wait=True):
+def index_design_docs(db, docid, design_name, wait=True, abort_on_timeout=False):
     # found in the innards of couchdbkit
     view_names = list(db[docid].get('views', {}))
     if view_names:
@@ -45,6 +45,8 @@ def index_design_docs(db, docid, design_name, wait=True):
             except HTTPError as e:
                 if 'timeout' not in six.text_type(e) and e.response.status_code != 504:
                     raise
+                elif abort_on_timeout:
+                    break
             else:
                 break
 

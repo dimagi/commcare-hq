@@ -62,12 +62,13 @@ def sync_design_doc(design, temp=None):
     )
 
 
-def index_design_doc(design, wait=True):
+def index_design_doc(design, wait=True, abort_on_timeout=False):
     design_name = design.app_label
     docid = "_design/%s" % design_name
     sync_docs.index_design_docs(
         db=design.db,
         docid=docid,
         design_name=design_name,
-        wait=wait
+        wait=wait,
+        abort_on_timeout=abort_on_timeout,
     )
