@@ -207,8 +207,8 @@ class IdentityProvider(models.Model):
             self.clear_email_domain_caches(email_domain)
 
     def save(self, *args, **kwargs):
-        self.clear_all_email_domain_caches()
         super().save(*args, **kwargs)
+        self.clear_all_email_domain_caches()
 
     def create_trust_with_domain(self, domain, username):
         """
