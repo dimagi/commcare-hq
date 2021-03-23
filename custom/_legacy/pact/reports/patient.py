@@ -2,7 +2,7 @@ import logging
 from django.urls import reverse
 from django.http import Http404
 import json
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from corehq.apps.api.es import ReportFormESView
 from corehq.apps.hqwebapp.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -140,11 +140,13 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     def rows(self):
         if self.patient_id:
             def _format_row(row_field_dict):
-                yield mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
-                reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
+                yield format_html(
+                    "<a class='ajax_dialog' href='{}'>View</a>",
+                    reverse('render_form_data', args=[self.domain, row_field_dict['_id']])
+                )
                 yield self.format_date(row_field_dict["received_on"].replace('_', ' '))
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
-                if row_field_dict["script_encounter_date"] != None:
+                if row_field_dict["script_encounter_date"] is not None:
                     yield row_field_dict["script_encounter_date"]
                 else:
                     yield "---"

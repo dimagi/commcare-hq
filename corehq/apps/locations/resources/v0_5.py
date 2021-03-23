@@ -32,7 +32,7 @@ class LocationTypeResource(BaseLocationsResource):
     class Meta(object):
         resource_name = 'location_type'
         queryset = LocationType.objects.all()
-        authentication = DomainAdminAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.edit_locations)
         fields = [
             'id',
             'domain',

@@ -38,9 +38,14 @@ class BaseDeletion(object):
         self.models = models
 
     def get_model_classes(self):
-        return [
-            apps.get_model(self.app_label, model) for model in self.models
-        ]
+        model_classes = []
+        for model_name in self.models:
+            if '.' in model_name:
+                model_class = apps.get_model(model_name)
+            else:
+                model_class = apps.get_model(self.app_label, model_name)
+            model_classes.append(model_class)
+        return model_classes
 
     def is_app_installed(self):
         try:
@@ -260,7 +265,7 @@ DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
-    ModelDeletion('locations', 'SQLLocation', 'domain', ['LocationRelation']),
+    ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
     ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
@@ -296,16 +301,18 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
+    ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
     ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain', [
         'SQLActionConfig', 'SQLAlertConfig', 'SQLConsumptionConfig',
         'SQLStockLevelsConfig', 'SQLStockRestoreConfig',
     ]),
-    ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', ['CustomDataFieldsProfile', 'Field']),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
-    ModelDeletion('data_dictionary', 'CaseType', 'domain', ['CaseProperty']),
+    ModelDeletion('data_dictionary', 'CaseType', 'domain', [
+        'CaseProperty', 'fhir.FHIRResourceType', 'fhir.FHIRResourceProperty',
+    ]),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),

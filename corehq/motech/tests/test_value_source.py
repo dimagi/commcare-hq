@@ -1,12 +1,20 @@
 import doctest
-import warnings
+from datetime import datetime, timedelta
+from uuid import uuid4
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 import attr
 from schema import Use
 
 import corehq.motech.value_source
+from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.tests.utils import (
+    create_case,
+    create_case_with_index,
+    delete_all_xforms_and_cases,
+    use_sql_backend,
+)
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
@@ -23,8 +31,11 @@ from corehq.motech.value_source import (
     CaseTriggerInfo,
     ConstantValue,
     FormUserAncestorLocationField,
+    SubcaseValueSource,
+    SupercaseValueSource,
     ValueSource,
     as_value_source,
+    get_case_trigger_info_for_case,
     get_form_question_values,
 )
 
@@ -245,18 +256,24 @@ class DirectionTests(SimpleTestCase):
         self.assertTrue(value_source.can_export)
 
 
-class AsJsonObjectTests(SimpleTestCase):
+class TestAsValueSourceSchema(SimpleTestCase):
 
-    def test_constant_value_schema_validates_constant_string(self):
-        json_object = as_value_source({"value": "spam"})
-        self.assertIsInstance(json_object, ConstantValue)
-
-    def test_case_property_constant_value(self):
-        json_object = as_value_source({
-            "case_property": "spam",
+    def test_as_constant_value(self):
+        value_source = as_value_source({
             "value": "spam",
         })
-        self.assertIsInstance(json_object, CasePropertyConstantValue)
+        self.assertIsInstance(value_source, ConstantValue)
+
+    def test_as_case_property_constant_value(self):
+        value_source = as_value_source({
+            "value": "spam",
+            "case_property": "spam",
+        })
+        self.assertIsInstance(value_source, CasePropertyConstantValue)
+
+    def test_type_error(self):
+        with self.assertRaises(TypeError):
+            as_value_source({})
 
 
 class FormUserAncestorLocationFieldTests(SimpleTestCase):
@@ -315,6 +332,78 @@ class CaseOwnerAncestorLocationFieldTests(SimpleTestCase):
             as_value_source({"location_field": "dhis_id"})
 
 
+class TestSupercaseValueSourceValidation(SimpleTestCase):
+
+    def test_supercase_value_source(self):
+        value_source = as_value_source({
+            'supercase_value_source': {'case_property': 'foo'},
+        })
+        self.assertIsInstance(value_source, SupercaseValueSource)
+
+    def test_identifier(self):
+        value_source = as_value_source({
+            'supercase_value_source': {'case_property': 'foo'},
+            'identifier': 'bar',
+        })
+        self.assertIsInstance(value_source, SupercaseValueSource)
+
+    def test_referenced_type(self):
+        value_source = as_value_source({
+            'supercase_value_source': {'case_property': 'foo'},
+            'referenced_type': 'bar',
+        })
+        self.assertIsInstance(value_source, SupercaseValueSource)
+
+    def test_relationship(self):
+        value_source = as_value_source({
+            'supercase_value_source': {'case_property': 'foo'},
+            'relationship': 'extension',
+        })
+        self.assertIsInstance(value_source, SupercaseValueSource)
+
+    def test_relationship_invalid(self):
+        with self.assertRaises(TypeError):
+            as_value_source({
+                'supercase_value_source': {'case_property': 'foo'},
+                'relationship': 'invalid',
+            })
+
+    def test_supercase_value_source_empty(self):
+        with self.assertRaises(TypeError):
+            as_value_source({
+                'supercase_value_source': {},
+            })
+
+
+class TestSubcaseValueSourceValidation(SimpleTestCase):
+
+    def test_subcase_value_source(self):
+        value_source = as_value_source({
+            'subcase_value_source': {'case_property': 'foo'},
+        })
+        self.assertIsInstance(value_source, SubcaseValueSource)
+
+    def test_case_types(self):
+        value_source = as_value_source({
+            'subcase_value_source': {'case_property': 'foo'},
+            'case_types': ['bar'],
+        })
+        self.assertIsInstance(value_source, SubcaseValueSource)
+
+    def test_is_closed(self):
+        value_source = as_value_source({
+            'subcase_value_source': {'case_property': 'foo'},
+            'is_closed': False,
+        })
+        self.assertIsInstance(value_source, SubcaseValueSource)
+
+    def test_subcase_value_source_empty(self):
+        with self.assertRaises(TypeError):
+            as_value_source({
+                'subcase_value_source': {},
+            })
+
+
 class AsValueSourceTests(SimpleTestCase):
 
     def test_as_value_source(self):
@@ -334,6 +423,222 @@ class AsValueSourceTests(SimpleTestCase):
         self.assertEqual(data, {"test_value": 10})
         self.assertIsInstance(value_source, StringValueSource)
         self.assertEqual(value_source.test_value, "10")
+
+
+@use_sql_backend
+class TestSubcaseValueSourceSetExternalValue(TestCase):
+
+    domain = 'lincoln-montana'
+
+    def setUp(self):
+        now = datetime.utcnow()
+        case_kwargs = {
+            'owner_id': uuid4().hex,
+            'modified_on': now,
+            'server_modified_on': now,
+        }
+        self.host_case_id = uuid4().hex
+        case = CommCareCaseSQL(
+            case_id=self.host_case_id,
+            domain=self.domain,
+            type='person',
+            name='Ted',
+            **case_kwargs,
+        )
+        self.host_case = create_case(case)
+
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
+            domain=self.domain,
+            type='person_name',
+            name='Theodore',
+            case_json={
+                'given_names': 'Theodore John',
+                'family_name': 'Kaczynski',
+            },
+            **case_kwargs,
+        )
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='host',
+            referenced_type='person',
+            referenced_id=self.host_case_id,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION,
+        )
+        self.ext_case_1 = create_case_with_index(case, index)
+
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
+            domain=self.domain,
+            type='person_name',
+            name='Unabomber',
+            case_json={
+                'given_names': 'Unabomber',
+            },
+            **case_kwargs,
+        )
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='host',
+            referenced_type='person',
+            referenced_id=self.host_case_id,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION,
+        )
+        self.ext_case_2 = create_case_with_index(case, index)
+
+    def tearDown(self):
+        delete_all_xforms_and_cases(self.domain)
+
+    def test_set_external_data(self):
+        value_source_configs = [{
+            'case_property': 'name',
+            'jsonpath': '$.name[0].text',
+        }, {
+            'subcase_value_source': {
+                'case_property': 'given_names',
+                # Use counter1 to skip the name set by the parent case
+                'jsonpath': '$.name[{counter1}].given[0]',
+            },
+            'case_types': ['person_name'],
+        }, {
+            'subcase_value_source': {
+                'case_property': 'family_name',
+                'jsonpath': '$.name[{counter1}].family',
+            },
+            'case_types': ['person_name'],
+        }]
+
+        external_data = {}
+        case_trigger_info = get_case_trigger_info_for_case(
+            self.host_case,
+            value_source_configs,
+        )
+        for value_source_config in value_source_configs:
+            value_source = as_value_source(value_source_config)
+            value_source.set_external_value(external_data, case_trigger_info)
+
+        name = external_data['name']
+        self.assertIn({'text': 'Ted'}, name)
+        self.assertIn({'given': ['Theodore John'], 'family': 'Kaczynski'}, name)
+        self.assertIn({'given': ['Unabomber']}, name)
+
+
+@use_sql_backend
+class TestSupercaseValueSourceSetExternalValue(TestCase):
+
+    domain = 'quarantinewhile'
+
+    def setUp(self):
+        now = datetime.utcnow()
+        yesterday = now - timedelta(days=1)
+        owner_id = uuid4().hex
+        self.parent_case_id = uuid4().hex
+        case = CommCareCaseSQL(
+            case_id=self.parent_case_id,
+            domain=self.domain,
+            type='person',
+            name='Joe',
+            owner_id=owner_id,
+            modified_on=yesterday,
+            server_modified_on=yesterday,
+        )
+        self.parent_case = create_case(case)
+
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
+            domain=self.domain,
+            type='temperature',
+            case_json={
+                'value': '36.2',
+            },
+            owner_id=owner_id,
+            modified_on=yesterday,
+            server_modified_on=yesterday,
+        )
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD,
+        )
+        self.child_case_1 = create_case_with_index(case, index)
+
+        case = CommCareCaseSQL(
+            case_id=uuid4().hex,
+            domain=self.domain,
+            type='temperature',
+            case_json={
+                'value': '36.6',
+            },
+            owner_id=owner_id,
+            modified_on=now,
+            server_modified_on=now,
+        )
+        index = CommCareCaseIndexSQL(
+            domain=self.domain,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD,
+        )
+        self.child_case_2 = create_case_with_index(case, index)
+
+    def tearDown(self):
+        delete_all_xforms_and_cases(self.domain)
+
+    def test_set_external_data(self):
+        value_source_configs = [{
+            'case_property': 'value',
+            'jsonpath': '$.valueQuantity.value',
+            'external_data_type': COMMCARE_DATA_TYPE_DECIMAL,
+        }, {
+            'value': 'degrees Celsius',
+            'jsonpath': '$.valueQuantity.unit',
+        }, {
+            'supercase_value_source': {
+                'case_property': 'case_id',
+                'jsonpath': '$.subject.reference',
+            },
+            'identifier': 'parent',
+            'referenced_type': 'person',
+        }, {
+            'supercase_value_source': {
+                'case_property': 'name',
+                'jsonpath': '$.subject.display',
+            },
+            'identifier': 'parent',
+            'referenced_type': 'person',
+        }]
+
+        resources = []
+        for case in (self.child_case_1, self.child_case_2):
+            external_data = {}
+            info = get_case_trigger_info_for_case(case, value_source_configs)
+            for value_source_config in value_source_configs:
+                value_source = as_value_source(value_source_config)
+                value_source.set_external_value(external_data, info)
+            resources.append(external_data)
+
+        self.assertEqual(resources, [{
+            'subject': {
+                'reference': self.parent_case_id,
+                'display': 'Joe',
+            },
+            'valueQuantity': {
+                'value': 36.2,  # case 1
+                'unit': 'degrees Celsius',
+            },
+        }, {
+            'subject': {
+                'reference': self.parent_case_id,
+                'display': 'Joe',
+            },
+            'valueQuantity': {
+                'value': 36.6,  # case 2
+                'unit': 'degrees Celsius',
+            },
+        }])
 
 
 def test_doctests():

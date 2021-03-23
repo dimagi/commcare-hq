@@ -77,7 +77,6 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
@@ -99,7 +98,7 @@ for url_module in extension_points.domain_specific_urls():
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
-    url(r'^auditcare/', include('auditcare.urls')),
+    url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^api/', include(user_api_urlpatterns)),

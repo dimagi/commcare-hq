@@ -512,3 +512,19 @@ class TestCaseSearchLookups(TestCase):
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
             ['c2', 'c3']
         )
+
+    def test_date_range_criteria(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'dob': date(2020, 3, 1)},
+                {'_id': 'c2', 'dob': date(2020, 3, 2)},
+                {'_id': 'c3', 'dob': date(2020, 3, 3)},
+                {'_id': 'c4', 'dob': date(2020, 3, 4)},
+            ],
+            CaseSearchCriteria(self.domain, self.case_type, {'dob': '__range__2020-03-02__2020-03-03'}).search_es,
+            None,
+            ['c2', 'c3']
+        )
+        config.delete()

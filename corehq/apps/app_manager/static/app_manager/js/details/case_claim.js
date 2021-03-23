@@ -13,6 +13,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     saveButton.fire('change');
                 });
             });
+            $(".hq-help").hqHelp();
         };
 
     var itemsetModel = function (options, saveButton) {
@@ -65,20 +66,24 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options = _.defaults(options, {
             name: '',
             label: '',
+            hint: '',
             appearance: '',
             defaultValue: '',
+            receiverExpression: '',
             itemsetOptions: {},
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
         self.name = ko.observable(options.name);
         self.label = ko.observable(options.label);
+        self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
 
+        self.receiverExpression = ko.observable(options.receiverExpression);
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'appearance', 'defaultValue'], saveButton);
+        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
 
         return self;
     };
@@ -96,9 +101,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
     };
 
     var searchConfigKeys = [
-        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'includeClosed', 'searchAgainLabel',
+        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
-        'searchAdditionalRelevant', 'sessionVar',
+        'searchAdditionalRelevant',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -142,14 +147,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return {
                 auto_launch: self.autoLaunch(),
                 default_search: self.defaultSearch(),
-                session_var: self.sessionVar(),
                 search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
                 search_again_label: self.searchAgainLabel(),
                 search_filter: self.searchFilter(),
-                include_closed: self.includeClosed(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
         };
@@ -166,17 +169,26 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
-                // property labels come in keyed by lang.
+                // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
+                var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
+                if (searchProperties[i].appearance === "address") {
+                    appearance = "address";
+                }
+                if (searchProperties[i].input_ === "daterange") {
+                    appearance = "daterange";
+                }
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
+                    hint: hint,
                     appearance: appearance,
                     defaultValue: searchProperties[i].default_value,
+                    receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
                         instance_uri: searchProperties[i].itemset.instance_uri,
@@ -208,8 +220,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                        hint: p.hint(),
                         appearance: p.appearance(),
                         default_value: p.defaultValue(),
+                        receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
                 }

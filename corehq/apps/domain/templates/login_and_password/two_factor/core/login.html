@@ -5,6 +5,14 @@
     {{ current_page.page_name }}
   </h2>
 
+  {% if messages %}
+    {% for message in messages %}
+      <p class="alert text-center{% if message.tags %} {{ message.tags }}{% endif %}">
+        {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+      </p>
+    {% endfor %}
+  {% endif %}
+
   {% if wizard.steps.current == 'token' %}
     {% if device.method == 'call' %}
       <p class="alert alert-info text-center">

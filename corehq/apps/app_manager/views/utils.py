@@ -340,7 +340,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             ))
     else:
         master_build = master_app_id_or_build
-    master_app_id = master_build.master_id
+    master_app_id = master_build.origin_id
 
     previous = app.get_latest_build_from_upstream(master_app_id)
     if (
@@ -474,20 +474,33 @@ def handle_shadow_child_modules(app, shadow_parent):
         if m.root_module_id == shadow_parent.source_module_id
         and m.module_type != 'shadow'
     ]
+    source_module_children_ids = [
+        source_module_child.unique_id for source_module_child in source_module_children
+    ]
 
     shadow_parent_children = [
         m for m in app.get_modules()
         if m.root_module_id == shadow_parent.unique_id
+    ]  # All the child shadows that already exist
+
+    # Delete child modules that no longer have a source
+    unneeded_module_ids = [
+        child.unique_id for child in shadow_parent_children
+        if child.source_module_id not in source_module_children_ids
     ]
+    for unneeded_module_id in unneeded_module_ids:
+        changes = True
+        app.delete_module(unneeded_module_id)
 
-    # Delete unneeded modules
-    for child in shadow_parent_children:
-        if child.source_module_id not in source_module_children:
-            changes = True
-            app.delete_module(child.unique_id)
-
-    # Add new modules
-    for source_child in source_module_children:
+    # We need to create child modules for those source children that don't have them
+    existing_child_shadow_sources = [
+        child.source_module_id for child in shadow_parent_children
+    ]  # The set of source children ids that already have shadows
+    needed_modules = [
+        source_child for source_child in source_module_children
+        if source_child.unique_id not in existing_child_shadow_sources
+    ]
+    for source_child in needed_modules:
         changes = True
         new_shadow = ShadowModule.new_module(source_child.default_name(app=app), app.default_language)
         new_shadow.source_module_id = source_child.unique_id
