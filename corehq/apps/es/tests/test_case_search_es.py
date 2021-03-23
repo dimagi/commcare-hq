@@ -373,7 +373,7 @@ class TestCaseSearchLookups(TestCase):
         ]
         self._assert_queries_run_correctly(
             self.domain,
-            CASE_SEARCH_DATA,
+            CASE_SEARCH_DATA.copy(),
             None,
             [
                 (
@@ -404,7 +404,7 @@ class TestCaseSearchLookups(TestCase):
         ]
         self._assert_queries_run_correctly(
             self.domain,
-            CASE_SEARCH_DATA,
+            CASE_SEARCH_DATA.copy(),
             None,
             [
                 (
