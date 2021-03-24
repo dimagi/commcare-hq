@@ -176,26 +176,38 @@ following should cover the needs of most developers.
 
 1. Install docker packages.
 
+    **Mac**: see [Install Docker Desktop on
+    Mac](https://docs.docker.com/docker-for-mac/install/) for docker
+    installation and setup.
+
+    **Linux**:
+
     ```sh
+    # install docker
     $ sudo apt install docker.io
-    $ pip install docker-compose
+
+    # ensure docker is running
+    $ systemctl is-active docker || sudo systemctl start docker
+    # add your user to the `docker` group
     $ sudo adduser $USER docker
-    ```
-
-1. Log in as yourself again to activate membership of the "docker" group and
-   re-activate your virtualenv.
-
-    ```sh
+    # login as yourself again to activate membership of the "docker" group
     $ su - $USER
+
+    # re-activate your virtualenv (with your venv tool of choice)
+    # (virtualenvwrapper)
     $ workon cchq
+
+    # or (pyenv)
+    $ pyenv activate cchq
+
+    # or (virtualenv)
+    $ source $WORKON_HOME/cchq/bin/activate
     ```
 
-1. Ensure the Docker service is running.
+1. Install the `docker-compose` python library.
 
     ```sh
-    $ sudo systemctl status docker
-    # if service is not running, execute:
-    $ sudo systemctl start docker
+    $ pip install docker-compose
     ```
 
 1. Ensure the elasticsearch config files are world-readable (their containers
@@ -205,12 +217,14 @@ following should cover the needs of most developers.
     chmod 0644 ./docker/files/elasticsearch*.yml
     ```
 
-1. Bring up the Docker containers.
+1. Bring up the docker containers.
 
     ```sh
-    $ ./scripts/docker up
-    # Or, use '-d' option to detach and run in the background:
     $ ./scripts/docker up -d
+    # Or, omit the '-d' option to keep the containers attached in the foreground
+    $ ./scripts/docker up
+    # Optionally, bring up only specific containers (add '-d' to detach)
+    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
     ```
 
 1. If you are planning on running Formplayer from source, stop the formplayer
