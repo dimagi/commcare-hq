@@ -19,6 +19,29 @@
   margin-bottom: 0;
 }
 
+.alert-setting {
+  background-color: @color-purple-dark;
+  color: #ffffff;
+  border: none;
+
+  a,
+  a:active,
+  a:hover,
+  a:link {
+    color: @color-purple-dark-inverse;
+  }
+
+  .btn-confirm {
+    .button-variant(#ffffff; @color-purple-dark; darken(@color-purple-dark, 5));
+    border: 1px solid #ffffff;
+
+    &:active,
+    &:hover {
+      border: 1px solid #ffffff;
+    }
+  }
+}
+
 .alert-ui-notify.helpbubble {
   padding-bottom: 20px;
 }

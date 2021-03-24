@@ -145,19 +145,6 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
         self.request.user = self.user
 
     def tearDown(self):
-        # clear the quickcache
-        IdentityProvider.does_domain_trust_this_idp.clear(
-            self.idp,
-            self.external_domain.name
-        )
-        IdentityProvider.does_domain_trust_this_idp.clear(
-            self.idp,
-            self.domain.name
-        )
-        IdentityProvider.does_domain_trust_this_idp.clear(
-            self.idp,
-            self.domain_created_by_user.name
-        )
         TrustedIdentityProvider.objects.all().delete()
         super().tearDown()
 
