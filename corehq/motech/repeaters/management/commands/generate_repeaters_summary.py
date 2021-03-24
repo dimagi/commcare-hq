@@ -15,6 +15,7 @@ class Command(BaseCommand):
         self.stdout.write('*' * 230)
 
     def handle(self, *args, **options):
+        self.stdout.write("\n\n\nGetting Number of Repeaters by domain...\n")
         repeater_summary = Repeater.get_db().view(
             'repeaters/repeaters',
             group_level=1,
@@ -22,6 +23,7 @@ class Command(BaseCommand):
         ).all()
         self._print_summary(repeater_summary)
 
+        self.stdout.write("\n\n\nGetting Number of Repeat Records by domain...\n")
         repeat_records_summary = RepeatRecord.get_db().view(
             'repeaters/repeat_records',
             group_level=1,
