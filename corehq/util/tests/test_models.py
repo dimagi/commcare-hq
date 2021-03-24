@@ -90,3 +90,13 @@ class TestForeignValue(TestCase):
         info = UserAccessLog.user_agent.get_related.cache_info()
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
+
+    def test_foreign_value_duplicate(self):
+        ua1 = UserAgent(value="Mozilla")
+        ua2 = UserAgent(value="Mozilla")
+        ua1.save()
+        ua2.save()
+        self.assertNotEqual(ua1.id, ua2.id)
+        self.log.user_agent = "Mozilla"
+        self.log.save()
+        self.assertEqual(self.log.user_agent_fk.id, ua1.id)
