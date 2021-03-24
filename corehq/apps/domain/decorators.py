@@ -475,6 +475,13 @@ def two_factor_check(view_func, api_key):
 
 
 def _two_factor_required(view_func, domain, couch_user, request):
+    if (ENTERPRISE_SSO.enabled_for_request(request)
+            and is_request_using_sso(request)):
+        # SSO authenticated users manage two-factor auth on the Identity Provider
+        # level, so CommCare HQ does not attempt 2FA with them. This is one of
+        # the reasons we require that domains establish TrustedIdentityProvider
+        # relationships.
+        return False
     exempt = getattr(view_func, 'two_factor_exempt', False)
     if exempt:
         return False
