@@ -11,6 +11,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.sso.tests.generator import create_request_session
 from corehq.apps.users.models import CouchUser
 from corehq.util.test_utils import flag_enabled
 
@@ -44,6 +45,19 @@ class TestTwoFactorCheck(TestCase):
             request
         )
         self.assertTrue(two_factor_required_bool)
+
+    @flag_enabled('ENTERPRISE_SSO')
+    def test_two_factor_check_with_sso_request(self):
+        view_func = 'dummy_view_func'
+        request = self.request
+        create_request_session(request, use_sso=True)
+        two_factor_required_bool = _two_factor_required(
+            view_func,
+            self.domain,
+            request.couch_user,
+            request
+        )
+        self.assertFalse(two_factor_required_bool)
 
     def test_two_factor_required_without_feature_flag(self):
         view_func = 'dummy_view_func'
