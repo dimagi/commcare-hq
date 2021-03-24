@@ -29,7 +29,7 @@ class Command(BaseCommand):
         self.stdout.write("Domain\tRepeaters\tRepeatRecords")
         for info in repeat_records_summary:
             domain = info['key'][0]
-            num_repeaters = repeaters_by_domain.get('domain', 0)
+            num_repeaters = repeaters_by_domain.get(domain, 0)
             num_repeat_records = info['value']
             self.stdout.write(f'{domain}\t{num_repeaters}\t{num_repeat_records}')
         self.stdout.write('*' * 230)
