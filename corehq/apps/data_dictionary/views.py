@@ -134,20 +134,20 @@ def update_case_property(request, domain):
             for key, msgs in dict(e).items():
                 for msg in msgs:
                     errors.append(_("FHIR Resource {} {}: {}").format(fhir_resource_type, key, msg))
-
-    for property in property_list:
-        case_type = property.get('caseType')
-        name = property.get('name')
-        description = property.get('description')
-        fhir_resource_prop_path = property.get('fhir_resource_prop_path')
-        data_type = property.get('data_type')
-        group = property.get('group')
-        deprecated = property.get('deprecated')
-        remove_path = property.get('removeFHIRResourcePropertyPath', False)
-        error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
-                                   fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
-        if error:
-            errors.append(error)
+    if not errors:
+        for property in property_list:
+            case_type = property.get('caseType')
+            name = property.get('name')
+            description = property.get('description')
+            fhir_resource_prop_path = property.get('fhir_resource_prop_path')
+            data_type = property.get('data_type')
+            group = property.get('group')
+            deprecated = property.get('deprecated')
+            remove_path = property.get('removeFHIRResourcePropertyPath', False)
+            error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
+                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
+            if error:
+                errors.append(error)
 
     if errors:
         return JsonResponse({"status": "failed", "errors": errors}, status=400)
