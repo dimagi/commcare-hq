@@ -1,5 +1,7 @@
 import json
+import urllib.parse
 
+from django.core.cache import cache
 from django.http import Http404, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -20,12 +22,12 @@ from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
-from .forms import FHIRRepeaterForm
+from .forms import FHIRRepeaterForm, OAuthAllowForm
 from .models import (
     FHIRResourceType,
     SmartConfiguration,
-    build_fhir_resource,
     build_capability_statement,
+    build_fhir_resource,
 )
 from .utils import resource_url
 
@@ -156,11 +158,37 @@ def smart_metadata_view(request, domain, fhir_version_name):
 @method_decorator([consumer_user_login_required], name="dispatch")
 class SmartAuthView(AuthorizationView):
     urlname = "smart_auth_view"
+    form_class = OAuthAllowForm
+    template_name = "fhir/authorize.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        available_case_ids = ConsumerUserCaseRelationship.objects.filter(
+            consumer_user__user=self.request.user,
+            domain=self.request.domain,
+        ).values_list(
+            'case_id', flat=True
+        ).all()
+        cases = CaseAccessors(self.request.domain).get_cases(list(available_case_ids))
+        kwargs['cases'] = [(case.case_id, case.name) for case in cases if case]
+        return kwargs
 
     def get(self, request, domain, *args, **kwargs):
         if not toggles.FHIR_INTEGRATION.enabled_for_request(request):
             raise Http404()
         return super().get(request, *args, **kwargs)
+
+    def post(self, request, domain, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        case_id = request.POST.get('case_id')
+        client_id = request.POST.get('client_id')
+
+        parsed_url = urllib.parse.urlparse(response.url)
+        authorization_code = urllib.parse.parse_qs(parsed_url.query)["code"][0]
+
+        # Save the selected case_id in the cache to be returned with the token in the SmartTokenView
+        cache.set(_get_smart_cache_key(domain, client_id, authorization_code), case_id, 5 * 60)
+        return response
 
 
 class SmartTokenView(TokenView):
@@ -168,6 +196,7 @@ class SmartTokenView(TokenView):
 
     def post(self, request, domain, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
+
         if response.status_code != 200:
             return response
 
@@ -175,10 +204,15 @@ class SmartTokenView(TokenView):
         access_token = body.get("access_token")
         token = get_access_token_model().objects.get(token=access_token)
         if "launch/patient" in token.scope:
-            case_ids = ConsumerUserCaseRelationship.objects.filter(
-                consumer_user__user=token.user,
-                domain=domain,
-            ).values_list('case_id', flat=True)
-            body['patient'] = case_ids[0]
+            authorization_code = request.POST.get('code')
+            client_id = request.POST.get('client_id')
+            case_id = cache.get(_get_smart_cache_key(domain, client_id, authorization_code))
+            if not case_id:
+                raise Http404()
+            body['patient'] = case_id
 
         return HttpResponse(content=json.dumps(body), status=response.status_code)
+
+
+def _get_smart_cache_key(domain, client_id, authorization_code):
+    return f"{domain}-{client_id}-{authorization_code}"
