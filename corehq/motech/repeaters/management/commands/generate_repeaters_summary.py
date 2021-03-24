@@ -7,16 +7,6 @@ class Command(BaseCommand):
     Shows the number of Repeaters and RepeatRecords per domain.
     """
 
-    def _get_summary_dict(self, summary):
-        return {info['key'][0]: info['value'] for info in summary}
-
-    def _print_summary(self, summary):
-        for info in summary:
-            domain = info['key'][0]
-            count = info['value']
-            self.stdout.write(f'{domain}\t{count}')
-        self.stdout.write('*' * 230)
-
     def handle(self, *args, **options):
         self.stdout.write("\n")
         self.stdout.write('fetching repeater data...')
@@ -44,4 +34,3 @@ class Command(BaseCommand):
             self.stdout.write(f'{domain}\t{num_repeaters}\t{num_repeat_records}')
         self.stdout.write('*' * 230)
         self.stdout.write('done...')
-        self._print_summary(repeat_records_summary)
