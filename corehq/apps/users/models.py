@@ -2,6 +2,7 @@ import hmac
 import json
 import logging
 import re
+from collections import defaultdict
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -2537,7 +2538,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         self.get_sql_location.reset_cache(self)
         self.save()
 
-    def unset_location(self, domain, fall_back_to_next=False):
+    def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """
         Change primary location to next location from assigned_location_ids,
         if there are no more locations in assigned_location_ids, primary location is cleared
@@ -2552,7 +2553,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             membership.location_id = None
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
@@ -2568,7 +2570,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.get_sql_locations.reset_cache(self)
             self.save()
 
-    def reset_locations(self, domain, location_ids):
+    def reset_locations(self, domain, location_ids, commit=True):
         """
         reset locations to given list of location_ids. Before calling this, primary location
             should be explicitly set/unset via set_location/unset_location
@@ -2578,7 +2580,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     @memoized
     def get_sql_location(self, domain):
@@ -3072,3 +3075,31 @@ class HQApiKey(models.Model):
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
         return None
+
+
+class BulkUploadResponseWrapper(object):
+
+    def __init__(self, context):
+        results = context.get('result') or defaultdict(lambda: [])
+        self.response_rows = results['rows']
+        self.response_errors = results['errors']
+        if context['user_type'] == 'web users':
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'invited')]
+        else:
+            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
+
+    def success_count(self):
+        return len(self.response_rows) - len(self.problem_rows)
+
+    def has_errors(self):
+        return bool(self.response_errors or self.problem_rows)
+
+    def errors(self):
+        errors = []
+        for row in self.problem_rows:
+            if row['flag'] == 'missing-data':  # TODO: is this true for web workers?
+                errors.append(_('A row with no username was skipped'))
+            else:
+                errors.append('{username}: {flag}'.format(**row))
+        errors.extend(self.response_errors)
+        return errors
