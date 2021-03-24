@@ -155,7 +155,7 @@ def _inactive_domain_response(request, domain_name):
 
 
 def _is_missing_two_factor(view_fn, request):
-    return (_two_factor_required(view_fn, request.project, request.couch_user)
+    return (_two_factor_required(view_fn, request.project, request.couch_user, request)
             and not getattr(request, 'bypass_two_factor', False)
             and not request.user.is_verified())
 
@@ -449,7 +449,7 @@ def two_factor_check(view_func, api_key):
                 not api_key and
                 not getattr(request, 'skip_two_factor_check', False) and
                 domain_obj and
-                _two_factor_required(view_func, domain_obj, couch_user)
+                _two_factor_required(view_func, domain_obj, couch_user, request)
             ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
@@ -474,7 +474,7 @@ def two_factor_check(view_func, api_key):
     return _outer
 
 
-def _two_factor_required(view_func, domain, couch_user):
+def _two_factor_required(view_func, domain, couch_user, request):
     exempt = getattr(view_func, 'two_factor_exempt', False)
     if exempt:
         return False

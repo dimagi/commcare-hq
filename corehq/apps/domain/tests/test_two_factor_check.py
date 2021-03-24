@@ -37,14 +37,23 @@ class TestTwoFactorCheck(TestCase):
     def test_two_factor_required_with_feature_flag(self):
         view_func = 'dummy_view_func'
         request = self.request
-        two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
+        two_factor_required_bool = _two_factor_required(
+            view_func,
+            self.domain,
+            request.couch_user,
+            request
+        )
         self.assertTrue(two_factor_required_bool)
 
     def test_two_factor_required_without_feature_flag(self):
         view_func = 'dummy_view_func'
         request = self.request
-        two_factor_required_bool = _two_factor_required(view_func, self.domain,
-                                                        request.couch_user)
+        two_factor_required_bool = _two_factor_required(
+            view_func,
+            self.domain,
+            request.couch_user,
+            request
+        )
         self.assertFalse(two_factor_required_bool)
 
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
