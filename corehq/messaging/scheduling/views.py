@@ -56,6 +56,8 @@ from corehq.messaging.scheduling.view_helpers import (
     UntranslatedConditionalAlertUploader,
     upload_conditional_alert_workbook,
 )
+
+from corehq.apps.es.cases import CaseES
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -776,8 +778,12 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def page_context(self):
         context = super().page_context
+        case_count = None
+        if self.rule and self.rule.case_type:
+            case_count = CaseES().domain(self.domain).case_type(self.rule.case_type).count()
         context.update({
             'basic_info_form': self.basic_info_form,
+            'case_count': case_count,
             'criteria_form': self.criteria_form,
             'help_text': self.help_text,
             'schedule_form': self.schedule_form,
