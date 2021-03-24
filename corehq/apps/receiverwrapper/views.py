@@ -134,6 +134,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
             force_logs=request.GET.get('force_logs', 'false') == 'true',
+            timing_context=timer
         )
 
         try:
