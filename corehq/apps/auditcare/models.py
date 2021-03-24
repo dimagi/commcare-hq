@@ -68,7 +68,7 @@ class AuditEvent(models.Model):
     session_key = models.CharField(max_length=255, blank=True, null=True)
     user_agent_fk = models.ForeignKey(
         UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
-    user_agent = ForeignValue(user_agent_fk, truncate=True)
+    user_agent = ForeignValue(user_agent_fk, truncate=True, cache_size=0)
 
     @property
     def doc_type(self):
@@ -116,7 +116,7 @@ class NavigationEventAudit(AuditEvent):
     params = models.CharField(max_length=512, blank=True, default='')
     view_fk = models.ForeignKey(
         ViewName, null=True, db_index=False, on_delete=models.PROTECT)
-    view = ForeignValue(view_fk, truncate=True)
+    view = ForeignValue(view_fk, truncate=True, cache_size=0)
     view_kwargs = NullJsonField(default=dict)
     headers = NullJsonField(default=dict)
     status_code = models.SmallIntegerField(default=0)
@@ -165,7 +165,7 @@ class AccessAudit(AuditEvent):
     access_type = models.CharField(max_length=1, choices=ACCESS_CHOICES.items())
     http_accept_fk = models.ForeignKey(
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
-    http_accept = ForeignValue(http_accept_fk, truncate=True)
+    http_accept = ForeignValue(http_accept_fk, truncate=True, cache_size=0)
     trace_id = models.CharField(max_length=127, null=True, blank=True)
 
     # Optional (django-ified) settings.AUDIT_TRACE_ID_HEADER set by AuditcareConfig
