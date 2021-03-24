@@ -296,7 +296,11 @@ class ForeignValue:
     @cached_property
     def get_related(self):
         def get_related(value):
-            return manager.get_or_create(value=value)[0]
+            try:
+                return manager.get_or_create(value=value)[0]
+            except model.MultipleObjectsReturned:
+                return manager.filter(value=value).order_by("id").first()
+        model = self.fk.related_model
         manager = self.fk.related_model.objects
         if self.cache_size:
             get_related = lru_cache(self.cache_size)(get_related)

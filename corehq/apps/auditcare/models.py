@@ -92,7 +92,7 @@ class AuditEvent(models.Model):
     def create_audit(cls, request, user):
         audit = cls()
         audit.domain = get_domain(request)
-        audit.path = request.path
+        audit.path = request.path[:255]
         audit.ip_address = get_ip(request)
         audit.session_key = request.session.session_key
         audit.user_agent = request.META.get('HTTP_USER_AGENT')
@@ -134,7 +134,7 @@ class NavigationEventAudit(AuditEvent):
         try:
             audit = cls.create_audit(request, user)
             if request.GET:
-                audit.params = request.META.get("QUERY_STRING", "")
+                audit.params = request.META.get("QUERY_STRING", "")[:512]
             audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)
