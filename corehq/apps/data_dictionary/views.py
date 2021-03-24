@@ -133,7 +133,7 @@ def update_case_property(request, domain):
         except ValidationError as e:
             for key, msgs in dict(e).items():
                 for msg in msgs:
-                    errors.append(_("{}: {}").format(key, msg))
+                    errors.append(_("FHIR Resource {} {}: {}").format(fhir_resource_type, key, msg))
 
     for property in property_list:
         case_type = property.get('caseType')
@@ -411,7 +411,7 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
             except ValidationError as e:
                 for key, msgs in dict(e).items():
                     for msg in msgs:
-                        errors.append(_("{}: {}").format(key, msg))
+                        errors.append(_("FHIR Resource {} {}: {}").format(fhir_resource_type, key, msg))
             else:
                 fhir_resource_type_by_case_type[case_type] = fhir_resource_type_obj
     return errors, fhir_resource_type_by_case_type
