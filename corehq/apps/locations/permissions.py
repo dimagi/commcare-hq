@@ -249,14 +249,6 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
 
-    if getattr(view_fn, 'is_hq_report', False):  # HQ report
-        dispatcher = view_fn.view_class
-        report_class = dispatcher.get_report(view_kwargs['domain'], view_kwargs['report_slug'])
-        return _view_obj_is_safe(report_class, request, *view_args, **view_kwargs)
-
-    if hasattr(view_fn, "view_class"):  # Django view
-        return _view_obj_is_safe(view_fn.view_class, request, *view_args, **view_kwargs)
-
     return _view_obj_is_safe(view_fn, request, *view_args, **view_kwargs)
 
 
