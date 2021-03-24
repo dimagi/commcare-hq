@@ -224,3 +224,22 @@ def time_method():
                 return fn(self, *args, **kwargs)
         return _inner
     return decorator
+
+
+DURATION_REPORTING_THRESHOLD = "_duration_reporting_threshold"
+
+
+def set_request_duration_reporting_threshold(threshold):
+    """Decorator to override the default reporting threshold for a view.
+
+    If requests to the view take longer than the threshold a Sentry event
+    will get created.
+
+    See `corehq.middleware.LogLongRequestMiddleware` for where the duration is compared
+    to the threshold.
+    """
+    def decorator(view):
+        setattr(view, DURATION_REPORTING_THRESHOLD, threshold)
+        return view
+
+    return decorator
