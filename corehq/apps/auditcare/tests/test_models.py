@@ -113,6 +113,114 @@ class TestNavigationEventAudit(AuditcareTest):
         event = NavigationEventAudit.audit_view(make_request(), "melvin@test.com", view, {})
         self.assertIsNone(event.id)
 
+    def test_delete_duplicates(self):
+        from itertools import groupby
+        from django.db import models
+        from ..models import UserAgent, HttpAccept, ViewName
+
+        model_map = {
+            HttpAccept: [AccessAudit],
+            UserAgent: [AccessAudit, NavigationEventAudit],
+            ViewName: [NavigationEventAudit],
+        }
+        field_map = {
+            HttpAccept: "http_accept_fk_id",
+            UserAgent: "user_agent_fk_id",
+            ViewName: "view_fk_id",
+        }
+
+        def delete_duplicates(model):
+            def update_dups(rel_model, first_id, other_ids):
+                field_name = field_map[model]
+                rel_model.objects.filter(
+                    **{field_name + "__in": other_ids}
+                ).update(
+                    **{field_name: first_id},
+                )
+
+            def do_delete(apps, schema_editor):
+                def sort_key(item):
+                    id, value = item
+                    return value
+
+                dup_values = list(
+                    model.objects
+                    .values("value")
+                    .annotate(value_count=models.Count("value"))
+                    .filter(value_count__gt=1)
+                    .values_list("value", flat=True)
+                )
+                dups = (
+                    model.objects
+                    .filter(value__in=dup_values)
+                    .values_list("id", "value")
+                )
+                for value, pairs in groupby(sorted(dups, key=sort_key), key=sort_key):
+                    ids = sorted(id for id, value in pairs)
+                    first_id, *other_ids = ids
+                    for rel_model in model_map[model]:
+                        update_dups(rel_model, first_id, other_ids)
+                    model.objects.filter(value=value, id__in=other_ids).delete()
+
+            return do_delete
+
+        values = [
+            UserAgent(value="1"),
+            UserAgent(value="1"),
+            UserAgent(value="1"),
+            UserAgent(value="2"),
+            HttpAccept(value="1"),
+            HttpAccept(value="1"),
+            HttpAccept(value="1"),
+            HttpAccept(value="2"),
+            ViewName(value="1"),
+            ViewName(value="1"),
+            ViewName(value="1"),
+            ViewName(value="2"),
+        ]
+        for value in values:
+            value.save()
+        agents = values[:4]
+        accepts = values[4:8]
+        views = values[8:]
+
+        for agent, accept in zip(agents, accepts):
+            acc = AccessAudit(
+                user_agent_fk_id=agent.id,
+                http_accept_fk_id=accept.id,
+                access_type="i",
+            )
+            acc.save()
+
+        for agent, view in zip(agents, views):
+            nav = NavigationEventAudit(user_agent_fk_id=agent.id, view_fk_id=view.id)
+            nav.save()
+
+        delete_duplicates(UserAgent)(None, None)
+        delete_duplicates(HttpAccept)(None, None)
+        delete_duplicates(ViewName)(None, None)
+
+        def assert_foreigns(model, values):
+            new_values = model.objects.all()
+            value_ids = {a.id for a in new_values}
+            self.assertEqual(value_ids, {values[0].id, values[3].id}, values)
+
+        assert_foreigns(UserAgent, agents)
+        assert_foreigns(HttpAccept, accepts)
+        assert_foreigns(ViewName, views)
+
+        navs = NavigationEventAudit.objects.all()
+        agent_ids = {n.user_agent_fk_id for n in navs}
+        self.assertEqual(agent_ids, {agents[0].id, agents[3].id})
+        view_ids = {n.view_fk_id for n in navs}
+        self.assertEqual(view_ids, {views[0].id, views[3].id})
+
+        accs = AccessAudit.objects.all()
+        agent_ids = {n.user_agent_fk_id for n in accs}
+        self.assertEqual(agent_ids, {agents[0].id, agents[3].id})
+        accept_ids = {n.http_accept_fk_id for n in accs}
+        self.assertEqual(accept_ids, {accepts[0].id, accepts[3].id})
+
 
 def test_get_domain():
     def test(cfg):
