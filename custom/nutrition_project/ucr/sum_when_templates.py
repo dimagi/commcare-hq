@@ -68,3 +68,21 @@ class ComplementaryFeedingStartedCheckSpec(SumWhenTemplateSpec):
 class LatestBMICategorySpec(SumWhenTemplateSpec):
     type = TypeProperty("india-nutrition-project_latest_bmi_category")
     expression = "latest_bmi_category = ?"
+
+
+class HCMEligibleChildrenSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_hcm_eligible_children")
+    expression = "member_migration_status != 'migrated' AND want_nutrition_services != 'no' " \
+                 "AND DATE(dob) between CURRENT_DATE - interval '6 year' AND CURRENT_DATE - interval '3 year'"
+
+
+class THREligibleSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_thr_eligible")
+    expression = "member_migration_status != 'migrated' AND want_nutrition_services != 'no' "
+
+
+class HCMEligibleAdolescentSpec(SumWhenTemplateSpec):
+    type = TypeProperty("india-nutrition-project_hcm_eligible_adolescent")
+    expression = "member_migration_status != 'migrated' AND current_pregnant != 'yes' AND " \
+                 "want_nutrition_services != 'no' " \
+                 "AND DATE(dob) between CURRENT_DATE - interval '19 year' AND CURRENT_DATE - interval '10 year'"
