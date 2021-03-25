@@ -167,6 +167,12 @@ def get_restore_params(request, domain):
     if isinstance(openrosa_version, bytes):
         openrosa_version = openrosa_version.decode('utf-8')
 
+    skip_fixtures = (
+        toggles.SKIP_FIXTURES_ON_RESTORE.enabled(
+            domain, namespace=toggles.NAMESPACE_DOMAIN
+        ) or request.GET.get('skip_fixtures') == 'true'
+    )
+
     return {
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "2.0"),
@@ -178,7 +184,7 @@ def get_restore_params(request, domain):
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
         'case_sync': request.GET.get('case_sync'),
-        'skip_fixtures': request.GET.get('skip_fixtures') == 'true',
+        'skip_fixtures': skip_fixtures,
         'auth_type': getattr(request, 'auth_type', None),
     }
 
