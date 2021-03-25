@@ -1824,6 +1824,16 @@ BLOCK_RESTORES = StaticToggle(
     """
 )
 
+SKIP_FIXTURES_ON_RESTORE = StaticToggle(
+    'skip_fixtures_on_restore',
+    'Skip Fixture Syncs on Restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag to skip fixtures on restores for certain project spaces.
+    """
+)
+
 SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'skip_updating_user_reporting_metadata',
     'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
