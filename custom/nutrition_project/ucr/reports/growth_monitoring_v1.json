@@ -1,0 +1,108 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "report_id": "static-growth_monitoring_v1",
+  "data_source_table": "static-weight_height_v1",
+  "config": {
+    "title": "Growth Monitoring V1 (Static)",
+    "description": "Last value of indicators filled per child care case per month",
+    "visible": true,
+    "aggregation_columns": [
+      "child_care_case_id",
+      "gender",
+      "supervisor_id",
+      "flw_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "display": "Filter by FLW",
+        "slug": "flw_id",
+        "type": "dynamic_choice_list",
+        "field": "userID",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "datatype": "string"
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string"
+      },
+      {
+        "display": "Date of Birth",
+        "slug": "dob",
+        "type": "date",
+        "field": "dob",
+        "datatype": "date"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "completed_time",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "Supervisor ID",
+        "column_id": "supervisor_id",
+        "type": "field",
+        "field": "supervisor_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "FLW ID",
+        "column_id": "flw_id",
+        "type": "field",
+        "field": "flw_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Gender",
+        "column_id": "gender",
+        "type": "field",
+        "field": "gender",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Child Care Case ID",
+        "column_id": "child_care_case_id",
+        "type": "field",
+        "field": "child_care_case_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Z Scoring WFA",
+        "column_id": "zscore_grading_wfa",
+        "type": "array_agg_last_value",
+        "field": "zscore_grading_wfa",
+         "order_by_col": "completed_time"
+      },
+      {
+        "display": "Z Scoring WFH",
+        "column_id": "zscore_grading_wfh",
+        "type": "array_agg_last_value",
+        "field": "zscore_grading_wfh",
+         "order_by_col": "completed_time"
+      }
+    ]
+  },
+  "doc_type": "ReportConfiguration"
+}

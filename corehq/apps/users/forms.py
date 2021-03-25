@@ -1281,3 +1281,17 @@ class CommCareUserFilterForm(forms.Form):
 
 class CreateDomainPermissionsMirrorForm(forms.Form):
     mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
+
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_mirror_domain(self):
+        mirror_domain = self.data.get('mirror_domain')
+        if self.domain == mirror_domain:
+            raise forms.ValidationError(_("""
+                Enterprise permissions cannot be granted from a project space to itself.
+            """))
+        return mirror_domain

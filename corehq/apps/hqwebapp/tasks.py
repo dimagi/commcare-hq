@@ -10,6 +10,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
+from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.models import TransientBounceEmail
@@ -38,7 +39,8 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, from_email, recipient_list, messaging_event_id=None):
+def send_mail_async(self, subject, message, from_email, recipient_list,
+                    messaging_event_id=None, domain=None):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -59,7 +61,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
 
     # todo deal with recipients marked as bounced
     from dimagi.utils.django.email import get_valid_recipients, mark_local_bounced_email
-    filtered_recipient_list = get_valid_recipients(recipient_list)
+    filtered_recipient_list = get_valid_recipients(recipient_list, domain)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_recipients and messaging_event_id:
         mark_local_bounced_email(bounced_recipients, messaging_event_id)
@@ -124,7 +126,8 @@ def send_html_email_async(self, subject, recipient, html_content,
                           email_from=settings.DEFAULT_FROM_EMAIL,
                           file_attachments=None, bcc=None,
                           smtp_exception_skip_list=None,
-                          messaging_event_id=None):
+                          messaging_event_id=None,
+                          domain=None):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -141,7 +144,8 @@ def send_html_email_async(self, subject, recipient, html_content,
             file_attachments=file_attachments,
             bcc=bcc,
             smtp_exception_skip_list=smtp_exception_skip_list,
-            messaging_event_id=messaging_event_id
+            messaging_event_id=messaging_event_id,
+            domain=domain
         )
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
@@ -197,6 +201,23 @@ def process_bounced_emails():
                     'error': e,
                 }
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=2), queue='background_queue')
+def alert_bounced_system_emails():
+    bounced_system_emails = get_bounced_system_emails()
+    if bounced_system_emails:
+        bounced_system_emails = ", ".join(bounced_system_emails)
+        mail_admins(
+            "[IMPORTANT] System emails were marked as bounced! Please investigate.",
+            f"These emails have recorded bounces: {bounced_system_emails}. \n"
+            f"Please make sure they are not hard bounced in AWS and follow the "
+            f"steps in Confluence to properly un-bounce them. Thanks! \n"
+            f"HQ will continue to try sending email, but if AWS has them "
+            f"permanently bounced, then these messages will not go "
+            f"through and it will continue to negatively affect our bounce "
+            f"rate percentage. Be swift!"
+        )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=3), queue='background_queue')

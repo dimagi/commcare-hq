@@ -68,6 +68,7 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -93,7 +94,6 @@ from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     UploadConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
@@ -413,7 +413,8 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
         '/a/{domain}/data_dictionary/',
-        '/a/{domain}/importer/'
+        '/a/{domain}/importer/',
+        '/a/{domain}/case/',
     )
 
     @property
@@ -808,19 +809,29 @@ class ProjectDataTab(UITab):
                     edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
             items.extend(edit_section)
 
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or
-             self.can_view_ecd_preview) and self.can_edit_commcare_data):
+        explore_data_views = []
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views = [
-                {
-                    'title': _(ExploreCaseDataView.page_title),
-                    'url': reverse(ExploreCaseDataView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': False,
+            explore_data_views.append({
+                'title': _(ExploreCaseDataView.page_title),
+                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+                'show_in_dropdown': False,
+                'icon': 'fa fa-map-marker',
+                'subpages': [],
+            })
+        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
+            from corehq.apps.case_search.models import case_search_enabled_for_domain
+            if case_search_enabled_for_domain(self.domain):
+                from corehq.apps.case_search.views import CaseSearchView
+                explore_data_views.append({
+                    'title': _(CaseSearchView.page_title),
+                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-search',
+                    'show_in_dropdown': False,
                     'subpages': [],
-                }
-            ]
+                })
+        if explore_data_views:
             items.append([_("Explore Data"), explore_data_views])
 
         if self.can_use_lookup_tables:
@@ -1036,11 +1047,6 @@ class MessagingTab(UITab):
 
     @property
     @memoized
-    def show_dashboard(self):
-        return show_messaging_dashboard(self.domain, self.couch_user)
-
-    @property
-    @memoized
     def messages_urls(self):
         messages_urls = []
 
@@ -1195,12 +1201,11 @@ class MessagingTab(UITab):
     def dropdown_items(self):
         result = []
 
-        if self.show_dashboard:
-            result.append(dropdown_dict(_("Dashboard"), is_header=True))
-            result.append(dropdown_dict(
-                _("Dashboard"),
-                url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
-            ))
+        result.append(dropdown_dict(_("Dashboard"), is_header=True))
+        result.append(dropdown_dict(
+            _("Dashboard"),
+            url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
+        ))
 
         if result:
             result.append(self.divider)
@@ -1218,10 +1223,9 @@ class MessagingTab(UITab):
         if result:
             result.append(self.divider)
 
-        view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
         result.append(dropdown_dict(
             _("View All"),
-            url=reverse(view_all_view, args=[self.domain]),
+            url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
         ))
 
         return result
@@ -1230,14 +1234,13 @@ class MessagingTab(UITab):
     def sidebar_items(self):
         items = []
 
-        if self.show_dashboard:
-            items.append((
-                _("Dashboard"),
-                [{
-                    'title': _("Dashboard"),
-                    'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
-                }]
-            ))
+        items.append((
+            _("Dashboard"),
+            [{
+                'title': _("Dashboard"),
+                'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
+            }]
+        ))
 
         for title, urls in (
             (_("Messages"), self.messages_urls),
@@ -1558,6 +1561,22 @@ class EnterpriseSettingsTab(UITab):
             'url': reverse('enterprise_billing_statements',
                            args=[self.domain])
         })
+        if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
+            if IdentityProvider.domain_has_editable_identity_provider(self.domain):
+                from corehq.apps.sso.views.enterprise_admin import (
+                    ManageSSOEnterpriseView,
+                    EditIdentityProviderEnterpriseView,
+                )
+                enterprise_views.append({
+                    'title': _(ManageSSOEnterpriseView.page_title),
+                    'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
+                    'subpages': [
+                        {
+                            'title': _(EditIdentityProviderEnterpriseView.page_title),
+                            'urlname': EditIdentityProviderEnterpriseView.urlname,
+                        },
+                    ],
+                })
         items.append((_('Manage Enterprise'), enterprise_views))
         return items
 

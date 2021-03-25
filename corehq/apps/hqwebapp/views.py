@@ -52,7 +52,6 @@ from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.views import LoginView
 
-from corehq.toggles import MONITOR_2FA_CHANGES
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -207,11 +206,6 @@ def redirect_to_default(req, domain=None):
         else:
             url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
-        if MONITOR_2FA_CHANGES.enabled(domain):
-            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
-            monitor_2fa_soft_assert(False, f'2FA required page shown to user '
-                                           f'{req.user.username} on {domain} after '
-                                           f'login')
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
@@ -389,8 +383,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         with mutable_querydict(req.POST):
             req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
 
-    context = {}
-
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
@@ -398,13 +390,9 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             old_lang = req.session.get(LANGUAGE_SESSION_KEY)
             update_session_language(req, old_lang, new_lang)
 
-            # context needed for MONITOR_2FA_CHANGES toggle in HQLoginView
-            context.update({
-                'is_commcare_user': couch_user.is_commcare_user(),
-            })
-
     req.base_template = settings.BASE_TEMPLATE
 
+    context = {}
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -485,22 +473,15 @@ class HQLoginView(LoginView):
     ]
     extra_context = {}
 
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        # The forms need the request to properly log authentication failures
+        kwargs.setdefault('request', self.request)
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
-
-        steps = context.get('wizard', {}).get('steps')
-        domain = context.get('domain')
-        is_commcare_user = context.get('is_commcare_user', False)
-        if (steps and steps.current == 'token'
-                and is_commcare_user and MONITOR_2FA_CHANGES.enabled(domain)):
-            username = self.request.POST['auth-username'].lower()
-            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
-            monitor_2fa_soft_assert(
-                False,
-                f'2FA TOKEN required upon login for mobile worker {username} from {domain}'
-            )
-
         return context
 
 

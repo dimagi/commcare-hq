@@ -38,9 +38,13 @@ services:
   formplayer:
     image: dimagi/formplayer
     environment:
-      WEB_HOST: "dockerhost"
+      COMMCARE_HOST: "http://host.docker.internal:8000"
+      COMMCARE_ALTERNATE_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
+      AUTH_KEY: "secretkey"
+      EXTERNAL_REQUEST_MODE: "replace-host"
     expose:
-      - "8010"
+      - "8080"
+      - "8081"
 
   postgres:
     image: dimagi/docker-postgresql
@@ -100,7 +104,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.4.13/data
 
   kafka:
-      image: wurstmeister/kafka:0.8.2.2-1
+      image: wurstmeister/kafka:2.13-2.6.0
       ports:
         - "9092:9092"
       environment:
@@ -108,6 +112,7 @@ services:
           KAFKA_BROKER_ID: 1
           KAFKA_ADVERTISED_PORT: 9092
           CUSTOM_INIT_SCRIPT: "curl https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh > wait.sh && chmod +x ./wait.sh && ./wait.sh zookeeper:2181 || exit 1"
+          KAFKA_ADVERTISED_HOST_NAME: "kafka"
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
         - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1

@@ -4,6 +4,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.exceptions import ResourceNotFound
 from decimal import Decimal
 from django.test import TestCase, SimpleTestCase, override_settings
+from django.test.client import RequestFactory
 
 from corehq.toggles import (
     NAMESPACE_USER,
@@ -12,7 +13,9 @@ from corehq.toggles import (
     PredictablyRandomToggle,
     StaticToggle,
     deterministic_random,
-    DynamicallyPredictablyRandomToggle)
+    DynamicallyPredictablyRandomToggle,
+    NAMESPACE_EMAIL_DOMAIN,
+)
 from toggle.shortcuts import (
     namespaced_item,
     find_users_with_toggle_enabled,
@@ -20,6 +23,8 @@ from toggle.shortcuts import (
 )
 from .models import generate_toggle_id, Toggle
 from .shortcuts import toggle_enabled, set_toggle
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
 
 
 class ToggleTestCase(TestCase):
@@ -318,3 +323,74 @@ class ShortcutTests(TestCase):
         )
         domain, = find_domains_with_toggle_enabled(domain_toggle)
         self.assertEqual(domain, self.domain)
+
+
+class NamespaceTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain(name='toggledomain', is_active=True)
+        cls.domain.save()
+
+        cls.user = WebUser(username='johndoe@somedomain.com')
+        cls.user.save()
+
+        cls.request = RequestFactory()
+        cls.request.user = cls.user
+        cls.request.domain = cls.domain
+
+        cls.second_domain = Domain(name='toggleotherdomain', is_active=True)
+        cls.second_domain.save()
+
+        cls.second_user = WebUser(username='jakerow@otherdomain.com')
+        cls.second_user.save()
+
+        cls.second_request = RequestFactory()
+        cls.second_request.user = cls.second_user
+        cls.second_request.domain = cls.second_domain
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.second_domain.delete()
+        cls.user.delete(deleted_by='admin')
+        cls.second_user.delete(deleted_by='admin')
+
+    def test_email_domain_namespace(self):
+        email_domain_toggle = StaticToggle(
+            'email_domain_namespace_toggle',
+            'A test toggle',
+            TAG_CUSTOM,
+            [NAMESPACE_EMAIL_DOMAIN]
+        )
+        email_domain_toggle.set('somedomain.com', True, namespace=NAMESPACE_EMAIL_DOMAIN)
+        self.assertTrue(email_domain_toggle.enabled(self.user.username))
+        self.assertFalse(email_domain_toggle.enabled(self.second_user.username))
+        self.assertTrue(email_domain_toggle.enabled_for_request(self.request))
+        self.assertFalse(email_domain_toggle.enabled_for_request(self.second_request))
+
+    def test_domain_namespace(self):
+        domain_toggle = StaticToggle(
+            'domain_namespace_toggle',
+            'A test toggle',
+            TAG_CUSTOM,
+            [NAMESPACE_DOMAIN]
+        )
+        domain_toggle.set(self.domain.name, True, namespace=NAMESPACE_DOMAIN)
+        self.assertTrue(domain_toggle.enabled(self.domain.name))
+        self.assertFalse(domain_toggle.enabled(self.second_domain.name))
+        self.assertTrue(domain_toggle.enabled_for_request(self.request))
+        self.assertFalse(domain_toggle.enabled_for_request(self.second_request))
+
+    def test_user_namespace(self):
+        user_toggle = StaticToggle(
+            'user_namespace_toggle',
+            'A test toggle',
+            TAG_CUSTOM,
+            [NAMESPACE_USER]
+        )
+        user_toggle.set(self.user.username, True, namespace=NAMESPACE_USER)
+        self.assertTrue(user_toggle.enabled(self.user.username))
+        self.assertFalse(user_toggle.enabled(self.second_user.username))
+        self.assertTrue(user_toggle.enabled_for_request(self.request))
+        self.assertFalse(user_toggle.enabled_for_request(self.second_request))

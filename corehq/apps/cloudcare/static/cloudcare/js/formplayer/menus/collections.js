@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'clearSession',
             'notification',
             'persistentCaseTile',
+            'queryKey',
             'selections',
             'tiles',
             'title',
@@ -20,7 +21,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
         entityProperties: [
             'actions',
-            'autolaunch',
             'currentPage',
             'hasInlineTile',
             'headers',
@@ -28,6 +28,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'maxWidth',
             'numEntitiesPerRow',
             'pageCount',
+            'redoLast',
             'shouldRequestLocation',
             'shouldWatchLocation',
             'sortIndices',

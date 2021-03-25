@@ -5,7 +5,6 @@ from typing import Callable, Optional
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-import attr
 from requests.structures import CaseInsensitiveDict
 
 from dimagi.utils.logging import notify_exception
@@ -13,27 +12,20 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
-from corehq.motech.models import RequestLog
+from corehq.motech.models import RequestLog, RequestLogEntry
 from corehq.motech.utils import (
     get_endpoint_url,
     pformat_json,
     unpack_request_args,
 )
+from corehq.util.metrics import metrics_counter
+from corehq.util.urlsanitize.urlsanitize import (
+    CannotResolveHost,
+    InvalidURL,
+    PossibleSSRFAttempt,
+    sanitize_user_input_url,
+)
 from corehq.util.view_utils import absolute_reverse
-
-
-@attr.s(frozen=True)
-class RequestLogEntry:
-    domain = attr.ib()
-    payload_id = attr.ib()
-    method = attr.ib()
-    url = attr.ib()
-    headers = attr.ib()
-    params = attr.ib()
-    data = attr.ib()
-    error = attr.ib()
-    response_status = attr.ib()
-    response_body = attr.ib()
 
 
 def log_request(self, func, logger):
@@ -43,16 +35,19 @@ def log_request(self, func, logger):
         log_level = logging.INFO
         request_error = ''
         response_status = None
+        response_headers = {}
         response_body = ''
         try:
             response = func(method, url, *args, **kwargs)
             response_status = response.status_code
+            response_headers = response.headers
             response_body = response.content
         except Exception as err:
             log_level = logging.ERROR
             request_error = str(err)
             if getattr(err, 'response', None) is not None:
                 response_status = err.response.status_code
+                response_headers = err.response.headers
                 response_body = pformat_json(err.response.text)
             raise
         else:
@@ -60,8 +55,17 @@ def log_request(self, func, logger):
         finally:
             params, data, headers = unpack_request_args(method, args, kwargs)
             entry = RequestLogEntry(
-                self.domain_name, self.payload_id, method, url, headers, params, data,
-                request_error, response_status, response_body
+                domain=self.domain_name,
+                payload_id=self.payload_id,
+                method=method,
+                url=url,
+                headers=headers,
+                params=params,
+                data=data,
+                error=request_error,
+                response_status=response_status,
+                response_headers=response_headers,
+                response_body=response_body,
             )
             logger(log_level, entry)
 
@@ -123,17 +127,18 @@ class Requests(object):
         self._session.close()
         self._session = None
 
-    def _send_request(self, method, *args, **kwargs):
+    def _send_request(self, method, url, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
+        sanitize_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
-            response = self._session.request(method, *args, **kwargs)
+            response = self._session.request(method, url, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
             with self.auth_manager.get_session() as session:
-                response = session.request(method, *args, **kwargs)
+                response = session.request(method, url, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response
@@ -266,3 +271,25 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         message = f'HTTP status code {response.status_code}: {response.text}'
         requests.notify_error(message)
     return response
+
+
+def sanitize_user_input_url_for_repeaters(url, domain, src):
+    try:
+        sanitize_user_input_url(url)
+    except (CannotResolveHost, InvalidURL):
+        pass
+    except PossibleSSRFAttempt as e:
+        if settings.DEBUG and e.reason == 'is_loopback':
+            pass
+        else:
+            metrics_counter('commcare.repeaters.ssrf_attempt', tags={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason
+            })
+            notify_exception(None, 'Possible SSRF Attempt', details={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason,
+            })
+            raise

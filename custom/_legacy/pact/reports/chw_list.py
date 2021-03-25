@@ -2,7 +2,7 @@ from django.urls import NoReverseMatch
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from django.utils import html
+from django.utils.html import format_html
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.util.dates import iso_string_to_datetime
 
@@ -29,10 +29,11 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
 
     def _chw_profile_link(self, user_id):
         try:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(PactCHWProfileReport.get_url(*[self.domain]) + "?chw_id=%s" % user_id),
+            return format_html(
+                "<a class='ajax_dialog' href='{}'>{}</a>",
+                PactCHWProfileReport.get_url(self.domain) + "?chw_id=%s" % user_id,
                 "View Profile",
-                ))
+            )
         except NoReverseMatch:
             return "Unknown User ID"
 

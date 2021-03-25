@@ -1,8 +1,8 @@
 <partial>
   <remote-request>
     <post url="https://www.example.com/a/test_domain/phone/claim-case/"
-          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-      <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
+      <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
     </post>
     <command id="search_command.m0">
       <display>
@@ -19,14 +19,14 @@
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
+             default_search="false"
              storage-instance="results"
              template="case">
         <data key="case_type" ref="'case'"/>
-        <data key="include_closed" ref="'False'"/>
         <data key="&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;" ref="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;"/>
         <data key="name" ref="instance('locations')/locations/location[@id=123]/@type"/>
       </query>
-      <datum id="case_id"
+      <datum id="search_case_id"
              nodeset="instance('results')/results/case[@case_type='case']"
              value="./@case_id"
              detail-confirm="m0_case_long"
@@ -34,7 +34,7 @@
     </session>
     <stack>
       <push>
-        <rewind value="instance('commcaresession')/session/data/case_id"/>
+        <rewind value="instance('commcaresession')/session/data/search_case_id"/>
       </push>
     </stack>
   </remote-request>

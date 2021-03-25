@@ -22,9 +22,15 @@ from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
 
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
+from corehq.apps.sso.utils.request_helpers import (
+    is_request_blocked_from_viewing_domain_due_to_sso,
+    is_request_using_sso,
+)
+from corehq.apps.sso.utils.view_helpers import (
+    render_untrusted_identity_provider_for_domain_view,
+)
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -34,12 +40,13 @@ from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
     FORMPLAYER,
+    OAUTH2,
     basic_or_api_key,
     basicauth,
     determine_authtype_from_request,
     formplayer_as_user_auth,
-    formplayer_auth,
     get_username_and_password_from_request,
+    HQApiKeyAuthentication,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
@@ -50,11 +57,12 @@ from corehq.toggles import (
     IS_CONTRACTOR,
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
+    ENTERPRISE_SSO,
 )
 from corehq.util.soft_assert import soft_assert
 from django_digest.decorators import httpdigest
 
-logger = logging.getLogger(__name__)
+auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
@@ -102,6 +110,11 @@ def login_and_domain_required(view_func):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
+            elif (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
+                  and is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj)):
+                # Important! Make sure this is always the final check prior
+                # to returning call_view() below
+                return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
             else:
                 return call_view()
         elif user.is_superuser:
@@ -111,6 +124,12 @@ def login_and_domain_required(view_func):
                 return no_permissions(req, message=msg)
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
+            if (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
+                    and is_request_using_sso(req)):
+                # We will not support SSO for superusers at this time
+                return HttpResponseForbidden(
+                    "SSO support is not currently available for superusers."
+                )
             return call_view()
         elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
             from corehq.apps.users.views import DomainRequestView
@@ -308,10 +327,12 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
     return _login_or_challenge(
         formplayer_as_user_auth,
-        allow_cc_users=allow_cc_users, allow_sessions=allow_sessions
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
     )
 
 
@@ -350,13 +371,13 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
             if authtype == FORMPLAYER and not allow_formplayer:
+                auth_logger.info(
+                    "Request rejected reason=%s request=%s",
+                    "formplayer_auth:not_enabled_for_request", request.path
+                )
                 return HttpResponseForbidden()
-            function_wrapper = {
-                BASIC: login_or_basic_ex(allow_cc_users=True),
-                DIGEST: login_or_digest_ex(allow_cc_users=True),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
-            }[authtype]
+            request.auth_type = authtype  # store auth type on request for access in views
+            function_wrapper = get_auth_decorator_map(allow_cc_users=True)[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -396,20 +417,26 @@ api_auth = _get_multi_auth_decorator(default=DIGEST)
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
-login_or_oauth2 = login_or_oauth2_ex()
 
-# Use these decorators on views to exclusively allow any one authorization method and not session based auth
-digest_auth = login_or_digest_ex(allow_sessions=False)
-basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
-oauth2_auth = login_or_oauth2_ex(allow_sessions=False)
-
-digest_auth_no_domain = login_or_digest_ex(allow_sessions=False, require_domain=False)
-basic_auth_no_domain = login_or_basic_ex(allow_sessions=False, require_domain=False)
-api_key_auth_no_domain = login_or_api_key_ex(allow_sessions=False, require_domain=False)
-oauth2_auth_no_domain = login_or_oauth2_ex(allow_sessions=False, require_domain=False)
 
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
+
+
+def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True):
+    # get a mapped set of decorators for different auth types with the specified parameters
+    decorator_function_kwargs = {
+        'allow_cc_users': allow_cc_users,
+        'require_domain': require_domain,
+        'allow_sessions': allow_sessions,
+    }
+    return {
+        DIGEST: login_or_digest_ex(**decorator_function_kwargs),
+        BASIC: login_or_basic_ex(**decorator_function_kwargs),
+        API_KEY: login_or_api_key_ex(**decorator_function_kwargs),
+        OAUTH2: login_or_oauth2_ex(**decorator_function_kwargs),
+        FORMPLAYER: login_or_formplayer_ex(**decorator_function_kwargs),
+    }
 
 
 def two_factor_check(view_func, api_key):
@@ -530,7 +557,7 @@ def check_lockout(fn):
             return fn(request, *args, **kwargs)
 
         user = CouchUser.get_by_username(username)
-        if user and user.is_locked_out() and user.supports_lockout():
+        if user and user.is_locked_out():
             return json_response({"error": _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)
@@ -598,6 +625,10 @@ cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_s
 def check_domain_migration(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
         if DATA_MIGRATION.enabled(domain):
+            auth_logger.info(
+                "Request rejected domain=%s reason=%s request=%s",
+                domain, "flag:migration", request.path
+            )
             return HttpResponse('Service Temporarily Unavailable',
                                 content_type='text/plain', status=503)
         return view_func(request, domain, *args, **kwargs)

@@ -13,19 +13,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         className: "formplayer-request",
-        attributes: function () {
-            var displayText = this.options.model.attributes.displayText;
-            return {
-                "role": "link",
-                "tabindex": "0",
-                "aria-label": displayText,
-            };
-        },
         events: {
             "click": "rowClick",
             "click .js-module-audio-play": "audioPlay",
             "click .js-module-audio-pause": "audioPause",
-            "keydown": "rowKeyAction",
         },
 
         initialize: function (options) {
@@ -75,11 +66,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
-        },
-        rowKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.rowClick(e);
-            }
         },
         templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -227,29 +213,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click": "rowClick",
-            "keydown": "rowKeyAction",
         },
 
         className: "formplayer-request",
 
-        attributes: function () {
-            var labelId = "case-view-item-".concat(this.options.model.attributes.id);
-            return {
-                "role": "link",
-                "tabindex": "0",
-                "aria-labelledby": labelId,
-            };
-        },
-
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
-        },
-
-        rowKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.rowClick(e);
-            }
         },
 
         templateContext: function () {
@@ -260,7 +230,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
-                labelId: "case-view-item-".concat(this.options.model.attributes.id),
             };
         },
     });
@@ -304,26 +273,41 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
+            this.redoLast = options.redoLast;
         },
 
         ui: {
             actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
-            paginators: '.page-link',
+            searchTextBox: '.module-search-container',
+            paginators: '.js-page',
+            paginationGoButton: '#pagination-go-button',
+            paginationGoTextBox: '.module-go-container',
             columnHeader: '.header-clickable',
+            paginationGoText: '#goText',
+            casesPerPageLimit: '.per-page-limit',
         },
 
         events: {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
+            'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
-            'keypress': 'keyAction',
+            'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
+            'keypress @ui.searchTextBox': 'searchTextKeyAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
+            'keypress @ui.paginators': 'paginateKeyAction',
         },
 
         caseListAction: function (e) {
-            var index = $(e.currentTarget).data().index;
-            FormplayerFrontend.trigger("menu:select", "action " + index);
+            var index = $(e.currentTarget).data().index,
+                step = "action " + index;
+            if (step === this.redoLast) {
+                FormplayerFrontend.trigger("menu:select");
+            } else {
+                FormplayerFrontend.trigger("menu:select", step);
+            }
         },
 
         caseListSearch: function (e) {
@@ -332,7 +316,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:search", searchText);
         },
 
-        keyAction: function (event) {
+        searchTextKeyAction: function (event) {
+            // Pressing Enter in the search box activates it.
             if (event.which === 13 || event.keyCode === 13) {
                 this.caseListSearch(event);
             }
@@ -343,19 +328,54 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
+        onPerPageLimitChange: function (e) {
+            e.preventDefault();
+            var casesPerPage = this.ui.casesPerPageLimit.val();
+            FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage);
+        },
+
+        paginationGoAction: function (e) {
+            e.preventDefault();
+            var goText = Number(this.ui.paginationGoText.val());
+            var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
+            FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+        },
+
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginateAction(e);
+            }
+        },
+
+        paginationGoKeyAction: function (e) {
+            // Pressing Enter in the go box activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                e.stopImmediatePropagation();
+                this.paginationGoAction(e);
+            }
+        },
+
         columnSortAction: function (e) {
             var columnSelection = $(e.currentTarget).data("id") + 1;
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
         templateContext: function () {
+            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
+            var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
+                startPage: paginateItems.startPage,
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                pageCount: this.options.pageCount,
+                endPage: paginateItems.endPage,
+                pageCount: paginateItems.pageCount,
+                rowRange: [10, 25, 50, 100],
+                limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
@@ -369,9 +389,58 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
+                pageNumLabel: _.template(gettext("Page <%=num%>")),
             };
         },
     });
+
+    // this method takes current page number on which user has clicked and total possible pages
+    // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
+    var paginateOptions = function (currentPage, totalPages) {
+        var maxPages = 5;
+        // ensure current page isn't out of range
+        if (currentPage < 1) {
+            currentPage = 1;
+        } else if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        var startPage, endPage;
+        if (totalPages <= maxPages) {
+            // total pages less than max so show all pages
+            startPage = 1;
+            endPage = totalPages;
+        } else {
+            // total pages more than max so calculate start and end pages
+            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
+            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
+            if (currentPage <= maxPagesBeforeCurrentPage) {
+                // current page near the start
+                startPage = 1;
+                endPage = maxPages;
+            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
+                // current page near the end
+                startPage = totalPages - maxPages + 1;
+                endPage = totalPages;
+            } else {
+                // current page somewhere in the middle
+                startPage = currentPage - maxPagesBeforeCurrentPage;
+                endPage = currentPage + maxPagesAfterCurrentPage;
+            }
+        }
+        return {
+            startPage: startPage,
+            endPage: endPage,
+            pageCount: totalPages,
+        };
+    };
+
+    var paginationGoPageNumber = function (pageNumber, pageCount) {
+        if (pageNumber >= 1 && pageNumber <= pageCount) {
+            return pageNumber;
+        } else {
+            return pageCount;
+        }
+    };
 
     // Return a two- or three-length array of case tile CSS styles
     //
@@ -453,26 +522,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
-        attributes: function () {
-            return {
-                "role": "link",
-                "tabindex": "0",
-            };
-        },
         events: {
             "click": "crumbClick",
-            "keydown": "crumbKeyAction",
         },
 
         crumbClick: function (e) {
             e.preventDefault();
             var crumbId = this.options.model.get('id');
             FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
-        },
-        crumbKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.crumbClick(e);
-            }
         },
     });
 
@@ -483,15 +540,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
-            'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
             FormplayerFrontend.trigger('navigateHome');
-        },
-        onKeyActionHome: function (e) {
-            if (e.keyCode === 13) {
-                this.onClickHome();
-            }
         },
 
     });
@@ -600,6 +651,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
+        paginateOptions: paginateOptions,
+        paginationGoPageNumber: paginationGoPageNumber,
     };
 })
 ;

@@ -33,6 +33,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.util.timer import time_method
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
@@ -57,6 +58,7 @@ class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_select
 
 
 class EntriesContributor(SuiteContributorByModule):
+    @time_method()
     def get_module_contributions(self, module):
         return self.entries_helper.entry_for_module(module)
 
@@ -102,10 +104,13 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_parent_filter(relationship, parent_id):
-        return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
-            relationship=relationship,
-            parent_id=parent_id,
-        )
+        if relationship is None:
+            return ""
+        else:
+            return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
+                relationship=relationship,
+                parent_id=parent_id,
+            )
 
     @staticmethod
     def get_userdata_autoselect(key, session_id, mode):

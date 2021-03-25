@@ -8,6 +8,13 @@ MIN_RETRY_WAIT = timedelta(minutes=60)
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
+# Number of attempts to an online endpoint before cancelling payload
+MAX_ATTEMPTS = 3
+# Number of exponential backoff attempts to an offline endpoint
+MAX_BACKOFF_ATTEMPTS = 6
+# Limit the number of records to forward at a time so that one repeater
+# can't hold up the rest.
+RECORDS_AT_A_TIME = 1000
 
 RECORD_PENDING_STATE = 'PENDING'
 RECORD_SUCCESS_STATE = 'SUCCESS'

@@ -1,7 +1,9 @@
 import base64
+import logging
 import re
 from functools import wraps
 
+import binascii
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -19,6 +21,9 @@ from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
+
+
+auth_logger = logging.getLogger("commcare_auth")
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -125,7 +130,10 @@ def get_username_and_password_from_request(request):
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
-        username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
+        try:
+            username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
+        except binascii.Error:
+            return None, None
         username = username.lower()
         # decode password submitted from mobile app login
         password = decode_password(password)
@@ -185,13 +193,21 @@ def formplayer_as_user_auth(view):
     @wraps(view)
     def _inner(request, *args, **kwargs):
         with mutable_querydict(request.GET):
-            as_user = request.GET.pop('as', None)
+            request_user = request.GET.pop('as', None)
 
-        if not as_user:
+        if not request_user:
+            auth_logger.info(
+                "Request rejected reason=%s request=%s",
+                "formplayer_auth:user_required", request.path
+            )
             return HttpResponse('User required', status=401)
 
-        couch_user = CouchUser.get_by_username(as_user[-1])
+        couch_user = CouchUser.get_by_username(request_user[-1])
         if not couch_user:
+            auth_logger.info(
+                "Request rejected reason=%s request=%s",
+                "formplayer_auth:unknown_user", request.path
+            )
             return HttpResponse('Unknown user', status=401)
 
         request.user = couch_user.get_django_user()

@@ -1,76 +1,84 @@
 from xml.etree import cElementTree as ElementTree
 
-from django.core.management.base import BaseCommand
+from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.util import username_to_user_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
+'''This command has an optional argument '--location' that will exclude all cases with that location. If the
+case_type is lab_result, the owner_id of that extension case is set to '-'. '''
 
 BATCH_SIZE = 100
-CASE_TYPE = "lab_result"
 DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
-def should_skip(case):
-    return len(case.indices) != 1
+def should_skip(case, traveler_location_id, inactive_location):
+    if len(case.indices) != 1:
+        return True
+    if case.type == 'contact' and case.get_case_property('has_index_case') == 'no':
+        return True
+    if traveler_location_id and case.get_case_property('owner_id') == traveler_location_id:
+        return True
+    if inactive_location and case.get_case_property('owner_id') != inactive_location:
+        return True
+    return False
 
 
 def needs_update(case):
     index = case.indices[0]
-    return index.referenced_type == "patient" and index.relationship == "child"
+    if index.referenced_type == "'patient'":
+        return True
+    return index.relationship == "child" and index.referenced_type == "patient"
 
 
-def case_block(case):
-    index = case.indices[0]
-    return ElementTree.tostring(CaseBlock.deprecated_init(
-        create=False,
-        case_id=case.case_id,
-        owner_id='-',
-        index={index.identifier: (index.referenced_type, index.referenced_id, "extension")},
-    ).as_xml()).decode('utf-8')
+def get_owner_id(case_type):
+    if case_type == 'lab_result':
+        return '-'
+    return None
 
 
-def update_cases(domain, username):
-    accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain(CASE_TYPE)
-    print(f"Found {len(case_ids)} {CASE_TYPE} cases in {domain}")
+class Command(CaseUpdateCommand):
+    help = ("Updates all case indices of a specfied case type to use an extension relationship instead of parent.")
 
-    user_id = username_to_user_id(username)
+    def case_block(self, case, owner_id):
+        index = case.indices[0]
+        return ElementTree.tostring(CaseBlock.deprecated_init(
+            create=False,
+            case_id=case.case_id,
+            owner_id=owner_id,
+            index={index.identifier: ("patient", index.referenced_id, "extension")},
+        ).as_xml(), encoding='utf-8').decode('utf-8')
 
-    case_blocks = []
-    skip_count = 0
-    for case in accessor.iter_cases(case_ids):
-        if should_skip(case):
-            skip_count += 1
-        elif needs_update(case):
-            case_blocks.append(case_block(case))
-    print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped due to multiple indices.")
+    def update_cases(self, domain, case_type, user_id):
+        inactive_location = self.extra_options['inactive_location']
+        accessor = CaseAccessors(domain)
+        case_ids = accessor.get_case_ids_in_domain(case_type)
+        print(f"Found {len(case_ids)} {case_type} cases in {domain}")
+        traveler_location_id = self.extra_options['location']
 
-    total = 0
-    for chunk in chunked(case_blocks, BATCH_SIZE):
-        submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
-        total += len(chunk)
-        print("Updated {} cases on domain {}".format(total, domain))
+        case_blocks = []
+        skip_count = 0
+        for case in accessor.iter_cases(case_ids):
+            if should_skip(case, traveler_location_id, inactive_location):
+                skip_count += 1
+            elif needs_update(case):
+                owner_id = get_owner_id(case_type)
+                case_blocks.append(self.case_block(case, owner_id))
+        print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped due to"
+              f" multiple indices.")
 
+        total = 0
+        for chunk in chunked(case_blocks, BATCH_SIZE):
+            submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
+            total += len(chunk)
+            print("Updated {} cases on domain {}".format(total, domain))
 
-class Command(BaseCommand):
-    help = (f"Updates all {CASE_TYPE} case indices to use an extension relationship instead of parent.")
+        self.log_data(domain, "update_case_index_relationship", case_type, len(case_ids), total, [])
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('username')
-        parser.add_argument('--and-linked', action='store_true', default=False)
-
-    def handle(self, domain, username, **options):
-        domains = {domain}
-        if options["and_linked"]:
-            domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
-
-        for domain in domains:
-            print(f"Processing {domain}")
-            update_cases(domain, username)
+        super().add_arguments(parser)
+        parser.add_argument('--location', type=str, default=None)
+        parser.add_argument('--inactive-location', type=str, default=None)

@@ -245,41 +245,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             self.rawAnswer(item.place_name);
             self.editing = false;
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                var broadcastObj = {
-                    full: item.place_name,
-                };
-                item.context.forEach(function (contextValue) {
-                    try {
-                        if (contextValue.id.startsWith('postcode')) {
-                            broadcastObj.zipcode = contextValue.text;
-                        } else if (contextValue.id.startsWith('place')) {
-                            broadcastObj.city = contextValue.text;
-                        } else if (contextValue.id.startsWith('country')) {
-                            broadcastObj.country = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.country_short = contextValue.short_code;
-                            }
-                        } else if (contextValue.id.startsWith('region')) {
-                            broadcastObj.region = contextValue.text;
-                            // TODO: Deprecate state_short and state_long.
-                            broadcastObj.state_long = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.state_short = contextValue.short_code.replace('US-', '');
-                            }
-                            // If US region, it's actually a state so add us_state.
-                            if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
-                                broadcastObj.us_state = contextValue.text;
-                                broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
-                            }
-                        }
-                    } catch (err) {
-                        // Swallow error, broadcast best effort. Consider logging.
-                    }
-                });
-                // street composed of (optional) number and street name.
-                broadcastObj.street = item.address || '';
-                broadcastObj.street += ' ' + item.text;
-
+                var broadcastObj = Utils.getBroadcastObject(item);
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
             // The default full address returned to the search bar
@@ -306,22 +272,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 });
             }
 
-            var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
-            var geocoder = new MapboxGeocoder({
-                accessToken: initialPageData.get("mapbox_access_token"),
-                types: 'address',
-                enableEventLogging: false,
-                getItemValue: self.geocoderItemCallback,
-            });
-            if (defaultGeocoderLocation.coordinates) {
-                geocoder.setProximity(defaultGeocoderLocation.coordinates);
-            }
-            geocoder.on('clear', self.geocoderOnClearCallback);
-            geocoder.addTo('#' + self.entryId);
-            // Must add the form-control class to the input created by mapbox in order to edit.
-            var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
-            inputEl.addClass('form-control');
-            inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+            Utils.renderMapboxInput(
+                self.entryId,
+                self.geocoderItemCallback,
+                self.geocoderOnClearCallback,
+                initialPageData
+            );
         };
 
         self._inputOnKeyDown = function (event) {
@@ -629,6 +585,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         if (!query || !option.text) {
             return true;
         }
+        query = query.toLowerCase();
+        var haystack = option.text.toLowerCase();
 
         var match;
         if (matchType === Const.COMBOBOX_MULTIWORD) {
@@ -637,7 +595,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
             // where n is number of words in the query, and m is number of words in the choice
             var wordsInQuery = query.split(' ');
-            var wordsInChoice = option.text.split(' ');
+            var wordsInChoice = haystack.split(' ');
 
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
@@ -645,8 +603,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         } else if (matchType === Const.COMBOBOX_FUZZY) {
             // Fuzzy filter, matches if query is "close" to answer
             match = (
-                (window.Levenshtein.get(option.text.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
-                option.text.toLowerCase() === query.toLowerCase()
+                (window.Levenshtein.get(haystack, query) <= 2 && query.length > 3) ||
+                haystack === query
             );
         }
 
@@ -656,7 +614,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         }
 
         // Standard filter, matches only start of word
-        return option.text.toLowerCase().startsWith(query.toLowerCase());
+        return haystack.startsWith(query);
     };
 
     ComboboxEntry.prototype = Object.create(DropdownEntry.prototype);
