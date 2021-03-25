@@ -1813,6 +1813,17 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     """
 )
 
+BLOCK_RESTORES = StaticToggle(
+    'block_restores',
+    'Block Restores Immediately with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag for EMERGENCY PURPOSES ONLY if a project's restore is causing
+    system-wide issues that aren't caught by rate limiting or other mechanisms.
+    """
+)
+
 SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'skip_updating_user_reporting_metadata',
     'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
