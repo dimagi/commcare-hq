@@ -908,7 +908,7 @@ class ApplicationsTab(UITab):
     def make_app_title(cls, app):
         return format_html(
             '{}{}',
-            strip_tags(app.name) or '(Untitled)',
+            strip_tags(app.name) or _('(Untitled)'),
             ' (Remote)' if is_remote_app(app) else '',
         )
 
