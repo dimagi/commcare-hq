@@ -3,7 +3,6 @@ from django.utils.translation import ugettext_lazy
 
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.users.models import AnonymousCouchUser
-from corehq.middleware import get_view_func
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from .permissions import is_location_safe, location_restricted_response
 
@@ -35,8 +34,7 @@ class LocationAccessMiddleware(MiddlewareMixin):
         self.apply_location_access(request)
 
         if not request.can_access_all_locations:
-            view_func = get_view_func(view_fn, view_kwargs)
-            if not is_location_safe(view_func, request, view_args, view_kwargs):
+            if not is_location_safe(view_fn, request, view_args, view_kwargs):
                 return location_restricted_response(request)
             elif not user.get_sql_location(domain):
                 return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)
