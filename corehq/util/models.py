@@ -8,7 +8,6 @@ from django.db import models
 
 from jsonfield import JSONField as jsonfield_JSONField
 
-from dimagi.utils.logging import notify_exception
 from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
 
 AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
@@ -300,8 +299,6 @@ class ForeignValue:
             try:
                 return manager.get_or_create(value=value)[0]
             except model.MultipleObjectsReturned:
-                notify_exception(None, f"{model} multiple objects returned. "
-                    "Does your 'value' field have a unique constraint?")
                 return manager.filter(value=value).order_by("id").first()
         model = self.fk.related_model
         manager = self.fk.related_model.objects
