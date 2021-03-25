@@ -176,9 +176,11 @@ class SmartAuthView(AuthorizationView):
     def get(self, request, domain, *args, **kwargs):
         if not toggles.FHIR_INTEGRATION.enabled_for_request(request):
             raise Http404()
+        self._validate_case_relationships()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, domain, *args, **kwargs):
+        self._validate_case_relationships()
         response = super().post(request, *args, **kwargs)
         form = self.get_form()
         if not form.is_valid():
@@ -192,6 +194,13 @@ class SmartAuthView(AuthorizationView):
         # Save the selected case_id in the cache to be returned with the token in the SmartTokenView
         cache.set(_get_smart_cache_key(domain, client_id, authorization_code), case_id, 5 * 60)
         return response
+
+    def _validate_case_relationships(self):
+        if not ConsumerUserCaseRelationship.objects.filter(
+            consumer_user__user=self.request.user,
+            domain=self.request.domain,
+        ).exists():
+            raise Http404("There are no cases associated with this user")
 
 
 class SmartTokenView(TokenView):

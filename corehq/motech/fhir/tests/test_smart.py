@@ -135,3 +135,9 @@ class TokenEndpointTests(TestCase):
         self.assertTrue(
             "INVALID CASE ID is not one of the available choices." in auth_response.content.decode('utf-8')
         )
+
+    def test_no_cases_no_auth(self):
+        self.client.login(username=self.test_user.username, password="123456")
+        code_verifier, code_challenge = self._generate_pkce_codes("S256")
+        auth_response = self._get_pkce_auth_response(code_challenge, "S256", case_id='')
+        self.assertEqual(404, auth_response.status_code)
