@@ -84,7 +84,7 @@ def restore(request, domain, app_id=None):
         return HttpTooManyRequests()
 
     response, timing_context = get_restore_response(
-        domain, request.couch_user, app_id, **get_restore_params(request))
+        domain, request.couch_user, app_id, **get_restore_params(request, domain))
     return response
 
 
@@ -154,7 +154,7 @@ def claim(request, domain):
     return HttpResponse(status=200)
 
 
-def get_restore_params(request):
+def get_restore_params(request, domain):
     """
     Given a request, get the relevant restore parameters out with sensible defaults
     """
