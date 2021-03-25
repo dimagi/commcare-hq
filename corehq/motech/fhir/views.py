@@ -212,6 +212,10 @@ class SmartTokenView(TokenView):
         if response.status_code != 200:
             return response
 
+        if request.POST.get('grant_type') == "refresh_token":
+            # For a refresh token, we don't need to add the case id, since the client should already have it
+            return response
+
         body = json.loads(response.content)
         access_token = body.get("access_token")
         token = get_access_token_model().objects.get(token=access_token)
