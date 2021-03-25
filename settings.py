@@ -855,6 +855,7 @@ OAUTH2_PROVIDER = {
         'launch/patient': 'Access your unique patient ID',
     },
 }
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
 
 # TODO: WARNING: Can only set this after the migration has run
 # OAUTH2_PROVIDER_APPLICATION_MODEL = 'hqwebapp.HQOAuthApplication'
