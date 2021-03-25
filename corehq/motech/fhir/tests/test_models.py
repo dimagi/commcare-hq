@@ -1,6 +1,7 @@
 import doctest
 from contextlib import contextmanager
 
+from django.db import IntegrityError
 from django.test import TestCase
 
 from nose.tools import assert_in
@@ -108,6 +109,56 @@ class TestConfigurationErrors(TestCase):
         self.assertEqual(value_source.__class__.__name__, 'CaseProperty')
         self.assertEqual(value_source.case_property, 'name')
         self.assertEqual(value_source.jsonpath, 'name[0].text')
+
+
+class TestModelIntegrity(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.mother = CaseType.objects.create(
+            domain=DOMAIN,
+            name='mother',
+        )
+        cls.patient = models.FHIRResourceType.objects.create(
+            domain=DOMAIN,
+            case_type=cls.mother,
+            name='Patient'
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patient.delete()
+        cls.mother.delete()
+        super().tearDownClass()
+
+    def test_two_resource_types_one_case_type_bad(self):
+        """
+        Case type "mother" can't be mapped to both "Patient" and "Person"
+        """
+        with self.assertRaises(IntegrityError):
+            models.FHIRResourceType.objects.create(
+                domain=DOMAIN,
+                case_type=self.mother,
+                name='Person'
+            )
+
+    def test_two_case_types_one_resource_type_ok(self):
+        """
+        Case types "mother" and "child" can both be mapped to "Patient"
+        """
+        child = CaseType.objects.create(
+            domain=DOMAIN,
+            name='child',
+        )
+        self.addCleanup(child.delete)
+
+        patient_again = models.FHIRResourceType.objects.create(
+            domain=DOMAIN,
+            case_type=child,
+            name='Patient'
+        )
+        self.addCleanup(patient_again.delete)
 
 
 class TestResourceValidation(TestCase):
