@@ -450,9 +450,11 @@ class RestoreState(object):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self._new_sync_log()
 
-    def finish_sync(self):
+    def finish_sync(self, timing_context):
         self.duration = datetime.utcnow() - self.start_time
         self.current_sync_log.duration = self.duration.seconds
+        if self.duration.seconds > 1:
+            self.current_sync_log.timing_detail = timing_context.to_dict()
         self.current_sync_log.save()
 
     def _new_sync_log(self):
@@ -627,7 +629,7 @@ class RestoreConfig(object):
         self.restore_state.start_sync()
         fileobj = self._generate_restore_response(async_task=async_task)
         try:
-            self.restore_state.finish_sync()
+            self.restore_state.finish_sync(self.timing_context)
             cached_response = self.set_cached_payload_if_necessary(
                 fileobj, self.restore_state.duration, async_task)
             if async_task:

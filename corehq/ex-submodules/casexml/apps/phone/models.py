@@ -285,6 +285,7 @@ class AbstractSyncLog(SafeSaveDocument):
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()  # in seconds
+    timing_detail = DictProperty()  # value from TimingContext.to_dict
     log_format = StringProperty()
 
     # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
