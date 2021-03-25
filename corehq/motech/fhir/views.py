@@ -59,8 +59,8 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 
 
 @require_GET
-@login_or_api_key
-@require_superuser
+# @login_or_api_key
+# @require_superuser
 @toggles.FHIR_INTEGRATION.required_decorator()
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
@@ -180,9 +180,12 @@ class SmartAuthView(AuthorizationView):
 
     def post(self, request, domain, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
+        form = self.get_form()
+        if not form.is_valid():
+            return response
+
         case_id = request.POST.get('case_id')
         client_id = request.POST.get('client_id')
-
         parsed_url = urllib.parse.urlparse(response.url)
         authorization_code = urllib.parse.parse_qs(parsed_url.query)["code"][0]
 

@@ -38,6 +38,7 @@ class TokenEndpointTests(TestCase):
         super().setUp()
         self.case_factory = CaseFactory(DOMAIN)
         self.test_user = UserModel.objects.create_user("test_user", "test@example.com", "123456")
+        self.consumer_user = ConsumerUser.objects.create(user=self.test_user)
 
         self.application = Application.objects.create(
             name="Test Application",
@@ -71,7 +72,12 @@ class TokenEndpointTests(TestCase):
             code_challenge = code_verifier
         return code_verifier, code_challenge
 
-    def _get_pkce_auth(self, code_challenge, code_challenge_method, case_id=None):
+    def _get_pkce_auth_code(self, code_challenge, code_challenge_method, case_id=None):
+        response = self._get_pkce_auth_response(code_challenge, code_challenge_method, case_id)
+        query_dict = parse_qs(urlparse(response["Location"]).query)
+        return query_dict["code"].pop()
+
+    def _get_pkce_auth_response(self, code_challenge, code_challenge_method, case_id=None):
         """
         From https://github.com/jazzband/django-oauth-toolkit/blob/9d2aac2480b2a1875eb52612661992f73606bade/tests/test_authorization_code.py#L627  # noqa
         """
@@ -88,20 +94,18 @@ class TokenEndpointTests(TestCase):
         }
 
         response = self.client.post(reverse(SmartAuthView.urlname, kwargs={"domain": DOMAIN}), data=authcode_data)
-        query_dict = parse_qs(urlparse(response["Location"]).query)
-        return query_dict["code"].pop()
+        return response
 
     def test_patient_case_id_included_single_relationship(self):
         case = self.case_factory.create_case(case_name="Demographic Case")
 
-        consumer_user = ConsumerUser.objects.create(user=self.test_user)
-        consumer_user_case_relationship = ConsumerUserCaseRelationship.objects.create(
-            consumer_user=consumer_user, case_id=case.case_id, domain=DOMAIN
+        ConsumerUserCaseRelationship.objects.create(
+            consumer_user=self.consumer_user, case_id=case.case_id, domain=DOMAIN
         )
 
         self.client.login(username=self.test_user.username, password="123456")
         code_verifier, code_challenge = self._generate_pkce_codes("S256")
-        authorization_code = self._get_pkce_auth(code_challenge, "S256", case_id=case.case_id)
+        authorization_code = self._get_pkce_auth_code(code_challenge, "S256", case_id=case.case_id)
 
         token_request_data = {
             "grant_type": "authorization_code",
@@ -115,4 +119,19 @@ class TokenEndpointTests(TestCase):
             reverse("smart_token_view", kwargs={"domain": DOMAIN}), data=token_request_data
         )
         content = json.loads(response.content.decode("utf-8"))
-        self.assertEqual(content["patient"], consumer_user_case_relationship.case_id)
+        self.assertEqual(content["patient"], case.case_id)
+
+    def test_token_rejected_invalid_case(self):
+        case = self.case_factory.create_case(case_name="Demographic Case 1")
+
+        ConsumerUserCaseRelationship.objects.create(
+            consumer_user=self.consumer_user, case_id=case.case_id, domain=DOMAIN
+        )
+
+        self.client.login(username=self.test_user.username, password="123456")
+        code_verifier, code_challenge = self._generate_pkce_codes("S256")
+        auth_response = self._get_pkce_auth_response(code_challenge, "S256", case_id="INVALID CASE ID")
+        auth_response.render()
+        self.assertTrue(
+            "INVALID CASE ID is not one of the available choices." in auth_response.content.decode('utf-8')
+        )
