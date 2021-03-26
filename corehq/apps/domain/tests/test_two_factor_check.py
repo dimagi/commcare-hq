@@ -41,7 +41,6 @@ class TestTwoFactorCheck(TestCase):
         two_factor_required_bool = _two_factor_required(
             view_func,
             self.domain,
-            request.couch_user,
             request
         )
         self.assertTrue(two_factor_required_bool)
@@ -54,7 +53,6 @@ class TestTwoFactorCheck(TestCase):
         two_factor_required_bool = _two_factor_required(
             view_func,
             self.domain,
-            request.couch_user,
             request
         )
         self.assertFalse(two_factor_required_bool)
@@ -65,7 +63,6 @@ class TestTwoFactorCheck(TestCase):
         two_factor_required_bool = _two_factor_required(
             view_func,
             self.domain,
-            request.couch_user,
             request
         )
         self.assertFalse(two_factor_required_bool)

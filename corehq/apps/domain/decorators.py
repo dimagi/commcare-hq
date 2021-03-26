@@ -155,7 +155,7 @@ def _inactive_domain_response(request, domain_name):
 
 
 def _is_missing_two_factor(view_fn, request):
-    return (_two_factor_required(view_fn, request.project, request.couch_user, request)
+    return (_two_factor_required(view_fn, request.project, request)
             and not getattr(request, 'bypass_two_factor', False)
             and not request.user.is_verified())
 
@@ -449,7 +449,7 @@ def two_factor_check(view_func, api_key):
                 not api_key and
                 not getattr(request, 'skip_two_factor_check', False) and
                 domain_obj and
-                _two_factor_required(view_func, domain_obj, couch_user, request)
+                _two_factor_required(view_func, domain_obj, request)
             ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
@@ -474,7 +474,7 @@ def two_factor_check(view_func, api_key):
     return _outer
 
 
-def _two_factor_required(view_func, domain_obj, couch_user, request):
+def _two_factor_required(view_func, domain_obj, request):
     if (ENTERPRISE_SSO.enabled_for_request(request)
             and is_request_using_sso(request)):
         # SSO authenticated users manage two-factor auth on the Identity Provider
@@ -485,19 +485,19 @@ def _two_factor_required(view_func, domain_obj, couch_user, request):
     exempt = getattr(view_func, 'two_factor_exempt', False)
     if exempt:
         return False
-    if not couch_user:
+    if not getattr(request, 'couch_user'):
         return False
     return (
         # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
         # If you lose your phone, you have to give up superuser privileges
         # until you have two factor set up again.
-        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser
+        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and request.couch_user.is_superuser
     ) or (
         # For other policies requiring two factor auth,
         # allow the two_factor_disabled loophole for people who have lost their phones
         # and need time to set up two factor auth again.
-        (domain_obj.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username))
-        and not couch_user.two_factor_disabled
+        (domain_obj.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.couch_user.username))
+        and not request.couch_user.two_factor_disabled
     )
 
 
