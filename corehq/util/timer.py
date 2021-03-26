@@ -59,10 +59,8 @@ class NestableTimer(object):
     def to_dict(self, minimal=False):
         timer_dict = {
             'name': self.name,
-            'duration': self.duration,
-            'percent_total': self.percent_of_total,
-            'percent_parent': self.percent_of_parent,
-            'subs': [sub.to_dict() for sub in self.subs]
+            'duration': None if self.duration is None else round(self.duration, 4),
+            'subs': [sub.to_dict(minimal) for sub in self.subs]
         }
         if not minimal:
             timer_dict['percent_total'] = self.percent_of_total,
