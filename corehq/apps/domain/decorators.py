@@ -475,6 +475,13 @@ def two_factor_check(view_func, api_key):
 
 
 def _two_factor_required(view_func, domain_obj, request):
+    """
+    Check if Two Factor Authentication is required.
+    :param view_func: the view function being accessed
+    :param domain_obj: Domain instance associated with the view
+    :param request: Request
+    :return: Boolean (True if 2FA is required)
+    """
     if (ENTERPRISE_SSO.enabled_for_request(request)
             and is_request_using_sso(request)):
         # SSO authenticated users manage two-factor auth on the Identity Provider
