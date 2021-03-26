@@ -106,14 +106,14 @@ class LogLongRequestMiddleware(MiddlewareMixin):
     Use `corehq.util.timer.set_request_duration_reporting_threshold` to override the
     default threshold for specific views.
     """
-    DEFAULT_THRESHOLD = timedelta(minutes=10)  # 10 minutes
+    DEFAULT_THRESHOLD = timedelta(minutes=10).total_seconds()  # 10 minutes
 
     def process_request(self, request):
         request._profile_starttime = datetime.datetime.utcnow()
 
     def process_view(self, request, view_fn, view_args, view_kwargs):
         view_func = get_view_func(view_fn, view_kwargs)
-        reporting_threshold = getattr(view_func, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD.total_seconds())
+        reporting_threshold = getattr(view_func, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD)
         setattr(request, DURATION_REPORTING_THRESHOLD, reporting_threshold)
 
     def process_response(self, request, response):
@@ -128,7 +128,7 @@ class LogLongRequestMiddleware(MiddlewareMixin):
 
         if hasattr(request, '_profile_starttime'):
             duration = datetime.datetime.utcnow() - request._profile_starttime
-            threshold = getattr(request, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD.total_seconds())
+            threshold = getattr(request, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD)
             if duration.total_seconds() > threshold:
                 notify_exception(request, "Request timing above threshold", details={
                     'threshold': threshold,
