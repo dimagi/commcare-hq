@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -372,7 +374,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
 class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return get_apps_in_domain(domain, include_remote=False)
+        return sorted(get_apps_in_domain(domain, include_remote=False), key=attrgetter("date_created"))
 
     def obj_get(self, bundle, **kwargs):
         # support returning linked applications upon receiving an application request
