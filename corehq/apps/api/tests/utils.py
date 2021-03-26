@@ -136,7 +136,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
             api_url = "%s?%s" % (url, api_params)
         return api_url
 
-    def _assert_auth_get_resource(self, url, username=None, password=None, failure_code=401, headers=None):
+    def _assert_auth_get_resource(self, url, username=None, password=None, allow_session_auth=False, headers=None):
         """
         This tests that the given URL fails when accessed via sessions and returns the response
         obtained via using API auth. It's callers' responsibility to test resource specific logic
@@ -149,10 +149,10 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         password = password or self.password
         headers = headers or {}
 
-        # session based auth should fail
-        self.client.login(username=username, password=password)
-        response = self.client.get(url, **headers)
-        self.assertEqual(response.status_code, failure_code)
+        if not allow_session_auth:
+            self.client.login(username=username, password=password)
+            response = self.client.get(url, **headers)
+            self.assertEqual(response.status_code, 401)
 
         # api_key auth should succeed, caller can check for expected code
         api_url = self._api_url(url, username)
