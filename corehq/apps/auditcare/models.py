@@ -47,15 +47,15 @@ STANDARD_HEADER_KEYS = [
 
 
 class UserAgent(models.Model):
-    value = models.CharField(max_length=255, db_index=True, unique=True)
+    value = models.CharField(max_length=255, db_index=True)
 
 
 class HttpAccept(models.Model):
-    value = models.CharField(max_length=255, db_index=True, unique=True)
+    value = models.CharField(max_length=255, db_index=True)
 
 
 class ViewName(models.Model):
-    value = models.CharField(max_length=255, db_index=True, unique=True)
+    value = models.CharField(max_length=255, db_index=True)
 
 
 class AuditEvent(models.Model):
