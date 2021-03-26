@@ -444,7 +444,7 @@ def two_factor_check(view_func, api_key):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
             domain_obj = Domain.get_by_name(domain)
-            couch_user = _ensure_request_couch_user(request)
+            _ensure_request_couch_user(request)
             if (
                 not api_key and
                 not getattr(request, 'skip_two_factor_check', False) and
