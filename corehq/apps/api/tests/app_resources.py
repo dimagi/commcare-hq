@@ -2,11 +2,9 @@ import json
 
 from testil import Regex
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import v0_4
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
-from corehq.apps.domain.models import Domain
 from .utils import APIResourceTest
 
 
