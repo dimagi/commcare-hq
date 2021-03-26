@@ -36,7 +36,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    UserRole, InvitationStatus,
+    UserRole, InvitationStatus, DomainRequest,
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.apps.users.views.utils import get_editable_role_choices
@@ -294,6 +294,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
+        is_accepted=False,
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
@@ -696,8 +697,17 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                             user.set_role(domain, role_qualified_id)
                         user.save()
                     else:
-                        create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
-                                                         user.location_id)
+                        # If user exists and has already requested access, just add them to the project
+                        # Otherwise, send an invitation
+                        domain_request = DomainRequest.by_email(domain, username)
+                        if domain_request is not None:
+                            domain_request.is_approved = True
+                            domain_request.save()
+                            domain_request.send_approval_email()
+                            user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
+                        else:
+                            create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                             user.location_id)
                 status_row['flag'] = 'updated'
 
             else:
