@@ -482,17 +482,17 @@ def _two_factor_required(view_func, domain_obj, request):
     :param request: Request
     :return: Boolean (True if 2FA is required)
     """
+    exempt = getattr(view_func, 'two_factor_exempt', False)
+    if exempt:
+        return False
+    if not getattr(request, 'couch_user'):
+        return False
     if (ENTERPRISE_SSO.enabled_for_request(request)
             and is_request_using_sso(request)):
         # SSO authenticated users manage two-factor auth on the Identity Provider
         # level, so CommCare HQ does not attempt 2FA with them. This is one of
         # the reasons we require that domains establish TrustedIdentityProvider
         # relationships.
-        return False
-    exempt = getattr(view_func, 'two_factor_exempt', False)
-    if exempt:
-        return False
-    if not getattr(request, 'couch_user'):
         return False
     return (
         # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
