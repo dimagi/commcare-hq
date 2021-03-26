@@ -70,7 +70,6 @@ branches:
   - mk/fhir/data-dictionary-upload-2 # MK Mar 9
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-  - smh/add-location-data-web-user-download # Steph Mar 15
   #- ap/translation-update # Amit March 16
   - ap/escape-html-underscore # Amit March 16
   - fr/consumer-user             # Farid March 17
