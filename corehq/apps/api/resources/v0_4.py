@@ -4,6 +4,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from django.urls import reverse
+from memoized import memoized
 
 from tastypie import fields
 from tastypie.authentication import Authentication
@@ -43,7 +44,7 @@ from corehq.apps.api.serializers import (
 )
 from corehq.apps.api.util import get_obj, get_object_or_not_exist
 from corehq.apps.app_manager.app_schemas.case_properties import (
-    get_case_properties,
+    get_all_case_properties,
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_all_built_app_results,
@@ -415,8 +416,11 @@ class ApplicationResource(BaseApplicationResource):
             for result in results
         ]
 
-    @staticmethod
-    def dehydrate_module(app, module, langs):
+    @memoized
+    def get_all_case_properties_local(self, app):
+        return get_all_case_properties(app, exclude_invalid_properties=False)
+
+    def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
         with just the good parts.
@@ -429,9 +433,8 @@ class ApplicationResource(BaseApplicationResource):
 
             dehydrated['case_type'] = module.case_type
 
-            dehydrated['case_properties'] = get_case_properties(
-                app, [module.case_type], defaults=['name']
-            )[module.case_type]
+            all_case_properties = self.get_all_case_properties_local(app)
+            dehydrated['case_properties'] = all_case_properties[module.case_type]
 
             dehydrated['unique_id'] = module.unique_id
 
