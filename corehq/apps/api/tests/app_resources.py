@@ -40,7 +40,10 @@ class TestAppResource(APIResourceTest):
         response = self._assert_auth_get_resource(self.list_endpoint, allow_session_auth=True)
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
-        self.assertEqual(content["meta"], {"total_count": 2})
+        self.assertEqual(content["meta"], {
+            'limit': None, 'next': None, 'offset': 0, 'previous': None,
+            'total_count': 2
+        })
         self.assertEqual(content["objects"], [
             self.get_expected_structure(with_version=True),
             self.get_expected_structure(with_version=False),
