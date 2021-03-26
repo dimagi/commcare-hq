@@ -56,7 +56,7 @@ class NestableTimer(object):
         else:
             return None
 
-    def to_dict(self):
+    def to_dict(self, minimal=False):
         timer_dict = {
             'name': self.name,
             'duration': self.duration,
@@ -64,6 +64,10 @@ class NestableTimer(object):
             'percent_parent': self.percent_of_parent,
             'subs': [sub.to_dict() for sub in self.subs]
         }
+        if not minimal:
+            timer_dict['percent_total'] = self.percent_of_total,
+            timer_dict['percent_parent'] = self.percent_of_parent
+
         if not self.duration:
             timer_dict.update({
                 'beginning': self.beginning,
@@ -170,7 +174,7 @@ class TimingContext(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop(self.peek().name)
 
-    def to_dict(self):
+    def to_dict(self, minimal=False):
         """Get timing data as a recursive dictionary of the format:
         {
             "name": "demo_timing",
@@ -187,8 +191,11 @@ class TimingContext(object):
                 }
             ]
         }
+
+        :param minimal: If set to True the ``percent_*`` fields will be excluded
+            from the result.
         """
-        return self.root.to_dict()
+        return self.root.to_dict(minimal=minimal)
 
     @property
     def duration(self):

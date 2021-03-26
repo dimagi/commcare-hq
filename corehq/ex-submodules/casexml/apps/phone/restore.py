@@ -454,7 +454,7 @@ class RestoreState(object):
         self.duration = datetime.utcnow() - self.start_time
         self.current_sync_log.duration = self.duration.seconds
         if self.duration.seconds > 1:
-            self.current_sync_log.timing_detail = timing_context.to_dict()
+            self.current_sync_log.timing_detail = timing_context.to_dict(minimal=True)["subs"]
         self.current_sync_log.save()
 
     def _new_sync_log(self):
