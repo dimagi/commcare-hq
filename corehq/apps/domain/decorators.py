@@ -474,7 +474,7 @@ def two_factor_check(view_func, api_key):
     return _outer
 
 
-def _two_factor_required(view_func, domain, couch_user, request):
+def _two_factor_required(view_func, domain_obj, couch_user, request):
     if (ENTERPRISE_SSO.enabled_for_request(request)
             and is_request_using_sso(request)):
         # SSO authenticated users manage two-factor auth on the Identity Provider
@@ -496,7 +496,7 @@ def _two_factor_required(view_func, domain, couch_user, request):
         # For other policies requiring two factor auth,
         # allow the two_factor_disabled loophole for people who have lost their phones
         # and need time to set up two factor auth again.
-        (domain.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username))
+        (domain_obj.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username))
         and not couch_user.two_factor_disabled
     )
 
