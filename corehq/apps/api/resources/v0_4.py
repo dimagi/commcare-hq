@@ -15,6 +15,7 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
+from corehq.apps.api.resources.pagination import DoesNothingPaginator
 from couchforms.models import doc_types
 
 from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
@@ -387,6 +388,7 @@ class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecific
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+        paginator_class = DoesNothingPaginator
 
 
 class ApplicationResource(BaseApplicationResource):
