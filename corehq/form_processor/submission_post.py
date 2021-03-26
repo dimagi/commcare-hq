@@ -63,9 +63,11 @@ class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform ca
 
 class SubmissionPost(object):
 
-    def __init__(self, instance=None, attachments=None, auth_context=None, domain=None, app_id=None, build_id=None,
-                 path=None, location=None, submit_ip=None, openrosa_headers=None, last_sync_token=None,
-                 received_on=None, date_header=None, partial_submission=False, case_db=None, force_logs=False,
+    def __init__(self, instance=None, attachments=None, auth_context=None,
+                 domain=None, app_id=None, build_id=None, path=None,
+                 location=None, submit_ip=None, openrosa_headers=None,
+                 last_sync_token=None, received_on=None, date_header=None,
+                 partial_submission=False, case_db=None, force_logs=False,
                  timing_context=None):
         assert domain, "'domain' is required"
         assert instance, instance
