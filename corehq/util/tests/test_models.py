@@ -1,3 +1,6 @@
+from contextlib import contextmanager
+from unittest.mock import patch
+
 from django.test import TestCase
 from testil import eq
 
@@ -86,10 +89,13 @@ class TestForeignValue(TestCase):
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 0)
 
-        UserAccessLog(user_agent="Mozilla")
+        log2 = UserAccessLog(user_agent="Mozilla")
         info = UserAccessLog.user_agent.get_related.cache_info()
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
+
+        # matching instances indicates LRU cache was used
+        self.assertIs(self.log.user_agent_fk, log2.user_agent_fk)
 
     def test_foreign_value_duplicate(self):
         ua1 = UserAgent(value="Mozilla")
@@ -100,3 +106,26 @@ class TestForeignValue(TestCase):
         self.log.user_agent = "Mozilla"
         self.log.save()
         self.assertEqual(self.log.user_agent_fk.id, ua1.id)
+
+    def test_lru_cache_disabled(self):
+        with foreign_value_lru_cache_disabled():
+            self.log.user_agent = "Mozilla"
+            log2 = UserAccessLog(user_agent="Mozilla")
+            self.assertEqual(self.log.user_agent_fk.id, log2.user_agent_fk.id)
+
+            # different instances indicates LRU cache was not used
+            self.assertIsNot(self.log.user_agent_fk, log2.user_agent_fk)
+
+
+@contextmanager
+def foreign_value_lru_cache_disabled():
+    def reset_cached_property():
+        fv_prop.__dict__.pop("get_related", None)
+
+    fv_prop = UserAccessLog.user_agent
+    reset_cached_property()
+    try:
+        with patch.object(fv_prop, "cache_size", 0):
+            yield
+    finally:
+        reset_cached_property()
