@@ -844,21 +844,32 @@ ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
 
+# TODO: WARNING: Can only set this after the migration has run
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'hqwebapp.HQOAuthApplication'
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
+
+
+def pkce_required(client_id):
+    from django.apps import apps
+    Application = apps.get_model(OAUTH2_PROVIDER_APPLICATION_MODEL)
+    try:
+        client = Application.objects.get(client_id=client_id)
+        return client.pkce_required
+    except Application.DoesNotExist:
+        return False
+
+
 OAUTH2_PROVIDER = {
     # until we have clearer project-level checks on this, just expire the token every
     # 15 minutes to match HIPAA constraints.
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
-    'PKCE_REQUIRED': True,
+    'PKCE_REQUIRED': pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'launch/patient': 'Access your unique patient ID',
     },
 }
-OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
-
-# TODO: WARNING: Can only set this after the migration has run
-# OAUTH2_PROVIDER_APPLICATION_MODEL = 'hqwebapp.HQOAuthApplication'
 
 
 # this should be overridden in localsettings

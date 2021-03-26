@@ -99,4 +99,4 @@ class UserAccessLog(models.Model):
 
 
 class HQOAuthApplication(AbstractApplication):
-    pass
+    pkce_required = models.BooleanField(default=True)
