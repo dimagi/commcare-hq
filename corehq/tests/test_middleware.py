@@ -5,8 +5,8 @@ from django.http import HttpResponse
 from django.test import override_settings, SimpleTestCase
 from django.urls import path
 from django.views import View
+from testil import Regex
 
-from corehq.middleware import LogLongRequestMiddleware
 from corehq.util.timer import set_request_duration_reporting_threshold, TimingContext
 
 
@@ -49,10 +49,9 @@ class TestLogLongRequestMiddleware(SimpleTestCase):
     @mock.patch('corehq.middleware.add_breadcrumb')
     @mock.patch('corehq.middleware.notify_exception')
     def test_middleware_reports_slow_function_view_with_timer(self, notify_exception, add_breadcrumb):
-        with mock.patch.object(LogLongRequestMiddleware, "DURATION_FORMAT", "0.1f"):
-            res = self.client.get('/slow_function')
+        res = self.client.get('/slow_function')
         self.assertEqual(res.status_code, 200)
         notify_exception.assert_called_once()
         add_breadcrumb.assert_has_calls([
-            mock.call(category="timing", message="sleep: 0.2", level="info")
+            mock.call(category="timing", message=Regex(r"^sleep: 0.\d+"), level="info")
         ])

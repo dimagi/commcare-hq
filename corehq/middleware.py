@@ -107,7 +107,6 @@ class LogLongRequestMiddleware(MiddlewareMixin):
     default threshold for specific views.
     """
     DEFAULT_THRESHOLD = timedelta(minutes=10)  # 10 minutes
-    DURATION_FORMAT = "0.3f"  # millisecond granularity
 
     def process_request(self, request):
         request._profile_starttime = datetime.datetime.utcnow()
@@ -123,7 +122,7 @@ class LogLongRequestMiddleware(MiddlewareMixin):
             for sub in request_timer.to_list(exclude_root=True):
                 add_breadcrumb(
                     category="timing",
-                    message=f"{sub.name}: {sub.duration:{LogLongRequestMiddleware.DURATION_FORMAT}}",
+                    message=f"{sub.name}: {sub.duration:0.3f}",
                     level="info",
                 )
 
