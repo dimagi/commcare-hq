@@ -89,9 +89,9 @@ class TestAppResource(APIResourceTest):
                     "unique_id": "update_case_module",
                     "case_type": "person",
                     "case_properties": ["name"], "forms": [{
-                    "unique_id": "update_case_form_0", "name": {"en": "update_case form 0"},
-                    "questions": questions, "xmlns": xmlns
-                }],
+                        "unique_id": "update_case_form_0", "name": {"en": "update_case form 0"},
+                        "questions": questions, "xmlns": xmlns
+                    }],
                 }
             ],
         }
