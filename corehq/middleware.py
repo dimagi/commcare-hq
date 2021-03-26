@@ -112,6 +112,11 @@ class LogLongRequestMiddleware(MiddlewareMixin):
     def process_request(self, request):
         request._profile_starttime = datetime.datetime.utcnow()
 
+    def process_view(self, request, view_fn, view_args, view_kwargs):
+        view_func = get_view_func(view_fn, view_kwargs)
+        reporting_threshold = getattr(view_func, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD.total_seconds())
+        setattr(request, DURATION_REPORTING_THRESHOLD, reporting_threshold)
+
     def process_response(self, request, response):
         request_timer = getattr(response, 'request_timer', None)
         if request_timer:
@@ -132,11 +137,6 @@ class LogLongRequestMiddleware(MiddlewareMixin):
                     'status_code': response.status_code
                 })
         return response
-
-    def process_view(self, request, view_fn, view_args, view_kwargs):
-        view_func = get_view_func(view_fn, view_kwargs)
-        reporting_threshold = getattr(view_func, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD.total_seconds())
-        setattr(request, DURATION_REPORTING_THRESHOLD, reporting_threshold)
 
 
 class TimeoutMiddleware(MiddlewareMixin):
