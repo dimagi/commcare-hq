@@ -206,3 +206,29 @@ class ReportsSidebarOrdering(models.Model):
             "will be listed under the given heading in the sidebar nav."
         )
     )
+
+
+class TableauServer(models.Model):
+    SERVER_TYPES = (
+        ('server', 'Tableau Server'),
+        ('online', 'Tableau Online'),
+    )
+    server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
+    server_name = models.CharField(max_length=128)
+    target_site = models.CharField(max_length=64, default='Default')
+
+    def __str__(self):
+        return '{server} {server_type} {site}'.format(server=self.server_name,
+                                                      server_type=self.server_type,
+                                                      site=self.target_site)
+
+
+class TableauVisualization(models.Model):
+    project = models.CharField(max_length=64)
+    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
+    view_url = models.CharField(max_length=256)
+
+    def __str__(self):
+        return '{project} {server} {view}'.format(project=self.project,
+                                                  server=self.server,
+                                                  view=self.view_url[0:64])

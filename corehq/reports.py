@@ -15,7 +15,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect,
-    deployments, sms
+    deployments, sms, tableau
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
@@ -99,10 +99,13 @@ def REPORTS(project):
     inspect_reports = _filter_reports(report_set, inspect_reports)
     deployments_reports = _filter_reports(report_set, deployments_reports)
 
+    tableau_reports = tableau.get_reports(project.name)
+
     reports.extend([
         (ugettext_lazy("Monitor Workers"), monitoring_reports),
         (ugettext_lazy("Inspect Data"), inspect_reports),
         (ugettext_lazy("Manage Deployments"), deployments_reports),
+        (ugettext_lazy("Tableau Views"), tableau_reports),
     ])
 
     if project.commtrack_enabled:
