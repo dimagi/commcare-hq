@@ -155,7 +155,7 @@ def _inactive_domain_response(request, domain_name):
 
 
 def _is_missing_two_factor(view_fn, request):
-    return (_two_factor_required(view_fn, request.project, request.couch_user)
+    return (_two_factor_required(view_fn, request.project, request)
             and not getattr(request, 'bypass_two_factor', False)
             and not request.user.is_verified())
 
@@ -444,12 +444,12 @@ def two_factor_check(view_func, api_key):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
             domain_obj = Domain.get_by_name(domain)
-            couch_user = _ensure_request_couch_user(request)
+            _ensure_request_couch_user(request)
             if (
                 not api_key and
                 not getattr(request, 'skip_two_factor_check', False) and
                 domain_obj and
-                _two_factor_required(view_func, domain_obj, couch_user)
+                _two_factor_required(view_func, domain_obj, request)
             ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
@@ -474,23 +474,37 @@ def two_factor_check(view_func, api_key):
     return _outer
 
 
-def _two_factor_required(view_func, domain, couch_user):
+def _two_factor_required(view_func, domain_obj, request):
+    """
+    Check if Two Factor Authentication is required.
+    :param view_func: the view function being accessed
+    :param domain_obj: Domain instance associated with the view
+    :param request: Request
+    :return: Boolean (True if 2FA is required)
+    """
     exempt = getattr(view_func, 'two_factor_exempt', False)
     if exempt:
         return False
-    if not couch_user:
+    if not request.couch_user:
+        return False
+    if (ENTERPRISE_SSO.enabled_for_request(request)
+            and is_request_using_sso(request)):
+        # SSO authenticated users manage two-factor auth on the Identity Provider
+        # level, so CommCare HQ does not attempt 2FA with them. This is one of
+        # the reasons we require that domains establish TrustedIdentityProvider
+        # relationships.
         return False
     return (
         # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
         # If you lose your phone, you have to give up superuser privileges
         # until you have two factor set up again.
-        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser
+        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and request.couch_user.is_superuser
     ) or (
         # For other policies requiring two factor auth,
         # allow the two_factor_disabled loophole for people who have lost their phones
         # and need time to set up two factor auth again.
-        (domain.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username))
-        and not couch_user.two_factor_disabled
+        (domain_obj.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.couch_user.username))
+        and not request.couch_user.two_factor_disabled
     )
 
 
