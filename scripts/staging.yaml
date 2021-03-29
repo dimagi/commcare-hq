@@ -76,6 +76,4 @@ branches:
   - kev/repeat-translation-inner-group # Kevin Mar 22
   - mjr/xss_accounting # Matt Mar 24
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - sk/profile-api  # Simon March 29
-  - sk/app-structure-api  # Simon March 29
 submodules: {}
