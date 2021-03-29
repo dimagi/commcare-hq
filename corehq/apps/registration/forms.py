@@ -466,7 +466,11 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 ugettext("Information for new Web User"),
-                'email',
+                crispy.Field(
+                    "email",
+                    autocomplete="off",
+                    data_bind="textInput: email",
+                ),
                 'role',
             ),
             hqcrispy.FormActions(
