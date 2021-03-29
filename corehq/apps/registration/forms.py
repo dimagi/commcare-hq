@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+from django.template.loader import render_to_string
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
@@ -472,6 +473,14 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
+            ),
+            crispy.HTML(
+                render_to_string(
+                    'users/partials/confirm_trust_identity_provider_message.html',
+                    {
+                        'is_add_user': is_add_user,
+                    }
+                ),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
