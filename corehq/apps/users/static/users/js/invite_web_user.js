@@ -13,7 +13,8 @@ hqDefine('users/js/invite_web_user',[
     'use strict';
 
     var inviteWebUserFormHandler = function () {
-        var self = {};
+        var self = {},
+            emailDefaultValue = $('#id_email').val();
 
         self.email = ko.observable()
             .extend({
@@ -58,11 +59,16 @@ hqDefine('users/js/invite_web_user',[
                     },
                 },
             });
-        
+
         self.isEmailValidating = ko.observable(false);
         self.emailDelayed.isValidating.subscribe(function (isValidating) {
             self.isEmailValidating(isValidating && self.email.isValid());
         });
+
+        if(emailDefaultValue) {
+            // we set the default here after the validators have been set up
+            self.email(emailDefaultValue);
+        }
 
         self.isSubmitEnabled = ko.computed(function () {
             return self.email.isValid()
