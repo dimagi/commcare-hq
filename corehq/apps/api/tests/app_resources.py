@@ -1,5 +1,6 @@
 import json
 
+from mock.mock import patch
 from testil import Regex
 
 from corehq.apps.api.resources import v0_4
@@ -16,7 +17,9 @@ class TestAppResource(APIResourceTest):
     def setUpClass(cls):
         super(TestAppResource, cls).setUpClass()
         cls.apps = [cls.make_app(), cls.make_app()]
-        cls.apps[0].make_build().save()
+
+        with patch('corehq.apps.app_manager.models.validate_xform', return_value=None):
+            cls.apps[0].make_build().save()
 
     @classmethod
     def make_app(cls):
