@@ -639,11 +639,12 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
         role = row.get('role', None)
         status = row.get('status')
-        location_codes = row.get('location_code') or []
-        if location_codes and not isinstance(location_codes, list):
-            location_codes = [location_codes]
-        # ignore empty
-        location_codes = [code for code in location_codes if code]
+        location_codes = row.get('location_code')
+        if location_codes is not None:
+            if not isinstance(location_codes, list):
+                location_codes = [location_codes]
+            # ignore empty
+            location_codes = [code for code in location_codes if code]
 
         try:
             remove = spec_value_to_boolean_or_none(row, 'remove')
@@ -679,7 +680,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         user.save()
                 else:
                     if user.is_member_of(domain):
-                        if domain_has_privilege(domain, privileges.LOCATIONS):
+                        if domain_has_privilege(domain, privileges.LOCATIONS) and location_codes is not None:
                             membership = user.get_domain_membership(domain)
                             location_cache = SiteCodeToLocationCache(domain)
                             location_ids = find_location_id(location_codes, location_cache)
