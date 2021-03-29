@@ -32,6 +32,10 @@ def update_fhir_resource_type(domain, case_type, fhir_resource_type):
     return fhir_resource_type_obj
 
 
+def remove_fhir_resource_type(domain, case_type):
+    FHIRResourceType.objects.filter(case_type__name=case_type, domain=domain).delete()
+
+
 def update_fhir_resource_property(case_property, fhir_resource_type, fhir_resource_prop_path, remove_path=False):
     if case_property.deprecated or remove_path:
         try:

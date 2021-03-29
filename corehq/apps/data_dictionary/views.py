@@ -13,7 +13,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
 from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
-from corehq.motech.fhir.utils import load_fhir_resource_mappings, update_fhir_resource_type
+from corehq.motech.fhir.utils import load_fhir_resource_mappings, update_fhir_resource_type, \
+    remove_fhir_resource_type
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, RateDefinition
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -113,7 +114,10 @@ def update_case_property(request, domain):
     fhir_resource_type_obj = None
     case_type = request.POST.get('case_type')
     errors = []
-    if fhir_resource_type and case_type:
+
+    if request.POST.get('remove_fhir_resource_type', '') == 'true':
+        remove_fhir_resource_type(domain, case_type)
+    elif fhir_resource_type and case_type:
         case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
         try:
             fhir_resource_type_obj = update_fhir_resource_type(domain, case_type_obj, fhir_resource_type)
@@ -157,7 +161,7 @@ def update_case_property_description(request, domain):
 
 def _export_data_dictionary(domain):
     export_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
-    case_type_headers = [_('Case Type'), _('FHIR Resource Type')]
+    case_type_headers = [_('Case Type'), _('FHIR Resource Type'), _('Remove Resource Type(Y)')]
     case_prop_headers = [_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
@@ -211,7 +215,8 @@ def _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_
     case_type_data[FHIR_RESOURCE_TYPE_MAPPING_SHEET] = [
         {
             _('Case Type'): case_type.name,
-            _('FHIR Resource Type'): fhir_resource_type
+            _('FHIR Resource Type'): fhir_resource_type,
+            _('Remove Resource Type(Y)'): ''
         }
         for case_type, fhir_resource_type in fhir_resource_type_name_by_case_type.items()
     ]
@@ -377,10 +382,14 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
     errors = []
     fhir_resource_type_by_case_type = {}
     for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
-        if len(row) < 2:
+        if len(row) < 3:
             errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
-            case_type, fhir_resource_type = [cell.value for cell in row[:2]]
+            case_type, fhir_resource_type, remove_resource_type = [cell.value for cell in row[:3]]
+            remove_resource_type = remove_resource_type == 'Y' if remove_resource_type else False
+            if remove_resource_type:
+                remove_fhir_resource_type(domain, case_type)
+                continue
             case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
             try:
                 fhir_resource_type_obj = update_fhir_resource_type(domain, case_type_obj, fhir_resource_type)

@@ -86,6 +86,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.caseTypes = ko.observableArray();
         self.activeCaseType = ko.observable();
         self.fhirResourceType = ko.observable();
+        self.removefhirResourceType = ko.observable(false);
         self.newPropertyName = ko.observable();
         self.newGroupName = ko.observable();
         self.casePropertyList = ko.observableArray();
@@ -122,6 +123,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     data: {
                         'properties': JSON.stringify(postProperties),
                         'fhir_resource_type': self.fhirResourceType(),
+                        'remove_fhir_resource_type': self.removefhirResourceType(),
                         'case_type': self.activeCaseType(),
                     },
                     success: function () {
@@ -153,6 +155,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     }
                     self.casePropertyList.subscribe(changeSaveButton);
                     self.fhirResourceType.subscribe(changeSaveButton);
+                    self.removefhirResourceType.subscribe(changeSaveButton);
                 });
         };
 
@@ -227,6 +230,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.hideDeprecated = function () {
             self.showAll(false);
+        };
+
+        self.removeResourceType = function () {
+            self.removefhirResourceType(true);
+        };
+
+        self.restoreResourceType = function () {
+            self.removefhirResourceType(false);
         };
 
         return self;

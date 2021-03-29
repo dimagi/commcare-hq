@@ -29,8 +29,17 @@
                   data-bind="options: fhirResourceTypes,
                              optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
                              value: fhirResourceType,
+                             disable: removefhirResourceType,
                             ">
           </select>
+          <!-- ko if: fhirResourceType() && !removefhirResourceType() -->
+          <button data-bind="click: removeResourceType" class="btn btn-danger btn-sm">{% trans "Clear" %}
+          </button>
+          <!-- /ko -->
+          <!-- ko if: removefhirResourceType() -->
+          <button data-bind="click: restoreResourceType" class="btn btn-default btn-sm">{% trans "Restore" %}
+          </button>
+          <!-- /ko -->
         </div>
         <br />
       {% endif %}
