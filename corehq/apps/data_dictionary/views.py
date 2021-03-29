@@ -13,7 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
 from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
-from corehq.motech.fhir.models import FHIRResourceType, FHIRResourceProperty
+from corehq.motech.fhir.utils import load_fhir_resource_mappings, update_fhir_resource_type
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, RateDefinition
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -79,7 +79,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(
+        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
             domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
@@ -102,20 +102,6 @@ def data_dictionary_json(request, domain, case_type_name=None):
     return JsonResponse({'case_types': props})
 
 
-def _load_fhir_resource_mappings(domain):
-    fhir_resource_types = FHIRResourceType.objects.select_related('case_type').filter(domain=domain)
-    fhir_resource_type_name_by_case_type = {
-        ft.case_type: ft.name
-        for ft in fhir_resource_types
-    }
-    fhir_resource_prop_by_case_prop = {
-        fr.case_property: fr.jsonpath
-        for fr in FHIRResourceProperty.objects.select_related('case_property').filter(
-            resource_type__in=fhir_resource_types)
-    }
-    return fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop
-
-
 # atomic decorator is a performance optimization for looped saves
 # as per http://stackoverflow.com/questions/3395236/aggregating-saves-in-django#comment38715164_3397586
 @atomic
@@ -128,8 +114,9 @@ def update_case_property(request, domain):
     case_type = request.POST.get('case_type')
     errors = []
     if fhir_resource_type and case_type:
+        case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
         try:
-            fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
+            fhir_resource_type_obj = update_fhir_resource_type(domain, case_type_obj, fhir_resource_type)
         except ValidationError as e:
             for key, msgs in dict(e).items():
                 for msg in msgs:
@@ -153,18 +140,6 @@ def update_case_property(request, domain):
         return JsonResponse({"status": "failed", "errors": errors}, status=400)
     else:
         return JsonResponse({"status": "success"})
-
-
-def _update_fhir_resource_type(domain, case_type, fhir_resource_type):
-    case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
-    try:
-        fhir_resource_type_obj = FHIRResourceType.objects.get(case_type=case_type_obj, domain=domain)
-    except FHIRResourceType.DoesNotExist:
-        fhir_resource_type_obj = FHIRResourceType(case_type=case_type_obj, domain=domain)
-    fhir_resource_type_obj.name = fhir_resource_type
-    fhir_resource_type_obj.full_clean()
-    fhir_resource_type_obj.save()
-    return fhir_resource_type_obj
 
 
 @login_and_domain_required
@@ -219,7 +194,7 @@ def _generate_data_for_export(domain, export_fhir_data):
     fhir_resource_prop_by_case_prop = {}
 
     if export_fhir_data:
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = _load_fhir_resource_mappings(
+        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
             domain
         )
         _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_case_type)
@@ -406,8 +381,9 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
             errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
             case_type, fhir_resource_type = [cell.value for cell in row[:2]]
+            case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
             try:
-                fhir_resource_type_obj = _update_fhir_resource_type(domain, case_type, fhir_resource_type)
+                fhir_resource_type_obj = update_fhir_resource_type(domain, case_type_obj, fhir_resource_type)
             except ValidationError as e:
                 for key, msgs in dict(e).items():
                     for msg in msgs:

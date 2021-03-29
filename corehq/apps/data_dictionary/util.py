@@ -9,6 +9,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
@@ -151,28 +152,8 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return str(e)
 
     if fhir_resource_type and fhir_resource_prop_path:
-        _update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
+        update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
     prop.save()
-
-
-def _update_fhir_resource_property(case_property, fhir_resource_type, fhir_resource_prop_path, remove_path=False):
-    from corehq.motech.fhir.models import FHIRResourceProperty
-    if case_property.deprecated or remove_path:
-        try:
-            FHIRResourceProperty.objects.get(case_property=case_property,
-                                             resource_type=fhir_resource_type,
-                                             jsonpath=fhir_resource_prop_path).delete()
-        except FHIRResourceProperty.DoesNotExist:
-            pass
-    elif fhir_resource_prop_path:
-        try:
-            fhir_resource_prop = FHIRResourceProperty.objects.get(case_property=case_property,
-                                                                  resource_type=fhir_resource_type)
-        except FHIRResourceProperty.DoesNotExist:
-            fhir_resource_prop = FHIRResourceProperty(case_property=case_property,
-                                                      resource_type=fhir_resource_type)
-        fhir_resource_prop.jsonpath = fhir_resource_prop_path
-        fhir_resource_prop.save()
 
 
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
