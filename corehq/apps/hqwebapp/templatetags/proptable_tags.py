@@ -31,6 +31,14 @@ from corehq.const import USER_DATE_FORMAT, USER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
+
+VALUE_DISPLAY_PROCESSORS = {
+    'yesno': lambda value, data: yesno(value),
+    'doc_info': lambda value, data: pretty_doc_info(
+        get_doc_info_by_id(data['domain'], value)
+    )
+}
+
 register = template.Library()
 
 
@@ -143,17 +151,13 @@ class DisplayConfig:
     # True if this value represents a 'phone time'. See ``PhoneTime``
     is_phone_time = attr.ib(default=False)
 
+    @process.validator
+    def _validate_process(self, attribute, value):
+        if value is not None and value not in ("yesno", "doc_info"):
+            raise ValueError("'process' must be 'yesno' or 'doc_info'")
 
-def get_display_data(data: dict, prop_def: DisplayConfig, processors=None, timezone=pytz.utc):
-    default_processors = {
-        'yesno': yesno,
-        'doc_info': lambda value: pretty_doc_info(
-            get_doc_info_by_id(data['domain'], value)
-        )
-    }
-    processors = processors or {}
-    processors.update(default_processors)
 
+def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
     expr_name = _get_expr_name(prop_def)
     name = prop_def.name or _format_slug_string_for_display(expr_name)
 
@@ -169,7 +173,7 @@ def get_display_data(data: dict, prop_def: DisplayConfig, processors=None, timez
             val = PhoneTime(val, timezone).user_time(timezone).done()
 
     try:
-        val = conditional_escape(processors[prop_def.process](val))
+        val = conditional_escape(VALUE_DISPLAY_PROCESSORS[prop_def.process](val, data))
     except KeyError:
         val = mark_safe(_to_html(val, timeago=prop_def.timeago))
     if prop_def.format:
@@ -202,7 +206,7 @@ def eval_expr(expr, dict_data):
         return dict_data.get(expr, None)
 
 
-def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
+def get_tables_as_rows(data, definition, timezone=pytz.utc):
     """
     Return a low-level definition of a group of tables, given a data object and
     a high-level declarative definition of the table rows and value
@@ -221,8 +225,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
             [get_display_data(
                 data,
                 prop,
-                timezone=timezone,
-                processors=processors) for prop in row]
+                timezone=timezone) for prop in row]
             for row in section['layout']]
 
         max_row_len = max(list(map(len, rows))) if rows else 0
