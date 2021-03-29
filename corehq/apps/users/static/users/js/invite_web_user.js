@@ -59,6 +59,12 @@ hqDefine('users/js/invite_web_user',[
                 },
             });
         
+        self.isSubmitEnabled = ko.computed(function () {
+            return self.email.isValid()
+                && self.emailDelayed.isValid()
+                && !self.emailDelayed.isValidating();
+        });
+
         return self;
     };
 

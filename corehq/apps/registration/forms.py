@@ -479,6 +479,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                      else ugettext("Send Invite")),
                     type="submit",
                     css_class="btn-primary",
+                    data_bind="enable: isSubmitEnabled",
                 ),
             ),
         )
