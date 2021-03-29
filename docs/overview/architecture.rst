@@ -22,7 +22,7 @@ processing.
 
 Synchronous processing
 ~~~~~~~~~~~~~~~~~~~~~~
-Form and case data in CommCare ALWAYS follow the same pathway through the system regardless of whether the data
+Form and case data in CommCare always follows the same pathway through the system regardless of whether the data
 originated from a mobile device (as in the diagram below), from Web Apps, an external integration or from an
 internal process such as case update rules.
 
