@@ -100,3 +100,6 @@ class UserAccessLog(models.Model):
 
 class HQOAuthApplication(AbstractApplication):
     pkce_required = models.BooleanField(default=True)
+    smart_on_fhir_compatible = models.BooleanField(
+        default=False
+    )  # Whether this application will request tokens with SMART scopes. See hqwebapp.oauth_scopes.HQScopes
