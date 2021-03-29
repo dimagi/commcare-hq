@@ -12,10 +12,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
-from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
-from corehq.motech.fhir.utils import load_fhir_resource_mappings, update_fhir_resource_type, \
-    remove_fhir_resource_type
-from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, RateDefinition
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
@@ -32,9 +28,19 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
+from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
+from corehq.motech.fhir.utils import (
+    load_fhir_resource_mappings,
+    remove_fhir_resource_type,
+    update_fhir_resource_type,
+)
+from corehq.project_limits.rate_limiter import (
+    RateDefinition,
+    RateLimiter,
+    get_dynamic_rate_definition,
+)
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
-
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 
