@@ -59,6 +59,11 @@ hqDefine('users/js/invite_web_user',[
                 },
             });
         
+        self.isEmailValidating = ko.observable(false);
+        self.emailDelayed.isValidating.subscribe(function (isValidating) {
+            self.isEmailValidating(isValidating && self.email.isValid());
+        });
+
         self.isSubmitEnabled = ko.computed(function () {
             return self.email.isValid()
                 && self.emailDelayed.isValid()

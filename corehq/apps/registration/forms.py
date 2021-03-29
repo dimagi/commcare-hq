@@ -490,6 +490,12 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                     css_class="btn-primary",
                     data_bind="enable: isSubmitEnabled",
                 ),
+                crispy.HTML(
+                    render_to_string(
+                        'users/partials/waiting_to_verify_email_message.html',
+                        {}
+                    ),
+                ),
             ),
         )
 
