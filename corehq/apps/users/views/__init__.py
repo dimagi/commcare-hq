@@ -1166,7 +1166,6 @@ class InviteWebUserView(BaseManageWebUserView):
     def page_context(self):
         return {
             'registration_form': self.invite_web_user_form,
-            'request_id': self.request_id,
         }
 
     def post(self, request, *args, **kwargs):
