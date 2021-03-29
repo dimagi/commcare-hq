@@ -485,7 +485,7 @@ def _two_factor_required(view_func, domain_obj, request):
     exempt = getattr(view_func, 'two_factor_exempt', False)
     if exempt:
         return False
-    if not getattr(request, 'couch_user'):
+    if not request.couch_user:
         return False
     if (ENTERPRISE_SSO.enabled_for_request(request)
             and is_request_using_sso(request)):
