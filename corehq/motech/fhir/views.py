@@ -188,8 +188,13 @@ class SmartAuthView(AuthorizationView):
     def post(self, request, domain, *args, **kwargs):
         self._validate_case_relationships()
         response = super().post(request, *args, **kwargs)
+
         form = self.get_form()
         if not form.is_valid():
+            return response
+
+        if not form.cleaned_data.get("allow"):
+            # The user clicked "cancel"
             return response
 
         case_id = request.POST.get('case_id')
