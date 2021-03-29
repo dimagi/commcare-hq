@@ -1200,6 +1200,13 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
+
+            # Ensure trust is established with Invited User's Identity Provider
+            if (toggles.ENTERPRISE_SSO.enabled_for_request(request)
+                    and not IdentityProvider.does_domain_trust_user(self.domain, data["email"])):
+                idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
+                idp.create_trust_with_domain(self.domain, self.request.user.username)
+
             return HttpResponseRedirect(reverse(
                 ListWebUsersView.urlname,
                 args=[self.domain]
