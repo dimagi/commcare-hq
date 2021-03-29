@@ -2026,3 +2026,12 @@ FHIR_INTEGRATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+
+USH_CASE_CLAIM_ADDONS = StaticToggle(
+    'ush_case_claim_addons',
+    'USH Case Search/Claim Addons: Enabled Geocoder, Lookup table, Hint text and '
+    'other options in Webapps Case Search',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
