@@ -22,7 +22,6 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.functional import SimpleLazyObject
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
