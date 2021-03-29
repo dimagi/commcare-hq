@@ -248,7 +248,7 @@ ghdiff==0.4
     # via -r base-requirements.in
 gipc==1.1.0
     # via -r base-requirements.in
-git-build-branch==0.1.9
+git-build-branch==0.1.10
     # via -r dev-requirements.in
 gnureadline==8.0.0
     # via -r dev-requirements.in
