@@ -459,7 +459,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'form-horizontal form-ko-validation'
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
