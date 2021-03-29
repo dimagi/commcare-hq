@@ -1110,6 +1110,7 @@ class InviteWebUserView(BaseManageWebUserView):
         role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
+        is_add_user = self.request_id is not None
         initial = {
             'email': domain_request.email if domain_request else None,
         }
@@ -1123,9 +1124,16 @@ class InviteWebUserView(BaseManageWebUserView):
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
-                domain=self.domain
+                domain=self.domain,
+                is_add_user=is_add_user,
             )
-        return AdminInvitesUserForm(initial=initial, role_choices=role_choices, domain=self.domain, location=loc)
+        return AdminInvitesUserForm(
+            initial=initial,
+            role_choices=role_choices,
+            domain=self.domain,
+            location=loc,
+            is_add_user=is_add_user,
+        )
 
     @property
     @memoized

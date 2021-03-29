@@ -434,7 +434,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
         domain_obj = None
         location = None
         if 'domain' in kwargs:
@@ -457,12 +457,27 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         self.excluded_emails = excluded_emails or []
 
         self.helper = FormHelper()
-        self.helper.form_tag = False
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal'
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                ugettext("Information for new Web User"),
+                'email',
+                'role',
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    (ugettext("Add User") if is_add_user
+                     else ugettext("Send Invite")),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
