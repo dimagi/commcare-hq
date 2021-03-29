@@ -247,7 +247,7 @@ jdcal==1.4.1
     # via openpyxl
 jedi==0.17.2
     # via ipython
-jinja2==2.11.2
+jinja2==2.11.3
     # via -r base-requirements.in
 jmespath==0.10.0
     # via
