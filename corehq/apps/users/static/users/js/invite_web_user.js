@@ -19,7 +19,7 @@ hqDefine('users/js/invite_web_user',[
         self.email = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify an email."),
+                    message: gettext("Please specify an email."),
                     params: true,
                 },
                 emailRFC2822: true,
@@ -65,7 +65,7 @@ hqDefine('users/js/invite_web_user',[
             self.isEmailValidating(isValidating && self.email.isValid());
         });
 
-        if(emailDefaultValue) {
+        if (emailDefaultValue) {
             // we set the default here after the validators have been set up
             self.email(emailDefaultValue);
         }
