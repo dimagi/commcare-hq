@@ -13,6 +13,7 @@ from django.views.generic.edit import BaseCreateView, BaseUpdateView
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -106,14 +107,18 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
     urlname = 'dataset_map_create_view'
     page_title = _('DataSet Map')
     template_name = 'dhis2/dataset_map_create.html'
     model = SQLDataSetMap
     form_class = DataSetMapForm
+
+    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)
@@ -130,8 +135,6 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
         )
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
                            CRUDPaginatedViewMixin):
     urlname = 'dataset_map_update_view'
@@ -143,6 +146,12 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
     limit_text = _('DataValue Maps per page')
     empty_notification = _('This DataSet Map has no DataValue Maps')
     loading_message = _('Loading DataValue Maps')
+
+    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)
