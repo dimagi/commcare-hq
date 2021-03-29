@@ -20,7 +20,6 @@ from corehq.apps.consumer_user.models import (
     CaseRelationshipOauthToken,
     ConsumerUserCaseRelationship,
 )
-from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
@@ -28,6 +27,7 @@ from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
+from .decorators import smart_auth
 from .forms import FHIRRepeaterForm, OAuthAllowForm
 from .models import (
     FHIRResourceType,
@@ -65,8 +65,7 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 
 
 @require_GET
-# @login_or_api_key
-# @require_superuser
+@smart_auth
 @toggles.FHIR_INTEGRATION.required_decorator()
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
@@ -91,8 +90,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 
 
 @require_GET
-@login_or_api_key
-@require_superuser
+@smart_auth
 @toggles.FHIR_INTEGRATION.required_decorator()
 def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
