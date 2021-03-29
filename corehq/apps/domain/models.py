@@ -34,7 +34,7 @@ from dimagi.utils.couch.database import (
     iter_bulk_delete,
     iter_docs,
 )
-from dimagi.utils.logging import log_signal_errors, notify_exception
+from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
@@ -330,8 +330,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     hipaa_compliant = BooleanProperty(default=False)
     use_sql_backend = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
-
-    case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
@@ -825,29 +823,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
-
-    def get_case_display(self, case):
-        """Get the properties display definition for a given case"""
-        return self._wrap_display_config(self.case_display.case_details.get(case.type))
-
-    def get_form_display(self, form):
-        """Get the properties display definition for a given XFormInstance"""
-        return self._wrap_display_config(self.case_display.form_details.get(form.xmlns))
-
-    def _wrap_display_config(self, config):
-        from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
-        if not config:
-            return
-
-        if config.pop("parse_date", None):
-            config["process"] = "date"
-        try:
-            return DisplayConfig(**config)
-        except Exception:
-            notify_exception(None, "Error converting display from DB", details={
-                "domain": self.name,
-                "display": config
-            })
 
     @property
     def location_types(self):

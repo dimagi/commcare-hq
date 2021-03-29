@@ -1023,13 +1023,13 @@ class CaseDataView(BaseProjectReportSectionView):
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
-        display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
 
         def _get_case_url(case_id):
             return absolute_reverse(self.urlname, args=[self.domain, case_id])
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
+        display = wrapped_case.get_display_config()
         default_properties = _get_tables_as_rows(data, display)
         dynamic_data = wrapped_case.dynamic_properties()
 
@@ -1407,10 +1407,8 @@ def _get_form_context(request, domain, instance):
     except AssertionError:
         raise Http404()
 
-    display = request.project.get_form_display(instance)
     context = {
         "domain": domain,
-        "display": display,
         "timezone": timezone,
         "instance": instance,
         "user": request.couch_user,
