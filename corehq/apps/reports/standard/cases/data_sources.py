@@ -20,14 +20,17 @@ from corehq.apps.case_search.const import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.view_utils import absolute_reverse
 
 
-class CaseInfo(object):
+class CaseDisplay:
     """This class wraps a raw case from ES to provide simpler access
-    to certain properties."""
+    to certain properties as well as formatting for properties for use in
+    the UI"""
 
     def __init__(self, report, case):
         """
@@ -69,19 +72,7 @@ class CaseInfo(object):
         return self.case['closed']
 
     @property
-    def opened_on(self):
-        return self.case['opened_on']
-
-    @property
-    def modified_on(self):
-        return self.case['modified_on']
-
-    @property
-    def closed_on(self):
-        return self.case['closed_on']
-
-    @property
-    def creating_user(self):
+    def _creating_user(self):
         try:
             creator_id = self.case['opened_by']
         except KeyError:
@@ -166,12 +157,6 @@ class CaseInfo(object):
             except Exception:
                 return date_string
 
-
-class CaseDisplay(CaseInfo):
-    """This class wraps a raw case from ES to provide simpler access
-    to certain properties as well as formatting for properties for use in
-    the UI"""
-
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
@@ -221,7 +206,7 @@ class CaseDisplay(CaseInfo):
 
     @property
     def creating_user(self):
-        user = super(CaseDisplay, self).creating_user
+        user = self._creating_user
         if user is None:
             return _("No data")
         else:
@@ -230,7 +215,7 @@ class CaseDisplay(CaseInfo):
 
     @property
     def opened_by_user_id(self):
-        user = super(CaseDisplay, self).creating_user
+        user = self._creating_user
         if user is None:
             return _("No data")
         else:
