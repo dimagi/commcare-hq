@@ -185,6 +185,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
             self.activeCaseType(caseType.name);
             self.fhirResourceType(caseType.fhirResourceType());
+            self.removefhirResourceType(false);
             self.casePropertyList(self.activeCaseTypeData());
             self.saveButton.setState('saved');
         };
