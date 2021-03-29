@@ -9,6 +9,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 from django.contrib import messages
@@ -1082,6 +1083,25 @@ def delete_invitation(request, domain):
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
+
+
+@always_allow_project_access
+@require_POST
+@require_can_edit_web_users
+def check_sso_trust(request, domain):
+    username = request.POST['username']
+    is_trusted = IdentityProvider.does_domain_trust_user(domain, username)
+    response = {
+        'is_trusted': is_trusted,
+    }
+    if not is_trusted:
+        response.update({
+            'email_domain': get_email_domain_from_username(username),
+            'idp_name': IdentityProvider.get_active_identity_provider_by_username(
+                username
+            ).name,
+        })
+    return JsonResponse(response)
 
 
 class BaseManageWebUserView(BaseUserSettingsView):

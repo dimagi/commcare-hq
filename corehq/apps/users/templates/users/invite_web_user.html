@@ -6,6 +6,8 @@
 {% requirejs_main 'users/js/invite_web_user' %}
 
 {% block page_content %}
+  {% registerurl "check_sso_trust" domain %}
+
   <div id="invite-web-user-form"
        class="ko-template">
     {% crispy registration_form %}
