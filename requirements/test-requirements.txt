@@ -310,7 +310,7 @@ pbr==5.5.0
     # via mock
 phonenumberslite==8.12.10
     # via -r base-requirements.in
-pillow==7.2.0
+pillow==8.1.2
     # via
     #   -r base-requirements.in
     #   cairosvg
