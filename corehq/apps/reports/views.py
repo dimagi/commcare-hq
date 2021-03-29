@@ -22,6 +22,7 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.functional import SimpleLazyObject
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
@@ -1035,7 +1036,7 @@ class CaseDataView(BaseProjectReportSectionView):
         for section in display:
             for row in section['layout']:
                 for item in row:
-                    dynamic_data.pop(item.get("expr"), None)
+                    dynamic_data.pop(item.expr, None)
 
         if dynamic_data:
             dynamic_keys = sorted(dynamic_data.keys())

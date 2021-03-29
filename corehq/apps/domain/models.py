@@ -34,7 +34,7 @@ from dimagi.utils.couch.database import (
     iter_bulk_delete,
     iter_docs,
 )
-from dimagi.utils.logging import log_signal_errors
+from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
@@ -828,11 +828,24 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""
-        return self.case_display.case_details.get(case.type)
+        return self._wrap_display_config(self.case_display.case_details.get(case.type))
 
     def get_form_display(self, form):
         """Get the properties display definition for a given XFormInstance"""
-        return self.case_display.form_details.get(form.xmlns)
+        return self._wrap_display_config(self.case_display.form_details.get(form.xmlns))
+
+    def _wrap_display_config(self, config):
+        from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
+        if not config:
+            return
+
+        try:
+            return DisplayConfig(**config)
+        except Exception:
+            notify_exception(None, "Error converting display from DB", details={
+                "domain": self.name,
+                "display": config
+            })
 
     @property
     def location_types(self):

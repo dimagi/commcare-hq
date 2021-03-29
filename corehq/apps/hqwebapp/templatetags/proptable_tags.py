@@ -12,6 +12,7 @@ import collections
 import datetime
 from itertools import zip_longest
 
+import attr
 from django import template
 from django.template.defaultfilters import yesno
 from django.utils.html import conditional_escape, escape
@@ -113,12 +114,37 @@ def _to_html(val, key=None, level=0, timeago=False):
     return mark_safe(ret)
 
 
-def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
-    # when prop_def came from a couchdbkit document, it will be a LazyDict with
-    # a broken pop method.  This conversion also has the effect of a shallow
-    # copy, which we want.
-    prop_def = dict(prop_def)
+@attr.s
+class DisplayConfig:
+    # dict key for callable to get value from data dict
+    expr = attr.ib()
 
+    # name of the field. Defaults to `expr` if not given.
+    name = attr.ib(default=None)
+
+    # processor to apply. Available processors are:
+    # - 'yesno': convert boolean values to yes / no / maybe
+    # - 'doc_info': render a DocInfo
+    # - 'date': convert date strings to date objects
+    process = attr.ib(default=None)
+
+    # String to use as the output format e.g. "<b>{}</b>"
+    format = attr.ib(default=None)
+
+    # add 'timeago' class to <time/> elements
+    timeago = attr.ib(default=False)
+
+    # property that is passed through in the return result
+    has_history = attr.ib(default=False)
+
+    # attempt to parse the value as a date / datetime
+    parse_date = attr.ib(default=False)
+
+    # True if this value represents a 'phone time'. See ``PhoneTime``
+    is_phone_time = attr.ib(default=False)
+
+
+def get_display_data(data: dict, prop_def: DisplayConfig, processors=None, timezone=pytz.utc):
     default_processors = {
         'yesno': yesno,
         'doc_info': lambda value: pretty_doc_info(
@@ -129,18 +155,13 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     processors.update(default_processors)
 
     expr_name = _get_expr_name(prop_def)
-    expr = prop_def.pop('expr')
-    name = prop_def.pop('name', None) or _format_slug_string_for_display(expr)
-    format = prop_def.pop('format', None)
-    process = prop_def.pop('process', None)
-    timeago = prop_def.get('timeago', False)
-    has_history = prop_def.pop('has_history', False)
+    name = prop_def.name or _format_slug_string_for_display(expr_name)
 
-    val = eval_expr(expr, data)
+    val = eval_expr(prop_def.expr, data)
 
-    if prop_def.pop('parse_date', None):
+    if prop_def.parse_date:
         val = _parse_date_or_datetime(val)
-    is_phone_time = prop_def.pop('is_phone_time', False)
+    is_phone_time = prop_def.is_phone_time
     if isinstance(val, datetime.datetime):
         if not is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
@@ -148,25 +169,25 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
             val = PhoneTime(val, timezone).user_time(timezone).done()
 
     try:
-        val = conditional_escape(processors[process](val))
+        val = conditional_escape(processors[prop_def.process](val))
     except KeyError:
-        val = mark_safe(_to_html(val, timeago=timeago))
-    if format:
-        val = mark_safe(format.format(val))
+        val = mark_safe(_to_html(val, timeago=prop_def.timeago))
+    if prop_def.format:
+        val = mark_safe(prop_def.format.format(val))
 
     return {
         "expr": expr_name,
         "name": name,
         "value": val,
-        "has_history": has_history,
+        "has_history": prop_def.has_history,
     }
 
 
-def _get_expr_name(prop_def):
-    if callable(prop_def['expr']):
-        return prop_def['name']
+def _get_expr_name(prop_def: DisplayConfig):
+    if callable(prop_def.expr):
+        return prop_def.name
     else:
-        return prop_def['expr']
+        return prop_def.expr
 
 
 def eval_expr(expr, dict_data):
@@ -187,6 +208,10 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
     a high-level declarative definition of the table rows and value
     calculations.
 
+    :param definition: dict with keys:
+       "name" (optional): the name of the section
+       "layout": list of rows to display. Each row must be a list of `DisplayConfig` classes
+            that represent the cells of the row.
     """
 
     sections = []
@@ -236,7 +261,7 @@ def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None
     phonetime_fields = phonetime_fields or set()
     layout = chunked(
         [
-            {"expr": prop, "is_phone_time": prop in phonetime_fields, "has_history": True, "parse_date": parse_dates}
+            DisplayConfig(expr=prop, is_phone_time=prop in phonetime_fields, has_history=True, parse_date=parse_dates)
             for prop in keys
         ],
         num_columns
