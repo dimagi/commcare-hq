@@ -1,4 +1,5 @@
-from django.test import SimpleTestCase
+import pytz
+from django.test import SimpleTestCase, override_settings
 from mock.mock import patch
 
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_commcareuser_url
@@ -72,6 +73,46 @@ class CaseDisplayDataTest(SimpleTestCase):
         self.assertEqual(
             get_display_data(data, column),
             {'expr': 'bob', 'name': 'bob', 'value': expected_value, 'has_history': False}
+        )
+
+    def test_get_display_process_date(self):
+        column = DisplayConfig(expr='date', process="date")
+        data = {'date': "2021-03-16T14:37:22Z"}
+        expected_value = (
+            "<time title='2021-03-16T14:37:22+00:00' datetime='2021-03-16T14:37:22+00:00'>"
+            "Mar 16, 2021 14:37 UTC"
+            "</time>"
+        )
+        self.assertEqual(
+            get_display_data(data, column),
+            {'expr': 'date', 'name': 'date', 'value': expected_value, 'has_history': False}
+        )
+
+    def test_get_display_process_timeago(self):
+        column = DisplayConfig(expr='date', process="date", timeago=True)
+        data = {'date': "2021-03-16T14:37:22Z"}
+        expected_value = (
+            "<time class='timeago' title='2021-03-16T14:37:22+00:00' datetime='2021-03-16T14:37:22+00:00'>"
+            "Mar 16, 2021 14:37 UTC"
+            "</time>"
+        )
+        self.assertEqual(
+            get_display_data(data, column),
+            {'expr': 'date', 'name': 'date', 'value': expected_value, 'has_history': False}
+        )
+
+    @override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=True)
+    def test_get_display_process_phonetime(self):
+        column = DisplayConfig(expr='date', process="date", is_phone_time=True)
+        data = {'date': "2021-03-16T14:37:22Z"}
+        expected_value = (
+            "<time title='2021-03-16T16:37:22+02:00' datetime='2021-03-16T16:37:22+02:00'>"
+            "Mar 16, 2021 16:37 SAST"
+            "</time>"
+        )
+        self.assertEqual(
+            get_display_data(data, column, timezone=pytz.timezone("Africa/Johannesburg")),
+            {'expr': 'date', 'name': 'date', 'value': expected_value, 'has_history': False}
         )
 
     def test_get_display_data_blank(self):

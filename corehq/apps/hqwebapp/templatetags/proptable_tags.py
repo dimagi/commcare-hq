@@ -117,8 +117,12 @@ def _to_html(val, key=None, level=0, timeago=False):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
-            "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
+        ret = mark_safe("<time{timeago} title='{title}' datetime='{iso}'>{display}</time>".format(
+            timeago=" class='timeago'" if timeago else "",
+            title=iso,
+            iso=iso,
+            display=safe_strftime(val, fmt)
+        ))
     else:
         if val is None:
             val = '---'
