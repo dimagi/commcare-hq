@@ -92,7 +92,7 @@ python-imap==1.0.0
 python-Levenshtein
 python-magic~=0.4.22
 pytz>=2017.2
-PyYAML~=5.1
+PyYAML~=5.4.1
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache~=0.5
