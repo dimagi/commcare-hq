@@ -484,7 +484,7 @@ pytz==2020.1
     #   django
     #   jenkinsapi
     #   twilio
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via
     #   -r base-requirements.in
     #   git-build-branch
