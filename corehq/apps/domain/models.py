@@ -839,6 +839,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not config:
             return
 
+        if config.pop("parse_date", None):
+            config["process"] = "date"
         try:
             return DisplayConfig(**config)
         except Exception:

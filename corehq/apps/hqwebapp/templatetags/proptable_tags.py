@@ -32,11 +32,17 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 
+class DisplayProcessor(collections.namedtuple("DisplayProcessor", "processor, returns_html")):
+    def __call__(self, value, data):
+        return self.processor(value, data)
+
+
 VALUE_DISPLAY_PROCESSORS = {
-    'yesno': lambda value, data: yesno(value),
-    'doc_info': lambda value, data: pretty_doc_info(
+    'date': DisplayProcessor(lambda value, data: _parse_date_or_datetime(value), False),
+    'yesno': DisplayProcessor(lambda value, data: conditional_escape(yesno(value)), False),
+    'doc_info': DisplayProcessor(lambda value, data: pretty_doc_info(
         get_doc_info_by_id(data['domain'], value)
-    )
+    ), True)
 }
 
 register = template.Library()
@@ -145,16 +151,14 @@ class DisplayConfig:
     # property that is passed through in the return result
     has_history = attr.ib(default=False)
 
-    # attempt to parse the value as a date / datetime
-    parse_date = attr.ib(default=False)
-
     # True if this value represents a 'phone time'. See ``PhoneTime``
     is_phone_time = attr.ib(default=False)
 
     @process.validator
     def _validate_process(self, attribute, value):
-        if value is not None and value not in ("yesno", "doc_info"):
-            raise ValueError("'process' must be 'yesno' or 'doc_info'")
+        choices = VALUE_DISPLAY_PROCESSORS.keys()
+        if value is not None and value not in choices:
+            raise ValueError("'process' must be one of {}".format(", ".join(choices)))
 
 
 def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
@@ -163,21 +167,23 @@ def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
 
     val = eval_expr(prop_def.expr, data)
 
-    if prop_def.parse_date:
-        val = _parse_date_or_datetime(val)
-    is_phone_time = prop_def.is_phone_time
+    processor = VALUE_DISPLAY_PROCESSORS.get(prop_def.process, None)
+    if processor:
+        val = processor(val, data)
+
     if isinstance(val, datetime.datetime):
-        if not is_phone_time:
+        if not prop_def.is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
         else:
             val = PhoneTime(val, timezone).user_time(timezone).done()
 
-    try:
-        val = conditional_escape(VALUE_DISPLAY_PROCESSORS[prop_def.process](val, data))
-    except KeyError:
-        val = mark_safe(_to_html(val, timeago=prop_def.timeago))
+    if not processor or not processor.returns_html:
+        val = _to_html(val, timeago=prop_def.timeago)
+
     if prop_def.format:
-        val = mark_safe(prop_def.format.format(val))
+        val = prop_def.format.format(val)
+
+    val = mark_safe(val)
 
     return {
         "expr": expr_name,
@@ -262,9 +268,10 @@ def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None
 
     """
     phonetime_fields = phonetime_fields or set()
+    process = "date" if parse_dates else None
     layout = chunked(
         [
-            DisplayConfig(expr=prop, is_phone_time=prop in phonetime_fields, has_history=True, parse_date=parse_dates)
+            DisplayConfig(expr=prop, is_phone_time=prop in phonetime_fields, has_history=True, process=process)
             for prop in keys
         ],
         num_columns

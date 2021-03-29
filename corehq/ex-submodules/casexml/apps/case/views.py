@@ -33,9 +33,9 @@ class CaseDisplayWrapper(object):
                 "layout": [
                     [
                         DisplayConfig(name=_("Name"), expr="name", has_history=True),
-                        DisplayConfig(name=_("Opened On"), expr="opened_on", parse_date=True, is_phone_time=True),
-                        DisplayConfig(name=_("Modified On"), expr="modified_on", parse_date=True, is_phone_time=True),
-                        DisplayConfig(name=_("Closed On"), expr="closed_on", parse_date=True, is_phone_time=True),
+                        DisplayConfig(name=_("Opened On"), expr="opened_on", process="date", is_phone_time=True),
+                        DisplayConfig(name=_("Modified On"), expr="modified_on", process="date", is_phone_time=True),
+                        DisplayConfig(name=_("Closed On"), expr="closed_on", process="date", is_phone_time=True),
                     ],
                     [
                         DisplayConfig(name=_("Case Type"), expr="type", format="<code>{0}</code>"),
@@ -63,8 +63,8 @@ class CaseDisplayWrapper(object):
             DisplayConfig(name=_('Status'), expr='status'),
             DisplayConfig(name=_('Case Type'), expr='type'),
             DisplayConfig(name=_('Owner'), expr=lambda c: cached_owner_id_to_display(c.get('owner_id'))),
-            DisplayConfig(name=_('Date Opened'), expr='opened_on', parse_date=True, is_phone_time=True),
-            DisplayConfig(name=_('Date Modified'), expr='modified_on', parse_date=True, is_phone_time=True),
+            DisplayConfig(name=_('Date Opened'), expr='opened_on', process="date", is_phone_time=True),
+            DisplayConfig(name=_('Date Modified'), expr='modified_on', process="date", is_phone_time=True),
         ]
 
     @property
