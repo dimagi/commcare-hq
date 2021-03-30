@@ -3,6 +3,7 @@ import uuid
 from dateutil.parser import parser
 import json
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
 from couchforms.models import XFormInstance
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
@@ -316,22 +317,9 @@ class PactPatientCase(CommCareCase):
     @property
     def related_cases_columns(self):
         return [
-            {
-                'name': _('Status'),
-                'expr': "status",
-            },
-            {
-                'name': _('Follow-Up Date'),
-                'expr': "date_followup",
-                'parse_date': True,
-                'timeago': True,
-            },
-            {
-                'name': _('Date Modified'),
-                'expr': "modified_on",
-                'parse_date': True,
-                'timeago': True,
-            }
+            DisplayConfig(name=_('Status'), expr="status"),
+            DisplayConfig(name=_('Follow-Up Date'), expr="date_followup", process="date", timeago=True),
+            DisplayConfig(name=_('Date Modified'), expr="modified_on", process="date", timeago=True),
         ]
 
     @property
