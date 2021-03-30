@@ -277,7 +277,7 @@ kombu==4.2.2.post1
     #   celery
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.2
+lxml==4.6.3
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -571,7 +571,7 @@ zipp==3.4.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==20.2.3
+pip==21.0.1
     # via -r prod-requirements.in
 setuptools==50.3.0
     # via

@@ -229,7 +229,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self, self.get_case(row))
+            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,
@@ -240,10 +240,3 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    def date_to_json(self, date):
-        if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string(USER_DATETIME_FORMAT_WITH_SEC))
-        else:
-            return ''
