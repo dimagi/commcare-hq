@@ -46,6 +46,7 @@ class TokenEndpointTests(TestCase):
             user=self.test_user,
             client_type=Application.CLIENT_PUBLIC,
             authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
+            smart_on_fhir_compatible=True,
         )
 
     def tearDown(self):

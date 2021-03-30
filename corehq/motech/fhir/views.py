@@ -198,11 +198,15 @@ class SmartAuthView(AuthorizationView):
         case_id = request.POST.get('case_id')
         client_id = request.POST.get('client_id')
         parsed_url = urllib.parse.urlparse(response.url)
-        authorization_code = urllib.parse.parse_qs(parsed_url.query)["code"][0]
-
-        # Save the selected case_id in the cache to be returned with the token in the SmartTokenView
-        cache.set(_get_smart_cache_key(domain, client_id, authorization_code), case_id, 5 * 60)
-        return response
+        try:
+            authorization_code = urllib.parse.parse_qs(parsed_url.query)["code"][0]
+        except KeyError:
+            # This request didn't result in an authorization code, so just return whatever oauthlib wanted to
+            return response
+        else:
+            # Save the selected case_id in the cache to be returned with the token in the SmartTokenView
+            cache.set(_get_smart_cache_key(domain, client_id, authorization_code), case_id, 5 * 60)
+            return response
 
     def _validate_case_relationships(self):
         if not ConsumerUserCaseRelationship.objects.filter(
