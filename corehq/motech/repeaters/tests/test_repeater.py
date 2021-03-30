@@ -331,23 +331,6 @@ class RepeaterTest(BaseRepeaterTest):
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
     @run_with_all_backends
-    def test_process_repeat_record_locking(self):
-        self.assertEqual(len(self.repeat_records()), 2)
-
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
-            check_repeaters()
-            self.assertEqual(mock_process.delay.call_count, 0)
-
-        for record in self.repeat_records():
-            # Resetting next_check should allow them to be requeued
-            record.next_check = datetime.utcnow()
-            record.save()
-
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
-            check_repeaters()
-            self.assertEqual(mock_process.delay.call_count, 2)
-
-    @run_with_all_backends
     def test_retry_process_repeat_record_locking(self):
         self.assertEqual(len(self.repeat_records()), 2)
 
