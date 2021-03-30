@@ -1,6 +1,5 @@
 from corehq.apps.hqadmin.views.data import (
     doc_in_es,
-    get_db_from_db_name,
     raw_doc,
 )
 from corehq.apps.hqadmin.views.operations import (
