@@ -52,12 +52,8 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     else:
         doc_info = get_doc_info_sql(doc, cache=cache)
 
-    if (
-        domain_hint and
-        not (
-            doc_info.domain == domain_hint or
-            domain_hint in domains
-        )
+    if domain_hint and not (
+        doc_info.domain == domain_hint or domain_hint in domains
     ):
         raise DomainMismatchException("Doc '%s' does not match the domain_hint '%s'" % (doc_info.id, domain_hint))
 

@@ -16,6 +16,7 @@ from corehq.util.couchdb_management import couch_config
 
 DbResult = namedtuple('DbResult', 'dbname result status')
 
+
 @attr.s
 class LookupResult:
     doc_id = attr.ib()
