@@ -14,7 +14,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 });
             });
             $(".hq-help").hqHelp();
-        };
+        },
         itemsetValue = function (item) {
             return "instance('" + item.id + "')" + item.path;
         };
@@ -83,23 +83,23 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
         self.appearanceFinal = ko.computed(function () {
-            var appearance = self.appearance()
+            var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
                 return 'fixture';
             }
             else {
-                return appearance
+                return appearance;
             }
         });
         self.dropdownLabels = ko.computed(function () {
-            if (self.appearance() == 'report_fixture') {
+            if (self.appearance() === 'report_fixture') {
                 return {
                     'labelPlaceholder': 'column_0',
                     'valuePlaceholder': 'column_0',
                     'optionsLabel': gettext("Mobile UCR Options"),
                     'tableLabel': gettext("Mobile UCR Report"),
                     'selectLabel': gettext("Select a Report..."),
-                    'advancedLabel': gettext("Advanced Mobile UCR Options")
+                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
                 };
             }
             else {
@@ -109,7 +109,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Lookup Table Options"),
                     'tableLabel': gettext("Lookup Table"),
                     'selectLabel': gettext("Select a Lookup Table..."),
-                    'advancedLabel': gettext("Advanced Lookup Table Options")
+                    'advancedLabel': gettext("Advanced Lookup Table Options"),
                 };
             }
         });
@@ -119,12 +119,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var itemLists = get('js_options').item_lists;
             return _.map(
                 _.filter(itemLists, function (p) {
-                    return p.fixture_type === self.appearance()
+                    return p.fixture_type === self.appearance();
                 }),
                 function (p) {
                     return {
                         "value": itemsetValue(p),
-                        "name": p.name
+                        "name": p.name,
                     };
                 }
             );
@@ -222,7 +222,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
-                    var uri = searchProperties[i].itemset.instance_uri
+                    var uri = searchProperties[i].itemset.instance_uri;
                     if (uri !== null && uri.includes("commcare-reports")) {
                         appearance = "report_fixture";
                     }
