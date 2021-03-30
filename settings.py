@@ -879,8 +879,12 @@ COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
 # using the local DEBUG value (which we don't have access to here yet)
 COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
-COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
-'compressor.filters.cssmin.rCSSMinFilter']
+COMPRESS_FILTERS = {
+    'css': [
+        'compressor.filters.css_default.CssAbsoluteFilter',
+        'compressor.filters.cssmin.rCSSMinFilter',
+    ]
+}
 
 LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
