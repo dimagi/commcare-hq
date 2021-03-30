@@ -185,6 +185,8 @@ def get_doc_info_couch(doc, domain_hint=None, cache=None):
 
 def form_docinfo(domain, doc_id, is_deleted):
     doc_info = DocInfo(
+        id=doc_id,
+        type="XFormInstance",
         type_display=_('Form'),
         link=reverse(
             'render_form_data',
@@ -197,6 +199,8 @@ def form_docinfo(domain, doc_id, is_deleted):
 
 def case_docinfo(domain, doc_id, name, is_deleted):
     return DocInfo(
+        id=doc_id,
+        type="CommCareCase",
         display=name,
         type_display=_('Case'),
         link=get_case_url(domain, doc_id),
@@ -240,6 +244,8 @@ def get_doc_info_sql(obj, cache=None):
     if isinstance(obj, SQLLocation):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(
+            id=obj.location_id,
+            type="Location",
             type_display=_('Location'),
             display=obj.name,
             link=reverse(
@@ -259,7 +265,7 @@ def get_doc_info_sql(obj, cache=None):
 
     doc_info.id = doc_info.id or str(obj.pk)
     doc_info.domain = obj.domain if hasattr(obj, 'domain') else None
-    doc_info.type = class_name
+    doc_info.type = doc_info.type or class_name
 
     if cache:
         cache[cache_key] = doc_info
