@@ -22,6 +22,7 @@ from corehq.motech.value_source import (
 from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
 
 from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
+from .validators import validate_supported_type
 
 
 class FHIRResourceType(models.Model):
@@ -31,11 +32,11 @@ class FHIRResourceType(models.Model):
     case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
 
     # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, validators=[validate_supported_type])
 
     # `template` offers a way to define a FHIR resource if it cannot be
     # built using only mapped case properties.
-    template = JSONField(default=dict)
+    template = JSONField(default=dict, null=True, blank=True)
 
     class Meta:
         unique_together = ('case_type', 'fhir_version')
