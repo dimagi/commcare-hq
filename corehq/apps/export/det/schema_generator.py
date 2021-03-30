@@ -8,7 +8,7 @@ from corehq.apps.userreports import datatypes
 
 PROPERTIES_PREFIX = 'properties.'
 ID_FIELD = 'id'
-FORM_ID_SOURCE = 'form.meta.instanceID'
+FORM_ID_SOURCE = 'id'
 CASE_ID_SOURCE = 'case_id'
 
 # maps Case fields to the API field names used in CommCareCaseResource

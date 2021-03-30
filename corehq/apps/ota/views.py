@@ -37,6 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -83,7 +84,7 @@ def restore(request, domain, app_id=None):
         return HttpTooManyRequests()
 
     response, timing_context = get_restore_response(
-        domain, request.couch_user, app_id, **get_restore_params(request))
+        domain, request.couch_user, app_id, **get_restore_params(request, domain))
     return response
 
 
@@ -101,7 +102,10 @@ def search(request, domain):
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
 
-    case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    try:
+        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    except TooManyRelatedCasesError:
+        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     search_es = case_search_criteria.search_es
 
     try:
@@ -150,7 +154,7 @@ def claim(request, domain):
     return HttpResponse(status=200)
 
 
-def get_restore_params(request):
+def get_restore_params(request, domain):
     """
     Given a request, get the relevant restore parameters out with sensible defaults
     """
@@ -163,6 +167,12 @@ def get_restore_params(request):
     if isinstance(openrosa_version, bytes):
         openrosa_version = openrosa_version.decode('utf-8')
 
+    skip_fixtures = (
+        toggles.SKIP_FIXTURES_ON_RESTORE.enabled(
+            domain, namespace=toggles.NAMESPACE_DOMAIN
+        ) or request.GET.get('skip_fixtures') == 'true'
+    )
+
     return {
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "2.0"),
@@ -174,7 +184,7 @@ def get_restore_params(request):
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
         'case_sync': request.GET.get('case_sync'),
-        'skip_fixtures': request.GET.get('skip_fixtures') == 'true',
+        'skip_fixtures': skip_fixtures,
         'auth_type': getattr(request, 'auth_type', None),
     }
 

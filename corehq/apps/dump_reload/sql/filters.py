@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from django.db.models import Q
+from corehq.util.queries import queryset_to_iterator
 
 from dimagi.utils.chunked import chunked
 
@@ -104,7 +105,7 @@ class UnfilteredModelIteratorBuilder(object):
     def _base_queryset(self):
         assert self.domain and self.model_class and self.db_alias, "Unprepared IteratorBuilder"
         objects = self.model_class._default_manager
-        return objects.using(self.db_alias).order_by(self.model_class._meta.pk.name)
+        return objects.using(self.db_alias)
 
     def querysets(self):
         yield self._base_queryset()
@@ -114,7 +115,7 @@ class UnfilteredModelIteratorBuilder(object):
 
     def iterators(self):
         for queryset in self.querysets():
-            yield queryset.iterator()
+            yield queryset_to_iterator(queryset, self.model_class, ignore_ordering=True)
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label).prepare(domain, model_class, db_alias)

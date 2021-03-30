@@ -12,15 +12,17 @@ class DataDumper(metaclass=ABCMeta):
     """
     :param domain: Name of domain to dump data for
     :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
+    :param includes: List of app labels ("app_label.model_name" or "app_label") to include
     """
 
     @abstractproperty
     def slug(self):
         raise NotImplementedError
 
-    def __init__(self, domain, excludes, stdout=None, stderr=None):
+    def __init__(self, domain, excludes, includes, stdout=None, stderr=None):
         self.domain = domain
         self.excludes = excludes
+        self.includes = includes
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
 

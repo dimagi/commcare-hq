@@ -25,6 +25,8 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
 
+# Bandit does not catch any references to mark_safe using this,
+# so please use it with caution, and only on segments that do not contain user input
 mark_safe_lazy = lazy(mark_safe, str)
 
 
@@ -322,14 +324,15 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
                              max_length=User._meta.get_field('email').max_length,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
-                               widget=forms.PasswordInput(render_value=False,
-                                                          attrs={
-                                                            'data-bind': "value: password, valueUpdate: 'input'",
-                                                            'class': 'form-control',
-                                                          }),
-                               help_text=mark_safe("""
-                               <span data-bind="text: passwordHelp, css: color">
-                               """))
+                               widget=forms.PasswordInput(
+                                   render_value=False,
+                                   attrs={
+                                       'data-bind': "value: password, valueUpdate: 'input'",
+                                       'class': 'form-control',
+                                   }),
+                               help_text=mark_safe(  # nosec - no user input
+                               '<span data-bind="text: passwordHelp, css: color">'
+                               ))
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=_("Type the letters in the box"))
     # Must be set to False to have the clean_*() routine called

@@ -11,6 +11,7 @@ from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
@@ -21,6 +22,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.pillows.case_search import domain_needs_search_index
+from corehq.toggles import CASE_API_V0_6
 
 from .api.core import SubmissionError, UserError, serialize_case
 from .api.get_list import get_list
@@ -77,11 +79,11 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         return redirect('hq_soil_download', self.domain, download.download_id)
 
 
-# TODO switch to @require_can_edit_data
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @api_auth
-@require_superuser_or_contractor
+@require_can_edit_data
+@CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:

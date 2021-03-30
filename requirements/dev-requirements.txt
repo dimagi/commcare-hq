@@ -203,7 +203,7 @@ dnspython==1.15.0
     # via
     #   -r base-requirements.in
     #   email-validator
-docutils==0.15.2
+docutils==0.16
     # via
     #   -r dev-requirements.in
     #   recommonmark
@@ -248,9 +248,9 @@ ghdiff==0.4
     # via -r base-requirements.in
 gipc==1.1.0
     # via -r base-requirements.in
-git-build-branch==0.1.9
+git-build-branch==0.1.10
     # via -r dev-requirements.in
-gnureadline==6.3.8
+gnureadline==8.0.0
     # via -r dev-requirements.in
 graphviz==0.16
     # via -r dev-requirements.in
@@ -707,7 +707,7 @@ zipp==3.2.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==20.2.3
+pip==21.0.1
     # via pip-tools
 setuptools==50.3.0
     # via
