@@ -369,8 +369,10 @@ class CustomerAccountInvoiceFactory(object):
         if not self.subscriptions:
             return
         try:
-            self._generate_customer_invoice()
+            invoice = self._generate_customer_invoice()
             self._email_invoice()
+
+            return invoice
         except InvoiceAlreadyCreatedError as e:
             log_accounting_error(
                 "Invoice already existed for account %s: %s" % (self.account.name, e),
@@ -400,10 +402,12 @@ class CustomerAccountInvoiceFactory(object):
         self._update_invoice_due_date(invoice, self.date_end)
         self.customer_invoice = invoice
 
+        return invoice
+
     def _update_invoice_due_date(self, invoice, factory_date_end):
         should_set_date_due = (
-            invoice.balance > SMALL_INVOICE_THRESHOLD or
-            (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+            invoice.balance > SMALL_INVOICE_THRESHOLD
+            or (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
         )
         if should_set_date_due:
             invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
