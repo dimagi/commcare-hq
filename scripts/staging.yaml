@@ -78,5 +78,4 @@ branches:
   - jm/pillow-upgrade # Joel Mar 29
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
-  - sr/ucr-cs # Sravan March 30
 submodules: {}
