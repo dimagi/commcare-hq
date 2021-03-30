@@ -16,8 +16,12 @@
       <a href="{% url 'dataset_map_create_view' domain %}">
         <button type="button" class="btn btn-primary">
           {% trans "Add DataSet Map" %}
-        </button>
-      </a>
+        </button></a>
+
+      <a href="{% url 'dataset_map_json_create_view' domain %}">
+        <button type="button" class="btn btn-default">
+          {% trans "Add DataSet Map (JSON UI)" %}
+        </button></a>
     </div>
   </div>
   <div class="spacer"></div>
@@ -44,6 +48,11 @@
               class="btn btn-default">
         {% trans "Send Now" %}
       </button>
+
+      <a data-bind="attr: {href: jsonEditUrl}">
+        <button type="button" class="btn btn-default">
+          {% trans "Edit (JSON UI)" %}
+        </button></a>
 
       <button type="button"
               class="btn btn-danger"

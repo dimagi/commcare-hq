@@ -1,8 +1,10 @@
 import json
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
+from django.forms import model_to_dict
 from django.http import Http404, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -19,6 +21,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.repeaters.forms import GenericRepeaterForm
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
+from corehq.util.json import CommCareJSONEncoder
 
 from .const import SEND_FREQUENCY_CHOICES
 from .dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
@@ -93,6 +96,10 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
                 DataSetMapUpdateView.urlname,
                 kwargs={'domain': self.domain, 'pk': dataset_map.id}
             ),
+            'jsonEditUrl': reverse(
+                'dataset_map_json_edit_view',
+                kwargs={'domain': self.domain, 'pk': dataset_map.id}
+            ),
         }
 
     def get_deleted_item_data(self, item_id):
@@ -105,6 +112,84 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class DataSetMapJsonCreateView(BaseProjectSettingsView):
+    urlname = 'dataset_map_json_create_view'
+    page_title = _('DataSet Map')
+    template_name = 'dhis2/dataset_map_json.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['dataset_map'] = '{}'
+        return context
+
+    def post(self, request, domain, **kwargs):
+        dsm_dict = json.loads(request.POST['dataset_map'])
+        _save_dsm_dict(domain, dsm_dict)
+        return JsonResponse({'success': _('DataSet map updated successfully.')})
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class DataSetMapJsonEditView(BaseProjectSettingsView):
+    urlname = 'dataset_map_json_edit_view'
+    page_title = _('DataSet Map')
+    template_name = 'dhis2/dataset_map_json.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs=self.kwargs)
+
+    def get_context_data(self, **kwargs):
+        dataset_map_id = kwargs['pk']
+        dataset_map = get_object_or_404(
+            SQLDataSetMap,
+            domain=self.domain,
+            id=dataset_map_id,
+        )
+        dsm_dict = _dsm_to_dict(dataset_map)
+        dsm_json = json.dumps(dsm_dict, cls=CommCareJSONEncoder)
+
+        context = super().get_context_data(**kwargs)
+        context['dataset_map'] = dsm_json
+        return context
+
+    def post(self, request, domain, **kwargs):
+        dsm_dict = json.loads(request.POST['dataset_map'])
+        _save_dsm_dict(domain, dsm_dict)
+        return JsonResponse({'success': _('DataSet map updated successfully.')})
+
+
+def _dsm_to_dict(dataset_map):
+    dataset_map_dict = model_to_dict(dataset_map)
+    dataset_map_dict['connection_settings_id'] = dataset_map_dict.pop(
+        'connection_settings', None
+    )
+    dataset_map_dict['datavalue_maps'] = [
+        model_to_dict(dvm, exclude=('id', 'dataset_map'))
+        for dvm in dataset_map.datavalue_maps.all()
+    ]
+    return dataset_map_dict
+
+
+def _save_dsm_dict(domain, dsm_dict):
+    dsm_dict_domain = dsm_dict.pop('domain', None)
+    if dsm_dict_domain and dsm_dict_domain != domain:
+        raise ValidationError(_('Invalid value for "domain"'))
+
+    dvm_dicts = dsm_dict.pop('datavalue_maps', [])
+    pk = dsm_dict.pop('id', None)
+    dataset_map, __ = SQLDataSetMap.objects.update_or_create(
+        domain=domain,
+        pk=pk,
+        defaults=dsm_dict,
+    )
+    dataset_map.datavalue_maps.all().delete()
+    for dvm_dict in dvm_dicts:
+        dataset_map.datavalue_maps.create(**dvm_dict)
 
 
 class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
