@@ -555,7 +555,8 @@ def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if not (user.is_authenticated and user.is_active):
+        couch_user = getattr(request, 'couch_user', None)
+        if not couch_user or not (user.is_authenticated and user.is_active):
             return redirect_for_login_or_domain(request)
 
         # User's login and domain have been validated - it's safe to call the view function
