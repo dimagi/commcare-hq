@@ -15,7 +15,7 @@ from django.template.base import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import escape, format_html
+from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
@@ -40,9 +40,7 @@ def JSON(obj):
     if isinstance(obj, QueryDict):
         obj = dict(obj)
     try:
-        return mark_safe(  # nosec: sanitization must be done higher up -- this can contain tags
-            escape_script_tags(json.dumps(obj, default=json_handler))
-        )
+        return escape_script_tags(json.dumps(obj, default=json_handler))
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
@@ -579,7 +577,7 @@ def trans_html_attr(value):
         value = value.decode('utf-8')
     if not isinstance(value, str):
         value = JSON(value)
-    return escape(_(value))
+    return conditional_escape(_(value))
 
 
 @register.simple_tag
@@ -588,7 +586,7 @@ def html_attr(value):
         value = value.decode('utf-8')
     if not isinstance(value, str):
         value = JSON(value)
-    return escape(value)
+    return conditional_escape(value)
 
 
 def _create_page_data(parser, token, node_slug):
