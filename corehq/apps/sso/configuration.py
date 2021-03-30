@@ -76,7 +76,7 @@ def _get_advanced_saml2_settings():
             # Turning this off for now as HTTPS makes the handshake secure
             # todo to discuss to make this a configurable parameter
             "wantAssertionsSigned": True,
-            "wantMessagesSigned": True,
+            "wantMessagesSigned": False,
             "wantAssertionsEncrypted": True,
 
             "wantNameId": True,
