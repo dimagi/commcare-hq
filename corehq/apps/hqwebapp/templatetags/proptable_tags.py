@@ -134,10 +134,10 @@ def _to_html(val, key=None, level=0, timeago=False):
 
 @attr.s
 class DisplayConfig:
-    # dict key for callable to get value from data dict
+    # dict key or callable to get value from data dict
     expr = attr.ib()
 
-    # name of the field. Defaults to `expr` if not given.
+    # name of the field. Defaults to the value `expr` if not given.
     name = attr.ib(default=None)
 
     # processor to apply. Available processors are:
