@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
+from captcha.fields import CaptchaTextInput
 
 from dimagi.utils.dates import DateSpan
 
@@ -173,3 +174,7 @@ class GeoCoderInput(Input):
         return mark_safe("""
             <div class="geocoder-proximity">{}</div>
         """.format(output))
+
+
+class HQCaptchaTextInput(CaptchaTextInput):
+    template_name = 'hq-captcha-field.html'

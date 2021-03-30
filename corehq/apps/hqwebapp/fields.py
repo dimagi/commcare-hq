@@ -1,6 +1,9 @@
 from django import forms
 from django.core.validators import validate_email
 from django.forms import fields
+from captcha.fields import CaptchaField as BaseCaptchaField
+
+from .widgets import HQCaptchaTextInput
 
 
 class CSVListField(fields.CharField):
@@ -59,3 +62,10 @@ class MultiEmailField(MultiCharField):
     default_error_messages = {
         'invalid': 'Please enter only valid email addresses.'
     }
+
+
+class CaptchaField(BaseCaptchaField):
+    def __init__(self, *args, **kwargs):
+        if 'widget' not in kwargs:
+            kwargs['widget'] = HQCaptchaTextInput
+        super().__init__(*args, **kwargs)

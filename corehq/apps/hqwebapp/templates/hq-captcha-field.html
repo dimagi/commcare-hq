@@ -1,3 +1,11 @@
-{# hidden submit button to enable [enter] key #}
-<div style="display: none"><input type="submit" value=""/></div>
-{{image}}{{hidden_field}}<br />{{text_field}}
+{% load i18n %}
+{% spaceless %}
+    {# hidden submit button to enable [enter] key #}
+    <div style="display: none"><input type="submit" value=""/></div>
+    {% if audio %}
+        <a title="{% trans "Play CAPTCHA as audio file" %}" href="{{ audio }}">
+    {% endif %}
+    <img src="{{ image }}" alt="captcha" class="captcha" />
+    {% if audio %}</a>{% endif %}
+{% endspaceless %}
+{% include "django/forms/widgets/multiwidget.html" %}
