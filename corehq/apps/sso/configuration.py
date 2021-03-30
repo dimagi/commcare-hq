@@ -75,9 +75,9 @@ def _get_advanced_saml2_settings():
             # by Azure AD (see: Token encryption) and is not available by default.
             # Turning this off for now as HTTPS makes the handshake secure
             # todo to discuss to make this a configurable parameter
-            "wantAssertionsSigned": False,
+            "wantAssertionsSigned": True,
             "wantMessagesSigned": False,
-            "wantAssertionsEncrypted": False,
+            "wantAssertionsEncrypted": True,
 
             "wantNameId": True,
             "wantNameIdEncrypted": False,  # Azure will not accept if True
