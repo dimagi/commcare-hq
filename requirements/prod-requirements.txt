@@ -277,7 +277,7 @@ kombu==4.2.2.post1
     #   celery
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.2
+lxml==4.6.3
     # via
     #   -r base-requirements.in
     #   eulxml
