@@ -316,10 +316,18 @@ class SelectiveSessionMiddleware(SessionMiddleware):
 def get_view_func(view_fn, view_kwargs):
     """Given a view_fn from the `process_view` middleware function return the actual
     function or class that represents the view.
+
+    :returns: the view function or class or None if not able to determine the view class
     """
     if getattr(view_fn, 'is_hq_report', False):  # HQ report
         dispatcher = view_fn.view_class
-        return dispatcher.get_report(view_kwargs['domain'], view_kwargs['report_slug'])
+        domain = view_kwargs.get("domain", None)
+        slug = view_kwargs.get("report_slug", None)
+        try:
+            return dispatcher.get_report(domain, slug)
+        except TypeError:
+            # custom report dispatchers may take different args for get_report
+            return
 
     if hasattr(view_fn, "view_class"):  # Django view
         return view_fn.view_class
