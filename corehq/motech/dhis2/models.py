@@ -2,12 +2,14 @@ import bz2
 from base64 import b64decode, b64encode
 from datetime import date, timedelta
 from itertools import chain
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms import model_to_dict
 
 from dateutil.relativedelta import relativedelta
+from memoized import memoized_property
 
 from dimagi.ext.couchdbkit import (
     Document,
@@ -23,11 +25,12 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.util.couch import get_document_or_not_found
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 
 from .const import (
     SEND_FREQUENCIES,
+    SEND_FREQUENCY_CHOICES,
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
@@ -96,16 +99,79 @@ class DataSetMap(Document):
         if self.connection_settings_id:
             return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
+    @property
+    def pk(self):
+        return self._id
 
-@quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
-def get_info_for_columns(dataset_map: DataSetMap) -> Dict[str, dict]:
+
+class SQLDataSetMap(models.Model):
+    domain = models.CharField(max_length=126, db_index=True)
+    couch_id = models.CharField(max_length=36, null=True, blank=True,
+                                db_index=True)
+    connection_settings = models.ForeignKey(ConnectionSettings,
+                                            on_delete=models.PROTECT,
+                                            null=True, blank=True)
+    ucr_id = models.CharField(max_length=36)
+    description = models.TextField()
+    frequency = models.CharField(max_length=16,
+                                 choices=SEND_FREQUENCY_CHOICES,
+                                 default=SEND_FREQUENCY_MONTHLY)
+
+    # Day of the month for monthly/quarterly frequency. Day of the week
+    # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
+    day_to_send = models.PositiveIntegerField()
+
+    data_set_id = models.CharField(max_length=11, null=True, blank=True)
+
+    org_unit_id = models.CharField(max_length=11, null=True, blank=True)
+    org_unit_column = models.CharField(max_length=64, null=True, blank=True)
+
+    # cf. https://docs.dhis2.org/master/en/developer/html/webapi_date_perid_format.html
+    period = models.CharField(max_length=32, null=True, blank=True)
+    period_column = models.CharField(max_length=64, null=True, blank=True)
+
+    attribute_option_combo_id = models.CharField(max_length=11,
+                                                 null=True, blank=True)
+    complete_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.description
+
+    @memoized_property
+    def ucr(self) -> Optional[ReportConfiguration]:
+        try:
+            return get_document_or_not_found(ReportConfiguration,
+                                             self.domain, self.ucr_id)
+        except DocumentNotFound:
+            return None
+
+
+class SQLDataValueMap(models.Model):
+    dataset_map = models.ForeignKey(
+        SQLDataSetMap, on_delete=models.CASCADE,
+        related_name='datavalue_maps',
+    )
+    column = models.CharField(max_length=64)
+    data_element_id = models.CharField(max_length=11)
+    category_option_combo_id = models.CharField(max_length=11, blank=True)
+    comment = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.column
+
+
+@quickcache(['dataset_map.domain', 'dataset_map.pk'])
+def get_info_for_columns(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+) -> Dict[str, dict]:
+
     info_for_columns = {
         dvm.column: {
-            **dvm,
+            **_datavalue_map_to_dict(dvm),
             'is_org_unit': False,
             'is_period': False,
         }
-        for dvm in dataset_map.datavalue_maps
+        for dvm in _iter_datavalue_maps(dataset_map)
     }
     if dataset_map.org_unit_column:
         info_for_columns[dataset_map.org_unit_column] = {
@@ -120,17 +186,43 @@ def get_info_for_columns(dataset_map: DataSetMap) -> Dict[str, dict]:
     return info_for_columns
 
 
-def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
+def _datavalue_map_to_dict(datavalue_map):
+    try:
+        return model_to_dict(datavalue_map, exclude=['id', 'dataset_map'])
+    except AttributeError:
+        return datavalue_map
+
+
+def _iter_datavalue_maps(dataset_map):
+    try:
+        return dataset_map.datavalue_maps.all()
+    except AttributeError:
+        return dataset_map.datavalue_maps
+
+
+def get_datavalues(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+    ucr_row: dict,
+) -> List[dict]:
     """
-    Returns rows of "dataElement", "categoryOptionCombo", "value", and
-    optionally "period", "orgUnit" and "comment" for ``dataset_map``
-    where ``ucr_row`` looks like::
+    Given a ``ucr_row`` that looks like ... ::
 
         {
-            "org_unit_id": "ABC",
+            "org_unit_id": "ghi45678901",
             "data_element_cat_option_combo_1": 123,
             "data_element_cat_option_combo_2": 456,
             "data_element_cat_option_combo_3": 789,
+        }
+
+    ... returns rows of data values that look like ::
+
+        {
+            "dataElement": "abc45678901",
+            "value": 123,
+            "categoryOptionCombo": "def45678901",  /* optional */
+            "period": 202101,  /* optional */
+            "orgUnit": "ghi45678901",  /* optional */
+            "comment": "A comment"  /* optional */
         }
 
     """
@@ -148,9 +240,11 @@ def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
             else:
                 datavalue = {
                     'dataElement': info_for_columns[key]['data_element_id'],
-                    'categoryOptionCombo': info_for_columns[key]['category_option_combo_id'],
                     'value': value,
                 }
+                if info_for_columns[key].get('category_option_combo_id'):
+                    datavalue['categoryOptionCombo'] = (
+                        info_for_columns[key]['category_option_combo_id'])
                 if info_for_columns[key].get('comment'):
                     datavalue['comment'] = info_for_columns[key]['comment']
                 datavalues.append(datavalue)
@@ -164,11 +258,15 @@ def get_datavalues(dataset_map: DataSetMap, ucr_row: dict) -> List[dict]:
     return datavalues
 
 
-def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
-    report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
-    date_filter = get_date_filter(report_config)
+def get_dataset(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+    send_date: date
+) -> dict:
+    if not dataset_map.ucr:
+        raise ValueError('UCR not found for {dataset_map!r}')
+    date_filter = get_date_filter(dataset_map.ucr)
     date_range = get_date_range(dataset_map.frequency, send_date)
-    ucr_data = get_ucr_data(report_config, date_filter, date_range)
+    ucr_data = get_ucr_data(dataset_map.ucr, date_filter, date_range)
 
     datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)  # one UCR row may have many DataValues
     dataset = {
@@ -186,7 +284,7 @@ def get_dataset(dataset_map: DataSetMap, send_date: date) -> dict:
     if dataset_map.attribute_option_combo_id:
         dataset['attributeOptionCombo'] = dataset_map.attribute_option_combo_id
     if dataset_map.complete_date:
-        dataset['completeDate'] = dataset_map.complete_date
+        dataset['completeDate'] = str(dataset_map.complete_date)
     return dataset
 
 
@@ -222,7 +320,10 @@ def as_iso_quarter(startdate: date) -> str:
     return f'{startdate.year}Q{quarter}'
 
 
-def should_send_on_date(dataset_map: DataSetMap, send_date: date) -> bool:
+def should_send_on_date(
+    dataset_map: Union[DataSetMap, SQLDataSetMap],
+    send_date: date,
+) -> bool:
     if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
         return dataset_map.day_to_send == send_date.isoweekday()
     if dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
@@ -232,11 +333,6 @@ def should_send_on_date(dataset_map: DataSetMap, send_date: date) -> bool:
             dataset_map.day_to_send == send_date.day
             and send_date.month in [1, 4, 7, 10]
         )
-
-
-def get_report_config(domain_name, ucr_id):
-    report_config = get_document_or_not_found(ReportConfiguration, domain_name, ucr_id)
-    return report_config
 
 
 def get_date_filter(report_config):
