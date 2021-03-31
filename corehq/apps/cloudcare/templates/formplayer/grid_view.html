@@ -52,7 +52,7 @@
 
 <script id="single-app-template" type="text/template">
   <ol class="breadcrumb">
-    <li class="breadcrumb-text"><%= appName %></li>
+    <li class="breadcrumb-text"><%- appName %></li>
   </ol>
   <div class="container container-appicons">
     <div class="row">
@@ -115,10 +115,10 @@
         <% if (!imageUrl) { %>
           <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
         <% } else { %>
-          <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
+          <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%- imageUrl %>');" aria-hidden="true"></i>
         <% } %>
         <div class="appicon-title">
-          <h3><%= appName %></h3>
+          <h3><%- appName %></h3>
         </div>
       </div>
     </div>
@@ -131,7 +131,7 @@
     <% if (!imageUrl) { %>
       <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
     <% } else { %>
-      <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
+      <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%- imageUrl %>');" aria-hidden="true"></i>
     <% } %>
     <div class="appicon-title">
       <h3><%- name %></h3>
