@@ -14,9 +14,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
     hqMain,
     googleAnalytics
 ) {
-    var caseType = function (name) {
+    var caseType = function (name, fhirResourceType) {
         var self = {};
         self.name = name || gettext("No Name");
+        self.fhirResourceType = ko.observable(fhirResourceType);
         self.properties = ko.observableArray();
 
         self.init = function (groupDict, changeSaveButton) {
@@ -24,10 +25,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var groupObj = propertyListItem(group, true, group, self.name);
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
-                    var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description, prop.deprecated);
+                    var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type,
+                        prop.description, prop.fhir_resource_prop_path, prop.deprecated,
+                        prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
+                    propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
+                    propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                     self.properties.push(propObj);
                 });
             });
@@ -36,7 +41,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, deprecated) {
+    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description,
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
         self.expanded = ko.observable(true);
@@ -45,7 +51,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.caseType = caseType;
         self.dataType = ko.observable(dataType);
         self.description = ko.observable(description);
+        self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
+        self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
+        self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -59,18 +68,31 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.deprecated(false);
         };
 
+        self.removePath = function () {
+            self.removeFHIRResourcePropertyPath(true);
+            // set back to original to delete the corresponding entry on save
+            self.fhirResourcePropPath(self.originalResourcePropPath);
+        };
+
+        self.restorePath = function () {
+            self.removeFHIRResourcePropertyPath(false);
+        };
+
         return self;
     };
 
-    var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices) {
+    var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
         var self = {};
         self.caseTypes = ko.observableArray();
         self.activeCaseType = ko.observable();
+        self.fhirResourceType = ko.observable();
+        self.removefhirResourceType = ko.observable(false);
         self.newPropertyName = ko.observable();
         self.newGroupName = ko.observable();
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
+        self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
@@ -84,7 +106,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
+                            'fhir_resource_prop_path': (
+                                element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
+                            'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                         };
                         postProperties.push(data);
                     } else {
@@ -97,6 +122,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     dataType: 'JSON',
                     data: {
                         'properties': JSON.stringify(postProperties),
+                        'fhir_resource_type': self.fhirResourceType(),
+                        'remove_fhir_resource_type': self.removefhirResourceType(),
+                        'case_type': self.activeCaseType(),
                     },
                     success: function () {
                         var activeCaseType = self.getActiveCaseType();
@@ -117,7 +145,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $.getJSON(dataUrl)
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
-                        var caseTypeObj = caseType(caseTypeData.name);
+                        var caseTypeObj = caseType(caseTypeData.name, caseTypeData.fhir_resource_type);
                         var groupDict = _.groupBy(caseTypeData.properties, function (prop) {return prop.group;});
                         caseTypeObj.init(groupDict, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
@@ -126,6 +154,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         self.goToCaseType(self.caseTypes()[0]);
                     }
                     self.casePropertyList.subscribe(changeSaveButton);
+                    self.fhirResourceType.subscribe(changeSaveButton);
+                    self.removefhirResourceType.subscribe(changeSaveButton);
                 });
         };
 
@@ -154,6 +184,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 }
             }
             self.activeCaseType(caseType.name);
+            self.fhirResourceType(caseType.fhirResourceType());
+            self.removefhirResourceType(false);
             self.casePropertyList(self.activeCaseTypeData());
             self.saveButton.setState('saved');
         };
@@ -163,7 +195,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
+                prop.fhirResourcePropPath.subscribe(changeSaveButton);
                 prop.deprecated.subscribe(changeSaveButton);
+                prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                 self.newPropertyName(undefined);
                 self.casePropertyList.push(prop);
             }
@@ -199,6 +233,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.showAll(false);
         };
 
+        self.removeResourceType = function () {
+            self.removefhirResourceType(true);
+        };
+
+        self.restoreResourceType = function () {
+            self.removefhirResourceType(false);
+        };
+
         return self;
     };
 
@@ -206,7 +248,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         var dataUrl = initialPageData.reverse('data_dictionary_json'),
             casePropertyUrl = initialPageData.reverse('update_case_property'),
             typeChoices = initialPageData.get('typeChoices'),
-            viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
+            fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
+            viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function () {
