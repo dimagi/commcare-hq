@@ -30,20 +30,10 @@ def register_patients(
             # Patient is already registered
             info_resource_list_to_send.append((info, resource))
             continue
-        response = requests.post(
-            'Patient/',
-            json=resource,
-            raise_for_status=True,
-        )
-        try:
-            _set_external_id(info, response.json()['id'], repeater_id)
-            # Don't append `resource` to `info_resource_list_to_send`
-            # because the remote service has all its data now.
-        except (ValueError, KeyError) as err:
-            # The remote service returned a 2xx response, but did not
-            # return JSON, or the JSON does not include an ID.
-            msg = 'Unable to parse response from remote FHIR service'
-            raise HTTPError(msg, response=response) from err
+        send_resource(requests, info, resource, repeater_id,
+                      raise_on_ext_id=True)
+        # Don't append `resource` to `info_resource_list_to_send`
+        # because the remote service has all its data now.
     return info_resource_list_to_send
 
 
