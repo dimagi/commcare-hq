@@ -15,7 +15,6 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
@@ -1365,20 +1364,18 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
 
     form_name = _("Followup with Person")
 
-    output_tag = mark_safe(  # nosec: no user input
-        "<output value=\"instance('casedb')/casedb/case[@case_id = "
-        "instance('commcaresession')/session/data/case_id]/case_name\" "
-        "vellum:value=\"#case/case_name\" />"
-    )
-
     context = {
         'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'lang': lang,
-        'placeholder_label': format_html(_(
+        'placeholder_label': mark_safe(_(
             "This is your follow up form for {}. Delete this label and add "
             "questions for any follow up visits."
-        ), output_tag)
+        ).format(
+            "<output value=\"instance('casedb')/casedb/case[@case_id = "
+            "instance('commcaresession')/session/data/case_id]/case_name\" "
+            "vellum:value=\"#case/case_name\" />"
+        ))
     }
     attachment = render_to_string(
         "app_manager/simprints_followup_form.xml",
