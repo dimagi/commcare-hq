@@ -32,7 +32,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.lookupTableNodeset = ko.pureComputed({
             write: function (value) {
-                self.nodeset(value);
+                if (value === undefined) {
+                    self.nodeset(null);
+                }
+                else {
+                    self.nodeset(value);
+                }
                 var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
                     matches = reg.exec(value);
                 if (matches && matches.length > 1) {
