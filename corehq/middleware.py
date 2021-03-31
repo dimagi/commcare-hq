@@ -20,6 +20,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from corehq.util.timer import DURATION_REPORTING_THRESHOLD
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -324,9 +325,10 @@ def get_view_func(view_fn, view_kwargs):
         domain = view_kwargs.get("domain", None)
         slug = view_kwargs.get("report_slug", None)
         try:
-            return dispatcher.get_report(domain, slug)
-        except TypeError:
-            # custom report dispatchers may take different args for get_report
+            class_name = dispatcher.get_report_class_name(domain, slug)
+            return to_function(class_name) if class_name else None
+        except:
+            # custom report dispatchers may do things differently
             return
 
     if hasattr(view_fn, "view_class"):  # Django view

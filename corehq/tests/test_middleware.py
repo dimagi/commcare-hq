@@ -58,12 +58,12 @@ class TestCustomReportDispatcher(TestNoDomainReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_custom"
 
-    def get_report(self, domain, slug, config_id):
-        """Intentionally different method signature to the parent class"""
-        return CustomReport
+    def dispatch(self, request, *args, **kwargs):
+        return CustomReport(request).view_response
 
-    def get_report_class_name(self, domain, report_slug):
-        return CustomReport.__module__ + '.' + CustomReport.__name__
+    @classmethod
+    def get_report_class_name(cls, domain, report_slug):
+        raise Exception("Custom dispatcher's don't like this method")
 
 
 class BaseReport(GenericReportView):
