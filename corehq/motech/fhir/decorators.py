@@ -11,20 +11,30 @@ def smart_auth(view):
 
     """
 
-    def _build_required_scope(resource_type, request):
+    def _build_required_scope(resource_type, action):
+        # We currently only allow user scopes. When we have provide auth,
+        # we can update this to allow `patient/` scopes too
+        return [f'user/{resource_type}.{action}']
+
+    def _get_action_from_method(request):
         if request.method.upper() in ["GET", "HEAD", "OPTIONS"]:
-            read_write_scope = 'read'
+            return 'read'
         else:
-            read_write_scope = 'write'
-        # TODO: If this is a WebUser, then allow `patient`
-        return [f'user/{resource_type}.{read_write_scope}']
+            return 'write'
 
     @wraps(view)
     def wrapper(request, *args, **kwargs):
         core = get_oauthlib_core()
-        valid, oauth_request = core.verify_request(
-            request, scopes=_build_required_scope(kwargs['resource_type'], request)
-        )
+
+        # Oauthlib doesn't have a way to provide a list of optional scopes,
+        # So we check each valid scope for this resource in turn
+        for resource_type in [kwargs['resource_type'], '*']:
+            for action in [_get_action_from_method(request), '*']:
+                valid, oauth_request = core.verify_request(
+                    request, scopes=_build_required_scope(resource_type, action)
+                )
+                if valid:
+                    break
 
         if not valid:
             return HttpResponseForbidden(oauth_request.oauth2_error.get('error_description', ''))

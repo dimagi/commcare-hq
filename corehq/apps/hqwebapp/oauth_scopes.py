@@ -70,7 +70,7 @@ class HQScopes(BaseScopes):
                 'name', flat=True
             ).all()
             available_scopes = list(DEFAULT_SMART_SCOPES.keys())
-            for resource in resources:
+            for resource in list(resources) + ['*']:
                 available_scopes += CLINICAL_SCOPES_BY_RESOURCE_NAME[resource]
             return available_scopes
 
