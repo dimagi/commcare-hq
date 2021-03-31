@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+from django.template.loader import render_to_string
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
@@ -434,7 +435,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
         domain_obj = None
         location = None
         if 'domain' in kwargs:
@@ -457,12 +458,46 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         self.excluded_emails = excluded_emails or []
 
         self.helper = FormHelper()
-        self.helper.form_tag = False
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'form-horizontal form-ko-validation'
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                ugettext("Information for new Web User"),
+                crispy.Field(
+                    "email",
+                    autocomplete="off",
+                    data_bind="textInput: email",
+                ),
+                'role',
+            ),
+            crispy.HTML(
+                render_to_string(
+                    'users/partials/confirm_trust_identity_provider_message.html',
+                    {
+                        'is_add_user': is_add_user,
+                    }
+                ),
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    (ugettext("Add User") if is_add_user
+                     else ugettext("Send Invite")),
+                    type="submit",
+                    css_class="btn-primary",
+                    data_bind="enable: isSubmitEnabled",
+                ),
+                crispy.HTML(
+                    render_to_string(
+                        'users/partials/waiting_to_verify_email_message.html',
+                        {}
+                    ),
+                ),
+            ),
+        )
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()

@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<!-- ko if: showIdentityProviderMessage -->
+  <div class="alert alert-setting">
+    <p class="lead">
+      <i class="fa fa-lock"></i>
+      {% blocktrans %}
+        This user <strong data-bind="text: email"></strong> will be authenticated by the
+        SSO Identity Provider "<strong data-bind="text: identityProviderName"></strong>".
+      {% endblocktrans %}
+    </p>
+    <p>
+      {% if is_add_user %}
+        {% blocktrans %}
+          By adding this user, you agree to trust this Identity Provider.
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+          By sending this invitation, you agree to trust this Identity Provider.
+        {% endblocktrans %}
+      {% endif %}
+      {% blocktrans %}
+        This will apply to all web users with
+        <strong>@<!--ko text: trustedEmailDomain--><!--/ko--></strong>
+        email addresses.
+      {% endblocktrans %}
+    </p>
+    <p>
+      {% blocktrans %}
+        <a href="#">Learn more</a> about SSO on CommCare HQ.
+      {% endblocktrans %}
+    </p>
+  </div>
+<!-- /ko -->
