@@ -500,14 +500,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     # the user's information is updated, or none of it
 
                     # Do not update location info if the column is not included at all
-                    location_ids = []
-                    for code in location_codes:
-                        loc = get_location_from_site_code(code, domain_info.location_cache)
-                        location_ids.append(loc.location_id)
+                    location_ids = find_location_id(location_codes, domain_info.location_cache)
                     locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
                                                                                      user.location_id,
                                                                                      user.assigned_location_ids)
-                    if primary_location_removed:
+                    if primary_loc_removed:
                         user.unset_location(commit=False)
                     if locations_updated:
                         user.reset_locations(location_ids, commit=False)
@@ -656,10 +653,11 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
         role = row.get('role', None)
         status = row.get('status')
-        location_codes = row.get('location_code')
+
+        location_codes = row.get('location_code', []) if 'location_code' in row else None
+        if location_codes and not isinstance(location_codes, list):
+            location_codes = [location_codes]
         if location_codes is not None:
-            if not isinstance(location_codes, list):
-                location_codes = [location_codes]
             # ignore empty
             location_codes = [code for code in location_codes if code]
 
