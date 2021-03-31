@@ -1,14 +1,11 @@
 hqDefine('domain/js/pro-bono', [
     'jquery',
+    'hqwebapp/js/utils/email',
     'select2/dist/js/select2.full.min',
 ], function (
-    $
+    $,
+    emailUtils
 ) {
-    var _validateEmail = function (email) {
-        // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-        var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // eslint-disable-line no-useless-escape
-        return re.test(email);
-    };
 
     $(function () {
         $('#id_contact_email').select2({
@@ -22,7 +19,7 @@ hqDefine('domain/js/pro-bono', [
                     return this.text.localeCompare(term) === 0;
                 });
 
-                if (matchedData.length === 0 && _validateEmail(term)) {
+                if (matchedData.length === 0 && emailUtils.validateEmail(term)) {
                     return { id: term, text: term };
                 }
             },

@@ -101,7 +101,7 @@ def _get_couchdb_counts(domain):
 
 def _get_sql_counts(domain):
     counter = Counter()
-    for model_class, builder in get_model_iterator_builders_to_dump(domain, []):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain, [], []):
         if model_class in (User, XFormInstanceSQL, CommCareCaseSQL):
             continue  # User is very slow, others we want to break out
         for queryset in builder.querysets():

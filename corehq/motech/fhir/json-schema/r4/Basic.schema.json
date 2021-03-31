@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Basic",
+  "id": "file:Basic.schema.json",
   "$ref": "#/definitions/Basic",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Basic": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Basic is used for handling concepts not yet defined in FHIR, narrative-only resources that don\u0027t map to an existing resource, and custom resources not appropriate for inclusion in the FHIR specification.",

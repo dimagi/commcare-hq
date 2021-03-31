@@ -56,7 +56,7 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
             'defDate': self.get_ivory_coast_timestamp().strftime('%Y%m%d%H%M%S'),
             'blink': 'false',
             'flash': 'false',
-            'private': 'false',
+            'Private': 'false',
             'smsText': msg_obj.text.encode('utf-8'),
             'recipientPhone': msg_obj.phone_number,
         }
@@ -74,7 +74,7 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
             return
 
         response = requests.get(
-            'http://smspro.mtn.ci/smspro/soap/messenger.asmx/HTTP_SendSms',
+            'https://smspro.mtn.ci/bms/Soap/Messenger.asmx/HTTP_SendSms',
             params=self.get_params(msg_obj),
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )

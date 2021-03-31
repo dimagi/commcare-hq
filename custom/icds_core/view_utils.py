@@ -9,7 +9,7 @@ from custom.icds_core.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
 from corehq.apps.users.models import DomainMembershipError
 from django.http import HttpResponse
 
-DATA_INTERFACE_ACCESS_DENIED = mark_safe(ugettext_lazy(
+DATA_INTERFACE_ACCESS_DENIED = mark_safe(ugettext_lazy(  # nosec: no user input
     "This project has blocked access to interfaces that edit data for forms and cases"
 ))
 

@@ -97,3 +97,23 @@ def paginated_queryset(queryset, chunk_size):
                 yield obj
         except EmptyPage:
             return
+
+
+def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
+    """
+    Pull from queryset in chunks. This is suitable for deep pagination, but
+    cannot be used with ordered querysets (results will be sorted by pk).
+    """
+    if queryset.ordered and not ignore_ordering:
+        raise AssertionError("queryset_to_iterator does not respect ordering.  "
+                             "Pass ignore_ordering=True to continue.")
+
+    pk_field = model_cls._meta.pk.name
+    queryset = queryset.order_by(pk_field)
+    docs = queryset[:limit]
+    while docs:
+        for doc in docs:
+            yield doc
+
+        last_doc_pk = getattr(doc, pk_field)
+        docs = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]

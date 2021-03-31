@@ -222,7 +222,9 @@
       </div>
     </div>
     <div class="panel-footer">
-      <button class="btn btn-default btn-xs add" href="#" data-bind="click: newRepeat">{% trans "Add new repeat" %}</button>
+      <button class="btn btn-default btn-xs add" href="#"
+              data-bind="click: newRepeat, text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}')"
+              id="repeat-add-new" />
     </div>
 
   </div>
@@ -430,4 +432,12 @@
   </div>
   <span class="help-block">{% trans "24-hour clock" %}</span>
 </script>
+
+<script type="text/html" id="ethiopian-date-entry-ko-template">
+  <div class="input-group">
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+  </div>
+</script>
+
 <script type="text/html" id="blank-entry-ko-template"></script>

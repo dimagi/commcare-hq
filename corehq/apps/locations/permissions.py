@@ -100,10 +100,8 @@ see.
 from functools import wraps
 
 from django.http import Http404
-from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy
-from django.views.generic import View
 
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
@@ -113,21 +111,24 @@ from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.domain.decorators import (
-    domain_admin_required,
     login_and_domain_required,
 )
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 
 from .models import SQLLocation
 
-LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
+
+# TODO: ugettext_lazy is likely not having the desired effect, as format_html will immediately
+# evaluate it against the current language.
+# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+# has details on how to create a delayed format_html/mark_safe
+LOCATION_ACCESS_DENIED = format_html(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
-    'More information is available <a href="{link}">here</a>.'
-).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+and+User+Editing+Restrictions"))
+    'More information is available <a href="{}">here</a>.'),
+    "https://wiki.commcarehq.org/display/commcarepublic/Data+Access+and+User+Editing+Restrictions")
+
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
@@ -295,11 +296,11 @@ def user_can_access_other_user(domain, user, other_user):
 
 
 def user_can_access_case(domain, user, case):
-    from corehq.apps.reports.standard.cases.data_sources import CaseInfo
+    from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
     if user.has_permission(domain, 'access_all_locations'):
         return True
 
-    info = CaseInfo(None, case.to_json())
+    info = CaseDisplay(case.to_json())
     if info.owner_type == 'location':
         return user_can_access_location_id(domain, user, info.owner_id)
     elif info.owner_type == 'user':

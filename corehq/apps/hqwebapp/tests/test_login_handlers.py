@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from corehq.apps.hqwebapp.models import UserAccessLog
 
 from corehq.apps.hqwebapp.login_handlers import handle_failed_login, \
-    handle_login, handle_logout, handle_access_event
+    handle_login, handle_logout, _handle_access_event
 
 
 class TestLoginAccessHandler(TestCase):
@@ -12,13 +12,13 @@ class TestLoginAccessHandler(TestCase):
         factory = RequestFactory()
         request = factory.post('/login')
 
-        handle_access_event('some_event', request, 'test_user')
+        _handle_access_event('some_event', request, 'test_user')
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertIsNone(log_entry.user_agent)
 
     def test_missing_request_logs_empty_attributes(self):
-        handle_access_event('some_event', None, 'test_user')
+        _handle_access_event('some_event', None, 'test_user')
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertIsNone(log_entry.ip)
@@ -40,28 +40,36 @@ class TestHandleLogin(TestCase):
         self.assertEqual(log_entry.action, 'login')
         self.assertEqual(log_entry.user_id, 'test_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
+        self.assertEqual(log_entry.user_agent, 'Mozilla')
         self.assertEqual(log_entry.path, '/login')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
 
 
 class TestHandleLogout(TestCase):
+    def setUp(self):
+        factory = RequestFactory()
+        self.request = factory.post('/logout')
+
     @freeze_time('2020-01-02 03:20:15')
     def test_logout_stores_correct_fields_in_database(self):
-        factory = RequestFactory()
         user = User(username='test_user')
-        request = factory.post('/logout')
-        request.META['HTTP_USER_AGENT'] = 'Mozilla'
+        self.request.META['HTTP_USER_AGENT'] = 'Mozilla'
 
-        handle_logout('any_source', request, user)
+        handle_logout('any_source', self.request, user)
 
         log_entry = UserAccessLog.objects.filter(user_id='test_user').first()
         self.assertEqual(log_entry.action, 'logout')
         self.assertEqual(log_entry.user_id, 'test_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
+        self.assertEqual(log_entry.user_agent, 'Mozilla')
         self.assertEqual(log_entry.path, '/logout')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')
+
+    def test_no_user_is_logged_with_empty_user_id(self):
+        handle_logout('any_source', self.request, user=None)
+
+        unknown_logouts = UserAccessLog.objects.filter(user_id='')
+        self.assertEqual(unknown_logouts.count(), 1)
 
 
 class TestHandleFailedLogin(TestCase):
@@ -78,6 +86,6 @@ class TestHandleFailedLogin(TestCase):
         self.assertEqual(log_entry.action, 'failure')
         self.assertEqual(log_entry.user_id, 'fake_user')
         self.assertEqual(log_entry.ip, '127.0.0.1')
-        self.assertEqual(log_entry.user_agent.value, 'Mozilla')
+        self.assertEqual(log_entry.user_agent, 'Mozilla')
         self.assertEqual(log_entry.path, '/login')
         self.assertEqual(str(log_entry.timestamp), '2020-01-02 03:20:15')

@@ -99,7 +99,6 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         upgrade_subscriptions_to_latest_plan_version(
             self.first_version,
             self.admin_web_user,
-            datetime.date.today(),
             upgrade_note="test upgrading to latest version"
         )
         self.assertEqual(

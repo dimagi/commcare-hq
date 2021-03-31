@@ -74,9 +74,6 @@ class Command(ResourceStaticCommand):
             # and pass in the file contents, since get_hash does another read.
             file_hash = self.get_hash(filename)
 
-            if module['name'] == "users/js/bundle":
-                file_hash = uuid4().hex
-
             # Overwrite source map reference. Source maps are accessed on the CDN,
             # so they need to have the version hash appended.
             with open(filename, 'r') as fin:

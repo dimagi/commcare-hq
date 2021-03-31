@@ -1171,13 +1171,14 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
                 timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
+                      include_groups=False, include_translations=False, include_fixtures=False):
         try:
             return XForm(self.source).get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
                 include_translations=include_translations,
+                include_fixtures=include_fixtures,
             )
         except XFormException as e:
             raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))
@@ -2090,6 +2091,8 @@ class CaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
     hint = DictProperty()
 
+    # applicable when appearance is a receiver
+    receiver_expression = StringProperty()
     itemset = SchemaProperty(Itemset)
 
 
@@ -4069,9 +4072,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return self._id
 
     @property
-    def master_id(self):
-        """Return the ID of the 'master' app. For app builds this is the ID
-        of the app they were built from otherwise it's just the app's ID."""
+    def origin_id(self):
+        # For app builds this is the ID of the app they were built from. Otherwise, it's just the app's ID.
         return self.copy_of or self._id
 
     def is_deleted(self):
@@ -4152,8 +4154,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @memoized
     def get_latest_build(self):
         return self.view('app_manager/applications',
-            startkey=[self.domain, self.master_id, {}],
-            endkey=[self.domain, self.master_id],
+            startkey=[self.domain, self.origin_id, {}],
+            endkey=[self.domain, self.origin_id],
             include_docs=True,
             limit=1,
             descending=True,
@@ -4964,7 +4966,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
-            'uniqueid': self.master_id,
+            'uniqueid': self.origin_id,
             'name': self.name,
             'descriptor': "Profile File",
             'build_profile_id': build_profile_id,
@@ -5675,13 +5677,13 @@ class LinkedApplication(Application):
         if self.domain_link:
             versions = get_latest_master_releases_versions(self.domain_link)
             # Use self.get_master_app_briefs to limit return value by family_id
-            master_ids = [b.id for b in self.get_master_app_briefs()]
-            return {key: value for key, value in versions.items() if key in master_ids}
+            upstream_ids = [b.id for b in self.get_master_app_briefs()]
+            return {key: value for key, value in versions.items() if key in upstream_ids}
         return {}
 
     @memoized
     def get_latest_build_from_upstream(self, upstream_app_id):
-        build_ids = get_build_ids(self.domain, self.master_id)
+        build_ids = get_build_ids(self.domain, self.origin_id)
         for build_id in build_ids:
             build_doc = Application.get_db().get(build_id)
             if build_doc.get('upstream_app_id') == upstream_app_id:
@@ -5734,7 +5736,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None, c
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
     if source_domain == domain:
-        app.family_id = source_app.master_id
+        app.family_id = source_app.origin_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
@@ -5860,7 +5862,7 @@ class GlobalAppConfig(models.Model):
 
     @classmethod
     def by_app(cls, app):
-        model = cls.by_app_id(app.domain, app.master_id)
+        model = cls.by_app_id(app.domain, app.origin_id)
         model._app = app
         return model
 
@@ -5883,7 +5885,7 @@ class GlobalAppConfig(models.Model):
     def app(self):
         if not self._app:
             app = get_app(self.domain, self.app_id, latest=True, target='release')
-            assert self.app_id == app.master_id, "this class doesn't handle copy app ids"
+            assert self.app_id == app.origin_id, "this class doesn't handle copy app ids"
             self._app = app
         return self._app
 

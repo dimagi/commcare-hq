@@ -1,7 +1,7 @@
 API
 ===
-.. TODO: describe lucene syntax for ES resources
-    Add other resources
+
+For user facing API documentation see https://help.commcarehq.org/display/commcarepublic/Data+APIs
 
 Bulk User Resource
 ~~~~~~~~~~~~~~~~~~
