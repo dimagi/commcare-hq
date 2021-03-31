@@ -86,7 +86,7 @@ class SlowReport(BaseReport):
         return HttpResponse(200)
 
 
-@set_request_duration_reporting_threshold(0.1)
+@set_request_duration_reporting_threshold(1)
 class FastReport(BaseReport):
     dispatcher = TestReportDispatcher
     slug = 'fast_report'
