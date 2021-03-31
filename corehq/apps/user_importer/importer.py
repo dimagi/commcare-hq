@@ -744,7 +744,14 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
                             raise UserUploadError(_("The email has bounced for this user's invite. Please try "
                                                     "again with a different username").format(web_user=username))
-                    create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user, None)
+                    user_invite_location_id = None
+                    if domain_has_privilege(domain, privileges.LOCATIONS) and location_codes is not None:
+                        # set invite location to first item in location_codes
+                        if len(location_codes) > 0:
+                            user_invite_location = get_location_from_site_code(location_codes[0], location_cache)
+                            user_invite_location_id = user_invite_location.location_id
+                    create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                     user_invite_location_id)
                     status_row['flag'] = 'invited'
 
             if role_updated:
