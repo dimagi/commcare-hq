@@ -35,7 +35,7 @@ from .models import (
     build_capability_statement,
     build_fhir_resource,
 )
-from .utils import resource_url
+from .utils import case_access_authorized, resource_url
 
 
 class AddFHIRRepeaterView(AddRepeaterView):
@@ -71,6 +71,10 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
+
+    if not case_access_authorized(domain, request.oauth_access_token, resource_id):
+        return JsonResponse(status=403, data={'message': "You do not have access to this resource"})
+
     case = get_case_or_404(domain, resource_id)
 
     if not FHIRResourceType.objects.filter(
@@ -96,9 +100,13 @@ def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
+
     patient_case_id = request.GET.get('patient_id')
     if not patient_case_id:
         return JsonResponse(status=400, data={'message': "Please pass patient_id"})
+    if not case_access_authorized(domain, request.oauth_access_token, patient_case_id):
+        return JsonResponse(status=403, data={'message': "You do not have access to this resource"})
+
     case_accessor = CaseAccessors(domain)
     try:
         patient_case = case_accessor.get_case(patient_case_id)
