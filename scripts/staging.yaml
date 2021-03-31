@@ -80,4 +80,5 @@ branches:
   - bmb/sp-encrypt-test  # Biyeun March 30
   - sr/ucr-cs  # Sravan March 31
   - rp/fix-broken-link # Rynhard March 31
+  - dmr/emit-fixture-count-metrics  # Danny Mar 31
 submodules: {}
