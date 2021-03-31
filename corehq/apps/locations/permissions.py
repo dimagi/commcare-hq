@@ -115,6 +115,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
+from corehq.middleware import get_view_func
 
 from .models import SQLLocation
 
@@ -123,6 +124,8 @@ from .models import SQLLocation
 # evaluate it against the current language.
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 # has details on how to create a delayed format_html/mark_safe
+
+
 LOCATION_ACCESS_DENIED = format_html(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
@@ -249,15 +252,8 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
 
-    if getattr(view_fn, 'is_hq_report', False):  # HQ report
-        dispatcher = view_fn.view_class
-        report_class = dispatcher.get_report(view_kwargs['domain'], view_kwargs['report_slug'])
-        return _view_obj_is_safe(report_class, request, *view_args, **view_kwargs)
-
-    if hasattr(view_fn, "view_class"):  # Django view
-        return _view_obj_is_safe(view_fn.view_class, request, *view_args, **view_kwargs)
-
-    return _view_obj_is_safe(view_fn, request, *view_args, **view_kwargs)
+    view_func = get_view_func(view_fn, view_kwargs)
+    return _view_obj_is_safe(view_func, request, *view_args, **view_kwargs)
 
 
 def report_class_is_location_safe(report_class):
