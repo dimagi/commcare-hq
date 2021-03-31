@@ -1001,8 +1001,8 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
-    def attempt_forward_now(self):
-        from corehq.motech.repeaters.tasks import process_repeat_record
+    def attempt_forward_now(self, is_retry=False):
+        from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
 
         def is_ready():
             return self.next_check < datetime.utcnow()
@@ -1026,7 +1026,12 @@ class RepeatRecord(Document):
             # of Couch DB's optimistic locking, which prevents a process
             # with stale data from overwriting the work of another.
             return
-        process_repeat_record.delay(self)
+
+        # separated for improved datadog reporting
+        if is_retry:
+            retry_process_repeat_record.delay(self)
+        else:
+            process_repeat_record.delay(self)
 
     def requeue(self):
         self.cancelled = False
