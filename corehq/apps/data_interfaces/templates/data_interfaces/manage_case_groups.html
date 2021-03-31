@@ -19,7 +19,7 @@
 
     <script type="text/html" id="template-upload-progress">
       <p>
-        <%=current%> / <%=total%> {% trans 'cases processed. Please do not refresh or close this page.' %}
+        <%-current%> / <%-total%> {% trans 'cases processed. Please do not refresh or close this page.' %}
       </p>
     </script>
 
@@ -29,7 +29,7 @@
         <h4>{% trans 'Cases were successfully added:' %}</h4>
         <ul>
           <% _.each(success, function (s) { %>
-          <li><%=s%></li>
+          <li><%-s%></li>
           <% }); %>
         </ul>
       </div>
@@ -40,7 +40,7 @@
         <h4>{% trans 'Issues encountered during bulk upload:' %}</h4>
         <ul>
           <% _.each(errors, function (error) { %>
-          <li><%=error%></li>
+          <li><%-error%></li>
           <% }); %>
         </ul>
       </div>
