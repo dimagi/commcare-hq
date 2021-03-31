@@ -1,14 +1,11 @@
 from django import template
 from django.utils import html
-from django.utils.html import format_html
-from django.utils.translation import (
-    ugettext as _,
-    ugettext_lazy
-)
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
 
 register = template.Library()
 
-EMPTY_LABEL = format_html('<span class="label label-info">{}</span>', ugettext_lazy('Empty'))
+EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
 
 @register.simple_tag
@@ -19,34 +16,18 @@ def translate(t, lang, langs=None):
             return t[lang]
 
 
-def _create_indicator_with_brackets(lang):
-    return ' [%s] ' % lang
-
-
-def _create_indicator_with_markup(lang):
-    style = 'btn btn-xs btn-info btn-langcode-preprocessed'
-    return format_html(' <span class="{}">{}</span> ', style, lang)
-
-
-def _create_empty_indicator(lang):
-    return ''
-
-
 @register.filter
-def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, strip_tags=False):
+def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, escape=False):
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
-            create_lang_indicator = _create_indicator_with_brackets
+            tag = lambda lang: ' [%s] ' % lang
         else:
-            create_lang_indicator = _create_indicator_with_markup
+            tag = lambda lang: '''
+                <span class="btn btn-xs btn-info btn-langcode-preprocessed">%(lang)s</span>
+            ''' % {"lang": html.escape(lang)}
     else:
-        create_lang_indicator = _create_empty_indicator
-
-    translation_in_requested_langs = False
-    n = ''
-    affix = ''
-
+        tag = lambda lang: ""
     for lang in langs:
         # "name[lang] is not None" added to avoid empty lang tag in case of empty value for a field.
         # When a value like {'en': ''} is passed to trans it returns [en] which then gets added
@@ -54,101 +35,79 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, str
         # Ref: https://github.com/dimagi/commcare-hq/pull/16871/commits/14453f4482f6580adc9619a8ad3efb39d5cf37a2
         if lang in name and name[lang] is not None:
             n = str(name[lang])
-            is_currently_set_language = langs and lang == langs[0]
-            affix = ("" if is_currently_set_language else create_lang_indicator(lang))
-            translation_in_requested_langs = True
-            break
-
-    if not translation_in_requested_langs and len(name) > 0:
-        lang, n = sorted(name.items())[0]
+            if escape:
+                n = html.escape(n)
+            affix = ("" if langs and lang == langs[0] else tag(lang))
+            return affix + n if prefix else n + affix
+        # ok, nothing yet... just return anything in name
+    for lang, n in sorted(name.items()):
         n = str(n)
-        affix = create_lang_indicator(lang)
-
-    if strip_tags:
-        n = html.strip_tags(n)
-        affix = html.strip_tags(affix)
-
-    pattern = '{affix}{name}' if prefix else '{name}{affix}'
-    return format_html(pattern, affix=affix, name=n)
+        if escape:
+            n = html.escape(n)
+        affix = tag(lang)
+        return affix + n if prefix else n + affix
+    return ""
 
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return trans(name, langs, use_delim=False, strip_tags=True) or EMPTY_LABEL
+    return mark_safe(html.strip_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
 
 
 @register.filter
 def html_trans_prefix(name, langs=["default"]):
-    return trans(name, langs, use_delim=False, prefix=True) or EMPTY_LABEL
+    return mark_safe(trans(name, langs, use_delim=False, prefix=True, escape=True) or EMPTY_LABEL)
 
 
 @register.filter
 def html_trans_prefix_delim(name, langs=["default"]):
-    return trans(name, langs, use_delim=True, prefix=True) or EMPTY_LABEL
+    return mark_safe(trans(name, langs, use_delim=True, prefix=True, escape=True) or EMPTY_LABEL)
 
 
 @register.filter
 def html_name(name):
-    return html.strip_tags(name) or EMPTY_LABEL
+    return mark_safe(html.strip_tags(name) or EMPTY_LABEL)
 
 
 @register.simple_tag
 def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None):
-    options = _get_dynamic_input_trans_options(name, langs=langs)
-    input_id_attribute = format_html("id='{}'", input_id) if input_id else ""
-    data_bind_attribute = format_html("data-bind='{}'", data_bind) if data_bind else ""
-
-    options.update({
-        "input_name": input_name,
-        "input_id_attribute": input_id_attribute,
-        "data_bind_attribute": data_bind_attribute
-    })
-
     template = '''
         <input type="text"
-               name="{input_name}" {input_id_attribute} {data_bind_attribute}
+               name="{}" {} {}
                class="form-control"
-               value="{value}"
-               placeholder="{placeholder}" />
-    '''
-
-    return format_html(template, **options)
+               value="%(value)s"
+               placeholder="%(placeholder)s" />
+    '''.format(
+        input_name,
+        f"id='{input_id}'" if input_id else "",
+        f"data-bind='{data_bind}'" if data_bind else "")
+    return _input_trans(template, name, langs=langs)
 
 
 @register.simple_tag
 def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
         containerClass='', iconClass='', readOnlyClass='', disallow_edit='false'):
-    options = _get_dynamic_input_trans_options(name, langs=langs, allow_blank=False)
-    options.update({
-        'url': url,
-        'saveValueName': saveValueName,
-        'containerClass': containerClass,
-        'iconClass': iconClass,
-        'readOnlyClass': readOnlyClass,
-        'postSave': postSave,
-        'disallow_edit': disallow_edit
-    })
-
     template = '''
         <inline-edit params="
             name: 'name',
-            value: '{value}',
-            placeholder: '{placeholder}',
+            value: '%(value)s',
+            placeholder: '%(placeholder)s',
             nodeName: 'input',
-            lang: '{lang}',
-            url: '{url}',
-            saveValueName: '{saveValueName}',
-            containerClass: '{containerClass}',
-            iconClass: '{iconClass}',
-            readOnlyClass: '{readOnlyClass}',
-            postSave: {postSave},
-            disallow_edit: {disallow_edit},
+            lang: '%(lang)s',
+            url: '{}',
+            saveValueName: '{}',
+            containerClass: '{}',
+            iconClass: '{}',
+            readOnlyClass: '{}',
+            postSave: {},
+            disallow_edit: {},
         "></inline-edit>
-    '''
-    return format_html(template, **options)
+    '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave, disallow_edit)
+    return _input_trans(template, name, langs=langs, allow_blank=False)
 
 
-def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True):
+# template may have replacements for lang, placeholder, and value
+def _input_trans(template, name, langs=None, allow_blank=True):
     if langs is None:
         langs = ["default"]
     placeholder = _("Untitled")
@@ -169,7 +128,7 @@ def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True):
                 options['lang'] = lang
             break
     options = {key: html.escapejs(value) for (key, value) in options.items()}
-    return options
+    return mark_safe(template % options)
 
 
 @register.filter
