@@ -6,7 +6,6 @@ import architect
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
-from django.utils.functional import cached_property
 
 from dimagi.utils.web import get_ip
 
@@ -130,7 +129,7 @@ class NavigationEventAudit(AuditEvent):
     def description(self):
         return self.user or ""
 
-    @cached_property
+    @property
     def request_path(self):
         return f"{self.path}?{self.params}"
 
