@@ -1,7 +1,7 @@
 import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct
-from corehq.form_processor.models import TruncatingCharField
+from corehq.util.models import TruncatingCharField
 
 
 class StockReport(models.Model):
