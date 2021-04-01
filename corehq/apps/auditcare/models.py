@@ -11,7 +11,12 @@ from django.utils.functional import cached_property
 from dimagi.utils.web import get_ip
 
 from corehq.apps.domain.utils import get_domain_from_url
-from corehq.util.models import ForeignValue, NullJsonField, foreign_value_init
+from corehq.util.models import (
+    ForeignValue,
+    NullJsonField,
+    TruncatingCharField,
+    foreign_value_init,
+)
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +68,7 @@ class AuditEvent(models.Model):
     user = models.CharField(max_length=255, null=True, blank=True)
     domain = models.CharField(max_length=126, null=True, blank=True)
     event_date = models.DateTimeField(default=getdate, db_index=True)
-    path = models.CharField(max_length=255, blank=True, default='')
+    path = TruncatingCharField(max_length=255, blank=True, default='')
     ip_address = models.CharField(max_length=45, blank=True, default='')
     session_key = models.CharField(max_length=255, blank=True, null=True)
     user_agent_fk = models.ForeignKey(
@@ -92,7 +97,7 @@ class AuditEvent(models.Model):
     def create_audit(cls, request, user):
         audit = cls()
         audit.domain = get_domain(request)
-        audit.path = request.path[:255]
+        audit.path = request.path
         audit.ip_address = get_ip(request)
         audit.session_key = request.session.session_key
         audit.user_agent = request.META.get('HTTP_USER_AGENT')
@@ -113,7 +118,7 @@ class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
     """
-    params = models.CharField(max_length=512, blank=True, default='')
+    params = TruncatingCharField(max_length=4096, blank=True, default='')
     view_fk = models.ForeignKey(
         ViewName, null=True, db_index=False, on_delete=models.PROTECT)
     view = ForeignValue(view_fk, truncate=True)
@@ -134,7 +139,7 @@ class NavigationEventAudit(AuditEvent):
         try:
             audit = cls.create_audit(request, user)
             if request.GET:
-                audit.params = request.META.get("QUERY_STRING", "")[:512]
+                audit.params = request.META.get("QUERY_STRING", "")
             audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)

@@ -98,6 +98,15 @@ class TestNavigationEventAudit(AuditcareTest):
         self.assertNotIn(to_django_header(TRACE_HEADER), event.headers)
         event.save()
 
+    def test_audit_view_should_truncate_params(self):
+        path = "/path"
+        view = make_view(path)
+        request = make_request(path, params={f"a{x}": "b" for x in range(1000)})
+        event = NavigationEventAudit.audit_view(request, "melvin@test.com", view, {})
+        event.save()
+        event.refresh_from_db()
+        self.assertEqual(len(event.params), 4096)
+
     @override_settings(AUDIT_TRACE_ID_HEADER=TRACE_HEADER)
     def test_audit_trace_id_header(self):
         trace_id = "Root=1-67891233-abcdef012345678912345678"
@@ -128,10 +137,10 @@ def test_get_domain():
     yield test, cfg(path="/a/block/path", request_domain="xx")
 
 
-def make_request(path="/path", session_key="abc", **headers):
+def make_request(path="/path", session_key="abc", params=None, **headers):
     headers.setdefault("HTTP_ACCEPT", "html")
     headers.setdefault("HTTP_USER_AGENT", "Mozilla")
-    request = RequestFactory().get(path, {"key": "value"}, **headers)
+    request = RequestFactory().get(path, params or {"key": "value"}, **headers)
     request.session = Config(session_key=session_key)
     return request
 
