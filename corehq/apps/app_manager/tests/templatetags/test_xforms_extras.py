@@ -4,7 +4,6 @@ from django.test import SimpleTestCase
 from ...templatetags.xforms_extras import (
     html_trans,
     html_trans_prefix,
-    html_trans_prefix_delim,
     clean_trans,
     trans,
     html_name,
@@ -145,37 +144,6 @@ class TestHTMLTransPrefixFilter(SimpleTestCase):
         name_dict = {'en': 'English Output'}
         langs = ['en']
         result = html_trans_prefix(name_dict, langs)
-        self.assertIsInstance(result, SafeString)
-
-
-class TestHTMLTransPrefixDelimFilter(SimpleTestCase):
-    def test_primary_language_includes_no_indicator(self):
-        name_dict = {'en': 'English Output'}
-        langs = ['en']
-        result = html_trans_prefix_delim(name_dict, langs)
-        self.assertEqual(result, 'English Output')
-
-    def test_non_primary_language_includes_prepended_indicator(self):
-        name_dict = {'por': 'Portuguese Output'}
-        langs = ['en', 'por']
-        result = html_trans_prefix_delim(name_dict, langs)
-        self.assertEqual(result, ' [por] Portuguese Output')
-
-    def test_default_language_includes_prepended_indicator(self):
-        name_dict = {'en': 'English Output'}
-        result = html_trans_prefix_delim(name_dict)
-        self.assertEqual(result, ' [en] English Output')
-
-    def test_empty_mapping_returns_empty_span(self):
-        name_dict = {}
-        langs = ['en', 'por']
-        result = html_trans_prefix_delim(name_dict, langs)
-        self.assertEqual(result, '<span class="label label-info">Empty</span>')
-
-    def test_is_safe(self):
-        name_dict = {'en': 'English Output'}
-        langs = ['en']
-        result = html_trans_prefix_delim(name_dict, langs)
         self.assertIsInstance(result, SafeString)
 
 
