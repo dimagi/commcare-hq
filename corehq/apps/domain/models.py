@@ -331,8 +331,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     use_sql_backend = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
 
-    case_display = SchemaProperty(CaseDisplaySettings)
-
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
     # Whether or not a case can register via sms
@@ -825,14 +823,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
-
-    def get_case_display(self, case):
-        """Get the properties display definition for a given case"""
-        return self.case_display.case_details.get(case.type)
-
-    def get_form_display(self, form):
-        """Get the properties display definition for a given XFormInstance"""
-        return self.case_display.form_details.get(form.xmlns)
 
     @property
     def location_types(self):
