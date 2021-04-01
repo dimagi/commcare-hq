@@ -139,7 +139,11 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     val = eval_expr(expr, data)
 
     if prop_def.pop('parse_date', None):
-        val = _parse_date_or_datetime(val)
+        try:
+            val = _parse_date_or_datetime(val)
+        except Exception:
+            # ignore exceptions from date parsing
+            pass
     is_phone_time = prop_def.pop('is_phone_time', False)
     if isinstance(val, datetime.datetime):
         if not is_phone_time:
