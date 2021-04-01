@@ -42,15 +42,16 @@ class UsersMiddleware(MiddlewareMixin):
             request.org = view_kwargs['org']
         if request.user and request.user.is_authenticated:
             user_id = username_to_user_id(request.user.username)
-            couch_user = CouchUser.get_by_user_id(user_id)
-            if not couch_user:
-                couch_user = InvalidUser()
-            request.couch_user = couch_user
-            if not request.couch_user.analytics_enabled:
-                request.analytics_enabled = False
-            if 'domain' in view_kwargs:
-                domain = request.domain
-                request.couch_user.current_domain = domain
+            if user_id:
+                couch_user = CouchUser.get_by_user_id(user_id)
+                if not couch_user:
+                    couch_user = InvalidUser()
+                request.couch_user = couch_user
+                if not request.couch_user.analytics_enabled:
+                    request.analytics_enabled = False
+                if 'domain' in view_kwargs:
+                    domain = request.domain
+                    request.couch_user.current_domain = domain
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
