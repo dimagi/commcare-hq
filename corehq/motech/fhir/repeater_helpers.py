@@ -8,11 +8,14 @@ from requests import HTTPError, Response
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.requests import Requests
+from corehq.motech.repeater_helpers import RepeaterResponse
+from corehq.motech.requests import Requests, json_or_http_error
 from corehq.motech.value_source import CaseTriggerInfo
 
 from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
+from .matchers import PatientMatcher
 from .models import build_fhir_resource_for_info
+from .searchers import PatientSearcher
 
 
 def register_patients(
@@ -30,11 +33,44 @@ def register_patients(
             # Patient is already registered
             info_resource_list_to_send.append((info, resource))
             continue
-        send_resource(requests, info, resource, repeater_id,
-                      raise_on_ext_id=True)
-        # Don't append `resource` to `info_resource_list_to_send`
-        # because the remote service has all its data now.
+        patient = find_patient(requests, resource)  # Raises DuplicateWarning
+        if patient:
+            _set_external_id(info, patient['id'], repeater_id)
+            info_resource_list_to_send.append((info, resource))
+        else:
+            patient = register_patient(requests, resource)
+            _set_external_id(info, patient['id'], repeater_id)
+            # Don't append `resource` to `info_resource_list_to_send`
+            # because the remote service has all its data now.
     return info_resource_list_to_send
+
+
+def find_patient(requests, resource):
+    searcher = PatientSearcher(requests, resource)
+    matcher = PatientMatcher(resource)
+    for search in searcher.iter_searches():
+        candidates = search.iter_candidates()
+        match = matcher.find_match(candidates)  # Raises DuplicateWarning
+        if match:
+            _check_id(match)
+            return match
+    return None
+
+
+def register_patient(requests, resource):
+    response = requests.post('Patient/', json=resource, raise_for_status=True)
+    patient = json_or_http_error(response)
+    _check_id(patient)
+    return patient
+
+
+def _check_id(patient):
+    if 'id' not in patient:
+        response = RepeaterResponse(status_code=500, reason='Bad response')
+        raise HTTPError(
+            'Remote service returned a patient missing an "id" property',
+            response=response,
+        )
 
 
 def get_info_resource_list(
@@ -180,3 +216,5 @@ def _set_external_id(info, external_id, repeater_id):
         xmlns=XMLNS_FHIR,
         device_id=f'FHIRRepeater-{repeater_id}',
     )
+    # If case was matched, set external_id to update remote resource
+    info.extra_fields['external_id'] = external_id
