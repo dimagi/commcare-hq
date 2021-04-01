@@ -369,12 +369,12 @@ def _process_bulk_upload(bulk_file, domain):
                             cell.value for cell in row[:7]]
                         remove_path = remove_path == 'Y' if remove_path else False
                         fhir_resource_type = fhir_resource_type_by_case_type.get(case_type)
-                        if fhir_resource_type:
+                        if fhir_resource_prop_path and not fhir_resource_type:
+                            error = _('Could not find resource type for {}').format(case_type)
+                        else:
                             error = save_case_property(name, case_type, domain, data_type, description, group,
                                                        deprecated, fhir_resource_prop_path, fhir_resource_type,
                                                        remove_path)
-                        else:
-                            error = _('Could not find resource type for {}').format(case_type)
                     else:
                         name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
                         error = save_case_property(name, case_type, domain, data_type, description, group,
