@@ -85,9 +85,9 @@ class AuditEvent(models.Model):
 
     class Meta:
         abstract = True
-        index_together = [
-            ("user", "event_date"),
-            ("domain", "event_date"),
+        indexes = [
+            models.Index(fields=["user", "event_date"]),
+            models.Index(fields=["domain", "event_date"]),
         ]
 
     def __str__(self):
