@@ -74,7 +74,7 @@ branches:
   - mjr/xss_accounting # Matt Mar 24
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
   - jm/pillow-upgrade # Joel Mar 29
-  - sk/get_display_data # Simon March 30
+  # - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
   - bmb/sp-encrypt-test  # Biyeun March 30
   - sr/ucr-cs  # Sravan March 31
