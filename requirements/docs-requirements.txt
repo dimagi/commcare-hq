@@ -151,7 +151,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.16
+django==2.2.19
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -237,7 +237,7 @@ iso8601==0.1.13
     # via -r base-requirements.in
 jdcal==1.4.1
     # via openpyxl
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -r base-requirements.in
     #   sphinx
@@ -269,7 +269,7 @@ kombu==4.2.2.post1
     #   celery
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.2
+lxml==4.6.3
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -374,7 +374,7 @@ pytz==2020.1
     #   celery
     #   django
     #   twilio
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in

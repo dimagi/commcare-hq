@@ -175,7 +175,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.16
+django==2.2.19
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -248,7 +248,7 @@ ghdiff==0.4
     # via -r base-requirements.in
 gipc==1.1.0
     # via -r base-requirements.in
-git-build-branch==0.1.9
+git-build-branch==0.1.10
     # via -r dev-requirements.in
 gnureadline==8.0.0
     # via -r dev-requirements.in
@@ -295,9 +295,7 @@ jdcal==1.4.1
     # via openpyxl
 jedi==0.17.2
     # via ipython
-jenkinsapi==0.2.28
-    # via -r dev-requirements.in
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -r base-requirements.in
     #   sphinx
@@ -332,7 +330,7 @@ laboratory==0.2.0
     # via -r base-requirements.in
 linecache2==1.0.0
     # via traceback2
-lxml==4.6.2
+lxml==4.6.3
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -482,9 +480,8 @@ pytz==2020.1
     #   babel
     #   celery
     #   django
-    #   jenkinsapi
     #   twilio
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via
     #   -r base-requirements.in
     #   git-build-branch
@@ -519,7 +516,6 @@ requests==2.24.0
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
-    #   jenkinsapi
     #   pygithub
     #   requests-mock
     #   requests-oauthlib
@@ -707,7 +703,7 @@ zipp==3.2.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==20.2.3
+pip==21.0.1
     # via pip-tools
 setuptools==50.3.0
     # via

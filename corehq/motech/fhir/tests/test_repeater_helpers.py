@@ -1,6 +1,7 @@
 import random
 import string
 from datetime import datetime
+from unittest.mock import Mock
 from uuid import uuid4
 
 from django.test import TestCase
@@ -17,6 +18,7 @@ from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_TEXT,
 )
+from corehq.motech.value_source import CaseTriggerInfo
 
 from ..const import FHIR_DATA_TYPE_LIST_OF_STRING, FHIR_VERSION_4_0_1
 from ..models import (
@@ -25,7 +27,7 @@ from ..models import (
     get_case_trigger_info,
     get_resource_type_or_none,
 )
-from ..repeater_helpers import get_info_resource_list
+from ..repeater_helpers import get_info_resource_list, send_resources
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
@@ -380,3 +382,72 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
             },
             'resourceType': 'Observation',
         }])
+
+
+class TestWhenToBundle(TestCase):
+
+    def setUp(self):
+        self.requests = Mock()
+
+    def test_nothing_to_send(self):
+        info_resources_list = []
+        response = send_resources(
+            self.requests,
+            info_resources_list,
+            FHIR_VERSION_4_0_1,
+            repeater_id='abc123',
+        )
+        self.assertEqual(response, True)
+
+    def test_one_to_send(self):
+        info = CaseTriggerInfo(
+            domain=DOMAIN,
+            case_id='123abc',
+            extra_fields={'external_id': '1000'},
+        )
+        resource = {'id': '123abc', 'resourceType': 'Patient'}
+        info_resources_list = [(info, resource)]
+        send_resources(
+            self.requests,
+            info_resources_list,
+            FHIR_VERSION_4_0_1,
+            repeater_id='abc123',
+        )
+
+        self.requests.put.assert_called_with(
+            'Patient/1000',
+            json=resource,
+            raise_for_status=True,
+        )
+
+    def test_many_to_send(self):
+
+        def get_obs(id_):
+            info = CaseTriggerInfo(
+                domain=DOMAIN,
+                case_id=id_,
+                extra_fields={'external_id': None},
+            )
+            resource = {
+                'id': id_,
+                'code': {'text': 'Temperature'},
+                'valueQuantity': {'value': 36.1},
+                'resourceType': 'Observation',
+            }
+            return info, resource
+
+        def post(endpoint, **kwargs):
+            return f'POSTed to endpoint {endpoint!r}'
+
+        self.requests.post = post
+
+        info_resources_list = [get_obs(x) for x in 'abc']
+        response = send_resources(
+            self.requests,
+            info_resources_list,
+            FHIR_VERSION_4_0_1,
+            repeater_id='abc123',
+        )
+
+        # Bundles are POSTed to API root
+        self.assertEqual(response, "POSTed to endpoint '/'")
