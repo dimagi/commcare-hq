@@ -136,22 +136,19 @@ class NavigationEventAudit(AuditEvent):
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs):
-        try:
-            audit = cls.create_audit(request, user)
-            if request.GET:
-                audit.params = request.META.get("QUERY_STRING", "")
-            audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
-            for k in STANDARD_HEADER_KEYS:
-                header_item = request.META.get(k, None)
-                if header_item is not None:
-                    audit.headers[k] = header_item
-            # it's a bit verbose to go to that extreme, TODO: need to have
-            # targeted fields in the META, but due to server differences, it's
-            # hard to make it universal.
-            audit.view_kwargs = view_kwargs
-            return audit
-        except Exception:
-            log.exception("NavigationEventAudit.audit_view error")
+        audit = cls.create_audit(request, user)
+        if request.GET:
+            audit.params = request.META.get("QUERY_STRING", "")
+        audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
+        for k in STANDARD_HEADER_KEYS:
+            header_item = request.META.get(k, None)
+            if header_item is not None:
+                audit.headers[k] = header_item
+        # it's a bit verbose to go to that extreme, TODO: need to have
+        # targeted fields in the META, but due to server differences, it's
+        # hard to make it universal.
+        audit.view_kwargs = view_kwargs
+        return audit
 
 
 ACCESS_LOGIN = 'i'
