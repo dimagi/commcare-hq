@@ -23,11 +23,6 @@ class TestTransFilter(SimpleTestCase):
         result = trans(translation_dict)
         self.assertEqual(result, 'English Output [en] ')
 
-    def test_exclude_language_only_outputs_translation(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, include_lang=False)
-        self.assertEqual(result, 'English Output')
-
     def test_primary_language_excludes_indicator(self):
         translation_dict = {'en': 'English Output'}
         langs = ['en']
@@ -39,22 +34,6 @@ class TestTransFilter(SimpleTestCase):
         langs = ['por', 'en']
         result = trans(translation_dict, langs=langs)
         self.assertEqual(result, 'English Output [en] ')
-
-    def test_do_not_use_delimiter_includes_html_indicator(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, use_delim=False)
-        self.assertEqual(result,
-            'English Output <span class="btn btn-xs btn-info btn-langcode-preprocessed">en</span> ')
-
-    def test_prefix_puts_indicator_in_front_of_translation(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, prefix=True)
-        self.assertEqual(result, ' [en] English Output')
-
-    def test_strip_tags_removes_tags_from_html_indicator(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, use_delim=False, strip_tags=True)
-        self.assertEqual(result, 'English Output en ')
 
     def test_does_not_escape_output_by_default(self):
         translation_dict = {'en': '<b>English Output</b>'}

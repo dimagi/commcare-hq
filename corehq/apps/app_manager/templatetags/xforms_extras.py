@@ -32,19 +32,13 @@ def _create_empty_indicator(lang):
     return ''
 
 
-@register.filter
-def trans(name,
-
+def _trans(name,
         langs=None,
         include_lang=True,
         use_delim=True,
         prefix=False,
         strip_tags=False,
         generates_html=False):
-    """
-    Generates a translation in the form of 'Translation [language] '
-    Not expected to contain HTML elements
-    """
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
@@ -87,12 +81,20 @@ def trans(name,
 
 
 @register.filter
+def trans(name, langs=["default"]):
+    """
+    Generates a translation in the form of 'Translation [language] '
+    """
+    return _trans(name, langs)
+
+
+@register.filter
 def html_trans(name, langs=["default"]):
     """
     Generates an HTML-friendly translation, where the language is included as markup
     i.e. 'Translation <span>language</span> '
     """
-    return trans(name, langs, use_delim=False, strip_tags=True, generates_html=True) or EMPTY_LABEL
+    return _trans(name, langs, use_delim=False, strip_tags=True, generates_html=True) or EMPTY_LABEL
 
 
 @register.filter
@@ -101,13 +103,13 @@ def html_trans_prefix(name, langs=["default"]):
     Generates an HTML-friendly translation, where the language markup is prepended
     i.e. '<span>language</span> Translation'
     """
-    return trans(name, langs, use_delim=False, prefix=True, generates_html=True) or EMPTY_LABEL
+    return _trans(name, langs, use_delim=False, prefix=True, generates_html=True) or EMPTY_LABEL
 
 
 @register.filter
 def clean_trans(name, langs=None):
     """Produces a simple translation without any language identifier"""
-    return trans(name, langs=langs, include_lang=False)
+    return _trans(name, langs=langs, include_lang=False)
 
 
 @register.filter
