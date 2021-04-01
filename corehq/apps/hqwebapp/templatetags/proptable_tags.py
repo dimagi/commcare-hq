@@ -224,7 +224,7 @@ def get_tables_as_columns(*args, **kwargs):
     return sections
 
 
-def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, parse_dates=False):
+def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, date_fields=None):
     """
     Get a default single table layout definition for `keys` split across
     `num_columns` columns.
@@ -234,9 +234,15 @@ def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None
 
     """
     phonetime_fields = phonetime_fields or set()
+    date_fields = date_fields or set()
     layout = chunked(
         [
-            {"expr": prop, "is_phone_time": prop in phonetime_fields, "has_history": True, "parse_date": parse_dates}
+            {
+                "expr": prop,
+                "is_phone_time": prop in phonetime_fields,
+                "has_history": True,
+                "parse_date": prop in date_fields
+            }
             for prop in keys
         ],
         num_columns
