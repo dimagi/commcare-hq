@@ -60,7 +60,9 @@ class ItemListsProvider(FixtureProvider):
                 global_types[data_type._id] = data_type
             else:
                 user_types[data_type._id] = data_type
-        items = global_items = user_items = []
+        items = []
+        global_items = []
+        user_items = []
         if global_types:
             global_items = self.get_global_items(global_types, restore_state)
             items.extend(global_items)
