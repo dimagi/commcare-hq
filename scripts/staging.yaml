@@ -64,7 +64,7 @@ branches:
   - nh/reminders  # Norman Jan 26
   - smh/bulk-upload-web-users # Steph Feb 22
   - mk/fhir/data-dictionary # MK Feb 26
-  #- nh/fhir/repeater  # Norman Mar 1
+  - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   #- ap/translation-update # Amit March 16
   - ap/escape-html-underscore # Amit March 16
