@@ -80,7 +80,7 @@ def _trans(name,
         return pattern.format(affix=affix, name=n)
 
 
-@register.filter
+@register.filter(is_safe=True)
 def trans(name, langs=["default"]):
     """
     Generates a translation in the form of 'Translation [language] '
@@ -106,7 +106,7 @@ def html_trans_prefix(name, langs=["default"]):
     return _trans(name, langs, use_delim=False, prefix=True, generates_html=True) or EMPTY_LABEL
 
 
-@register.filter
+@register.filter(is_safe=True)
 def clean_trans(name, langs=None):
     """Produces a simple translation without any language identifier"""
     return _trans(name, langs=langs, include_lang=False)
