@@ -76,10 +76,10 @@ def _get_advanced_saml2_settings():
             # Turning this off for now as HTTPS makes the handshake secure
             # todo to discuss to make this a configurable parameter
             "wantAssertionsSigned": True,
-            "wantMessagesSigned": False,
-            "wantAssertionsEncrypted": True,
+            "wantAssertionsEncrypted": False,
 
             "wantNameId": True,
+            "wantMessagesSigned": False,
             "wantNameIdEncrypted": False,  # Azure will not accept if True
             "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
