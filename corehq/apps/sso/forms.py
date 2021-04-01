@@ -431,6 +431,20 @@ class SSOEnterpriseSettingsForm(forms.Form):
         label=ugettext_lazy("Certificate Expiration"),
         required=False,
     )
+    require_encrypted_assertions = forms.BooleanField(
+        label=ugettext_lazy("Token Encryption"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Use Token Encryption"
+            ),
+        ),
+        help_text=ugettext_lazy(
+            "High security feature that ensures Assertions are fully encrypted. "
+            "This requires a Premium Azure AD subscription with Token Encryption "
+            "enabled."
+        ),
+    )
 
     def __init__(self, identity_provider, *args, **kwargs):
         self.idp = identity_provider
@@ -444,6 +458,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 identity_provider.date_idp_cert_expiration.isoformat()
                 if identity_provider.date_idp_cert_expiration else ''
             ),
+            'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
         }
         super().__init__(*args, **kwargs)
 
@@ -477,6 +492,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
                             ", ".join(identity_provider.get_email_domains()),
                         ),
                         twbscrispy.PrependedText('is_active', ''),
+                        twbscrispy.PrependedText('require_encrypted_assertions', ''),
                     ),
                     css_class="panel-body"
                 ),
@@ -554,6 +570,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
         self.idp.logout_url = self.cleaned_data['logout_url']
         self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
         self.idp.date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
+        self.idp.require_encrypted_assertions = self.cleaned_data['require_encrypted_assertions']
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp

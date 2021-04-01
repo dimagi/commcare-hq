@@ -69,6 +69,10 @@ class IdentityProvider(models.Model):
     # this will be filled out by enterprise admins
     date_idp_cert_expiration = models.DateTimeField(blank=True, null=True)
 
+    # Requires that <saml:Assertion> elements received by the SP are encrypted.
+    # In Azure AD this requires that Token Encryption is enabled, a premium feature
+    require_encrypted_assertions = models.BooleanField(default=False)
+
     # as the service provider, this will store our x509 certificates and
     # will be renewed automatically by a periodic task
     sp_cert_public = models.TextField(blank=True, null=True)
