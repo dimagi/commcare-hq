@@ -105,15 +105,6 @@ def html_trans_prefix(name, langs=["default"]):
 
 
 @register.filter
-def html_trans_prefix_delim(name, langs=["default"]):
-    """
-    Generates an HTML-friendly translation where the language is prepended without markup
-    i.e. '[language] Translation'
-    """
-    return trans(name, langs, use_delim=True, prefix=True, generates_html=True) or EMPTY_LABEL
-
-
-@register.filter
 def clean_trans(name, langs=None):
     """Produces a simple translation without any language identifier"""
     return trans(name, langs=langs, include_lang=False)
