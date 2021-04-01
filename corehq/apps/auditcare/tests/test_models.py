@@ -14,7 +14,7 @@ from .test_middleware import make_view
 from .testutils import AuditcareTest
 from ..utils import to_django_header
 
-TRACE_HEADER = "X-Test-Trace-Id"
+TRACE_HEADER = "X-Test-1354321354-Trace-Id"
 
 
 class TestAccessAudit(AuditcareTest):
@@ -164,7 +164,8 @@ def intercept_save(cls):
 @contextmanager
 def patch_trace_id_header():
     def assert_not_installed():
-        assert AccessAudit.trace_id_header is None, AccessAudit.trace_id_header
+        assert AccessAudit.trace_id_header != settings.AUDIT_TRACE_ID_HEADER, \
+            AccessAudit.trace_id_header
         assert django_header not in mod.STANDARD_HEADER_KEYS, \
             (django_header, mod.STANDARD_HEADER_KEYS)
 
