@@ -24,7 +24,11 @@ from corehq.motech.value_source import (
 )
 from corehq.util.view_utils import absolute_reverse
 
-from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
+from .const import (
+    CAPABILITY_STATEMENT_PUBLISHED_DATE,
+    FHIR_VERSION_4_0_1,
+    FHIR_VERSIONS,
+)
 from .validators import validate_supported_type
 
 
@@ -403,7 +407,7 @@ class SmartCapabilityStatement(JsonObject):
     kind = StringProperty(required=True, default='instance')
     fhirVersion = StringProperty(required=True, default=FHIR_VERSION_4_0_1)
     rest = ListProperty(_MetadataRest, required=True, default=[_MetadataRest()])
-    date = StringProperty(required=True, default='2021-03-23')
+    date = StringProperty(required=True, default=CAPABILITY_STATEMENT_PUBLISHED_DATE)
 
 
 def build_capability_statement(domain):
