@@ -65,8 +65,6 @@ branches:
   - smh/bulk-upload-web-users # Steph Feb 22
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-  #- ap/translation-update # Amit March 16
-  - ap/escape-html-underscore # Amit March 16
   - fr/consumer-user             # Farid March 17
   - feature/USH-606-conditional-alert-modal # Jenny March 18
   - kev/repeat-translation-inner-group # Kevin Mar 22
@@ -82,4 +80,12 @@ branches:
   - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
   - nh/wfp/api_manager  # Norman Apr 2
+  - ap/escape-html-in-app-manager # Amit Apr 2
+  - ap/escape-html-in-cloudcare # Amit Apr 2
+  - ap/escape-html-in-hqwebapp # Amit Apr 2
+  - ap/escape-html-in-multimedia # Amit Apr 2
+  - ap/escape-html-in-reports # Amit Apr 2
+  - ap/escape-html-in-users # Amit Apr 2
+  - ap/escape-html-underscore # Amit Apr 2
+  - ap/escape-templates-in-datainterfaces # Amit Apr 2
 submodules: {}
