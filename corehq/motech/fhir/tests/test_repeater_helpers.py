@@ -250,20 +250,43 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
             domain=DOMAIN,
             case_type=cls.vitals_case_type,
             name='Observation',
-            template={
-                'code': {
-                    'coding': [{
-                        'system': 'http://loinc.org',
-                        'code': '8310-5',
-                        'display': 'Body temperature',
-                    }],
-                    'text': 'Temperature',
-                },
-                'valueQuantity': {
-                    'unit': 'degrees Celsius',
-                },
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.coding[0].system',
+                'value': 'http://loinc.org',
             }
         )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.coding[0].code',
+                'value': '8310-5',
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.coding[0].display',
+                'value': 'Body temperature',
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.text',
+                'value': 'Temperature',
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.valueQuantity.unit',
+                'value': 'degrees Celsius',
+            }
+        )
+
         FHIRResourceProperty.objects.create(
             resource_type=resource_type_for_vitals,
             value_source_config={
