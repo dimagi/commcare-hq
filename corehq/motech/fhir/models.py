@@ -298,37 +298,3 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
         )
     except FHIRResourceType.DoesNotExist:
         return None
-
-
-def deepmerge(a, b):
-    """
-    Merges ``b`` into ``a``.
-
-    >>> foo = {'one': {'two': 2, 'three': 42}}
-    >>> bar = {'one': {'three': 3}}
-    >>> {**foo, **bar}
-    {'one': {'three': 3}}
-    >>> deepmerge(foo, bar)
-    {'one': {'two': 2, 'three': 3}}
-
-    Dicts and lists are recursed. Other data types are replaced.
-
-    >>> foo = {'one': [{'two': 2}, 42]}
-    >>> bar = {'one': [{'three': 3}]}
-    >>> deepmerge(foo, bar)
-    {'one': [{'two': 2, 'three': 3}, 42]}
-
-    """
-    if isinstance(a, dict) and isinstance(b, dict):
-        for key in b:
-            if key in a:
-                a[key] = deepmerge(a[key], b[key])
-            else:
-                a[key] = b[key]
-        return a
-    elif isinstance(a, list) and isinstance(b, list):
-        return list(deepmerge(aa, bb) for aa, bb in zip_longest(a, b))
-    elif b is None:
-        return a
-    else:
-        return b
