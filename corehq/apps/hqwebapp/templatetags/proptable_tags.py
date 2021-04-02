@@ -65,10 +65,6 @@ def _parse_date_or_datetime(val):
     return result
 
 
-def _format_slug_string_for_display(key):
-    return key.replace('_', ' ').replace('-', ' ')
-
-
 def _to_html(val, key=None, level=0, timeago=False):
     """
     Recursively convert a value to its HTML representation using <dl>s for
@@ -78,7 +74,7 @@ def _to_html(val, key=None, level=0, timeago=False):
 
     def _key_format(k, v):
         if not _is_list_like(v):
-            return _format_slug_string_for_display(k)
+            return k
         else:
             return ""
 
@@ -91,9 +87,9 @@ def _to_html(val, key=None, level=0, timeago=False):
 
     elif _is_list_like(val):
         ret = "".join(
-            ["<dl>"] +
-            ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
-            ["</dl>"])
+            ["<dl>"]
+            + ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val]
+            + ["</dl>"])
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
@@ -130,7 +126,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
 
     expr_name = _get_expr_name(prop_def)
     expr = prop_def.pop('expr')
-    name = prop_def.pop('name', None) or _format_slug_string_for_display(expr)
+    name = prop_def.pop('name', None) or expr
     format = prop_def.pop('format', None)
     process = prop_def.pop('process', None)
     timeago = prop_def.get('timeago', False)

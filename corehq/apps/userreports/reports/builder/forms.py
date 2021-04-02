@@ -421,7 +421,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=True,
             )
-            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'date_closed'})
 
     @property
     def uses_managed_data_source(self):
@@ -574,11 +574,10 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
             else:
                 data_types = ["string", "decimal", "datetime"]
-
             properties[property] = DataSourceProperty(
                 type=PROPERTY_TYPE_CASE_PROP,
                 id=property,
-                text=property_map.get(property, property.replace('_', ' ')),
+                text=property_map.get(property, property),
                 source=property,
                 data_types=data_types,
             )
@@ -594,7 +593,6 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 self._get_owner_location_with_descendants_pseudo_property()
             properties[COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID] = \
                 self._get_owner_location_archived_with_descendants_pseudo_property()
-
         return properties
 
     @staticmethod
@@ -602,7 +600,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id='case_id',
-            text=_('Case ID'),
+            text='case_id',
             source='case_id',
             data_types=["string"],
         )
@@ -615,7 +613,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            text=_('Case Owner'),
+            text='owner_name',
             source=COMPUTED_OWNER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
@@ -662,7 +660,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return DataSourceProperty(
             type=PROPERTY_TYPE_CASE_PROP,
             id=COMPUTED_USER_NAME_PROPERTY_ID,
-            text=_('Mobile Worker Last Updating Case'),
+            text='mobile_worker_last_updating_case',
             source=COMPUTED_USER_NAME_PROPERTY_ID,
             data_types=["string"],
         )

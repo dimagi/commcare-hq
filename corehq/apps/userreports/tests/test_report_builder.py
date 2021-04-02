@@ -121,17 +121,18 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             "property_value": self.case_type,
         }
         self.assertEqual(expected_filter, builder.filter)
+
         expected_property_names = [
-            "closed", "closed_on", "first_name", "last_name", "modified_on", "name", "opened_on",
-            "owner_id", "user_id", "computed/owner_name", "computed/user_name",
+            '@owner_id', 'closed', 'date_closed', 'date_opened', 'first_name',
+            'last_modified', 'last_name', 'name', 'user_id', 'computed/owner_name', 'computed/user_name'
         ]
         self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
         owner_name_prop = builder.data_source_properties['computed/owner_name']
         self.assertEqual('computed/owner_name', owner_name_prop.get_id())
-        self.assertEqual('Case Owner', owner_name_prop.get_text())
+        self.assertEqual('owner_name', owner_name_prop.get_text())
         first_name_prop = builder.data_source_properties['first_name']
         self.assertEqual('first_name', first_name_prop.get_id())
-        self.assertEqual('first name', first_name_prop.get_text())
+        self.assertEqual('first_name', first_name_prop.get_text())
 
     @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
     def test_owner_as_location(self):
