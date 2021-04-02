@@ -76,7 +76,6 @@ branches:
   - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
   - rp/fix-broken-link # Rynhard March 31
-  - dmr/emit-fixture-count-metrics  # Danny Mar 31
   - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
   - nh/wfp/api_manager  # Norman Apr 2
