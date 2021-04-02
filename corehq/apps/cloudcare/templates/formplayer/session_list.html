@@ -1,6 +1,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+<script src="{% static 'bootpag/lib/jquery.bootpag.min.js' %}"></script>
+
 <script type="text/template" id="session-view-list-preview-template">
   <div class="breadcrumb-form-container">
     <ol class="breadcrumb breadcrumb-form">
@@ -12,6 +14,9 @@
       <tbody>
       </tbody>
     </table>
+  </div>
+  <div class="pull-right">
+      <ul id="sessions-paginator" class="pagination-sm"></ul>
   </div>
 </script>
 
@@ -32,6 +37,9 @@
       <tbody>
       </tbody>
     </table>
+  </div>
+  <div class="pull-right">
+      <ul id="sessions-paginator" class="pagination-lg"></ul>
   </div>
 </script>
 
