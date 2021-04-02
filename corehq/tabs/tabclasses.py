@@ -93,7 +93,7 @@ from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     UploadConditionalAlertView,
 )
-from corehq.motech.dhis2.views import DataSetMapView
+from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
@@ -1865,8 +1865,8 @@ def _get_integration_section(domain):
 
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.append({
-            'title': _(DataSetMapView.page_title),
-            'url': reverse(DataSetMapView.urlname, args=[domain])
+            'title': _(DataSetMapListView.page_title),
+            'url': reverse(DataSetMapListView.urlname, args=[domain])
         })
 
     if toggles.INCREMENTAL_EXPORTS.enabled(domain):
