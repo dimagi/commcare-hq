@@ -138,6 +138,12 @@ Next, install the appropriate requirements (only one is necessary).
 
       $ pip install -r requirements/dev-requirements.txt
 
+* Recommended for developers or others with custom requirements
+
+      $ cp requirements/local.txt.sample requirements/local.txt
+      # customize requirements/local.txt as desired
+      $ pip install -r requirements/local.txt
+
 * For production environments
 
       $ pip install -r requirements/prod-requirements.txt
