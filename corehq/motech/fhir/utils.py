@@ -1,5 +1,10 @@
+import json
+import os
+
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 from corehq.util.view_utils import absolute_reverse
+
+from .const import CAPABILITY_STATEMENT_PUBLISHED_DATE, FHIR_VERSION_4_0_1
 
 
 def resource_url(domain, resource_type, case_id):
@@ -53,3 +58,20 @@ def update_fhir_resource_property(case_property, fhir_resource_type, fhir_resour
                                                       resource_type=fhir_resource_type)
         fhir_resource_prop.jsonpath = fhir_resource_prop_path
         fhir_resource_prop.save()
+
+
+def build_capability_statement(domain):
+    """
+    Builds the FHIR capability statement including the OAuth URL extensions for SMART
+    https://hl7.org/fhir/smart-app-launch/conformance/index.html
+    """
+    with open(os.path.join(os.path.dirname(__file__), 'data', 'capability_statement.json'), encoding='utf-8') as f:
+        data = (
+            f.read()
+            .replace('__TOKEN_URL__', absolute_reverse("oauth2_provider:token"))
+            .replace('__AUTHORIZE_URL__', absolute_reverse("oauth2_provider:authorize"))
+            .replace('__FHIR_VERSION__', FHIR_VERSION_4_0_1)
+            .replace('__PUBLISHED_DATE__', CAPABILITY_STATEMENT_PUBLISHED_DATE)
+        )
+        statement = json.loads(data)
+    return statement

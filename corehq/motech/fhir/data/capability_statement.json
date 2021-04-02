@@ -1,0 +1,41 @@
+{
+    "rest": [
+        {
+            "security": {
+                "extension": [
+                    {
+                        "url": "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
+                        "extension": [
+                            {
+                                "url": "token",
+                                "valueUri": "__TOKEN_URL__"
+                            },
+                            {
+                                "url": "authorize",
+                                "valueUri": "__AUTHORIZE_URL__"
+                            }
+                        ]
+                    }
+                ],
+                "service": [
+                    {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/restful-security-service",
+                                "code": "SMART-on-FHIR"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "mode": "server"
+        }
+    ],
+    "format": [
+        "json"
+    ],
+    "status": "active",
+    "kind": "instance",
+    "fhirVersion": "__FHIR_VERSION__",
+    "date": "__PUBLISHED_DATE__"
+}

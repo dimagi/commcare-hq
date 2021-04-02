@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
-from corehq.motech.fhir.models import build_capability_statement
+from corehq.motech.fhir.utils import build_capability_statement
 from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 
@@ -28,7 +28,7 @@ class TestConfigurationView(TestCase):
 class TestCapabilityStatement(TestCase):
 
     def test_capability_statement(self):
-        statement = build_capability_statement("test_domain").to_json()
+        statement = build_capability_statement("test_domain")
         expected_statement = {
             "date":
                 "2021-03-23",
