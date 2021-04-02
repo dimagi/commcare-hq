@@ -416,7 +416,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
-                pageNumLabel: _.template(gettext("Page <%=num%>")),
+                pageNumLabel: _.template(gettext("Page <%-num%>")),
             };
         },
     });
