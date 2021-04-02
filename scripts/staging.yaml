@@ -63,7 +63,6 @@ branches:
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - nh/reminders  # Norman Jan 26
   - smh/bulk-upload-web-users # Steph Feb 22
-  - mk/fhir/data-dictionary # MK Feb 26
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   #- ap/translation-update # Amit March 16
@@ -82,4 +81,5 @@ branches:
   - dmr/emit-fixture-count-metrics  # Danny Mar 31
   - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
+  - nh/wfp/api_manager  # Norman Apr 2
 submodules: {}
