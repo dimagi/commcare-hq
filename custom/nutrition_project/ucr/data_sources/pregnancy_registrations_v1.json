@@ -1,0 +1,195 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-pregnancy_registrations_v1",
+    "display_name": "Pregnancy Registrations V1 (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/C598D396-C69A-4F1B-84FD-92B582DDC57D"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "username"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "received_on"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "member_case_id",
+        "display_name": "member_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "member_case_id_loaded"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "currently_pregnant",
+        "display_name": "currently_pregnant",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "currently_pregnant"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "residential_status",
+        "display_name": "residential_status",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_residential_status"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "member_case_id_loaded"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "form.final_edd_calc",
+        "display_name": "form.final_edd_calc",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "final_edd_calc"
+          ]
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

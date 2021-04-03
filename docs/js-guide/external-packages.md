@@ -1,5 +1,8 @@
 # External Packages
 
+This page discusses how to add new dependencies with yarn.
+Be cautious of adding new dependencies, which introduce an indefinite maintenance burden.
+
 ## Yarn
 
 Yarn can manage components that contain HTML, CSS, JavaScript, fonts or even image files. Yarn doesn’t concatenate or minify code or do anything else - it just installs the right versions of the packages you need and their dependencies.

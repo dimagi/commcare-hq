@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
     get_usercase_properties,
@@ -42,7 +43,9 @@ def get_casedb_schema(form):
     subsets = [{
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
-        "structure": generate_structure(ctypes, map, descriptions_dict),
+        "structure": {
+            p: {"description": descriptions_dict.get(t, {}).get(p, '')}
+            for t in ctypes for p in map[t]},
         "related": {"parent": {
             "hashtag": "#case/" + generation_names[i + 1],
             "subset": generation_names[i + 1],
@@ -66,29 +69,3 @@ def get_casedb_schema(form):
         "structure": {},
         "subsets": subsets,
     }
-
-
-def generate_structure(case_types, case_to_property_mapping, descriptions):
-    structure = {}
-
-    for case_type in case_types:
-        case_properties = case_to_property_mapping[case_type]
-        case_descriptions = descriptions.get(case_type, {})
-        properties_with_metadata = {
-            prop: generate_property_metadata(prop, case_descriptions)
-            for prop in case_properties
-        }
-        structure.update(properties_with_metadata)
-
-    return structure
-
-
-def generate_property_metadata(prop, descriptions):
-    metadata = {
-        "description": descriptions.get(prop, '')
-    }
-
-    if prop == '@owner_id':
-        metadata['name'] = 'owner_id'
-
-    return metadata

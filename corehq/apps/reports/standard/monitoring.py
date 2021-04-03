@@ -31,6 +31,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
 )
 from corehq.apps.reports import util
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_case_counts_closed_by_user,
@@ -716,7 +717,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
         ) and not export:
             raise BadRequestError(
-                _('Query selects too many users. Please modify your filters to select fewer users')
+                _('Query selects too many users. Please modify your filters to select fewer than {} users').format(
+                    USER_QUERY_LIMIT,
+                )
             )
         selected_users = self.selected_simplified_users
         track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))
@@ -1268,7 +1271,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @property
     @memoized
     def activity_times(self):
-        all_times = []
         users = _get_selected_users(self.domain, self.request)
         user_ids = [user.user_id for user in users]
         xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
@@ -1363,7 +1365,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
         # our google charts library doesn't support unicode
         # TODO: replace with some in JS (d3?)
-        chart.set_axis_labels('y', [''] + [day_names[n].encode('ascii', 'replace') for n in days] + [''])
+        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'

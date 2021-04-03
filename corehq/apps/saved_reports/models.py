@@ -368,9 +368,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
-        if self.is_configurable_report:
-            mock_query_string_parts.append(urlencode(self.filters, True))
-            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
@@ -690,6 +687,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             )
 
             attach_excel = getattr(self, 'attach_excel', False)
+            excel_files = None
             try:
                 report_text, excel_files = get_scheduled_report_response(
                     self.owner, self.domain, self._id, attach_excel=attach_excel,
@@ -718,7 +716,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         'error': er,
                     }
                 )
-                if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+                if excel_files:
+                    message = _("Unable to generate email report. Excel files are attached.")
+                    send_html_email_async(title, email, message,
+                                          email_from=settings.DEFAULT_FROM_EMAIL,
+                                          file_attachments=excel_files,
+                                          smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+
+                elif getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
                     # If the email doesn't work because it is too large to fit in the HTML body,
                     # send it as an excel attachment, by creating a mock request with the right data.
 

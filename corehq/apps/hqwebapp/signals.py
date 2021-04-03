@@ -28,7 +28,7 @@ def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
 
 @receiver(user_login_failed)
 def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
-    user = CouchUser.get_by_username(credentials['username'])
+    user = CouchUser.get_by_username(credentials['username'], strict=True)
     if not user:
         metrics_counter('commcare.auth.invalid_user')
         return
@@ -47,7 +47,7 @@ def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
         'result': lockout_result
     })
 
-    if not locked_out:
+    if not locked_out and user.supports_lockout():
         if user.attempt_date == date.today():
             user.login_attempts += 1
         else:

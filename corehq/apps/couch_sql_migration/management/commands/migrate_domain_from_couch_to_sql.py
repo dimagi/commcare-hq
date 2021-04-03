@@ -267,12 +267,12 @@ class Command(BaseCommand):
                 forms=self.forms,
             )
         except CleanBreak:
-            print("migration stopped")
+            log.info("migration stopped")
             sys.exit(1)
 
         has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if self.live_migrate:
-            print("Live migration completed.")
+            log.info("Live migration completed.")
         if has_diffs:
             print("\nRun `diff` or `stats [--verbose]` for more details.\n")
             sys.exit(1)

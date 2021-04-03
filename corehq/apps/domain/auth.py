@@ -3,6 +3,7 @@ import logging
 import re
 from functools import wraps
 
+import binascii
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -129,7 +130,10 @@ def get_username_and_password_from_request(request):
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
-        username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
+        try:
+            username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
+        except binascii.Error:
+            return None, None
         username = username.lower()
         # decode password submitted from mobile app login
         password = decode_password(password)
@@ -189,9 +193,7 @@ def formplayer_as_user_auth(view):
     @wraps(view)
     def _inner(request, *args, **kwargs):
         with mutable_querydict(request.GET):
-            request_user = request.GET.pop('for', None)
-            if not request_user:
-                request_user = request.GET.pop('as', None)
+            request_user = request.GET.pop('as', None)
 
         if not request_user:
             auth_logger.info(

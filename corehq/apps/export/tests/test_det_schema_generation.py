@@ -45,6 +45,9 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             id_row = data_by_headings.pop(0)
             self.assertEqual('case_id', id_row['Source Field'])
             self.assertEqual('id', id_row['Field'])
+            domain_row = data_by_headings.pop(0)
+            self.assertEqual('domain', domain_row['Source Field'])
+            self.assertEqual('domain', domain_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             for i, input_column in enumerate(main_table.selected_columns):
@@ -56,7 +59,7 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             data_by_headings_by_source_field = {
                 row['Source Field']: row for row in data_by_headings
             }
-            self.assertEqual('str2date', data_by_headings_by_source_field['properties.closed_on']['Map Via'])
+            self.assertEqual('str2date', data_by_headings_by_source_field['date_closed']['Map Via'])
             self.assertEqual(None, data_by_headings_by_source_field['properties.event_date']['Map Via'])
 
             # note: subtables not supported
@@ -82,7 +85,7 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             self.assertEqual('str2num', data_by_headings_by_source_field['properties.event_duration']['Map Via'])
             # ensure defaults still work
             self.assertEqual(None, data_by_headings_by_source_field['properties.event_score']['Map Via'])
-            self.assertEqual('str2date', data_by_headings_by_source_field['properties.closed_on']['Map Via'])
+            self.assertEqual('str2date', data_by_headings_by_source_field['date_closed']['Map Via'])
 
 
 class TestDETFormInstance(SimpleTestCase, TestFileMixin):
@@ -115,8 +118,11 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             headings = all_data.pop(0)
             data_by_headings = [dict(zip(headings, row)) for row in all_data]
             id_row = data_by_headings.pop(0)
-            self.assertEqual('form.meta.instanceID', id_row['Source Field'])
+            self.assertEqual('id', id_row['Source Field'])
             self.assertEqual('id', id_row['Field'])
+            domain_row = data_by_headings.pop(0)
+            self.assertEqual('domain', domain_row['Source Field'])
+            self.assertEqual('domain', domain_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             # basic sanity check

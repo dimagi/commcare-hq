@@ -447,20 +447,6 @@ def get_all_apps(domain):
     return chain(get_apps_in_domain(domain), _saved_apps())
 
 
-def get_all_app_ids(domain):
-    """
-    Returns a list of all the app_ids ever built and current Applications.
-    """
-    from .models import Application
-    results = Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-    ).all()
-    return [result['id'] for result in results]
-
-
 def get_all_built_app_ids_and_versions(domain, app_id=None):
     """
     Returns a list of all the app_ids ever built and their version.

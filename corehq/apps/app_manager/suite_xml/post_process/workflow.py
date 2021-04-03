@@ -262,8 +262,8 @@ class EndOfFormNavigationWorkflow(object):
                 frame_children.extend(frame_children_for_module(module_.root_module))
 
             if include_user_selections:
-                this_module_children = self.helper.get_frame_children(id_strings.form_command(module_.get_form(0)),
-                                                                      module_, module_only=True)
+                command = self._get_first_command(module_)
+                this_module_children = self.helper.get_frame_children(command, module_, module_only=True)
                 for child in this_module_children:
                     if child not in frame_children:
                         frame_children.append(child)
@@ -320,7 +320,7 @@ class EndOfFormNavigationWorkflow(object):
 
                 if target_module in module.get_child_modules():
                     parent_frame_children = self.helper.get_frame_children(
-                        id_strings.form_command(module.get_form(0)), module, module_only=True)
+                        self._get_first_command(module), module, module_only=True)
 
                     # exclude frame children from the child module if they are already
                     # supplied by the parent module
@@ -372,6 +372,11 @@ class EndOfFormNavigationWorkflow(object):
                     raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
                         form.default_name(), child.id
                     ))
+
+    def _get_first_command(self, module):
+        if module.module_type == "shadow":
+            module = module.source_module
+        return id_strings.form_command(module.get_form(0))
 
 
 class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_created case_not_created')):

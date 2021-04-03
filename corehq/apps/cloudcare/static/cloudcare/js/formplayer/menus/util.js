@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
 
 
     var getMenuView = function (menuResponse) {
-        var menuData = {
+        var menuData = {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -112,10 +112,14 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             numEntitiesPerRow: menuResponse.numEntitiesPerRow,
             maxHeight: menuResponse.maxHeight,
             maxWidth: menuResponse.maxWidth,
+            redoLast: menuResponse.redoLast,
             useUniformUnits: menuResponse.useUniformUnits,
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
         };
+        var Util = hqImport("cloudcare/js/formplayer/utils/util");
+        var urlObject = Util.currentUrlToObject();
+
         if (menuResponse.type === "commands") {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
@@ -129,11 +133,10 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 hqImport('analytix/js/kissmetrix').track.event('Case Search', props);
             }
             sessionStorage.queryKey = menuResponse.queryKey;
+            urlObject.setQueryData({}, false);
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-                var Util = hqImport("cloudcare/js/formplayer/utils/util");
-                var urlObject = Util.currentUrlToObject();
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
                 var eventData = menuResponse.title;

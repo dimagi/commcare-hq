@@ -144,3 +144,20 @@ def test_single_value_none():
         pass
 
     testil.eq(ext_point(), None)
+
+
+def test_invoke_default():
+    ext = CommCareExtensions()
+
+    @ext.extension_point(result_format=ResultFormat.FIRST)
+    def ext_point_d(domain):
+        return f'default {domain}'
+
+    testil.eq(ext_point_d(1), 'default 1')
+
+    @ext_point_d.extend(domains=[1])
+    def extend_1(domain):
+        return f"custom {domain}"
+
+    testil.eq(ext_point_d(1), 'custom 1')
+    testil.eq(ext_point_d(2), 'default 2')

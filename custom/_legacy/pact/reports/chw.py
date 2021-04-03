@@ -4,7 +4,7 @@ from corehq.apps.api.es import ReportCaseESView, ReportFormESView
 from corehq.apps.es import filters
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
@@ -144,8 +144,10 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
         """
         if self.get_user() is not None:
             def _format_row(row_field_dict):
-                yield mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
-                reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
+                yield format_html(
+                    "<a class='ajax_dialog' href='{}'>View</a>",
+                    reverse('render_form_data', args=[self.domain, row_field_dict['_id']])
+                )
                 yield row_field_dict['script_pact_id']
                 yield self.format_date(row_field_dict["received_on"].replace('_', ' ').title())
                 yield self.format_date(row_field_dict['script_encounter_date'])

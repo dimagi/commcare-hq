@@ -53,6 +53,7 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True, progre
                 for doc_id in missing_ids(doc_type):
                     statedb.add_missing_docs(doc_type, [doc_id])
                     dd_count(f"commcare.couchsqlmigration.{entity}.has_diff")
+    log.info("missing docs scan%s complete", "" if resume else " (rebuild)")
 
 
 def recheck_missing_docs(domain, state_dir):

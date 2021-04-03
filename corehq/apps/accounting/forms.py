@@ -927,12 +927,6 @@ class BulkUpgradeToLatestVersionForm(forms.Form):
         required=True,
         widget=forms.Textarea,
     )
-    start_date = forms.DateField(
-        label="Date When New Version Takes Effect",
-        widget=forms.DateInput(),
-        required=False,
-        help_text="If left blank this change will take effect immediately.",
-    )
 
     def __init__(self, old_plan_version, web_user, *args, **kwargs):
         self.old_plan_version = old_plan_version
@@ -946,7 +940,6 @@ class BulkUpgradeToLatestVersionForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "Upgrade All Subscriptions To Latest Version",
-                crispy.Field('start_date', css_class="date-picker"),
                 'upgrade_note',
             ),
             hqcrispy.FormActions(
@@ -963,7 +956,6 @@ class BulkUpgradeToLatestVersionForm(forms.Form):
         upgrade_subscriptions_to_latest_plan_version(
             self.old_plan_version,
             self.web_user,
-            self.cleaned_data['start_date'],
             self.cleaned_data['upgrade_note'],
         )
 
@@ -1773,7 +1765,6 @@ class SoftwarePlanVersionForm(forms.Form):
             upgrade_subscriptions_to_latest_plan_version(
                 self.plan_version,
                 self.admin_web_user,
-                datetime.date.today(),
                 upgrade_note="Immediately upgraded when creating a new version."
             )
             messages.success(

@@ -129,7 +129,7 @@ class FixtureDataTest(TestCase):
             <district_name lang="eng">Delhi_in_ENG</district_name>
             <district_id>Delhi_id</district_id>
         </district>
-        """, ElementTree.tostring(self.data_item.to_xml()))
+        """, ElementTree.tostring(self.data_item.to_xml(), encoding='utf-8'))
 
     def test_ownership(self):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
@@ -148,7 +148,7 @@ class FixtureDataTest(TestCase):
                 </district>
             </district_list>
         </fixture>
-        """ % self.user.user_id, ElementTree.tostring(fixture))
+        """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
 
         self.data_item.remove_user(self.user)
         self.assertItemsEqual([], self.data_item.get_all_users())
@@ -173,7 +173,7 @@ class FixtureDataTest(TestCase):
                 <district_list />
             </fixture>
             """.format(self.user.user_id),
-            ElementTree.tostring(fixtures[0])
+            ElementTree.tostring(fixtures[0], encoding='utf-8')
         )
 
         self.fixture_ownership = self.data_item.add_user(self.user)
@@ -223,7 +223,7 @@ class FixtureDataTest(TestCase):
                 {}
                 {}
             </fixtures>
-            """.format(*[ElementTree.tostring(fixture).decode('utf-8') for fixture in fixtures])
+            """.format(*[ElementTree.tostring(fixture, encoding='utf-8').decode('utf-8') for fixture in fixtures])
         )
 
     def test_empty_data_types(self):
@@ -264,7 +264,7 @@ class FixtureDataTest(TestCase):
             </fixture>
             </f>
             """.format(self.user.user_id),
-            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture).decode('utf-8') for fixture in fixtures])
+            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture, encoding='utf-8').decode('utf-8') for fixture in fixtures])
         )
 
     def test_user_data_type_with_item(self):

@@ -229,7 +229,6 @@ class CouchSqlDomainMigrator:
                 process_form(doc)
 
     def _migrate_form(self, couch_form, case_ids, **kw):
-        set_local_domain_sql_backend_override(self.domain)
         form_id = couch_form.form_id
         self._migrate_form_and_associated_models(couch_form, **kw)
         self.case_diff_queue.update(case_ids, form_id)
@@ -238,6 +237,7 @@ class CouchSqlDomainMigrator:
         """
         Copies `couch_form` into a new sql form
         """
+        set_local_domain_sql_backend_override(self.domain)
         sql_form = None
         try:
             assert couch_form.domain == self.domain, couch_form.form_id
@@ -301,7 +301,7 @@ class CouchSqlDomainMigrator:
             sql_json = sql_form_to_json(sql_form)
             self.statedb.save_form_diffs(couch_json, sql_json)
         else:
-            self.statedb.add_missing_docs("XFormInstance", [couch_form.form_id])
+            self.statedb.add_missing_docs(couch_form.doc_type, [couch_form.form_id])
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
@@ -351,6 +351,7 @@ class CouchSqlDomainMigrator:
                 pool.spawn(copy_case, doc)
 
     def _copy_unprocessed_case(self, doc):
+        set_local_domain_sql_backend_override(self.domain)
         couch_case = CommCareCase.wrap(doc)
         log.debug('Processing doc: %(doc_type)s(%(_id)s)', doc)
         try:
@@ -1279,15 +1280,21 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
     if rows.state.is_resume() and rows.state.to_json().get("kwargs"):
-        log.info("iteration state: %r", rows.state.to_json()["kwargs"])
+        log.debug("iteration state: %r", rows.state.to_json()["kwargs"])
     row = None
+    log_message = log.debug
     try:
         for row in rows:
             yield row[row_key]
+    except:  # noqa E772
+        log_message = logging.info
+        raise
     finally:
         final_state = rows.state.to_json().get("kwargs")
         if final_state:
-            log.info("final iteration state: %r", final_state)
+            if stopper.clean_break:
+                log_message = logging.info
+            log_message("final iteration state: %r", final_state)
 
 
 _iter_docs.chunk_size = 1000

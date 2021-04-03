@@ -13,6 +13,7 @@ from django.http import (
 )
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 
@@ -20,13 +21,14 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.enterprise.decorators import require_enterprise_admin
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq import privileges
 from corehq.apps.accounting.models import CustomerInvoice, CustomerBillingRecord
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
-from corehq.apps.domain.views import DomainAccountingSettings
+from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
 from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
     BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
 
@@ -42,6 +44,7 @@ from corehq.apps.domain.decorators import (
 )
 
 from corehq.apps.accounting.utils.subscription import get_account_or_404
+from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.const import USER_DATE_FORMAT
 
@@ -112,11 +115,14 @@ def enterprise_dashboard_email(request, domain, slug):
 @login_and_domain_required
 def enterprise_settings(request, domain):
     account = get_account_or_404(request, domain)
+    export_settings = get_default_export_settings_if_available(domain)
 
     if request.method == 'POST':
-        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account,
+                                      username=request.user.username, export_settings=export_settings)
     else:
-        form = EnterpriseSettingsForm(domain=domain, account=account)
+        form = EnterpriseSettingsForm(domain=domain, account=account, username=request.user.username,
+                                      export_settings=export_settings)
 
     context = {
         'account': account,
@@ -136,7 +142,9 @@ def enterprise_settings(request, domain):
 @require_POST
 def edit_enterprise_settings(request, domain):
     account = get_account_or_404(request, domain)
-    form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+    export_settings = get_default_export_settings_if_available(domain)
+    form = EnterpriseSettingsForm(request.POST, username=request.user.username, domain=domain,
+                                  account=account, export_settings=export_settings)
 
     if form.is_valid():
         form.save(account)
@@ -145,6 +153,19 @@ def edit_enterprise_settings(request, domain):
         return enterprise_settings(request, domain)
 
     return HttpResponseRedirect(reverse('enterprise_settings', args=[domain]))
+
+
+@method_decorator(require_enterprise_admin, name='dispatch')
+class BaseEnterpriseAdminView(BaseDomainView):
+    section_name = ugettext_lazy("Enterprise Dashboard")
+
+    @property
+    def section_url(self):
+        return reverse('enterprise_dashboard', args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
 
 
 class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):

@@ -30,7 +30,9 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         $modal.find('#js-confirmation-confirm').text(options.confirmText);
         $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
-        $modal.find('#js-confirmation-confirm').click(function (e) {
+        var $confirmationButton = $modal.find('#js-confirmation-confirm');
+        $confirmationButton.off('.confirmationModal');
+        $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
         $modal.modal('show');
@@ -128,6 +130,23 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     };
 
+    Util.getStickyQueryInputs = function () {
+        if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
+            return {};
+        }
+        if (!this.stickyQueryInputs) {
+            return {};
+        }
+        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+    };
+
+    Util.setStickyQueryInputs = function (inputs) {
+        if (!this.stickyQueryInputs) {
+            this.stickyQueryInputs = {};
+        }
+        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
+    };
+
     Util.CloudcareUrl = function (options) {
         this.appId = options.appId;
         this.copyOf = options.copyOf;
@@ -135,10 +154,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.steps = options.steps;
         this.page = options.page;
         this.search = options.search;
+        this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
-        this.installReference = options.installReference;
         this.sortIndex = options.sortIndex;
+        this.forceManualAction = options.forceManualAction;
 
         this.setSteps = function (steps) {
             this.steps = steps;
@@ -148,14 +168,23 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.steps) {
                 this.steps = [];
             }
-            this.steps.push(step);
-            //clear out pagination and search when we take a step
+
+            // Steps only deal with strings, because formplayer will send them back as strings
+            this.steps.push(String(step));
+
+            // clear out pagination and search when we take a step
             this.page = null;
             this.search = null;
         };
 
         this.setPage = function (page) {
             this.page = page;
+        };
+
+        this.setCasesPerPage = function (casesPerPage) {
+            this.casesPerPage = casesPerPage;
+            this.page = null;
+            this.sortIndex = null;
         };
 
         this.setSort = function (sortIndex) {
@@ -173,10 +202,18 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.queryData) {
                 this.queryData = {};
             }
+            var steps = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().steps;
             this.queryData[sessionStorage.queryKey] = {
                 inputs: queryDict,
                 execute: execute,
+                selections: steps,
             };
+            this.page = null;
+            this.search = null;
+        };
+
+        this.setForceManualAction = function (force) {
+            this.forceManualAction = force;
         };
 
         this.clearExceptApp = function () {
@@ -186,6 +223,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.forceManualAction = null;
         };
 
         this.onSubmit = function () {
@@ -193,21 +231,29 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.forceManualAction = null;
         };
 
         this.spliceSteps = function (index) {
-
             // null out the session if we clicked the root (home)
             if (index === 0) {
                 this.steps = null;
                 this.sessionId = null;
             } else {
                 this.steps = this.steps.splice(0, index);
+                var stepsKey = this.steps.join(",");
+                // Query data is necessary to formplayer navigation, so keep it,
+                // but only for the steps that are still relevant to the session.
+                this.queryData = _.pick(this.queryData, function (value) {
+                    var valueKey = value.selections.join(",");
+                    return stepsKey.startsWith(valueKey) && stepsKey !== valueKey;
+                });
             }
             this.page = null;
             this.search = null;
-            this.queryData = null;
             this.sortIndex = null;
+            this.queryData = null;
+            this.forceManualAction = null;
         };
     };
 
@@ -220,10 +266,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             steps: self.steps,
             page: self.page,
             search: self.search,
-            queryData: self.queryData,
+            queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
-            installReference: self.installReference,
             sortIndex: self.sortIndex,
+            forceManualAction: self.forceManualAction,
         };
         return JSON.stringify(dict);
     };
@@ -239,8 +285,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'search': data.search,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
-            'installReference': data.installReference,
             'sortIndex': data.sortIndex,
+            'forceManualAction': data.forceManualAction,
         };
         return new Util.CloudcareUrl(options);
     };
@@ -289,6 +335,16 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             return result;
         };
     }
+
+    Util.savePerPageLimitCookie = function (name, perPageLimit) {
+        var savedPath = window.location.pathname;
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        $.cookie(name + '-per-page-limit', perPageLimit, {
+            expires: 365,
+            path: savedPath,
+            secure: initialPageData.get('secure_cookies'),
+        });
+    };
 
     return Util;
 });

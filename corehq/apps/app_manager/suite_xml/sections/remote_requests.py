@@ -24,10 +24,12 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionDatum,
     Stack,
     Text,
+    Hint,
 )
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
@@ -43,10 +45,11 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, domain, app, module):
+    def __init__(self, domain, app, module, detail_section_elements):
         self.domain = domain
         self.app = app
         self.module = module
+        self.detail_section_elements = detail_section_elements
 
     def build_remote_request(self):
         return RemoteRequest(
@@ -63,12 +66,13 @@ class RemoteRequestFactory(object):
             "data": [
                 QueryData(
                     key='case_id',
-                    ref=QuerySessionXPath(self.module.search_config.session_var).instance(),
+                    ref=QuerySessionXPath(self.module.search_config.case_session_var).instance(),
                 ),
             ],
         }
-        if self.module.search_config.relevant:
-            kwargs["relevant"] = self.module.search_config.relevant
+        relevant = self.module.search_config.get_relevant()
+        if relevant:
+            kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
@@ -86,14 +90,14 @@ class RemoteRequestFactory(object):
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [QuerySessionXPath(self.module.search_config.session_var).instance()]
+        query_xpaths = [QuerySessionXPath(self.module.search_config.case_session_var).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
-        query_xpaths.extend([self.module.search_config.relevant, self.module.search_config.search_filter])
+        query_xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
         query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
-        instances |= get_instances_for_module(self.app, self.module)
+        instances |= get_instances_for_module(self.app, self.module, self.detail_section_elements)
 
         # sorted list to prevent intermittent test failures
         return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
@@ -111,7 +115,8 @@ class RemoteRequestFactory(object):
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
                 data=self._get_remote_request_query_datums(),
-                prompts=self._build_query_prompts()
+                prompts=self._build_query_prompts(),
+                default_search=self.module.search_config.default_search,
             )
         ]
 
@@ -127,7 +132,7 @@ class RemoteRequestFactory(object):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
-            id=self.module.search_config.session_var,
+            id=self.module.search_config.case_session_var,
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
@@ -140,10 +145,6 @@ class RemoteRequestFactory(object):
                 key='case_type',
                 ref="'{}'".format(self.module.case_type)
             ),
-            QueryData(
-                key='include_closed',
-                ref="'{}'".format(self.module.search_config.include_closed)
-            )
         ]
         extra_query_datums = [
             QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
@@ -161,12 +162,26 @@ class RemoteRequestFactory(object):
     def _build_query_prompts(self):
         prompts = []
         for prop in self.module.search_config.properties:
+            text = Text(locale_id=id_strings.search_property_locale(self.module, prop.name))
+            if prop.hint:
+                display = Display(
+                    text=text,
+                    hint=Hint(text=Text(locale_id=id_strings.search_property_hint_locale(self.module, prop.name)))
+                )
+            else:
+                display = Display(text=text)
+
             kwargs = {
                 'key': prop.name,
-                'display': Display(text=Text(locale_id=id_strings.search_property_locale(self.module, prop.name))),
+                'display': display
             }
+            if not prop.appearance or prop.itemset.nodeset:
+                kwargs['receive'] = prop.receiver_expression
             if prop.appearance and self.app.enable_search_prompt_appearance:
-                kwargs['appearance'] = prop.appearance
+                if prop.appearance == 'address':
+                    kwargs['input_'] = prop.appearance
+                else:
+                    kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
             if prop.default_value and self.app.enable_default_value_expression:
@@ -184,7 +199,7 @@ class RemoteRequestFactory(object):
     def _build_stack(self):
         stack = Stack()
         frame = PushFrame()
-        frame.add_rewind(QuerySessionXPath(self.module.search_config.session_var).instance())
+        frame.add_rewind(QuerySessionXPath(self.module.search_config.case_session_var).instance())
         stack.add_frame(frame)
         return stack
 
@@ -202,7 +217,10 @@ class RemoteRequestContributor(SuiteContributorByModule):
     .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#remote-request
 
     """
-    def get_module_contributions(self, module):
+
+    @time_method()
+    def get_module_contributions(self, module, detail_section_elements):
         if module_offers_search(module):
-            return [RemoteRequestFactory(self.app.domain, self.app, module).build_remote_request()]
+            return [RemoteRequestFactory(
+                self.app.domain, self.app, module, detail_section_elements).build_remote_request()]
         return []

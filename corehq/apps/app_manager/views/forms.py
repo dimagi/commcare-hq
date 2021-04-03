@@ -66,7 +66,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    MappingItem,
     ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
@@ -352,9 +351,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     "a release notes form <TODO messaging>")},
                 status_code=400
             )
-    if (should_edit("form_links_xpath_expressions") and
-            should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+    if (should_edit("form_links_xpath_expressions")
+            and should_edit("form_links_form_ids")
+            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -519,9 +518,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     if conflict is not None:
         return conflict
 
-    current_xml = form.source
-    dmp = diff_match_patch()
-    xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    xml = apply_patch(patch, form.source)
     xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
@@ -533,6 +530,11 @@ def patch_xform(request, domain, app_id, form_unique_id):
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return json_response(response_json)
+
+
+def apply_patch(patch, text):
+    dmp = diff_match_patch()
+    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
 
 
 def _get_xform_conflict_response(form, sha1_checksum):

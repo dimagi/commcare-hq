@@ -70,11 +70,6 @@ class CopyApplicationForm(forms.Form):
         domain_obj = Domain.get_by_name(domain)
         if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
-        if toggles.MULTI_MASTER_BYPASS_VERSION_CHECK.enabled(domain):
-            raise forms.ValidationError("""
-                Copying an app to a domain that uses multi-master linked apps and bypasses
-                the minimum CommCare version check requires developer intervention.
-            """)
         return domain
 
     def clean(self):

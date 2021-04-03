@@ -4,6 +4,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -84,9 +85,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
+                        var urlObject = Util.currentUrlToObject();
+                        if (urlObject.steps) {
+                            urlObject.steps.pop();
+                            Util.setUrlToObject(urlObject);
+                        }
                         defer.reject();
                     },
                 };
+                var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
                 options.data = JSON.stringify({
                     "username": user.username,
                     "restoreAs": user.restoreAs,
@@ -94,11 +101,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "app_id": params.appId,
                     "locale": displayOptions.language,
                     "selections": params.steps,
-                    "offset": params.page * 10,
+                    "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
+                    "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
-                    "installReference": params.installReference,
+                    "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
                     "useLiveQuery": user.useLiveQuery,

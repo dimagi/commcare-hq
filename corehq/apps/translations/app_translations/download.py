@@ -2,10 +2,10 @@ import re
 from collections import OrderedDict
 
 from django.utils.encoding import force_text
-from django.utils.safestring import mark_safe
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xform import ItextOutput, ItextValue
 from corehq.apps.translations.app_translations.utils import (
     get_form_sheet_name,
@@ -172,6 +172,7 @@ def get_module_rows(langs, module):
 
     return get_module_case_list_form_rows(langs, module) + \
         get_module_case_list_menu_item_rows(langs, module) + \
+        get_module_search_command_rows(langs, module) + \
         get_module_detail_rows(langs, module)
 
 
@@ -208,6 +209,18 @@ def get_module_case_list_menu_item_rows(langs, module):
     return [
         ('case_list_menu_item_label', 'list') +
         tuple(module.case_list.label.get(lang, '') for lang in langs)
+    ]
+
+
+def get_module_search_command_rows(langs, module):
+    if not module_offers_search(module):
+        return []
+
+    return [
+        ('search_command_label', 'list')
+        + tuple(module.search_config.command_label.get(lang, '') for lang in langs),
+        ('search_again_label', 'list')
+        + tuple(module.search_config.again_label.get(lang, '') for lang in langs),
     ]
 
 
@@ -338,7 +351,7 @@ def get_form_question_label_name_media(langs, form):
                         part = part.replace('&', '&amp;')
                         part = part.replace('<', '&lt;')
                         part = part.replace('>', '&gt;')
-                        value += mark_safe(part)
+                        value += part
                 itext_items[text_id][(lang, value_form)] = value
 
     app = form.get_app()

@@ -195,3 +195,28 @@ same originating number.
 
 If your backend uses load balancing and rate limiting, the framework applies
 the rate limit to each phone number separately as you would expect.
+
+Backend Selection
+^^^^^^^^^^^^^^^^^
+
+There's also an **Automatic Choose** option, which selects a backend for each message based on the
+phone number's prefix. Domains can customize their prefix mappings, and there's a global mapping that
+HQ will fall back to if no domain-specific mapping is defined.
+
+These prefix-backend mappings are stored in ``SQLMobileBackend``. The global mappings can be accessed with
+``[(m.prefix, m.backend) for m in SQLMobileBackendMapping.objects.filter(is_global=True)]``
+
+On production, this currently returns
+
+.. code-block:: python
+
+    ('27', <SQLMobileBackend: Global Backend 'GRAPEVINE-ZA'>),
+    ('999', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_TEST'>),
+    ('1', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_TWILIO'>),
+    ('258', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_MOZ'>),
+    ('266', <SQLMobileBackend: Global Backend 'GRAPEVINE-ZA'>),
+    ('265', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_TWILIO'>),
+    ('91', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_UNICEL'>),
+    ('268', <SQLMobileBackend: Global Backend 'GRAPEVINE-ZA'>),
+    ('256', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_YO'>),
+    ('*', <SQLMobileBackend: Global Backend 'MOBILE_BACKEND_MACH'>)

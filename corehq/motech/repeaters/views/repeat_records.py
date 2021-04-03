@@ -8,7 +8,7 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
@@ -206,11 +206,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
     def headers(self):
         columns = [
             DataTablesColumn(
-                mark_safe(
-                    f"""
-                    {_('Select')}<button id="all" class="select-visible btn btn-xs btn-default">{_('all')}</button>
-                    <button id="none" class="select-none btn btn-xs btn-default">{_('none')}</button>
-                    """
+                format_html(
+                    '{}<button id="all" class="select-visible btn btn-xs btn-default">{}</button>'
+                    '<button id="none" class="select-none btn btn-xs btn-default">{}</button>',
+                    _('Select'),
+                    _('all'),
+                    _('none')
                 ),
                 sortable=False, span=3
             ),
@@ -257,10 +258,9 @@ class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
     slug = 'couch_repeat_record_report'
 
     def _make_row(self, record):
-        checkbox = mark_safe(
-            """<input type="checkbox" class="xform-checkbox"
-            data-id="{}" name="xform_ids"/>""".format(record.get_id)
-        )
+        checkbox = format_html(
+            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            record.get_id)
         row = [
             checkbox,
             self._make_state_label(record),
@@ -288,8 +288,9 @@ class SQLRepeatRecordReport(BaseRepeatRecordReport):
     slug = 'repeat_record_report'
 
     def _make_row(self, record):
-        checkbox = mark_safe('<input type="checkbox" class="xform-checkbox" '
-                             f'data-id="{record.pk}" name="xform_ids"/>')
+        checkbox = format_html(
+            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            record.pk)
         if record.attempts:
             # Use prefetched `record.attempts` instead of requesting a
             # different queryset

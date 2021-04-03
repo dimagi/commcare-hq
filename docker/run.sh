@@ -111,8 +111,8 @@ function _run_tests() {
 
     if [ "$TEST" == "python-sharded-and-javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "coverage run manage.py test $@ $TESTS"
-        /vendor/bin/coverage run manage.py test "$@" $TESTS
+        echo "./manage.py test $@ $TESTS"
+        ./manage.py test "$@" $TESTS
 
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
@@ -121,8 +121,8 @@ function _run_tests() {
          grunt test "$@"
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "coverage run manage.py test $@ $TESTS"
-        /vendor/bin/coverage run manage.py test "$@" $TESTS
+        echo "./manage.py test $@ $TESTS"
+        ./manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
@@ -138,6 +138,7 @@ function bootstrap() {
                 ./manage.py sync_couch_views &&
                 ./manage.py migrate --noinput &&
                 ./manage.py compilejsi18n &&
+                ./manage.py create_kafka_topics &&
                 ./manage.py make_superuser admin@example.com"
 }
 

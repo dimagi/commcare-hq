@@ -41,7 +41,7 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     FormExportInstance,
 )
-from corehq.apps.export.utils import get_default_export_settings_for_domain
+from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
@@ -253,15 +253,16 @@ class CreateNewCustomFormExportView(BaseExportView):
         from corehq.apps.export.views.list import FormExportListView
         return FormExportListView
 
-    def create_new_export_instance(self, schema):
-        return self.export_instance_cls.generate_instance_from_schema(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
         xmlns = request.GET.get('export_tag').strip('"')
 
+        export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, app_id, xmlns)
-        self.export_instance = self.create_new_export_instance(schema)
+        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
@@ -278,14 +279,15 @@ class CreateNewCustomCaseExportView(BaseExportView):
         from corehq.apps.export.views.list import CaseExportListView
         return CaseExportListView
 
-    def create_new_export_instance(self, schema):
-        return self.export_instance_cls.generate_instance_from_schema(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, None, case_type)
-        self.export_instance = self.create_new_export_instance(schema)
+        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
@@ -317,8 +319,11 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
 
-    def create_new_export_instance(self, schema):
-        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         clean_odata_columns(export_instance)
         return export_instance
 
@@ -328,12 +333,13 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
 
-    def create_new_export_instance(self, schema):
-        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         # odata settings only apply to form exports
-        export_settings = get_default_export_settings_for_domain(schema.domain)
         if export_settings:
-            export_instance.include_errors = export_settings.odata_include_duplicates
             export_instance.split_multiselects = export_settings.odata_expand_checkbox
         clean_odata_columns(export_instance)
         return export_instance

@@ -15,7 +15,6 @@ hqDefine('case_search/js/case_search', [
         self.type = ko.observable();
         self.owner_id = ko.observable();
         self.customQueryAddition = ko.observable();
-        self.includeClosed = ko.observable(false);
         self.results = ko.observableArray();
         self.count = ko.observable();
         self.took = ko.observable();
@@ -61,7 +60,6 @@ hqDefine('case_search/js/case_search', [
                     owner_id: self.owner_id(),
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
-                    includeClosed: self.includeClosed(),
                     xpath: self.xpath(),
                 }
                 )}),

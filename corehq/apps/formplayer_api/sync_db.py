@@ -1,14 +1,15 @@
 from corehq.apps.formplayer_api.exceptions import FormplayerResponseException
 from corehq.apps.formplayer_api.smsforms.api import _post_data
-from corehq.apps.users.models import CouchUser
+from corehq.apps.formplayer_api.utils import check_user_access
 from corehq.toggles import FORMPLAYER_USE_LIVEQUERY
 
 
 def sync_db(domain, username, restore_as=None):
     """Call Formplayer API to force a sync for a user."""
-    user = CouchUser.get_by_username(username)
-    assert user.is_member_of(domain)
-    user_id = user.user_id
+    user = check_user_access(domain, username, allow_mirroring=True)
+    if restore_as:
+        check_user_access(domain, restore_as)
+
     use_livequery = FORMPLAYER_USE_LIVEQUERY.enabled(domain)
     data = {
         'action': 'sync-db',
@@ -17,6 +18,6 @@ def sync_db(domain, username, restore_as=None):
         'restoreAs': restore_as,
         'useLiveQuery': use_livequery,
     }
-    response_json = _post_data(data, user_id)
+    response_json = _post_data(data, user.user_id)
     if not response_json.get("status") == "accepted":
         raise FormplayerResponseException(response_json)

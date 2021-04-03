@@ -422,7 +422,7 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "days")
 
         self.config.save()
-        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
+        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user)
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -497,7 +497,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -724,7 +724,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 )
 
             self.report_notification.save()
-            ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
+            ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
             if self.is_new:
                 DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_saved_scheduled_reports')
                 messages.success(request, _("Scheduled report added."))
@@ -1019,6 +1019,7 @@ class CaseDataView(BaseProjectReportSectionView):
         from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
         wrapped_case = get_wrapped_case(self.case_instance)
         timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
         display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
@@ -1501,10 +1502,11 @@ def _get_cases_changed_context(domain, form, case_id=None):
         else:
             url = "#"
 
+        keys = _sorted_case_update_keys(list(b))
+        assume_phonetimes = not form.metadata or form.metadata.deviceID != CLOUDCARE_DEVICE_ID
         definition = get_default_definition(
-            _sorted_case_update_keys(list(b)),
-            assume_phonetimes=(not form.metadata or
-                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
+            keys,
+            phonetime_fields=keys if assume_phonetimes else {},
         )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
@@ -1521,14 +1523,20 @@ def _get_cases_changed_context(domain, form, case_id=None):
 
 
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+
     meta = _top_level_tags(form).get('meta', None) or {}
+
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
-    definition = get_default_definition(_sorted_form_metadata_keys(list(meta)))
+    phonetime_fields = ['timeStart', 'timeEnd']
+    date_fields = ['received_on', 'server_modified_on'] + phonetime_fields
+    definition = get_default_definition(
+        _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_fields, date_fields=date_fields
+    )
     form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
@@ -1569,6 +1577,7 @@ def _top_level_tags(form):
         Returns a OrderedDict of the top level tags found in the xml, in the
         order they are found.
 
+        The actual values are taken from the form JSON data and not from the XML
         """
         to_return = OrderedDict()
 

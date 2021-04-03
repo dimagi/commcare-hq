@@ -6,6 +6,6 @@ sphinx:
 formats: all
 python:
   install:
-    - requirements: requirements/dev-requirements.txt
+    - requirements: requirements/docs-requirements.txt
 submodules:
   include: all

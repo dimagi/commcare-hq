@@ -22,7 +22,7 @@ class TestSSOTasks(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.idp = generator.create_idp(self.account)
+        self.idp = generator.create_idp('vaultwax', self.account)
 
     def test_create_rollover_service_provider_x509_certificates(self):
         self.idp.create_service_provider_certificate()

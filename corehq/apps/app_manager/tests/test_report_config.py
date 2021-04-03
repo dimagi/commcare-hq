@@ -258,7 +258,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                     with mock_datasource_config():
                         fixtures = call_fixture_generator(report_fixture_generator, cls.user)
                         fixture = [f for f in fixtures if f.attrib.get('id') == ReportFixturesProviderV1.id][0]
-        cls.fixture = ElementTree.tostring(fixture)
+        cls.fixture = ElementTree.tostring(fixture, encoding='utf-8')
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""

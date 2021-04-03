@@ -744,7 +744,7 @@ class FormMediaMixin(MediaMixin):
         if self.form_type != 'shadow_form':
             xform_count = self.memoized_xform().rename_media(old_path, new_path)
             if xform_count:
-                self.source = etree.tostring(self.memoized_xform().xml).decode('utf-8')
+                self.source = etree.tostring(self.memoized_xform().xml, encoding='utf-8').decode('utf-8')
 
         return menu_count + xform_count
 

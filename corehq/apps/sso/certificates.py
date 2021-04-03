@@ -1,8 +1,11 @@
+from io import BytesIO
+
 from OpenSSL import crypto
 import uuid
 from dateutil.parser import parse
 
 from django.conf import settings
+from django.http import HttpResponse
 
 DEFAULT_EXPIRATION = 365 * 24 * 60 * 60 # one year in seconds
 
@@ -41,3 +44,12 @@ def get_public_key(cert):
 
 def get_private_key(key_pair):
     return crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair).decode("utf-8")
+
+
+def get_certificate_response(cert_string, filename):
+    response = HttpResponse(
+        BytesIO(cert_string.encode("utf-8")),
+        content_type="application/x-x509-user-cert"
+    )
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    return response

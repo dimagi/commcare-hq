@@ -78,8 +78,8 @@ class LedgerProcessor(PillowProcessor):
 
     def process_change(self, change):
         ledger = change.get_document()
-        from corehq.apps.commtrack.models import CommtrackConfig
-        commtrack_config = CommtrackConfig.for_domain(ledger['domain'])
+        from corehq.apps.commtrack.models import SQLCommtrackConfig
+        commtrack_config = SQLCommtrackConfig.for_domain(ledger['domain'])
 
         if commtrack_config and commtrack_config.use_auto_consumption:
             daily_consumption = _get_daily_consumption_for_ledger(ledger)

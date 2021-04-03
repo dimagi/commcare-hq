@@ -6,151 +6,129 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
                 return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
             });
+        },
+        subscribeToSave = function (model, observableNames, saveButton) {
+            _.each(observableNames, function (name) {
+                model[name].subscribe(function () {
+                    saveButton.fire('change');
+                });
+            });
+            $(".hq-help").hqHelp();
         };
 
-    var searchViewModel = function (searchProperties, sessionVar, autoLaunch, includeClosed, defaultProperties, lang, searchCommandLabel,
-        searchButtonDisplayCondition, searchFilter, searchRelevant, blacklistedOwnerIdsExpression, saveButton, searchFilterObservable) {
-        var self = {},
-            DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
+    var itemsetModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            'instance_id': '',
+            'instance_uri': '',
+            'nodeset': '',
+            'label': '',
+            'value': '',
+            'sort': '',
+        });
+        var self = ko.mapping.fromJS(options);
 
-        var itemSet = function (instanceId, instanceUri, nodeset, label, value, sort) {
-            var self = {};
+        self.lookupTableNodeset = ko.pureComputed({
+            write: function (value) {
+                self.nodeset(value);
+                var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
+                    matches = reg.exec(value);
+                if (matches && matches.length > 1) {
+                    var instanceId = matches[1],
+                        itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
 
-            self.instance_id = ko.observable(instanceId);
-            self.instance_uri = ko.observable(instanceUri);
-            self.nodeset = ko.observable(nodeset);
-
-            self.label = ko.observable(label);
-            self.value = ko.observable(value);
-            self.sort = ko.observable(sort);
-
-            self.lookupTableNodeset = ko.pureComputed({
-                write: function (value) {
-                    self.nodeset(value);
-                    var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
-                        matches = reg.exec(value);
-                    if (matches && matches.length > 1) {
-                        var instanceId = matches[1],
-                            itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
-
-                        self.instance_id(instanceId);
-                        if (itemList) {
-                            self.instance_uri(itemList['uri']);
-                        }
+                    self.instance_id(instanceId);
+                    if (itemList) {
+                        self.instance_uri(itemList['uri']);
                     }
-                },
-                read: function () {
-                    // is the nodeset a lookup table that we know about?
-                    var itemLists = get('js_options').item_lists,
-                        itemListNodesets = _.map(itemLists, function (item) {
-                            return "instance('" + item.id + "')" + item.path;
-                        });
-                    if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
+                }
+            },
+            read: function () {
+                // is the nodeset a lookup table that we know about?
+                var itemLists = get('js_options').item_lists,
+                    itemListNodesets = _.map(itemLists, function (item) {
+                        return "instance('" + item.id + "')" + item.path;
+                    });
+                if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
 
-                        return self.nodeset();
-                    } else {
-                        return '';
+                    return self.nodeset();
+                } else {
+                    return '';
+                }
+            },
+        });
+
+        subscribeToSave(self, ['nodeset', 'label', 'value', 'sort'], saveButton);
+
+        return self;
+    };
+
+    var searchPropertyModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            name: '',
+            label: '',
+            hint: '',
+            appearance: '',
+            defaultValue: '',
+            receiverExpression: '',
+            itemsetOptions: {},
+        });
+        var self = {};
+        self.uniqueId = generateSemiRandomId();
+        self.name = ko.observable(options.name);
+        self.label = ko.observable(options.label);
+        self.hint = ko.observable(options.hint);
+        self.appearance = ko.observable(options.appearance);
+        self.defaultValue = ko.observable(options.defaultValue);
+
+        self.receiverExpression = ko.observable(options.receiverExpression);
+        self.itemset = itemsetModel(options.itemsetOptions, saveButton);
+
+        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
+
+        return self;
+    };
+
+    var defaultPropertyModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            property: '',
+            defaultValue: '',
+        });
+        var self = ko.mapping.fromJS(options);
+
+        subscribeToSave(self, ['property', 'defaultValue'], saveButton);
+
+        return self;
+    };
+
+    var searchConfigKeys = [
+        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
+        'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchAdditionalRelevant',
+    ];
+    var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
+        hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
+
+        options.searchCommandLabel = options.searchCommandLabel[lang] || "";
+        options.searchAgainLabel = options.searchAgainLabel[lang] || "";
+        var self = ko.mapping.fromJS(options);
+
+        self.workflow = ko.computed({
+            read: function () {
+                if (self.autoLaunch()) {
+                    if (self.defaultSearch()) {
+                        return "es_only";
                     }
-                },
-            });
-
-            // Nodeset: if the nodeset is in the list,
-            self.nodeset.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.label.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.value.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.sort.subscribe(function () {
-                saveButton.fire('change');
-            });
-
-            return self;
-        };
-
-        var searchProperty = function (options) {
-            hqImport('hqwebapp/js/assert_properties').assertRequired(options, [
-                'name',
-                'label',
-                'appearance',
-                'defaultValue',
-                'itemSet',
-            ]);
-
-            var self = {};
-            self.uniqueId = generateSemiRandomId();
-            self.name = ko.observable(options.name);
-            self.label = ko.observable(options.label);
-            self.appearance = ko.observable(options.appearance);
-            self.defaultValue = ko.observable(options.defaultValue);
-
-            self.itemSet = options.itemSet;
-
-            self.name.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.label.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.appearance.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.defaultValue.subscribe(function () {
-                saveButton.fire('change');
-            });
-            return self;
-        };
-
-        var defaultProperty = function (property, defaultValue) {
-            var self = {};
-            self.property = ko.observable(property);
-            self.defaultValue = ko.observable(defaultValue);
-
-            self.property.subscribe(function () {
-                saveButton.fire('change');
-            });
-            self.defaultValue.subscribe(function () {
-                saveButton.fire('change');
-            });
-
-            return self;
-        };
-
-        self.sessionVar = ko.observable(sessionVar);
-        self.searchCommandLabel = ko.observable(searchCommandLabel[lang] || "");
-        self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
-        self.autoLaunch = ko.observable(autoLaunch);
-        self.includeClosed = ko.observable(includeClosed);
-        self.searchProperties = ko.observableArray();
-        self.defaultProperties = ko.observableArray();
-        self.searchFilter = ko.observable(searchFilter);
-        self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
-
-        // Parse searchRelevant into DEFAULT_CLAIM_RELEVANT, which controls a checkbox,
-        // and the remainder of the expression, if any, which appears in a textbox.
-        // Note that this fragile parsing logic needs to match the self.relevant calculation below
-        // and cannot be changed without migrating existing CaseSearch documents
-        var defaultRelevant = false,
-            prefix = "(" + DEFAULT_CLAIM_RELEVANT + ") and (",
-            extraRelevant = "";
-        searchRelevant = searchRelevant || "";
-        if (searchRelevant) {
-            searchRelevant = searchRelevant.trim();
-            if (searchRelevant === DEFAULT_CLAIM_RELEVANT) {
-                defaultRelevant = true;
-                extraRelevant = "";
-            } else if (searchRelevant.startsWith(prefix)) {
-                defaultRelevant = true;
-                extraRelevant = searchRelevant.substr(prefix.length, searchRelevant.length - prefix.length - 1);
-            } else {
-                extraRelevant = searchRelevant;
-            }
-        }
-        self.extraRelevant = ko.observable(extraRelevant);
-        self.defaultRelevant = ko.observable(defaultRelevant);
+                    return "auto_launch";
+                } else if (self.defaultSearch()) {
+                    return "see_more";
+                }
+                return "classic";
+            },
+            write: function (value) {
+                self.autoLaunch(_.contains(["es_only", "auto_launch"], value));
+                self.defaultSearch(_.contains(["es_only", "see_more"], value));
+            },
+        });
 
         // Allow search filter to be copied from another part of the page
         self.setSearchFilterVisible = ko.computed(function () {
@@ -163,50 +141,70 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.searchFilter(searchFilterObservable());
         };
 
+        subscribeToSave(self, searchConfigKeys, saveButton);
+
+        self.serialize = function () {
+            return {
+                auto_launch: self.autoLaunch(),
+                default_search: self.defaultSearch(),
+                search_default_relevant: self.searchDefaultRelevant(),
+                search_additional_relevant: self.searchAdditionalRelevant(),
+                search_button_display_condition: self.searchButtonDisplayCondition(),
+                search_command_label: self.searchCommandLabel(),
+                search_again_label: self.searchAgainLabel(),
+                search_filter: self.searchFilter(),
+                blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
+            };
+        };
+
+        return self;
+    };
+
+    var searchViewModel = function (searchProperties, defaultProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
+        var self = {};
+
+        self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
+        self.searchProperties = ko.observableArray();
+        self.defaultProperties = ko.observableArray();
+
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
-                // property labels come in keyed by lang.
+                // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
+                var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
-                var defaultValue = searchProperties[i].default_value;
-                var propItemSet = itemSet(
-                    searchProperties[i].itemset.instance_id,
-                    searchProperties[i].itemset.instance_uri,
-                    searchProperties[i].itemset.nodeset,
-                    searchProperties[i].itemset.label,
-                    searchProperties[i].itemset.value,
-                    searchProperties[i].itemset.sort,
-                    searchProperties[i].itemset.filter
-                );
-                self.searchProperties.push(searchProperty({
+                if (searchProperties[i].appearance === "address") {
+                    appearance = "address";
+                }
+                if (searchProperties[i].input_ === "daterange") {
+                    appearance = "daterange";
+                }
+                self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
+                    hint: hint,
                     appearance: appearance,
-                    defaultValue: defaultValue,
-                    itemSet: propItemSet,
-                }));
+                    defaultValue: searchProperties[i].default_value,
+                    receiverExpression: searchProperties[i].receiver_expression,
+                    itemsetOptions: {
+                        instance_id: searchProperties[i].itemset.instance_id,
+                        instance_uri: searchProperties[i].itemset.instance_uri,
+                        nodeset: searchProperties[i].itemset.nodeset,
+                        label: searchProperties[i].itemset.label,
+                        value: searchProperties[i].itemset.value,
+                        sort: searchProperties[i].itemset.sort,
+                    },
+                }, saveButton));
             }
         } else {
-            self.searchProperties.push(searchProperty({
-                name: '',
-                label: '',
-                appearance: '',
-                defaultValue: '',
-                itemSet: itemSet(),
-            }));
+            self.searchProperties.push(searchPropertyModel({}, saveButton));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(searchProperty({
-                name: '',
-                label: '',
-                appearance: '',
-                defaultValue: '',
-                itemSet: itemSet(),
-            }));
+            self.searchProperties.push(searchPropertyModel({}, saveButton));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
@@ -222,9 +220,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                        hint: p.hint(),
                         appearance: p.appearance(),
                         default_value: p.defaultValue(),
-                        fixture: ko.toJSON(p.itemSet),
+                        receiver_expression: p.receiverExpression(),
+                        fixture: ko.toJSON(p.itemset),
                     };
                 }
             );
@@ -232,16 +232,16 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (defaultProperties.length > 0) {
             for (var k = 0; k < defaultProperties.length; k++) {
-                self.defaultProperties.push(defaultProperty(
-                    defaultProperties[k].property,
-                    defaultProperties[k].defaultValue
-                ));
+                self.defaultProperties.push(defaultPropertyModel({
+                    property: defaultProperties[k].property,
+                    defaultValue: defaultProperties[k].defaultValue,
+                }, saveButton));
             }
         } else {
-            self.defaultProperties.push(defaultProperty('', ''));
+            self.defaultProperties.push(defaultPropertyModel({}, saveButton));
         }
         self.addDefaultProperty = function () {
-            self.defaultProperties.push(defaultProperty('',''));
+            self.defaultProperties.push(defaultPropertyModel({}, saveButton));
         };
         self.removeDefaultProperty = function (property) {
             self.defaultProperties.remove(property);
@@ -260,68 +260,21 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             );
         };
-        self.relevant = ko.computed(function () {
-            if (self.defaultRelevant()) {
-                if (self.extraRelevant().trim() === "") {
-                    return DEFAULT_CLAIM_RELEVANT;
-                } else {
-                    // Note this needs to match the initialization logic for defaultRelevant and extraRelevant above
-                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.extraRelevant().trim() + ")";
-                }
-            }
-            return self.extraRelevant().trim();
-        });
 
         self.serialize = function () {
-            return {
+            return _.extend({
                 properties: self._getProperties(),
-                session_var: self.sessionVar(),
-                auto_launch: self.autoLaunch(),
-                relevant: self.relevant(),
-                search_button_display_condition: self.searchButtonDisplayCondition(),
-                search_command_label: self.searchCommandLabel(),
-                search_filter: self.searchFilter(),
-                include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
-                blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
-            };
+            }, self.searchConfig.serialize());
         };
 
-        self.sessionVar.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.autoLaunch.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.includeClosed.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.relevant.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.defaultProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchCommandLabel.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchButtonDisplayCondition.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.searchFilter.subscribe(function () {
-            saveButton.fire('change');
-        });
-        self.blacklistedOwnerIdsExpression.subscribe(function () {
-            saveButton.fire('change');
-        });
+        subscribeToSave(self, ['searchProperties', 'defaultProperties'], saveButton);
 
         return self;
     };
 
     return {
+        searchConfigKeys: searchConfigKeys,
         searchViewModel: searchViewModel,
     };
 });

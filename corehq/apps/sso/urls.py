@@ -1,6 +1,6 @@
 from django.conf.urls import include, url
 
-from corehq.apps.sso.views import (
+from corehq.apps.sso.views.saml import (
     sso_saml_metadata,
     sso_saml_acs,
     sso_saml_login,

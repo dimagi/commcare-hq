@@ -58,4 +58,4 @@ LOCATION_DHIS_ID = 'dhis_id'
 # (Used for updating cases with their tracked entity instance ID.)
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
 
-DHIS2_MAX_VERSION = "2.33.0"
+DHIS2_MAX_VERSION = "2.35.1"

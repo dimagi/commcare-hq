@@ -62,13 +62,13 @@ class OtaFixtureTest(TestCase):
 
         if has_groups:
             expected = _get_group_fixture(self.user.get_id, [self.group1, self.group2])
-            check_xml_line_by_line(self, expected, ElementTree.tostring(fixture_xml[0]))
+            check_xml_line_by_line(self, expected, ElementTree.tostring(fixture_xml[0], encoding='utf-8'))
 
         if item_lists:
             for i, item_list_tag in enumerate(item_lists):
                 data_type, data_item = self.item_lists[item_list_tag]
                 item_list_xml = [
-                    ElementTree.tostring(fixture)
+                    ElementTree.tostring(fixture, encoding='utf-8')
                     for fixture in fixture_xml if item_list_tag in fixture.attrib.get("id")
                 ]
                 self.assertEqual(len(item_list_xml), 1)
@@ -121,7 +121,7 @@ def _get_item_list_fixture(user_id, tag, fixture_item):
     return template.format(
         user_id=user_id,
         tag=tag,
-        item_xml=ElementTree.tostring(fixture_item.to_xml())
+        item_xml=ElementTree.tostring(fixture_item.to_xml(), encoding='utf-8')
     )
 
 

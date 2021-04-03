@@ -221,7 +221,7 @@ class AdminRestoreView(TemplateView):
     def _get_restore_response(self):
         return get_restore_response(
             self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request)
+            **get_restore_params(self.request, self.user.domain)
         )
 
     @staticmethod
@@ -309,7 +309,7 @@ class AdminRestoreView(TemplateView):
                     'If you believe this is a bug please report an issue.'
                 ).format(response.status_code, response.content.decode('utf-8'))
                 xml_payload = E.error(message)
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True).decode('utf-8')
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True, encoding='utf-8').decode('utf-8')
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,

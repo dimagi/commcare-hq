@@ -5,7 +5,7 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.configuration import get_saml2_config
-from corehq.apps.sso.utils import get_request_data
+from corehq.apps.sso.utils.request_helpers import get_request_data
 
 
 def identity_provider_required(view_func):

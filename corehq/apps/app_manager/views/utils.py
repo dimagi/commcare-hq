@@ -340,7 +340,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             ))
     else:
         master_build = master_app_id_or_build
-    master_app_id = master_build.master_id
+    master_app_id = master_build.origin_id
 
     previous = app.get_latest_build_from_upstream(master_app_id)
     if (
@@ -438,14 +438,42 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
     return total_size
 
 
+def _copy_as_dict(attribute):
+    return deepcopy(dict(attribute))
+
+
+def _copy_list_of_dict(attribute):
+    dict_list = [dict(schema) for schema in attribute]
+    return deepcopy(dict_list)
+
+
 SHADOW_MODULE_PROPERTIES_TO_COPY = [
-    ('case_details', True),
-    ('ref_details', True),
-    ('case_list', True),
-    ('referral_list', True),
-    ('task_list', True),
-    ('parent_select', False),
-    ('search_config', False),
+    ('case_details', deepcopy),
+    ('ref_details', deepcopy),
+    ('case_list', deepcopy),
+    ('referral_list', deepcopy),
+    ('task_list', deepcopy),
+    ('parent_select', None),
+    ('search_config', None),
+]
+
+
+MODULE_BASE_PROPERTIES_TO_COPY = [
+    ('module_filter', None),
+    ('put_in_root', None),
+
+    ('fixture_select', deepcopy),
+    ('report_context_tile', None),
+    ('auto_select_case', None),
+    ('is_training_module', None),
+    ('case_list_form', deepcopy),
+
+    # deepcopy cannot handle DictProperty, so convert to normal python dict first
+    ('media_image', _copy_as_dict),
+    ('media_audio', _copy_as_dict),
+    ('custom_icons', _copy_list_of_dict),
+    ('use_default_image_for_all', None),
+    ('use_default_audio_for_all', None),
 ]
 
 
@@ -470,41 +498,51 @@ def handle_shadow_child_modules(app, shadow_parent):
         changes = True
 
     source_module_children = [
-        m for m in app.modules
+        m for m in app.get_modules()
         if m.root_module_id == shadow_parent.source_module_id
         and m.module_type != 'shadow'
     ]
-
-    shadow_parent_children = [
-        m for m in app.modules
-        if m.root_module_id == shadow_parent.unique_id
+    source_module_children_ids = [
+        source_module_child.unique_id for source_module_child in source_module_children
     ]
 
-    # Delete unneeded modules
-    for child in shadow_parent_children:
-        if child.source_module_id not in source_module_children:
-            changes = True
-            app.delete_module(child.unique_id)
+    shadow_parent_children = [
+        m for m in app.get_modules()
+        if m.root_module_id == shadow_parent.unique_id
+    ]  # All the child shadows that already exist
 
-    # Add new modules
-    for source_child in source_module_children:
+    # Delete child modules that no longer have a source
+    unneeded_module_ids = [
+        child.unique_id for child in shadow_parent_children
+        if child.source_module_id not in source_module_children_ids
+    ]
+    for unneeded_module_id in unneeded_module_ids:
+        changes = True
+        app.delete_module(unneeded_module_id)
+
+    # We need to create child modules for those source children that don't have them
+    existing_child_shadow_sources = [
+        child.source_module_id for child in shadow_parent_children
+    ]  # The set of source children ids that already have shadows
+    needed_modules = [
+        source_child for source_child in source_module_children
+        if source_child.unique_id not in existing_child_shadow_sources
+    ]
+    for source_child in needed_modules:
         changes = True
         new_shadow = ShadowModule.new_module(source_child.default_name(app=app), app.default_language)
         new_shadow.source_module_id = source_child.unique_id
-
-        # ModuleBase properties
-        new_shadow.module_filter = source_child.module_filter
-        new_shadow.put_in_root = source_child.put_in_root
         new_shadow.root_module_id = shadow_parent.unique_id
-        new_shadow.fixture_select = deepcopy(source_child.fixture_select)
-        new_shadow.report_context_tile = source_child.report_context_tile
-        new_shadow.auto_select_case = source_child.auto_select_case
-        new_shadow.is_training_module = source_child.is_training_module
+
+        # BaseModule properties
+        for prop, transform in MODULE_BASE_PROPERTIES_TO_COPY:
+            new_value = getattr(source_child, prop)
+            setattr(new_shadow, prop, transform(new_value) if transform is not None else new_value)
 
         # ShadowModule properties
-        for prop, to_deepcopy in SHADOW_MODULE_PROPERTIES_TO_COPY:
+        for prop, transform in SHADOW_MODULE_PROPERTIES_TO_COPY:
             new_value = getattr(source_child, prop)
-            setattr(new_shadow, prop, deepcopy(new_value) if to_deepcopy else new_value)
+            setattr(new_shadow, prop, transform(new_value) if transform is not None else new_value)
 
         # move excluded form ids
         source_child_form_ids = set(

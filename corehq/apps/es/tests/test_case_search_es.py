@@ -7,6 +7,8 @@ from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
     case_property_missing,
@@ -238,6 +240,7 @@ class TestCaseSearchLookups(TestCase):
 
     def setUp(self):
         self.domain = 'case_search_es'
+        self.case_type = 'person'
         super(TestCaseSearchLookups, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
@@ -256,7 +259,8 @@ class TestCaseSearchLookups(TestCase):
         case_id = case_properties.pop('_id')
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         owner_id = case_properties.pop('owner_id', None)
-        case = create_and_save_a_case(domain, case_id, case_name, case_properties, owner_id=owner_id)
+        case = create_and_save_a_case(
+            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type)
         return case
 
     def _bootstrap_cases_in_es_for_domain(self, domain):
@@ -412,3 +416,19 @@ class TestCaseSearchLookups(TestCase):
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
             ['c2', 'c3']
         )
+
+    def test_date_range_criteria(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'dob': date(2020, 3, 1)},
+                {'_id': 'c2', 'dob': date(2020, 3, 2)},
+                {'_id': 'c3', 'dob': date(2020, 3, 3)},
+                {'_id': 'c4', 'dob': date(2020, 3, 4)},
+            ],
+            CaseSearchCriteria(self.domain, self.case_type, {'dob': '__range__2020-03-02__2020-03-03'}).search_es,
+            None,
+            ['c2', 'c3']
+        )
+        config.delete()

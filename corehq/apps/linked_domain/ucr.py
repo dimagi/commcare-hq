@@ -1,7 +1,10 @@
 import json
 from collections import namedtuple
 
-from corehq.apps.app_manager.dbaccessors import get_brief_app_docs_in_domain
+from django.utils.translation import ugettext as _
+
+from corehq.apps.linked_domain.applications import get_downstream_app_id, get_upstream_app_ids
+from corehq.apps.linked_domain.exceptions import DomainLinkError, MultipleDownstreamAppsError
 from corehq.apps.linked_domain.remote_accessors import get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
@@ -57,21 +60,26 @@ def _get_or_create_datasource_link(domain_link, datasource):
 
 
 def _replace_master_app_ids(linked_domain, datasource_json):
-    master_app_to_linked_app = {
-        doc['family_id']: doc['_id']
-        for doc in get_brief_app_docs_in_domain(linked_domain)
-        if doc.get('family_id', None) is not None
-    }
-
     configured_filter = json.dumps(datasource_json['configured_filter'])
-    for master_app_id, linked_app_id in master_app_to_linked_app.items():
-        configured_filter = configured_filter.replace(master_app_id, linked_app_id)
+    for app_id in get_upstream_app_ids(linked_domain):
+        configured_filter = _replace_upstream_app_id(configured_filter, app_id, linked_domain)
     datasource_json['configured_filter'] = json.loads(configured_filter)
 
     named_filters = json.dumps(datasource_json['named_filters'])
-    for master_app_id, linked_app_id in master_app_to_linked_app.items():
-        named_filters = named_filters.replace(master_app_id, linked_app_id)
+    for app_id in get_upstream_app_ids(linked_domain):
+        named_filters = _replace_upstream_app_id(named_filters, app_id, linked_domain)
     datasource_json['named_filters'] = json.loads(named_filters)
+
+
+def _replace_upstream_app_id(haystack, upstream_app_id, downstream_domain):
+    if upstream_app_id in haystack:
+        try:
+            downstream_app_id = get_downstream_app_id(downstream_domain, upstream_app_id)
+        except MultipleDownstreamAppsError:
+            raise DomainLinkError(_("This report cannot be updated because it references an app "
+                                    "that has multiple linked apps."))
+        haystack = haystack.replace(upstream_app_id, downstream_app_id)
+    return haystack
 
 
 def _get_or_create_report_link(domain_link, report, datasource):

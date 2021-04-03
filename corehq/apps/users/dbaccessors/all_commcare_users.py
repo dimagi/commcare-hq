@@ -27,7 +27,7 @@ def _get_es_query(domain, user_filters):
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
 
-    query = UserES().domain(domain).mobile_users()
+    query = UserES().domain(domain).mobile_users().remove_default_filter('active')
 
     if role_id:
         query = query.role_id(role_id)

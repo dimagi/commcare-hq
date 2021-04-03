@@ -561,6 +561,9 @@ class DownloadDETSchemaView(View):
             return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
         output_file.seek(0)
-        response = HttpResponse(output_file, content_type='application/vnd.ms-excel')
+        response = HttpResponse(
+            output_file,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
         response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
         return response

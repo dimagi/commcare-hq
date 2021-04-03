@@ -294,12 +294,16 @@ class FormListForm(object):
 
 
 class HQAuthenticationTokenForm(AuthenticationTokenForm):
+    def __init__(self, user, initial_device, request, **kwargs):
+        super().__init__(user, initial_device, **kwargs)
+        self.request = request
 
     def clean(self):
         try:
             cleaned_data = super(HQAuthenticationTokenForm, self).clean()
         except ValidationError:
             user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                request=self.request,
                 token_failure=True)
             couch_user = CouchUser.get_by_username(self.user.username)
             if couch_user and couch_user.is_locked_out():
@@ -319,11 +323,16 @@ class HQAuthenticationTokenForm(AuthenticationTokenForm):
 
 class HQBackupTokenForm(BackupTokenForm):
 
+    def __init__(self, user, initial_device, request, **kwargs):
+        super().__init__(user, initial_device, **kwargs)
+        self.request = request
+
     def clean(self):
         try:
             cleaned_data = super(HQBackupTokenForm, self).clean()
         except ValidationError:
             user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                request=self.request,
                 token_failure=True)
             couch_user = CouchUser.get_by_username(self.user.username)
             if couch_user and couch_user.is_locked_out():

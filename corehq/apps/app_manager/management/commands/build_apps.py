@@ -21,7 +21,7 @@ _parser = etree.XMLParser(remove_blank_text=True)
 
 def normalize_xml(xml):
     xml = etree.fromstring(xml, parser=_parser)
-    return etree.tostring(xml, pretty_print=True)
+    return etree.tostring(xml, pretty_print=True, encoding='utf-8')
 
 
 @contextlib.contextmanager

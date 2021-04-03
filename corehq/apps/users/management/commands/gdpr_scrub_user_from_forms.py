@@ -50,6 +50,6 @@ class Command(BaseCommand):
             "{http://openrosa.org/jr/xforms}username")
         id_elem.text = new_username
 
-        new_form_attachment_xml = etree.tostring(xml_elem)
+        new_form_attachment_xml = etree.tostring(xml_elem, encoding='utf-8')
 
         return new_form_attachment_xml

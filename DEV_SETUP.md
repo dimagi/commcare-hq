@@ -51,7 +51,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
-      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev
+      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
 
 
 ##### macOS Notes
@@ -117,6 +117,10 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
        $ workon cchq
 
+1. Ensure your vitualenv `pip` is up-to-date:
+
+       $ python3 -m pip install --upgrade pip
+
 
 #### Clone repo and install requirements
 
@@ -167,28 +171,68 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 Once you have completed the above steps, you can use Docker to build
 and run all of the service containers. There are detailed instructions
 for setting up Docker in the [docker folder](docker/README.md). But the
-following should cover the needs of most developers:
+following should cover the needs of most developers.
 
+
+1. Install docker packages.
+
+    **Mac**: see [Install Docker Desktop on
+    Mac](https://docs.docker.com/docker-for-mac/install/) for docker
+    installation and setup.
+
+    **Linux**:
+
+    ```sh
+    # install docker
     $ sudo apt install docker.io
-    $ pip install docker-compose
+
+    # ensure docker is running
+    $ systemctl is-active docker || sudo systemctl start docker
+    # add your user to the `docker` group
     $ sudo adduser $USER docker
-
-Log in as yourself again, to activate membership of the "docker" group:
-
+    # login as yourself again to activate membership of the "docker" group
     $ su - $USER
 
-Ensure the Docker service is running:
+    # re-activate your virtualenv (with your venv tool of choice)
+    # (virtualenvwrapper)
+    $ workon cchq
 
-    $ sudo service docker status
+    # or (pyenv)
+    $ pyenv activate cchq
 
-Bring up the Docker containers for the services you probably need:
+    # or (virtualenv)
+    $ source $WORKON_HOME/cchq/bin/activate
+    ```
 
-    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+1. Install the `docker-compose` python library.
 
-or, to detach and run in the background, use the `-d` option:
+    ```sh
+    $ pip install docker-compose
+    ```
 
-    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+1. Ensure the elasticsearch config files are world-readable (their containers
+   will fail to start otherwise).
 
+    ```sh
+    chmod 0644 ./docker/files/elasticsearch*.yml
+    ```
+
+1. Bring up the docker containers.
+
+    ```sh
+    $ ./scripts/docker up -d
+    # Or, omit the '-d' option to keep the containers attached in the foreground
+    $ ./scripts/docker up
+    # Optionally, bring up only specific containers (add '-d' to detach)
+    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+    ```
+
+1. If you are planning on running Formplayer from source, stop the formplayer
+   container.
+
+    ```sh
+    $ ./scripts/docker stop formplayer
+    ```
 
 ### (Optional) Copying data from an existing HQ install
 
@@ -498,8 +542,14 @@ installing `yarn` above for more details.
 
 It's recommended to install grunt globally (with `yarn`) in order to use grunt from the command line:
 
-    $ yarn install global grunt
-    $ yarn install global grunt-cli
+    $ yarn global add grunt
+    $ yarn global add grunt-cli
+
+You'll then need to add the yarn bin folder to your path:
+    
+    $ export PATH="$(yarn global bin):$PATH"
+    
+More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
 In order for the tests to run the __development server needs to be running on port 8000__.
 

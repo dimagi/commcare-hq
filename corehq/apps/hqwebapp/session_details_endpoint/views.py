@@ -2,7 +2,7 @@ import datetime
 import json
 
 from django.conf import settings
-from django.http import Http404, HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -11,6 +11,7 @@ from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.middleware import TimeoutMiddleware
+from corehq.toggles import DISABLE_WEB_APPS
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -51,6 +52,10 @@ class SessionDetailsView(View):
                 raise Http404
         else:
             raise Http404
+
+        domain = data.get('domain')
+        if domain and DISABLE_WEB_APPS.enabled(domain):
+            return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
