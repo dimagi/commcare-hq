@@ -13,7 +13,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.debug import sensitive_post_parameters
 
 from no_exceptions.exceptions import Http400
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
 from corehq.apps.domain.decorators import two_factor_exempt
@@ -23,7 +22,6 @@ from corehq.util.view_utils import reverse as hq_reverse
 from .decorators import consumer_user_login_required
 from .forms import (
     ChangeContactDetailsForm,
-    ConsumerUserAuthenticationForm,
     ConsumerUserSignUpForm,
 )
 from .models import (
@@ -34,11 +32,6 @@ from .models import (
 
 
 class ConsumerUserLoginView(LoginView):
-    form_list = (
-        ('auth', ConsumerUserAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
-    )
     invitation = None
     signed_invitation_id = None
     template_name = 'consumer_user/p_login.html'
@@ -51,15 +44,6 @@ class ConsumerUserLoginView(LoginView):
             self.signed_invitation_id = kwargs['signed_invitation_id']
             self.invitation = _get_invitation_or_400(self.signed_invitation_id)
         return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self, step=None):
-        """
-        Returns the keyword arguments for instantiating the form
-        (or formset) on the given step.
-        """
-        if self.invitation:
-            return {'invitation': self.invitation}
-        return {}
 
     def get_success_url(self):
         return self.get_redirect_url() or reverse('consumer_user:homepage')
@@ -74,6 +58,14 @@ class ConsumerUserLoginView(LoginView):
             )
         context['hide_menu'] = True
         return context
+
+    def done(self, *args, **kwargs):
+        if self.invitation and not self.invitation.accepted:
+            # If a WebUser was signed in and clicked an invitation link, we
+            # create a ConsumerUser here
+            consumer_user, created = ConsumerUser.objects.get_or_create(user=self.get_user())
+            self.invitation.accept_for_consumer_user(consumer_user)
+        return super().done(*args, **kwargs)
 
 
 @two_factor_exempt
