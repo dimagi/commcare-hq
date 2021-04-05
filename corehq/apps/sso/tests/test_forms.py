@@ -417,14 +417,8 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         `date_idp_cert_expiration` is provided with a incorrectly formatted date
         string.
         """
-        post_data = {
-            'is_active': self.idp.is_active,
-            'entity_id': self.idp.entity_id,
-            'login_url': self.idp.login_url,
-            'logout_url': self.idp.logout_url,
-            'idp_cert_public': self.idp.idp_cert_public,
-            'date_idp_cert_expiration': 'purposefully bad date string',
-        }
+        post_data = self._get_post_data()
+        post_data['date_idp_cert_expiration'] = 'purposefully bad date string'
         edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
         edit_sso_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
