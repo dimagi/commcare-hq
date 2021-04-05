@@ -541,8 +541,15 @@ def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        couch_user = getattr(request, 'couch_user', None)
-        if not couch_user or not (user.is_authenticated and user.is_active):
+        if not (user.is_authenticated and user.is_active):
+            return redirect_for_login_or_domain(request)
+
+        # When there is no CouchUser for a django user, we are dealing with a
+        # ConsumerUser ConsumerUsers without a corresponding WebUser are not
+        # allowed to view any pages on HQ, so we redirect to the login page
+        # The call to get_by_username is cached.
+        is_consumer_user = not CouchUser.get_by_username(user.username)
+        if is_consumer_user:
             return redirect_for_login_or_domain(request)
 
         # User's login and domain have been validated - it's safe to call the view function
