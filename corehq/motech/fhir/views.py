@@ -137,4 +137,7 @@ def smart_configuration_view(request, domain, fhir_version_name):
 @require_GET
 @toggles.FHIR_INTEGRATION.required_decorator()
 def smart_metadata_view(request, domain, fhir_version_name):
-    return JsonResponse(build_capability_statement(domain))
+    fhir_version = _get_fhir_version(fhir_version_name)
+    if not fhir_version:
+        return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
+    return JsonResponse(build_capability_statement(domain, fhir_version))
