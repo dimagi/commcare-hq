@@ -439,9 +439,7 @@ def prepare_form_multimedia(request, domain):
     export = view_helper.get_export(export_specs[0]['export_id'])
     datespan = filter_form.cleaned_data['date_range']
     user_types = filter_form.get_es_user_types(filter_form_data)
-    user_ids = filter_form.get_user_ids(filter_form_data)
-    user_ids.extend(filter_form.get_group_user_ids(filter_form_data))
-    user_ids.extend(filter_form.get_location_user_ids(filter_form_data))
+    user_ids = filter_form.get_user_ids_for_filter(filter_form_data)
 
     if media_export_is_too_big(domain, export.app_id, export.xmlns, datespan, user_types, user_ids):
         return json_response({

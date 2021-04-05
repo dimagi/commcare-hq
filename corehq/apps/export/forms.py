@@ -1011,13 +1011,15 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def get_user_ids(self, filter_form_data):
+    def get_user_ids_for_filter(self, filter_form_data):
         mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
-        return self._get_user_ids(mobile_user_and_group_slugs)
+        user_ids = self._get_user_ids(mobile_user_and_group_slugs)
+        user_ids.extend(self._get_group_user_ids(mobile_user_and_group_slugs))
+        user_ids.extend(self._get_location_user_ids(mobile_user_and_group_slugs))
+        return set(user_ids)
 
-    def get_group_user_ids(self, filter_form_data):
+    def _get_group_user_ids(self, mobile_user_and_group_slugs):
         user_ids = []
-        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
         group_ids = self._get_group_ids(mobile_user_and_group_slugs)
         if group_ids:
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
@@ -1025,9 +1027,8 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
                 user_ids = flatten_non_iterable_list(groups_static_user_ids)
         return user_ids
 
-    def get_location_user_ids(self, filter_form_data):
+    def _get_location_user_ids(self, mobile_user_and_group_slugs):
         user_ids = []
-        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
         location_ids = self._get_locations_ids(mobile_user_and_group_slugs)
         if location_ids:
             user_ids = user_ids_at_locations_and_descendants(location_ids)
