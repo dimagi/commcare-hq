@@ -1015,6 +1015,16 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
         return self._get_user_ids(mobile_user_and_group_slugs)
 
+    def get_group_user_ids(self, filter_form_data):
+        user_ids = []
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
+        group_ids = self._get_group_ids(mobile_user_and_group_slugs)
+        if group_ids:
+            groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+            if groups_static_user_ids:
+                user_ids = flatten_non_iterable_list(groups_static_user_ids)
+        return user_ids
+
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
     export_user_filter = OwnerFilter
