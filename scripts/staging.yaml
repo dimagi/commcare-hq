@@ -70,7 +70,6 @@ branches:
   - kev/repeat-translation-inner-group # Kevin Mar 22
   - mjr/xss_accounting # Matt Mar 24
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - jm/pillow-upgrade # Joel Mar 29
   - jm/hub-and-kiss-emails # Joel Apr 1
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
