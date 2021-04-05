@@ -1025,6 +1025,14 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
                 user_ids = flatten_non_iterable_list(groups_static_user_ids)
         return user_ids
 
+    def get_location_user_ids(self, filter_form_data):
+        user_ids = []
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
+        location_ids = self._get_locations_ids(mobile_user_and_group_slugs)
+        if location_ids:
+            user_ids = user_ids_at_locations_and_descendants(location_ids)
+        return user_ids
+
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
     export_user_filter = OwnerFilter
