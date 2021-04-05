@@ -1061,7 +1061,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             self.group_specs = []
 
         try:
-            check_headers(self.user_specs)
+            check_headers(self.user_specs, self.domain)
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))

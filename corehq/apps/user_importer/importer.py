@@ -47,7 +47,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
+    'last_sync (read only)', 'web_user', 'remove_web_user'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -55,7 +55,7 @@ old_headers = {
 }
 
 
-def check_headers(user_specs):
+def check_headers(user_specs, domain):
     messages = []
     headers = set(user_specs.fieldnames)
 
@@ -68,8 +68,11 @@ def check_headers(user_specs):
                 ))
             headers.discard(old_name)
 
+    if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        allowed_headers.add('domain')
+
     illegal_headers = headers - allowed_headers
-    missing_headers = required_headers - headers
+    missing_headers = required_headers - headers    
 
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
