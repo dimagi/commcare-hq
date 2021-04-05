@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ProcessRequest",
+  "id": "file:ProcessRequest.schema.json",
   "$ref": "#/definitions/ProcessRequest",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ProcessRequest": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "This resource provides the target, request and response, and action details for an action to be performed by the target on or about existing resources.",
@@ -143,7 +143,7 @@
     "ProcessRequest_Item": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the target, request and response, and action details for an action to be performed by the target on or about existing resources.",

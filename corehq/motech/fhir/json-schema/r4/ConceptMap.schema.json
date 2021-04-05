@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ConceptMap",
+  "id": "file:ConceptMap.schema.json",
   "$ref": "#/definitions/ConceptMap",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ConceptMap": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
@@ -180,7 +180,7 @@
     "ConceptMap_Group": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
@@ -238,7 +238,7 @@
     "ConceptMap_Element": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
@@ -274,7 +274,7 @@
     "ConceptMap_Target": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
@@ -345,7 +345,7 @@
     "ConceptMap_DependsOn": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",
@@ -389,7 +389,7 @@
     "ConceptMap_Unmapped": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A statement of relationships from one set of concepts to one or more other concepts - either code systems or data elements, or classes in class models.",

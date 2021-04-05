@@ -7,12 +7,10 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from dateutil.parser import parse
 from memoized import memoized
 
-from auditcare.models import NavigationEventAudit
-from auditcare.utils.export import navigation_event_ids_by_user
-from dimagi.utils.couch.database import iter_docs
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
 
+from corehq.apps.auditcare.utils.export import navigation_events_by_user
 from corehq.apps.es import users as user_es
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -186,11 +184,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def rows(self):
         rows = []
-        event_ids = navigation_event_ids_by_user(
+        events = navigation_events_by_user(
             self.selected_user, self.datespan.startdate, self.datespan.enddate
         )
-        for event_doc in iter_docs(NavigationEventAudit.get_db(), event_ids):
-            event = NavigationEventAudit.wrap(event_doc)
+        for event in events:
             if not self.selected_domain or self.selected_domain == event.domain:
                 rows.append([
                     event.event_date, event.user, event.domain or '', event.ip_address, event.request_path

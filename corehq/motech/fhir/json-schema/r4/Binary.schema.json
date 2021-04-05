@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Binary",
+  "id": "file:Binary.schema.json",
   "$ref": "#/definitions/Binary",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Binary": {
       "allOf": [
         {
-          "$ref": "Resource#/definitions/Resource"
+          "$ref": "Resource.schema.json#/definitions/Resource"
         },
         {
           "description": "A binary resource can contain any content, whether text, image, pdf, zip archive, etc.",

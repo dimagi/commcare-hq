@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ActivityDefinition",
+  "id": "file:ActivityDefinition.schema.json",
   "$ref": "#/definitions/ActivityDefinition",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ActivityDefinition": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",
@@ -292,7 +292,7 @@
     "ActivityDefinition_Participant": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",
@@ -317,7 +317,7 @@
     "ActivityDefinition_DynamicValue": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",

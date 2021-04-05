@@ -368,9 +368,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
-        if self.is_configurable_report:
-            mock_query_string_parts.append(urlencode(self.filters, True))
-            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware

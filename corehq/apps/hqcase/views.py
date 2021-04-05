@@ -11,15 +11,22 @@ from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.pillows.case_search import domain_needs_search_index
+from corehq.toggles import CASE_API_V0_6
 
-from .api import SubmissionError, UserError, handle_case_update, serialize_case
+from .api.core import SubmissionError, UserError, serialize_case
+from .api.get_list import get_list
+from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -72,18 +79,40 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         return redirect('hq_soil_download', self.domain, download.download_id)
 
 
-# TODO switch to @require_can_edit_data
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @api_auth
-@require_superuser_or_contractor
+@require_can_edit_data
+@CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 def case_api(request, domain, case_id=None):
+    if request.method == 'GET' and case_id:
+        return _handle_individual_get(request, case_id)
+    if request.method == 'GET' and not case_id and domain_needs_search_index(domain):
+        return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
     if request.method == 'PUT' and case_id:
         return _handle_case_update(request, case_id)
     return JsonResponse({'error': "Request method not allowed"}, status=405)
+
+
+def _handle_individual_get(request, case_id):
+    try:
+        case = CaseAccessors(request.domain).get_case(case_id)
+        if case.domain != request.domain:
+            raise CaseNotFound()
+    except CaseNotFound:
+        return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
+    return JsonResponse(serialize_case(case))
+
+
+def _handle_list_view(request):
+    try:
+        cases = get_list(request.domain, request.GET.dict())
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse(cases)
 
 
 def _handle_case_update(request, case_id=None):

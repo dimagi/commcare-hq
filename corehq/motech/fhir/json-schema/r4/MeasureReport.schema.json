@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/MeasureReport",
+  "id": "file:MeasureReport.schema.json",
   "$ref": "#/definitions/MeasureReport",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "MeasureReport": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "The MeasureReport resource contains the results of evaluating a measure.",
@@ -97,7 +97,7 @@
     "MeasureReport_Group": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The MeasureReport resource contains the results of evaluating a measure.",
@@ -139,7 +139,7 @@
     "MeasureReport_Population": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The MeasureReport resource contains the results of evaluating a measure.",
@@ -172,7 +172,7 @@
     "MeasureReport_Stratifier": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The MeasureReport resource contains the results of evaluating a measure.",
@@ -195,7 +195,7 @@
     "MeasureReport_Stratum": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The MeasureReport resource contains the results of evaluating a measure.",
@@ -231,7 +231,7 @@
     "MeasureReport_Population1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The MeasureReport resource contains the results of evaluating a measure.",

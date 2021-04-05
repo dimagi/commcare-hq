@@ -7,6 +7,16 @@ from corehq.apps.es import filters
 
 
 def close_cases_assigned_to_checkin(checkin_case, rule):
+    """
+    For any associated checkin case that matches the rule criteria, the following occurs:
+        1) For all cases of type [x] find all fields where [assigned_to_primary_checkin_case_id] is set
+           to the case ID of the associated checkin case. These are the assigned cases.
+        2) For every assigned case, the following case properties are blanked out (set to ""):
+            - assigned_to_primary_checkin_case_id
+            - is_assigned_primary
+            - assigned_to_primary_name
+            - assigned_to_primary_username
+    """
     if checkin_case.type != "checkin":
         return CaseRuleActionResult()
 

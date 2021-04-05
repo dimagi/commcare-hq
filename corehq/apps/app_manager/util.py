@@ -667,3 +667,11 @@ def _get_app_ids_by_form_unique_id(domain):
                     raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
                 app_ids[form.unique_id] = app.get_id
     return app_ids
+
+
+def extract_instance_id_from_nodeset_ref(nodeset):
+    # note: for simplicity, this only returns the first instance ref in the event there are multiple.
+    # if that's ever a problem this method could be changed in the future to return a list
+    if nodeset:
+        matches = re.findall(r"instance\('(.*?)'\)", nodeset)
+        return matches[0] if matches else None

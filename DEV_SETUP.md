@@ -117,6 +117,10 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
        $ workon cchq
 
+1. Ensure your vitualenv `pip` is up-to-date:
+
+       $ python3 -m pip install --upgrade pip
+
 
 #### Clone repo and install requirements
 
@@ -133,6 +137,12 @@ Next, install the appropriate requirements (only one is necessary).
 * Recommended for those developing CommCare HQ
 
       $ pip install -r requirements/dev-requirements.txt
+
+* Recommended for developers or others with custom requirements
+
+      $ cp requirements/local.txt.sample requirements/local.txt
+      # customize requirements/local.txt as desired
+      $ pip install -r requirements/local.txt
 
 * For production environments
 
@@ -167,28 +177,68 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 Once you have completed the above steps, you can use Docker to build
 and run all of the service containers. There are detailed instructions
 for setting up Docker in the [docker folder](docker/README.md). But the
-following should cover the needs of most developers:
+following should cover the needs of most developers.
 
+
+1. Install docker packages.
+
+    **Mac**: see [Install Docker Desktop on
+    Mac](https://docs.docker.com/docker-for-mac/install/) for docker
+    installation and setup.
+
+    **Linux**:
+
+    ```sh
+    # install docker
     $ sudo apt install docker.io
-    $ pip install docker-compose
+
+    # ensure docker is running
+    $ systemctl is-active docker || sudo systemctl start docker
+    # add your user to the `docker` group
     $ sudo adduser $USER docker
-
-Log in as yourself again, to activate membership of the "docker" group:
-
+    # login as yourself again to activate membership of the "docker" group
     $ su - $USER
 
-Ensure the Docker service is running:
+    # re-activate your virtualenv (with your venv tool of choice)
+    # (virtualenvwrapper)
+    $ workon cchq
 
-    $ sudo service docker status
+    # or (pyenv)
+    $ pyenv activate cchq
 
-Bring up the Docker containers for the services you probably need:
+    # or (virtualenv)
+    $ source $WORKON_HOME/cchq/bin/activate
+    ```
 
-    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+1. Install the `docker-compose` python library.
 
-or, to detach and run in the background, use the `-d` option:
+    ```sh
+    $ pip install docker-compose
+    ```
 
-    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+1. Ensure the elasticsearch config files are world-readable (their containers
+   will fail to start otherwise).
 
+    ```sh
+    chmod 0644 ./docker/files/elasticsearch*.yml
+    ```
+
+1. Bring up the docker containers.
+
+    ```sh
+    $ ./scripts/docker up -d
+    # Or, omit the '-d' option to keep the containers attached in the foreground
+    $ ./scripts/docker up
+    # Optionally, bring up only specific containers (add '-d' to detach)
+    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+    ```
+
+1. If you are planning on running Formplayer from source, stop the formplayer
+   container.
+
+    ```sh
+    $ ./scripts/docker stop formplayer
+    ```
 
 ### (Optional) Copying data from an existing HQ install
 

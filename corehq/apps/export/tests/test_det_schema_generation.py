@@ -118,7 +118,7 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             headings = all_data.pop(0)
             data_by_headings = [dict(zip(headings, row)) for row in all_data]
             id_row = data_by_headings.pop(0)
-            self.assertEqual('form.meta.instanceID', id_row['Source Field'])
+            self.assertEqual('id', id_row['Source Field'])
             self.assertEqual('id', id_row['Field'])
             domain_row = data_by_headings.pop(0)
             self.assertEqual('domain', domain_row['Source Field'])

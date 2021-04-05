@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Measure",
+  "id": "file:Measure.schema.json",
   "$ref": "#/definitions/Measure",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Measure": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "The Measure resource provides the definition of a quality measure.",
@@ -317,7 +317,7 @@
     "Measure_Group": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The Measure resource provides the definition of a quality measure.",
@@ -366,7 +366,7 @@
     "Measure_Population": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The Measure resource provides the definition of a quality measure.",
@@ -410,7 +410,7 @@
     "Measure_Stratifier": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The Measure resource provides the definition of a quality measure.",
@@ -442,7 +442,7 @@
     "Measure_SupplementalData": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The Measure resource provides the definition of a quality measure.",

@@ -54,7 +54,7 @@ from corehq.form_processor.utils import (
     should_use_sql_backend,
 )
 from corehq.util.metrics import metrics_counter, metrics_histogram
-from corehq.util.timer import TimingContext
+from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
 from tastypie.http import HttpTooManyRequests
 
@@ -134,6 +134,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
             force_logs=request.GET.get('force_logs', 'false') == 'true',
+            timing_context=timer
         )
 
         try:
@@ -150,6 +151,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
     response = result.response
+    response.request_timer = timer  # logged as Sentry breadcrumbs in LogLongRequestMiddleware
+
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
@@ -210,6 +213,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 @csrf_exempt
 @require_POST
 @check_domain_migration
+@set_request_duration_reporting_threshold(60)
 def post(request, domain, app_id=None):
     try:
         if domain_requires_auth(domain):
@@ -300,6 +304,7 @@ def _noauth_post(request, domain, app_id=None):
 
 @login_or_digest_ex(allow_cc_users=True)
 @two_factor_exempt
+@set_request_duration_reporting_threshold(60)
 def _secure_post_digest(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -314,6 +319,7 @@ def _secure_post_digest(request, domain, app_id=None):
 @handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
 @two_factor_exempt
+@set_request_duration_reporting_threshold(60)
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -328,6 +334,7 @@ def _secure_post_basic(request, domain, app_id=None):
 @login_or_api_key_ex()
 @require_permission(Permissions.edit_data)
 @require_permission(Permissions.access_api)
+@set_request_duration_reporting_threshold(60)
 def _secure_post_api_key(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -344,6 +351,7 @@ def _secure_post_api_key(request, domain, app_id=None):
 @csrf_exempt
 @require_POST
 @check_domain_migration
+@set_request_duration_reporting_threshold(60)
 def secure_post(request, domain, app_id=None):
     authtype_map = {
         DIGEST: _secure_post_digest,

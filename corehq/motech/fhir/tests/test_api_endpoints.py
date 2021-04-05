@@ -181,16 +181,18 @@ FOO_PATIENT = {
     "resourceType": "Patient",
     "id": FOO_CASE_ID,
     # We could get `lastUpdated` from the case.
-    # TODO: It's not a user-defined case property. How would we map it?
-    #       Or do we just include it in all resources?
     # "meta": {
     #     "lastUpdated": "2020-12-08T02:37:47.219+00:00",
     # },
     "identifier": [{
-        # We can't do this with a mapping. I think we're going to need
-        # to allow users to set a JSON template for each case type, and
-        # then we use [JSONPath](https://github.com/h2non/jsonpath-ng)
-        # to modify / extend it.
+        # We use `value_source_config` to map to constant values
+        # FHIRResourceProperty.objects.create(
+        #     resource_type=patient,
+        #     value_source_config={
+        #         'jsonpath': '$.identifier[0].type.coding[0].system',
+        #         'value': 'http://terminology.hl7.org/CodeSystem/v2-0203',
+        #     }
+        # )
         "type": {
             "coding": [{
                 "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -207,10 +209,6 @@ FOO_PATIENT = {
             "display": "ZAF"
         }
     }],
-    # I don't know if `active` is required. If so, we can just use the
-    # template mentioned above to set `"active": True` for all cases. If
-    # it's not required, we should leave this out.
-    "active": True,
     "name": [{
         # Data Dictionary: 'last_name' -> 'name[0].family'
         "family": "Foo",

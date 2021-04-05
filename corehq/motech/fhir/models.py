@@ -1,23 +1,28 @@
 import json
 import os
+from itertools import zip_longest
 from typing import Optional, Union
 
 from django.conf import settings
 from django.db import models
 
 from jsonfield import JSONField
+from jsonschema import RefResolver, ValidationError, validate
 
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     ValueSource,
     as_value_source,
 )
+from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
+
+from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
+from .validators import validate_supported_type
 
 
 class FHIRResourceType(models.Model):
@@ -27,11 +32,10 @@ class FHIRResourceType(models.Model):
     case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
 
     # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, validators=[validate_supported_type])
 
-    # `template` offers a way to define a FHIR resource if it cannot be
-    # built using only mapped case properties.
-    template = JSONField(null=True, blank=True, default=None)
+    class Meta:
+        unique_together = ('case_type', 'fhir_version')
 
     def __str__(self):
         return self.name
@@ -49,12 +53,8 @@ class FHIRResourceType(models.Model):
         '#/definitions/Patient'
 
         """
-        ver = dict(FHIR_VERSIONS)[self.fhir_version].lower()
-        schema_file = f'{self.name}.schema.json'
-        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
-                            'json-schema', ver, schema_file)
         try:
-            with open(path, 'r') as file:
+            with open(self._schema_file, 'r') as file:
                 return json.load(file)
         except FileNotFoundError:
             raise ConfigurationError(
@@ -64,11 +64,34 @@ class FHIRResourceType(models.Model):
 
     @classmethod
     def get_names(cls, version=FHIR_VERSION_4_0_1):
-        ver = dict(FHIR_VERSIONS)[version].lower()
-        path = os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
-                            'json-schema', ver)
+        schema_dir = get_schema_dir(version)
         ext = len('.schema.json')
-        return [n[:-ext] for n in os.listdir(path)]
+        return [n[:-ext] for n in os.listdir(schema_dir)]
+
+    def validate_resource(self, fhir_resource):
+        schema = self.get_json_schema()
+        resolver = RefResolver(base_uri=f'file://{self._schema_file}',
+                               referrer=schema)
+        try:
+            validate(fhir_resource, schema, resolver=resolver)
+        except ValidationError as err:
+            raise ConfigurationError(
+                f'Validation failed for resource {fhir_resource!r}: {err}'
+            ) from err
+
+    @property
+    def _schema_file(self):
+        return os.path.join(self._schema_dir, f'{self.name}.schema.json')
+
+    @property
+    def _schema_dir(self):
+        return get_schema_dir(self.fhir_version)
+
+
+def get_schema_dir(version):
+    ver = dict(FHIR_VERSIONS)[version].lower()
+    return os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
+                        'json-schema', ver)
 
 
 class FHIRResourceProperty(models.Model):
@@ -88,6 +111,12 @@ class FHIRResourceProperty(models.Model):
     # `value_source_config` is used when the Data Dictionary UI cannot
     # do what you need.
     value_source_config = JSONField(null=True, blank=True, default=None)
+
+    def __str__(self):
+        jsonpath = self.value_source_jsonpath
+        if jsonpath.startswith('$.'):
+            jsonpath = jsonpath[2:]
+        return f'{self.resource_type.name}.{jsonpath}'
 
     def save(self, *args, **kwargs):
         if (
@@ -113,15 +142,12 @@ class FHIRResourceProperty(models.Model):
         return self.resource_type.case_type
 
     @property
-    def case_property_name(self) -> Optional[str]:
-        if self.case_property:
-            return self.case_property.name
-        if (
-            self.value_source_config
-            and 'case_property' in self.value_source_config
-        ):
-            return self.value_source_config['case_property']
-        return None
+    def value_source_jsonpath(self) -> str:
+        if self.jsonpath:
+            return self.jsonpath
+        if 'jsonpath' in self.value_source_config:
+            return self.value_source_config['jsonpath']
+        return ''
 
     def get_value_source(self) -> ValueSource:
         """
@@ -143,33 +169,132 @@ class FHIRResourceProperty(models.Model):
         return as_value_source(value_source_config)
 
 
-def build_fhir_resource(case, version=FHIR_VERSION_4_0_1):
-    case_type = CaseType.objects.get(
-        domain=case.domain,
-        name=case.type,
-    )
-    info = get_case_trigger_info(case, case_type)
-    resource_type = (FHIRResourceType.objects
-                     .prefetch_related('properties__case_property')
-                     .get(case_type=case_type, fhir_version=version))
-    fhir_resource = resource_type.template or {}
+def build_fhir_resource(
+    case: Union[CommCareCase, CommCareCaseSQL],
+    fhir_version: str = FHIR_VERSION_4_0_1,
+) -> Optional[dict]:
+    """
+    Builds a FHIR resource using data from ``case``. Returns ``None`` if
+    mappings do not exist.
+
+    Used by the FHIR API.
+    """
+    resource_type = get_resource_type_or_none(case, fhir_version)
+    if resource_type is None:
+        return None
+    info = get_case_trigger_info(case, resource_type)
+    return _build_fhir_resource(info, resource_type)
+
+
+def build_fhir_resource_for_info(
+    info: CaseTriggerInfo,
+    resource_type: FHIRResourceType,
+) -> Optional[dict]:
+    """
+    Builds a FHIR resource using data from ``info``. Returns ``None`` if
+    mappings do not exist, or if there is no data to forward.
+
+    Used by ``FHIRRepeater``.
+    """
+    return _build_fhir_resource(info, resource_type, skip_empty=True)
+
+
+def _build_fhir_resource(
+    info: CaseTriggerInfo,
+    resource_type: FHIRResourceType,
+    *,
+    skip_empty: bool = False,
+) -> Optional[dict]:
+
+    fhir_resource = {}
     for prop in resource_type.properties.all():
         value_source = prop.get_value_source()
         value_source.set_external_value(fhir_resource, info)
+    if not fhir_resource and skip_empty:
+        return None
+
+    fhir_resource.update({
+        'id': info.case_id,
+        'resourceType': resource_type.name,  # Always required
+    })
+    resource_type.validate_resource(fhir_resource)
     return fhir_resource
 
 
 def get_case_trigger_info(
-        case: Union[CommCareCase, CommCareCaseSQL],
-        case_type: CaseType,
+    case: Union[CommCareCase, CommCareCaseSQL],
+    resource_type: FHIRResourceType,
+    case_block: Optional[dict] = None,
+    form_question_values: Optional[dict] = None,
 ) -> CaseTriggerInfo:
     """
-    CaseTriggerInfo packages case (and form) data for use by ValueSource
+    Returns ``CaseTriggerInfo`` instance for ``case``.
+
+    Ignores case properties that aren't in the Data Dictionary.
+
+    ``CaseTriggerInfo`` packages case (and form) data for use by
+    ``ValueSource``.
     """
-    prop_names = [p.name for p in case_type.properties.all()]
+    if case_block is None:
+        case_block = {}
+    else:
+        assert case_block['@case_id'] == case.case_id
+    if form_question_values is None:
+        form_question_values = {}
+
+    case_create = case_block.get('create') or {}
+    case_update = case_block.get('update') or {}
+    case_property_names = _get_case_property_names(resource_type)
+    extra_fields = {
+        # CouchDB (via jsonobject) casts case properties as `Decimal`,
+        # `date`, `time` and `datetime` but SQL stores them as `str`.
+        p: _str_or_none(case.get_case_property(p))  # Standardize.
+        for p in case_property_names
+    }
     return CaseTriggerInfo(
         domain=case.domain,
         case_id=case.case_id,
         type=case.type,
-        updates={p: case.get_case_property(p) for p in prop_names},
+        name=case.name,
+        owner_id=case.owner_id,
+        modified_by=case.modified_by,
+        updates={**case_create, **case_update},
+        created='create' in case_block if case_block else None,
+        closed='close' in case_block if case_block else None,
+        extra_fields=extra_fields,
+        form_question_values=form_question_values,
     )
+
+
+def _get_case_property_names(resource_type):
+    """
+    Returns the names of mapped case properties, plus "external_id"
+    """
+    # We will need "external_id" to tell whether a case already exists
+    # on the remote service.
+    case_property_names = ['external_id']
+    for resource_property in resource_type.properties.all():
+        value_source = resource_property.get_value_source()
+        if hasattr(value_source, 'case_property'):
+            case_property_names.append(value_source.case_property)
+    return case_property_names
+
+
+def _str_or_none(value):
+    return None if value is None else str(value)
+
+
+def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
+    try:
+        return (
+            FHIRResourceType.objects
+            .select_related('case_type')
+            .prefetch_related('properties__case_property')
+            .get(
+                domain=case.domain,
+                case_type__name=case.type,
+                fhir_version=fhir_version,
+            )
+        )
+    except FHIRResourceType.DoesNotExist:
+        return None

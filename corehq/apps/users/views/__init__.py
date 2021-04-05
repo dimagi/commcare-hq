@@ -7,6 +7,9 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
+
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 from django.contrib import messages
@@ -411,6 +414,20 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
+        if toggles.ENTERPRISE_SSO.enabled_for_request(self.request):
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.editable_user.username
+            )
+            ctx.update({
+                'has_untrusted_identity_provider': (
+                    not IdentityProvider.does_domain_trust_user(
+                        self.domain,
+                        self.editable_user.username
+                    )
+                ),
+                'idp_name': idp.name if idp else '',
+            })
+
         return ctx
 
     @method_decorator(always_allow_project_access)
@@ -424,6 +441,25 @@ class EditWebUserView(BaseEditUserView):
     def post(self, request, *args, **kwargs):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
+
+        if (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
+                and self.request.POST['form_type'] == 'trust-identity-provider'):
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.editable_user.username
+            )
+            if idp:
+                idp.create_trust_with_domain(
+                    self.domain,
+                    self.request.user.username
+                )
+                messages.success(
+                    self.request,
+                    _('Your project space "{domain}" now trusts the SSO '
+                      'Identity Provider "{idp_name}".').format(
+                        domain=self.domain,
+                        idp_name=idp.name,
+                    )
+                )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
@@ -675,10 +711,10 @@ def delete_domain_permission_mirror(request, domain, mirror):
 @require_superuser
 @require_POST
 def create_domain_permission_mirror(request, domain):
-    form = CreateDomainPermissionsMirrorForm(request.POST)
+    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
     if form.is_valid():
         mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        mirror_domain = Domain.get_by_name(form.cleaned_data.get("mirror_domain"))
+        mirror_domain = Domain.get_by_name(mirror_domain_name)
         if mirror_domain is not None:
             mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
             mirror.save()
@@ -688,8 +724,8 @@ def create_domain_permission_mirror(request, domain):
             message = _('Please enter a valid project space.')
             messages.error(request, message.format())
     else:
-        message = _('An error occurred while trying to add the project space.')
-        messages.error(request, message.format())
+        for field, message in form.errors.items():
+            messages.error(request, message)
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
@@ -710,6 +746,7 @@ def paginate_web_users(request, domain):
     )
 
     web_users = [WebUser.wrap(w) for w in result.hits]
+    is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -721,6 +758,11 @@ def paginate_web_users(request, domain):
         'removeUrl': (
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
+        ),
+        'isUntrustedIdentityProvider': (
+            not IdentityProvider.does_domain_trust_user(
+                domain, u.username
+            ) if is_sso_toggle_enabled else False
         ),
     } for u in web_users]
 
@@ -1043,6 +1085,25 @@ def delete_request(request, domain):
     return json_response({'status': 'ok'})
 
 
+@always_allow_project_access
+@require_POST
+@require_can_edit_web_users
+def check_sso_trust(request, domain):
+    username = request.POST['username']
+    is_trusted = IdentityProvider.does_domain_trust_user(domain, username)
+    response = {
+        'is_trusted': is_trusted,
+    }
+    if not is_trusted:
+        response.update({
+            'email_domain': get_email_domain_from_username(username),
+            'idp_name': IdentityProvider.get_active_identity_provider_by_username(
+                username
+            ).name,
+        })
+    return JsonResponse(response)
+
+
 class BaseManageWebUserView(BaseUserSettingsView):
 
     @method_decorator(always_allow_project_access)
@@ -1069,6 +1130,7 @@ class InviteWebUserView(BaseManageWebUserView):
         role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
+        is_add_user = self.request_id is not None
         initial = {
             'email': domain_request.email if domain_request else None,
         }
@@ -1082,9 +1144,16 @@ class InviteWebUserView(BaseManageWebUserView):
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
-                domain=self.domain
+                domain=self.domain,
+                is_add_user=is_add_user,
             )
-        return AdminInvitesUserForm(initial=initial, role_choices=role_choices, domain=self.domain, location=loc)
+        return AdminInvitesUserForm(
+            initial=initial,
+            role_choices=role_choices,
+            domain=self.domain,
+            location=loc,
+            is_add_user=is_add_user,
+        )
 
     @property
     @memoized
@@ -1097,7 +1166,6 @@ class InviteWebUserView(BaseManageWebUserView):
     def page_context(self):
         return {
             'registration_form': self.invite_web_user_form,
-            'request_id': self.request_id,
         }
 
     def post(self, request, *args, **kwargs):
@@ -1132,6 +1200,13 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
+
+            # Ensure trust is established with Invited User's Identity Provider
+            if (toggles.ENTERPRISE_SSO.enabled_for_request(request)
+                    and not IdentityProvider.does_domain_trust_user(self.domain, data["email"])):
+                idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
+                idp.create_trust_with_domain(self.domain, self.request.user.username)
+
             return HttpResponseRedirect(reverse(
                 ListWebUsersView.urlname,
                 args=[self.domain]

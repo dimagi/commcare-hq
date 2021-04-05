@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/DataRequirement",
+  "id": "file:DataRequirement.schema.json",
   "$ref": "#/definitions/DataRequirement",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "DataRequirement": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "Describes a required data item for evaluation in terms of the type of data, and optional code or date-based filters of the data.",
@@ -70,7 +70,7 @@
     "DataRequirement_CodeFilter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Describes a required data item for evaluation in terms of the type of data, and optional code or date-based filters of the data.",
@@ -131,7 +131,7 @@
     "DataRequirement_DateFilter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Describes a required data item for evaluation in terms of the type of data, and optional code or date-based filters of the data.",

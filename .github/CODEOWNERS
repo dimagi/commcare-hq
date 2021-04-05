@@ -42,7 +42,7 @@
 /corehq/apps/locations/static/ @esoergel @orangejenny
 /corehq/apps/locations/templates/ @esoergel @orangejenny
 /corehq/apps/ota/ @snopoke
-/corehq/apps/reports/standard/cases/ @proteusvacuum
+/corehq/apps/reports/standard/cases/ @proteusvacuum @esoergel
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/sms*/ @millerdev @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun

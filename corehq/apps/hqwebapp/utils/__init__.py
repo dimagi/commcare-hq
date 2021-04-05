@@ -11,8 +11,6 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_PSS
 from memoized import memoized
 
-from corehq.util.soft_assert import soft_assert
-
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
@@ -20,11 +18,6 @@ from custom.nic_compliance.utils import get_raw_password
 
 
 logger = logging.getLogger(__name__)
-
-monitor_2fa_soft_assert = soft_assert(
-    to=['{}@{}'.format('biyeun', 'dimagi.com')],
-    send_to_ops=False
-)
 
 
 @memoized

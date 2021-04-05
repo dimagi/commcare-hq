@@ -166,24 +166,6 @@ def use_timepicker(view_func):
     return _wrapped
 
 
-def use_datetimepicker(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the datimepicker library from xdsoft.net
-    at the base template level.
-
-    Example:
-
-    @use_datetimepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_datetimepicker = True
-        return view_func(class_based_view, request, *args, **kwargs)
-    return _wrapped
-
-
 def use_maps(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the maps (with sync utils) library at the base

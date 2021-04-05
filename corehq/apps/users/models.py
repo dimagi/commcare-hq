@@ -2226,19 +2226,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 "There was no linked supply point for the location."
             )
 
-    def add_location_delegate(self, location):
-        """
-        Add a single location to the delgate case access.
-
-        This will dynamically create a supply point if the supply point isn't found.
-        """
-        # todo: the dynamic supply point creation is bad and should be removed.
-        sp = SupplyInterface(self.domain).get_or_create_by_location(location)
-
-        if not location.location_type_object.administrative:
-            from corehq.apps.commtrack.util import submit_mapping_case_block
-            submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
-
     def submit_location_block(self, caseblock, source):
         from corehq.apps.hqcase.utils import submit_case_blocks
 
@@ -2249,25 +2236,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,
         )
-
-    def remove_location_delegate(self, location):
-        """
-        Remove a single location from the case delagate access.
-        """
-
-        sp = SupplyInterface(self.domain).get_by_location(location)
-
-        mapping = self.get_location_map_case()
-
-        if not location.location_type_object.administrative:
-            if mapping and location.location_id in [loc.location_id for loc in self.locations]:
-                caseblock = CaseBlock.deprecated_init(
-                    create=False,
-                    case_id=mapping._id,
-                    index=self.supply_point_index_mapping(sp, True)
-                )
-
-                self.submit_location_block(caseblock, "remove_location_delegate")
 
     def clear_location_delegates(self):
         """
@@ -2508,14 +2476,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             web_user = cls.wrap(user_doc)
             if web_user.is_domain_admin(domain):
-                yield web_user
-
-    @classmethod
-    def get_users_by_permission(cls, domain, permission):
-        user_ids = cls.ids_by_domain(domain)
-        for user_doc in iter_docs(cls.get_db(), user_ids):
-            web_user = cls.wrap(user_doc)
-            if web_user.has_permission(domain, permission):
                 yield web_user
 
     @classmethod
@@ -2781,22 +2741,6 @@ class DomainRemovalRecord(DeleteRecord):
         user = WebUser.get_by_user_id(self.user_id)
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
-
-
-class UserCache(object):
-
-    def __init__(self):
-        self.cache = {}
-
-    def get(self, user_id):
-        if not user_id:
-            return None
-        if user_id in self.cache:
-            return self.cache[user_id]
-        else:
-            user = CouchUser.get_by_user_id(user_id)
-            self.cache[user_id] = user
-            return user
 
 
 class AnonymousCouchUser(object):

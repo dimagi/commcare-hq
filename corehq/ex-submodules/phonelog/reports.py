@@ -25,7 +25,7 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.util.timezones.conversions import ServerTime
 from memoized import memoized
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
@@ -153,20 +153,18 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     def rendered_report_title(self):
         new_title = self.name
         if self.errors_only:
-            new_title = (
-                "Errors &amp; Warnings Log <small>for %s</small>" % (
-                    ", ".join(self.device_log_users)
-                )
-                if self.device_log_users
-                else "Errors &amp; Warnings Log"
-            )
+            new_title = format_html(
+                "Errors &amp; Warnings Log <small>for {}</small>",
+                ", ".join(self.device_log_users)
+            ) if self.device_log_users else "Errors & Warnings Log"
         elif self.goto_key:
             log = self.goto_log
-            new_title = "Last %s Logs <small>before %s</small>" % (
+            new_title = format_html(
+                "Last {} Logs <small>before {}</small>",
                 self.limit,
                 ServerTime(log.date).user_time(self.timezone).ui_string()
             )
-        return mark_safe(new_title)
+        return new_title
 
     @property
     def rows(self):

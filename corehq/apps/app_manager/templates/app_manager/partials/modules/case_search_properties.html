@@ -7,162 +7,6 @@
 </legend>
 
 <div data-bind="with: search">
-
-  <script type="text/html" id="property_template" class="hide">
-    <tr>
-      <td class="col-sm-4">
-        <input class="form-control" type="text" data-bind="value: property.name"/>
-      </td>
-      <td class="col-sm-6">
-        <input class="form-control" type="text" data-bind="value: property.label"/>
-      </td>
-      {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled%}
-      <td class="col-sm-2">
-        <button type="button"
-                class="btn btn-default"
-                data-bind="
-                    attr: {'data-target': '#lookup-table-prompt-' +   property.uniqueId}"
-                data-toggle="modal">
-          <i class="fa fa-pencil"></i>
-          {% trans "Configure" %}
-        </button>
-      </td>
-      {% endif %}
-      <td class="col-sm-2">
-        <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + property.uniqueId}">
-          <div class="modal-dialog modal-md">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title">
-                  {% trans "Options for:" %}
-                  <!-- ko text: property.label --><!-- /ko -->
-                </h4>
-              </div>
-              <div class="modal-body">
-                <div class="form-horizontal">
-                  <fieldset>
-                    <legend>{% trans "Basic" %}</legend>
-                    <div class="form-group">
-                      <label class="control-label col-xs-12 col-sm-3">
-                        {% trans "Help Text" %}
-                      </label>
-                      <div class="col-xs-12 col-sm-9">
-                        <textarea class="form-control vertical-resize" type="text" data-bind="value: property.hint">
-                        </textarea>
-                      </div>
-                    </div>
-                    {% if js_options.default_value_expression_enabled %}
-                    <div class="form-group">
-                      <label class="control-label col-xs-12 col-sm-3">
-                        {% trans "Default Value Expression" %}
-                      </label>
-                      <div class="col-xs-12 col-sm-9">
-                        <input class="form-control" type="text" data-bind="value: property.defaultValue"/>
-                        <p class="help-block" data-bind="visible: property.appearance() == 'daterange'">
-                          {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
-                        </p>
-                      </div>
-                    </div>
-                    {% endif %}
-                    {% if js_options.search_prompt_appearance_enabled %}
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Format" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <select class="form-control" data-bind="value: property.appearance">
-                            <option value="">{% trans "Text" %}</option>
-                            <option value="daterange">{% trans "Date Range" %}</option>
-                            <option value="barcode_scan">{% trans "Barcode" %}</option>
-                            <option value="fixture">{% trans "Lookup Table Selection" %}</option>
-                          </select>
-                        </div>
-                      </div>
-                    {% endif %}
-                  </fieldset>
-                  {% if js_options.search_prompt_appearance_enabled %}
-                  <fieldset data-bind="visible: property.appearance() == 'fixture'">
-                    <legend>{% trans "Lookup Table Options" %}</legend>
-                    <div class="form-group">
-                      <label class="control-label col-xs-12 col-sm-3">
-                        {% trans "Lookup Table" %}
-                      </label>
-                      <div class="col-xs-12 col-sm-9">
-                        <select class="form-control" data-bind="value: property.itemset.lookupTableNodeset">
-                          <option value="">{% trans "Select a lookup table..." %}</option>
-                          {% for item in  js_options.item_lists %}
-                            <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label col-xs-12 col-sm-3">{% trans "Label Field" %}</label>
-                      <div class="col-xs-12 col-sm-9">
-                        <input class="form-control" type="text" data-bind="value: property.itemset.label" placeholder="name"/>
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label col-xs-12 col-sm-3">{% trans "Value Field" %}</label>
-                      <div class="col-xs-12 col-sm-9">
-                        <input class="form-control" type="text" data-bind="value: property.itemset.value" placeholder="id"/>
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label col-xs-12 col-sm-3">{% trans "Sort Field" %}</label>
-                      <div class="col-xs-12 col-sm-9">
-                        <input class="form-control" type="text" data-bind="value: property.itemset.sort" placeholder="name"/>
-                      </div>
-                    </div>
-                    </fieldset>
-                    <fieldset data-bind="visible: property.appearance() == 'fixture'">
-                      <legend>{% trans "Advanced Lookup Table Options" %}</legend>
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Instance URI" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <input class="form-control" type="text" data-bind="value: property.itemset.instance_uri"/>
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Instance ID" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <input class="form-control" type="text" data-bind="value: property.itemset.instance_id"/>
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Instance Nodeset" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <input class="form-control" type="text" data-bind="value: property.itemset.nodeset"/>
-                        </div>
-                      </div>
-                  </fieldset>
-                  {% endif %}
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button class="btn btn-primary" type="button" data-dismiss="modal">
-                  {% trans "Done" %}
-                </button>
-              </div>
-                </form>
-            </div>
-          </div>
-        </div>
-      </td>
-      <td class="col-sm-1">
-        <i style="cursor: pointer;" class="fa fa-remove"
-           data-bind="click: $parent.removeProperty"></i>
-      </td>
-    </tr>
-  </script>
-
   <form>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
@@ -173,14 +17,17 @@
         <table class="table table-condensed">
           <thead data-bind="visible: searchProperties().length > 0">
           <tr>
+            <th class="col-sm-1"></th>
             <th class="col-sm-4">{% trans "Case Property" %}</th>
-            <th class="col-sm-6">{% trans "Display Text" %}</th>
-            {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled%}
+            <th class="col-sm-4">{% trans "Display Text" %}</th>
+            {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled %}
               <th class="col-sm-2">{% trans "Other Options" %}</th>
             {% endif %}
+            <th class="col-sm-1"></th>
           </tr>
           </thead>
-          <tbody data-bind="template: { name: 'property_template', foreach: searchProperties, as: 'property' }">
+          <tbody data-bind="foreach: searchProperties, sortableList: searchProperties">
+            {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
         <p>

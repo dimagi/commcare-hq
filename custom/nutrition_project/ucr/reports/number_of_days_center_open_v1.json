@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"

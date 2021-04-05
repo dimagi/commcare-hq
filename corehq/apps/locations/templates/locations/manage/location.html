@@ -63,12 +63,6 @@
           <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
         {% endif %}
 
-        {% if related_location_form %}
-          <li class="{% if form_tab == "related_location" %}active{% endif %}">
-            <a href="#related_location" data-toggle="tab">{% trans "Related Locations" %}</a>
-          </li>
-        {% endif %}
-
       </ul>
       <br />
     {% endif %}
@@ -185,29 +179,6 @@
         </div>
       {% endif %}
 
-      {% if related_location_form %}
-        <div class="tab-pane {% if form_tab == "related_location" %}active{% endif %}" id="related_location">
-          <div class="panel panel-modern-gray panel-form-only">
-            <div class="panel-body">
-              <form id="group_form" class="form-horizontal{% if request.is_view_only %} form-hide-actions{% endif %}" name="" method="post">
-                {% csrf_token %}
-                <fieldset>
-                  <legend>{% trans 'Related Locations' %}</legend>
-                  {% crispy related_location_form %}
-                  <input type="hidden" name="form_type" value="related_location" />
-                </fieldset>
-                <div class="form-actions">
-                  <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary disable-on-submit">
-                      {% trans 'Update Related Locations' %}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      {% endif %}
     </div>
 
   </div>

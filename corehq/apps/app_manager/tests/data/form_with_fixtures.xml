@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
+        xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    <h:head>
+        <h:title>Form with Lookup Table Question</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+                      xmlns="http://openrosa.org/formdesigner/2FDA1C1F-D04C-43A9-86FB-08B6B065D1E9" uiVersion="1"
+                      version="1" name="Form with Lookup Table Question">
+                    <lookup-table/>
+                </data>
+            </instance>
+            <instance src="jr://fixture/item-list:country" id="country"/>
+            <bind vellum:nodeset="#form/lookup-table" nodeset="/data/lookup-table"/>
+            <itext>
+                <translation lang="en" default="">
+                    <text id="lookup-table-label">
+                        <value>I'm a lookup table!</value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <select1 vellum:ref="#form/lookup-table" ref="/data/lookup-table" appearance="Survey">
+            <label ref="jr:itext('lookup-table-label')"/>
+            <itemset nodeset="instance('country')/country_list/country">
+                <label ref="name"/>
+                <value ref="id"/>
+            </itemset>
+        </select1>
+    </h:body>
+</h:html>

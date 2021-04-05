@@ -259,9 +259,7 @@ def _get_branches_merged_into_autostaging(cwd=None):
 def _get_submodules():
     """
     returns something like
-    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader',
-     'submodules/auditcare-src',
-     ...]
+    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader', ...]
     """
     import sh
     git = sh.git.bake(_tty_out=False)

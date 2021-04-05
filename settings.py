@@ -162,7 +162,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
-    'auditcare.middleware.AuditMiddleware',
+    'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
@@ -237,7 +237,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'auditcare',
+    'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
     'corehq.apps.case_migrations',
@@ -534,7 +534,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    "corehq.apps.locations.fixtures.related_locations_fixture_generator",
 ]
 
 ### Shared drive settings ###
@@ -747,11 +746,6 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_MODEL_SAVE = [
-    'corehq.apps.app_manager.Application',
-    'corehq.apps.app_manager.RemoteApp',
-]
-
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
     'corehq.apps.hqadmin.views.users.AuthenticateAs',
@@ -817,6 +811,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.fhir.repeaters.FHIRRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
@@ -884,10 +879,12 @@ COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
 # using the local DEBUG value (which we don't have access to here yet)
 COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
-# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
-COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
-'compressor.filters.cssmin.rCSSMinFilter']
+COMPRESS_FILTERS = {
+    'css': [
+        'compressor.filters.css_default.CssAbsoluteFilter',
+        'compressor.filters.cssmin.rCSSMinFilter',
+    ]
+}
 
 LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
@@ -1994,6 +1991,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
     'vectorlink-senegal': 'custom.abt',
+    'vectorlink-sierra-leone': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
@@ -2004,6 +2002,8 @@ DOMAIN_MODULE_MAP = {
     'inddex-multi-vn': 'custom.inddex',
     'iita-fcms-nigeria': 'custom.inddex',
     'cambodia-arch-3-study': 'custom.inddex',
+    'senegal-arch-3-study': 'custom.inddex',
+    'inddex24-dev': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

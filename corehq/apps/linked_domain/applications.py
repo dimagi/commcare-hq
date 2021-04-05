@@ -1,5 +1,10 @@
+from collections import defaultdict
+
+from django.conf import settings
+
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
+    get_brief_app_docs_in_domain,
     get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
@@ -7,7 +12,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.exceptions import AppLinkError
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.linked_domain.exceptions import RemoteRequestError
+from corehq.apps.linked_domain.exceptions import MultipleDownstreamAppsError, RemoteRequestError
 from corehq.apps.linked_domain.remote_accessors import (
     get_app_by_version,
     get_brief_apps,
@@ -15,6 +20,7 @@ from corehq.apps.linked_domain.remote_accessors import (
     get_released_app,
 )
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
+from corehq.util.quickcache import quickcache
 
 
 def get_master_app_briefs(domain_link, family_id):
@@ -35,6 +41,28 @@ def get_master_app_by_version(domain_link, upstream_app_id, upstream_version):
 
     if app:
         return wrap_app(app)
+
+
+def get_downstream_app_id(downstream_domain, upstream_app_id):
+    downstream_ids = _get_downstream_app_id_map(downstream_domain)[upstream_app_id]
+    if not downstream_ids:
+        return None
+    if len(downstream_ids) > 1:
+        raise MultipleDownstreamAppsError
+    return downstream_ids[0]
+
+
+def get_upstream_app_ids(downstream_domain):
+    return list(_get_downstream_app_id_map(downstream_domain))
+
+
+@quickcache(vary_on=['downstream_domain'], skip_arg=lambda _: settings.UNIT_TESTING, timeout=5 * 60)
+def _get_downstream_app_id_map(downstream_domain):
+    downstream_app_ids = defaultdict(list)
+    for doc in get_brief_app_docs_in_domain(downstream_domain):
+        if doc.get("family_id"):
+            downstream_app_ids[doc["family_id"]].append(doc["_id"])
+    return downstream_app_ids
 
 
 def get_latest_master_app_release(domain_link, app_id):
@@ -75,4 +103,5 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
         except RemoteRequestError:
             raise AppLinkError('Error fetching multimedia from remote server. Please try again later.')
 
+    _get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app

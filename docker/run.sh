@@ -138,6 +138,7 @@ function bootstrap() {
                 ./manage.py sync_couch_views &&
                 ./manage.py migrate --noinput &&
                 ./manage.py compilejsi18n &&
+                ./manage.py create_kafka_topics &&
                 ./manage.py make_superuser admin@example.com"
 }
 

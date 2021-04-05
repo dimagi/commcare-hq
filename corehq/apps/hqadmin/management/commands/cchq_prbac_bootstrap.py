@@ -166,6 +166,9 @@ class Command(BaseCommand):
              name='App User Profiles',
              description='Allows use of App User Profiles.'),
         Role(slug=privileges.GEOCODER, name='Geocoder', description='Address widget in Web Apps.'),
+        Role(slug=privileges.DEFAULT_EXPORT_SETTINGS,
+             name='Default Export Settings',
+             description='Allows ability to set default values for newly created exports.')
     ]
 
     BOOTSTRAP_PLANS = [

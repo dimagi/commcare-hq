@@ -1,14 +1,13 @@
 import uuid
-from datetime import datetime
 
 from django.test import TestCase
 from django.urls import reverse
 
-from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -17,14 +16,14 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import privilege_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
-from ..api import serialize_case
 from ..utils import submit_case_blocks
 
 
 @use_sql_backend
 @privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('CASE_API_V0_6')
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
@@ -33,9 +32,10 @@ class TestCaseAPI(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None)
-        cls.web_user.is_superuser = True  # in pre-release, this is superuser-only
-        cls.web_user.save()
+        role = UserRole.get_or_create_with_permissions(
+            cls.domain, Permissions(edit_data=True), 'edit-data'
+        )
+        cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
         cls.case_accessor = CaseAccessors(cls.domain)
         cls.form_accessor = FormAccessors(cls.domain)
 
@@ -48,6 +48,7 @@ class TestCaseAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.web_user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -66,54 +67,6 @@ class TestCaseAPI(TestCase):
             }
         ).as_text()], domain=self.domain)
         return cases[0]
-
-    def test_serialize_case(self):
-        parent_case_id = self._make_case().case_id
-        xform, cases = submit_case_blocks([CaseBlock(
-            case_id=str(uuid.uuid4()),
-            case_type='match',
-            case_name='Harmon/Luchenko',
-            owner_id='harmon',
-            external_id='14',
-            create=True,
-            update={'winner': 'Harmon'},
-            index={
-                'parent': IndexAttrs(case_type='player', case_id=parent_case_id, relationship='child')
-            },
-        ).as_text()], domain=self.domain)
-        case = cases[0]
-
-        case.opened_on = datetime(2021, 2, 18, 10, 59)
-        case.modified_on = datetime(2021, 2, 18, 10, 59)
-        case.server_modified_on = datetime(2021, 2, 18, 10, 59)
-
-        self.assertEqual(
-            serialize_case(case),
-            {
-                "domain": self.domain,
-                "@case_id": case.case_id,
-                "@case_type": "match",
-                "case_name": "Harmon/Luchenko",
-                "external_id": "14",
-                "@owner_id": "harmon",
-                "date_opened": "2021-02-18T10:59:00",
-                "last_modified": "2021-02-18T10:59:00",
-                "server_last_modified": "2021-02-18T10:59:00",
-                "closed": False,
-                "date_closed": None,
-                "properties": {
-                    "winner": "Harmon",
-                },
-                "indices": {
-                    "parent": {
-                        "case_id": parent_case_id,
-                        "@case_type": "player",
-                        "@relationship": "child",
-                    }
-                }
-            }
-
-        )
 
     def _create_case(self, body):
         return self.client.post(
@@ -134,6 +87,30 @@ class TestCaseAPI(TestCase):
     def _bulk_update_cases(self, body):
         # for the time being, the implementation is the same
         return self._create_case(body)
+
+    def test_simple_get(self):
+        case_id = self._make_case().case_id
+        res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()['@case_id'], case_id)
+
+    def test_case_not_found(self):
+        res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
+
+    def test_case_on_other_domain(self):
+        case_id = str(uuid.uuid4())
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            case_type='player',
+            case_name='Judit Polgár',
+            create=True,
+            update={}
+        ).as_text()], domain='other_domain')
+        res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.json()['error'], f"Case '{case_id}' not found")
 
     def test_create_case(self):
         res = self._create_case({
@@ -239,6 +216,22 @@ class TestCaseAPI(TestCase):
             },
         })
         self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
+        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+
+    def test_update_case_on_other_domain(self):
+        case_id = str(uuid.uuid4())
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            case_type='player',
+            case_name='Judit Polgár',
+            create=True,
+            update={}
+        ).as_text()], domain='other_domain')
+
+        res = self._update_case(case_id, {
+            '@owner_id': 'stealing_this_case',
+        })
+        self.assertEqual(res.json()['error'], f"No case found with ID '{case_id}'")
         self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
 
     def test_create_child_case(self):

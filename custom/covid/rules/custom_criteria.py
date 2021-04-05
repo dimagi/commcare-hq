@@ -4,6 +4,12 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 
 
 def associated_user_case_closed(case, now):
+    """
+    Only cases that match the following criteria pass the filter:
+        - the case is open
+        - the case is an associated checkin case of a mobile worker
+        - the corresponding user case is closed
+    """
     if case.closed:
         return False
 

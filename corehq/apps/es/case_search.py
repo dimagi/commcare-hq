@@ -12,7 +12,6 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
-from django.conf import settings
 from django.utils.dateparse import parse_date
 
 from corehq.apps.case_search.const import (
@@ -26,7 +25,6 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
 
@@ -36,7 +34,12 @@ class CaseSearchES(CaseES):
 
     @property
     def builtin_filters(self):
-        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
+        return [
+            case_property_filter,
+            blacklist_owner_id,
+            external_id,
+            indexed_on,
+        ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
@@ -268,6 +271,14 @@ def _base_property_query(case_property_name, query):
 
 def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
+
+
+def external_id(external_id):
+    return filters.term('external_id', external_id)
+
+
+def indexed_on(gt=None, gte=None, lt=None, lte=None, eq=None):
+    return filters.date_range('@indexed_on', gt=None, gte=None, lt=None, lte=None, eq=None)
 
 
 def flatten_result(hit, include_score=False):

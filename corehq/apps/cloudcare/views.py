@@ -25,6 +25,7 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 from text_unidecode import unidecode
 
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
@@ -216,7 +217,7 @@ class FormplayerMain(View):
             "domain_is_on_trial": domain_is_on_trial(domain),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(for_js=True),
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
@@ -257,7 +258,7 @@ class FormplayerPreviewSingleApp(View):
             raise Http404()
 
         role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app.master_id):
+        if role and not role.permissions.view_web_app(app.origin_id):
             raise Http404()
 
         def _default_lang():
@@ -278,7 +279,7 @@ class FormplayerPreviewSingleApp(View):
             "apps": [_format_app_doc(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(for_js=True),
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
@@ -298,7 +299,7 @@ class PreviewAppView(TemplateView):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
-            'formplayer_url': settings.FORMPLAYER_URL,
+            'formplayer_url': get_formplayer_url(for_js=True),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
@@ -407,7 +408,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     root_context = {
         'form_url': form_url,
-        'formplayer_url': settings.FORMPLAYER_URL,
+        'formplayer_url': get_formplayer_url(for_js=True),
     }
     if instance_id:
         try:

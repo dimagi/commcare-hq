@@ -29,10 +29,9 @@ def should_skip(case, traveler_location_id, inactive_location):
 
 def needs_update(case):
     index = case.indices[0]
-    return index.relationship == "child" and (
-        index.referenced_type == "patient"
-        or index.referenced_type == "'patient'"
-    )
+    if index.referenced_type == "'patient'":
+        return True
+    return index.relationship == "child" and index.referenced_type == "patient"
 
 
 def get_owner_id(case_type):
@@ -76,6 +75,8 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+        self.log_data(domain, "update_case_index_relationship", case_type, len(case_ids), total, [])
 
     def add_arguments(self, parser):
         super().add_arguments(parser)

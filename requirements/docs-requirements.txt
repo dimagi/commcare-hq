@@ -13,7 +13,9 @@ amqp==2.6.1
 architect==0.5.6
     # via -r base-requirements.in
 attrs==18.2.0
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   jsonschema
 babel==2.8.0
     # via
     #   django-phonenumber-field
@@ -99,7 +101,7 @@ django-bulk-update==2.2.0
     # via -r base-requirements.in
 django-celery-results==1.0.4
     # via -r base-requirements.in
-django-compressor==2.1
+django-compressor==2.4
     # via -r base-requirements.in
 django-countries==4.6
     # via -r base-requirements.in
@@ -149,7 +151,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.16
+django==2.2.19
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -176,7 +178,7 @@ dnspython==1.15.0
     # via
     #   -r base-requirements.in
     #   email-validator
-docutils==0.14
+docutils==0.16
     # via
     #   -r docs-requirements.in
     #   recommonmark
@@ -227,13 +229,15 @@ idna==2.10
     #   requests
 imagesize==1.2.0
     # via sphinx
+importlib-metadata==3.4.0
+    # via jsonschema
 intervaltree==3.1.0
     # via ddtrace
 iso8601==0.1.13
     # via -r base-requirements.in
 jdcal==1.4.1
     # via openpyxl
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -r base-requirements.in
     #   sphinx
@@ -255,6 +259,8 @@ jsonobject==0.9.9
     #   jsonobject-couchdbkit
 https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
+jsonschema==3.2.0
+    # via -r base-requirements.in
 kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==4.2.2.post1
@@ -263,7 +269,7 @@ kombu==4.2.2.post1
     #   celery
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.2
+lxml==4.6.3
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -293,7 +299,7 @@ pbr==5.5.0
     # via mock
 phonenumberslite==8.12.10
     # via -r base-requirements.in
-pillow==7.2.0
+pillow==8.1.2
     # via
     #   -r base-requirements.in
     #   cairosvg
@@ -338,6 +344,8 @@ pyparsing==2.4.7
     # via packaging
 pyphen==0.9.5
     # via weasyprint
+pyrsistent==0.17.3
+    # via jsonschema
 pysocks==1.7.1
     # via twilio
 pystache==0.5.4
@@ -355,7 +363,7 @@ python-imap==1.0.0
     # via -r base-requirements.in
 python-levenshtein==0.12.0
     # via -r base-requirements.in
-python-magic==0.4.18
+python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
@@ -366,7 +374,7 @@ pytz==2020.1
     #   celery
     #   django
     #   twilio
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
@@ -403,7 +411,7 @@ requests==2.24.0
     #   stripe
     #   tinys3
     #   twilio
-rjsmin==1.0.12
+rjsmin==1.1.0
     # via django-compressor
 s3transfer==0.3.3
     # via boto3
@@ -423,6 +431,7 @@ six==1.15.0
     # via
     #   -r base-requirements.in
     #   django-braces
+    #   django-compressor
     #   django-simple-captcha
     #   django-statici18n
     #   django-transfer
@@ -436,6 +445,7 @@ six==1.15.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
+    #   jsonschema
     #   mock
     #   protobuf
     #   python-dateutil
@@ -498,6 +508,8 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
+typing-extensions==3.7.4.3
+    # via importlib-metadata
 ua-parser==0.10.0
     # via user-agents
 urllib3==1.25.10
@@ -528,6 +540,8 @@ xlrd==1.0.0
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
+zipp==3.4.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==53.0.0
@@ -536,6 +550,7 @@ setuptools==53.0.0
     #   cssselect2
     #   django-websocket-redis
     #   gunicorn
+    #   jsonschema
     #   protobuf
     #   python-levenshtein
     #   sphinx

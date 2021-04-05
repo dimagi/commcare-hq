@@ -27,6 +27,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -195,6 +196,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
+            'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
             'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
@@ -952,8 +954,13 @@ def _update_search_properties(module, search_properties, lang='en'):
 
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
+        elif prop.get('appearance', '') == 'address':
+            ret['appearance'] = 'address'
         elif prop.get('appearance', '') == 'daterange':
             ret['input_'] = 'daterange'
+
+        if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
+            ret['receiver_expression'] = prop.get('receiver_expression', '')
 
         yield ret
 

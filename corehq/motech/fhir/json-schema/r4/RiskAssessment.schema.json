@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/RiskAssessment",
+  "id": "file:RiskAssessment.schema.json",
   "$ref": "#/definitions/RiskAssessment",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "RiskAssessment": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "An assessment of the likely outcome(s) for a patient or other subject as well as the likelihood of each outcome.",
@@ -125,7 +125,7 @@
     "RiskAssessment_Prediction": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "An assessment of the likely outcome(s) for a patient or other subject as well as the likelihood of each outcome.",

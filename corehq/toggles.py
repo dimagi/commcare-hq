@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
@@ -87,7 +88,7 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
     css_class='info',
-    description=mark_safe(
+    description=mark_safe(  # nosec: no user input
         'These features are only available for our services projects. This '
         'may affect support and pricing when the project is transitioned to a '
         'subscription. Limited Use Solutions Feature Flags cannot be enabled '
@@ -213,10 +214,11 @@ class StaticToggle(object):
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
                     messages.warning(
                         request,
-                        mark_safe((
+                        format_html(
                             'This <a href="{}">feature flag</a> should be enabled '
-                            'to access this URL'
-                        ).format(toggle_url)),
+                            'to access this URL',
+                            toggle_url
+                        ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
                 raise Http404()
@@ -650,14 +652,6 @@ VISIT_SCHEDULER = StaticToggle(
 )
 
 
-MONITOR_2FA_CHANGES = StaticToggle(
-    'monitor_2fa_changes',
-    'Monitor 2FA activity for SAAS-11210 ticket',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -839,6 +833,13 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'Feature Preview. By default, this feature will only be available for '
     'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CASE_API_V0_6 = StaticToggle(
+    'case_api_v0_6',
+    'Enable the v0.6 Case API',
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1431,6 +1432,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
     'Allows sending of incremental CSV exports to a particular endpoint',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Incremental+Data+Exports"
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1638,15 +1640,6 @@ SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
-RELATED_LOCATIONS = StaticToggle(
-    'related_locations',
-    'REACH: Enable experimental location many-to-many mappings',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
-)
-
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
@@ -1820,6 +1813,27 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     """
 )
 
+BLOCK_RESTORES = StaticToggle(
+    'block_restores',
+    'Block Restores Immediately with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag for EMERGENCY PURPOSES ONLY if a project's restore is causing
+    system-wide issues that aren't caught by rate limiting or other mechanisms.
+    """
+)
+
+SKIP_FIXTURES_ON_RESTORE = StaticToggle(
+    'skip_fixtures_on_restore',
+    'Skip Fixture Syncs on Restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag to skip fixtures on restores for certain project spaces.
+    """
+)
+
 SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'skip_updating_user_reporting_metadata',
     'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
@@ -1829,9 +1843,10 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'Require explicit permissions to access mobile app endpoints',
+    'COVID: Require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
 )
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
@@ -1913,7 +1928,8 @@ HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'COVID: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
 )
 
 GAEN_OTP_SERVER = StaticToggle(
@@ -1964,7 +1980,8 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/One+Phone+Number+-+Multiple+Contacts"
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
@@ -1974,7 +1991,8 @@ CHANGE_FORM_LANGUAGE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Allows the user to change the language of the form content while in the form itself in Web Apps
-    """
+    """,
+    help_link="https://confluence.dimagi.com/display/ccinternal/Change+Form+Language"
 )
 
 APP_ANALYTICS = StaticToggle(
@@ -1983,16 +2001,6 @@ APP_ANALYTICS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
-)
-
-DEFAULT_EXPORT_SETTINGS = StaticToggle(
-    'default_export_settings',
-    'Allow enterprise admin to set default export settings',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Allows an enterprise admin to set default export settings for all domains under the enterprise account.
-    """
 )
 
 ENTERPRISE_SSO = StaticToggle(
