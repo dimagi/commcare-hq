@@ -40,6 +40,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 required_headers = set(['username'])
 allowed_headers = set([
