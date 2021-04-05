@@ -146,8 +146,12 @@ def change_password_view(request):
 @consumer_user_login_required
 def domains_and_cases_list_view(request):
     consumer_user = get_object_or_404(ConsumerUser, user=request.user)
-    qs = ConsumerUserCaseRelationship.objects.filter(consumer_user=consumer_user)
-    domains_and_cases = [val for val in qs.values('domain', 'case_id')]
+    domains_and_cases = list(
+        ConsumerUserCaseRelationship.objects
+        .filter(consumer_user=consumer_user)
+        .values('domain', 'case_id')
+    )
+
     return render(request, 'consumer_user/domains_and_cases.html', {'domains_and_cases': domains_and_cases})
 
 
