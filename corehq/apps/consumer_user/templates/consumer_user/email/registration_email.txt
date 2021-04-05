@@ -1,0 +1,7 @@
+Dear user,
+
+Visit the below link to register
+{{link}}
+
+Cheers,
+--The CommCareHQ Team
