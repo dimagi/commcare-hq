@@ -73,7 +73,7 @@ def check_headers(user_specs, domain):
         allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
-    missing_headers = required_headers - headers    
+    missing_headers = required_headers - headers
 
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
