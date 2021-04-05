@@ -104,7 +104,7 @@ def _create_new_invitation(domain, invitation_case, demographic_case_id):
     email_context = {
         'link':
             absolute_reverse(
-                'consumer_user:consumer_user_register',
+                'consumer_user:register',
                 kwargs={'signed_invitation_id': new_invitation.signature()},
             ),
     }

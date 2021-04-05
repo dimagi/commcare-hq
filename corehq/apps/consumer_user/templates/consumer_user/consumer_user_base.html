@@ -9,7 +9,7 @@
     {% if hide_menu %}
     <nav class="navbar-menus navbar-signin" role="navigation">
       <div class="nav-settings-bar pull-right">
-        <a href="{% url "consumer_user:consumer_user_login" %}" class="btn btn-primary navbar-btn">{% trans "Sign In"%}
+        <a href="{% url "consumer_user:login" %}" class="btn btn-primary navbar-btn">{% trans "Sign In"%}
         </a>
       </div>
     </nav>
@@ -41,7 +41,7 @@
                 </a>
               </li>
               <li>
-                <a href="{% url "consumer_user:consumer_user_logout" %}">
+                <a href="{% url "consumer_user:logout" %}">
                 {% trans "Logout" %}
                 </a>
               </li>
@@ -53,7 +53,7 @@
     {% endif %}
 
     <div class="navbar-header hq-header">
-      <a href="{% url "consumer_user:consumer_user_homepage" %}" class="navbar-brand">
+      <a href="{% url "consumer_user:homepage" %}" class="navbar-brand">
       {% if CUSTOM_LOGO_URL %}
       <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo"/>
       {% else %}

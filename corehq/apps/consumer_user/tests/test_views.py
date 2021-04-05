@@ -32,14 +32,14 @@ from corehq.tests.locks import reentrant_redis_locks
 
 def register_url(invitation):
     return reverse(
-        'consumer_user:consumer_user_register',
+        'consumer_user:register',
         kwargs={'signed_invitation_id': invitation.signature()}
     )
 
 
 def login_accept_url(invitation):
     return reverse(
-        'consumer_user:consumer_user_login_with_invitation',
+        'consumer_user:login_with_invitation',
         kwargs={'signed_invitation_id': invitation.signature()}
     )
 
@@ -48,7 +48,7 @@ class RegisterTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.login_url = reverse('consumer_user:consumer_user_login')
+        self.login_url = reverse('consumer_user:login')
         self.client = Client()
 
     def tearDown(self):
@@ -148,7 +148,7 @@ class RegisterTestCase(TestCase):
 
     def test_register_invalid_invitation(self):
         register_uri = reverse(
-            'consumer_user:consumer_user_register',
+            'consumer_user:register',
             kwargs={'signed_invitation_id': TimestampSigner().sign(urlsafe_base64_encode(b'1000'))}
         )
         response = self.client.get(register_uri)
@@ -160,8 +160,8 @@ class LoginTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.login_url = reverse('consumer_user:consumer_user_login')
-        self.homepage_url = reverse('consumer_user:consumer_user_homepage')
+        self.login_url = reverse('consumer_user:login')
+        self.homepage_url = reverse('consumer_user:homepage')
         self.client = Client()
 
     def tearDown(self):

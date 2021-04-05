@@ -64,7 +64,7 @@ class ConsumerUserLoginView(LoginView):
         url = self.get_redirect_url()
         if url:
             return url
-        url = reverse('consumer_user:consumer_user_homepage')
+        url = reverse('consumer_user:homepage')
         return url
 
     def get_context_data(self, **kwargs):
@@ -72,7 +72,7 @@ class ConsumerUserLoginView(LoginView):
         if self.signed_invitation_id:
             extra_context = {}
             go_to_signup = reverse(
-                'consumer_user:consumer_user_register', kwargs={'signed_invitation_id': self.signed_invitation_id}
+                'consumer_user:register', kwargs={'signed_invitation_id': self.signed_invitation_id}
             )
             extra_context['go_to_signup'] = '%s%s' % (go_to_signup, '?create_user=1')
             context.update(extra_context)
@@ -87,13 +87,13 @@ def register_view(request, signed_invitation_id):
     invitation = _get_invitation_or_400(signed_invitation_id)
 
     if invitation.accepted:
-        return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
+        return HttpResponseRedirect(reverse('consumer_user:login'))
 
     email = invitation.email
     create_user = request.GET.get('create_user', False)
     if create_user != '1' and User.objects.filter(username=email).exists():
         url = reverse(
-            'consumer_user:consumer_user_login_with_invitation',
+            'consumer_user:login_with_invitation',
             kwargs={'signed_invitation_id': signed_invitation_id}
         )
         return HttpResponseRedirect(url)
@@ -101,7 +101,7 @@ def register_view(request, signed_invitation_id):
         form = ConsumerUserSignUpForm(request.POST, invitation=invitation)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect(reverse('consumer_user:consumer_user_login'))
+            return HttpResponseRedirect(reverse('consumer_user:login'))
     else:
         form = ConsumerUserSignUpForm(initial={'email': email})
     return render(
@@ -123,7 +123,7 @@ def success_view(request):
 @consumer_user_login_required
 def logout_view(request):
     logout(request)
-    url = reverse('consumer_user:consumer_user_login')
+    url = reverse('consumer_user:login')
     return HttpResponseRedirect(url)
 
 

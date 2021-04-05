@@ -496,7 +496,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                 return super().get_success_url()
             try:
                 ConsumerUser.objects.get(user=self.user)
-                return reverse('consumer_user:consumer_user_login')
+                return reverse('consumer_user:login')
             except ConsumerUser.DoesNotExist:
                 pass
         return super().get_success_url()
