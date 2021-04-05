@@ -700,14 +700,18 @@ ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
 
 
 def allow_cors(allowed_methods):
+    allowed_methods = allowed_methods or []
+    # always allow options
+    allowed_methods = allowed_methods + ['OPTIONS']
+
     def decorator(view_func):
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
             if request.method == "OPTIONS":
-                response = HttpResponse(allowed_methods)
+                response = HttpResponse()
                 response[ACCESS_CONTROL_ALLOW_ORIGIN] = '*'
                 response[ACCESS_CONTROL_ALLOW_HEADERS] = 'Content-Type, Authorization'
-                response[ACCESS_CONTROL_ALLOW] = allowed_methods
+                response[ACCESS_CONTROL_ALLOW] = ', '.join(allowed_methods)
                 return response
             response = view_func(request, *args, **kwargs)
             if request.method in allowed_methods:

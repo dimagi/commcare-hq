@@ -5,7 +5,8 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from mock import mock
 
-from corehq.apps.domain.decorators import _login_or_challenge, api_auth, allow_cors, ACCESS_CONTROL_ALLOW_ORIGIN
+from corehq.apps.domain.decorators import _login_or_challenge, api_auth, allow_cors, ACCESS_CONTROL_ALLOW_ORIGIN, \
+    ACCESS_CONTROL_ALLOW
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -259,3 +260,12 @@ class AllowCORSDecoratorTest(TestCase):
     def test_method_exclusions(self):
         response = allow_cors(['POST'])(sample_view_with_response)(_get_request())
         self._assert_no_cors(response)
+
+    def test_options_no_decorator(self):
+        response = sample_view_with_response(RequestFactory().options('/foobar/'))
+        self._assert_no_cors(response)
+
+    def test_options(self):
+        response = allow_cors(['POST'])(sample_view_with_response)(RequestFactory().options('/foobar/'))
+        self._assert_cors(response)
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW], 'POST, OPTIONS')
