@@ -57,11 +57,11 @@ hqDefine('reports_core/js/maps', function () {
         if (!privates.template || !_.isEqual(config.columns, privates.columns)) {
             privates.columns = config.columns;
             var rows = _.map(privates.columns, function (col) {
-                var tr = _.template("<tr><td><%= label %></td>")(col);
-                tr += "<td><%= " + col.column_id + "%></td></tr>";
+                var tr = _.template("<tr><td><%- label %></td>")(col);
+                tr += "<td><%- " + col.column_id + "%></td></tr>";
                 return tr;
             });
-            var table = '<table class="table table-bordered"><%= rows %></table>';
+            var table = '<table class="table table-bordered"><%- rows %></table>';
             var template = _.template(table)({rows: rows.join('')});
             privates.template = _.template(template);
         }
