@@ -100,20 +100,20 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             }
         },
         header: function (action) {
-            var nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (<%= action.case_type() %>)";
+            var nameSnip = "<i class=\"fa fa-tag\"></i> <%- action.case_tag() %> (<%- action.case_type() %>)";
             var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
             var spanSnip = '<span class="text-muted" style="font-weight: normal;">';
             if (action.actionType === 'open') {
                 return _.template(
                     nameSnip + spanSnip +
                     '<% if (action.parent_tags()) { %> : ' +
-                    gettext('subcase of') + '<span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
+                    gettext('subcase of') + '<span style="font-weight: bold;"><%- action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>")({
                     action: action,
                 });
             } else {
                 if (action.auto_select) {
-                    nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (" + gettext("autoselect mode: ") + "<%= action.auto_select.mode() %>)";
+                    nameSnip = "<i class=\"fa fa-tag\"></i> <%- action.case_tag() %> (" + gettext("autoselect mode: ") + "<%- action.auto_select.mode() %>)";
                 }
                 if (action.load_case_from_fixture) {
                     nameSnip += gettext(" (from fixture)");
