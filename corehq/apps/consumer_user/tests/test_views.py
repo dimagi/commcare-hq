@@ -312,7 +312,8 @@ class SignalTestCase(TestCase):
                         'email': 'testing@testing.in'
                     }
                 }
-            ),
+            )])
+        self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=uuid.uuid4().hex,
                 indices=[
