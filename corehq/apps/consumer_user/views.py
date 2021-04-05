@@ -112,7 +112,7 @@ def register_view(request, signed_invitation_id):
 
 
 @consumer_user_login_required
-def success_view(request):
+def homepage_view(request):
     return render(request, 'consumer_user/homepage.html')
 
 
