@@ -303,7 +303,8 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     @staticmethod
     def _get_post_data(no_entity_id=False, no_login_url=False, no_logout_url=False,
-                       no_certificate=False, no_certificate_date=False, is_active=False):
+                       no_certificate=False, no_certificate_date=False, is_active=False,
+                       require_encrypted_assertions=False):
         expiration_date = datetime.utcnow() + timedelta(days=30)
         return {
             'is_active': is_active,
@@ -313,6 +314,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
             'idp_cert_public': '' if no_certificate else 'TEST CERTIFICATE',
             'date_idp_cert_expiration': ('' if no_certificate_date
                                          else expiration_date.strftime(TIME_FORMAT)),
+            'require_encrypted_assertions': require_encrypted_assertions,
         }
 
     def test_is_active_triggers_required_fields_and_updates(self):
