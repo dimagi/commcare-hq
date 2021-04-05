@@ -5,7 +5,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.signing import BadSignature, SignatureExpired
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -21,11 +21,11 @@ from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import reverse as hq_reverse
 
 from .decorators import consumer_user_login_required
-from .forms.change_contact_details_form import ChangeContactDetailsForm
-from .forms.consumer_user_authentication_form import (
+from .forms import (
+    ChangeContactDetailsForm,
     ConsumerUserAuthenticationForm,
+    ConsumerUserSignUpForm,
 )
-from .forms.consumer_user_signup_form import ConsumerUserSignUpForm
 from .models import (
     ConsumerUser,
     ConsumerUserCaseRelationship,
