@@ -1011,6 +1011,10 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
+    def get_user_ids(self, filter_form_data):
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
+        return self._get_user_ids(mobile_user_and_group_slugs)
+
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
     export_user_filter = OwnerFilter

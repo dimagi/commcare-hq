@@ -591,7 +591,7 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     return list(query.run().aggregations.user_id.buckets_dict)
 
 
-def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types, user_ids):
     enddate = datespan.enddate + timedelta(days=1)
     query = (FormES()
              .domain(domain)
@@ -604,6 +604,9 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
     if user_types:
         query = query.user_type(user_types)
 
+    if user_ids:
+        query = query.user_id(user_ids)
+
     for form in query.scroll():
         try:
             for attachment in form.get('external_blobs', {}).values():
@@ -614,15 +617,15 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
             pass
 
 
-def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types, user_ids):
     return {
-        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types, user_ids)
     }
 
 
-def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types, user_ids):
     size = 0
-    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types, user_ids):
         for attachment in form.get('external_blobs', {}).values():
             size += attachment.get('content_length', 0)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:

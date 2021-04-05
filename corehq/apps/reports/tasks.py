@@ -241,11 +241,12 @@ def build_form_multimedia_zip(
         user_types,
         download_id,
         owner_id,
+        user_ids,
 ):
     from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
     form_ids = get_form_ids_having_multimedia(
-        domain, export.app_id, export.xmlns, datespan, user_types
+        domain, export.app_id, export.xmlns, datespan, user_types, user_ids
     )
     forms_info = _get_form_attachment_info(domain, form_ids, export)
 
