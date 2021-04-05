@@ -429,3 +429,19 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         edit_sso_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
             edit_sso_idp_form.clean_date_idp_cert_expiration()
+
+    def test_require_encrypted_assertions_is_saved(self):
+        """
+        Ensure that SSOEnterpriseSettingsForm updates the
+        `require_encrypted_assertions property` on the IdentityProvider.
+        """
+        post_data = self._get_post_data(
+            require_encrypted_assertions=True,
+        )
+        self.assertFalse(self.idp.require_encrypted_assertions)
+        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form.cleaned_data = post_data
+        self.assertTrue(edit_sso_idp_form.is_valid())
+        edit_sso_idp_form.update_identity_provider(self.accounting_admin)
+        self.idp.refresh_from_db()
+        self.assertTrue(self.idp.require_encrypted_assertions)
