@@ -6,7 +6,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.signing import BadSignature, SignatureExpired
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -125,50 +125,43 @@ def logout_view(request):
 
 @consumer_user_login_required
 def change_password_view(request):
-    consumer_user = ConsumerUser.objects.get_or_none(user=request.user)
-    if consumer_user:
-        if request.method == 'POST':
-            form = PasswordChangeForm(user=request.user, data=request.POST)
-            if form.is_valid():
-                form.save()
-                couch_user = CouchUser.from_django_user(request.user)
-                if couch_user:
-                    couch_user.last_password_set = datetime.utcnow()
-                    couch_user.save()
-                messages.success(request, _('Updated Successfully'))
-            return render(request, 'consumer_user/change_password.html', {'form': form})
-        else:
-            form = PasswordChangeForm(user=request.user)
-            return render(request, 'consumer_user/change_password.html', {'form': form})
+    # Check this is actually a ConsumerUser
+    get_object_or_404(ConsumerUser, user=request.user)
+
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            couch_user = CouchUser.from_django_user(request.user)
+            if couch_user:
+                couch_user.last_password_set = datetime.utcnow()
+                couch_user.save()
+            messages.success(request, _('Updated Successfully'))
+        return render(request, 'consumer_user/change_password.html', {'form': form})
     else:
-        return HttpResponse(status=404)
+        form = PasswordChangeForm(user=request.user)
+        return render(request, 'consumer_user/change_password.html', {'form': form})
 
 
 @consumer_user_login_required
 def domains_and_cases_list_view(request):
-    consumer_user = ConsumerUser.objects.get_or_none(user=request.user)
-    if consumer_user:
-        qs = ConsumerUserCaseRelationship.objects.filter(consumer_user=consumer_user)
-        domains_and_cases = [val for val in qs.values('domain', 'case_id')]
-        return render(request, 'consumer_user/domains_and_cases.html', {'domains_and_cases': domains_and_cases})
-    else:
-        return HttpResponse(status=404)
+    consumer_user = get_object_or_404(ConsumerUser, user=request.user)
+    qs = ConsumerUserCaseRelationship.objects.filter(consumer_user=consumer_user)
+    domains_and_cases = [val for val in qs.values('domain', 'case_id')]
+    return render(request, 'consumer_user/domains_and_cases.html', {'domains_and_cases': domains_and_cases})
 
 
 @consumer_user_login_required
 def change_contact_details_view(request):
-    consumer_user = ConsumerUser.objects.get_or_none(user=request.user)
-    if consumer_user:
-        if request.method == 'POST':
-            form = ChangeContactDetailsForm(request.POST, instance=request.user)
-            if form.is_valid():
-                form.save()
-                messages.success(request, _('Updated Successfully'))
-        else:
-            form = ChangeContactDetailsForm(instance=request.user)
-        return render(request, 'consumer_user/change_contact_details.html', {'form': form})
+    get_object_or_404(ConsumerUser, user=request.user)
+    if request.method == 'POST':
+        form = ChangeContactDetailsForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Updated Successfully'))
     else:
-        return HttpResponse(status=404)
+        form = ChangeContactDetailsForm(instance=request.user)
+    return render(request, 'consumer_user/change_contact_details.html', {'form': form})
 
 
 def _get_invitation_or_400(signed_invitation_id):
