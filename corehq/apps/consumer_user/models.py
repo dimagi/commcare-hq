@@ -12,12 +12,10 @@ from corehq.apps.consumer_user.const import (
     CONSUMER_INVITATION_STATUS,
 )
 from corehq.apps.hqcase.utils import update_case
-from corehq.util.models import GetOrNoneManager
 
 
 class ConsumerUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    objects = GetOrNoneManager()
 
 
 class ConsumerUserCaseRelationship(models.Model):
