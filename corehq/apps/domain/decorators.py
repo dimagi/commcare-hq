@@ -710,8 +710,9 @@ def allow_cors(allowed_methods):
                 response[ACCESS_CONTROL_ALLOW] = allowed_methods
                 return response
             response = view_func(request, *args, **kwargs)
-            response[ACCESS_CONTROL_ALLOW_ORIGIN] = '*'
-            response[ACCESS_CONTROL_ALLOW_HEADERS] = 'Content-Type, Authorization'
+            if request.method in allowed_methods:
+                response[ACCESS_CONTROL_ALLOW_ORIGIN] = '*'
+                response[ACCESS_CONTROL_ALLOW_HEADERS] = 'Content-Type, Authorization'
             return response
         return wrapped_view
     return decorator
