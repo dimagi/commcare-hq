@@ -18,6 +18,7 @@ from two_factor.views import LoginView
 
 from corehq.apps.domain.decorators import two_factor_exempt
 from corehq.apps.users.models import CouchUser
+from corehq.util.view_utils import reverse as hq_reverse
 
 from .decorators import consumer_user_login_required
 from .forms.change_contact_details_form import ChangeContactDetailsForm
@@ -61,22 +62,17 @@ class ConsumerUserLoginView(LoginView):
         return {}
 
     def get_success_url(self):
-        url = self.get_redirect_url()
-        if url:
-            return url
-        url = reverse('consumer_user:homepage')
-        return url
+        return self.get_redirect_url() or reverse('consumer_user:homepage')
 
     def get_context_data(self, **kwargs):
         context = super(ConsumerUserLoginView, self).get_context_data(**kwargs)
         if self.signed_invitation_id:
-            extra_context = {}
-            go_to_signup = reverse(
-                'consumer_user:register', kwargs={'signed_invitation_id': self.signed_invitation_id}
+            context['go_to_signup'] = hq_reverse(
+                'consumer_user:register',
+                kwargs={'signed_invitation_id': self.signed_invitation_id},
+                params={'create_user': '1'},
             )
-            extra_context['go_to_signup'] = '%s%s' % (go_to_signup, '?create_user=1')
-            context.update(extra_context)
-        context.update({'hide_menu': True})
+        context['hide_menu'] = True
         return context
 
 
