@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
@@ -34,7 +35,7 @@ from .models import (
 class ConsumerUserLoginView(LoginView):
     invitation = None
     signed_invitation_id = None
-    template_name = 'consumer_user/p_login.html'
+    template_name = settings.LOGIN_TEMPLATE
 
     @two_factor_exempt
     @method_decorator(sensitive_post_parameters('password'))
@@ -57,6 +58,7 @@ class ConsumerUserLoginView(LoginView):
                 params={'create_user': '1'},
             )
         context['hide_menu'] = True
+        context['restrict_domain_creation'] = True
         return context
 
     def done(self, *args, **kwargs):

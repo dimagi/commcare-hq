@@ -65,7 +65,6 @@ class RegisterTestCase(TestCase):
         register_uri = register_url(invitation)
         response = self.client.get(register_uri)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'consumer_user/signup.html')
         self.assertFalse(invitation.accepted)
 
     def test_register_consumer(self):
@@ -170,11 +169,6 @@ class LoginTestCase(TestCase):
         ConsumerUser.objects.all().delete()
         User.objects.all().delete()
         super().tearDown()
-
-    def test_login_get(self):
-        response = self.client.get(self.login_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'consumer_user/p_login.html')
 
     def test_login_post(self):
         email = 'log@log.in'
