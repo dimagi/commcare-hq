@@ -5,8 +5,9 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from mock import mock
 
-from corehq.apps.domain.decorators import _login_or_challenge, api_auth, allow_cors, ACCESS_CONTROL_ALLOW_ORIGIN, \
-    ACCESS_CONTROL_ALLOW
+from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW
+from corehq.apps.api.decorators import allow_cors
+from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
