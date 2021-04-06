@@ -68,7 +68,7 @@ def item_lists_by_app(app):
             'id': config.uuid,
             'uri': uri,
             'path': "/rows/row",
-            'name': config.header.get('en'),
+            'name': app.default_language,
             'structure': {},
             'fixture_type': REPORT_FIXTURE,
         })
