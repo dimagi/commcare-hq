@@ -1,3 +1,4 @@
+import copy
 import uuid
 
 from datetime import date
@@ -373,7 +374,7 @@ class TestCaseSearchLookups(TestCase):
         ]
         self._assert_queries_run_correctly(
             self.domain,
-            CASE_SEARCH_DATA.copy(),
+            copy.deepcopy(CASE_SEARCH_DATA),
             None,
             [
                 (
@@ -404,7 +405,7 @@ class TestCaseSearchLookups(TestCase):
         ]
         self._assert_queries_run_correctly(
             self.domain,
-            CASE_SEARCH_DATA.copy(),
+            copy.deepcopy(CASE_SEARCH_DATA),
             None,
             [
                 (
