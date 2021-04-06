@@ -461,7 +461,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.getTranslation = function (translationKey, defaultTranslation) {
             var curParent = self.parent;
-            while (curParent.parent != null) {
+            while (curParent.parent !== null) {
                 curParent = curParent.parent;
             }
             var translations = curParent.translations;
