@@ -1,0 +1,14 @@
+{% extends "consumer_user/consumer_user_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Homepage" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <h2>{% trans "Welcome" %} {{request.user.username}}</h2>
+    </div>
+  </div>
+</div>
+{% endblock %}

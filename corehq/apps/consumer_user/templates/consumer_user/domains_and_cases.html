@@ -1,0 +1,22 @@
+{% extends "consumer_user/consumer_user_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Projects And Cases" %}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>{% trans "Projects And Cases" %}</h2>
+  <table class="table table-bordered">
+    <tr>
+      <th>{% trans "Projects" %}</th>
+      <th>{% trans "Cases" %}</th>
+    </tr>
+    {% for dict in domains_and_cases %}
+    <tr>
+      <td>{{dict.domain}}</td>
+      <td>{{dict.case_id}}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
