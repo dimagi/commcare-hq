@@ -5,7 +5,7 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from mock import mock
 
-from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW
+from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS
 from corehq.apps.api.decorators import allow_cors
 from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
@@ -250,6 +250,7 @@ class AllowCORSDecoratorTest(TestCase):
 
     def _assert_cors(self, response):
         self.assertEqual(response[ACCESS_CONTROL_ALLOW_ORIGIN], '*')
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW_HEADERS], 'Content-Type, Authorization')
 
     def test_no_decorator_no_cors_headers(self):
         self._assert_no_cors(sample_view_with_response(_get_request()))
