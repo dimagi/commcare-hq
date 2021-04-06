@@ -694,7 +694,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                         user.delete_domain_membership(domain)
                         user.save()
                 else:
-                    if user.is_member_of(domain):
+                    if domain in user.get_domains():
                         if domain_has_privilege(domain, privileges.LOCATIONS) and location_codes is not None:
                             membership = user.get_domain_membership(domain)
                             location_cache = SiteCodeToLocationCache(domain)
