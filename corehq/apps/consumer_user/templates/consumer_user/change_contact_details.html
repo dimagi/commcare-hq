@@ -1,57 +1,38 @@
 {% extends "consumer_user/consumer_user_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load compress %}
 
 {% block title %}{% trans "Change Contact Details" %}{% endblock title %}
 
-{% block background_content %}
-<div class="bg-container">
-  <div class="bg-full-cover-fixed bg-registration b-lazy b-loaded"
-       style="background-image: url({% static 'hqwebapp/images/molly.jpg' %});"></div>
-  <div class="bg-overlay"></div>
-</div>
-{% endblock %}
+{% block page_title %}{% trans "Change Contact Details" %}{% endblock page_title %}
 
-{% block stylesheets %}
-{% compress css %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.less' %}" />
-{% endcompress %}
-{% endblock stylesheets %}
-
-{% block content %}
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="reg-form-container sign-in-container">
-        <div class="form-bubble form-bubble-lg">
-          <h2 class="text-center">{% trans "Change Contact Details" %}</h2>
-          {% if form.errors %}
-          <ul class="user-msg error">
-            {% for field in form %}
-            {% for error in field.errors %}
-            <li>
-              {% if field != '__all__' %}
-              <strong>{{ field.label }}:</strong>
+{% block page_content %}
+  <div class="container-fluid">
+    <form action="#" class="form-horizontal" method="post">
+      {% csrf_token %}
+      <fieldset>
+        {% for field in form.visible_fields %}
+          <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+            <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label" for="{{ field.id }}">{{ field.label }}</label>
+            <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls">
+              {{ field }}
+              {% for error in field.errors %}
+                <p class="help-block">{{ error }}</p>
+              {% endfor %}
+              {% if field.help_text %}
+                <p class="help-block">
+                  {{ field.help_text }}
+                </p>
               {% endif %}
-              {{ error }}
-            </li>
-            {% endfor %}
-            {% endfor %}
-          </ul>
-          {% endif %}
-
-          <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button class="btn btn-primary" type="submit">{% trans "Submit" %}</button>
-          </form>
+            </div>
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="form-actions">
+        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
+          <button class="btn btn-primary" type="submit">{% trans "Submit" %}</button>
         </div>
       </div>
-    </div>
+    </form>
   </div>
-</div>
-{% endblock content %}
+{% endblock page_content %}
