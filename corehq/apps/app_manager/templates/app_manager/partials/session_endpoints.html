@@ -1,0 +1,26 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+            <div class="form-group">
+              <label class="control-label {% css_label_class %}">
+                {% trans 'Session Endpoint ID' %}
+                <span class="hq-help-template"
+                      data-title="{% trans 'Session Endpoint ID' %}"
+                      data-content="{% blocktrans %}A session endpoint ID allows Android apps to call in to
+                                    CommCare at this case list.{% endblocktrans %}"></span>
+              </label>
+              <div id="session-endpoint-id"
+                   {% comment %}
+                   <!-- TODO: When 2.51 is released: -->
+                   class="{% css_field_class %} commcare-feature"
+                   data-since-version="2.51"
+                   {% endcomment %}
+                   class="{% css_field_class %}">
+                <input class="code form-control"
+                       type="text"
+                       id="session_endpoint_id"
+                       name="session_endpoint_id"
+                       {# CommCare currently only supports one session endpoint #}
+                       value="{{ module_or_form.session_endpoint_ids.0 }}" />
+              </div>
+            </div>
