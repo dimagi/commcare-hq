@@ -402,6 +402,53 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
 
     /**
+     * Represents a select2 for multiple options
+     */
+    function MultiDropdownEntry(question, options) {
+        var self = this;
+        MultiSelectEntry.call(this, question, options);
+        self.templateType = 'multidropdown';
+        self.placeholderText = gettext('Please choose an item');
+
+        self.helpText = function () {
+            return "";
+        };
+
+        self.options = ko.computed(function () {
+            return _.map(question.choices(), function (choice, idx) {
+                return {
+                    text: choice,
+                    id: idx + 1,
+                };
+            });
+        });
+
+        self.renderSelect2 = function () {
+            var $input = $('#' + self.entryId);
+            $input.select2(_.extend({
+                allowClear: true,
+                placeholder: self.placeholderText,
+                multiple: true,
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+            }));
+        };
+
+        self.afterRender = function () {
+            self.renderSelect2();
+        };
+    }
+    MultiDropdownEntry.prototype = Object.create(MultiSelectEntry.prototype);
+    MultiDropdownEntry.prototype.constructor = MultiSelectEntry;
+    MultiDropdownEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        MultiSelectEntry.prototype.onAnswerChange.call(self, newValue);
+        _.delay(function () {
+            $("#" + self.entryId).trigger("change.select2");
+        });
+    };
+
+
+    /**
      * Represents multiple radio button entries
      */
     function SingleSelectEntry(question, options) {
@@ -1046,7 +1093,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 }
                 break;
             case Const.MULTI_SELECT:
-                entry = new MultiSelectEntry(question, {});
+                isMinimal = style === Const.MINIMAL;
+                if (isMinimal) {
+                    entry = new MultiDropdownEntry(question, {});
+                } else {
+                    entry = new MultiSelectEntry(question, {});
+                }
                 break;
             case Const.DATE:
                 if (style === Const.ETHIOPIAN) {
@@ -1111,6 +1163,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
+        MultDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
         TimeEntry: TimeEntry,
