@@ -3,6 +3,8 @@ import math
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -968,7 +970,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             results.get(json_format_date(date), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="text-muted">0</span>' if c == 0 else c for c in date_cols]
+        styled_zero = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
+        styled_date_cols = [styled_zero if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
@@ -1943,12 +1946,13 @@ def _get_raw_user_link(user, url, filter_class):
     filter_class is expected to be either ExpandedMobileWorkerFilter or a
     subclass of it, such as the CaseListFilter
     """
-    user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
-    user_link = user_link_template % {
-        'link': url,
-        'params': urlencode(filter_class.for_user(user.user_id)),
-        'username': user.username_in_report,
-    }
+    user_link_template = '<a href="{link}?{params}">{username}</a>'
+    user_link = format_html(
+        user_link_template,
+        link=url,
+        params=urlencode(filter_class.for_user(user.user_id)),
+        username=user.username_in_report,
+    )
     return user_link
 
 
