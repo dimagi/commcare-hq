@@ -2,7 +2,7 @@ import datetime
 
 from django.db import transaction
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext
 
@@ -478,10 +478,13 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ) % {
                 'num_apps': num_apps,
             },
-            [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
-                'url': reverse('view_app', args=[domain.name, app['_id']])
-            } for app in cloudcare_enabled_apps],
+            [
+                format_html(
+                    '<a href="{}">{}</a>',
+                    reverse('view_app', args=[domain.name, app['_id']]),
+                    app['name']
+                ) for app in cloudcare_enabled_apps
+            ],
         )
 
     @staticmethod
@@ -784,8 +787,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ) % {
                 'num_apps': len(apps),
             },
-            [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
-                'url': reverse('view_app', args=[project.name, app['_id']])
-            } for app in apps],
+            [
+                format_html(
+                    '<a href="{}">{}</a>',
+                    reverse('view_app', args=[project.name, app['_id']]),
+                    app['name']
+                ) for app in apps
+            ],
         )
