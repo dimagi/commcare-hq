@@ -2,9 +2,11 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     return {
         listSessions: function listSessions(pageNumber, pageSize) {
+            /* eslint-disable */
             if (pageSize == null) {
                 pageSize = hqImport("cloudcare/js/formplayer/constants").DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
             }
+            /* eslint-disable */
             if (pageNumber == null) {
                 pageNumber = 0;
             }
