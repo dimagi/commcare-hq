@@ -2,13 +2,25 @@
 {% load i18n %}
 
 {% block title %}{% trans "Homepage" %}{% endblock %}
+{% block page_title %}{% trans "Projects And Cases" %}{% endblock page_title %}
 
-{% block content %}
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-12">
-      <h2>{% trans "Welcome" %} {{request.user.username}}</h2>
-    </div>
+{% block page_content %}
+  <div class="container">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>{% trans "Project" %}</th>
+          <th>{% trans "Case" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for case_ in cases %}
+          <tr>
+            <td>{{case_.domain}}</td>
+            <td>{{case_.case_id}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</div>
 {% endblock %}

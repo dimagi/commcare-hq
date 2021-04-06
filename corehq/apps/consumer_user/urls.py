@@ -4,7 +4,6 @@ from .views import (
     ConsumerUserLoginView,
     change_contact_details_view,
     change_password_view,
-    domains_and_cases_list_view,
     homepage_view,
     logout_view,
     register_view,
@@ -23,6 +22,5 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('homepage/', homepage_view, name='homepage'),
     path('change-password/', change_password_view, name='change_password'),
-    path('domain-case-list/', domains_and_cases_list_view, name='domain_and_cases_list'),
     path('change-contact-details/', change_contact_details_view, name='change_contact_details'),
 ]

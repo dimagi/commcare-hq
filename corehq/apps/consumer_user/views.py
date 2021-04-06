@@ -105,7 +105,14 @@ def register_view(request, signed_invitation_id):
 
 @consumer_user_login_required
 def homepage_view(request):
-    return render(request, 'consumer_user/homepage.html')
+    consumer_user = get_object_or_404(ConsumerUser, user=request.user)
+    cases = list(
+        ConsumerUserCaseRelationship.objects
+        .filter(consumer_user=consumer_user)
+        .values('domain', 'case_id')
+    )
+
+    return render(request, 'consumer_user/homepage.html', {'cases': cases})
 
 
 @consumer_user_login_required
@@ -137,18 +144,6 @@ def change_password_view(request):
         'consumer_user/consumer_user_form.html',
         {'form': form, 'page_title': _("Change Password")},
     )
-
-
-@consumer_user_login_required
-def domains_and_cases_list_view(request):
-    consumer_user = get_object_or_404(ConsumerUser, user=request.user)
-    domains_and_cases = list(
-        ConsumerUserCaseRelationship.objects
-        .filter(consumer_user=consumer_user)
-        .values('domain', 'case_id')
-    )
-
-    return render(request, 'consumer_user/domains_and_cases.html', {'domains_and_cases': domains_and_cases})
 
 
 @consumer_user_login_required
