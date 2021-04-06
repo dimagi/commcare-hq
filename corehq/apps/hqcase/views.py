@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
+from corehq.apps.api.decorators import allow_cors
 from soil import DownloadBase
 
 from corehq import privileges
@@ -15,7 +16,7 @@ from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
-    allow_cors)
+)
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
