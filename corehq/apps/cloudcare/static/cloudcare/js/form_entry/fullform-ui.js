@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
     function getQuestions(o) {
         if (ko.utils.unwrapObservable(o.type) === 'question') {
-            return [o]
+            return [o];
         } else {
             var qs = [];
             for (var i = 0; i < o.children().length; i++) {
@@ -295,6 +295,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             var questions = getQuestions(self);
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
+                /* eslint-disable */
                 if (questions[i].error() != null || questions[i].serverError() != null ) {
                     qs.push(questions[i]);
                 }
@@ -574,9 +575,9 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.navigateTo = function () {
             var el = $("label[for='" + self.entry.entryId + "']");
             $('html, body').animate({
-                scrollTop: $(el).offset().top - 60
+                scrollTop: $(el).offset().top - 60,
             });
-        }
+        };
     }
 
     /**
