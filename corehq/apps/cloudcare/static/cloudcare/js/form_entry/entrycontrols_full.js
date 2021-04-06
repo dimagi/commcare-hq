@@ -1163,7 +1163,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
-        MultDropdownEntry: MultiDropdownEntry,
+        MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
         TimeEntry: TimeEntry,
