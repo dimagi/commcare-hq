@@ -15,6 +15,7 @@ from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.translation import ugettext
+from django.utils.html import conditional_escape
 
 from celery.utils.log import get_task_logger
 from memoized import memoized
@@ -45,6 +46,14 @@ from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 from corehq import toggles
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
+
+def _sanitize_rows(rows):
+    return [_sanitize_row(row) for row in rows]
+
+
+def _sanitize_row(row):
+    return [conditional_escape(col) for col in row]
 
 
 class GenericReportView(object):
@@ -897,7 +906,7 @@ class GenericTabularReport(GenericReportView):
             self.pagination.start (skip)
             self.pagination.count (limit)
         """
-        rows = list(self.rows)
+        rows = _sanitize_rows(self.rows)
         total_records = self.total_records
         if not isinstance(total_records, int):
             raise ValueError("Property 'total_records' should return an int.")
