@@ -129,10 +129,14 @@ def change_password_view(request):
                 couch_user.last_password_set = datetime.utcnow()
                 couch_user.save()
             messages.success(request, _('Updated Successfully'))
-        return render(request, 'consumer_user/change_password.html', {'form': form})
     else:
         form = PasswordChangeForm(user=request.user)
-        return render(request, 'consumer_user/change_password.html', {'form': form})
+
+    return render(
+        request,
+        'consumer_user/consumer_user_form.html',
+        {'form': form, 'page_title': _("Change Password")},
+    )
 
 
 @consumer_user_login_required
@@ -157,7 +161,11 @@ def change_contact_details_view(request):
             messages.success(request, _('Updated Successfully'))
     else:
         form = ChangeContactDetailsForm(instance=request.user)
-    return render(request, 'consumer_user/change_contact_details.html', {'form': form})
+    return render(
+        request,
+        'consumer_user/consumer_user_form.html',
+        {'form': form, 'page_title': _('Change Contact Details')},
+    )
 
 
 def _get_invitation_or_400(signed_invitation_id):
