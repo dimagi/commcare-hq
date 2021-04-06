@@ -2,66 +2,52 @@
 {% load i18n %}
 
 {% block navigation %}
-<div id="hq-navigation"
-     class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
-  <div class="container-fluid">
-
-    {% if hide_menu %}
-    <nav class="navbar-menus navbar-signin" role="navigation">
-      <div class="nav-settings-bar pull-right">
-        <a href="{% url "consumer_user:login" %}" class="btn btn-primary navbar-btn">{% trans "Sign In"%}
+  <div id="hq-navigation"
+    class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
+    <div class="container-fluid">
+      <div class="navbar-header hq-header">
+        <a href="{% url "consumer_user:homepage" %}" class="navbar-brand">
+          <!-- navbar.less supplies the default logo -->
+          <div></div>
         </a>
       </div>
-    </nav>
-
-    {% else %}
-    <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
-      <div class="nav-settings-bar pull-right">
-        <ul class="nav navbar-nav" role="menu">
-          <li id="settingsmenu-project" class="dropdown">
-            <a class="dropdown-toggle" href="#" data-toggle="dropdown" aria-expanded="true">
-              <span class="responsive-label">{% trans "Menu" %}</span>
-              {% trans "Menu" %}
-              <b class="caret"></b>
+      {% if hide_menu %}
+        <nav class="navbar-menus navbar-signin" role="navigation">
+          <div class="nav-settings-bar pull-right">
+            <a href="{% url "consumer_user:login" %}" class="btn btn-primary navbar-btn">{% trans "Sign In"%}
             </a>
-            <ul class="dropdown-menu dropdown-menu-right" role="menu">
-              <li>
-                <a href="{% url "consumer_user:domain_and_cases_list" %}">
-                {% trans "Projects And Cases" %}
-                </a>
-              </li>
-              <li>
-                <a href="{% url "consumer_user:change_password" %}">
+          </div>
+        </nav>
+
+      {% else %}
+        <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+
+          <ul class="nav navbar-nav">
+            <li>
+              <a href="{% url "consumer_user:change_password" %}">
                 {% trans "Change Password" %}
-                </a>
-              </li>
-              <li>
-                <a href="{% url "consumer_user:change_contact_details" %}">
+              </a>
+            </li>
+            <li>
+              <a href="{% url "consumer_user:change_contact_details" %}">
                 {% trans "Change Contact Details" %}
-                </a>
-              </li>
+              </a>
+            </li>
+
+          </ul>
+          <div class="nav-settings-bar pull-right">
+            <ul class="nav navbar-nav">
               <li>
                 <a href="{% url "consumer_user:logout" %}">
-                {% trans "Logout" %}
+                  <i class="icon-signout fa fa-sign-out"></i>
+                  {% trans 'Sign Out' %}
                 </a>
               </li>
             </ul>
-          </li>
-        </ul>
-      </div>
-    </nav>
-    {% endif %}
-
-    <div class="navbar-header hq-header">
-      <a href="{% url "consumer_user:homepage" %}" class="navbar-brand">
-      {% if CUSTOM_LOGO_URL %}
-      <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo"/>
-      {% else %}
-      <!-- navbar.less supplies the default logo -->
-      <div></div>
+          </div>
+        </nav>
       {% endif %}
-      </a>
+
     </div>
   </div>
-</div>
 {% endblock navigation %}
