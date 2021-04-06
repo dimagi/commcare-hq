@@ -460,8 +460,9 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         };
 
         self.getTranslation = function (translationKey, defaultTranslation) {
+            // Find the root level element which contains the translations.
             var curParent = self.parent;
-            while (curParent.parent !== null) {
+            while (curParent.parent) {
                 curParent = curParent.parent;
             }
             var translations = curParent.translations;
