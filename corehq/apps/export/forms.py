@@ -53,7 +53,6 @@ from corehq.apps.reports.filters.users import (
 )
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.pillows import utils
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
 

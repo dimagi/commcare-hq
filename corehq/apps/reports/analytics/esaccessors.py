@@ -1,6 +1,5 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
-from django.conf import settings
 
 from django.conf import settings
 
