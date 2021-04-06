@@ -21,6 +21,6 @@ urlpatterns = [
     ),
     path('logout/', logout_view, name='logout'),
     path('homepage/', homepage_view, name='homepage'),
-    path('change-password/', change_password_view, name='change_password'),
-    path('change-contact-details/', change_contact_details_view, name='change_contact_details'),
+    path('change_password/', change_password_view, name='change_password'),
+    path('change_contact_details/', change_contact_details_view, name='change_contact_details'),
 ]
