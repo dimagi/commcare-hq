@@ -13,5 +13,4 @@
 -r dev-requirements.txt
 
 django-debug-toolbar
-ipdb==0.11
 pdbpp
