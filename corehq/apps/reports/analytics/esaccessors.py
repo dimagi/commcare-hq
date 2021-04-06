@@ -591,6 +591,7 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     return list(query.run().aggregations.user_id.buckets_dict)
 
 
+# ToDo: Remove post build_form_multimedia_zipfile rollout
 def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
     enddate = datespan.enddate + timedelta(days=1)
     query = (FormES()
@@ -614,15 +615,35 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
             pass
 
 
+def _get_forms_with_attachments(es_query):
+    query = es_query.source(['_id', 'external_blobs'])
+
+    for form in query.scroll():
+        try:
+            for attachment in form.get('external_blobs', {}).values():
+                if attachment['content_type'] != "text/xml":
+                    yield form
+                    continue
+        except AttributeError:
+            pass
+
+
+# ToDo: Remove post build_form_multimedia_zipfile rollout
 def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
     return {
         form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
     }
 
 
-def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+def get_form_ids_with_multimedia(export_es_query):
+    return {
+        form['_id'] for form in _get_forms_with_attachments(export_es_query)
+    }
+
+
+def media_export_is_too_big(es_query):
     size = 0
-    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    for form in _get_forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
             size += attachment.get('content_length', 0)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:
