@@ -19,6 +19,7 @@ from corehq.util.view_utils import absolute_reverse
 from .const import (
     CONSUMER_INVITATION_ACCEPTED,
     CONSUMER_INVITATION_ERROR,
+    CONSUMER_INVITATION_EXPIRED,
     CONSUMER_INVITATION_SENT,
     CONSUMER_INVITATION_STATUS,
 )
@@ -140,7 +141,9 @@ def expire_unused_invitations():
         domain_mapped_case_ids[domain].append(case_id)
 
     for domain, case_ids in domain_mapped_case_ids.items():
-        case_changes = [(case_id, {CONSUMER_INVITATION_STATUS: "expired"}, True) for case_id in case_ids]
+        case_changes = [(case_id, {
+            CONSUMER_INVITATION_STATUS: CONSUMER_INVITATION_EXPIRED
+        }, True) for case_id in case_ids]
         bulk_update_cases(domain, case_changes, device_id=__name__ + '.expire_unused_invitations')
 
     expired_invitations.update(active=False)
