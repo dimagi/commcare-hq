@@ -40,7 +40,11 @@ class ConsumerUserCaseRelationship(models.Model):
     subcases of that case.
 
     """
-    consumer_user = models.ForeignKey(ConsumerUser, on_delete=models.CASCADE)
+    consumer_user = models.ForeignKey(
+        ConsumerUser,
+        on_delete=models.CASCADE,
+        related_name='case_relationships',
+    )
     case_id = models.CharField(max_length=255, unique=True)
     domain = models.CharField(max_length=255)
 
