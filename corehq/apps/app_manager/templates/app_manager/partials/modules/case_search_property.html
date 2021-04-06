@@ -66,8 +66,12 @@
                         <option value="">{% trans "Text" %}</option>
                         <option value="daterange">{% trans "Date Range" %}</option>
                         <option value="barcode_scan">{% trans "Barcode" %}</option>
+                        {% if js_options.has_lookup_tables %}
                         <option value="lookup_table_fixture">{% trans "Lookup Table Selection" %}</option>
-                        <option value="report_fixture">{% trans "Mobile UCR Selection" %}</option>
+                        {% endif %}
+                        {% if js_options.has_mobile_ucr %}
+                          <option value="report_fixture">{% trans "Mobile UCR Selection" %}</option>
+                        {% endif %}
                         {% if js_options.has_geocoder_privs %}
                           <option value="address">{% trans "Geocoder Broadcast" %}</option>
                         {% endif %}
