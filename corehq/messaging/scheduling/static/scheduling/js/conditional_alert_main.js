@@ -33,20 +33,6 @@ hqDefine("scheduling/js/conditional_alert_main", [
         var basicInformation = basicInformationTab(name);
         // setup tab
         basicInformation.setRuleTabVisibility();
-
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
-
-        $("#conditional-alert-form-save").click(function () {
-            var $form = $("#conditional-alert-form"),
-                $modal = $("#conditional-alert-warning-modal");
-            if ($modal.length) {
-                $modal.find(".btn-primary").off("click").on("click", function () {
-                    $form.submit();
-                });
-                $modal.modal('show');
-                return;
-            }
-            $form.submit();
-        });
     });
 });
