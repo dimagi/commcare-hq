@@ -22,7 +22,6 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-# from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
@@ -1091,9 +1090,6 @@ class CaseDataView(BaseProjectReportSectionView):
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
             "show_properties_edit": show_properties_edit,
-            #TODO: Figure out if this is safe to just remove -- it doesn't appear to be referenced
-            #  within reports/reportdata/case_data.html
-            # "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
             "ledgers": ledger_map,
