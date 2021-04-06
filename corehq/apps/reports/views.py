@@ -1526,15 +1526,16 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
     meta = _top_level_tags(form).get('meta', None) or {}
-    phonetime_keys = list(meta)
 
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
+    phonetime_fields = ['timeStart', 'timeEnd']
+    date_fields = ['received_on', 'server_modified_on'] + phonetime_fields
     definition = get_default_definition(
-        _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_keys, parse_dates=True
+        _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_fields, date_fields=date_fields
     )
     form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):

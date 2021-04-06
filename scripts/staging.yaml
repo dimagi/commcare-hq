@@ -62,23 +62,31 @@ branches:
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - nh/reminders  # Norman Jan 26
-  #- fr/ethiopian-date-widget-webapps                            # Farid Jan 29 -- commented out by Joel Mar 30
   - smh/bulk-upload-web-users # Steph Feb 22
-  - mk/fhir/data-dictionary # MK Feb 26
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-  #- ap/translation-update # Amit March 16
-  - ap/escape-html-underscore # Amit March 16
   - fr/consumer-user             # Farid March 17
   - feature/USH-606-conditional-alert-modal # Jenny March 18
   - kev/repeat-translation-inner-group # Kevin Mar 22
   - mjr/xss_accounting # Matt Mar 24
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - jm/pillow-upgrade # Joel Mar 29
-  - jm/ssri-8.0.1 # Joel Mar 30
+  - jm/hub-and-kiss-emails # Joel Apr 1
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
-  - bmb/sp-encrypt-test  # Biyeun March 30
-  - revert-29439-revert-29395-sk/sentry-submission-timing # Simon March 31
   - sr/ucr-cs  # Sravan March 31
+  - rp/fix-broken-link # Rynhard March 31
+  - bmb/sso-token-encryption  # Biyeun Apr 1
+  - sr/pagedSessions  # Sravan April 2
+  - nh/wfp/api_manager  # Norman Apr 2
+  - ap/escape-html-in-app-manager # Amit Apr 2
+  - ap/escape-html-in-cloudcare # Amit Apr 2
+  - ap/escape-html-in-hqwebapp # Amit Apr 2
+  - ap/escape-html-in-multimedia # Amit Apr 2
+  - ap/escape-html-in-reports # Amit Apr 2
+  - ap/escape-html-in-users # Amit Apr 2
+  - ap/escape-templates-in-datainterfaces # Amit Apr 2
+  - ap/escape-html-in-remaining-apps # Amit Apr 5
+  - smh/missing-queryData # Steph Apr 2
+  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
+  - mjr/xss_data_tables_fix  # Matt April 5
 submodules: {}

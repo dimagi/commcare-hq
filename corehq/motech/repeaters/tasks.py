@@ -103,7 +103,7 @@ def check_repeaters():
                 ):
                     break
                 metrics_counter("commcare.repeaters.check.attempt_forward")
-                record.attempt_forward_now()
+                record.attempt_forward_now(is_retry=True)
             else:
                 iterating_time = datetime.utcnow() - start
                 _soft_assert(
@@ -116,6 +116,15 @@ def check_repeaters():
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
+    _process_repeat_record(repeat_record)
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def retry_process_repeat_record(repeat_record):
+    _process_repeat_record(repeat_record)
+
+
+def _process_repeat_record(repeat_record):
 
     # A RepeatRecord should ideally never get into this state, as the
     # domain_has_privilege check is also triggered in the create_repeat_records
