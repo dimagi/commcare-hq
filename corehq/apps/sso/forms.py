@@ -174,9 +174,9 @@ class ServiceProviderDetailsForm(forms.Form):
     @property
     def token_encryption_help_block(self):
         help_text = _(
-            'SAML Token Encryption for Azure AD is a high security feature '
-            'that ensures Assertions are fully encrypted. This feature '
-            'requires a Premium Azure AD subscription. '
+            'This is a high security feature  that ensures Assertions are '
+            'fully encrypted. This feature requires a Premium Azure AD '
+            'subscription. '
         )
         return crispy.HTML(
             format_html('<p class="help-block">{}</p>', help_text)
@@ -522,7 +522,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('SAML Token Encryption Settings'),
+                        _('SAML Token Encryption'),
                         sp_details_form.token_encryption_help_block,
                         twbscrispy.PrependedText('require_encrypted_assertions', ''),
                         crispy.Div(*sp_details_form.token_encryption_fields),
