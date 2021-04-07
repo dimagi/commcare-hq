@@ -32,7 +32,7 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
         });
 
         self.placeholder = ko.computed(function () {
-            return _.template(gettext("Select <%= title %>..."))({ title: self.title() });
+            return _.template(gettext("Select <%- title %>..."))({ title: self.title() });
         });
 
         self.endpoint = data.endpoint;
