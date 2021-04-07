@@ -721,13 +721,11 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            soft_assert(to=[settings.SUPPORT_EMAIL,
-                            '{}@{}'.format('miemma', 'dimagi.com'),
-                            '{}@{}'.format('aphilippot', 'dimagi.com'),
-                            '{}@{}'.format('colaughlin', 'dimagi.com')],
-                        send_to_ops=False)(False,
-                                           'Error submitting periodic analytics data to Hubspot or Kissmetrics',
-                                           {'response': e.response.content.decode('utf-8')})
+            soft_assert(to=settings.SAAS_OPS_EMAIL, send_to_ops=False)(
+                False,
+                'Error submitting periodic analytics data to Hubspot or Kissmetrics',
+                {'response': e.response.content.decode('utf-8')}
+            )
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
