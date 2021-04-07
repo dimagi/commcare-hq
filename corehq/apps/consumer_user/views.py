@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm
@@ -35,7 +34,7 @@ from .models import (
 class ConsumerUserLoginView(LoginView):
     invitation = None
     signed_invitation_id = None
-    template_name = settings.LOGIN_TEMPLATE
+    template_name = 'consumer_user/login.html'
 
     @two_factor_exempt
     @method_decorator(sensitive_post_parameters('password'))
@@ -52,7 +51,8 @@ class ConsumerUserLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(ConsumerUserLoginView, self).get_context_data(**kwargs)
         if self.signed_invitation_id:
-            context['go_to_signup'] = hq_reverse(
+            context['invitation_email'] = self.invitation.email
+            context['register_url'] = hq_reverse(
                 'consumer_user:register',
                 kwargs={'signed_invitation_id': self.signed_invitation_id},
                 params={'create_user': '1'},
@@ -101,6 +101,11 @@ def register_view(request, signed_invitation_id):
             'form': form,
             'hide_menu': True,
             'domain': invitation.domain,
+            'invitation_email': invitation.email,
+            'login_url': reverse(
+                'consumer_user:login_with_invitation',
+                kwargs={'signed_invitation_id': signed_invitation_id}
+            )
         }
     )
 

@@ -44,4 +44,20 @@
     </div>
   </div>
 </div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="reg-form-container sign-in-container">
+        <div class="form-bubble form-bubble-lg">
+          <p>
+          {% blocktrans %}
+            If you already have a username that you want to link to the invitation that was sent to <strong>{{ invitation_email }}</strong>
+          {% endblocktrans %}
+          </p>
+          <a class="btn btn-primary" href="{{ login_url }}">{% trans "Sign In" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
