@@ -20,7 +20,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             actionButton: action || '',
             searchInput: search || '',
         });
-    }
+    };
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
         var action = _.template(
