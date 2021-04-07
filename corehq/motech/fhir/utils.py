@@ -63,6 +63,7 @@ def build_capability_statement(domain, fhir_version):
     Builds the FHIR capability statement including the OAuth URL extensions for SMART
     https://hl7.org/fhir/smart-app-launch/conformance/index.html
     """
+    from corehq.motech.fhir.views import SmartAuthView
     return {
         "rest": [
             {
@@ -77,7 +78,7 @@ def build_capability_statement(domain, fhir_version):
                                 },
                                 {
                                     "url": "authorize",
-                                    "valueUri": absolute_reverse("oauth2_provider:authorize"),
+                                    "valueUri": absolute_reverse(SmartAuthView.urlname, kwargs={"domain": domain})
                                 }
                             ]
                         }
