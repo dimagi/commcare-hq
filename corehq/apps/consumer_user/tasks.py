@@ -108,6 +108,7 @@ def _create_new_invitation(domain, invitation_case, demographic_case_id):
                 'consumer_user:register',
                 kwargs={'signed_invitation_id': new_invitation.signature()},
             ),
+        'domain': domain,
     }
     send_html_email_async.delay(
         _('Beneficiary Registration'),
