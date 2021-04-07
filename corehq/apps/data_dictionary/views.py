@@ -115,10 +115,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
 def update_case_property(request, domain):
-    property_list = json.loads(request.POST.get('properties'))
     fhir_resource_type_obj = None
     errors = []
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
+    property_list = json.loads(request.POST.get('properties'))
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
