@@ -61,6 +61,7 @@ branches:
   - sr/es-alias # Sravan Nov 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - jls/remove-ace-script-tags # Jenny April 7
   - nh/reminders  # Norman Jan 26
   - smh/bulk-upload-web-users # Steph Feb 22
   - nh/fhir/repeater  # Norman Mar 1
