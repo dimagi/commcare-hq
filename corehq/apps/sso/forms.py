@@ -527,8 +527,8 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 crispy.Div(
                     crispy.Fieldset(
                         _('Connection Details from Azure AD'),
-                        'entity_id',
                         'login_url',
+                        'entity_id',
                         'logout_url',
                         crispy.Div(*certificate_details),
                         'idp_cert_public',
