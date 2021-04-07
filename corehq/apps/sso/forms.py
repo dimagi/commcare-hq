@@ -133,8 +133,8 @@ class ServiceProviderDetailsForm(forms.Form):
         label=ugettext_lazy("Assertion Consumer Service"),
         required=False,
     )
-    sp_logout_url = forms.CharField(
-        label=ugettext_lazy("Logout URL"),
+    sp_sign_on_url = forms.CharField(
+        label=ugettext_lazy("Sign on URL"),
         required=False,
     )
     sp_public_cert = forms.CharField(
@@ -197,8 +197,8 @@ class ServiceProviderDetailsForm(forms.Form):
                 url_helpers.get_saml_acs_url(self.idp),
             ),
             hqcrispy.B3TextField(
-                'sp_logout_url',
-                url_helpers.get_saml_sls_url(self.idp),
+                'sp_sign_on_url',
+                url_helpers.get_saml_login_url(self.idp),
             ),
         ])
         return shown_fields
