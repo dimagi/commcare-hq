@@ -46,7 +46,8 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("sessions");
+            var pageSize = hqImport("cloudcare/js/formplayer/constants").DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
+            FormplayerFrontend.trigger("sessions", 0, pageSize);
         },
         syncClick: function (e) {
             e.preventDefault();
