@@ -26,7 +26,7 @@ this template generates an underscore.js template used by the maps report
 </style>
 
 <div class="stock-status-detail">
-  <h3><%= name %> <span class="loctype">(<%= props.type %>)</span></h3>
+  <h3><%- name %> <span class="loctype">(<%- props.type %>)</span></h3>
   <hr />
   <table>
     <tr><th></th>
@@ -38,7 +38,7 @@ this template generates an underscore.js template used by the maps report
       <tr><td>{{ p.name }}</td>
         {% for c in columns %}
           <td class="data data-{{ p.get_id }}-{{ c.id }}">
-            <%= props['{{ p.get_id }}-{{ c.id }}'] %>
+            <%- props['{{ p.get_id }}-{{ c.id }}'] %>
           </td>
         {% endfor %}
       </tr>
