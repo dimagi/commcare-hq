@@ -1,17 +1,25 @@
+import json
 import urllib.parse
 
 from django.core.cache import cache
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from oauth2_provider.views.base import AuthorizationView
+from oauth2_provider.models import (
+    get_access_token_model,
+    get_refresh_token_model,
+)
+from oauth2_provider.views.base import AuthorizationView, TokenView
 
 from corehq import toggles
 from corehq.apps.consumer_user.decorators import consumer_user_login_required
-from corehq.apps.consumer_user.models import ConsumerUserCaseRelationship
+from corehq.apps.consumer_user.models import (
+    CaseRelationshipOauthToken,
+    ConsumerUserCaseRelationship,
+)
 from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -21,8 +29,14 @@ from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm, OAuthAllowForm
-from .models import FHIRResourceType, build_fhir_resource
-from .utils import build_capability_statement, resource_url
+from .models import (
+    FHIRResourceType,
+    build_fhir_resource,
+)
+from .utils import (
+    build_capability_statement,
+    resource_url,
+)
 
 
 class AddFHIRRepeaterView(AddRepeaterView):
@@ -206,6 +220,63 @@ class SmartAuthView(AuthorizationView):
             domain=self.request.domain,
         ).exists():
             raise Http404(_("There are no cases associated with this user"))
+
+
+class SmartTokenView(TokenView):
+    urlname = "smart_token_view"
+
+    def post(self, request, domain, *args, **kwargs):
+        if request.POST.get('grant_type') == "refresh_token":
+            return self._handle_refresh_token(request, *args, **kwargs)
+
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code != 200:
+            return response
+
+        body = json.loads(response.content)
+        access_token = body.get("access_token")
+        token = get_access_token_model().objects.get(token=access_token)
+
+        if "launch/patient" in token.scope:
+            authorization_code = request.POST.get('code')
+            client_id = request.POST.get('client_id')
+            case_id = cache.get(_get_smart_cache_key(domain, client_id, authorization_code))
+            if not case_id:
+                raise Http404()
+
+            # save the case_id in the join table. We'll check this during auth
+            # later to ensure the case_id is the one this access token was made
+            # for.
+            if not CaseRelationshipOauthToken.create_from_case_id(case_id, token):
+                return Http404()
+
+            body['patient'] = case_id
+
+        return HttpResponse(content=json.dumps(body), status=response.status_code)
+
+    def _handle_refresh_token(self, request, *args, **kwargs):
+        # get the previous access_token before it is revoked
+        refresh_token_id = request.POST.get('refresh_token')
+        refresh_token = get_refresh_token_model().objects.get(token=refresh_token_id)
+        old_access_token = refresh_token.access_token
+
+        try:
+            relationship = CaseRelationshipOauthToken.objects.get(access_token=old_access_token)
+        except CaseRelationshipOauthToken.DoesNotExist:
+            # The old token didn't have case information, so we don't need to update anything
+            return super().post(request, *args, **kwargs)
+        else:
+            # revoke the old access token and make a new one
+            response = super().post(request, *args, **kwargs)
+            body = json.loads(response.content)
+            access_token = body.get("access_token")
+            new_access_token = get_access_token_model().objects.get(token=access_token)
+
+            relationship.access_token = new_access_token
+            relationship.save()
+
+            return response
 
 
 def _get_smart_cache_key(domain, client_id, authorization_code):

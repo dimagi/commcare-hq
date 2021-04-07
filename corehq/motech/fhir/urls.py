@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from corehq.motech.fhir.views import (
     SmartAuthView,
+    SmartTokenView,
     get_view,
     search_view,
     smart_configuration_view,
@@ -22,4 +23,5 @@ urlpatterns = [
 
 
     url(r'^oauth/login', SmartAuthView.as_view(), name=SmartAuthView.urlname),
+    url(r'^oauth/token', SmartTokenView.as_view(), name=SmartTokenView.urlname),
 ]
