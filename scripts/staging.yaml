@@ -91,5 +91,6 @@ branches:
   - fr/smart-oauth-prep         # Farid April 7
   - mk/form-mm-exports-filters # MK April 8
   - fr/smart-oauth-views        # Farid April 7
+  - mjr/xss_custom_fields  # Matt April 7
 
 submodules: {}
