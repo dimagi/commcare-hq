@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm, PasswordInput
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.consumer_user.models import ConsumerUser
@@ -38,7 +40,14 @@ class ConsumerUserSignUpForm(ModelForm):
             User.objects.filter(username=email).exists()
             or ConsumerUser.objects.filter(user__username=email).exists()
         ):
-            raise ValidationError(_(u'Username "{username}" is already in use.'), params={"username": email})
+            login_url = reverse(
+                'consumer_user:login_with_invitation',
+                kwargs={'signed_invitation_id': self.invitation.signature()}
+            )
+            sign_in_message = _(
+                'Username <strong>{email}</strong> is already in use. If you already have an '
+                'account, you can sign in <a href="{url}">here</a>').format(email=email, url=login_url)
+            raise ValidationError(mark_safe(sign_in_message))
 
         return email
 
