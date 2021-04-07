@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from corehq.motech.fhir.const import FHIR_VERSION_4_0_1
 from corehq.motech.fhir.utils import build_capability_statement
-from corehq.motech.fhir.views import SmartAuthView
+from corehq.motech.fhir.views import SmartAuthView, SmartTokenView
 from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 
@@ -27,7 +27,9 @@ class TestConfigurationView(TestCase):
             json_content['authorization_endpoint'],
             absolute_reverse(SmartAuthView.urlname, kwargs={"domain": "test"})
         )
-        self.assertEqual(json_content['token_endpoint'], absolute_reverse("oauth2_provider:token"))
+        self.assertEqual(
+            json_content['token_endpoint'], absolute_reverse(SmartTokenView.urlname, kwargs={"domain": "test"})
+        )
 
 
 class TestCapabilityStatement(TestCase):
@@ -55,7 +57,7 @@ class TestCapabilityStatement(TestCase):
                     }],
                     "extension": [{
                         "extension": [{
-                            "valueUri": absolute_reverse("oauth2_provider:token"),
+                            "valueUri": absolute_reverse(SmartTokenView.urlname, kwargs={"domain": "test_domain"}),
                             "url": "token"
                         }, {
                             "valueUri": absolute_reverse(SmartAuthView.urlname, kwargs={"domain": "test_domain"}),
