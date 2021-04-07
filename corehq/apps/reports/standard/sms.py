@@ -7,7 +7,7 @@ from django.db.models import Count, F, Q
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.html import escape, format_html
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -1431,7 +1431,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return ServerTime(timestamp).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
 
     def get_link_display(self, href, text):
-        return '<a target="_blank" href="%s">%s</a>' % (href, escape(text))
+        return format_html('<a target="_blank" href="{}">{}</a>', href, text)
 
     def get_case_display(self, case):
         from corehq.apps.reports.views import CaseDataView
