@@ -92,4 +92,7 @@ class AuditMiddleware:
                     audit_doc.user = request.couch_user.username
             if response is not None:
                 audit_doc.status_code = response.status_code
-            audit_doc.save()
+            try:
+                audit_doc.save()
+            except Exception:
+                log.exception("error saving view audit")
