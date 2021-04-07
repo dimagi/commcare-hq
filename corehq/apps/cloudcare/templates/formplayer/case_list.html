@@ -28,9 +28,9 @@
           <% _.each(headers, function(header, index) { %>
           <% if (columnVisible(index)) { %>
           <% if (columnSortable(index)) { %>
-          <th class="module-caselist-header header-clickable formplayer-request" data-id="<%= index %>"> <%= header %></th>
+          <th class="module-caselist-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
           <% } else { %>
-          <th class="module-caselist-header" data-id="<%= index %>"> <%= header %></th>
+          <th class="module-caselist-header" data-id="<%- index %>"> <%- header %></th>
           <% } %>
           <% } %>
           <% }); %>
@@ -40,7 +40,7 @@
         <% if (hasNoItems) { %>
         <tbody>
         <tr>
-          <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
+          <td class="module-caselist-column module-caselist-column-empty" colspan="<%-headers.length%>">
             <div class="alert alert-info">{% trans "List is empty." %}</div>
           </td>
         </tr>
@@ -56,7 +56,7 @@
     <div class="caselist-actions">
       <% _.each(actions, function(action, index) { %>
       <div class="caselist-action-button btn-group formplayer-request">
-        <button type="button" class="btn btn-success btn-lg" data-index="<%= index %>"><%= action.text %></button>
+        <button type="button" class="btn btn-success btn-lg" data-index="<%- index %>"><%- action.text %></button>
       </div>
       <% }) %>
     </div>
@@ -74,28 +74,28 @@
   <% _.each(data, function(datum, index) { %>
   <% if (!(styles[index].widthHint === 0)) { %>
   <% if (styles[index].displayFormat === 'Image') { %>
-  <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+  <td class="module-caselist-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
   <% } else if (styles[index].displayFormat === 'Graph') { %>
-  <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
+  <td class="module-caselist-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
   <% } else { %>
-  <td class="module-caselist-column"><%= datum %></td>
+  <td class="module-caselist-column"><%- datum %></td>
   <% } %>
   <% } %>
   <% }); %>
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
-  <div class="<%= prefix %>-cell-grid-style">
+  <div class="<%- prefix %>-cell-grid-style">
     <% _.each(data, function(datum, index) { %>
-    <div class="<%= prefix %>-grid-style-<%= index %> box">
+    <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-      <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%= resolveUri(datum) %>"/>
+      <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
-      <div style="display:none;"><%= datum %></div>
+      <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%= datum %></div>
+      <div><%- datum %></div>
       <% } %>
     </div>
     <% }); %>
@@ -104,18 +104,18 @@
 
 <script type="text/template" id="cell-layout-style-template">
   <% _.each(models, function(model){ %>
-  .<%= model.id %> {
-  grid-area: <%= model.gridStyle %>;
-  font-size: <%= model.fontStyle %>;
+  .<%- model.id %> {
+  grid-area: <%- model.gridStyle %>;
+  font-size: <%- model.fontStyle %>;
   }
   <% }); %>
 </script>
 
 <script type="text/template" id="cell-container-style-template">
   .list-cell-container-style {
-  width: <%= model.widthPercentage %>%;
+  width: <%- model.widthPercentage %>%;
   height: 0;
-  padding-bottom: <%= model.heightPercentage %>%;
+  padding-bottom: <%- model.heightPercentage %>%;
   display: inline-block;
   border: 1px solid white;
   border-collapse: collapse;
@@ -126,10 +126,10 @@
 </script>
 
 <script type="text/template" id="cell-grid-style-template">
-  .<%= model.prefix %>-cell-grid-style {
+  .<%- model.prefix %>-cell-grid-style {
   display: grid;
-  grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
-  grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
+  grid-template-columns: repeat(<%- model.numColumns %>, <%- model.widthPixels %>px) min-content 5px;
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightPixels %>px) min-content 5px;
   background-color: transparent;
   color: #685c53;
   justify-items: left;
@@ -147,7 +147,7 @@
         <tr>
           <% _.each(headers, function(header, index) { %>
           <% if (!(styles[index].widthHint === 0)) { %>
-          <th class="module-caselist-header"> <%= header %></th>
+          <th class="module-caselist-header"> <%- header %></th>
           <% } %>
           <% }); %>
         </tr>
@@ -155,7 +155,7 @@
         <% if (hasNoItems) { %>
         <tbody>
         <tr>
-          <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
+          <td class="module-caselist-column module-caselist-column-empty" colspan="<%-headers.length%>">
             <div class="alert alert-info">{% trans "List is empty." %}</div>
           </td>
         </tr>
