@@ -138,11 +138,13 @@ Next, install the appropriate requirements (only one is necessary).
 
       $ pip install -r requirements/dev-requirements.txt
 
-* Recommended for developers or others with custom requirements
+* Recommended for developers or others with custom requirements. Use this
+  `pip install ...` workflow for initial setup only. Then use commands in
+  `local.in`.
 
-      $ cp requirements/local.txt.sample requirements/local.txt
-      # customize requirements/local.txt as desired
-      $ pip install -r requirements/local.txt
+      $ cp requirements/local.in.sample requirements/local.in
+      # customize requirements/local.in as desired
+      $ pip install -r requirements/local.in
 
 * For production environments
 
