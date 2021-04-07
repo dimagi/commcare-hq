@@ -11,9 +11,9 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import render
-from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.html import conditional_escape
 
@@ -1104,10 +1104,11 @@ class GenericTabularReport(GenericReportView):
         return context
 
     def table_cell(self, value, html=None, zerostyle=False):
-        styled_value = '<span class="text-muted">0</span>' if zerostyle and value == 0 else value
+        empty_indicator = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
+        styled_value = empty_indicator if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
-            html="%s" % styled_value if html is None else html
+            html=styled_value if html is None else html
         )
 
 
