@@ -1,4 +1,3 @@
-
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 from corehq.util.view_utils import absolute_reverse
 
@@ -63,42 +62,31 @@ def build_capability_statement(domain, fhir_version):
     Builds the FHIR capability statement including the OAuth URL extensions for SMART
     https://hl7.org/fhir/smart-app-launch/conformance/index.html
     """
+    from corehq.motech.fhir.views import SmartAuthView, SmartTokenView
     return {
-        "rest": [
-            {
-                "security": {
-                    "extension": [
-                        {
-                            "url": "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
-                            "extension": [
-                                {
-                                    "url": "token",
-                                    "valueUri": absolute_reverse("oauth2_provider:token"),
-                                },
-                                {
-                                    "url": "authorize",
-                                    "valueUri": absolute_reverse("oauth2_provider:authorize"),
-                                }
-                            ]
-                        }
-                    ],
-                    "service": [
-                        {
-                            "coding": [
-                                {
-                                    "system": "http://hl7.org/fhir/restful-security-service",
-                                    "code": "SMART-on-FHIR"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "mode": "server"
-            }
-        ],
-        "format": [
-            "json"
-        ],
+        "rest": [{
+            "security": {
+                "extension": [{
+                    "url":
+                        "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
+                    "extension": [{
+                        "url": "token",
+                        "valueUri": absolute_reverse(SmartTokenView.urlname, kwargs={"domain": domain}),
+                    }, {
+                        "url": "authorize",
+                        "valueUri": absolute_reverse(SmartAuthView.urlname, kwargs={"domain": domain})
+                    }]
+                }],
+                "service": [{
+                    "coding": [{
+                        "system": "http://hl7.org/fhir/restful-security-service",
+                        "code": "SMART-on-FHIR"
+                    }]
+                }]
+            },
+            "mode": "server"
+        }],
+        "format": ["json"],
         "status": "active",
         "kind": "instance",
         "fhirVersion": fhir_version,
