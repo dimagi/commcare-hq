@@ -93,7 +93,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     @memoized
     def edit_enterprise_idp_form(self):
         if self.request.method == 'POST':
-            return SSOEnterpriseSettingsForm(self.identity_provider, self.request.POST)
+            return SSOEnterpriseSettingsForm(
+                self.identity_provider, self.request.POST, self.request.FILES
+            )
         return SSOEnterpriseSettingsForm(self.identity_provider)
 
     def post(self, request, *args, **kwargs):
