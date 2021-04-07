@@ -85,7 +85,7 @@
         "perfect-scrollbar": "1.5.0",
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
         "requirejs": "2.3.6",
-        "select2": "4.0.0",
+        "select2": "4.1.0-rc.0",
         "topojson": "3.0.2",
         "uglify-js": "2.8.29",
         "ui-select": "npm:ui-select#0.13.2",
