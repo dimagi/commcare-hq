@@ -116,11 +116,40 @@ def data_dictionary_json(request, domain, case_type_name=None):
 @toggles.DATA_DICTIONARY.required_decorator()
 def update_case_property(request, domain):
     property_list = json.loads(request.POST.get('properties'))
-    fhir_resource_type = request.POST.get('fhir_resource_type')
     fhir_resource_type_obj = None
-    case_type = request.POST.get('case_type')
     errors = []
+    update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
 
+    if update_fhir_resources:
+        errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
+    if not errors:
+        for property in property_list:
+            case_type = property.get('caseType')
+            name = property.get('name')
+            description = property.get('description')
+            data_type = property.get('data_type')
+            group = property.get('group')
+            deprecated = property.get('deprecated')
+            if update_fhir_resources:
+                fhir_resource_prop_path = property.get('fhir_resource_prop_path')
+                remove_path = property.get('removeFHIRResourcePropertyPath', False)
+            else:
+                fhir_resource_prop_path, remove_path = None, None
+            error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
+                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
+            if error:
+                errors.append(error)
+
+    if errors:
+        return JsonResponse({"status": "failed", "errors": errors}, status=400)
+    else:
+        return JsonResponse({"status": "success"})
+
+
+def _update_fhir_resource_type(request, domain):
+    errors, fhir_resource_type_obj = [], None
+    fhir_resource_type = request.POST.get('fhir_resource_type')
+    case_type = request.POST.get('case_type')
     if request.POST.get('remove_fhir_resource_type', '') == 'true':
         remove_fhir_resource_type(domain, case_type)
     elif fhir_resource_type and case_type:
@@ -131,25 +160,7 @@ def update_case_property(request, domain):
             for key, msgs in dict(e).items():
                 for msg in msgs:
                     errors.append(_("FHIR Resource {} {}: {}").format(fhir_resource_type, key, msg))
-    if not errors:
-        for property in property_list:
-            case_type = property.get('caseType')
-            name = property.get('name')
-            description = property.get('description')
-            fhir_resource_prop_path = property.get('fhir_resource_prop_path')
-            data_type = property.get('data_type')
-            group = property.get('group')
-            deprecated = property.get('deprecated')
-            remove_path = property.get('removeFHIRResourcePropertyPath', False)
-            error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
-                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
-            if error:
-                errors.append(error)
-
-    if errors:
-        return JsonResponse({"status": "failed", "errors": errors}, status=400)
-    else:
-        return JsonResponse({"status": "success"})
+    return errors, fhir_resource_type_obj
 
 
 @login_and_domain_required
