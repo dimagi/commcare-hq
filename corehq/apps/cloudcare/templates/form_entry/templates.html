@@ -128,7 +128,25 @@
       </div>
     </div>
   </div>
+  <div class="row" data-bind="visible: erroredQuestions().length > 0">
+    <div class="col-sm-12 alert alert-warning">
+      <h2>
+        {% trans "Please correct below answers before submitting this form." %}
+      </h2>
+      <ul data-bind="foreach: erroredQuestions">
+          <li>
+              <a href="#" data-bind="click: navigateTo, text: caption_markdown() || caption()"></a>
+              <span class="error-message server-error-message" data-bind="
+                        visible: serverError,
+                        text: serverError
+                    "></span>
+              </li>
+          </li>
+      </ul>
+    </div>
+  </div>
 </script>
+
 
 <script type="text/html" id="question-fullform-ko-template">
   <!-- ko if: datatype() !== 'info' -->
