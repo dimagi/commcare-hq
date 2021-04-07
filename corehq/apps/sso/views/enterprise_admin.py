@@ -82,6 +82,11 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
                 self.identity_provider.sp_cert_public,
                 f"{self.identity_provider.slug}_sp_public.cer"
             )
+        if 'idp_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.idp_cert_public,
+                f"{self.identity_provider.slug}_idp_public.cer"
+            )
         if 'sp_rollover_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_rollover_cert_public,
