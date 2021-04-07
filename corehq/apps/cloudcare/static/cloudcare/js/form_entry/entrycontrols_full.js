@@ -56,7 +56,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
         self.previousAnswer = self.answer();
-
     }
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
