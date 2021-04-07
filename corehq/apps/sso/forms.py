@@ -126,11 +126,11 @@ class ServiceProviderDetailsForm(forms.Form):
     required service provider information that's needed to link with an
     identity provider."""
     sp_entity_id = forms.CharField(
-        label=ugettext_lazy("Entity ID"),
+        label=ugettext_lazy("Identifier (Entity ID)"),
         required=False,
     )
     sp_acs_url = forms.CharField(
-        label=ugettext_lazy("Assertion Consumer Service"),
+        label=ugettext_lazy("Reply URL (Assertion Consumer Service)"),
         required=False,
     )
     sp_sign_on_url = forms.CharField(
@@ -425,7 +425,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
         required=False,
     )
     entity_id = forms.CharField(
-        label=ugettext_lazy("Issuer/Entity ID"),
+        label=ugettext_lazy("Azure AD Identifier"),
         required=False,
     )
     login_url = forms.CharField(
@@ -498,7 +498,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Service Provider Details for Azure AD'),
+                        _('Basic SAML Configuration for Azure AD'),
                         *sp_details_form.service_provider_fields
                     ),
                     css_class="panel-body"
