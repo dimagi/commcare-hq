@@ -8,6 +8,8 @@ from .views import (
     DomainRequestView,
     EditWebUserView,
     InviteWebUserView,
+    UploadWebUsers,
+    WebUserUploadStatusView,
     ListRolesView,
     ListWebUsersView,
     accept_invitation,
@@ -32,6 +34,7 @@ from .views import (
     create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
+    web_user_upload_job_poll,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -99,6 +102,11 @@ urlpatterns = [
     url(r'^web/download/$', download_web_users, name='download_web_users'),
     url(r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadWebUsersStatusView.as_view(), name='download_web_users_status'),
+    url(r'^web/upload/$', waf_allow('XSS_BODY')(UploadWebUsers.as_view()), name=UploadWebUsers.urlname),
+    url(r'^web/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        WebUserUploadStatusView.as_view(), name=WebUserUploadStatusView.urlname),
+    url(r'^web/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', web_user_upload_job_poll,
+        name='web_user_upload_job_poll'),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
         name='delete_domain_permission_mirror'),
