@@ -127,7 +127,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return (label_cls, label_text)
 
     def _make_state_label(self, record):
-        return format_html('<span class="label label-{}">{}</span>', *self.get_state(record))
+        return format_html('<span class="label label-{}">{}</span>', *self._get_state(record))
 
     @property
     def total_records(self):
