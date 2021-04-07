@@ -83,6 +83,23 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         }
     }
 
+    function getQuestions(o) {
+        if (ko.utils.unwrapObservable(o.type) === 'question') {
+            return [o];
+        } else {
+            var qs = [];
+            for (var i = 0; i < o.children().length; i++) {
+                if (ko.utils.unwrapObservable(o.children()[i].type) === 'question') {
+                    qs.push(o.children()[i]);
+                }
+                else {
+                    qs = qs.concat(getQuestions(o.children()[i]));
+                }
+            }
+            return qs;
+        }
+    }
+
     function parseMeta(type, style) {
         var meta = {};
 
@@ -272,6 +289,18 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.enableSubmitButton = ko.computed(function () {
             return !self.isSubmitting();
+        });
+
+        self.erroredQuestions = ko.computed(function () {
+            var questions = getQuestions(self);
+            var qs = [];
+            for (var i = 0; i < questions.length; i++) {
+                /* eslint-disable */
+                if (questions[i].error() != null || questions[i].serverError() != null ) {
+                    qs.push(questions[i]);
+                }
+            }
+            return qs;
         });
 
         self.submitText = ko.computed(function () {
@@ -548,6 +577,13 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.mediaSrc = function (resourceType) {
             if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
             return Utils.resourceMap(resourceType);
+        };
+
+        self.navigateTo = function () {
+            var el = $("label[for='" + self.entry.entryId + "']");
+            $('html, body').animate({
+                scrollTop: $(el).offset().top - 60,
+            });
         };
     }
 
