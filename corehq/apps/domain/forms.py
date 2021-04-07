@@ -1240,8 +1240,6 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
             couch_user = CouchUser.from_django_user(user)
             # If there is no CouchUser then this could be a ConsumerUser
-
-
             if couch_user and couch_user.is_web_user():
                 user_email = user.username
             elif user.email:
