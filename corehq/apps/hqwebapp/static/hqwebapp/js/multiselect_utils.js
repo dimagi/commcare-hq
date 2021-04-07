@@ -12,15 +12,15 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     var multiselect_utils = {};
 
     var _renderHeader = function (title, action, search) {
-        if (!action){
-            action = '';
-        }
-        if (!search){
-            search = '';
-        }
-        var templateStr = '<div class="ms-header">' + title + action + '</div>' + search;
-        return  _.template(templateStr);
-    };
+        // Since action and search are created from _renderAction() and _renderSearch()
+        // and the variables the functions are esacaped so it would be safe to use them with <%=
+        var header = _.template('<div class="ms-header"><%- headerTitle %><%= actionButton %></div><%= searchInput %>');
+        return header({
+            headerTitle: title,
+            actionButton: action || '',
+            searchInput: search || '',
+        });
+    }
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
         var action = _.template(
