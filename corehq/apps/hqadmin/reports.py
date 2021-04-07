@@ -320,9 +320,13 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
         return "---"
 
     def _hyperlink_diff_url(self, diff_url):
-        return f'<a href="{diff_url}">Diff with previous</a>'
+        return format_html('<a href="{}">Diff with previous</a>', diff_url)
 
     def _shorten_and_hyperlink_commit(self, commit_sha):
         if commit_sha:
-            return f'<a href="https://github.com/dimagi/commcare-hq/commit/{commit_sha}">{commit_sha[:7]}</a>'
+            return format_html(
+                '<a href="https://github.com/dimagi/commcare-hq/commit/{full_sha}">{abbrev_sha}</a>',
+                full_sha=commit_sha,
+                abbrev_sha=commit_sha[:7]
+            )
         return None
