@@ -30,6 +30,7 @@ from corehq.apps.hqwebapp.views import (
     quick_find,
     redirect_to_default,
     redirect_to_dimagi,
+    OauthApplicationRegistration,
     retrieve_download,
     server_up,
     temporary_google_verify,
@@ -92,7 +93,12 @@ urlpatterns = [
     url(r'^relogin/$', login_new_window, name='login_new_window'),
     url(r'^relogin/iframe/$', iframe_domain_login_new_window, name='iframe_domain_login_new_window'),
     url(r'^log_email_event/(?P<secret>[\w]+)/?$', log_email_event, name='log_email_event'),
-
+    url(
+        r'^oauth/applications/register/',
+        OauthApplicationRegistration.as_view(),
+        name=OauthApplicationRegistration.urlname
+    ),
+    url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]
 
 domain_specific = [
