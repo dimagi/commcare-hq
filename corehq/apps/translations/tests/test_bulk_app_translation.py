@@ -1208,7 +1208,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.modules[0]),
                          [('case_list_menu_item_label', 'list', 'Steth List')])
 
-    @flag_enabled('USH_CASE_CLAIM_ADDONS')
+    @flag_enabled('CASE_CLAIM_AUTOLAUNCH')
     def test_module_search_command_rows(self):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),

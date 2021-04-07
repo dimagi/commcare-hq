@@ -176,4 +176,7 @@ class CommCareFeatureSupportMixin(object):
 
     @property
     def enable_default_value_expression(self):
-        return self._require_minimum_version('2.51')
+        return (
+            self._require_minimum_version('2.51')
+            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(self.domain)
+        )

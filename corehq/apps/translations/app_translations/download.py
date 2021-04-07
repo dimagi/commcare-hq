@@ -215,7 +215,7 @@ def get_module_case_list_menu_item_rows(langs, module):
 
 
 def get_module_search_command_rows(langs, module, domain):
-    if not module_offers_search(module) or not toggles.USH_CASE_CLAIM_ADDONS.enabled(domain):
+    if not module_offers_search(module) or not toggles.CASE_CLAIM_AUTOLAUNCH.enabled(domain):
         return []
 
     return [

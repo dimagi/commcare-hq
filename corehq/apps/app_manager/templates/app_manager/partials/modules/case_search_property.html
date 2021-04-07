@@ -11,7 +11,6 @@
   <td>
     <input class="form-control" type="text" data-bind="value: label"/>
   </td>
-  {% if request|toggle_enabled:'USH_CASE_CLAIM_ADDONS' %}
   {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled %}
   <td>
     <button type="button"
@@ -69,8 +68,7 @@
                         <option value="daterange">{% trans "Date Range" %}</option>
                         <option value="barcode_scan">{% trans "Barcode" %}</option>
                         <option value="fixture">{% trans "Lookup Table Selection" %}</option>
-                        {% if js_options.has_geocoder_privs %}
-                          <option value="address">{% trans "Geocoder Broadcast" %}</option>
+                        {% if js_options.has_geocoder_privs %} <option value="address">{% trans "Geocoder Broadcast" %}</option>
                         {% endif %}
                       </select>
                     </div>
@@ -165,7 +163,6 @@
       </div>
     </div>
   </td>
-  {% endif %}
   {% endif %}
   <td>
     <i style="cursor: pointer;" class="fa fa-remove"

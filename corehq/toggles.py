@@ -772,8 +772,9 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 CASE_CLAIM_AUTOLAUNCH = StaticToggle(
     'case_claim_autolaunch',
     '''
-        Support several different case search/claim workflows in web apps:
-        "search first", "see more", and "skip to default case search results"
+        USH Specific toggle to support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results", Geocoder,
+        Lookup table, Hint text and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
@@ -2024,14 +2025,5 @@ FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
     TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-
-USH_CASE_CLAIM_ADDONS = StaticToggle(
-    'ush_case_claim_addons',
-    'USH Case Search/Claim Addons: Enabled Geocoder, Lookup table, Hint text and '
-    'other options in Webapps Case Search',
-    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
