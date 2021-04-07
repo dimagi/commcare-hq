@@ -48,6 +48,8 @@ class Migration(migrations.Migration):
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[
+                migrations.AlterIndexTogether(name='accessaudit', index_together=set()),
+                migrations.AlterIndexTogether(name='navigationeventaudit', index_together=set()),
                 migrations.AddIndex(
                     model_name='accessaudit',
                     index=models.Index(fields=['user', 'event_date'], name="auditcare_a_user_58e671_idx"),
