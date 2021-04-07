@@ -508,24 +508,6 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Single Sign-On Settings'),
-                        hqcrispy.B3TextField(
-                            'name',
-                            identity_provider.name,
-                        ),
-                        hqcrispy.B3TextField(
-                            'linked_email_domains',
-                            ", ".join(identity_provider.get_email_domains()),
-                        ),
-                        twbscrispy.PrependedText('is_active', ''),
-                    ),
-                    css_class="panel-body"
-                ),
-                css_class="panel panel-modern-gray panel-form-only"
-            ),
-            crispy.Div(
-                crispy.Div(
-                    crispy.Fieldset(
                         _('Connection Details from Azure AD'),
                         'login_url',
                         'entity_id',
@@ -544,6 +526,24 @@ class SSOEnterpriseSettingsForm(forms.Form):
                         sp_details_form.token_encryption_help_block,
                         twbscrispy.PrependedText('require_encrypted_assertions', ''),
                         crispy.Div(*sp_details_form.token_encryption_fields),
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Single Sign-On Settings'),
+                        hqcrispy.B3TextField(
+                            'name',
+                            identity_provider.name,
+                        ),
+                        hqcrispy.B3TextField(
+                            'linked_email_domains',
+                            ", ".join(identity_provider.get_email_domains()),
+                        ),
+                        twbscrispy.PrependedText('is_active', ''),
                     ),
                     css_class="panel-body"
                 ),
