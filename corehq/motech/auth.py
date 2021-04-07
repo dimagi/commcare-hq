@@ -62,12 +62,21 @@ moveit_automation_settings = OAuth2ApiSettings(
 )
 
 
+# https://wso2.com/
+wso2_api_manager_settings = OAuth2ApiSettings(
+    token_endpoint='/token',
+    refresh_endpoint='/token',
+    pass_credentials_in_header=True,
+)
+
+
 oauth1_api_endpoints = tuple(
     # No integrations using OAuth1 authentication (yet?)
 )
 oauth2_api_settings = (
     ('dhis2_auth_settings', 'DHIS2 OAuth 2.0'),
     ('moveit_automation_settings', 'MOVEit Automation'),
+    ('wso2_api_manager_settings', 'WSO2 API Manager'),
 )
 api_auth_settings_choices = [
     (None, _('(Not Applicable)')),
