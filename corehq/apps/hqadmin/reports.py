@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -254,7 +255,11 @@ class UserListReport(GetParamsMixin, AdminReport):
         return self._users_query().count()
 
     def _user_link(self, username):
-        return f'<a href="{self._user_lookup_url}?q={username}">{username}</a>'
+        return format_html(
+            '<a href="{url}?q={username}">{username}</a>',
+            url=self._user_lookup_url,
+            username=username
+        )
 
     @cached_property
     def _user_lookup_url(self):
