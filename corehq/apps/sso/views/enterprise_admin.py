@@ -112,4 +112,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             # we redirect here to force the memoized identity_provider property
             # to re-fetch its data.
             return HttpResponseRedirect(self.page_url)
+        else:
+            messages.error(
+                request,
+                _("Please check form for errors.")
+            )
         return self.get(request, *args, **kwargs)
