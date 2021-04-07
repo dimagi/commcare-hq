@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -813,14 +814,14 @@ class SubscriptionForm(forms.Form):
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
-                raise forms.ValidationError(mark_safe(_(
+                raise forms.ValidationError(format_html(_(
                     "Please update 'Client Contact Emails' "
-                    '<strong><a href=%(link)s target="_blank">here</a></strong> '
-                    "before using Billing Account <strong>%(account)s</strong>."
-                ) % {
-                    'link': reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                    'account': account.name,
-                }))
+                    '<strong><a href={link} target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>{account}</strong>."
+                ),
+                    link=reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    account=account.name,
+                ))
 
         start_date = self.cleaned_data.get('start_date')
         if not start_date:
@@ -1009,7 +1010,7 @@ class CreditForm(forms.Form):
         amount = self.cleaned_data['amount']
         field_metadata = CreditAdjustment._meta.get_field('amount')
         if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
-            raise ValidationError(mark_safe(_(
+            raise ValidationError(mark_safe(_(  # nosec: no user input
                 'Amount over maximum size.  If you need support for '
                 'quantities this large, please <a data-toggle="modal" '
                 'data-target="#modalReportIssue" href="#modalReportIssue">'
@@ -1147,11 +1148,14 @@ class SuppressSubscriptionForm(forms.Form):
 
         invoices = self.subscription.invoice_set.all()
         if invoices:
-            raise ValidationError(mark_safe(
-                "Cannot suppress subscription. Suppress these invoices first: %s"
-                % ', '.join(['<a href="{edit_url}">{name}</a>'.format(
-                        edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
-                        name=invoice.invoice_number,
+            raise ValidationError(format_html(
+                "Cannot suppress subscription. Suppress these invoices first: {}",
+                format_html_join(
+                    ', ',
+                    '<a href="{}">{}</a>',
+                    [(
+                        reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
+                        invoice.invoice_number,
                     ) for invoice in invoices])
             ))
 
@@ -2509,14 +2513,15 @@ class InvoiceInfoForm(forms.Form):
             ManageBillingAccountView,
         )
         if not invoice.is_wire and not invoice.is_customer_invoice:
-            subscription_link = mark_safe(make_anchor_tag(
+            subscription_link = make_anchor_tag(
                 reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
-                '{plan_name} ({start_date} - {end_date})'.format(
+                format_html(
+                    '{plan_name} ({start_date} - {end_date})',
                     plan_name=subscription.plan_version,
                     start_date=subscription.date_start,
                     end_date=subscription.date_end,
                 )
-            ))
+            )
         else:
             subscription_link = 'N/A'
 
@@ -2541,16 +2546,13 @@ class InvoiceInfoForm(forms.Form):
         self.helper.layout[0].extend([
             hqcrispy.B3TextField(
                 'account',
-                mark_safe(
-                    '<a href="%(account_link)s">'
-                    '%(account_name)s'
-                    '</a>' % {
-                        'account_link': reverse(
-                            ManageBillingAccountView.urlname,
-                            args=(invoice.account.id,)
-                        ),
-                        'account_name': invoice.account.name,
-                    }
+                format_html(
+                    '<a href="{}">Super {}</a>',
+                    reverse(
+                        ManageBillingAccountView.urlname,
+                        args=(invoice.account.id,)
+                    ),
+                    invoice.account.name
                 ),
             ),
             hqcrispy.B3TextField(
@@ -2723,7 +2725,7 @@ class CreateAdminForm(forms.Form):
                 css_id="select-admin-username",
             ),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % "Add Admin"),
+                format_html('<i class="fa fa-plus"></i> {}', 'Add Admin'),
                 css_class="btn-primary disable-on-submit",
                 type="submit",
             )
