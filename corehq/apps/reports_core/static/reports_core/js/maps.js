@@ -64,8 +64,8 @@ hqDefine('reports_core/js/maps', function () {
                 "       <td><%- row[col.column_id] %></td>",
                 "     </tr>",
                 "   <% }) %>",
-                "</table>"
-            ].join('\n'))
+                "</table>",
+            ].join('\n'));
         }
     };
 
