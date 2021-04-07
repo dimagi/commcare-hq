@@ -1,7 +1,6 @@
 import io
 import json
 import re
-from collections import defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -99,7 +98,7 @@ from corehq.apps.users.forms import (
     NewMobileWorkerForm,
     SetUserPasswordForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, BulkUploadResponseWrapper
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -1009,6 +1008,25 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return self.render_form("failure")
 
 
+def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun):
+    context = {
+        'bulk_upload': {
+            "help_site": {
+                "address": BULK_MOBILE_HELP_SITE,
+                "name": _("CommCare Help Site"),
+            },
+            "download_url": reverse(download_url, args=(domain,)),
+            "adjective": _(adjective),
+            "plural_noun": _(plural_noun),
+        },
+        'show_secret_settings': request_params.get("secret", False),
+    }
+    context.update({
+        'bulk_upload_form': get_bulk_upload_form(context),
+    })
+    return context
+
+
 class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
@@ -1021,23 +1039,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     @property
     def page_context(self):
         request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
-        context = {
-            'bulk_upload': {
-                "help_site": {
-                    "address": BULK_MOBILE_HELP_SITE,
-                    "name": _("CommCare Help Site"),
-                },
-                "download_url": reverse(
-                    "download_commcare_users", args=(self.domain,)),
-                "adjective": _("mobile worker"),
-                "plural_noun": _("mobile workers"),
-            },
-            'show_secret_settings': request_params.get("secret", False),
-        }
-        context.update({
-            'bulk_upload_form': get_bulk_upload_form(context),
-        })
-        return context
+        return get_user_upload_context(self.domain, request_params, "download_commcare_users", "mobile worker",
+                                       "mobile workers")
 
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
@@ -1092,9 +1095,9 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 list(self.user_specs),
                 list(self.group_specs),
                 request.couch_user,
-                upload_record.pk
+                upload_record.pk,
+                False
             )
-
         task_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
@@ -1136,34 +1139,11 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     context.update({
         'on_complete_short': _('Bulk upload complete.'),
         'on_complete_long': _('Mobile Worker upload has finished'),
+        'user_type': _('mobile workers'),
 
     })
 
-    class _BulkUploadResponseWrapper(object):
-
-        def __init__(self, context):
-            results = context.get('result') or defaultdict(lambda: [])
-            self.response_rows = results['rows']
-            self.response_errors = results['errors']
-            self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
-
-        def success_count(self):
-            return len(self.response_rows) - len(self.problem_rows)
-
-        def has_errors(self):
-            return bool(self.response_errors or self.problem_rows)
-
-        def errors(self):
-            errors = []
-            for row in self.problem_rows:
-                if row['flag'] == 'missing-data':
-                    errors.append(_('A row with no username was skipped'))
-                else:
-                    errors.append('{username}: {flag}'.format(**row))
-            errors.extend(self.response_errors)
-            return errors
-
-    context['result'] = _BulkUploadResponseWrapper(context)
+    context['result'] = BulkUploadResponseWrapper(context)
     return render(request, template, context)
 
 
