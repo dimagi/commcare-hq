@@ -2048,3 +2048,11 @@ FHIR_INTEGRATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+
+ADD_LIMITED_FIXTURES_TO_SMS_WORKFLOW = StaticToggle(
+    'fixtures_in_sms_workflow',
+    'Allow limited fixtures to be available in SMS workflows',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)

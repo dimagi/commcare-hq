@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
@@ -15,13 +17,21 @@ from casexml.apps.phone.xml import (
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.locations.fixtures import (
+    FlatLocationSerializer,
+    get_location_data_fields,
+)
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import WEBAPPS_CASE_MIGRATION
+from corehq.toggles import WEBAPPS_CASE_MIGRATION, ADD_LIMITED_FIXTURES_TO_SMS_WORKFLOW
 from corehq.util import reverse
 
 from .forms import MigrationForm
 from .migration import perform_migration
+
+
+MockCaseAsRestoreUser = namedtuple("MockCaseAsRestoreUser", "user_id")
 
 
 @method_decorator(domain_admin_required, name='dispatch')
@@ -81,6 +91,15 @@ def migration_restore(request, domain, case_id):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
+        if ADD_LIMITED_FIXTURES_TO_SMS_WORKFLOW.enabled(domain):
+            _add_limited_fixtures(domain, case_id, content)
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
+
+
+def _add_limited_fixtures(domain, case_id, content):
+    serializer = FlatLocationSerializer()
+    data_fields = get_location_data_fields(domain)
+    restore_user = MockCaseAsRestoreUser(user_id=case_id)
+    content.extend(serializer.get_xml_nodes('locations', restore_user, SQLLocation.active_objects, data_fields))

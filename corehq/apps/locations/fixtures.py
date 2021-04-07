@@ -113,7 +113,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
-        data_fields = _get_location_data_fields(restore_user.domain)
+        data_fields = get_location_data_fields(restore_user.domain)
         return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
 
 
@@ -331,7 +331,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
     xml_root.append(_get_metadata_node(location, data_fields))
 
 
-def _get_location_data_fields(domain):
+def get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
     fields_definition = CustomDataFieldsDefinition.get(domain, LocationFieldsView.field_type)
     if fields_definition:
