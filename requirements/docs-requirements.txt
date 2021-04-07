@@ -329,7 +329,7 @@ pycryptodome==3.9.9
     # via -r base-requirements.in
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.7.1
+pygments==2.8.1
     # via
     #   -r base-requirements.in
     #   pycco

@@ -414,7 +414,7 @@ pyflakes==2.2.0
     # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.7.1
+pygments==2.8.1
     # via
     #   -r base-requirements.in
     #   ipython

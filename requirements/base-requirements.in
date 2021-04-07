@@ -85,7 +85,7 @@ py-KISSmetrics==1.1.0
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
 PyGithub==1.54.1
-Pygments~=2.0
+Pygments==2.8.1
 pygooglechart==0.4.0
 python-dateutil~=2.6
 python-imap==1.0.0
