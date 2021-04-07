@@ -150,13 +150,10 @@ class ServiceProviderDetailsForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, identity_provider, show_public_cert=True,
-                 show_rollover_cert=True, show_help_block=True, *args, **kwargs):
+    def __init__(self, identity_provider, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
         #  whether SP signing is enforced (dependent on client's Azure tier)
-        self.show_public_cert = show_public_cert
-        self.show_rollover_cert = show_rollover_cert
         self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)
@@ -175,8 +172,18 @@ class ServiceProviderDetailsForm(forms.Form):
         )
 
     @property
+    def token_encryption_help_block(self):
+        help_text = _(
+            'SAML Token Encryption for Azure AD is a high security feature '
+            'that ensures Assertions are fully encrypted. This feature '
+            'requires a Premium Azure AD subscription. '
+        )
+        return crispy.HTML(
+            format_html('<p class="help-block">{}</p>', help_text)
+        )
+
+    @property
     def service_provider_fields(self):
-        download = _("Download")
         shown_fields = []
         if self.show_help_block:
             shown_fields.append(self.service_provider_help_block)
@@ -194,30 +201,34 @@ class ServiceProviderDetailsForm(forms.Form):
                 url_helpers.get_saml_sls_url(self.idp),
             ),
         ])
-        if self.show_public_cert:
-            shown_fields.extend([
-                hqcrispy.B3TextField(
-                    'sp_public_cert',
-                    format_html(
-                        '<a href="?sp_cert_public" target="_blank">{}</a>',
-                        download
-                    ),
+        return shown_fields
+
+    @property
+    def token_encryption_fields(self):
+        download = _("Download")
+        return [
+            hqcrispy.B3TextField(
+                'sp_public_cert',
+                format_html(
+                    '<a href="?sp_cert_public" target="_blank">{}</a>',
+                    download
                 ),
-                hqcrispy.B3TextField(
-                    'sp_public_cert_expiration',
-                    self.idp.date_sp_cert_expiration.strftime(
-                        '%d %B %Y at %H:%M UTC'
-                    ),
+            ),
+            hqcrispy.B3TextField(
+                'sp_public_cert_expiration',
+                self.idp.date_sp_cert_expiration.strftime(
+                    '%d %B %Y at %H:%M UTC'
                 ),
-            ])
-        if self.show_rollover_cert:
-            shown_fields.append(hqcrispy.B3TextField(
+            ),
+            hqcrispy.B3TextField(
                 'sp_rollover_cert',
-                (format_html('<a href="?sp_rollover_cert_public" target="_blank">{}</a>', download)
+                (format_html(
+                    '<a href="?sp_rollover_cert_public" target="_blank">{}</a>',
+                    download)
                  if self.idp.sp_rollover_cert_public
                  else _("Not needed/generated yet.")),
-            ))
-        return shown_fields
+            ),
+        ]
 
 
 class EditIdentityProviderAdminForm(forms.Form):
@@ -323,7 +334,8 @@ class EditIdentityProviderAdminForm(forms.Form):
                     crispy.Fieldset(
                         _('Service Provider Settings'),
                         'slug',
-                        *sp_details_form.service_provider_fields
+                        crispy.Div(*sp_details_form.service_provider_fields),
+                        crispy.Div(*sp_details_form.token_encryption_fields),
                     ),
                     css_class="panel-body"
                 ),
@@ -444,11 +456,6 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 "Use Token Encryption"
             ),
         ),
-        help_text=ugettext_lazy(
-            "High security feature that ensures Assertions are fully encrypted. "
-            "This requires a Premium Azure AD subscription with Token Encryption "
-            "enabled."
-        ),
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
@@ -511,7 +518,6 @@ class SSOEnterpriseSettingsForm(forms.Form):
                             ", ".join(identity_provider.get_email_domains()),
                         ),
                         twbscrispy.PrependedText('is_active', ''),
-                        twbscrispy.PrependedText('require_encrypted_assertions', ''),
                     ),
                     css_class="panel-body"
                 ),
@@ -526,6 +532,18 @@ class SSOEnterpriseSettingsForm(forms.Form):
                         'logout_url',
                         crispy.Div(*certificate_details),
                         'idp_cert_public',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('SAML Token Encryption Settings'),
+                        sp_details_form.token_encryption_help_block,
+                        twbscrispy.PrependedText('require_encrypted_assertions', ''),
+                        crispy.Div(*sp_details_form.token_encryption_fields),
                     ),
                     css_class="panel-body"
                 ),
