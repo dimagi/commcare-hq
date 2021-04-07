@@ -316,7 +316,11 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     def _format_date(self, date):
         if date:
-            return f'<div>{naturaltime(date)}</div><div>{date.strftime(SERVER_DATETIME_FORMAT)}</div>'
+            return format_html(
+                '<div>{}</div><div>{}</div>',
+                naturaltime(date),
+                date.strftime(SERVER_DATETIME_FORMAT)
+            )
         return "---"
 
     def _hyperlink_diff_url(self, diff_url):
