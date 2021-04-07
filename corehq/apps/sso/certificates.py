@@ -46,6 +46,10 @@ def get_private_key(key_pair):
     return crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair).decode("utf-8")
 
 
+def get_certificate_from_file(file):
+    return crypto.load_certificate(crypto.FILETYPE_PEM, file.read())
+
+
 def get_certificate_response(cert_string, filename):
     response = HttpResponse(
         BytesIO(cert_string.encode("utf-8")),

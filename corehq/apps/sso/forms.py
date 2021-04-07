@@ -1,4 +1,5 @@
-import dateutil
+import datetime
+
 from django import forms
 from django.db import transaction
 from django.template.defaultfilters import slugify
@@ -14,6 +15,7 @@ from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
+from corehq.apps.sso import certificates
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils import url_helpers
 
@@ -422,13 +424,16 @@ class SSOEnterpriseSettingsForm(forms.Form):
         label=ugettext_lazy("Logout URL"),
         required=False,
     )
-    idp_cert_public = forms.CharField(
-        label=ugettext_lazy("Public Signing Certificate"),
-        widget=forms.Textarea,
+    idp_cert_public = forms.FileField(
+        label=ugettext_lazy("Upload Certificate (Base64)"),
+        required=False,
+    )
+    download_idp_cert_public = forms.CharField(
+        label=ugettext_lazy("Certificate (Base64)"),
         required=False,
     )
     date_idp_cert_expiration = forms.CharField(
-        label=ugettext_lazy("Certificate Expiration"),
+        label=ugettext_lazy("Certificate Expires On"),
         required=False,
     )
     require_encrypted_assertions = forms.BooleanField(
@@ -453,17 +458,31 @@ class SSOEnterpriseSettingsForm(forms.Form):
             'entity_id': identity_provider.entity_id,
             'login_url': identity_provider.login_url,
             'logout_url': identity_provider.logout_url,
-            'idp_cert_public': identity_provider.idp_cert_public,
-            'date_idp_cert_expiration': (
-                identity_provider.date_idp_cert_expiration.isoformat()
-                if identity_provider.date_idp_cert_expiration else ''
-            ),
             'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
         }
         super().__init__(*args, **kwargs)
 
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
         self.fields.update(sp_details_form.fields)
+
+        certificate_details = []
+        if self.idp.idp_cert_public:
+            self.fields['idp_cert_public'].label = _("Upload New Certificate (Base64)")
+            certificate_details = [
+                hqcrispy.B3TextField(
+                    'download_idp_cert_public',
+                    format_html(
+                        '<a href="?idp_cert_public" target="_blank">{}</a>',
+                        _("Download")
+                    ),
+                ),
+                hqcrispy.B3TextField(
+                    'date_idp_cert_expiration',
+                    self.idp.date_idp_cert_expiration.strftime(
+                        '%d %B %Y at %H:%M UTC'
+                    ),
+                ),
+            ]
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -505,11 +524,8 @@ class SSOEnterpriseSettingsForm(forms.Form):
                         'entity_id',
                         'login_url',
                         'logout_url',
+                        crispy.Div(*certificate_details),
                         'idp_cert_public',
-                        crispy.Field(
-                            'date_idp_cert_expiration',
-                            placeholder="YYYY/MM/DD HH:MM AM/PM",
-                        ),
                     ),
                     css_class="panel-body"
                 ),
@@ -546,30 +562,38 @@ class SSOEnterpriseSettingsForm(forms.Form):
         return logout_url
 
     def clean_idp_cert_public(self):
-        idp_cert_public = self.cleaned_data['idp_cert_public']
-        _check_required_when_active(self.cleaned_data['is_active'], idp_cert_public)
-        return idp_cert_public
-
-    def clean_date_idp_cert_expiration(self):
-        date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
-        _check_required_when_active(self.cleaned_data['is_active'], date_idp_cert_expiration)
-        if date_idp_cert_expiration:
+        idp_cert_file = self.cleaned_data['idp_cert_public']
+        if idp_cert_file:
             try:
-                date_idp_cert_expiration = dateutil.parser.parse(date_idp_cert_expiration)
-            except dateutil.parser.ParserError:
+                cert = certificates.get_certificate_from_file(idp_cert_file)
+                public_key = certificates.get_public_key(cert)
+                date_expiration = certificates.get_expiration_date(cert)
+            except certificates.crypto.Error:
                 raise forms.ValidationError(
-                    _("This is not a valid Date and Time. "
-                      "It should be YYYY/MM/DD HH:MM.")
+                    _("File type not accepted. Please ensure you have "
+                      "uploaded a Base64 x509 certificate.")
                 )
-        return date_idp_cert_expiration
+            if date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
+                raise forms.ValidationError(
+                    _("This certificate has already expired!")
+                )
+        else:
+            public_key = self.idp.idp_cert_public
+            date_expiration = self.idp.date_idp_cert_expiration
+
+        _check_required_when_active(self.cleaned_data['is_active'], public_key)
+        return public_key, date_expiration
 
     def update_identity_provider(self, admin_user):
         self.idp.is_active = self.cleaned_data['is_active']
         self.idp.entity_id = self.cleaned_data['entity_id']
         self.idp.login_url = self.cleaned_data['login_url']
         self.idp.logout_url = self.cleaned_data['logout_url']
-        self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
-        self.idp.date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
+
+        public_key, date_expiration = self.cleaned_data['idp_cert_public']
+        self.idp.idp_cert_public = public_key
+        self.idp.date_idp_cert_expiration = date_expiration
+
         self.idp.require_encrypted_assertions = self.cleaned_data['require_encrypted_assertions']
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
