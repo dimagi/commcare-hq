@@ -94,6 +94,10 @@ branches:
   - mjr/xss_custom_fields  # Matt April 7
   - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
   - ap/fix-ko-html-parsing-issues # Amit April 8
+<<<<<<< HEAD
   - rp/fix-2fa-hyperlink # Rynhard April 8
+=======
+  - rp/fix-f2a-hyperlink # Rynhard April 8
+>>>>>>> ac54ec3a9adf7e2c3ef56b413e9d1f173f484450
 
 submodules: {}
