@@ -96,6 +96,7 @@ class HQOauthApplication(models.Model):
         related_name='hq_application',
     )
     pkce_required = models.BooleanField(default=True)
+    smart_on_fhir_compatible = models.BooleanField(default=False)
 
 
 def pkce_required(client_id):
