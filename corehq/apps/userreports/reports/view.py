@@ -41,7 +41,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.exceptions import FilterException
-from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.reports_core.filters import Choice
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.const import (
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
@@ -255,8 +255,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.request_dict, self.request_user, self.lang)
-            for filter in self.filters
+            report_filter.css_id: report_filter.context(self.request_dict, self.request_user, self.lang)
+            for report_filter in self.filters
+        }
+
+    def filter_context_for_saved_report(self, saved_config):
+        return {
+            report_filter.css_id: report_filter.context(saved_config.filters, self.request_user, self.lang)
+            for report_filter in self.filters
         }
 
     @property
@@ -369,6 +375,11 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     def saved_report_context_data(self):
+        """
+        Update context with saved report data
+        Override filter_context with saved report config filters
+        :return: updated context
+        """
         def _get_context_for_saved_report(report_config):
             if report_config:
                 report_config_data = report_config.to_json()
@@ -381,7 +392,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
             if saved_report_config_id else None
 
-        return {
+        context = {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
                 for saved_report in ReportConfig.by_domain_and_owner(
@@ -391,6 +402,12 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'default_config': _get_context_for_saved_report(saved_report_config),
             'datespan_filters': ReportConfig.datespan_filter_choices(self.datespan_filters, self.lang),
         }
+
+        if saved_report_config:
+            # override filter_context with the saved report config filters
+            context.update({'filter_context': self.filter_context_for_saved_report(saved_report_config)})
+
+        return context
 
     @property
     def has_datespan(self):
