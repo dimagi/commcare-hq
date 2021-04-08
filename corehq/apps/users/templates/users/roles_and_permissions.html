@@ -175,7 +175,7 @@
             <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
               <strong>{% trans "Only" %}</strong><br/>
               <span data-bind="foreach: reportPermissions.specific">
-                                    <span class="label label-default" data-bind="html: name, visible: value"></span><br data-bind="visible: value" />
+                                    <span class="label label-default" data-bind="text: name, visible: value"></span><br data-bind="visible: value" />
                                 </span>
             </div>
           </td>
