@@ -61,7 +61,8 @@ def get_case_hierarchy_for_restore(case):
 
 @formplayer_auth
 def migration_restore(request, domain, case_id):
-    """Restore endpoint used in bulk case migrations
+    """Restore endpoint used in bulk case migrations.
+    Also used by formplayer, to get case data, when responding to smsforms in HQ.
 
     Accepts the provided case_id and returns a restore for the user containing:
     * Registration block

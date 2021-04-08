@@ -154,6 +154,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.steps = options.steps;
         this.page = options.page;
         this.search = options.search;
+        this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
@@ -178,6 +179,12 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setPage = function (page) {
             this.page = page;
+        };
+
+        this.setCasesPerPage = function (casesPerPage) {
+            this.casesPerPage = casesPerPage;
+            this.page = null;
+            this.sortIndex = null;
         };
 
         this.setSort = function (sortIndex) {
@@ -328,6 +335,16 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             return result;
         };
     }
+
+    Util.savePerPageLimitCookie = function (name, perPageLimit) {
+        var savedPath = window.location.pathname;
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        $.cookie(name + '-per-page-limit', perPageLimit, {
+            expires: 365,
+            path: savedPath,
+            secure: initialPageData.get('secure_cookies'),
+        });
+    };
 
     return Util;
 });

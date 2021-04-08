@@ -10,9 +10,6 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils.functional import lazy
-from django.utils.safestring import mark_safe
-from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -47,7 +44,8 @@ from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.icds_core.view_utils import is_icds_cas_project
 
-mark_safe_lazy = lazy(mark_safe, str)
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
+
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -219,13 +217,11 @@ class BaseUserInfoForm(forms.Form):
         choices=(),
         initial=None,
         required=False,
-        help_text=mark_safe_lazy(
-            ugettext_lazy(
-                "<i class=\"fa fa-info-circle\"></i> "
-                "Becomes default language seen in Web Apps and reports (if applicable), "
-                "but does not affect mobile applications. "
-                "Supported languages for reports are en, fr (partial), and hin (partial)."
-            )
+        help_text=ugettext_lazy(
+            "<i class=\"fa fa-info-circle\"></i> "
+            "Becomes default language seen in Web Apps and reports (if applicable), "
+            "but does not affect mobile applications. "
+            "Supported languages for reports are en, fr (partial), and hin (partial)."
         )
     )
 
@@ -289,10 +285,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 hqcrispy.Field('language'),
                 crispy.Div(hqcrispy.StaticField(
                     ugettext_lazy('API Key'),
-                    mark_safe(
-                        ugettext_lazy('API key management has moved <a href="{}">here</a>.')
-                        .format(reverse(ApiKeyView.urlname))
-                    ),
+                    format_html_lazy(
+                        ugettext_lazy('API key management has moved <a href="{}">here</a>.'),
+                        reverse(ApiKeyView.urlname)),
                 )),
             ),
             hqcrispy.FormActions(
@@ -338,12 +333,12 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
-        self.fields['role'].help_text = _(mark_safe(
+        self.fields['role'].help_text = _(
             '<i class="fa fa-info-circle"></i> '
             'Only applies to mobile workers who will be entering data using '
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
-        ))
+        )
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
@@ -378,15 +373,12 @@ class SetUserPasswordForm(SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe_lazy(
-                format_lazy(
-                    ('<i class="fa fa-warning"></i>{}<br />'
-                     '<span data-bind="text: passwordHelp, css: color">'),
-                    ugettext_lazy(
-                        "This password is automatically generated. "
-                        "Please copy it or create your own. It will not be shown again."),
-                )
-            )
+            self.fields['new_password1'].help_text = format_html_lazy(
+                ('<i class="fa fa-warning"></i>{}<br />'
+                    '<span data-bind="text: passwordHelp, css: color">'),
+                ugettext_lazy(
+                    "This password is automatically generated. "
+                    "Please copy it or create your own. It will not be shown again."))
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -570,14 +562,11 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             # Use normal text input so auto-generated strong password is visible
             self.fields['new_password'].widget = forms.TextInput()
-            self.fields['new_password'].help_text = mark_safe_lazy(
-                format_lazy(
-                    '<i class="fa fa-warning"></i>{}<br />',
-                    ugettext_lazy(
-                        'This password is automatically generated. '
-                        'Please copy it or create your own. It will not be shown again.'),
-                )
-            )
+            self.fields['new_password'].help_text = format_html_lazy(
+                '<i class="fa fa-warning"></i>{}<br />',
+                ugettext_lazy(
+                    'This password is automatically generated. '
+                    'Please copy it or create your own. It will not be shown again.'))
 
         if project.uses_locations:
             self.fields['location_id'].widget = forms.Select()

@@ -12,7 +12,6 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
-from django.conf import settings
 from django.utils.dateparse import parse_date
 
 from corehq.apps.case_search.const import (
@@ -26,7 +25,6 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
 

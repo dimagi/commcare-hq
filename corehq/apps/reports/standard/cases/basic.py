@@ -25,12 +25,12 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.timezones.conversions import PhoneTime
 
-from .data_sources import CaseDisplay, CaseInfo
+from .data_sources import CaseDisplay
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -212,33 +212,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             'external_id',
         ]
 
-    def get_data(self):
-        for row in self.es_results['hits'].get('hits', []):
-            case = self.get_case(row)
-            ci = CaseInfo(self, case)
-            data = {
-                '_case': case,
-                'detail_url': ci.case_detail_url,
-            }
-            data.update((prop, getattr(ci, prop)) for prop in (
-                    'case_type', 'case_name', 'case_id', 'external_id',
-                    'is_closed', 'opened_on', 'modified_on', 'closed_on',
-                ))
-
-            creator = ci.creating_user or {}
-            data.update({
-                'creator_id': creator.get('id'),
-                'creator_name': creator.get('name'),
-            })
-            owner = ci.owner
-            data.update({
-                'owner_type': owner[0],
-                'owner_id': owner[1]['id'],
-                'owner_name': owner[1]['name'],
-            })
-
-            yield data
-
     @property
     def headers(self):
         headers = DataTablesHeader(
@@ -255,8 +228,8 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     @property
     def rows(self):
-        for data in self.get_data():
-            display = CaseDisplay(self, data['_case'])
+        for row in self.es_results['hits'].get('hits', []):
+            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,
@@ -267,10 +240,3 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    def date_to_json(self, date):
-        if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string(SERVER_DATETIME_FORMAT))
-        else:
-            return ''

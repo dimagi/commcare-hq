@@ -86,7 +86,7 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
                 'The following groups have no name. '
                 'Please name them before continuing: {}'
             ),
-            mark_safe(', '.join(group_links))
+            mark_safe(', '.join(group_links))  # nosec: no user input
         ))
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))

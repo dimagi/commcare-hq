@@ -62,21 +62,38 @@ branches:
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - nh/reminders  # Norman Jan 26
-  - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - smh/bulk-upload-web-users # Steph Feb 22
-  - sr/geocoder  # Sravan Feb 25
-  - nh/master+adil-uddin/feature/USH-462-HQ-Properties-Change  # Norman Mar 1
-  - adil-uddin:feature/USH-606-conditional-alert-modal # Adil/Jenny Feb 1
-  - adil-uddin:feature/USH-632-pagination-updates # Adil/Jenny Feb 10
-  - adil-uddin:feature/USH-462-HQ-Properties-Change # Adil/Jenny Feb 17
-  - mk/fhir/data-dictionary # MK Feb 26
-  - mk/fhir/api-2 # MK Feb 26
-  - mk/fhir/data-dictionary-upload-2 # MK Mar 9
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-  - kev/repeat-add-new-translation # Kevin Mar 2
-  - gh/remove-export-settings-ff # Graham March 11
-  # - challabeehyv:consumer_user_poc # Farid March 11
-  - jls/case-search-parent-props # Jenny March 15
-  - smh/add-location-data-web-user-download # Steph Mar 15
+  - fr/consumer-user             # Farid March 17
+  - mjr/xss_accounting # Matt Mar 24
+  - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
+  - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
+  - sk/get_display_data # Simon March 30
+  - sk/consolidate-doc-lookup # Simon March 30
+  - sr/ucr-cs  # Sravan March 31
+  - bmb/sso-token-encryption  # Biyeun Apr 1
+  - sr/pagedSessions  # Sravan April 2
+  - nh/wfp/api_manager  # Norman Apr 2
+  - ap/escape-html-in-app-manager # Amit Apr 2
+  - ap/escape-html-in-cloudcare # Amit Apr 2
+  - ap/escape-html-in-hqwebapp # Amit Apr 2
+  - ap/escape-html-in-multimedia # Amit Apr 2
+  - ap/escape-html-in-reports # Amit Apr 2
+  - ap/escape-html-in-users # Amit Apr 2
+  - ap/escape-templates-in-datainterfaces # Amit Apr 2
+  - ap/escape-html-in-remaining-apps # Amit Apr 5
+  - smh/missing-queryData # Steph Apr 2
+  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
+  - mjr/xss_reports  # Matt April 7
+  - sr/jumptoErrors # Sravan April 6
+  - fr/smart-oauth-prep         # Farid April 7
+  - mk/form-mm-exports-filters # MK April 8
+  - fr/smart-oauth-views        # Farid April 7
+  - mjr/xss_custom_fields  # Matt April 7
+  - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
+  - ap/fix-ko-html-parsing-issues # Amit April 8
+  - rp/fix-2fa-hyperlink # Rynhard April 8
+  - rp/fix-broken-link-2.0 # Rynhard April 8
+
 submodules: {}

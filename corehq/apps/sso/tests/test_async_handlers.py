@@ -218,8 +218,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
         self.request.method = 'POST'
-        self.idp.is_editable = False
-        self.idp.save()
+        self.idp.refresh_from_db()
 
     def tearDown(self):
         UserExemptFromSingleSignOn.objects.all().delete()

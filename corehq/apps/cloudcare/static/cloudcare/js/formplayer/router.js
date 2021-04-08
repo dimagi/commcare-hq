@@ -162,6 +162,14 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
+    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setCasesPerPage(casesPerPage);
+        Util.setUrlToObject(urlObject);
+        Util.savePerPageLimitCookie('cases', casesPerPage);
+        API.listMenus();
+    });
+
     FormplayerFrontend.on("menu:sort", function (newSortIndex) {
         var urlObject = Util.currentUrlToObject();
         var currentSortIndex = urlObject.sortIndex;

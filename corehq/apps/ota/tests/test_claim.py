@@ -11,6 +11,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.exceptions import CaseNotFound
 
 DOMAIN = 'test_domain'
 USERNAME = 'lina.stern@ras.ru'
@@ -110,6 +111,16 @@ class CaseClaimTests(TestCase):
         self._close_case(claim_id)
         first_claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(first_claim)
+
+    @run_with_all_backends
+    def test_claim_case_other_domain(self):
+        malicious_domain = 'malicious_domain'
+        domain_obj = create_domain(malicious_domain)
+        self.addCleanup(domain_obj.delete)
+        claim_id = claim_case(malicious_domain, self.user.user_id, self.host_case_id,
+                              host_type=self.host_case_type, host_name=self.host_case_name)
+        with self.assertRaises(CaseNotFound):
+            CaseAccessors(malicious_domain).get_case(claim_id)
 
     def _close_case(self, case_id):
         case_block = CaseBlock.deprecated_init(

@@ -2091,6 +2091,8 @@ class CaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
     hint = DictProperty()
 
+    # applicable when appearance is a receiver
+    receiver_expression = StringProperty()
     itemset = SchemaProperty(Itemset)
 
 

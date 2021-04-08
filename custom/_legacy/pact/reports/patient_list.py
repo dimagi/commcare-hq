@@ -1,5 +1,5 @@
 from django.urls import NoReverseMatch
-from django.utils import html
+from django.utils.html import format_html
 
 from corehq.apps.api.es import ReportCaseESView, ReportFormESView
 from corehq.apps.es import filters
@@ -195,11 +195,11 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
 
     def pact_case_link(self, case_id, name):
         try:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(
-                    PactPatientInfoReport.get_url(*[self.domain]) + "?patient_id=%s" % case_id),
-                html.escape(name),
-                ))
+            return format_html(
+                "<a class='ajax_dialog' href='{}'>{}</a>",
+                PactPatientInfoReport.get_url(self.domain) + "?patient_id=%s" % case_id,
+                name
+            )
         except NoReverseMatch:
             return "%s (bad ID format)" % name
 
@@ -219,10 +219,10 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             return ''
 
         try:
-            return html.mark_safe("<span class='label label-info'>%s</span> <a class='ajax_dialog' href='%s'>Report</a>" % (
-                html.escape(status),
-                html.escape(
-                    PactDOTReport.get_url(*[self.domain]) + "?dot_patient=%s" % case_id),
-                ))
+            return format_html(
+                "<span class='label label-info'>{}</span> <a class='ajax_dialog' href='{}'>Report</a>",
+                status,
+                PactDOTReport.get_url(self.domain) + "?dot_patient=%s" % case_id
+            )
         except NoReverseMatch:
             return "%s (bad ID format)" % status

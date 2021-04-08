@@ -8,12 +8,11 @@ from casexml.apps.phone.utils import (
     GLOBAL_USER_ID,
     get_or_cache_global_fixture,
 )
-
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
-
+from corehq.util.metrics import metrics_histogram
 from .utils import get_index_schema_node
 
 
@@ -62,10 +61,30 @@ class ItemListsProvider(FixtureProvider):
             else:
                 user_types[data_type._id] = data_type
         items = []
+        global_items = []
+        user_items = []
         if global_types:
-            items.extend(self.get_global_items(global_types, restore_state))
+            global_items = self.get_global_items(global_types, restore_state)
+            items.extend(global_items)
         if user_types:
-            items.extend(self.get_user_items(user_types, restore_user))
+            user_items = self.get_user_items(user_types, restore_user)
+            items.extend(user_items)
+
+        for metric_name, items_count in [
+            ('commcare.fixtures.item_lists.global', len(global_items)),
+            ('commcare.fixtures.item_lists.user', len(user_items)),
+            ('commcare.fixtures.item_lists.all', len(items)),
+        ]:
+            metrics_histogram(
+                metric_name,
+                items_count,
+                bucket_tag='items',
+                buckets=[1, 100, 1000, 10000, 30000, 100000, 300000, 1000000],
+                bucket_unit='',
+                tags={
+                    'domain': restore_user.domain
+                }
+            )
         return items
 
     def get_global_items(self, global_types, restore_state):

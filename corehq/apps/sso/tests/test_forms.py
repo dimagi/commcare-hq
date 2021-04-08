@@ -303,7 +303,8 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     @staticmethod
     def _get_post_data(no_entity_id=False, no_login_url=False, no_logout_url=False,
-                       no_certificate=False, no_certificate_date=False, is_active=False):
+                       no_certificate=False, no_certificate_date=False, is_active=False,
+                       require_encrypted_assertions=False):
         expiration_date = datetime.utcnow() + timedelta(days=30)
         return {
             'is_active': is_active,
@@ -313,6 +314,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
             'idp_cert_public': '' if no_certificate else 'TEST CERTIFICATE',
             'date_idp_cert_expiration': ('' if no_certificate_date
                                          else expiration_date.strftime(TIME_FORMAT)),
+            'require_encrypted_assertions': require_encrypted_assertions,
         }
 
     def test_is_active_triggers_required_fields_and_updates(self):
@@ -415,15 +417,25 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         `date_idp_cert_expiration` is provided with a incorrectly formatted date
         string.
         """
-        post_data = {
-            'is_active': self.idp.is_active,
-            'entity_id': self.idp.entity_id,
-            'login_url': self.idp.login_url,
-            'logout_url': self.idp.logout_url,
-            'idp_cert_public': self.idp.idp_cert_public,
-            'date_idp_cert_expiration': 'purposefully bad date string',
-        }
+        post_data = self._get_post_data()
+        post_data['date_idp_cert_expiration'] = 'purposefully bad date string'
         edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
         edit_sso_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
             edit_sso_idp_form.clean_date_idp_cert_expiration()
+
+    def test_require_encrypted_assertions_is_saved(self):
+        """
+        Ensure that SSOEnterpriseSettingsForm updates the
+        `require_encrypted_assertions property` on the IdentityProvider.
+        """
+        post_data = self._get_post_data(
+            require_encrypted_assertions=True,
+        )
+        self.assertFalse(self.idp.require_encrypted_assertions)
+        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form.cleaned_data = post_data
+        self.assertTrue(edit_sso_idp_form.is_valid())
+        edit_sso_idp_form.update_identity_provider(self.accounting_admin)
+        self.idp.refresh_from_db()
+        self.assertTrue(self.idp.require_encrypted_assertions)

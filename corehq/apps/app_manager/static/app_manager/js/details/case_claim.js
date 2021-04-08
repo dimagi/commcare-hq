@@ -69,6 +69,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hint: '',
             appearance: '',
             defaultValue: '',
+            receiverExpression: '',
             itemsetOptions: {},
         });
         var self = {};
@@ -79,9 +80,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
 
+        self.receiverExpression = ko.observable(options.receiverExpression);
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue'], saveButton);
+        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
 
         return self;
     };
@@ -174,6 +176,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "select1") {
                     appearance = "fixture";
                 }
+                if (searchProperties[i].appearance === "address") {
+                    appearance = "address";
+                }
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
                 }
@@ -183,6 +188,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     hint: hint,
                     appearance: appearance,
                     defaultValue: searchProperties[i].default_value,
+                    receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
                         instance_uri: searchProperties[i].itemset.instance_uri,
@@ -217,6 +223,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hint: p.hint(),
                         appearance: p.appearance(),
                         default_value: p.defaultValue(),
+                        receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
                 }

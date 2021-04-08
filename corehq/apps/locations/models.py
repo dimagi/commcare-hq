@@ -170,12 +170,10 @@ class LocationType(models.Model):
             self._populate_stock_levels(config)
 
         is_not_first_save = self.pk is not None
-        saved = super(LocationType, self).save(*args, **kwargs)
+        super(LocationType, self).save(*args, **kwargs)
 
         if is_not_first_save:
             self.sync_administrative_status()
-
-        return saved
 
     def sync_administrative_status(self, sync_supply_points=True):
         from .tasks import sync_administrative_status
