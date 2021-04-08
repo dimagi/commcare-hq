@@ -2039,5 +2039,6 @@ FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
     TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )
