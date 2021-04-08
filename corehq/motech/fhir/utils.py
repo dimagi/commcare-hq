@@ -6,9 +6,9 @@ from corehq.util.view_utils import absolute_reverse
 from .const import CAPABILITY_STATEMENT_PUBLISHED_DATE
 
 
-def resource_url(domain, resource_type, case_id):
+def resource_url(domain, fhir_version_name, resource_type, case_id):
     from corehq.motech.fhir.views import get_view
-    return absolute_reverse(get_view, args=(domain, resource_type, case_id))
+    return absolute_reverse(get_view, args=(domain, fhir_version_name, resource_type, case_id))
 
 
 def load_fhir_resource_mappings(domain):
