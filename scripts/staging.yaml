@@ -92,5 +92,6 @@ branches:
   - mk/form-mm-exports-filters # MK April 8
   - fr/smart-oauth-views        # Farid April 7
   - mjr/xss_custom_fields  # Matt April 7
+  - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
 
 submodules: {}
