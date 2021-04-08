@@ -1,0 +1,38 @@
+{% extends "consumer_user/consumer_user_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}{{ page_title }}{% endblock title %}
+
+{% block page_title %}{{ page_title }}{% endblock page_title %}
+
+{% block page_content %}
+  <div class="container-fluid">
+    <form action="#" class="form-horizontal" method="post">
+      {% csrf_token %}
+      <fieldset>
+        {% for field in form.visible_fields %}
+          <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+            <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label" for="{{ field.id }}">{{ field.label }}</label>
+            <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls">
+              {{ field }}
+              {% for error in field.errors %}
+                <p class="help-block">{{ error }}</p>
+              {% endfor %}
+              {% if field.help_text %}
+                <p class="help-block">
+                  {{ field.help_text }}
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="form-actions">
+        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
+          <button class="btn btn-primary" type="submit">{% trans "Submit" %}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock page_content %}
