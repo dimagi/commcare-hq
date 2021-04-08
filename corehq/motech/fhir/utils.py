@@ -1,3 +1,5 @@
+from corehq.apps.consumer_user.models import CaseRelationshipOauthToken
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 from corehq.util.view_utils import absolute_reverse
 
@@ -92,3 +94,15 @@ def build_capability_statement(domain, fhir_version):
         "fhirVersion": fhir_version,
         "date": CAPABILITY_STATEMENT_PUBLISHED_DATE,
     }
+
+
+def case_access_authorized(domain, access_token, case_id):
+    """Case Access is allowed if:
+    - There exists a CaseRelationship for this access token
+    - There exist a CaseRelationship for any ancestor cases for this access token
+    """
+    ancestor_case_ids = CaseAccessors(domain).get_indexed_case_ids([case_id])
+    return CaseRelationshipOauthToken.objects.filter(
+        access_token=access_token,
+        consumer_user_case_relationship__case_id__in=[case_id] + ancestor_case_ids
+    ).exists()
