@@ -108,7 +108,7 @@
               </div>
             {% endif %}
           </div>
-          {% if request|toggle_enabled:'CASE_CLAIM_AUTOLAUNCH' %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search_command_label" class="{% css_label_class %} control-label">
               {% trans "Button Label on Case List" %}
@@ -145,7 +145,7 @@
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'CASE_CLAIM_AUTOLAUNCH' %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group">
             <label for="search-filter" class="control-label {% css_label_class %}">
               {% trans "Search Filter" %}

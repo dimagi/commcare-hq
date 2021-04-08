@@ -134,7 +134,7 @@ def get_module_view_context(request, app, module, lang=None):
         'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
-            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
     }
     module_brief = {
@@ -198,7 +198,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'has_geocoder_privs': (
                 domain_has_privilege(app.domain, privileges.GEOCODER)
-                and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
             'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],

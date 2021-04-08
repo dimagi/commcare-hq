@@ -769,7 +769,7 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
-CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     '''
         USH Specific toggle to support several different case search/claim workflows in web apps:
