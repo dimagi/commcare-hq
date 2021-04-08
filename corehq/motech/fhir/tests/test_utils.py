@@ -1,8 +1,13 @@
 from django.test import TestCase
 
+from nose.tools import assert_equal
+
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
-from corehq.motech.fhir.utils import update_fhir_resource_property
+from corehq.motech.fhir.utils import (
+    resource_url,
+    update_fhir_resource_property,
+)
 
 DOMAIN = "test-domain"
 
@@ -133,3 +138,9 @@ class TestUpdateFHIRResourceProperty(TestCase):
                 jsonpath=new_fhir_resource_prop_path
             ).count(),
             1)
+
+
+def test_resource_url():
+    url = resource_url(DOMAIN, 'R4', 'Patient', 'abc123')
+    drop_hostname = url.split('/', maxsplit=3)[3]
+    assert_equal(drop_hostname, f'a/{DOMAIN}/fhir/R4/Patient/abc123/')
