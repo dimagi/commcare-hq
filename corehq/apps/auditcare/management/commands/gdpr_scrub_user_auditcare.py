@@ -2,7 +2,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from ...utils.export import navigation_events_by_user
+from ...models import AccessAudit, NavigationEventAudit
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +15,12 @@ class Command(BaseCommand):
         parser.add_argument('username', help="Username to scrub")
 
     def handle(self, username, **options):
-        events = navigation_events_by_user(username)
-        events.query.update(user=self.new_username)
+        def update_events(model):
+            user_events = model.objects.filter(user=username)
+            user_events.update(user=self.new_username)
+
+        update_events(AccessAudit)
+        update_events(NavigationEventAudit)
         self.scrub_legacy_couch_events(username)
 
     def scrub_legacy_couch_events(self, username):
