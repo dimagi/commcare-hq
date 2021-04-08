@@ -279,7 +279,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             for slug in uploader_slugs
         ]
         context.update({
-            "sessionid": request.COOKIES.get('sessionid'),
             "uploaders": uploaders,
             "uploaders_js": [u.js_options for u in uploaders],
             "refs": {
