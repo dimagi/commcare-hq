@@ -25,6 +25,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
                         page: pageNumber + 1,
                         total: totalPages,
                         maxVisible: Math.min(totalPages, 5),
+                        firstLastUse: true,
                     }).on("page", function (event, page) {
                         listSessions(page - 1, pageSize);
                     });
