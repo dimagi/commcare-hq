@@ -46,10 +46,10 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     emailable = False
     default_rows = 10
 
-    _username_fmt = "%(username)s"
-    _device_users_fmt = "%(username)s"
-    _device_id_fmt = "%(device)s"
-    _log_tag_fmt = "<label class='%(classes)s'>%(text)s</label>"
+    _username_fmt = "{username}"
+    _device_users_fmt = "{username}"
+    _device_id_fmt = "{device}"
+    _log_tag_fmt = "<label class='{classes}'>{text}</label>"
 
     @property
     def selected_domain(self):
