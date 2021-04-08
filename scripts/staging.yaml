@@ -72,7 +72,6 @@ branches:
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
-  - rp/fix-broken-link # Rynhard March 31
   - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
   - nh/wfp/api_manager  # Norman Apr 2
@@ -94,6 +93,6 @@ branches:
   - mjr/xss_custom_fields  # Matt April 7
   - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
   - ap/fix-ko-html-parsing-issues # Amit April 8
-  - rp/fix-f2a-hyperlink # Rynhard April 8
+  - rp/fix-2fa-hyperlink # Rynhard April 8
 
 submodules: {}
