@@ -146,7 +146,7 @@ hqDefine("reports/js/data_corrections", [
             return str.replace(/([^<]\s*[\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
         };
         var innerTemplate = _.map(self.displayProperties, function (p) {
-            return _.template("<span data-bind='html: $root.breakWord(<%= property %>), visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
+            return _.template("<span data-bind='html: $root.breakWord(<%- property %>), visible: $root.displayProperty() === \"<%- property %>\"'></span>")(p);
         }).join("");
         self.propertyTemplate = {
             nodes: $("<div>" + (options.propertyPrefix || "") + innerTemplate + (options.propertySuffix || "") + "</div>"),
