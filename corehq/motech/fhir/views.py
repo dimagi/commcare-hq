@@ -20,7 +20,6 @@ from corehq.apps.consumer_user.models import (
     CaseRelationshipOauthToken,
     ConsumerUserCaseRelationship,
 )
-from corehq.apps.domain.decorators import login_or_api_key, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
@@ -28,6 +27,7 @@ from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import absolute_reverse, get_case_or_404
 
 from .const import FHIR_VERSIONS
+from .decorators import smart_auth
 from .forms import FHIRRepeaterForm, OAuthAllowForm
 from .models import (
     FHIRResourceType,
@@ -35,6 +35,7 @@ from .models import (
 )
 from .utils import (
     build_capability_statement,
+    case_access_authorized,
     resource_url,
 )
 
@@ -66,13 +67,16 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 
 
 @require_GET
-@login_or_api_key
-@require_superuser
+@smart_auth
 @toggles.FHIR_INTEGRATION.required_decorator()
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
     if not fhir_version:
         return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
+
+    if not case_access_authorized(domain, request.oauth_access_token, resource_id):
+        return JsonResponse(status=403, data={'message': "You do not have access to this resource"})
+
     case = get_case_or_404(domain, resource_id)
 
     if not FHIRResourceType.objects.filter(
@@ -92,8 +96,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 
 
 @require_GET
-@login_or_api_key
-@require_superuser
+@smart_auth
 @toggles.FHIR_INTEGRATION.required_decorator()
 def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
@@ -102,6 +105,10 @@ def search_view(request, domain, fhir_version_name, resource_type):
     patient_case_id = request.GET.get('patient_id')
     if not patient_case_id:
         return JsonResponse(status=400, data={'message': "Please pass patient_id"})
+
+    if not case_access_authorized(domain, request.oauth_access_token, patient_case_id):
+        return JsonResponse(status=403, data={'message': "You do not have access to this resource"})
+
     case_accessor = CaseAccessors(domain)
     try:
         patient_case = case_accessor.get_case(patient_case_id)
