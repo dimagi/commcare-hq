@@ -7,7 +7,7 @@ hqDefine("app_manager/js/details/case_detail_print", function () {
         printTemplateUploader = new HQMediaFileUploadController(
             print_uploader.slug,
             print_uploader.media_type,
-            print_uploader.options,
+            print_uploader.options
         );
         printTemplateUploader.init();
         printRef = hqImport('hqmedia/js/media_reference_models').BaseMediaReference(initial_page_data('print_ref'));

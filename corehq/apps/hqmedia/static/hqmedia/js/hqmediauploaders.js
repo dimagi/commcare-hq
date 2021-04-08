@@ -6,7 +6,7 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
         HQMediaUploaders[uploader.slug] = new HQMediaUploaderTypes[uploader.uploader_type](
             uploader.slug,
             uploader.media_type,
-            uploader.options,
+            uploader.options
         );
         HQMediaUploaders[uploader.slug].init();
     });

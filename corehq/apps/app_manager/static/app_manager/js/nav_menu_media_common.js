@@ -7,7 +7,7 @@ hqDefine("app_manager/js/nav_menu_media_common", function () {
         uploaders[type] = new HQMediaFileUploadController(
             uploader.slug,
             uploader.media_type,
-            uploader.options,
+            uploader.options
         );
         uploaders[type].init();
     });
