@@ -565,21 +565,25 @@ class SSOEnterpriseSettingsForm(forms.Form):
         return is_active
 
     def clean_entity_id(self):
+        is_active = bool(self.data.get('is_active'))
         entity_id = self.cleaned_data['entity_id']
-        _check_required_when_active(self.cleaned_data['is_active'], entity_id)
+        _check_required_when_active(is_active, entity_id)
         return entity_id
 
     def clean_login_url(self):
+        is_active = bool(self.data.get('is_active'))
         login_url = self.cleaned_data['login_url']
-        _check_required_when_active(self.cleaned_data['is_active'], login_url)
+        _check_required_when_active(is_active, login_url)
         return login_url
 
     def clean_logout_url(self):
+        is_active = bool(self.data.get('is_active'))
         logout_url = self.cleaned_data['logout_url']
-        _check_required_when_active(self.cleaned_data['is_active'], logout_url)
+        _check_required_when_active(is_active, logout_url)
         return logout_url
 
     def clean_idp_cert_public(self):
+        is_active = bool(self.data.get('is_active'))
         idp_cert_file = self.cleaned_data['idp_cert_public']
         if idp_cert_file:
             try:
@@ -599,7 +603,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             public_key = self.idp.idp_cert_public
             date_expiration = self.idp.date_idp_cert_expiration
 
-        _check_required_when_active(self.cleaned_data['is_active'], public_key)
+        _check_required_when_active(is_active, public_key)
         return public_key, date_expiration
 
     def update_identity_provider(self, admin_user):
