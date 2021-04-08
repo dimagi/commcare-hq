@@ -7,6 +7,7 @@ import traceback
 import uuid
 from datetime import datetime
 from urllib.parse import urlparse
+from oauth2_provider.models import get_application_model
 
 import httpagentparser
 import requests
@@ -18,6 +19,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
+from django.forms import modelform_factory
 from django.http import (
     Http404,
     HttpResponse,
@@ -83,6 +85,7 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
+from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
@@ -1307,3 +1310,62 @@ def log_email_event(request, secret):
     handle_email_sns_event(message)
 
     return HttpResponse()
+
+
+@method_decorator(require_superuser, name="dispatch")
+class OauthApplicationRegistration(BasePageView):
+    urlname = 'oauth_application_registration'
+    page_title = "Oauth Application Registration"
+    template_name = "hqwebapp/oauth_application_registration_form.html"
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def base_application_form(self):
+        return modelform_factory(
+            get_application_model(),
+            fields=(
+                "name",
+                "client_id",
+                "client_secret",
+                "client_type",
+                "authorization_grant_type",
+                "redirect_uris",
+            ),
+        )
+
+    @property
+    def hq_application_form(self):
+        return modelform_factory(
+            HQOauthApplication,
+            fields=(
+                "pkce_required",
+            ),
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'forms' not in kwargs:
+            context['forms'] = [self.base_application_form(), self.hq_application_form()]
+        return context
+
+    def post(self, request, *args, **kwargs):
+
+        base_application_form = self.base_application_form(data=self.request.POST)
+        hq_application_form = self.hq_application_form(data=self.request.POST)
+
+        if base_application_form.is_valid() and hq_application_form.is_valid():
+            base_application_form.instance.user = self.request.user
+            base_application = base_application_form.save()
+            HQOauthApplication.objects.create(
+                application=base_application,
+                **hq_application_form.cleaned_data,
+            )
+        else:
+            return self.render_to_response(self.get_context_data(
+                forms=[base_application_form, hq_application_form]
+            ))
+
+        return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
