@@ -97,9 +97,9 @@ hqDefine("export/js/create_export", [
             var text = '';
             if (self.modelType() === 'form') {
                 if (newValue.submissions === 1) {
-                    text = gettext('<%= count %> form submission available.');
+                    text = gettext('<%- count %> form submission available.');
                 } else {
-                    text = gettext('<%= count %> form submissions available.');
+                    text = gettext('<%- count %> form submissions available.');
                 }
                 text = _.template(text)({ count: newValue.submissions });
             }
