@@ -230,7 +230,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.sortIndex = null;
             this.search = null;
-            this.queryData = null;
             this.forceManualAction = null;
         };
 
