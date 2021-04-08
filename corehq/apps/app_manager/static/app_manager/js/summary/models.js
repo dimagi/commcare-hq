@@ -298,8 +298,8 @@ hqDefine('app_manager/js/summary/models',[
         self.moduleFormReference = function (formId) {
             var formData = self.formNameMap[formId];
             var template = self.readOnly
-                ? "<%= moduleName %> &rarr; <%= formName %>"
-                : "<a href='<%= moduleUrl %>'><%= moduleName %></a> &rarr; <a href='<%= formUrl %>'><%= formName %></a>"
+                ? "<%- moduleName %> &rarr; <%- formName %>"
+                : "<a href='<%- moduleUrl %>'><%- moduleName %></a> &rarr; <a href='<%- formUrl %>'><%- formName %></a>"
             ;
             return _.template(template)({
                 moduleName: self.translate(formData.module_name),
@@ -311,8 +311,8 @@ hqDefine('app_manager/js/summary/models',[
         self.moduleReference = function (moduleId) {
             var moduleData = self.formNameMap[moduleId];
             var template = self.readOnly
-                ? "<%= moduleName %>"
-                : "<a href='<%= moduleUrl %>'><%= moduleName %></a>"
+                ? "<%- moduleName %>"
+                : "<a href='<%- moduleUrl %>'><%- moduleName %></a>"
             ;
             return _.template(template)({
                 moduleName: self.translate(moduleData.module_name),
