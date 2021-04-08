@@ -236,7 +236,6 @@ def _get_base_vellum_options(request, domain, form, displayLang):
                 'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
             },
             'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
-            'sessionid': request.COOKIES.get('sessionid'),
         },
     }
 
@@ -273,7 +272,6 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
             "meta/location",
         ] + _get_core_context_scheduler_data_nodes(module, form),
         'activityUrl': reverse('ping'),
-        'sessionid': request.COOKIES.get('sessionid'),
         'externalLinks': {
             'changeSubscription': reverse("domain_subscription_view",
                                           kwargs={'domain': domain}),
