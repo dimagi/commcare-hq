@@ -402,6 +402,39 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         self.assertEqual(idp.idp_cert_public, certificate_file.read().decode('utf-8'))
         self.assertIsNotNone(idp.date_idp_cert_expiration)
 
+    def test_that_validation_error_is_raised_when_certificate_file_is_bad(self):
+        """
+        Ensure that SSOEnterpriseSettingsForm raises a validation error
+        when the certificate file contains bad data.
+        """
+        certificate_file = generator.get_bad_cert_file(b"bad cert")
+        post_data = self._get_post_data(certificate=certificate_file)
+
+        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+            self.idp, post_data, self._get_request_files(certificate_file)
+        )
+        edit_sso_idp_form.cleaned_data = post_data
+
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_idp_cert_public()
+
+    def test_that_validation_error_is_raised_when_certificate_is_expired(self):
+        """
+        Ensure that SSOEnterpriseSettingsForm raises a validation error
+        when the certificate file contains an expired certificate.
+        """
+        certificate_file = generator.get_public_cert_file(expiration_in_seconds=0)
+        post_data = self._get_post_data(certificate=certificate_file)
+
+        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+            self.idp, post_data, self._get_request_files(certificate_file)
+        )
+
+        edit_sso_idp_form.cleaned_data = post_data
+
+        with self.assertRaises(forms.ValidationError):
+            edit_sso_idp_form.clean_idp_cert_public()
+
     def test_last_modified_by_and_fields_update_when_not_active(self):
         """
         Ensure that fields properly update and that `last_modified_by` updates
