@@ -2,7 +2,8 @@
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Util = hqImport("cloudcare/js/formplayer/utils/util"),
+        md = window.markdownit();
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -175,7 +176,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
             var obj = {};
-            obj.data = details[i];
+            obj.data = DOMPurify.sanitize(md.render(details[i]));
+            obj.markdown = true;
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
