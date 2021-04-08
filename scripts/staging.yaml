@@ -94,5 +94,6 @@ branches:
   - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
   - ap/fix-ko-html-parsing-issues # Amit April 8
   - rp/fix-2fa-hyperlink # Rynhard April 8
+  - rp/fix-broken-link-2.0 # Rynhard April 8
 
 submodules: {}
