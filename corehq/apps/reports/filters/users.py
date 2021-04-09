@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -25,6 +26,9 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+
+#TODO: replace with common code
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -210,8 +214,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = ugettext_lazy(mark_safe(
-        '<i class="fa fa-info-circle"></i> '
+    location_search_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
         'target="_blank">Advanced Search:</a> '
         'Put your location name in quotes to show only exact matches. To more '
@@ -225,11 +228,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = ugettext_lazy(mark_safe("""
-        <i class="fa fa-info-circle"></i> See
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions</a>.
-    """))
+    filter_help_inline = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '<i class="fa fa-info-circle"></i> See '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        ' target="_blank"> Filter Definitions</a>.'))
 
     @property
     @memoized
