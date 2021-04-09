@@ -24,7 +24,7 @@ from corehq.apps.locations.fixtures import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import WEBAPPS_CASE_MIGRATION, ADD_LIMITED_FIXTURES_TO_SMS_WORKFLOW
+from corehq.toggles import WEBAPPS_CASE_MIGRATION, ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
 from corehq.util import reverse
 
 from .forms import MigrationForm
@@ -91,7 +91,7 @@ def migration_restore(request, domain, case_id):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
-        if ADD_LIMITED_FIXTURES_TO_SMS_WORKFLOW.enabled(domain):
+        if ADD_LIMITED_FIXTURES_TO_CASE_RESTORE.enabled(domain):
             _add_limited_fixtures(domain, case_id, content)
         payload = content.get_fileobj()
 
