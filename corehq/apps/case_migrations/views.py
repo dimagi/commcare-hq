@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
@@ -18,8 +16,7 @@ from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.fixtures import (
-    FlatLocationSerializer,
-    get_location_data_fields,
+    FlatLocationSerializer
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
