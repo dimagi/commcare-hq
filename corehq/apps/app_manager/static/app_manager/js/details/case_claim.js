@@ -14,6 +14,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 });
             });
             $(".hq-help").hqHelp();
+        },
+        itemsetValue = function (item) {
+            return "instance('" + item.id + "')" + item.path;
         };
 
     var itemsetModel = function (options, saveButton) {
@@ -29,7 +32,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.lookupTableNodeset = ko.pureComputed({
             write: function (value) {
-                self.nodeset(value);
+                if (value === undefined) {
+                    self.nodeset(null);
+                }
+                else {
+                    self.nodeset(value);
+                }
                 var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
                     matches = reg.exec(value);
                 if (matches && matches.length > 1) {
@@ -46,7 +54,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 // is the nodeset a lookup table that we know about?
                 var itemLists = get('js_options').item_lists,
                     itemListNodesets = _.map(itemLists, function (item) {
-                        return "instance('" + item.id + "')" + item.path;
+                        return itemsetValue(item);
                     });
                 if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
 
@@ -79,8 +87,53 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
+        self.appearanceFinal = ko.computed(function () {
+            var appearance = self.appearance();
+            if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
+                return 'fixture';
+            }
+            else {
+                return appearance;
+            }
+        });
+        self.dropdownLabels = ko.computed(function () {
+            if (self.appearance() === 'report_fixture') {
+                return {
+                    'labelPlaceholder': 'column_0',
+                    'valuePlaceholder': 'column_0',
+                    'optionsLabel': gettext("Mobile UCR Options"),
+                    'tableLabel': gettext("Mobile UCR Report"),
+                    'selectLabel': gettext("Select a Report..."),
+                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
+                };
+            }
+            else {
+                return {
+                    'labelPlaceholder': 'name',
+                    'valuePlaceholder': 'id',
+                    'optionsLabel': gettext("Lookup Table Options"),
+                    'tableLabel': gettext("Lookup Table"),
+                    'selectLabel': gettext("Select a Lookup Table..."),
+                    'advancedLabel': gettext("Advanced Lookup Table Options"),
+                };
+            }
+        });
 
         self.receiverExpression = ko.observable(options.receiverExpression);
+        self.itemListOptions = ko.computed(function () {
+            var itemLists = get('js_options').item_lists;
+            return _.map(
+                _.filter(itemLists, function (p) {
+                    return p.fixture_type === self.appearance();
+                }),
+                function (p) {
+                    return {
+                        "value": itemsetValue(p),
+                        "name": p.name,
+                    };
+                }
+            );
+        });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
         subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
@@ -174,7 +227,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
-                    appearance = "fixture";
+                    var uri = searchProperties[i].itemset.instance_uri;
+                    if (uri !== null && uri.includes("commcare-reports")) {
+                        appearance = "report_fixture";
+                    }
+                    else {
+                        appearance = "lookup_table_fixture";
+                    }
                 }
                 if (searchProperties[i].appearance === "address") {
                     appearance = "address";
@@ -221,7 +280,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
-                        appearance: p.appearance(),
+                        appearance: p.appearanceFinal(),
                         default_value: p.defaultValue(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
