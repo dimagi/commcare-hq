@@ -6,20 +6,20 @@ from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 
 
-class SavedReportTest(TestCase):
+class SavedReportURLTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(SavedReportTest, cls).setUpClass()
+        super(SavedReportURLTest, cls).setUpClass()
         cls.domain = 'saved-report-tests'
 
     @classmethod
     def tearDownClass(cls):
-        super(SavedReportTest, cls).tearDownClass()
+        super(SavedReportURLTest, cls).tearDownClass()
 
     def tearDown(self):
         self.saved_report_config.delete()
-        super(SavedReportTest, self).tearDown()
+        super(SavedReportURLTest, self).tearDown()
 
     def _create_saved_report(self, configurable=False):
         domain = self.domain
