@@ -713,17 +713,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                             user.set_role(domain, role_qualified_id)
                         user.save()
                     else:
-                        # If user exists and has already requested access, just add them to the project
-                        # Otherwise, send an invitation
-                        domain_request = DomainRequest.by_email(domain, username)
-                        if domain_request is not None:
-                            domain_request.is_approved = True
-                            domain_request.save()
-                            domain_request.send_approval_email()
-                            user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
-                        else:
-                            create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
-                                                             user.location_id)
+                        create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                         user.location_id)
                 status_row['flag'] = 'updated'
 
             else:
