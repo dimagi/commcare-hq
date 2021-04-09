@@ -95,5 +95,6 @@ branches:
   - ap/fix-ko-html-parsing-issues # Amit April 8
   - rp/fix-2fa-hyperlink # Rynhard April 8
   - rp/fix-broken-link-2.0 # Rynhard April 8
+  - dmr/remove-unused-url  # Danny Apr 8
 
 submodules: {}
