@@ -311,7 +311,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             return get_result(self_, sql_form, couch_form)
 
         @staticmethod
-        def maybe_process_xforms_for_cases(xforms, casedb):
+        def maybe_process_xforms_for_cases(xforms, casedb, timing_context=None):
             if any(f.form_id == form_id for f in xforms):
                 assert len(xforms) == 1, xforms
                 stock = StockProcessingResult(xforms[0])

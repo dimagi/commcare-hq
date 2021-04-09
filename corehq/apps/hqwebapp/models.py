@@ -1,12 +1,14 @@
-import architect
-
 from collections import namedtuple
+from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
-from datetime import datetime
 from django.db import models
 
+import architect
+from oauth2_provider.settings import APPLICATION_MODEL
+
 from corehq.util.markup import mark_up_urls
+from corehq.util.models import ForeignValue, foreign_value_init
 from corehq.util.quickcache import quickcache
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
@@ -60,18 +62,8 @@ class UserAgent(models.Model):
     value = models.CharField(max_length=MAX_LENGTH, db_index=True)
 
 
-class UserAccessLogManager(models.Manager):
-    def create(self, **obj_data):
-        user_agent = obj_data.pop('user_agent', '')
-        if user_agent:
-            user_agent = user_agent[:UserAgent.MAX_LENGTH]
-            agent_ref, _ = UserAgent.objects.get_or_create(value=user_agent)
-            obj_data['user_agent'] = agent_ref
-
-        return super().create(**obj_data)
-
-
 @architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
+@foreign_value_init
 class UserAccessLog(models.Model):
     TYPE_LOGIN = 'login'
     TYPE_LOGOUT = 'logout'
@@ -87,11 +79,28 @@ class UserAccessLog(models.Model):
     user_id = models.CharField(max_length=255, db_index=True)
     action = models.CharField(max_length=20, choices=ACTIONS)
     ip = models.GenericIPAddressField(blank=True, null=True)
-    user_agent = models.ForeignKey(UserAgent, null=True, on_delete=models.PROTECT)
+    user_agent_fk = models.ForeignKey(
+        UserAgent, null=True, on_delete=models.PROTECT, db_column="user_agent_id")
+    user_agent = ForeignValue(user_agent_fk, truncate=True)
     path = models.CharField(max_length=255, blank=True)
     timestamp = models.DateTimeField(default=datetime.utcnow)
 
-    objects = UserAccessLogManager()
-
     def __str__(self):
         return f'{self.timestamp}: {self.user_id} - {self.action}'
+
+
+class HQOauthApplication(models.Model):
+    application = models.OneToOneField(
+        APPLICATION_MODEL,
+        on_delete=models.CASCADE,
+        related_name='hq_application',
+    )
+    pkce_required = models.BooleanField(default=True)
+
+
+def pkce_required(client_id):
+    try:
+        application = HQOauthApplication.objects.get(application__client_id=client_id)
+        return application.pkce_required
+    except HQOauthApplication.DoesNotExist:
+        return False

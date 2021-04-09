@@ -1,36 +1,53 @@
 from django.core import management
-from django.test import TestCase
 
-from dimagi.utils.couch.database import iter_bulk_delete
+from couchdbkit.ext.django.loading import get_db
 
-from ..models import NavigationEventAudit
-from ..utils.export import navigation_event_ids_by_user
+from ..models import AccessAudit, NavigationEventAudit
+from .testutils import AuditcareTest, save_couch_doc, delete_couch_docs
+
+USERNAME = "gdpr_user1"
 
 
-class TestGDPRScrubUserAuditcare(TestCase):
+class TestGDPRScrubUserAuditcare(AuditcareTest):
 
     def setUp(self):
-        NavigationEventAudit(user="test_user1", request_path="/fake/path/0").save()
-        NavigationEventAudit(user="test_user1", request_path="/fake/path/1").save()
-        NavigationEventAudit(user="test_user1", request_path="/fake/path/2").save()
+        NavigationEventAudit(user=USERNAME, path="/fake/path/0").save()
+        NavigationEventAudit(user=USERNAME, path="/fake/path/1").save()
+        NavigationEventAudit(user=USERNAME, path="/fake/path/2").save()
+        AccessAudit(user=USERNAME, path="/fake/login").save()
+        AccessAudit(user=USERNAME, path="/fake/logout").save()
+        self.couch_ids = [
+            save_couch_doc("NavigationEventAudit", USERNAME, path="/fake/path/3"),
+            save_couch_doc("AccessAudit", USERNAME, ip_address="123.45.67.89"),
+        ]
 
     def tearDown(self):
-        all_auditcare_ids = {result["id"] for result in NavigationEventAudit.get_db().view(
-            "auditcare/urlpath_by_user_date",
-            reduce=False,
-        ).all()}
-        iter_bulk_delete(NavigationEventAudit.get_db(), list(all_auditcare_ids))
+        delete_couch_docs(self.couch_ids)
 
     def test_update_username_no_returned_docs(self):
         management.call_command("gdpr_scrub_user_auditcare", "nonexistent_user")
-        num_redacted_users = navigation_event_ids_by_user("Redacted User (GDPR)")
-        self.assertEqual(len(num_redacted_users), 0)
-        num_original_users = navigation_event_ids_by_user("test_user1")
-        self.assertEqual(len(num_original_users), 3)
+        self.assertEqual(count_events("Redacted User (GDPR)"), 0)
+        self.assertEqual(count_events(USERNAME), 7)
 
     def test_update_username_returned_docs(self):
-        management.call_command("gdpr_scrub_user_auditcare", "test_user1")
-        num_redacted_users = navigation_event_ids_by_user("Redacted User (GDPR)")
-        self.assertEqual(len(num_redacted_users), 3)
-        num_original_users = navigation_event_ids_by_user("test_user1")
-        self.assertEqual(len(num_original_users), 0)
+        management.call_command("gdpr_scrub_user_auditcare", USERNAME)
+        self.assertEqual(count_events("Redacted User (GDPR)"), 7)
+        self.assertEqual(count_events(USERNAME), 0)
+
+
+def count_events(username):
+    return sum([
+        AccessAudit.objects.filter(user=username).count(),
+        NavigationEventAudit.objects.filter(user=username).count(),
+        couch_count(username),
+    ])
+
+
+def couch_count(username):
+    return get_db("auditcare").view(
+        "auditcare/urlpath_by_user_date",
+        startkey=[username],
+        endkey=[username, {}],
+        reduce=False,
+        include_docs=False,
+    ).count()

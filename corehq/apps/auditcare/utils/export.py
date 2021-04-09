@@ -1,52 +1,36 @@
 import csv
 from datetime import timedelta
+from itertools import chain
 
+import attr
+from couchdbkit.ext.django.loading import get_db
 from django.contrib.auth.models import User
-from django.utils.datastructures import OrderedSet
+from django.db.models import ForeignKey
+
+from corehq.apps.domain.utils import get_domain_from_url
+from corehq.apps.users.models import WebUser
+from corehq.util.models import ForeignValue
 
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.parsing import string_to_datetime
 
-from corehq.apps.users.models import WebUser
-
-from ..models import NavigationEventAudit, wrap_audit_event
+from ..models import AccessAudit, NavigationEventAudit
 
 
-def navigation_event_ids_by_user(user, start_date=None, end_date=None):
-    database = NavigationEventAudit.get_db()
-
-    def _date_key(date):
-        return [date.year, date.month, date.day]
-
-    startkey = [user]
-    if start_date:
-        startkey.extend(_date_key(start_date))
-
-    endkey = [user]
-    if end_date:
-        end = end_date + timedelta(days=1)
-        endkey.extend(_date_key(end))
-    else:
-        endkey.append({})
-
-    ids = OrderedSet()
-    results = database.view(
-        'auditcare/urlpath_by_user_date',
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=False,
+def navigation_events_by_user(user, start_date=None, end_date=None):
+    params = {"user": user, "start_date": start_date, "end_date": end_date}
+    where = get_date_range_where(start_date, end_date)
+    query = NavigationEventAudit.objects.filter(user=user, **where)
+    return chain(
+        iter_couch_audit_events(params),
+        AuditWindowQuery(query),
     )
-    for row in results:
-        ids.add(row['id'])
-    return ids
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
-    event_ids = navigation_event_ids_by_user(user, start_date, end_date)
-    for event in iter_docs(NavigationEventAudit.get_db(), event_ids):
-        doc = NavigationEventAudit.wrap(event)
-        if not domain or domain == doc.domain:
-            write_log_event(writer, doc, override_user)
+    for event in navigation_events_by_user(user, start_date, end_date):
+        if not domain or domain == event.domain:
+            write_log_event(writer, event, override_user)
 
 
 def write_log_event(writer, event, override_user=None):
@@ -63,34 +47,17 @@ def get_users_to_export(username, domain):
         users = {u.username for u in WebUser.by_domain(domain)}
         super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
         super_users = super_users - users
-
     return users, super_users
 
 
 def get_all_log_events(start_date=None, end_date=None):
-    def _date_key(date):
-        return [date.year, date.month, date.day]
-
-    startkey = []
-    if start_date:
-        startkey.extend(_date_key(start_date))
-
-    endkey = []
-    if end_date:
-        end = end_date + timedelta(days=1)
-        endkey.extend(_date_key(end))
-    else:
-        endkey.append({})
-
-    results = NavigationEventAudit.get_db().view(
-        'auditcare/all_events',
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=True,
+    params = {"start_date": start_date, "end_date": end_date}
+    where = get_date_range_where(start_date, end_date)
+    return chain(
+        iter_couch_audit_events(params),
+        AuditWindowQuery(AccessAudit.objects.filter(**where)),
+        AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
     )
-    for row in results:
-        yield wrap_audit_event(row['doc'])
 
 
 def write_generic_log_event(writer, event):
@@ -99,13 +66,20 @@ def write_generic_log_event(writer, event):
     if event.doc_type == 'NavigationEventAudit':
         action = event.headers['REQUEST_METHOD']
         resource = event.request_path
-    elif event.doc_type == 'AccessAudit':
+    else:
+        assert event.doc_type == 'AccessAudit'
         action = event.access_type
-        resource = event.path_info
+        resource = event.path
 
     writer.writerow([
-        event.event_date, event.doc_type, event.user, getattr(event, 'domain', ''),
-        getattr(event, 'ip_address', ''), action, resource, event.description
+        event.event_date,
+        event.doc_type,
+        event.user,
+        event.domain,
+        event.ip_address,
+        action,
+        resource,
+        event.description,
     ])
 
 
@@ -114,3 +88,158 @@ def write_export_from_all_log_events(file_obj, start, end):
     writer.writerow(['Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'Resource', 'Description'])
     for event in get_all_log_events(start, end):
         write_generic_log_event(writer, event)
+
+
+def get_date_range_where(start_date, end_date):
+    """Get ORM filter kwargs for inclusive event_date range"""
+    where = {}
+    if start_date:
+        where["event_date__gt"] = start_date.date()
+    if end_date:
+        where["event_date__lt"] = end_date.date() + timedelta(days=1)
+    return where
+
+
+@attr.s(cmp=False)
+class AuditWindowQuery:
+    query = attr.ib()
+    window_size = attr.ib(default=10000)
+
+    def __iter__(self):
+        """Windowed query generator using WHERE/LIMIT
+
+        Adapted from https://github.com/sqlalchemy/sqlalchemy/wiki/WindowedRangeQuery
+        """
+        query = self.query
+        last_date = None
+        last_ids = set()
+        while True:
+            qry = query
+            if last_date is not None:
+                qry = query.filter(event_date__gte=last_date).exclude(id__in=last_ids)
+            rec = None
+            for rec in qry.order_by("event_date")[:self.window_size]:
+                yield NoForeignQuery(rec)
+                if rec.event_date != last_date:
+                    last_date = rec.event_date
+                    last_ids = {rec.id}
+                else:
+                    last_ids.add(rec.id)
+            if rec is None:
+                break
+
+
+def iter_couch_audit_events(params, chunksize=10000):
+    if not (params.get("start_date") or params.get("user")):
+        raise NotImplementedError("auditcare queries on Couch have not "
+            "been designed for unbounded queries")
+    if params.get("start_date"):
+        sql_start = get_sql_start_date()
+        if params["start_date"] > sql_start:
+            return
+    db = get_db("auditcare")
+    if "user" in params:
+        view_name = "auditcare/urlpath_by_user_date"
+    else:
+        view_name = "auditcare/all_events"
+    startkey, endkey = _get_couch_view_keys(**params)
+    doc_ids = {r["id"] for r in db.view(
+        view_name,
+        startkey=startkey,
+        endkey=endkey,
+        reduce=False,
+        include_docs=False,
+    )}
+    for doc in iter_docs(db, doc_ids, chunksize=chunksize):
+        yield CouchAuditEvent(doc)
+
+
+def get_sql_start_date():
+    """Get the date of the first SQL auditcare record
+
+    HACK this uses `NavigationEventAudit` since that model is likely to
+    have the record with the earliest timestamp.
+
+    NOTE this function assumes no SQL data has been archived, and that
+    all auditcare data in Couch will be obsolete and/or archived before
+    SQL data. It should be removed when the data in Couch is no longer
+    relevant.
+    """
+    manager = NavigationEventAudit.objects
+    row = manager.order_by("event_date").values("event_date")[:1].first()
+    return row["event_date"] if row else None
+
+
+class CouchAuditEvent:
+    def __init__(self, doc):
+        self.__dict__ = doc
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.__dict__!r})"
+
+    @property
+    def domain(self):
+        return get_domain_from_url(self.path)
+
+    @property
+    def event_date(self):
+        datestr = self.__dict__["event_date"]
+        return string_to_datetime(datestr).replace(tzinfo=None)
+
+    @property
+    def path(self):
+        if self.doc_type == "NavigationEventAudit":
+            return self.request_path
+        return self.path_info
+
+
+def _get_couch_view_keys(user=None, start_date=None, end_date=None):
+    def date_key(date):
+        return [date.year, date.month, date.day]
+
+    startkey = [user] if user else []
+    if start_date:
+        startkey.extend(date_key(start_date))
+
+    endkey = [user] if user else []
+    if end_date:
+        end = end_date + timedelta(days=1)
+        endkey.extend(date_key(end))
+    else:
+        endkey.append({})
+
+    return startkey, endkey
+
+
+def get_foreign_names(model):
+    names = {f.name for f in model._meta.fields if isinstance(f, ForeignKey)}
+    names.update(ForeignValue.get_names(model))
+    return names
+
+
+@attr.s
+class NoForeignQuery:
+    """Raise an error if a foreign key field is accessed
+
+    This is a hack to prevent downstream code from accessing related
+    objects, inadvertently triggering many extra queries.
+    See also: https://stackoverflow.com/questions/66496443
+
+    If a need arises for downstream code to access related fields,
+    `navigation_events_by_user` should be updated to use
+    `query.select_related` and/or `query.prefetch_related`, and this
+    class should be refactored accordingly.
+    """
+    _obj = attr.ib()
+
+    def __attrs_post_init__(self):
+        self._fks = get_foreign_names(type(self._obj))
+
+    def __getattr__(self, name):
+        if name in self._fks:
+            raise ForeignKeyAccessError(name)
+        return getattr(self._obj, name)
+
+
+class ForeignKeyAccessError(AttributeError):
+    pass

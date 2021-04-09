@@ -637,13 +637,6 @@ MM_CASE_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-NEW_MULTIMEDIA_UPLOADER = StaticToggle(
-    'new_multimedia_uploader',
-    'Display new multimedia uploader',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'ICDS: Visit Scheduler',
@@ -1810,6 +1803,27 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
 
     To turn on global rate limiting, set Randomness Level to 1.
     To turn it off, set to 0.
+    """
+)
+
+BLOCK_RESTORES = StaticToggle(
+    'block_restores',
+    'Block Restores Immediately with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag for EMERGENCY PURPOSES ONLY if a project's restore is causing
+    system-wide issues that aren't caught by rate limiting or other mechanisms.
+    """
+)
+
+SKIP_FIXTURES_ON_RESTORE = StaticToggle(
+    'skip_fixtures_on_restore',
+    'Skip Fixture Syncs on Restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag to skip fixtures on restores for certain project spaces.
     """
 )
 

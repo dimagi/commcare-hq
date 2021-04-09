@@ -221,7 +221,7 @@ class AdminRestoreView(TemplateView):
     def _get_restore_response(self):
         return get_restore_response(
             self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request)
+            **get_restore_params(self.request, self.user.domain)
         )
 
     @staticmethod

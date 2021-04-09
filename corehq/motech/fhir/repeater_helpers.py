@@ -30,20 +30,10 @@ def register_patients(
             # Patient is already registered
             info_resource_list_to_send.append((info, resource))
             continue
-        response = requests.post(
-            'Patient/',
-            json=resource,
-            raise_for_status=True,
-        )
-        try:
-            _set_external_id(info, response.json()['id'], repeater_id)
-            # Don't append `resource` to `info_resource_list_to_send`
-            # because the remote service has all its data now.
-        except (ValueError, KeyError) as err:
-            # The remote service returned a 2xx response, but did not
-            # return JSON, or the JSON does not include an ID.
-            msg = 'Unable to parse response from remote FHIR service'
-            raise HTTPError(msg, response=response) from err
+        send_resource(requests, info, resource, repeater_id,
+                      raise_on_ext_id=True)
+        # Don't append `resource` to `info_resource_list_to_send`
+        # because the remote service has all its data now.
     return info_resource_list_to_send
 
 
@@ -66,6 +56,51 @@ def get_info_resource_list(
 
 
 def send_resources(
+    requests: Requests,
+    info_resources_list: List[tuple],
+    fhir_version: str,
+    repeater_id: str,
+) -> Response:
+    if not info_resources_list:
+        # Either the payload had no data to be forwarded, or resources
+        # were all patients to be registered: Nothing left to send.
+        return True
+
+    if len(info_resources_list) == 1:
+        info, resource = info_resources_list[0]
+        return send_resource(requests, info, resource, repeater_id)
+
+    return send_bundle(requests, info_resources_list, fhir_version)
+
+
+def send_resource(
+    requests: Requests,
+    info: CaseTriggerInfo,
+    resource: dict,
+    repeater_id: str,
+    *,
+    raise_on_ext_id: bool = False,
+) -> Response:
+    external_id = info.extra_fields['external_id']
+    if external_id:
+        endpoint = f"{resource['resourceType']}/{external_id}"
+        response = requests.put(endpoint, json=resource, raise_for_status=True)
+        return response
+
+    endpoint = f"{resource['resourceType']}/"
+    response = requests.post(endpoint, json=resource, raise_for_status=True)
+    try:
+        _set_external_id(info, response.json()['id'], repeater_id)
+    except (ValueError, KeyError) as err:
+        # The remote service returned a 2xx response, but did not
+        # return JSON, or the JSON does not include an ID.
+        if raise_on_ext_id:
+            msg = 'Unable to parse response from remote FHIR service'
+            raise HTTPError(msg, response=response) from err
+    return response
+
+
+def send_bundle(
     requests: Requests,
     info_resources_list: List[tuple],
     fhir_version: str,

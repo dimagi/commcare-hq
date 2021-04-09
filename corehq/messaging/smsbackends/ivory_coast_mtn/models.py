@@ -47,16 +47,16 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
 
         return {
             'customerID': config.customer_id,
-            'username': config.username,
+            'userName': config.username,
             'userPassword': config.password,
             'originator': config.sender_id,
             # This is for a custom project and they only send messages in French
             'messageType': 'Latin',
             # This must be set to the date and time to send the message; it's a required field
-            'defdate': self.get_ivory_coast_timestamp().strftime('%Y%m%d%H%M%S'),
+            'defDate': self.get_ivory_coast_timestamp().strftime('%Y%m%d%H%M%S'),
             'blink': 'false',
             'flash': 'false',
-            'private': 'false',
+            'Private': 'false',
             'smsText': msg_obj.text.encode('utf-8'),
             'recipientPhone': msg_obj.phone_number,
         }
@@ -74,7 +74,7 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
             return
 
         response = requests.get(
-            'https://smspro.mtn.ci/smspro/Soap/Messenger.asmx/HTTP_SendSms',
+            'https://smspro.mtn.ci/bms/Soap/Messenger.asmx/HTTP_SendSms',
             params=self.get_params(msg_obj),
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )

@@ -97,12 +97,12 @@ class BaseDumpLoadTest(TestCase):
         if dumper_fn:
             dumper_fn(output_stream)
         else:
-            SqlDataDumper(self.domain_name, []).dump(output_stream)
+            SqlDataDumper(self.domain_name, [], []).dump(output_stream)
 
         self.delete_sql_data()
 
         # make sure that there's no data left in the DB
-        objects_remaining = list(get_objects_to_dump(self.domain_name, []))
+        objects_remaining = list(get_objects_to_dump(self.domain_name, [], []))
         object_classes = [obj.__class__.__name__ for obj in objects_remaining]
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
@@ -149,7 +149,7 @@ class BaseDumpLoadTest(TestCase):
 
 @nottest
 def delete_domain_sql_data_for_dump_load_test(domain_name):
-    for model_class, builder in get_model_iterator_builders_to_dump(domain_name, []):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain_name, [], []):
         for iterator in builder.querysets():
             with transaction.atomic(using=iterator.db), \
                  constraint_checks_deferred(iterator.db):
@@ -157,7 +157,7 @@ def delete_domain_sql_data_for_dump_load_test(domain_name):
                 collector.collect(iterator)
                 collector.delete()
 
-    assert [] == list(get_objects_to_dump(domain_name, [])), "Not all SQL objects deleted"
+    assert [] == list(get_objects_to_dump(domain_name, [], [])), "Not all SQL objects deleted"
 
 
 @use_sql_backend
@@ -693,7 +693,7 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
 
     def _load_with_errors(self, chunk_size):
         output_stream = StringIO()
-        SqlDataDumper(self.domain_name, []).dump(output_stream)
+        SqlDataDumper(self.domain_name, [], []).dump(output_stream)
         self.delete_sql_data()
         # resave the product to force an error
         self.products[0].save()
