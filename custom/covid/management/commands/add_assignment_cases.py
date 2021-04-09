@@ -69,7 +69,7 @@ class Command(CaseUpdateCommand):
                 else:
                     if case.get_case_property('is_assigned_primary') == 'yes':
                         case_blocks.append(self.case_block(case, new_owner_id, 'primary'))
-                    elif case.get_case_property('is_assigned_temp') == 'yes':
+                    if case.get_case_property('is_assigned_temp') == 'yes':
                         case_blocks.append(self.case_block(case, new_owner_id, 'temp'))
         print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped because they're closed"
               f" or in an inactive location")

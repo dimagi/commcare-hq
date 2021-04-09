@@ -313,5 +313,5 @@ class CaseCommandsTest(TestCase):
 
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
 
-        self.assertEqual(len(assignment_cases), 3)
+        self.assertEqual(len(assignment_cases), 4)
         self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
