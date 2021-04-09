@@ -115,12 +115,41 @@ def data_dictionary_json(request, domain, case_type_name=None):
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
 def update_case_property(request, domain):
-    property_list = json.loads(request.POST.get('properties'))
-    fhir_resource_type = request.POST.get('fhir_resource_type')
     fhir_resource_type_obj = None
-    case_type = request.POST.get('case_type')
     errors = []
+    update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
+    property_list = json.loads(request.POST.get('properties'))
 
+    if update_fhir_resources:
+        errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
+    if not errors:
+        for property in property_list:
+            case_type = property.get('caseType')
+            name = property.get('name')
+            description = property.get('description')
+            data_type = property.get('data_type')
+            group = property.get('group')
+            deprecated = property.get('deprecated')
+            if update_fhir_resources:
+                fhir_resource_prop_path = property.get('fhir_resource_prop_path')
+                remove_path = property.get('removeFHIRResourcePropertyPath', False)
+            else:
+                fhir_resource_prop_path, remove_path = None, None
+            error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
+                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
+            if error:
+                errors.append(error)
+
+    if errors:
+        return JsonResponse({"status": "failed", "errors": errors}, status=400)
+    else:
+        return JsonResponse({"status": "success"})
+
+
+def _update_fhir_resource_type(request, domain):
+    errors, fhir_resource_type_obj = [], None
+    fhir_resource_type = request.POST.get('fhir_resource_type')
+    case_type = request.POST.get('case_type')
     if request.POST.get('remove_fhir_resource_type', '') == 'true':
         remove_fhir_resource_type(domain, case_type)
     elif fhir_resource_type and case_type:
@@ -131,25 +160,7 @@ def update_case_property(request, domain):
             for key, msgs in dict(e).items():
                 for msg in msgs:
                     errors.append(_("FHIR Resource {} {}: {}").format(fhir_resource_type, key, msg))
-    if not errors:
-        for property in property_list:
-            case_type = property.get('caseType')
-            name = property.get('name')
-            description = property.get('description')
-            fhir_resource_prop_path = property.get('fhir_resource_prop_path')
-            data_type = property.get('data_type')
-            group = property.get('group')
-            deprecated = property.get('deprecated')
-            remove_path = property.get('removeFHIRResourcePropertyPath', False)
-            error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
-                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
-            if error:
-                errors.append(error)
-
-    if errors:
-        return JsonResponse({"status": "failed", "errors": errors}, status=400)
-    else:
-        return JsonResponse({"status": "success"})
+    return errors, fhir_resource_type_obj
 
 
 @login_and_domain_required
@@ -364,21 +375,18 @@ def _process_bulk_upload(bulk_file, domain):
                 if len(row) < expected_columns_in_prop_sheet:
                     error = _('Not enough columns')
                 else:
+                    error, fhir_resource_prop_path, remove_path = None, None, None
+                    name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
                     if import_fhir_data:
-                        name, group, data_type, description, deprecated, fhir_resource_prop_path, remove_path = [
-                            cell.value for cell in row[:7]]
+                        fhir_resource_prop_path, remove_path = row[5:]
                         remove_path = remove_path == 'Y' if remove_path else False
                         fhir_resource_type = fhir_resource_type_by_case_type.get(case_type)
                         if fhir_resource_prop_path and not fhir_resource_type:
                             error = _('Could not find resource type for {}').format(case_type)
-                        else:
-                            error = save_case_property(name, case_type, domain, data_type, description, group,
-                                                       deprecated, fhir_resource_prop_path, fhir_resource_type,
-                                                       remove_path)
-                    else:
-                        name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
+                    if not error:
                         error = save_case_property(name, case_type, domain, data_type, description, group,
-                                                   deprecated)
+                                                   deprecated, fhir_resource_prop_path, fhir_resource_type,
+                                                   remove_path)
                 if error:
                     errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
     return errors
