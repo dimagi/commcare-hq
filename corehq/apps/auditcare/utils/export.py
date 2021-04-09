@@ -7,8 +7,12 @@ from couchdbkit.ext.django.loading import get_db
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey
 
+from corehq.apps.domain.utils import get_domain_from_url
 from corehq.apps.users.models import WebUser
 from corehq.util.models import ForeignValue
+
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.parsing import string_to_datetime
 
 from ..models import AccessAudit, NavigationEventAudit
 
@@ -17,7 +21,10 @@ def navigation_events_by_user(user, start_date=None, end_date=None):
     params = {"user": user, "start_date": start_date, "end_date": end_date}
     where = get_date_range_where(start_date, end_date)
     query = NavigationEventAudit.objects.filter(user=user, **where)
-    return AuditWindowQuery(query, params)
+    return chain(
+        iter_couch_audit_events(params),
+        AuditWindowQuery(query),
+    )
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
@@ -47,8 +54,9 @@ def get_all_log_events(start_date=None, end_date=None):
     params = {"start_date": start_date, "end_date": end_date}
     where = get_date_range_where(start_date, end_date)
     return chain(
-        AuditWindowQuery(AccessAudit.objects.filter(**where), params),
-        AuditWindowQuery(NavigationEventAudit.objects.filter(**where), params),
+        iter_couch_audit_events(params),
+        AuditWindowQuery(AccessAudit.objects.filter(**where)),
+        AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
     )
 
 
@@ -95,7 +103,6 @@ def get_date_range_where(start_date, end_date):
 @attr.s(cmp=False)
 class AuditWindowQuery:
     query = attr.ib()
-    params = attr.ib()
     window_size = attr.ib(default=10000)
 
     def __iter__(self):
@@ -121,24 +128,69 @@ class AuditWindowQuery:
             if rec is None:
                 break
 
-    def count(self):
-        return self.query.count() + self.couch_count()
 
-    def couch_count(self):
-        db = get_db("auditcare")
-        if "user" in self.params:
-            view_name = "auditcare/urlpath_by_user_date"
-        else:
-            view_name = "auditcare/all_events"
-            raise NotImplementedError("not yet used")
-        startkey, endkey = _get_couch_view_keys(**self.params)
-        return db.view(
-            view_name,
-            startkey=startkey,
-            endkey=endkey,
-            reduce=False,
-            include_docs=False,
-        ).count()
+def iter_couch_audit_events(params, chunksize=10000):
+    if not (params.get("start_date") or params.get("user")):
+        raise NotImplementedError("auditcare queries on Couch have not "
+            "been designed for unbounded queries")
+    if params.get("start_date"):
+        sql_start = get_sql_start_date()
+        if params["start_date"] > sql_start:
+            return
+    db = get_db("auditcare")
+    if "user" in params:
+        view_name = "auditcare/urlpath_by_user_date"
+    else:
+        view_name = "auditcare/all_events"
+    startkey, endkey = _get_couch_view_keys(**params)
+    doc_ids = {r["id"] for r in db.view(
+        view_name,
+        startkey=startkey,
+        endkey=endkey,
+        reduce=False,
+        include_docs=False,
+    )}
+    for doc in iter_docs(db, doc_ids, chunksize=chunksize):
+        yield CouchAuditEvent(doc)
+
+
+def get_sql_start_date():
+    """Get the date of the first SQL auditcare record
+
+    HACK this uses `NavigationEventAudit` since that model is likely to
+    have the record with the earliest timestamp.
+
+    NOTE this function assumes no SQL data has been archived, and that
+    all auditcare data in Couch will be obsolete and/or archived before
+    SQL data. It should be removed when the data in Couch is no longer
+    relevant.
+    """
+    manager = NavigationEventAudit.objects
+    row = manager.order_by("event_date").values("event_date")[:1].first()
+    return row["event_date"] if row else None
+
+
+class CouchAuditEvent:
+    def __init__(self, doc):
+        self.__dict__ = doc
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.__dict__!r})"
+
+    @property
+    def domain(self):
+        return get_domain_from_url(self.path)
+
+    @property
+    def event_date(self):
+        datestr = self.__dict__["event_date"]
+        return string_to_datetime(datestr).replace(tzinfo=None)
+
+    @property
+    def path(self):
+        if self.doc_type == "NavigationEventAudit":
+            return self.request_path
+        return self.path_info
 
 
 def _get_couch_view_keys(user=None, start_date=None, end_date=None):
