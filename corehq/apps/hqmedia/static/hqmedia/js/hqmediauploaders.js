@@ -6,10 +6,8 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
         HQMediaUploaders[uploader.slug] = new HQMediaUploaderTypes[uploader.uploader_type](
             uploader.slug,
             uploader.media_type,
-            _.extend({
-                sessionid: initial_page_data("sessionid"),
-                swfURL: initial_page_data("swfURL"),
-            }, uploader.options));
+            uploader.options
+        );
         HQMediaUploaders[uploader.slug].init();
     });
 
