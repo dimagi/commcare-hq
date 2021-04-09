@@ -1977,6 +1977,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
+    instance_name = StringProperty(default='casedb')
+
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
     persistent_case_context_xml = StringProperty(default='case_name')
@@ -2413,7 +2415,9 @@ class ModuleDetailsMixin(object):
 
     @property
     def search_detail(self):
-        return deepcopy(self.case_details.short)
+        detail = deepcopy(self.case_details.short)
+        detail.instance_name = "results"
+        return detail
 
     def rename_lang(self, old_lang, new_lang):
         super(Module, self).rename_lang(old_lang, new_lang)
