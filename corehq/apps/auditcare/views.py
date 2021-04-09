@@ -2,17 +2,12 @@
 #for more information see: http://code.google.com/p/django-axes/
 from argparse import ArgumentTypeError
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse, HttpResponseBadRequest
 
 from .utils.export import write_export_from_all_log_events
 
 from corehq.util.argparse_types import date_type
-
-LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
-LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
-VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
 
 @login_required
