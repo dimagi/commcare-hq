@@ -19,9 +19,10 @@ class TestAuditMiddleware(SimpleTestCase):
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_no_audit(self.request)
 
-    def test_admin_view_is_audited_with_default_settings(self):
+    def test_admin_view_is_audited_with_audit_admin_views_setting(self):
         func = make_view(module="django.contrib.admin")
-        with configured_middleware() as ware:
+        settings = Settings(AUDIT_ADMIN_VIEWS=True)
+        with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
 
@@ -41,13 +42,17 @@ class TestAuditMiddleware(SimpleTestCase):
 
     def test_audit_views_setting(self):
         func = make_view("ChangeMyPasswordView", "corehq.apps.settings.views")
-        with configured_middleware() as ware:
+        settings = Settings(AUDIT_VIEWS=[
+            "corehq.apps.settings.views.ChangeMyPasswordView",
+        ])
+        with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
 
     def test_audit_modules_setting(self):
         func = make_view("ClassView", "corehq.apps.reports")
-        with configured_middleware() as ware:
+        settings = Settings(AUDIT_MODULES=["corehq.apps.reports"])
+        with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
 
