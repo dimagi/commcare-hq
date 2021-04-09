@@ -92,14 +92,13 @@ def migration_restore(request, domain, case_id):
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
         if ADD_LIMITED_FIXTURES_TO_CASE_RESTORE.enabled(domain):
-            _add_limited_fixtures(domain, case_id, content)
+            _add_limited_fixtures(case_id, content)
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
 
 
-def _add_limited_fixtures(domain, case_id, content):
+def _add_limited_fixtures(case_id, content):
     serializer = FlatLocationSerializer()
-    data_fields = get_location_data_fields(domain)
     restore_user = MockCaseAsRestoreUser(user_id=case_id)
-    content.extend(serializer.get_xml_nodes('locations', restore_user, SQLLocation.active_objects, data_fields))
+    content.extend(serializer.get_xml_nodes('locations', restore_user, SQLLocation.active_objects))

@@ -113,8 +113,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
-        data_fields = get_location_data_fields(restore_user.domain)
-        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
+        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset)
 
 
 class HierarchicalLocationSerializer(object):
@@ -122,13 +121,14 @@ class HierarchicalLocationSerializer(object):
     def should_sync(self, restore_user, app):
         return should_sync_hierarchical_fixture(restore_user.project, app)
 
-    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset):
         locations_db = LocationSet(locations_queryset)
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
         root_locations = locations_db.root_locations
 
         if root_locations:
+            data_fields = get_location_data_fields(restore_user.domain)
             _append_children(root_node, locations_db, root_locations, data_fields)
         else:
             # There is a bug on mobile versions prior to 2.27 where
@@ -145,8 +145,8 @@ class FlatLocationSerializer(object):
     def should_sync(self, restore_user, app):
         return should_sync_flat_fixture(restore_user.project, app)
 
-    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
-
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset):
+        data_fields = get_location_data_fields(restore_user.domain)
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
             'code', flat=True
         )
