@@ -15,6 +15,7 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
@@ -71,7 +72,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
 from corehq.apps.app_manager.util import (
     generate_xmlns,
     is_usercase_in_use,
@@ -642,7 +643,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit("name"):
         name = request.POST.get("name", None)
         module["name"][lang] = name
-        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-module_name': clean_trans(module.name, [lang])}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -1371,18 +1372,20 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
 
     form_name = _("Followup with Person")
 
+    output_tag = mark_safe(  # nosec: no user input
+        "<output value=\"instance('casedb')/casedb/case[@case_id = "
+        "instance('commcaresession')/session/data/case_id]/case_name\" "
+        "vellum:value=\"#case/case_name\" />"
+    )
+
     context = {
         'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'lang': lang,
-        'placeholder_label': mark_safe(_(
+        'placeholder_label': format_html(_(
             "This is your follow up form for {}. Delete this label and add "
             "questions for any follow up visits."
-        ).format(
-            "<output value=\"instance('casedb')/casedb/case[@case_id = "
-            "instance('commcaresession')/session/data/case_id]/case_name\" "
-            "vellum:value=\"#case/case_name\" />"
-        ))
+        ), output_tag)
     }
     attachment = render_to_string(
         "app_manager/simprints_followup_form.xml",
