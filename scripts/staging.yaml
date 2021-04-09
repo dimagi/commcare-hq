@@ -96,5 +96,6 @@ branches:
   - rp/fix-2fa-hyperlink # Rynhard April 8
   - rp/fix-broken-link-2.0 # Rynhard April 8
   - kev/markdown-help-modal # Kevin Apr 9
+  - ce/multidropdown-webapps
 
 submodules: {}
