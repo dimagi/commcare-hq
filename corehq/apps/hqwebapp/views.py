@@ -979,7 +979,8 @@ class CRUDPaginatedViewMixin(object):
                     'deleted_items': self.deleted_items_header,
                     'new_items': self.new_items_header,
                 },
-                'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form': (
+                    html.escape(self.get_create_form_response(create_form)) if create_form else None),
                 'create_item_form_class': self.create_item_form_class,
             }
         }
