@@ -55,6 +55,25 @@ class CaseCommandsTest(TestCase):
             ], domain=self.domain
         )
 
+    def create_active_location(self, loc_id):
+        location_type = LocationType.objects.create(
+            domain=self.domain,
+            name="Active location",
+            administrative=True,
+        )
+        SQLLocation.objects.create(
+            domain=self.domain, name='active', location_id=loc_id, location_type=location_type,
+        )
+
+    def create_checkin_case_with_hq_user_id(self):
+        checkin_case_id = uuid.uuid4().hex
+        hq_user_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, checkin_case_id, user_id=self.user_id, owner_id='owner_id', case_type='checkin',
+            update={"hq_user_id": hq_user_id},
+        )
+        return checkin_case_id, hq_user_id
+
     def test_add_hq_user_id_to_case(self):
         username = normalize_username("mobile_worker", self.domain)
         new_mobile_worker = CommCareUser.create(self.domain, username, "123", None, None)
@@ -250,22 +269,9 @@ class CaseCommandsTest(TestCase):
         investigation_case = self.case_accessor.get_case(investigation_case_id)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-child-location')
 
-    def test_add_assignment_cases(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain)
-        location_type = LocationType.objects.create(
-            domain=self.domain,
-            name="Active location",
-            administrative=True,
-        )
-        SQLLocation.objects.create(
-            domain=self.domain, name='active', location_id='active-location', location_type=location_type,
-        )
-        checkin_case_id = uuid.uuid4().hex
-        hq_user_id = uuid.uuid4().hex
-        self.submit_case_block(
-            True, checkin_case_id, user_id=self.user_id, owner_id='owner_id', case_type='checkin',
-            update={"hq_user_id": hq_user_id},
-        )
+    def test_add_primary_assignment_cases(self):
+        self.create_active_location('active-location')
+        checkin_case_id, hq_user_id = self.create_checkin_case_with_hq_user_id()
 
         patient_case_primary_id = uuid.uuid4().hex
         self.submit_case_block(
@@ -273,45 +279,68 @@ class CaseCommandsTest(TestCase):
             update={"is_assigned_primary": 'yes', "assigned_to_primary_checkin_case_id": checkin_case_id},
         )
 
+        call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
+        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        self.assertEqual(len(assignment_cases), 1)
+        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
+
+    def test_add_temp_assignment_cases(self):
+        self.create_active_location('active-location')
+        checkin_case_id, hq_user_id = self.create_checkin_case_with_hq_user_id()
+
         patient_case_temp_id = uuid.uuid4().hex
         self.submit_case_block(
             True, patient_case_temp_id, user_id=self.user_id, owner_id='active-location', case_type='patient',
-            update={"is_assigned_temp": 'yes', "assigned_to_primary_checkin_case_id": checkin_case_id},
+            update={"is_assigned_temp": 'yes', "assigned_to_temp_checkin_case_id": checkin_case_id},
         )
+
+        call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
+        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        self.assertEqual(len(assignment_cases), 1)
+        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
+
+    def test_add_primary_and_temp_assingment_cases(self):
+        self.create_active_location('active-location')
+        checkin_case_id, hq_user_id = self.create_checkin_case_with_hq_user_id()
+
         patient_case_both_primary_and_temp_id = uuid.uuid4().hex
         self.submit_case_block(
             True, patient_case_both_primary_and_temp_id, user_id=self.user_id, owner_id='active-location',
             case_type='patient', update={"is_assigned_temp": 'yes',
                                          "is_assigned_primary": 'yes',
-                                         "assigned_to_primary_checkin_case_id": checkin_case_id},
+                                         "assigned_to_primary_checkin_case_id": checkin_case_id,
+                                         "assigned_to_temp_checkin_case_id": checkin_case_id},
         )
-        patient_case_not_real_assigned_case_id = uuid.uuid4().hex
-        self.submit_case_block(
-            True, patient_case_not_real_assigned_case_id, user_id=self.user_id, owner_id='active-location',
-            case_type='patient', update={"is_assigned_temp": 'yes',
-                                         "assigned_to_primary_checkin_case_id": None},
-        )
-        patient_case_not_primary_or_temp_id = uuid.uuid4().hex
-        self.submit_case_block(
-            True, patient_case_not_primary_or_temp_id, user_id=self.user_id, owner_id='active-location',
-            case_type='patient', update={"assigned_to_primary_checkin_case_id": checkin_case_id},
-        )
-        patient_primary_case = self.case_accessor.get_case(patient_case_primary_id)
-        self.assertFalse(patient_primary_case.closed)
-        self.assertEqual(SQLLocation.objects.get(location_id=patient_primary_case.owner_id).name, 'active')
-        self.assertEqual(patient_primary_case.get_case_property('is_assigned_primary'), 'yes')
 
-        call_command('add_assignment_cases', self.domain, 'patient')
+        call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
+        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        self.assertEqual(len(assignment_cases), 2)
+        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
+
+    def test_add_assignment_cases_invalid_assigned_to_ids(self):
+        self.create_active_location('active-location')
+        patient_case_both_primary_and_temp_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient_case_both_primary_and_temp_id, user_id=self.user_id, owner_id='active-location',
+            case_type='patient', update={"is_assigned_temp": 'yes',
+                                         "is_assigned_primary": 'yes',
+                                         "assigned_to_primary_checkin_case_id": 'not_a_invalid_id',
+                                         "assigned_to_temp_checkin_case_id": 'also_not_a_invalid_id'},
+        )
+        call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
         self.assertEqual(len(assignment_cases), 0)
+
+    def test_add_assignment_cases_with_inactive_location(self):
+        self.create_active_location('active-location')
+        checkin_case_id, hq_user_id = self.create_checkin_case_with_hq_user_id()
+
+        patient_case_primary_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient_case_primary_id, user_id=self.user_id, owner_id='active-location', case_type='patient',
+            update={"is_assigned_primary": 'yes', "assigned_to_primary_checkin_case_id": checkin_case_id},
+        )
 
         call_command('add_assignment_cases', self.domain, 'patient', '--location=loc-thats-not-act')
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
         self.assertEqual(len(assignment_cases), 0)
-
-        call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
-
-        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
-
-        self.assertEqual(len(assignment_cases), 4)
-        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
