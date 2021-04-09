@@ -149,7 +149,6 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
         context.update({
             'uploaders': self.upload_controllers,
             'uploaders_js': [u.js_options for u in self.upload_controllers],
-            "sessionid": self.request.COOKIES.get('sessionid'),
         })
         return context
 
@@ -172,7 +171,6 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if self.app is None:
             raise Http404(self)
         context.update({
-            "sessionid": self.request.COOKIES.get('sessionid'),
             "multimedia_state": self.app.check_media_state(),
         })
         return context
