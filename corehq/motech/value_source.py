@@ -22,8 +22,10 @@ from corehq.motech.const import (
     DIRECTION_IMPORT,
     DIRECTIONS,
 )
-from corehq.motech.exceptions import ConfigurationError, JsonpathError
-from corehq.motech.serializers import serializers
+
+from .exceptions import ConfigurationError, JsonpathError
+from .serializers import serializers
+from .utils import simplify_list
 
 
 @attr.s
@@ -137,12 +139,7 @@ class ValueSource:
             raise JsonpathError from err
         matches = jsonpath.find(external_data)
         values = [m.value for m in matches]
-        if not values:
-            return None
-        elif len(values) == 1:
-            return values[0]
-        else:
-            return values
+        return simplify_list(values)
 
     def set_external_value(self, external_data: dict, info: CaseTriggerInfo):
         """
