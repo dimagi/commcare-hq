@@ -113,7 +113,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
-        return self.serializer.get_xml_nodes(self.id, restore_user.domain, restore_user.user_id,
+        return self.serializer.get_xml_nodes(restore_user.domain, self.id, restore_user.user_id,
                                              locations_queryset)
 
 
@@ -122,7 +122,7 @@ class HierarchicalLocationSerializer(object):
     def should_sync(self, restore_user, app):
         return should_sync_hierarchical_fixture(restore_user.project, app)
 
-    def get_xml_nodes(self, fixture_id, domain, user_id, locations_queryset):
+    def get_xml_nodes(self, domain, fixture_id, user_id, locations_queryset):
         locations_db = LocationSet(locations_queryset)
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': user_id})
@@ -146,7 +146,7 @@ class FlatLocationSerializer(object):
     def should_sync(self, restore_user, app):
         return should_sync_flat_fixture(restore_user.project, app)
 
-    def get_xml_nodes(self, fixture_id, domain, user_id, locations_queryset):
+    def get_xml_nodes(self, domain, fixture_id, user_id, locations_queryset):
         data_fields = get_location_data_fields(domain)
         all_types = LocationType.objects.filter(domain=domain).values_list(
             'code', flat=True
