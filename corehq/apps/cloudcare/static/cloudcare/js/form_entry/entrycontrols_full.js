@@ -422,30 +422,17 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             });
         });
 
-        self.renderSelect2 = function () {
-            var $input = $('#' + self.entryId);
-            $input.select2(_.extend({
-                allowClear: true,
-                placeholder: self.placeholderText,
-                multiple: true,
-                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
-            }));
+        self.additionalSelect2Options = function () {
+            return {};
         };
 
         self.afterRender = function () {
-            self.renderSelect2();
+            select2ify(self);
         };
     }
     MultiDropdownEntry.prototype = Object.create(MultiSelectEntry.prototype);
     MultiDropdownEntry.prototype.constructor = MultiSelectEntry;
-    MultiDropdownEntry.prototype.onAnswerChange = function (newValue) {
-        var self = this;
-        MultiSelectEntry.prototype.onAnswerChange.call(self, newValue);
-        _.delay(function () {
-            $("#" + self.entryId).trigger("change.select2");
-        });
-    };
-
+    MultiDropdownEntry.prototype.onAnswerChange = select2AnswerChange(MultiSelectEntry);
 
     /**
      * Represents multiple radio button entries
@@ -560,28 +547,14 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self.additionalSelect2Options = function () {
             return {};
         };
-        self.renderSelect2 = function () {
-            var $input = $('#' + self.entryId);
-            $input.select2(_.extend({
-                allowClear: true,
-                placeholder: self.placeholderText,
-                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
-            }, self.additionalSelect2Options()));
-        };
 
         self.afterRender = function () {
-            self.renderSelect2();
+            select2ify(self);
         };
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     DropdownEntry.prototype.constructor = EntrySingleAnswer;
-    DropdownEntry.prototype.onAnswerChange = function (newValue) {
-        var self = this;
-        EntrySingleAnswer.prototype.onAnswerChange.call(self, newValue);
-        _.delay(function () {
-            $("#" + self.entryId).trigger("change.select2");
-        });
-    };
+    DropdownEntry.prototype.onAnswerChange = select2AnswerChange(EntrySingleAnswer);
     DropdownEntry.prototype.onPreProcess = function (newValue) {
         // When newValue is undefined it means we've unset the select question.
         if (newValue === Const.NO_ANSWER || newValue === undefined) {
@@ -1148,6 +1121,32 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         }
 
         return form.displayOptions || {};
+    }
+
+    /**
+     * Utility to render question as select2
+     */
+    function select2ify(entry) {
+        var $input = $('#' + entry.entryId);
+        $input.select2(_.extend({
+            allowClear: true,
+            placeholder: entry.placeholderText,
+            escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+        }, entry.additionalSelect2Options()));
+
+    }
+
+    /**
+     * Function to handle answer changes for entries using selct2
+     */
+    function select2AnswerChange(parentClass) {
+        return function(newValue) {
+            var self = this;
+            parentClass.prototype.onAnswerChange.call(self, newValue);
+            _.delay(function () {
+                $("#" + self.entryId).trigger("change.select2");
+            });
+        };
     }
 
     return {
