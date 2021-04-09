@@ -13,10 +13,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         className: "formplayer-request",
+        attributes: function () {
+            var displayText = this.options.model.attributes.displayText;
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-label": displayText,
+            };
+        },
         events: {
             "click": "rowClick",
             "click .js-module-audio-play": "audioPlay",
             "click .js-module-audio-pause": "audioPause",
+            "keydown": "rowKeyAction",
         },
 
         initialize: function (options) {
@@ -66,6 +75,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
+        },
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.rowClick(e);
+            }
         },
         templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -213,13 +227,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click": "rowClick",
+            "keydown": "rowKeyAction",
         },
 
         className: "formplayer-request",
 
+        attributes: function () {
+            return {
+                "tabindex": "0",
+            };
+        },
+
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
+        },
+
+        rowKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.rowClick(e);
+            }
         },
 
         templateContext: function () {
@@ -522,14 +549,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
+        attributes: function () {
+            return {
+                "role": "link",
+                "tabindex": "0",
+            };
+        },
         events: {
             "click": "crumbClick",
+            "keydown": "crumbKeyAction",
         },
 
         crumbClick: function (e) {
             e.preventDefault();
             var crumbId = this.options.model.get('id');
             FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
+        },
+        crumbKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.crumbClick(e);
+            }
         },
     });
 
@@ -540,11 +579,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
+            'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
             FormplayerFrontend.trigger('navigateHome');
         },
-
+        onKeyActionHome: function (e) {
+            if (e.keyCode === 13) {
+                this.onClickHome();
+            }
+        },
     });
 
     var LanguageOptionView = Marionette.View.extend({
