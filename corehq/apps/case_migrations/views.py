@@ -31,9 +31,6 @@ from .forms import MigrationForm
 from .migration import perform_migration
 
 
-MockCaseAsRestoreUser = namedtuple("MockCaseAsRestoreUser", "user_id")
-
-
 @method_decorator(domain_admin_required, name='dispatch')
 @method_decorator(WEBAPPS_CASE_MIGRATION.required_decorator(), name='dispatch')
 class BaseMigrationView(BaseDomainView):
@@ -92,13 +89,12 @@ def migration_restore(request, domain, case_id):
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
         if ADD_LIMITED_FIXTURES_TO_CASE_RESTORE.enabled(domain):
-            _add_limited_fixtures(case_id, content)
+            _add_limited_fixtures(domain, case_id, content)
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
 
 
-def _add_limited_fixtures(case_id, content):
+def _add_limited_fixtures(domain, case_id, content):
     serializer = FlatLocationSerializer()
-    restore_user = MockCaseAsRestoreUser(user_id=case_id)
-    content.extend(serializer.get_xml_nodes('locations', restore_user, SQLLocation.active_objects))
+    content.extend(serializer.get_xml_nodes('locations', domain, case_id, SQLLocation.active_objects))
