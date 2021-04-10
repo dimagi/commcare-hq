@@ -46,6 +46,7 @@ from corehq.apps.domain.decorators import (
     mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
@@ -134,14 +135,36 @@ def app_aware_search(request, domain, app_id):
 
 
 def _get_related_cases(cases, app_id):
+    """
+    Fetch related cases that are necessary to display any related-case
+    properties in the app requesting this case search.
+
+    Returns list of CommCareCase objects for adding to CaseDBFixture.
+    """
     if not cases:
         return []
 
     domain = cases[0].domain
     case_type = cases[0].type
+    paths = _get_related_case_relationship_paths(domain, app_id, case_type)
+    results = _get_related_case_results(cases, paths)
 
-    # Get unique case relationships used by search details in possible modules
-    # This will miss related cases that are referenced only by calculated properties
+    # Handle incompatibility between sql cases and CommCareCase
+    # See https://github.com/dimagi/commcare-hq/commit/f7eca23eaffb9168d04c06a06a8c5d497202f6bf
+    for result in results:
+        result.pop('modified_by')
+
+    return [CommCareCase.wrap(result) for result in results]
+
+
+def _get_related_case_relationship_paths(domain, app_id, case_type):
+    """
+    Get unique case relationships used by search details in any modules that
+    match the given case type and are configured for case search.
+    It will miss related cases that are referenced only by calculated properties
+
+    Returns a set of paths, e.g. {"parent", "host", "parent/parent"}
+    """
     paths = set()
     app = get_app_cached(domain, app_id)
     for module in app.get_modules():
@@ -150,22 +173,41 @@ def _get_related_cases(cases, app_id):
                 if not column.useXpathExpression:
                     parts = column.field.split("/")
                     if len(parts) > 1:
-                        parts[-1] = "name"
+                        parts.pop()     # keep only the relationship: "parent", "parent/parent", etc.
                         paths.add("/".join(parts))
+    return paths
 
-    # TODO: get only relevant cases
-    parent_indices = [case.get_index('parent') for case in cases]
-    parent_ids = {i.referenced_id for i in parent_indices if i}
 
-    from corehq.apps.es.cases import CaseES
-    results = CaseES().domain(domain).case_ids(parent_ids).run().hits
+def _get_related_case_results(cases, paths):
+    """
+    Given a set of cases and a set of case property paths,
+    fetches ES documents for all cases referenced by those paths.
+    """
+    if not cases:
+        return []
 
-    # Handle incompatibility between sql cases and CommCareCase
-    # See https://github.com/dimagi/commcare-hq/commit/f7eca23eaffb9168d04c06a06a8c5d497202f6bf
-    for result in results:
-        result.pop('modified_by')
+    domain = cases[0].domain
+    results_cache = {}
+    for path in paths:
+        parts = path.split("/")
+        for index, identifier in enumerate(parts):
+            fragment = "/".join(parts[:index + 1])
+            if not fragment:
+                continue
 
-    return [CommCareCase.wrap(result) for result in results]
+            if fragment in results_cache:
+                cases = results_cache[fragment]
+            else:
+                indices = [case.get_index(identifier) for case in cases]
+                related_case_ids = {i.referenced_id for i in indices if i}
+                results = CaseES().domain(domain).case_ids(related_case_ids).run().hits
+                results_cache[fragment] = results
+
+    results = []
+    for path in paths:
+        results.extend(results_cache[path])
+
+    return results
 
 
 @location_safe
