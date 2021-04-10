@@ -298,7 +298,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeat_record.attempts[0].message)
+        self.assertEqual(self.repeat_record.attempts[0].message, '')
 
     def test_add_success_attempt_200(self):
         resp = ResponseMock()
@@ -325,7 +325,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
-        self.assertIsNone(self.repeat_record.attempts[0].traceback)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_server_failure_attempt_cancel(self):
         message = '504: Gateway Timeout'
@@ -343,7 +343,7 @@ class AddAttemptsTests(RepeaterTestCase):
                            + [RECORD_CANCELLED_STATE])
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
-        self.assertIsNone(attempts[-1].traceback)
+        self.assertEqual(attempts[-1].traceback, '')
 
     def test_add_client_failure_attempt_fail(self):
         message = '409: Conflict'
@@ -355,7 +355,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
-        self.assertIsNone(self.repeat_record.attempts[0].traceback)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_client_failure_attempt_cancel(self):
         message = '409: Conflict'
@@ -370,7 +370,7 @@ class AddAttemptsTests(RepeaterTestCase):
                            + [RECORD_CANCELLED_STATE])
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
-        self.assertIsNone(attempts[-1].traceback)
+        self.assertEqual(attempts[-1].traceback, '')
 
     def test_add_payload_exception_attempt(self):
         message = 'ValueError: Schema validation failed'

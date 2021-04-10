@@ -1101,7 +1101,7 @@ class SQLRepeatRecord(models.Model):
         self.repeater_stub.reset_next_attempt()
         self.sqlrepeatrecordattempt_set.create(
             state=RECORD_SUCCESS_STATE,
-            message=format_response(response),
+            message=format_response(response) or '',
         )
         self.state = RECORD_SUCCESS_STATE
         self.save()
@@ -1191,15 +1191,15 @@ class SQLRepeatRecord(models.Model):
         # Uses `list(queryset)[-1]` instead of `queryset.last()` to use
         # prefetched attempts, if available.
         attempts = list(self.attempts)
-        return attempts[-1].message if attempts else None
+        return attempts[-1].message if attempts else ''
 
 
 class SQLRepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(SQLRepeatRecord,
                                       on_delete=models.CASCADE)
     state = models.TextField(choices=RECORD_STATES)
-    message = models.TextField(null=True, blank=True)
-    traceback = models.TextField(null=True, blank=True)
+    message = models.TextField(blank=True, default='')
+    traceback = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
