@@ -119,6 +119,12 @@ class TestAuditMiddleware(SimpleTestCase):
         self.assertEqual(audit_doc.user, "username")
         self.assertEqual(audit_doc.save_count, 1)
 
+    def test_audit_save_error_does_not_disrupt_response(self):
+        self.request.audit_doc = AuditSaveErrorDoc(user=None)
+        with configured_middleware() as ware:
+            ware(self.request)
+        self.assertEqual(self.request.audit_doc.save_count, 1)
+
     def assert_audit(self, request):
         audit_doc = getattr(request, "audit_doc", None)
         self.assertEqual(audit_doc, EXPECTED_AUDIT, "audit expected")
@@ -158,6 +164,13 @@ class FakeAuditDoc(Config):
             self.save_count += 1
         else:
             self.save_count = 1
+
+
+class AuditSaveErrorDoc(FakeAuditDoc):
+
+    def save(self):
+        super().save()
+        raise Exception("cannot save")
 
 
 ARGS = ()  # positional view args are not audited, therefore are empty

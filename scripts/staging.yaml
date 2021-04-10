@@ -66,12 +66,9 @@ branches:
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - fr/consumer-user             # Farid March 17
-  - feature/USH-606-conditional-alert-modal # Jenny March 18
-  - kev/repeat-translation-inner-group # Kevin Mar 22
   - mjr/xss_accounting # Matt Mar 24
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - jm/pillow-upgrade # Joel Mar 29
-  - jm/hub-and-kiss-emails # Joel Apr 1
+  - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
@@ -86,5 +83,15 @@ branches:
   - ap/escape-html-in-reports # Amit Apr 2
   - ap/escape-html-in-users # Amit Apr 2
   - ap/escape-templates-in-datainterfaces # Amit Apr 2
+  - ap/escape-html-in-remaining-apps # Amit Apr 5
   - smh/missing-queryData # Steph Apr 2
+  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
+  - mjr/xss_reports  # Matt April 7
+  - sr/jumptoErrors # Sravan April 6
+  - fr/smart-oauth-prep         # Farid April 7
+  - mk/form-mm-exports-filters # MK April 8
+  - fr/smart-oauth-views        # Farid April 7
+  - mjr/xss_custom_fields  # Matt April 7
+  - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
+
 submodules: {}

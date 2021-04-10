@@ -76,7 +76,7 @@ markdown==2.2.1
 mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
-Pillow>=7.1.0
+Pillow>=8.1.2
 polib==1.1.0
 prometheus-client==0.7.1
 psycogreen~=1.0
@@ -85,7 +85,7 @@ py-KISSmetrics==1.1.0
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
 PyGithub==1.54.1
-Pygments~=2.0
+Pygments==2.8.1
 pygooglechart==0.4.0
 python-dateutil~=2.6
 python-imap==1.0.0

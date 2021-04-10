@@ -83,6 +83,7 @@ def write_export_from_all_log_events(file_obj, start, end):
 
 
 def get_date_range_where(start_date, end_date):
+    """Get ORM filter kwargs for inclusive event_date range"""
     where = {}
     if start_date:
         where["event_date__gt"] = start_date.date()
