@@ -20,9 +20,9 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.motech.repeaters.dbaccessors import (
-    get_couch_repeat_records_by_payload_id,
+    get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
-    iter_repeat_records_by_repeater,
+    iter_repeat_record_ids_by_repeater,
 )
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -263,8 +263,7 @@ def _get_repeat_record_ids(
             records = get_sql_repeat_records_by_payload_id(domain, payload_id)
             return [r.id for r in records]
         else:
-            records = get_couch_repeat_records_by_payload_id(domain, payload_id)
-            return [r._id for r in records]
+            return get_couch_repeat_record_ids_by_payload_id(domain, payload_id)
     else:
         if use_sql:
             queryset = SQLRepeatRecord.objects.filter(
@@ -273,5 +272,4 @@ def _get_repeat_record_ids(
             )
             return [r['id'] for r in queryset.values('id')]
         else:
-            records = iter_repeat_records_by_repeater(domain, repeater_id)
-            return [r._id for r in records]
+            return list(iter_repeat_record_ids_by_repeater(domain, repeater_id))

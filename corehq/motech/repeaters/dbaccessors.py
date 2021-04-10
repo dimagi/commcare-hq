@@ -146,9 +146,20 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_si
 
 
 def iter_repeat_records_by_repeater(domain, repeater_id, chunk_size=1000):
+    return _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
+                                            include_docs=True)
+
+
+def iter_repeat_record_ids_by_repeater(domain, repeater_id, chunk_size=1000):
+    return _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
+                                            include_docs=False)
+
+
+def _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
+                                     include_docs):
     from corehq.motech.repeaters.models import RepeatRecord
     kwargs = {
-        'include_docs': True,
+        'include_docs': include_docs,
         'reduce': False,
         'descending': True,
     }
@@ -158,7 +169,10 @@ def iter_repeat_records_by_repeater(domain, repeater_id, chunk_size=1000):
             'repeaters/repeat_records',
             chunk_size,
             **kwargs):
-        yield RepeatRecord.wrap(doc['doc'])
+        if include_docs:
+            yield RepeatRecord.wrap(doc['doc'])
+        else:
+            yield doc['id']
 
 
 def get_repeat_records_by_payload_id(domain, payload_id):
@@ -169,16 +183,28 @@ def get_repeat_records_by_payload_id(domain, payload_id):
 
 
 def get_couch_repeat_records_by_payload_id(domain, payload_id):
+    return _get_couch_repeat_records_by_payload_id(domain, payload_id,
+                                                   include_docs=True)
+
+
+def get_couch_repeat_record_ids_by_payload_id(domain, payload_id):
+    return _get_couch_repeat_records_by_payload_id(domain, payload_id,
+                                                   include_docs=False)
+
+
+def _get_couch_repeat_records_by_payload_id(domain, payload_id, include_docs):
     from .models import RepeatRecord
     results = RepeatRecord.get_db().view(
         'repeaters/repeat_records_by_payload_id',
         startkey=[domain, payload_id],
         endkey=[domain, payload_id],
-        include_docs=True,
+        include_docs=include_docs,
         reduce=False,
         descending=True
     ).all()
-    return [RepeatRecord.wrap(result['doc']) for result in results]
+    if include_docs:
+        return [RepeatRecord.wrap(result['doc']) for result in results]
+    return [result['id'] for result in results]
 
 
 def get_sql_repeat_records_by_payload_id(domain, payload_id):
