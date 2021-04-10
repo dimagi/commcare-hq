@@ -92,6 +92,13 @@ def restore(request, domain, app_id=None):
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
+    return app_aware_search(request, domain, None)
+
+
+@location_safe
+@mobile_auth
+@check_domain_migration
+def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
     Returns results as a fixture with the same structure as a casedb instance.
