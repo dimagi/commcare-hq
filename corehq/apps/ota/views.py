@@ -118,6 +118,22 @@ def search(request, domain):
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+
+    # TODO: get necessary related cases, not necessarily parents
+    parent_indices = [case.get_index('parent') for case in cases]
+    parent_ids = [i.referenced_id for i in parent_indices if i]
+
+    from corehq.apps.es.cases import CaseES
+    results = CaseES().domain(domain).case_ids(parent_ids).run().hits
+
+    # Handle incompatibility between sql cases and CommCareCase
+    # See https://github.com/dimagi/commcare-hq/commit/f7eca23eaffb9168d04c06a06a8c5d497202f6bf
+    for result in results:
+        result.pop('modified_by')
+
+    related_cases = [CommCareCase.wrap(result) for result in results]
+    cases.extend(related_cases)
+
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
