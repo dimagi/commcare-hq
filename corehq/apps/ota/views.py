@@ -36,6 +36,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_version,
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
 from corehq.apps.case_search.utils import CaseSearchCriteria
@@ -125,10 +126,36 @@ def app_aware_search(request, domain, app_id):
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+    if app_id:
+        cases.extend(_get_related_cases(cases, app_id))
 
-    # TODO: get necessary related cases, not necessarily parents
+    fixtures = CaseDBFixture(cases).fixture
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+
+
+def _get_related_cases(cases, app_id):
+    if not cases:
+        return []
+
+    domain = cases[0].domain
+    case_type = cases[0].type
+
+    # Get unique case relationships used by search details in possible modules
+    # This will miss related cases that are referenced only by calculated properties
+    paths = set()
+    app = get_app_cached(domain, app_id)
+    for module in app.get_modules():
+        if module.case_type == case_type and module_offers_search(module):
+            for column in module.search_detail.columns:
+                if not column.useXpathExpression:
+                    parts = column.field.split("/")
+                    if len(parts) > 1:
+                        parts[-1] = "name"
+                        paths.add("/".join(parts))
+
+    # TODO: get only relevant cases
     parent_indices = [case.get_index('parent') for case in cases]
-    parent_ids = [i.referenced_id for i in parent_indices if i]
+    parent_ids = {i.referenced_id for i in parent_indices if i}
 
     from corehq.apps.es.cases import CaseES
     results = CaseES().domain(domain).case_ids(parent_ids).run().hits
@@ -138,11 +165,7 @@ def app_aware_search(request, domain, app_id):
     for result in results:
         result.pop('modified_by')
 
-    related_cases = [CommCareCase.wrap(result) for result in results]
-    cases.extend(related_cases)
-
-    fixtures = CaseDBFixture(cases).fixture
-    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+    return [CommCareCase.wrap(result) for result in results]
 
 
 @location_safe
