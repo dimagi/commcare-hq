@@ -109,7 +109,7 @@ def _to_html(val, key=None, level=0, timeago=False):
         iso = val.isoformat()
         ret = format_html(
             "<time {} title='{}' datetime='{}'>{}</time>",
-            "class='timeago'" if timeago else "",
+            mark_safe("class='timeago'") if timeago else "",  # nosec: no user input
             iso,
             iso,
             safe_strftime(val, fmt))
