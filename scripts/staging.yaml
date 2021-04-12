@@ -101,5 +101,6 @@ branches:
   - mjr/xss_hqwebapp_take2  # Matt April 12
   - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
   - mjr/xss_exports # Matt April 12
+  - jls/case-search-case-list-show-related-properties # Jenny April 12
 
 submodules: {}
