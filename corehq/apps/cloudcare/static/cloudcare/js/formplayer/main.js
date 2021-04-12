@@ -58,5 +58,20 @@ hqDefine("cloudcare/js/formplayer/main", function () {
                 $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
             }
         });
+
+        $(window).scroll(function() {
+            var fadeOutHeight = $(document).height() - $(window).height() - 100;
+            if ($(this).scrollTop() > fadeOutHeight) {
+                $('#scroll-bottom').fadeOut();
+            } else {
+                $('#scroll-bottom').fadeIn();
+            }
+        });
+
+        $(document).on('click', "#scroll-bottom", function () {
+            $('html, body').animate({
+                scrollTop: $(document).height() - $(window).height() - 60,
+            });
+        });
     });
 });
