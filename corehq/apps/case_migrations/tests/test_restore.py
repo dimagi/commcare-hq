@@ -11,6 +11,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.fixtures import FlatLocationSerializer
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.hmac_request import get_hmac_digest
@@ -75,8 +76,11 @@ class TestRelatedCases(TestCase):
     def test_restore(self):
         case_id = self.dad.case_id
 
-        create_domain(self.domain)
+        domain_obj = create_domain(self.domain)
         user = WebUser.create(self.domain, 'test-user', 'passmein', created_by=None, created_via=None)
+
+        self.addCleanup(delete_all_users)
+        self.addCleanup(domain_obj.delete)
 
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
