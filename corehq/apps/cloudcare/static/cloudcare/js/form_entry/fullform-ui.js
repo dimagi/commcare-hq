@@ -287,20 +287,20 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
-        self.enableSubmitButton = ko.computed(function () {
-            return !self.isSubmitting();
-        });
-
         self.erroredQuestions = ko.computed(function () {
             var questions = getQuestions(self);
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
-                /* eslint-disable */
-                if (questions[i].error() != null || questions[i].serverError() != null ) {
+                // eslint-disable-next-line
+                if (questions[i].error() != null || questions[i].serverError() != null || questions[i].requiredNotAnswered()) {
                     qs.push(questions[i]);
                 }
             }
             return qs;
+        });
+
+        self.enableSubmitButton = ko.computed(function () {
+            return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
         self.submitText = ko.computed(function () {
@@ -571,6 +571,10 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
             return Utils.resourceMap(resourceType);
         };
+
+        self.requiredNotAnswered = ko.computed(function () {
+            return self.required() && self.answer() === Const.NO_ANSWER;
+        });
 
         self.navigateTo = function () {
             var el = $("label[for='" + self.entry.entryId + "']");
