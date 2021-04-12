@@ -706,10 +706,8 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return mark_safe(  # nosec: render_to_string handles escaping
-        render_to_string('hqwebapp/partials/breadcrumbs.html', {
-            'page': page,
-            'section': section,
-            'parents': parents or [],
-        })
-    )
+    return render_to_string('hqwebapp/partials/breadcrumbs.html', {
+        'page': page,
+        'section': section,
+        'parents': parents or [],
+    })

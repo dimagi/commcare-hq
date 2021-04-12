@@ -79,8 +79,7 @@ class Select2Ajax(_Select2AjaxMixin, forms.Select):
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2Ajax, self).render(name, value, attrs, renderer=renderer)
-        return mark_safe(output)  # nosec: the output IS HTML, so needs to be marked safe
+        return super(Select2Ajax, self).render(name, value, attrs, renderer=renderer)
 
 
 class DateRangePickerWidget(Input):
@@ -134,7 +133,8 @@ class DateRangePickerWidget(Input):
             '   <span class="input-group-addon"><i class="fa fa-calendar"></i></span>'
             '   {}'
             '</div>',
-            mark_safe(output))  # nosec: must support the input tag
+            output
+        )
 
 
 class SelectToggle(forms.Select):
@@ -170,6 +170,4 @@ class GeoCoderInput(Input):
         if isinstance(value, dict):
             value = json.dumps(value)
         output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
-        return format_html(
-            '<div class="geocoder-proximity">{}</div>',
-            mark_safe(output))  # nosec: must support the input tag
+        return format_html('<div class="geocoder-proximity">{}</div>', output)
