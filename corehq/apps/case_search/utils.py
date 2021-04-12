@@ -11,8 +11,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
 )
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 
 
@@ -140,12 +139,7 @@ def get_related_cases(cases, app_id):
     paths = get_related_case_relationships(domain, app_id, case_type)
     results = get_related_case_results(cases, paths)
 
-    # Handle incompatibility between sql cases and CommCareCase
-    # See https://github.com/dimagi/commcare-hq/commit/f7eca23eaffb9168d04c06a06a8c5d497202f6bf
-    for result in results:
-        result.pop('modified_by')
-
-    return [CommCareCase.wrap(result) for result in results]
+    return [CommCareCase.wrap(flatten_result(result)) for result in results]
 
 
 def get_related_case_relationships(domain, app_id, case_type):
@@ -191,7 +185,7 @@ def get_related_case_results(cases, paths):
             else:
                 indices = [case.get_index(identifier) for case in cases]
                 related_case_ids = {i.referenced_id for i in indices if i}
-                results = CaseES().domain(domain).case_ids(related_case_ids).run().hits
+                results = CaseSearchES().domain(domain).case_ids(related_case_ids).run().hits
                 results_cache[fragment] = results
 
     results = []
