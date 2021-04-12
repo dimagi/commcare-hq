@@ -1,9 +1,6 @@
 from typing import List
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.suite_xml.contributors import (
-    SuiteContributorByModule,
-)
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Argument,
     PushFrame,
@@ -13,16 +10,14 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.xpath import XPath, session_var
 
 
-class SessionEndpointContributor(SuiteContributorByModule):
-
-    def get_module_contributions(self, module) -> List[SessionEndpoint]:
-        endpoints = []
-        if module.session_endpoint_ids:
-            endpoints.append(_get_module_endpoint(module))
-        for form in module.get_suite_forms():
-            if form.session_endpoint_ids:
-                endpoints.append(_get_form_endpoint(form))
-        return endpoints
+def get_session_endpoint_contributions(module) -> List[SessionEndpoint]:
+    endpoints = []
+    if module.session_endpoint_ids:
+        endpoints.append(_get_module_endpoint(module))
+    for form in module.get_suite_forms():
+        if form.session_endpoint_ids:
+            endpoints.append(_get_form_endpoint(form))
+    return endpoints
 
 
 def _get_module_endpoint(module) -> SessionEndpoint:
