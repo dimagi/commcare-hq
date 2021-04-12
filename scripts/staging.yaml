@@ -66,7 +66,7 @@ branches:
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - fr/consumer-user             # Farid March 17
-  - sk/get_display_data # Simon March 30
+  # - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
   - sr/ush-ff+sr/csr-cs+nh/reminders  # Sravan April 12
   - sr/ucr-cs  # Sravan March 31
@@ -82,7 +82,6 @@ branches:
   - ap/escape-templates-in-datainterfaces # Amit Apr 2
   - ap/escape-html-in-remaining-apps # Amit Apr 5
   - smh/missing-queryData # Steph Apr 2
-  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
   - mjr/xss_reports  # Matt April 7
   - sr/jumptoErrors # Sravan April 6
   - fr/smart-oauth-prep         # Farid April 7
@@ -98,5 +97,9 @@ branches:
   - sr/ush-ff  # Sravan April 12
   - rp/remove_superuser_impersonation #Rynhard April 12
   - ap/update-django-to-2-2-20  # Amit April 12
+  - mjr/xss_hqwebapp_AND_app_manager  # Matt April 12
+  - mjr/xss_hqwebapp_take2  # Matt April 12
+  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
+  - mjr/xss_exports # Matt April 12
 
 submodules: {}
