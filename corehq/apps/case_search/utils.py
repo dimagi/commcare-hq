@@ -1,5 +1,8 @@
 import re
 
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.dbaccessors import get_app_cached
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -8,6 +11,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
 )
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 
@@ -119,3 +123,79 @@ class CaseSearchCriteria(object):
                 self.search_es = self.search_es.xpath_query(self.domain, query)
             else:
                 self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+
+
+def get_related_cases(cases, app_id):
+    """
+    Fetch related cases that are necessary to display any related-case
+    properties in the app requesting this case search.
+
+    Returns list of CommCareCase objects for adding to CaseDBFixture.
+    """
+    if not cases:
+        return []
+
+    domain = cases[0].domain
+    case_type = cases[0].type
+    paths = get_related_case_relationships(domain, app_id, case_type)
+    results = get_related_case_results(cases, paths)
+
+    # Handle incompatibility between sql cases and CommCareCase
+    # See https://github.com/dimagi/commcare-hq/commit/f7eca23eaffb9168d04c06a06a8c5d497202f6bf
+    for result in results:
+        result.pop('modified_by')
+
+    return [CommCareCase.wrap(result) for result in results]
+
+
+def get_related_case_relationships(domain, app_id, case_type):
+    """
+    Get unique case relationships used by search details in any modules that
+    match the given case type and are configured for case search.
+    It will miss related cases that are referenced only by calculated properties
+
+    Returns a set of paths, e.g. {"parent", "host", "parent/parent"}
+    """
+    paths = set()
+    app = get_app_cached(domain, app_id)
+    for module in app.get_modules():
+        if module.case_type == case_type and module_offers_search(module):
+            for column in module.search_detail.columns:
+                if not column.useXpathExpression:
+                    parts = column.field.split("/")
+                    if len(parts) > 1:
+                        parts.pop()     # keep only the relationship: "parent", "parent/parent", etc.
+                        paths.add("/".join(parts))
+    return paths
+
+
+def get_related_case_results(cases, paths):
+    """
+    Given a set of cases and a set of case property paths,
+    fetches ES documents for all cases referenced by those paths.
+    """
+    if not cases:
+        return []
+
+    domain = cases[0].domain
+    results_cache = {}
+    for path in paths:
+        parts = path.split("/")
+        for index, identifier in enumerate(parts):
+            fragment = "/".join(parts[:index + 1])
+            if not fragment:
+                continue
+
+            if fragment in results_cache:
+                cases = results_cache[fragment]
+            else:
+                indices = [case.get_index(identifier) for case in cases]
+                related_case_ids = {i.referenced_id for i in indices if i}
+                results = CaseES().domain(domain).case_ids(related_case_ids).run().hits
+                results_cache[fragment] = results
+
+    results = []
+    for path in paths:
+        results.extend(results_cache[path])
+
+    return results
