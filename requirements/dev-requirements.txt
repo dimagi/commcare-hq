@@ -79,7 +79,7 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
-cryptography==3.4.6
+cryptography==3.4.7
     # via
     #   jwcrypto
     #   pyopenssl
