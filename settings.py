@@ -747,20 +747,10 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_VIEWS = [
-    'corehq.apps.settings.views.ChangeMyPasswordView',
-]
-
-AUDIT_MODULES = [
-    'corehq.apps.reports',
-    'corehq.apps.userreports',
-    'corehq.apps.data',
-    'corehq.apps.registration',
-    'corehq.apps.hqadmin',
-    'corehq.apps.accounting',
-    'corehq.apps.cloudcare',
-    'tastypie',
-]
+AUDIT_ALL_VIEWS = False
+AUDIT_VIEWS = []
+AUDIT_MODULES = []
+AUDIT_ADMIN_VIEWS = False
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {

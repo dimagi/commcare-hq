@@ -1,8 +1,5 @@
 from typing import List, Tuple
 
-from django.conf import settings
-from django.contrib.sites.models import Site
-
 from requests import HTTPError, Response
 
 from casexml.apps.case.mock import CaseBlock
@@ -13,6 +10,7 @@ from corehq.motech.value_source import CaseTriggerInfo
 
 from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
 from .models import build_fhir_resource_for_info
+from .utils import resource_url
 
 
 def register_patients(
@@ -115,6 +113,7 @@ def get_bundle_entries(
     info_resources_list: List[tuple],
     fhir_version: str,
 ) -> List[dict]:
+    fhir_version_name = dict(FHIR_VERSIONS)[fhir_version]
     entries = []
     for info, resource in info_resources_list:
         external_id = info.extra_fields['external_id']
@@ -128,7 +127,12 @@ def get_bundle_entries(
                 'method': 'POST',
                 'url': f"{resource['resourceType']}/",
             }
-        url = get_full_url(info.domain, resource, fhir_version)
+        url = resource_url(
+            info.domain,
+            fhir_version_name,
+            resource['resourceType'],
+            resource['id'],
+        )
         entries.append({
             'fullUrl': url,
             'resource': resource,
@@ -150,19 +154,6 @@ def create_bundle(
         'entry': entries,
         'resourceType': 'Bundle',
     }
-
-
-def get_full_url(
-    domain: str,
-    resource: dict,
-    fhir_version: str,
-) -> str:
-    # TODO: Use `absolute_reverse` as soon as we have an API view
-    proto = 'http' if settings.DEBUG else 'https'
-    host = Site.objects.get_current().domain
-    ver = dict(FHIR_VERSIONS)[fhir_version].lower()
-    return (f'{proto}://{host}/a/{domain}/api'
-            f"/fhir/{ver}/{resource['resourceType']}/{resource['id']}")
 
 
 def _set_external_id(info, external_id, repeater_id):
