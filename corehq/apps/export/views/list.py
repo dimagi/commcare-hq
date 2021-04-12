@@ -8,6 +8,7 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -76,6 +77,9 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
+
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
 
 class ExportListHelper(object):
@@ -478,10 +482,11 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = ugettext_lazy('''
+    lead_text = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
-    ''')
+    '''))
     is_odata = False
 
     @method_decorator(login_and_domain_required)
@@ -510,7 +515,7 @@ class BaseExportListView(BaseProjectDataView):
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
-            'lead_text': mark_safe(self.lead_text),
+            'lead_text': self.lead_text,
             "export_filter_form": (
                 DashboardFeedFilterForm(
                     self.domain_object,
