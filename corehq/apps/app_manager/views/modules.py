@@ -15,6 +15,7 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
@@ -99,7 +100,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -187,6 +188,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
+    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
@@ -200,7 +202,9 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
-            'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
+            'item_lists': item_lists,
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'default_search': module.search_config.default_search if module_offers_search(module) else False,
@@ -1367,18 +1371,20 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
 
     form_name = _("Followup with Person")
 
+    output_tag = mark_safe(  # nosec: no user input
+        "<output value=\"instance('casedb')/casedb/case[@case_id = "
+        "instance('commcaresession')/session/data/case_id]/case_name\" "
+        "vellum:value=\"#case/case_name\" />"
+    )
+
     context = {
         'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'lang': lang,
-        'placeholder_label': mark_safe(_(
+        'placeholder_label': format_html(_(
             "This is your follow up form for {}. Delete this label and add "
             "questions for any follow up visits."
-        ).format(
-            "<output value=\"instance('casedb')/casedb/case[@case_id = "
-            "instance('commcaresession')/session/data/case_id]/case_name\" "
-            "vellum:value=\"#case/case_name\" />"
-        ))
+        ), output_tag)
     }
     attachment = render_to_string(
         "app_manager/simprints_followup_form.xml",

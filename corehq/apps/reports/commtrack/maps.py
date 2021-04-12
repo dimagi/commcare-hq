@@ -17,8 +17,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     ]
 
     data_source = {
-        'adapter': 'report',
-        'geo_column': 'geo',
         'report': 'corehq.apps.reports.commtrack.data_sources.StockStatusBySupplyPointDataSource',
     }
 
@@ -153,8 +151,6 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     ]
 
     data_source = {
-        'adapter': 'report',
-        'geo_column': 'geo',
         'report': 'corehq.apps.reports.commtrack.data_sources.ReportingStatusDataSource',
     }
 

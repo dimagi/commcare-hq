@@ -237,7 +237,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'corehq.apps.auditcare',
+    'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
     'corehq.apps.case_migrations',
@@ -1987,6 +1987,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
     'vectorlink-senegal': 'custom.abt',
+    'vectorlink-sierra-leone': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',

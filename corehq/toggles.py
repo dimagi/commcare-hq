@@ -1433,6 +1433,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
     'Allows sending of incremental CSV exports to a particular endpoint',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Incremental+Data+Exports"
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1810,6 +1811,27 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
 
     To turn on global rate limiting, set Randomness Level to 1.
     To turn it off, set to 0.
+    """
+)
+
+BLOCK_RESTORES = StaticToggle(
+    'block_restores',
+    'Block Restores Immediately with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag for EMERGENCY PURPOSES ONLY if a project's restore is causing
+    system-wide issues that aren't caught by rate limiting or other mechanisms.
+    """
+)
+
+SKIP_FIXTURES_ON_RESTORE = StaticToggle(
+    'skip_fixtures_on_restore',
+    'Skip Fixture Syncs on Restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag to skip fixtures on restores for certain project spaces.
     """
 )
 
