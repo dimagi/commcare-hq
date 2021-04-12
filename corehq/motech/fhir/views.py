@@ -106,7 +106,7 @@ def search_view(request, domain, fhir_version_name, resource_type):
     }
     for case in cases:
         response["entry"].append({
-            "fullUrl": resource_url(domain, resource_type, case.case_id),
+            "fullUrl": resource_url(domain, fhir_version_name, resource_type, case.case_id),
             "search": {
                 "mode": "match"
             }

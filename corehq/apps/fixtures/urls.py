@@ -5,7 +5,6 @@ from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.views import (
     FixtureUploadStatusView,
     UploadItemLists,
-    download_file,
     download_item_lists,
     fixture_api_upload_status,
     fixture_metadata,
@@ -24,7 +23,6 @@ urlpatterns = [
     FixtureInterfaceDispatcher.url_pattern(),
     url(r'^edit_lookup_tables/download/$', download_item_lists, name="download_fixtures"),
     url(r'^edit_lookup_tables/upload/$', waf_allow('XSS_BODY')(UploadItemLists.as_view()), name='upload_fixtures'),
-    url(r'^edit_lookup_tables/file/$', download_file, name="download_fixture_file"),
     url(r'^edit_lookup_tables/update-tables/(?P<data_type_id>[\w-]+)?$', update_tables,
         name='update_lookup_tables'),
 
