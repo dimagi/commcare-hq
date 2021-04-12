@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from django import forms
 from django.db import transaction
@@ -18,6 +19,8 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils import url_helpers
+
+log = logging.getLogger(__name__)
 
 TIME_FORMAT = "%Y/%m/%d %I:%M %p"
 
@@ -591,6 +594,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 public_key = certificates.get_public_key(cert)
                 date_expiration = certificates.get_expiration_date(cert)
             except certificates.crypto.Error:
+                log.exception("Error uploading certificate: bad cert file.")
                 raise forms.ValidationError(
                     _("File type not accepted. Please ensure you have "
                       "uploaded a Base64 x509 certificate.")
