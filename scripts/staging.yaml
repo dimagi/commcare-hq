@@ -68,7 +68,7 @@ branches:
   - fr/consumer-user             # Farid March 17
   # - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
-  - sr/ush-ff+sr/csr-cs+nh/reminders  # Sravan April 12
+  # - sr/ush-ff+sr/csr-cs+nh/reminders  # Sravan April 12
   - sr/ucr-cs  # Sravan March 31
   - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
@@ -94,7 +94,7 @@ branches:
   - kev/markdown-help-modal # Kevin Apr 9
   - ce/multidropdown-webapps
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
-  - sr/ush-ff  # Sravan April 12
+  # - sr/ush-ff  # Sravan April 12
   - rp/remove_superuser_impersonation #Rynhard April 12
   - ap/update-django-to-2-2-20  # Amit April 12
   - mjr/xss_hqwebapp_AND_app_manager  # Matt April 12
