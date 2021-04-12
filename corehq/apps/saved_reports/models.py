@@ -236,8 +236,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        params.update(self.filters)
-        params.update(self.get_date_range())
+        if not self.is_configurable_report:
+            params.update(self.filters)
+            params.update(self.get_date_range())
 
         return urlencode(params, True)
 
