@@ -108,6 +108,7 @@
               </div>
             {% endif %}
           </div>
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search_command_label" class="{% css_label_class %} control-label">
               {% trans "Button Label on Case List" %}
@@ -128,6 +129,7 @@
               {% input_trans module.search_config.again_label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
           </div>
+          {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
@@ -143,6 +145,7 @@
               ></textarea>
             </div>
           </div>
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group">
             <label for="search-filter" class="control-label {% css_label_class %}">
               {% trans "Search Filter" %}
@@ -164,6 +167,7 @@
               </p>
             </div>
           </div>
+          {% endif %}
           <div class="form-group">
             <label for="claim-relevant-condition" class="control-label {% css_label_class %}">
               {% trans "Claim Condition" %}
