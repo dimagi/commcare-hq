@@ -136,9 +136,7 @@ def get_related_cases(cases, app_id):
 
     app = get_app_cached(cases[0].domain, app_id)
     paths = get_related_case_relationships(app, cases[0].type)
-    results = get_related_case_results(cases, paths)
-
-    return [CommCareCase.wrap(flatten_result(result)) for result in results]
+    return get_related_case_results(cases, paths)
 
 
 def get_related_case_relationships(app, case_type):
@@ -172,6 +170,7 @@ def get_related_case_results(cases, paths):
     domain = cases[0].domain
     results_cache = {}
     for path in paths:
+        current_cases = cases
         parts = path.split("/")
         for index, identifier in enumerate(parts):
             fragment = "/".join(parts[:index + 1])
@@ -179,12 +178,13 @@ def get_related_case_results(cases, paths):
                 continue
 
             if fragment in results_cache:
-                cases = results_cache[fragment]
+                current_cases = results_cache[fragment]
             else:
-                indices = [case.get_index(identifier) for case in cases]
+                indices = [case.get_index(identifier) for case in current_cases]
                 related_case_ids = {i.referenced_id for i in indices if i}
                 results = CaseSearchES().domain(domain).case_ids(related_case_ids).run().hits
-                results_cache[fragment] = results
+                current_cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+                results_cache[fragment] = current_cases
 
     results = []
     for path in paths:
