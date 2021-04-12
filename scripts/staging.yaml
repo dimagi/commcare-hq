@@ -66,7 +66,6 @@ branches:
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - fr/consumer-user             # Farid March 17
-  - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
   - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
