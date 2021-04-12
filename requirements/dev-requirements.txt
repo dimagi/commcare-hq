@@ -485,7 +485,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.0.6
     # via django-compressor
-recommonmark==0.6.0
+recommonmark==0.7.1
     # via -r dev-requirements.in
 redis==3.5.3
     # via
