@@ -73,7 +73,7 @@ class TestRelatedCases(TestCase):
         )
 
     @flag_enabled('ADD_LIMITED_FIXTURES_TO_CASE_RESTORE')
-    def test_restore(self):
+    def test_locations_in_restore(self):
         case_id = self.dad.case_id
 
         domain_obj = create_domain(self.domain)
