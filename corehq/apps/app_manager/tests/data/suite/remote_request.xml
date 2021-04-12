@@ -20,7 +20,7 @@
     <instance id="locations" src="jr://fixture/locations"/>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
-      <query url="https://www.example.com/a/test_domain/phone/search/"
+      <query url="https://www.example.com/a/test_domain/phone/search/123/"
              default_search="false"
              storage-instance="results"
              template="case">
