@@ -67,27 +67,27 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ]
 
     def _make_cancel_payload_button(self, record_id):
-        return '''
+        return format_html('''
                 <a
                     class="btn btn-default cancel-record-payload"
                     role="button"
                     data-record-id={}>
                     Cancel Payload
                 </a>
-                '''.format(record_id)
+                ''', record_id)
 
     def _make_requeue_payload_button(self, record_id):
-        return '''
+        return format_html('''
                 <a
                     class="btn btn-default requeue-record-payload"
                     role="button"
                     data-record-id={}>
                     Requeue Payload
                 </a>
-                '''.format(record_id)
+                ''', record_id)
 
     def _make_view_payload_button(self, record_id):
-        return '''
+        return format_html('''
         <a
             class="btn btn-default"
             role="button"
@@ -96,16 +96,16 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             data-target="#view-record-payload-modal">
             View Payload
         </a>
-        '''.format(record_id)
+        ''', record_id)
 
     def _make_resend_payload_button(self, record_id):
-        return '''
+        return format_html('''
         <button
             class="btn btn-default resend-record-payload"
             data-record-id={}>
             Resend Payload
         </button>
-        '''.format(record_id)
+        ''', record_id)
 
     def _get_state(self, record):
         if record.state == RECORD_SUCCESS_STATE:
@@ -127,11 +127,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return (label_cls, label_text)
 
     def _make_state_label(self, record):
-        return '''
-        <span class="label label-{}">
-            {}
-        </span>
-        '''.format(*self._get_state(record))
+        return format_html('<span class="label label-{}">{}</span>', *self._get_state(record))
 
     @property
     def total_records(self):
@@ -188,11 +184,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return rows
 
     def _payload_id_and_search_link(self, payload_id):
-        return (
+        return format_html(
             '<a href="{url}?q={payload_id}">'
             '<img src="{flower}" title="Search in HQ" width="14px" height="14px" />'
-            '</a> {payload_id}'
-        ).format(
+            '</a> {payload_id}',
             url=reverse('global_quick_find'),
             flower=static('hqwebapp/images/commcare-flower.png'),
             payload_id=payload_id,
