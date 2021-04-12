@@ -7,7 +7,7 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.http import HttpResponse
 
-DEFAULT_EXPIRATION = 3 * 365 * 24 * 60 * 60  # two years in seconds
+DEFAULT_EXPIRATION = 3 * 365 * 24 * 60 * 60  # three years in seconds
 
 
 def create_key_pair():
