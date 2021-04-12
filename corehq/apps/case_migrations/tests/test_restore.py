@@ -1,11 +1,20 @@
 import uuid
+from xml.etree import cElementTree as ElementTree
 
+from django.conf import settings
 from django.test import TestCase
+from django.urls import reverse
 
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.fixtures import FlatLocationSerializer
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.hmac_request import get_hmac_digest
+from corehq.util.test_utils import flag_enabled
 
 from ..views import get_case_hierarchy_for_restore
 
@@ -61,3 +70,29 @@ class TestRelatedCases(TestCase):
             [self.dad.case_id, self.kid.case_id, self.kid2.case_id,
              self.grandkid.case_id]
         )
+
+    @flag_enabled('ADD_LIMITED_FIXTURES_TO_CASE_RESTORE')
+    def test_restore(self):
+        case_id = self.dad.case_id
+
+        create_domain(self.domain)
+        user = WebUser.create(self.domain, 'test-user', 'passmein', created_by=None, created_via=None)
+
+        location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
+        SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
+
+        response = self._generate_restore(case_id, user)
+        self.assertEqual(response.status_code, 200)
+
+        response_content = next(response.streaming_content)
+        locations_content = b""
+        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id,
+                                                               SQLLocation.active_objects):
+            locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
+        self.assertIn(locations_content, response_content)
+
+    def _generate_restore(self, case_id, user):
+        self.client.login(username=user.username, password=user.password)
+        url = reverse("migration_restore", args=[self.domain, case_id])
+        hmac_header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, url)
+        return self.client.get(url, HTTP_X_MAC_DIGEST=hmac_header_value)
