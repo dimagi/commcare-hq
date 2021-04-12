@@ -134,15 +134,14 @@ def get_related_cases(cases, app_id):
     if not cases:
         return []
 
-    domain = cases[0].domain
-    case_type = cases[0].type
-    paths = get_related_case_relationships(domain, app_id, case_type)
+    app = get_app_cached(cases[0].domain, app_id)
+    paths = get_related_case_relationships(app, cases[0].type)
     results = get_related_case_results(cases, paths)
 
     return [CommCareCase.wrap(flatten_result(result)) for result in results]
 
 
-def get_related_case_relationships(domain, app_id, case_type):
+def get_related_case_relationships(app, case_type):
     """
     Get unique case relationships used by search details in any modules that
     match the given case type and are configured for case search.
@@ -151,7 +150,6 @@ def get_related_case_relationships(domain, app_id, case_type):
     Returns a set of paths, e.g. {"parent", "host", "parent/parent"}
     """
     paths = set()
-    app = get_app_cached(domain, app_id)
     for module in app.get_modules():
         if module.case_type == case_type and module_offers_search(module):
             for column in module.search_detail.columns:

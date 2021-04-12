@@ -5,14 +5,24 @@ from django.test.testcases import SimpleTestCase
 from django.test import TestCase
 from mock import MagicMock, patch
 
+from corehq.apps.app_manager.models import (
+    Application,
+    CaseSearchProperty,
+    DetailColumn,
+    Module,
+)
 from corehq.apps.case_search.const import RELEVANCE_SCORE
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.case_search.utils import (
+    CaseSearchCriteria,
+    get_related_case_relationships,
+)
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
+    CaseSearchES,
     case_property_missing,
-    case_property_text_query
+    case_property_text_query,
+    flatten_result,
 )
 from corehq.elastic import get_es_new, SIZE_LIMIT
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -432,3 +442,28 @@ class TestCaseSearchLookups(TestCase):
             ['c2', 'c3']
         )
         config.delete()
+
+    def test_get_related_case_relationships(self):
+        app = Application.new_app(self.domain, "Case Search App")
+        module = app.add_module(Module.new_module("Search Module", "en"))
+        module.case_type = self.case_type
+        detail = module.case_details.short
+        detail.columns.extend([
+            DetailColumn(header={"en": "x"}, model="case", field="x", format="plain"),
+            DetailColumn(header={"en": "y"}, model="case", field="parent/parent/y", format="plain"),
+            DetailColumn(header={"en": "z"}, model="case", field="host/z", format="plain"),
+        ])
+        module.search_config.properties = [CaseSearchProperty(
+            name="texture",
+            label={"en": "Texture"},
+        )]
+
+        module = app.add_module(Module.new_module("Non-Search Module", "en"))
+        module.case_type = self.case_type
+        detail = module.case_details.short
+        detail.columns.append(
+            DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
+        )
+
+        self.assertEqual(get_related_case_relationships(app, self.case_type), {"parent/parent", "host"})
+        self.assertEqual(get_related_case_relationships(app, "monster"), set())
