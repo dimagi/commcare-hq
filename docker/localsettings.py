@@ -171,8 +171,6 @@ JAR_SIGN = {
     "key_pass": "onetwothreefourfive",
 }
 
-AUDIT_ADMIN_VIEWS = False
-
 SECRET_KEY = 'secrettravis'
 
 # No logging
