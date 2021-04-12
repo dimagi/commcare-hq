@@ -63,7 +63,7 @@ branches:
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - nh/reminders  # Norman Jan 26
   - smh/bulk-upload-web-users # Steph Feb 22
-  - nh/fhir/repeater  # Norman Mar 1
+  # - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - fr/consumer-user             # Farid March 17
   - sk/get_display_data # Simon March 30
