@@ -182,5 +182,5 @@ class CommCareFeatureSupportMixin(object):
     def supports_session_endpoints(self):
         return (
             toggles.SESSION_ENDPOINTS.enabled(self.domain)
-            # and self._require_minimum_version('2.51')  # TODO: Uncomment after release
+            and self._require_minimum_version('2.51')
         )
