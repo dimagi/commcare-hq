@@ -196,6 +196,8 @@ def filter_form_diffs(couch_form, sql_form, diffs):
 
 def filter_case_diffs(couch_case, sql_case, diffs, statedb=None):
     doc_type = couch_case['doc_type']
+    while doc_type.endswith("-Deleted-Deleted"):
+        doc_type = doc_type[:-8]
     doc_types = [doc_type, 'CommCareCase*']
     diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
     if statedb is not None:
