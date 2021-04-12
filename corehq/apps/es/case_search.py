@@ -35,6 +35,7 @@ class CaseSearchES(CaseES):
     @property
     def builtin_filters(self):
         return [
+            case_ids,
             case_property_filter,
             blacklist_owner_id,
             external_id,
@@ -139,6 +140,10 @@ class CaseSearchES(CaseES):
             desc,
             reset_sort=False
         )
+
+
+def case_ids(case_ids):
+    return filters.term('_id', case_ids)
 
 
 def case_property_filter(case_property_name, value):
