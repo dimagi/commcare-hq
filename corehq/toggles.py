@@ -762,11 +762,12 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
-CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     '''
-        Support several different case search/claim workflows in web apps:
-        "search first", "see more", and "skip to default case search results"
+        USH Specific toggle to support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results", Geocoder,
+        Lookup table, Hint text and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
