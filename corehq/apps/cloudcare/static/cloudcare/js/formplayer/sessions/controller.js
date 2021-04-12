@@ -19,7 +19,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
                 });
 
                 FormplayerFrontend.regions.getRegion('main').show(sessionListView);
-                var totalPages = Math.max(2, Math.ceil(sessions.totalSessions / pageSize));
+                var totalPages = Math.max(1, Math.ceil(sessions.totalSessions / pageSize));
                 if (totalPages > 1) {
                     $('#sessions-paginator').bootpag({
                         page: pageNumber + 1,
