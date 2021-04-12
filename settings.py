@@ -749,7 +749,6 @@ AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 ####### auditcare parameters #######
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.users.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
