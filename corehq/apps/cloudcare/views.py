@@ -222,7 +222,7 @@ class FormplayerMain(View):
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
-            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -284,7 +284,7 @@ class FormplayerPreviewSingleApp(View):
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
-            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -303,8 +303,15 @@ class PreviewAppView(TemplateView):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
-            "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(request.domain),
         })
+
+
+def has_geocoder_privs(domain):
+    return (
+        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        and domain_has_privilege(domain, privileges.GEOCODER)
+    )
 
 
 @location_safe
