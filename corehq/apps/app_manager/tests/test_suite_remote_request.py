@@ -56,6 +56,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
             ))
         )
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "Parent's Whatever"},
+                model="case",
+                format="plain",
+                field="parent/whatever",
+            ))
+        )
         self.module.case_details.long.columns.append(
             DetailColumn.wrap(dict(
                 header={"en": "ledger_name"},

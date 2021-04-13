@@ -49,6 +49,18 @@
         </text>
       </template>
     </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_parent/whatever_4.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('casedb')/casedb/case[@case_id=current()/index/parent]/whatever"/>
+         </text>
+       </template>
+     </field>
     <action auto_launch="false" redo_last="false">
       <display>
         <text>
@@ -145,6 +157,18 @@
               <xpath function="instance('item-list:moons')/moons_list/moons[favorite='yes']/name"/>
             </variable>
           </xpath>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_short.case_parent/whatever_4.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('results')/results/case[@case_id=current()/index/parent]/whatever"/>
         </text>
       </template>
     </field>
