@@ -634,9 +634,9 @@ def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
     }
 
 
-def get_form_ids_with_multimedia(export_es_query):
+def get_form_ids_with_multimedia(es_query):
     return {
-        form['_id'] for form in _get_forms_with_attachments(export_es_query)
+        form['_id'] for form in _get_forms_with_attachments(es_query)
     }
 
 

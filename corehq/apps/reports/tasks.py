@@ -279,8 +279,8 @@ def build_form_multimedia_zipfile(
 ):
     from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
-    export_es_query = get_export_query(export, es_filters)
-    form_ids = get_form_ids_with_multimedia(export_es_query)
+    es_query = get_export_query(export, es_filters)
+    form_ids = get_form_ids_with_multimedia(es_query)
     forms_info = _get_form_attachment_info(domain, form_ids, export)
 
     num_forms = len(forms_info)
