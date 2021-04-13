@@ -94,7 +94,7 @@ hqDefine("users/js/web_users",[
             return self.daysRemaining() < 0;
         });
         self.daysRemainingText = ko.computed(function () {
-            return _.template(gettext("<%= days %> days remaining"))({
+            return _.template(gettext("<%- days %> days remaining"))({
                 days: Math.floor(self.daysRemaining()),
             });
         });
