@@ -455,7 +455,7 @@ def prepare_form_multimedia(request, domain):
     download.set_task(build_form_multimedia_zipfile.delay(
         domain=domain,
         export_id=export.get_id,
-        export_es_query=export_es_query,
+        es_filters=filters,
         download_id=download.download_id,
         owner_id=request.couch_user.get_id,
     ))

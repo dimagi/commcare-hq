@@ -20,6 +20,7 @@ from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
+from corehq.apps.export.export import get_export_query
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
@@ -272,12 +273,13 @@ def build_form_multimedia_zip(
 def build_form_multimedia_zipfile(
         domain,
         export_id,
-        export_es_query,
+        es_filters,
         download_id,
         owner_id,
 ):
     from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
+    export_es_query = get_export_query(export, es_filters)
     form_ids = get_form_ids_with_multimedia(export_es_query)
     forms_info = _get_form_attachment_info(domain, form_ids, export)
 
