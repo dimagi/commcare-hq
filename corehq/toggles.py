@@ -637,13 +637,6 @@ MM_CASE_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-NEW_MULTIMEDIA_UPLOADER = StaticToggle(
-    'new_multimedia_uploader',
-    'Display new multimedia uploader',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'ICDS: Visit Scheduler',
@@ -2057,5 +2050,6 @@ FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
     TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )

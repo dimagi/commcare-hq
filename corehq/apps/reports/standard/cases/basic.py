@@ -25,7 +25,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.timezones.conversions import PhoneTime
@@ -229,7 +229,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self, self.get_case(row))
+            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,
@@ -240,10 +240,3 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    def date_to_json(self, date):
-        if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string(SERVER_DATETIME_FORMAT))
-        else:
-            return ''

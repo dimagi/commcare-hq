@@ -1,8 +1,5 @@
 from typing import List, Tuple
 
-from django.conf import settings
-from django.contrib.sites.models import Site
-
 from requests import HTTPError, Response
 
 from casexml.apps.case.mock import CaseBlock
@@ -13,6 +10,7 @@ from corehq.motech.value_source import CaseTriggerInfo
 
 from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
 from .models import build_fhir_resource_for_info
+from .utils import resource_url
 
 
 def register_patients(
@@ -30,20 +28,10 @@ def register_patients(
             # Patient is already registered
             info_resource_list_to_send.append((info, resource))
             continue
-        response = requests.post(
-            'Patient/',
-            json=resource,
-            raise_for_status=True,
-        )
-        try:
-            _set_external_id(info, response.json()['id'], repeater_id)
-            # Don't append `resource` to `info_resource_list_to_send`
-            # because the remote service has all its data now.
-        except (ValueError, KeyError) as err:
-            # The remote service returned a 2xx response, but did not
-            # return JSON, or the JSON does not include an ID.
-            msg = 'Unable to parse response from remote FHIR service'
-            raise HTTPError(msg, response=response) from err
+        send_resource(requests, info, resource, repeater_id,
+                      raise_on_ext_id=True)
+        # Don't append `resource` to `info_resource_list_to_send`
+        # because the remote service has all its data now.
     return info_resource_list_to_send
 
 
@@ -69,6 +57,51 @@ def send_resources(
     requests: Requests,
     info_resources_list: List[tuple],
     fhir_version: str,
+    repeater_id: str,
+) -> Response:
+    if not info_resources_list:
+        # Either the payload had no data to be forwarded, or resources
+        # were all patients to be registered: Nothing left to send.
+        return True
+
+    if len(info_resources_list) == 1:
+        info, resource = info_resources_list[0]
+        return send_resource(requests, info, resource, repeater_id)
+
+    return send_bundle(requests, info_resources_list, fhir_version)
+
+
+def send_resource(
+    requests: Requests,
+    info: CaseTriggerInfo,
+    resource: dict,
+    repeater_id: str,
+    *,
+    raise_on_ext_id: bool = False,
+) -> Response:
+    external_id = info.extra_fields['external_id']
+    if external_id:
+        endpoint = f"{resource['resourceType']}/{external_id}"
+        response = requests.put(endpoint, json=resource, raise_for_status=True)
+        return response
+
+    endpoint = f"{resource['resourceType']}/"
+    response = requests.post(endpoint, json=resource, raise_for_status=True)
+    try:
+        _set_external_id(info, response.json()['id'], repeater_id)
+    except (ValueError, KeyError) as err:
+        # The remote service returned a 2xx response, but did not
+        # return JSON, or the JSON does not include an ID.
+        if raise_on_ext_id:
+            msg = 'Unable to parse response from remote FHIR service'
+            raise HTTPError(msg, response=response) from err
+    return response
+
+
+def send_bundle(
+    requests: Requests,
+    info_resources_list: List[tuple],
+    fhir_version: str,
 ) -> Response:
     entries = get_bundle_entries(info_resources_list, fhir_version)
     bundle = create_bundle(entries, bundle_type='transaction')
@@ -80,6 +113,7 @@ def get_bundle_entries(
     info_resources_list: List[tuple],
     fhir_version: str,
 ) -> List[dict]:
+    fhir_version_name = dict(FHIR_VERSIONS)[fhir_version]
     entries = []
     for info, resource in info_resources_list:
         external_id = info.extra_fields['external_id']
@@ -93,7 +127,12 @@ def get_bundle_entries(
                 'method': 'POST',
                 'url': f"{resource['resourceType']}/",
             }
-        url = get_full_url(info.domain, resource, fhir_version)
+        url = resource_url(
+            info.domain,
+            fhir_version_name,
+            resource['resourceType'],
+            resource['id'],
+        )
         entries.append({
             'fullUrl': url,
             'resource': resource,
@@ -115,19 +154,6 @@ def create_bundle(
         'entry': entries,
         'resourceType': 'Bundle',
     }
-
-
-def get_full_url(
-    domain: str,
-    resource: dict,
-    fhir_version: str,
-) -> str:
-    # TODO: Use `absolute_reverse` as soon as we have an API view
-    proto = 'http' if settings.DEBUG else 'https'
-    host = Site.objects.get_current().domain
-    ver = dict(FHIR_VERSIONS)[fhir_version].lower()
-    return (f'{proto}://{host}/a/{domain}/api'
-            f"/fhir/{ver}/{resource['resourceType']}/{resource['id']}")
 
 
 def _set_external_id(info, external_id, repeater_id):

@@ -48,13 +48,18 @@ def visit_completion_counter(case):
 
 
 class HNBCReportDisplay(CaseDisplay):
+    date_format = "'%d-%m-%Y'"
+
+    def __init__(self, report, case):
+        super().__init__(case, report.timezone, report.individual)
+        self.report = report
 
     @property
     def dob(self):
         if 'date_birth' not in self.case:
             return '---'
         else:
-            return self.report.date_to_json(self.case['date_birth'])
+            return self._dateprop('date_birth')
 
     @property
     def visit_completion(self):
@@ -78,7 +83,7 @@ class HNBCReportDisplay(CaseDisplay):
         try:
             return format_html(
                 "<a class='ajax_dialog' href='{}'>{}</a>",
-                reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug]),
+                reverse('crs_details_report', args=[self.case["domain"], case_id, self.report.slug]),
                 case_name,
             )
         except NoReverseMatch:
@@ -173,17 +178,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
         if individual:
             filters.append({'term': {'owner_id': individual}})
         return filters
-
-    def date_to_json(self, date):
-        if date:
-            try:
-                date = force_to_datetime(date)
-                return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                        .ui_string('%d-%m-%Y'))
-            except ValueError:
-                return ''
-        else:
-            return ''
 
 
 class HBNCMotherReport(BaseHNBCReport):

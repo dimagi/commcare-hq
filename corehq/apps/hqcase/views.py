@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
+from corehq.apps.api.decorators import allow_cors
 from soil import DownloadBase
 
 from corehq import privileges
@@ -81,6 +82,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 
 @waf_allow('XSS_BODY')
 @csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
 @api_auth
 @require_can_edit_data
 @CASE_API_V0_6.required_decorator()
