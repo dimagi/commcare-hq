@@ -53,7 +53,22 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 return self.instance_id();
             },
         });
-
+        self.nodesetValid = ko.computed(function () {
+            var itemLists = _.map(get('js_options').item_lists, function (item) {
+                    return itemsetValue(item);
+                });
+            if (self.nodeset().split("/").length === 0) {
+                return false;
+            }
+            var instancePart = self.nodeset().split("/")[0];
+            for (var i = itemLists.length - 1; i >= 0; i--) {
+                var groups = itemLists[i].split("/");
+                if (groups.length > 0 && groups[0] === instancePart) {
+                    return true;
+                }
+            }
+            return false;
+        });
         subscribeToSave(self, ['nodeset', 'label', 'value', 'sort'], saveButton);
 
         return self;
