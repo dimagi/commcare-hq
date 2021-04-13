@@ -126,7 +126,7 @@ def app_aware_search(request, domain, app_id):
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
     if app_id:
-        cases.extend(get_related_cases(cases, app_id))
+        cases.extend(get_related_cases(domain, app_id, case_type, cases))
 
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")

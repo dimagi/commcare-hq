@@ -506,5 +506,5 @@ class TestCaseSearchLookups(TestCase):
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
     def _assert_related_case_ids(self, cases, paths, ids):
-        results = get_related_case_results(cases, paths)
+        results = get_related_case_results(self.domain, cases, paths)
         self.assertEqual(ids, {result['_id'] for result in results})
