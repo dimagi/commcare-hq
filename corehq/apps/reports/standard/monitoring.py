@@ -1131,7 +1131,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         try:
             return self._get_rows()
         except TooMuchDataError as e:
-            return [['<span class="label label-danger">{}</span>'.format(e)] + ['--'] * 5]
+            return [[format_html('<span class="label label-danger">{}</span>', e)] + ['--'] * 5]
 
     def _get_rows(self):
         rows = []
@@ -1209,7 +1209,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     def _format_td_status(self, td, use_label=True):
         status = list()
-        template = '<span class="label %(klass)s">%(status)s</span>'
+        template = '<span class="label {klass}">{status}</span>'
         klass = "label-default"
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
@@ -1236,7 +1236,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                     status = [_("same")]
 
         if use_label:
-            return template % dict(status=", ".join(status), klass=klass)
+            return format_html(template, status=", ".join(status), klass=klass)
         else:
             return ", ".join(status)
 
@@ -1564,7 +1564,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return format_html('<a href="{}" target="_blank">{}</a>', href, value)
 
     @staticmethod
     def _make_url(base_url, params):
