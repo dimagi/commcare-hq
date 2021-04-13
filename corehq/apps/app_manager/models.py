@@ -118,6 +118,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -2415,7 +2416,7 @@ class ModuleDetailsMixin(object):
 
     def search_detail(self, short_or_long):
         detail = deepcopy(getattr(self.case_details, short_or_long))
-        detail.instance_name = "results"
+        detail.instance_name = RESULTS_INSTANCE
         return detail
 
     def rename_lang(self, old_lang, new_lang):
@@ -3126,7 +3127,7 @@ class AdvancedModule(ModuleBase):
 
     def search_detail(self, short_or_long):
         detail = deepcopy(getattr(self.case_details, short_or_long))
-        detail.instance_name = "results"
+        detail.instance_name = RESULTS_INSTANCE
         return detail
 
     def get_details(self):
