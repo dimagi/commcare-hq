@@ -136,6 +136,8 @@ def get_related_cases(cases, app_id):
 
     app = get_app_cached(cases[0].domain, app_id)
     paths = get_related_case_relationships(app, cases[0].type)
+    if not paths:
+        return []
     return get_related_case_results(cases, paths)
 
 
