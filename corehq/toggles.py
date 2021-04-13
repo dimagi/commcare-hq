@@ -2042,3 +2042,10 @@ FHIR_INTEGRATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )
+
+ERM_DEV = StaticToggle(
+    'erm_development',
+    'Flag to put enterprise release management work behind',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
