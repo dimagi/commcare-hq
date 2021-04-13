@@ -71,7 +71,6 @@ hqDefine("reports/js/filters/select2s", [
         if (!data.endpoint) {
             $filter.select2({
                 width: '100%',
-                escapeMarkup: function (m) { return m; },
             });
             return;
         }
@@ -120,7 +119,6 @@ hqDefine("reports/js/filters/select2s", [
                 },
             },
             multiple: true,
-            escapeMarkup: function (m) { return m; },
             width: '100%',
         });
 
