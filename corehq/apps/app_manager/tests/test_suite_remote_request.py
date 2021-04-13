@@ -31,6 +31,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
+        self.app._id = '123'
         self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
