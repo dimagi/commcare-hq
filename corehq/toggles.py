@@ -2042,7 +2042,7 @@ FHIR_INTEGRATION = StaticToggle(
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )
 
-ERM_DEV = StaticToggle(
+ERM_DEVELOPMENT = StaticToggle(
     'erm_development',
     'Flag to put enterprise release management work behind',
     TAG_PRODUCT,
