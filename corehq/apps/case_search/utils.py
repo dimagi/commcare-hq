@@ -150,7 +150,7 @@ def get_related_case_relationships(app, case_type):
     paths = set()
     for module in app.get_modules():
         if module.case_type == case_type and module_offers_search(module):
-            for column in module.search_detail.columns:
+            for column in module.search_detail("short").columns + module.search_detail("long").columns:
                 if not column.useXpathExpression:
                     parts = column.field.split("/")
                     if len(parts) > 1:

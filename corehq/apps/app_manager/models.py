@@ -2413,9 +2413,8 @@ class ModuleDetailsMixin(object):
         except Exception:
             return []
 
-    @property
-    def search_detail(self):
-        detail = deepcopy(self.case_details.short)
+    def search_detail(self, short_or_long):
+        detail = deepcopy(getattr(self.case_details, short_or_long))
         detail.instance_name = "results"
         return detail
 
@@ -2432,7 +2431,8 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         if module_offers_search(self) and not self.case_details.short.custom_xml:
-            details.append(('search_short', self.search_detail, True))
+            details.append(('search_short', self.search_detail("short"), True))
+            details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
 
 
@@ -3124,9 +3124,10 @@ class AdvancedModule(ModuleBase):
     def all_forms_require_a_case(self):
         return all(form.requires_case() for form in self.get_forms())
 
-    @property
-    def search_detail(self):
-        return deepcopy(self.case_details.short)
+    def search_detail(self, short_or_long):
+        detail = deepcopy(getattr(self.case_details, short_or_long))
+        detail.instance_name = "results"
+        return detail
 
     def get_details(self):
         details = [
@@ -3136,7 +3137,8 @@ class AdvancedModule(ModuleBase):
             ('product_long', self.product_details.long, False),
         ]
         if module_offers_search(self) and not self.case_details.short.custom_xml:
-            details.append(('search_short', self.search_detail, True))
+            details.append(('search_short', self.search_detail("short"), True))
+            details.append(('search_long', self.search_detail("long"), True))
         return details
 
     @property

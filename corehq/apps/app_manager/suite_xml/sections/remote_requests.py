@@ -124,8 +124,10 @@ class RemoteRequestFactory(object):
         details_helper = DetailsHelper(self.app)
         if self.module.case_details.short.custom_xml:
             short_detail_id = 'case_short'
+            long_detail_id = 'case_long'
         else:
             short_detail_id = 'search_short'
+            long_detail_id = 'search_long'
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
         if self.module.search_config.search_filter:
@@ -136,7 +138,7 @@ class RemoteRequestFactory(object):
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
-            detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
+            detail_confirm=details_helper.get_detail_id_safe(self.module, long_detail_id),
         )]
 
     def _get_remote_request_query_datums(self):

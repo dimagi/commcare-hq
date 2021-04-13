@@ -162,6 +162,41 @@
       </stack>
     </action>
   </detail>
+  <detail id="m0_search_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_long.case_calculated_property_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('ledgerdb')/ledgers/name/name"/>
+            </variable>
+          </xpath>
+        </text>
+      </template>
+    </field>
+  </detail>
   <detail id="m1_case_short">
     <title>
       <text>
@@ -244,6 +279,25 @@
         </push>
       </stack>
     </action>
+  </detail>
+  <detail id="m1_search_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.search_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
   </detail>
   <detail id="m2_case_short"/>
   <detail id="m2_case_long">
