@@ -299,6 +299,31 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             return qs;
         });
 
+        self.currentJumpPoint = null;
+        self.jumpToErrors = function() {
+            var erroredQuestions = self.erroredQuestions();
+            for (var i = erroredQuestions.length - 1; i >= 0; i--) {
+                if (!self.currentJumpPoint){
+                    self.currentJumpPoint = erroredQuestions[i];
+                    break;
+                }
+                if (self.currentJumpPoint.entry.entryId === erroredQuestions[i].entry.entryId) {
+                    if (i === erroredQuestions.length - 1) {
+                        self.currentJumpPoint = erroredQuestions[0];
+                    }
+                    else {
+                        self.currentJumpPoint = erroredQuestions[i + 1];
+                    }
+                    break;
+                }
+                else {
+                    self.currentJumpPoint = erroredQuestions[0];
+                    break;
+                }
+            }
+            self.currentJumpPoint.navigateTo();
+        };
+
         self.enableSubmitButton = ko.computed(function () {
             return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
