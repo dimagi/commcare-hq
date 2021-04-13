@@ -3,6 +3,8 @@ import math
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -141,13 +143,10 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
-        user_link_template = '<a href="%(link)s">%(username)s</a>'
+        user_link_template = '<a href="{link}">{username}</a>'
         base_link = SubmitHistory.get_url(domain=self.domain)
         link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        return user_link_template % {
-            'link': link,
-            'username': user.username_in_report,
-        }
+        return format_html(user_link_template, link=link, username=user.username_in_report)
 
 
 class MultiFormDrilldownMixin(object):
@@ -968,7 +967,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             results.get(json_format_date(date), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="text-muted">0</span>' if c == 0 else c for c in date_cols]
+        styled_zero = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
+        styled_date_cols = [styled_zero if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
@@ -1241,8 +1241,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn btn-default" href="%s">View Form</a>' % absolute_reverse(
-            'render_form_data', args=[self.domain, instance_id])
+        return format_html('<a class="btn btn-default" href="{}">View Form</a>', absolute_reverse(
+            'render_form_data', args=[self.domain, instance_id]))
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
@@ -1943,12 +1943,13 @@ def _get_raw_user_link(user, url, filter_class):
     filter_class is expected to be either ExpandedMobileWorkerFilter or a
     subclass of it, such as the CaseListFilter
     """
-    user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
-    user_link = user_link_template % {
-        'link': url,
-        'params': urlencode(filter_class.for_user(user.user_id)),
-        'username': user.username_in_report,
-    }
+    user_link_template = '<a href="{link}?{params}">{username}</a>'
+    user_link = format_html(
+        user_link_template,
+        link=url,
+        params=urlencode(filter_class.for_user(user.user_id)),
+        username=user.username_in_report,
+    )
     return user_link
 
 
