@@ -2035,11 +2035,17 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
 )
 
-
 FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
+)
+
+ERM_DEVELOPMENT = StaticToggle(
+    'erm_development',
+    'Flag to put enterprise release management work behind',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )
