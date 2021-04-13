@@ -8,6 +8,7 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -1012,7 +1013,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
 
     @property
     def lead_text(self):
-        return _("""
+        return _(format_html("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=63013347"
            id="js-odata-track-learn-more"
@@ -1021,10 +1022,9 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
         </a><br />
         This feature allows {odata_feed_limit} feed configurations. Need more?
         Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
-        """).format(
+        """,
             odata_feed_limit=self.odata_feed_limit,
-            sales_email=settings.SALES_EMAIL,
-        )
+            sales_email=settings.SALES_EMAIL,))
 
     @property
     def page_context(self):
