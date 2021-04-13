@@ -367,7 +367,7 @@ hqDefine('users/js/roles',[
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(
-                    "Are you sure you want to delete the role <%= role %>?"
+                    "Are you sure you want to delete the role <%- role %>?"
                 ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
 
