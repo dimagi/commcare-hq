@@ -72,7 +72,6 @@ branches:
   - sr/ucr-cs  # Sravan March 31
   - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
-  - nh/wfp/api_manager  # Norman Apr 2
   - ap/escape-html-in-app-manager # Amit Apr 2
   - ap/escape-html-in-cloudcare # Amit Apr 2
   - ap/escape-html-in-hqwebapp # Amit Apr 2
