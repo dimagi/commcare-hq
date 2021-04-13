@@ -20,6 +20,7 @@ from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
+from corehq.apps.export.export import get_export_query
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
@@ -34,6 +35,7 @@ from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
+    get_form_ids_with_multimedia,
     scroll_case_names,
 )
 
@@ -233,6 +235,7 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     return key
 
 
+# ToDo: Remove post build_form_multimedia_zipfile rollout
 @task(serializer='pickle')
 def build_form_multimedia_zip(
         domain,
@@ -257,12 +260,44 @@ def build_form_multimedia_zip(
 
     with TransientTempfile() as temp_path:
         with open(temp_path, 'wb') as f:
-            _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
+            _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name,
+                                       build_form_multimedia_zip)
         with open(temp_path, 'rb') as f:
             zip_name = 'multimedia-{}'.format(unidecode(export.name))
             _save_and_expose_zip(f, zip_name, domain, download_id, owner_id)
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
+
+
+@task(serializer='pickle')
+def build_form_multimedia_zipfile(
+        domain,
+        export_id,
+        es_filters,
+        download_id,
+        owner_id,
+):
+    from corehq.apps.export.models import FormExportInstance
+    export = FormExportInstance.get(export_id)
+    es_query = get_export_query(export, es_filters)
+    form_ids = get_form_ids_with_multimedia(es_query)
+    forms_info = _get_form_attachment_info(domain, form_ids, export)
+
+    num_forms = len(forms_info)
+    DownloadBase.set_progress(build_form_multimedia_zipfile, 0, num_forms)
+
+    all_case_ids = set.union(*(info['case_ids'] for info in forms_info)) if forms_info else set()
+    case_id_to_name = _get_case_names(domain, all_case_ids)
+
+    with TransientTempfile() as temp_path:
+        with open(temp_path, 'wb') as f:
+            _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name,
+                                       build_form_multimedia_zipfile)
+        with open(temp_path, 'rb') as f:
+            zip_name = 'multimedia-{}'.format(unidecode(export.name))
+            _save_and_expose_zip(f, zip_name, domain, download_id, owner_id)
+
+    DownloadBase.set_progress(build_form_multimedia_zipfile, num_forms, num_forms)
 
 
 def _get_form_attachment_info(domain, form_ids, export):
@@ -297,7 +332,7 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
     return filename
 
 
-def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
+def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name, task_name):
     total_size = 0
     with open(fpath, 'wb') as zfile:
         with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
@@ -319,7 +354,7 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                         attachment['name']),
                         zipfile.ZIP_STORED
                     )
-                DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
+                DownloadBase.set_progress(task_name, form_number, num_forms)
 
 
 def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
@@ -421,7 +456,7 @@ def _find_path_to_question_id(form, attachment_name, use_basename=False):
 
 def _extract_form_attachment_info(form, properties):
     """
-    This is a helper function for build_form_multimedia_zip.
+    This is a helper function for build_form_multimedia_zipfile.
     Return a dict containing information about the given form and its relevant
     attachments
     """
