@@ -577,6 +577,9 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.navigateTo = function () {
+            if (self.parent.collapsible !== undefined && !self.parent.showChildren()) {
+                self.parent.toggleChildren();
+            }
             var el = $("label[for='" + self.entry.entryId + "']");
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
