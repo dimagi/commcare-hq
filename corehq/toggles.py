@@ -2031,7 +2031,8 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
     'COVID: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
 )
 
 
