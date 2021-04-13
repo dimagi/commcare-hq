@@ -99,7 +99,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -134,7 +134,7 @@ def get_module_view_context(request, app, module, lang=None):
         'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
-            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
     }
     module_brief = {
@@ -187,17 +187,24 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
+    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
-            'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
-            'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
+            'has_geocoder_privs': (
+                domain_has_privilege(app.domain, privileges.GEOCODER)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
+            ),
+            'item_lists': item_lists,
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'default_search': module.search_config.default_search if module_offers_search(module) else False,
@@ -539,6 +546,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
+        "session_endpoint_id": None,
     }
 
     if attr not in attributes:
@@ -677,6 +685,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl = request.POST.getlist('excl_form_ids')
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
+    if should_edit('session_endpoint_id'):
+        module.session_endpoint_ids = [request.POST.get("session_endpoint_id")]
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
