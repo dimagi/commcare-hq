@@ -254,14 +254,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_context(self):
+        params = self.saved_report_config.filters if self.saved_report_config else self.request_dict
         return {
-            report_filter.css_id: report_filter.context(self.request_dict, self.request_user, self.lang)
-            for report_filter in self.filters
-        }
-
-    def filter_context_for_saved_report(self, saved_config):
-        return {
-            report_filter.css_id: report_filter.context(saved_config.filters, self.request_user, self.lang)
+            report_filter.css_id: report_filter.context(params, self.request_user, self.lang)
             for report_filter in self.filters
         }
 
@@ -285,6 +280,12 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self._lang is not None:
             return self._lang
         return self.request.couch_user.language or default_language()
+
+    @property
+    @memoized
+    def saved_report_config(self):
+        config_id = self.request.GET.get('config_id')
+        return get_document_or_404(ReportConfig, self.domain, config_id) if config_id else None
 
     def get(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
@@ -376,9 +377,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     def saved_report_context_data(self):
         """
-        Update context with saved report data
-        Override filter_context with saved report config filters
-        :return: updated context
+        Returns a dictionary with every saved report config associated with the report
         """
         def _get_context_for_saved_report(report_config):
             if report_config:
@@ -388,10 +387,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             else:
                 return ReportConfig.default()
 
-        saved_report_config_id = self.request.GET.get('config_id')
-        saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
-            if saved_report_config_id else None
-
         context = {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
@@ -399,13 +394,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                     self.domain, self.request.couch_user._id, report_slug=self.slug
                 )
             ],
-            'default_config': _get_context_for_saved_report(saved_report_config),
+            'default_config': _get_context_for_saved_report(self.saved_report_config),
             'datespan_filters': ReportConfig.datespan_filter_choices(self.datespan_filters, self.lang),
         }
-
-        if saved_report_config:
-            # override filter_context with the saved report config filters
-            context.update({'filter_context': self.filter_context_for_saved_report(saved_report_config)})
 
         return context
 
