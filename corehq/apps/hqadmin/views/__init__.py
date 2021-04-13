@@ -21,7 +21,6 @@ from corehq.apps.hqadmin.views.system import (
 )
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
-    AuthenticateAs,
     DisableTwoFactorView,
     DisableUserView,
     DomainAdminRestoreView,
