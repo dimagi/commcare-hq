@@ -85,9 +85,7 @@ branches:
   - sr/jumptoErrors # Sravan April 6
   - fr/smart-oauth-prep         # Farid April 7
   - mk/form-mm-exports-filters # MK April 8
-  - fr/smart-oauth-views        # Farid April 7
   - mjr/xss_custom_fields  # Matt April 7
-  - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
   - rp/fix-2fa-hyperlink # Rynhard April 8
   - rp/fix-broken-link-2.0 # Rynhard April 8
   - kev/markdown-help-modal # Kevin Apr 9
