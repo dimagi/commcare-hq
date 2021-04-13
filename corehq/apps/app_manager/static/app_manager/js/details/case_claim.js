@@ -36,32 +36,21 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     self.nodeset(null);
                 }
                 else {
-                    self.nodeset(value);
-                }
-                var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
-                    matches = reg.exec(value);
-                if (matches && matches.length > 1) {
-                    var instanceId = matches[1],
-                        itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
-
-                    self.instance_id(instanceId);
-                    if (itemList) {
-                        self.instance_uri(itemList['uri']);
+                    self.instance_id(value);
+                    var itemList = _.filter(get('js_options').item_lists, function (item) {
+                            return item.id === value;
+                        });
+                    if (itemList && itemList.length === 1) {
+                        self.instance_uri(itemList[0]['uri']);
+                        self.nodeset(itemsetValue(itemList[0]));
+                    }
+                    else {
+                        self.nodeset(null);
                     }
                 }
             },
             read: function () {
-                // is the nodeset a lookup table that we know about?
-                var itemLists = get('js_options').item_lists,
-                    itemListNodesets = _.map(itemLists, function (item) {
-                        return itemsetValue(item);
-                    });
-                if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
-
-                    return self.nodeset();
-                } else {
-                    return '';
-                }
+                return self.instance_id();
             },
         });
 
@@ -128,7 +117,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }),
                 function (p) {
                     return {
-                        "value": itemsetValue(p),
+                        "value": p.id,
                         "name": p.name,
                     };
                 }
