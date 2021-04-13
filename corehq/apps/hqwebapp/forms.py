@@ -22,7 +22,10 @@ from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 from corehq.util.metrics import metrics_counter
 
-LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
+LOCKOUT_MESSAGE = mark_safe(_(  # nosec: no user input
+    'Sorry - you have attempted to login with an incorrect password too many times. '
+    'Please <a href="/accounts/password_reset_email/">click here</a> to reset your password '
+    'or contact the domain administrator.'))
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
