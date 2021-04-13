@@ -219,7 +219,7 @@ def _report_user_dict(user):
                         else username)
         first = user.get('first_name', '')
         last = user.get('last_name', '')
-        username_in_report = _get_username_html_fragment(raw_username, first, last)
+        username_in_report = _get_username_fragment(raw_username, first, last)
         info = SimplifiedUserInfo(
             user_id=user.get('_id', ''),
             username_in_report=username_in_report,
@@ -234,12 +234,12 @@ def _report_user_dict(user):
 
 
 # TODO: This is very similar code to what exists in apps/users/util/user_display_string
-def _get_username_html_fragment(username, first='', last=''):
+def _get_username_fragment(username, first='', last=''):
     full_name = ("%s %s" % (first, last)).strip()
 
-    result = mark_safe(html.escape(username))  # nosec: escaped
+    result = username
     if full_name:
-        result = format_html('{} "{}"', result, full_name)
+        result = '{} "{}"'.format(result, full_name)
 
     return result
 
