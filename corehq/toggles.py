@@ -2034,7 +2034,6 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-
 FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
