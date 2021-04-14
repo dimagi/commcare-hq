@@ -31,6 +31,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
+        self.app._id = '123'
         self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
@@ -53,6 +54,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 format="calculate",
                 field="whatever",
                 calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
+            ))
+        )
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "Parent's Whatever"},
+                model="case",
+                format="plain",
+                field="parent/whatever",
             ))
         )
         self.module.case_details.long.columns.append(
