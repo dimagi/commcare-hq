@@ -374,7 +374,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         Repeater.by_domain.clear(Repeater, self.domain)
 
     @classmethod
-    @quickcache(['cls.__name__', 'domain'], timeout=5 * 60, memoize_timeout=10)
+    @quickcache(['cls.__name__', 'domain'], timeout=60 * 60, memoize_timeout=10)
     def by_domain(cls, domain):
         key = [domain]
         if cls.__name__ in get_all_repeater_types():
