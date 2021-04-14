@@ -117,6 +117,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
+from corehq.util.couch import stale_ok
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
@@ -379,9 +380,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
         Repeater.by_domain.clear(Repeater, self.domain)
 
     @classmethod
-    @quickcache(['cls.__name__', 'domain'], timeout=60 * 60, memoize_timeout=10)
-    def by_domain(cls, domain):
+    @quickcache(['cls.__name__', 'domain', 'stale_query'], timeout=60 * 60, memoize_timeout=10)
+    def by_domain(cls, domain, stale_query=False):
         key = [domain]
+        stale = False
+        if stale_query:
+            stale = stale_ok()
         if cls.__name__ in get_all_repeater_types():
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
@@ -399,7 +403,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
             endkey=key + [{}],
             include_docs=True,
             reduce=False,
-            wrap_doc=False
+            wrap_doc=False,
+            stale=stale
         )
 
         return [cls.wrap(repeater_doc['doc']) for repeater_doc in raw_docs
