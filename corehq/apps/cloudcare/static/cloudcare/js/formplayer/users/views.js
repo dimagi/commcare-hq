@@ -127,7 +127,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 endPage: paginationOptions.endPage,
                 pageCount: paginationOptions.pageCount,
                 currentPage: this.model.get('page') - 1,
-                pageNumLabel: _.template(gettext("Page <%= num %>")),
+                pageNumLabel: _.template(gettext("Page <%- num %>")),
             };
         },
         navigate: function () {
