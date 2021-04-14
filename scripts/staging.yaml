@@ -82,7 +82,6 @@ branches:
   - ap/escape-html-in-users # Amit Apr 2
   - ap/escape-templates-in-datainterfaces # Amit Apr 2
   - ap/escape-html-in-remaining-apps # Amit Apr 5
-  - smh/missing-queryData # Steph Apr 2
   - mjr/xss_reports  # Matt April 7
   - sr/jumptoErrors # Sravan April 6
   - mk/form-mm-exports-filters # MK April 8
