@@ -32,29 +32,30 @@ from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.motech.repeaters.const import (
+from corehq.motech.utils import pformat_json
+from corehq.util.xml_utils import indent_xml
+
+from ..const import (
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.dbaccessors import (
+from ..dbaccessors import (
     get_cancelled_repeat_record_count,
     get_paged_repeat_records,
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
 )
-from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.utils import pformat_json
-from corehq.util.xml_utils import indent_xml
+from ..models import RepeatRecord, are_repeat_records_migrated, is_queued
 
 
-class DomainForwardingRepeatRecords(GenericTabularReport):
+class BaseRepeatRecordReport(GenericTabularReport):
     name = 'Repeat Records'
     base_template = 'repeaters/repeat_record_report.html'
     section_name = 'Project Settings'
-    slug = 'repeat_record_report'
+
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
@@ -199,30 +200,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
 
     def _make_row(self, record):
-        checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.get_id)
-        row = [
-            checkbox,
-            self._make_state_label(record),
-            record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
-            self._format_date(record.last_checked) if record.last_checked else '---',
-            self._format_date(record.next_check) if record.next_check else '---',
-            render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
-            self._make_view_payload_button(record.get_id),
-            self._make_resend_payload_button(record.get_id),
-        ]
-
-        if record.cancelled and not record.succeeded:
-            row.append(self._make_requeue_payload_button(record.get_id))
-        elif not record.cancelled and not record.succeeded:
-            row.append(self._make_cancel_payload_button(record.get_id))
-        else:
-            row.append(None)
-
-        if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(2, self._payload_id_and_search_link(record.payload_id))
-        return row
+        raise NotImplementedError
 
     @property
     def headers(self):
@@ -253,7 +231,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     @property
     def report_context(self):
-        context = super(DomainForwardingRepeatRecords, self).report_context
+        context = super().report_context
 
         total = get_repeat_record_count(self.domain, self.repeater_id)
         total_pending = get_pending_repeat_record_count(self.domain, self.repeater_id)
@@ -274,6 +252,77 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             form_query_string_cancelled=form_query_string_cancelled,
         )
         return context
+
+
+class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
+    slug = 'couch_repeat_record_report'
+
+    def _make_row(self, record):
+        checkbox = format_html(
+            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            record.get_id)
+        row = [
+            checkbox,
+            self._make_state_label(record),
+            record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
+            self._format_date(record.last_checked) if record.last_checked else '---',
+            self._format_date(record.next_check) if record.next_check else '---',
+            render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
+            self._make_view_payload_button(record.get_id),
+            self._make_resend_payload_button(record.get_id),
+        ]
+
+        if record.cancelled and not record.succeeded:
+            row.append(self._make_requeue_payload_button(record.get_id))
+        elif not record.cancelled and not record.succeeded:
+            row.append(self._make_cancel_payload_button(record.get_id))
+        else:
+            row.append(None)
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(2, self._payload_id_and_search_link(record.payload_id))
+        return row
+
+
+class SQLRepeatRecordReport(BaseRepeatRecordReport):
+    slug = 'repeat_record_report'
+
+    def _make_row(self, record):
+        checkbox = format_html(
+            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            record.pk)
+        if record.attempts:
+            # Use prefetched `record.attempts` instead of requesting a
+            # different queryset
+            created_at = self._format_date(list(record.attempts)[-1].created_at)
+        else:
+            created_at = '---'
+        if record.repeater_stub.next_attempt_at:
+            next_attempt_at = self._format_date(record.repeater_stub.next_attempt_at)
+        else:
+            next_attempt_at = '---'
+        row = [
+            checkbox,
+            self._make_state_label(record),
+            record.repeater_stub.repeater.get_url(record),
+            created_at,
+            next_attempt_at,
+            render_to_string('repeaters/partials/attempt_history.html',
+                             {'record': record}),
+            self._make_view_payload_button(record.pk),
+            self._make_resend_payload_button(record.pk),
+        ]
+
+        if record.state == RECORD_CANCELLED_STATE:
+            row.append(self._make_requeue_payload_button(record.pk))
+        elif is_queued(record):
+            row.append(self._make_cancel_payload_button(record.pk))
+        else:
+            row.append(None)
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(2, self._payload_id_and_search_link(record.payload_id))
+        return row
 
 
 @method_decorator(domain_admin_required, name='dispatch')
@@ -317,10 +366,11 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
+        use_sql = are_repeat_records_migrated(domain)
         if _get_flag(request):
-            _schedule_task_with_flag(request, domain, 'resend')
+            _schedule_task_with_flag(request, domain, 'resend', use_sql)
         else:
-            _schedule_task_without_flag(request, domain, 'resend')
+            _schedule_task_without_flag(request, domain, 'resend', use_sql)
         return JsonResponse({'success': True})
 
 
@@ -328,10 +378,11 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
+    use_sql = are_repeat_records_migrated(domain)
     if _get_flag(request) == 'cancel_all':
-        _schedule_task_with_flag(request, domain, 'cancel')
+        _schedule_task_with_flag(request, domain, 'cancel', use_sql)
     else:
-        _schedule_task_without_flag(request, domain, 'cancel')
+        _schedule_task_without_flag(request, domain, 'cancel', use_sql)
 
     return HttpResponse('OK')
 
@@ -340,10 +391,11 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
+    use_sql = are_repeat_records_migrated(domain)
     if _get_flag(request) == 'requeue_all':
-        _schedule_task_with_flag(request, domain, 'requeue')
+        _schedule_task_with_flag(request, domain, 'requeue', use_sql)
     else:
-        _schedule_task_without_flag(request, domain, 'requeue')
+        _schedule_task_without_flag(request, domain, 'requeue', use_sql)
 
     return HttpResponse('OK')
 
@@ -367,17 +419,27 @@ def _change_record_state(query_dict: QueryDict, state: str) -> QueryDict:
     return query_dict
 
 
-def _schedule_task_with_flag(request, domain, action):
+def _schedule_task_with_flag(
+    request: HttpRequest,
+    domain: str,
+    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    use_sql: bool,
+):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id') or None
     repeater_id = request.POST.get('repeater') or None
     task = task_generate_ids_and_operate_on_payloads.delay(
-        payload_id, repeater_id, domain, action)
+        payload_id, repeater_id, domain, action, use_sql)
     task_ref.set_task(task)
 
 
-def _schedule_task_without_flag(request, domain, action):
+def _schedule_task_without_flag(
+    request: HttpRequest,
+    domain: str,
+    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    use_sql: bool,
+):
     record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operate_on_payloads.delay(record_ids, domain, action)
+    task = task_operate_on_payloads.delay(record_ids, domain, action, use_sql)
     task_ref.set_task(task)

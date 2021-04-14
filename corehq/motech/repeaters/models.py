@@ -70,7 +70,6 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from django.utils.functional import cached_property
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -282,10 +281,16 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self._id} {self.name!r}>"
 
-    @cached_property
+    @property
     def connection_settings(self):
         if not self.connection_settings_id:
             return self.create_connection_settings()
+        return self._get_connection_settings()
+
+    # Cache across instances to avoid N+1 query problem when calling
+    # Repeater.get_url() for each row in repeat record report
+    @quickcache(['self.connection_settings_id'])
+    def _get_connection_settings(self):
         return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @property
@@ -771,6 +776,22 @@ class RepeatRecordAttempt(DocumentSchema):
     def message(self):
         return self.success_response if self.succeeded else self.failure_reason
 
+    @property
+    def state(self):
+        state = RECORD_PENDING_STATE
+        if self.succeeded:
+            state = RECORD_SUCCESS_STATE
+        elif self.cancelled:
+            state = RECORD_CANCELLED_STATE
+        elif self.failure_reason:
+            state = RECORD_FAILURE_STATE
+        return state
+
+    @property
+    def created_at(self):
+        # Used by .../case/partials/repeat_records.html
+        return self.datetime
+
 
 class RepeatRecord(Document):
     """
@@ -1062,6 +1083,16 @@ class SQLRepeatRecord(models.Model):
         ]
         ordering = ['registered_at']
 
+    def requeue(self):
+        # Changing "success" to "pending" and "cancelled" to "failed"
+        # preserves the value of `self.failure_reason`.
+        if self.state == RECORD_SUCCESS_STATE:
+            self.state = RECORD_PENDING_STATE
+            self.save()
+        elif self.state == RECORD_CANCELLED_STATE:
+            self.state = RECORD_FAILURE_STATE
+            self.save()
+
     def add_success_attempt(self, response):
         """
         ``response`` can be a Requests response instance, or True if the
@@ -1070,7 +1101,7 @@ class SQLRepeatRecord(models.Model):
         self.repeater_stub.reset_next_attempt()
         self.sqlrepeatrecordattempt_set.create(
             state=RECORD_SUCCESS_STATE,
-            message=format_response(response),
+            message=format_response(response) or '',
         )
         self.state = RECORD_SUCCESS_STATE
         self.save()
@@ -1125,15 +1156,50 @@ class SQLRepeatRecord(models.Model):
 
     @property
     def num_attempts(self):
-        return self.sqlrepeatrecordattempt_set.count()
+        # Uses `len(queryset)` instead of `queryset.count()` to use
+        # prefetched attempts, if available.
+        return len(self.attempts)
+
+    def get_numbered_attempts(self):
+        for i, attempt in enumerate(self.attempts, start=1):
+            yield i, attempt
+
+    @property
+    def record_id(self):
+        # Used by Repeater.get_url() ... by SQLRepeatRecordReport._make_row()
+        return self.pk
+
+    @property
+    def last_checked(self):
+        # Used by .../case/partials/repeat_records.html
+        return self.repeater.last_attempt_at
+
+    @property
+    def url(self):
+        # Used by .../case/partials/repeat_records.html
+        return self.repeater.couch_repeater.get_url(self)
+
+    @property
+    def failure_reason(self):
+        if has_failed(self):
+            return self.last_message
+        else:
+            return ''
+
+    @property
+    def last_message(self):
+        # Uses `list(queryset)[-1]` instead of `queryset.last()` to use
+        # prefetched attempts, if available.
+        attempts = list(self.attempts)
+        return attempts[-1].message if attempts else ''
 
 
 class SQLRepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(SQLRepeatRecord,
                                       on_delete=models.CASCADE)
     state = models.TextField(choices=RECORD_STATES)
-    message = models.TextField(null=True, blank=True)
-    traceback = models.TextField(null=True, blank=True)
+    message = models.TextField(blank=True, default='')
+    traceback = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -1244,6 +1310,14 @@ def send_request(
                                    RECORD_CANCELLED_STATE)  # Don't retry
 
 
+def is_queued(record):
+    return record.state in (RECORD_PENDING_STATE, RECORD_FAILURE_STATE)
+
+
+def has_failed(record):
+    return record.state in (RECORD_FAILURE_STATE, RECORD_CANCELLED_STATE)
+
+
 def format_response(response) -> Optional[str]:
     if not is_response(response):
         return None
@@ -1259,6 +1333,17 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+@quickcache(['domain'], timeout=5 * 60)
+def are_repeat_records_migrated(domain) -> bool:
+    """
+    Returns True if ``domain`` has SQLRepeatRecords.
+
+    .. note:: Succeeded and cancelled RepeatRecords may not have been
+              migrated to SQLRepeatRecords.
+    """
+    return SQLRepeatRecord.objects.filter(domain=domain).exists()
 
 
 def domain_can_forward(domain):

@@ -1,28 +1,64 @@
 import datetime
+import hashlib
+import logging
+
 from django.urls import reverse
+from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_noop as _
+
 from jsonobject.exceptions import BadValueError
 
+import phonelog.reports as phonelog
+from dimagi.utils.modules import to_function
+
 from corehq import privileges
+from corehq.apps.accounting.interface import (
+    AccountingInterface,
+    CreditAdjustmentInterface,
+    CustomerInvoiceInterface,
+    InvoiceInterface,
+    PaymentRecordInterface,
+    SoftwarePlanInterface,
+    SubscriptionAdjustmentInterface,
+    SubscriptionInterface,
+    WireInvoiceInterface,
+)
+from corehq.apps.case_importer.base import ImportCases
+from corehq.apps.data_interfaces.interfaces import (
+    BulkFormManagementInterface,
+    CaseReassignmentInterface,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.views.incremental import IncrementalExportLogView
+from corehq.apps.fixtures.interface import (
+    FixtureEditInterface,
+    FixtureViewInterface,
+)
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
+    DeployHistoryReport,
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
-    DeployHistoryReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
-from corehq.apps.reports.standard import (
-    monitoring, inspect,
-    deployments, sms
+from corehq.apps.reports import commtrack
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
+from corehq.apps.reports.standard.cases.case_list_explorer import (
+    CaseListExplorer,
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
+from corehq.apps.smsbillables.interface import (
+    SMSBillablesInterface,
+    SMSGatewayFeeCriteriaInterface,
+)
+from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
-    StaticReportConfiguration,
     ReportConfiguration,
+    StaticReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
@@ -30,36 +66,13 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
 from corehq.form_processor.utils import should_use_sql_backend
-import phonelog.reports as phonelog
-from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
-from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
-import hashlib
-from dimagi.utils.modules import to_function
-import logging
-from . import toggles
-from django.utils.translation import ugettext_noop as _, ugettext_lazy
-from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
-from corehq.apps.case_importer.base import ImportCases
-from corehq.apps.accounting.interface import (
-    AccountingInterface,
-    SubscriptionInterface,
-    SoftwarePlanInterface,
-    InvoiceInterface,
-    WireInvoiceInterface,
-    CustomerInvoiceInterface,
-    PaymentRecordInterface,
-    SubscriptionAdjustmentInterface,
-    CreditAdjustmentInterface,
+from corehq.motech.repeaters.views import (
+    DomainForwardingRepeatRecords,
+    SQLRepeatRecordReport,
 )
-from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
-from corehq.apps.smsbillables.interface import (
-    SMSBillablesInterface,
-    SMSGatewayFeeCriteriaInterface,
-)
-from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
-from corehq.apps.export.views.incremental import IncrementalExportLogView
 from custom.openclinica.reports import OdmExportReport
+
+from . import toggles
 
 
 def REPORTS(project):
@@ -348,6 +361,7 @@ ADMIN_REPORTS = (
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
+        SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
     )),
