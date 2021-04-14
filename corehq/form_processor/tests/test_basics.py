@@ -296,7 +296,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         )
         case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 1)
-        self.assertEqual(indices[0].referenced_id, '')
+        self.assertEqual(case.indices[0].referenced_id, '')
 
     def test_invalid_index(self):
         invalid_case_id = uuid.uuid4().hex
