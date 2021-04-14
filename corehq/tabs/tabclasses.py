@@ -2146,7 +2146,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
                 {'title': _('View raw documents'),
@@ -2165,11 +2164,7 @@ class AdminTab(UITab):
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
             ]
-            user_operations = [
-                {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname),
-                 'icon': 'fa fa-user-secret'},
-            ] + user_operations + [
+            user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
