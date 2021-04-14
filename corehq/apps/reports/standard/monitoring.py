@@ -733,9 +733,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(simplified_user)] +
-                    [self.table_cell(row_data, zerostyle=True) for row_data in row] +
-                    [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
+                    [self.get_user_link(simplified_user)]
+                    + [self.table_cell(row_data, zerostyle=True) for row_data in row]
+                    + [self.table_cell(row_sum, format_html("<strong>{}</strong>", row_sum))]
                 )
                 totals = [totals[i] + col.get('sort_key')
                           for i, col in enumerate(row[1:])]
