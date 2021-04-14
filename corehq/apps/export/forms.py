@@ -53,7 +53,6 @@ from corehq.apps.reports.filters.users import (
 )
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.pillows import utils
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
 
@@ -970,46 +969,10 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             self.cleaned_data['date_range'],
         )
 
-    def _get_mapped_user_types(self, selected_user_types):
-        user_types = []
-        if HQUserType.ACTIVE in selected_user_types:
-            user_types.append(BaseFilterExportDownloadForm._USER_MOBILE)
-        if HQUserType.ADMIN in selected_user_types:
-            user_types.append(BaseFilterExportDownloadForm._USER_ADMIN)
-        if HQUserType.UNKNOWN in selected_user_types:
-            user_types.append(BaseFilterExportDownloadForm._USER_UNKNOWN)
-        if HQUserType.DEMO_USER in selected_user_types:
-            user_types.append(BaseFilterExportDownloadForm._USER_DEMO)
-
-        return user_types
-
     def get_edit_url(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
-
-    def get_es_user_types(self, filter_form_data):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
-        es_user_types = []
-        export_user_types = self._get_mapped_user_types(
-            self._get_selected_es_user_types(mobile_user_and_group_slugs)
-        )
-        export_to_es_user_types_map = {
-            BaseFilterExportDownloadForm._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            BaseFilterExportDownloadForm._USER_DEMO: [utils.DEMO_USER_TYPE],
-            BaseFilterExportDownloadForm._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            BaseFilterExportDownloadForm._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
 
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
