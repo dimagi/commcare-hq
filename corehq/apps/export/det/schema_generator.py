@@ -27,7 +27,7 @@ CASE_API_PATH_MAP = {
     'type': 'properties.case_type',
     'user_id': 'user_id',
 }
-
+PARENT_INDEX_PATH = 'indices.parent.case_id'
 
 FORM_API_PATH_MAP = {
     'xmlns': 'form.@xmlns',
@@ -64,7 +64,15 @@ class CaseDETSchemaHelper(DefaultDETSchemaHelper):
 
     @staticmethod
     def transform_path(input_path):
-        # either return hard-coded lookup or add prefix
+
+        # todo: this could be made smarter in the future for multi-parentage use cases
+        def _is_index_reference(path):
+            path_as_array = path.split('.')
+            return len(path_as_array) == 2 and path_as_array[0] == 'indices'
+
+        if _is_index_reference(input_path):
+            return PARENT_INDEX_PATH  # as could this
+
         return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
 
     def get_map_via(self, export_item):
