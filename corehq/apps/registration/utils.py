@@ -51,7 +51,7 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
+def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
