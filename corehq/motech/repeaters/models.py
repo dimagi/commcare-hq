@@ -383,9 +383,9 @@ class Repeater(QuickCachedDocumentMixin, Document):
     @quickcache(['cls.__name__', 'domain', 'stale_query'], timeout=60 * 60, memoize_timeout=10)
     def by_domain(cls, domain, stale_query=False):
         key = [domain]
-        stale = False
+        stale_kwargs = {}
         if stale_query:
-            stale = stale_ok()
+            stale_kwargs['stale'] = stale_ok()
         if cls.__name__ in get_all_repeater_types():
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
@@ -404,7 +404,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
             wrap_doc=False,
-            stale=stale
+            **stale_kwargs
         )
 
         return [cls.wrap(repeater_doc['doc']) for repeater_doc in raw_docs
