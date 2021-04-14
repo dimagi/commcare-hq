@@ -123,7 +123,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         src += "?next=" + initialPageData.reverse('iframe_domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
                         $modal.on('shown.bs.modal', function () {
-                            var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
+                            var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
                                 src: src,
                                 width: $body.width(),
                                 height: $body.height() - 10,
@@ -152,7 +152,7 @@ hqDefine('hqwebapp/js/inactivity', [
                     var error = "";
                     if (data.success) {
                         if (data.username !== initialPageData.get('secure_timeout_username')) {
-                            error = gettext(_.template("Please log in as <%= username %>"))({
+                            error = gettext(_.template("Please log in as <%- username %>"))({
                                 username: initialPageData.get('secure_timeout_username'),
                             });
                         }
