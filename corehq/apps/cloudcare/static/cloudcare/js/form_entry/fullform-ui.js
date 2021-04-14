@@ -637,6 +637,11 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
                     return options.data ? md.render(options.data) : null;
                 },
             },
+            help: {
+                update: function (options) {
+                    return options.data ? md.render(options.data) : null;
+                },
+            },
         };
 
         ko.mapping.fromJS(json, mapping, self);
