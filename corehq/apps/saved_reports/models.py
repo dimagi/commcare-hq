@@ -734,7 +734,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                             'context': {},
                             'request_params': json_request(request_data['GET'])}
 
-            export_all_rows_task(report_config.report, full_request, emails, title)
+            from corehq.apps.userreports.reports.view import ConfigurableReportView
+            report_class = ConfigurableReportView if report_config.is_configurable_report else report_config.report
+
+            export_all_rows_task(report_class, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:
