@@ -274,6 +274,7 @@ importlib-metadata==2.0.0
     # via
     #   flake8
     #   jsonschema
+    #   pep517
 intervaltree==3.1.0
     # via ddtrace
 ipython-genutils==0.2.0
@@ -368,6 +369,8 @@ parso==0.7.1
     # via jedi
 pbr==5.5.0
     # via mock
+pep517==0.10.0
+    # via pip-tools
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
@@ -380,7 +383,7 @@ pillow==8.1.2
     #   cairosvg
     #   django-simple-captcha
     #   reportlab
-pip-tools==5.5.0
+pip-tools==6.1.0
     # via -r test-requirements.in
 ply==3.11
     # via
@@ -633,6 +636,8 @@ tinycss2==1.0.2
     #   weasyprint
 tinys3==0.1.12
     # via -r base-requirements.in
+toml==0.10.2
+    # via pep517
 traceback2==1.4.0
     # via unittest2
 traitlets==4.3.3
@@ -687,7 +692,9 @@ xmlsec==1.3.9
 yapf==0.30.0
     # via -r dev-requirements.in
 zipp==3.2.0
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.0.1
