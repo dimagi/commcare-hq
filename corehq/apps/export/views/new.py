@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
@@ -90,7 +91,8 @@ class BaseExportView(BaseProjectDataView):
     def terminology(self):
         return {
             'page_header': _("Export Settings"),
-            'help_text': mark_safe(_("""
+            'help_text': mark_safe(  # nosec: no user input
+                _("""
                 Learn more about exports on our <a
                 href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
                 target="_blank">Help Site</a>.
@@ -192,11 +194,7 @@ class BaseExportView(BaseProjectDataView):
         export.save()
         messages.success(
             request,
-            mark_safe(
-                _("Export <strong>{}</strong> saved.").format(
-                    export.name
-                )
-            )
+            format_html(_("Export <strong>{}</strong> saved."), export.name)
         )
         return export._id
 
@@ -369,11 +367,7 @@ class DeleteNewCustomExportView(BaseExportView):
         export.delete()
         messages.success(
             request,
-            mark_safe(
-                _("Export <strong>{}</strong> was deleted.").format(
-                    export.name
-                )
-            )
+            format_html(_("Export <strong>{}</strong> was deleted."), export.name)
         )
         return export._id
 
@@ -425,11 +419,7 @@ class CopyExportView(View):
             new_export.save()
             messages.success(
                 request,
-                mark_safe(
-                    _("Export <strong>{}</strong> created.").format(
-                        new_export.name
-                    )
-                )
+                format_html(_("Export <strong>{}</strong> created."), new_export.name)
             )
         redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(redirect)
