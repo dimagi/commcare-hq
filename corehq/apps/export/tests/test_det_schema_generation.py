@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from io import BytesIO
@@ -50,9 +51,29 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             self.assertEqual('domain', domain_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
+
+            expected_paths = {
+                "_id": "id",
+                "activity_name": "properties.activity_name",
+                "closed": "closed",
+                "closed_by": "properties.closed_by",
+                "closed_on": "date_closed",
+                "event_date": "properties.event_date",
+                "event_duration": "properties.event_duration",
+                "event_score": "properties.event_score",
+                "indices.activity": "properties.indices.activity",
+                "location": "properties.location",
+                "modified_on": "properties.modified_on",
+                "name": "properties.case_name",
+                "number": "properties.number",
+                "opened_by": "opened_by",
+                "opened_on": "properties.date_opened",
+                "owner_id": "properties.owner_id",
+                "user_id": "user_id"
+            }
             for i, input_column in enumerate(main_table.selected_columns):
                 self.assertEqual(input_column.label, data_by_headings[i]['Field'])
-                self.assertEqual(CaseDETSchemaHelper.transform_path(input_column.item.readable_path),
+                self.assertEqual(expected_paths[input_column.item.readable_path],
                                  data_by_headings[i]['Source Field'])
 
             # test individual fields / types
