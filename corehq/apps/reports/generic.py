@@ -53,7 +53,16 @@ def _sanitize_rows(rows):
 
 
 def _sanitize_row(row):
-    return [conditional_escape(col) for col in row]
+    return [_sanitize_col(col) for col in row]
+
+
+def _sanitize_col(col):
+    if isinstance(col, str):
+        return conditional_escape(col)
+
+    # HACK: dictionaries make it here. The dictionaries I've seen have an 'html' key
+    # which I expect to be sanitized already, but there is no guaranteee
+    return col
 
 
 class GenericReportView(object):
