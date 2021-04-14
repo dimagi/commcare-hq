@@ -87,30 +87,24 @@ class ItemListsProvider(FixtureProvider):
             else:
                 user_types[data_type._id] = data_type
         items = []
-        global_items = []
-        user_items = []
+        user_items_count = 0
         if global_types:
             global_items = self.get_global_items(global_types, restore_state)
             items.extend(global_items)
         if user_types:
-            user_items = self.get_user_items(user_types, restore_user)
+            user_items, user_items_count = self.get_user_items_and_count(user_types, restore_user)
             items.extend(user_items)
 
-        for metric_name, items_count in [
-            ('commcare.fixtures.item_lists.global', len(global_items)),
-            ('commcare.fixtures.item_lists.user', len(user_items)),
-            ('commcare.fixtures.item_lists.all', len(items)),
-        ]:
-            metrics_histogram(
-                metric_name,
-                items_count,
-                bucket_tag='items',
-                buckets=[1, 100, 1000, 10000, 30000, 100000, 300000, 1000000],
-                bucket_unit='',
-                tags={
-                    'domain': restore_user.domain
-                }
-            )
+        metrics_histogram(
+            'commcare.fixtures.item_lists.user',
+            user_items_count,
+            bucket_tag='items',
+            buckets=[1, 100, 1000, 10000, 30000, 100000, 300000, 1000000],
+            bucket_unit='',
+            tags={
+                'domain': restore_user.domain
+            }
+        )
         return items
 
     def get_global_items(self, global_types, restore_state):
@@ -126,19 +120,21 @@ class ItemListsProvider(FixtureProvider):
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
-    def get_user_items(self, user_types, restore_user):
+    def get_user_items_and_count(self, user_types, restore_user):
+        user_items_count = 0
         items_by_type = defaultdict(list)
         for item in restore_user.get_fixture_data_items():
             data_type = user_types.get(item.data_type_id)
             if data_type:
                 self._set_cached_type(item, data_type)
                 items_by_type[data_type].append(item)
+                user_items_count += 1
 
         def get_items_by_type(data_type):
             return sorted(items_by_type.get(data_type, []),
                           key=attrgetter('sort_key'))
 
-        return self._get_fixtures(user_types, get_items_by_type, restore_user.user_id)
+        return self._get_fixtures(user_types, get_items_by_type, restore_user.user_id), user_items_count
 
     def _set_cached_type(self, item, data_type):
         # set the cached version used by the object so that it doesn't
