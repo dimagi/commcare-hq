@@ -54,6 +54,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             },
         });
         self.nodesetValid = ko.computed(function () {
+            if (self.nodeset() === null) {
+                return true;
+            }
             var itemLists = _.map(get('js_options').item_lists, function (item) {
                     return itemsetValue(item);
                 });
