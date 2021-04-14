@@ -32,7 +32,10 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
         """
         if not hasattr(self, "_case"):
             from casexml.apps.case.models import CommCareCase
-            self._case = CommCareCase.get(self.referenced_id)
+            if self.referenced_id:
+                self._case = CommCareCase.get(self.referenced_id)
+            else:
+                self._case = None
         return self._case
 
     @classmethod
