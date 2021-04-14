@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
-from django.http import Http404, HttpRequest, QueryDict
+from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from couchdbkit.ext.django.schema import (
@@ -52,6 +52,7 @@ from corehq.apps.saved_reports.exceptions import (
     UnsupportedSavedReportError,
     UnsupportedScheduledReportError,
 )
+from corehq.apps.saved_reports.util import create_mock_request
 from corehq.apps.userreports.util import \
     default_language as ucr_default_language
 from corehq.apps.userreports.util import localize as ucr_localize
@@ -359,17 +360,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 None,
             )
 
-        mock_request = HttpRequest()
-        mock_request.couch_user = self.owner
-        mock_request.user = self.owner.get_django_user()
-        mock_request.domain = self.domain
-        mock_request.couch_user.current_domain = self.domain
-        mock_request.couch_user.language = lang
-        mock_request.method = 'GET'
-        mock_request.bypass_two_factor = True
-
-        mock_query_string_parts = [self.query_string, 'filterSet=true']
-        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
+        mock_request = create_mock_request(self.owner, self.domain, lang, self.query_string)
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(mock_request)
@@ -679,7 +670,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _get_and_send_report(self, language, emails):
         from corehq.apps.reports.views import get_scheduled_report_response, render_full_report_notification
-        from corehq.apps.reports.standard.deployments import ApplicationStatusReport
         with localize(language):
             title = (
                 _(DEFAULT_REPORT_NOTIF_SUBJECT)
@@ -725,40 +715,30 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                                           smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
                 elif getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
-                    # If the email doesn't work because it is too large to fit in the HTML body,
-                    # send it as an excel attachment, by creating a mock request with the right data.
+                    self._send_email_as_downloadable_export(emails, title)
 
-                    for report_config in self.configs:
-                        mock_request = HttpRequest()
-                        mock_request.couch_user = self.owner
-                        mock_request.user = self.owner.get_django_user()
-                        mock_request.domain = self.domain
-                        mock_request.couch_user.current_domain = self.domain
-                        mock_request.couch_user.language = self.language
-                        mock_request.method = 'GET'
-                        mock_request.bypass_two_factor = True
+    def _send_email_as_downloadable_export(self, emails, title):
+        for report_config in self.configs:
+            mock_request = create_mock_request(self.owner, self.domain, self.language, report_config.query_string)
+            request_data = vars(mock_request)
+            request_data['couch_user'] = mock_request.couch_user.userID
 
-                        mock_query_string_parts = [report_config.query_string, 'filterSet=true']
-                        if report_config.is_configurable_report:
-                            mock_query_string_parts.append(urlencode(report_config.filters, True))
-                            mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
-                        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
-                        request_data = vars(mock_request)
-                        request_data['couch_user'] = mock_request.couch_user.userID
-                        if report_config.report_slug != ApplicationStatusReport.slug:
-                            # ApplicationStatusReport doesn't have date filter
-                            date_range = report_config.get_date_range()
-                            start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                            end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
-                            datespan = DateSpan(start_date, end_date)
-                            request_data['datespan'] = datespan
+            date_range = report_config.get_date_range()
+            if 'startdate' in date_range and 'enddate' in date_range:
+                start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
+                end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
+                datespan = DateSpan(start_date, end_date)
+                request_data['datespan'] = datespan
 
-                        full_request = {'request': request_data,
-                                        'domain': request_data['domain'],
-                                        'context': {},
-                                        'request_params': json_request(request_data['GET'])}
+            full_request = {'request': request_data,
+                            'domain': request_data['domain'],
+                            'context': {},
+                            'request_params': json_request(request_data['GET'])}
 
-                        export_all_rows_task(report_config.report, full_request, emails, title)
+            from corehq.apps.userreports.reports.view import ConfigurableReportView
+            report_class = ConfigurableReportView if report_config.is_configurable_report else report_config.report
+
+            export_all_rows_task(report_class, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:
