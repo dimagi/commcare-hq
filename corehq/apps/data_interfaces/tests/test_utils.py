@@ -31,35 +31,35 @@ class TestUtils(SimpleTestCase):
         response = _get_repeat_record_ids(None, None, 'test_domain', False)
         self.assertEqual(response, [])
 
-    @patch('corehq.apps.data_interfaces.tasks.get_couch_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    @patch('corehq.apps.data_interfaces.tasks.get_couch_repeat_record_ids_by_payload_id')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_record_ids_by_repeater')
     def test__get_ids_payload_id_in_data(
         self,
-        mock_iter_repeat_records_by_repeater,
-        mock_get_by_payload_id,
+        iter_by_repeater,
+        get_by_payload_id,
     ):
         payload_id = Mock()
         _get_repeat_record_ids(payload_id, None, 'test_domain', False)
 
-        self.assertEqual(mock_get_by_payload_id.call_count, 1)
-        mock_get_by_payload_id.assert_called_with(
+        self.assertEqual(get_by_payload_id.call_count, 1)
+        get_by_payload_id.assert_called_with(
             'test_domain', payload_id)
-        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 0)
+        self.assertEqual(iter_by_repeater.call_count, 0)
 
-    @patch('corehq.apps.data_interfaces.tasks.get_couch_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    @patch('corehq.apps.data_interfaces.tasks.get_couch_repeat_record_ids_by_payload_id')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_record_ids_by_repeater')
     def test__get_ids_payload_id_not_in_data(
         self,
-        mock_iter_repeat_records_by_repeater,
-        mock_get_by_payload_id,
+        iter_by_repeater,
+        get_by_payload_id,
     ):
         REPEATER_ID = 'c0ffee'
         _get_repeat_record_ids(None, REPEATER_ID, 'test_domain', False)
 
-        mock_get_by_payload_id.assert_not_called()
-        mock_iter_repeat_records_by_repeater.assert_called_with(
+        get_by_payload_id.assert_not_called()
+        iter_by_repeater.assert_called_with(
             'test_domain', REPEATER_ID)
-        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 1)
+        self.assertEqual(iter_by_repeater.call_count, 1)
 
     @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_record_does_not_exist(self, mock_RepeatRecord):
