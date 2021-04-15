@@ -680,7 +680,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
     if should_edit('session_endpoint_id'):
-        module.session_endpoint_ids = [request.POST.get("session_endpoint_id")]
+        module.session_endpoint_id = request.POST.get("session_endpoint_id")
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')

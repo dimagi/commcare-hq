@@ -439,7 +439,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
 
     if should_edit('session_endpoint_id'):
-        form.session_endpoint_ids = [request.POST['session_endpoint_id']]
+        form.session_endpoint_id = request.POST['session_endpoint_id']
 
     handle_media_edits(request, form, should_edit, resp, lang)
 

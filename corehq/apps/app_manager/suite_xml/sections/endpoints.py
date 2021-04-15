@@ -17,10 +17,10 @@ class SessionEndpointContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module) -> List[SessionEndpoint]:
         endpoints = []
-        if module.session_endpoint_ids:
+        if module.session_endpoint_id:
             endpoints.append(_get_module_endpoint(module))
         for form in module.get_suite_forms():
-            if form.session_endpoint_ids:
+            if form.session_endpoint_id:
                 endpoints.append(_get_form_endpoint(form))
         return endpoints
 
@@ -28,20 +28,20 @@ class SessionEndpointContributor(SuiteContributorByModule):
 def _get_module_endpoint(module) -> SessionEndpoint:
     id_string = id_strings.case_list_command(module)
     return SessionEndpoint(
-        arguments=[Argument(id=id_) for id_ in module.session_endpoint_ids],
-        stack=_build_stack(id_string, module.session_endpoint_ids),
+        arguments=[Argument(id=module.session_endpoint_id)],
+        stack=_build_stack(id_string, module.session_endpoint_id),
     )
 
 
 def _get_form_endpoint(form) -> SessionEndpoint:
     id_string = id_strings.form_command(form)
     return SessionEndpoint(
-        arguments=[Argument(id=id_) for id_ in form.session_endpoint_ids],
-        stack=_build_stack(id_string, form.session_endpoint_ids),
+        arguments=[Argument(id=form.session_endpoint_id)],
+        stack=_build_stack(id_string, form.session_endpoint_id),
     )
 
 
-def _build_stack(id_string: str, endpoint_ids: List[str]) -> Stack:
+def _build_stack(id_string: str, endpoint_id: str) -> Stack:
     """
     Returns a stack with the command for a form or case list, and a list
     of datums whose ID and session variable name are both the element ID.
@@ -63,10 +63,9 @@ def _build_stack(id_string: str, endpoint_ids: List[str]) -> Stack:
     stack = Stack()
     frame = PushFrame()
     frame.add_command(XPath.string(id_string))
-    for endpoint_id in endpoint_ids:
-        frame.add_datum(StackDatum(
-            id=endpoint_id,
-            value=session_var(endpoint_id))
-        )
+    frame.add_datum(StackDatum(
+        id=endpoint_id,
+        value=session_var(endpoint_id))
+    )
     stack.add_frame(frame)
     return stack
