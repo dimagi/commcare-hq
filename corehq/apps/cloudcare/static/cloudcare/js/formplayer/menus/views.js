@@ -2,7 +2,8 @@
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Util = hqImport("cloudcare/js/formplayer/utils/util"),
+        md = window.markdownit();
 
     var MenuView = Marionette.View.extend({
         tagName: function () {
@@ -224,8 +225,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
+            var data = this.options.model.get('data').map(x => DOMPurify.sanitize(md.render(x)));
             return {
-                data: this.options.model.get('data'),
+                data: data,
                 styles: this.options.styles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
