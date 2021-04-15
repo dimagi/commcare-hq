@@ -74,11 +74,14 @@ def _parse_date_or_datetime(val):
                 return dt.date()
             else:
                 return dt
-
-    result = parse()
-    if isinstance(result, datetime.datetime):
-        assert result.tzinfo is None
-    return result
+    try:
+        result = parse()
+        if isinstance(result, datetime.datetime):
+            assert result.tzinfo is None
+        return result
+    except Exception:
+        # ignore exceptions from date parsing
+        pass
 
 
 def _format_slug_string_for_display(key):
