@@ -82,11 +82,11 @@ branches:
   - ap/escape-html-in-users # Amit Apr 2
   - ap/escape-templates-in-datainterfaces # Amit Apr 2
   - ap/escape-html-in-remaining-apps # Amit Apr 5
-  # - mjr/xss_reports  # Matt April 7
+  - mjr/xss_reports  # Matt April 7
   - sr/jumptoErrors # Sravan April 6
   - mk/form-mm-exports-filters # MK April 8
   - fr/smart-oauth-views # Farid April 7
-  # - mjr/xss_custom_fields  # Matt April 7
+  - mjr/xss_custom_fields  # Matt April 7
   - rp/fix-2fa-hyperlink # Rynhard April 8
   - rp/fix-broken-link-2.0 # Rynhard April 8
   - kev/markdown-help-modal # Kevin Apr 9
@@ -95,12 +95,12 @@ branches:
   - sr/ush-ff  # Sravan April 12
   - rp/remove_superuser_impersonation #Rynhard April 12
   - ap/update-django-to-2-2-20  # Amit April 12
-  # - mjr/xss_hqwebapp_AND_app_manager  # Matt April 12
-  # - mjr/xss_hqwebapp_take2  # Matt April 12
-  # - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
-  # - mjr/xss_exports # Matt April 12
+  - mjr/xss_hqwebapp_AND_app_manager  # Matt April 12
+  - mjr/xss_hqwebapp_take2  # Matt April 12
+  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
+  - mjr/xss_exports # Matt April 12
   - jls/case-search-case-list-show-related-properties # Jenny April 12
-  # - mjr/xss_user_filter_fix # Matt April 12
+  - mjr/xss_user_filter_fix # Matt April 12
   - gh/fix-email-large-ucrs # Graham April 14
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - ce/stale-repeaters  # Danny/Cal Apr 14
