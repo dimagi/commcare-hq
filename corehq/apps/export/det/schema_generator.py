@@ -67,8 +67,7 @@ class CaseDETSchemaHelper(DefaultDETSchemaHelper):
 
         # todo: this could be made smarter in the future for multi-parentage use cases
         def _is_index_reference(path):
-            path_as_array = path.split('.')
-            return len(path_as_array) == 2 and path_as_array[0] == 'indices'
+            return path.startswith("indices.") and path.count(".") == 1
 
         if _is_index_reference(input_path):
             return PARENT_INDEX_PATH  # as could this
