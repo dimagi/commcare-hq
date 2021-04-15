@@ -7,7 +7,7 @@ from django.db.models import Count, F, Q
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.html import escape
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -128,12 +128,13 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         )
 
     def get_user_link(self, user):
-        user_link_template = '<a href="%(link)s">%(username)s</a>'
-        user_link = user_link_template % {
-            "link": absolute_reverse(EditCommCareUserView.urlname,
-                                     args=[self.domain, user._id]),
-            "username": user.username_in_report
-        }
+        user_link_template = '<a href="{link}">{username}</a>'
+        user_link = format_html(
+            user_link_template,
+            link=absolute_reverse(EditCommCareUserView.urlname,
+                args=[self.domain, user._id]),
+            username=user.username_in_report
+        )
         return self.table_cell(user.raw_username, user_link)
 
     @property
@@ -221,7 +222,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         username = username or "-"
         contact_type = contact_type or _("Unknown")
         if url:
-            ret = self.table_cell(username, '<a target="_blank" href="%s">%s</a>' % (url, username))
+            ret = self.table_cell(username, format_html('<a target="_blank" href="{}">{}</a>', url, username))
         else:
             ret = self.table_cell(username, username)
         ret['raw'] = "|||".join([username, contact_type,
@@ -600,7 +601,8 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
     def get_event_detail_link(self, event):
         display_text = _('View Details')
-        display = '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">%s</a>' % (
+        display = format_html(
+            '<a target="_blank" href="/a/{}/reports/message_event_detail/?id={}">{}</a>',
             self.domain,
             event.pk,
             display_text,
@@ -615,7 +617,8 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         if not subevent.xforms_session_id:
             return self._fmt(form_name)
         else:
-            display = '<a target="_blank" href="%s">%s</a>' % (
+            display = format_html(
+                '<a target="_blank" href="{}">{}</a>',
                 self.get_survey_detail_url(subevent),
                 form_name,
             )
@@ -1428,7 +1431,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return ServerTime(timestamp).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
 
     def get_link_display(self, href, text):
-        return '<a target="_blank" href="%s">%s</a>' % (href, escape(text))
+        return format_html('<a target="_blank" href="{}">{}</a>', href, text)
 
     def get_case_display(self, case):
         from corehq.apps.reports.views import CaseDataView
