@@ -152,3 +152,5 @@ if os.path.exists("extensions/icds/custom/icds"):
     if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
         COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
         CUSTOM_DB_ROUTING["icds_reports"] = "icds-ucr-citus"
+
+FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
