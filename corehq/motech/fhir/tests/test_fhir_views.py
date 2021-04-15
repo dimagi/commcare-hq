@@ -44,6 +44,7 @@ class BaseFHIRViewTest(TestCase):
         _setup_mappings()
 
     def setUp(self):
+        super().setUp()
         self.client.login(username=USERNAME, password=PASSWORD)
 
     @classmethod
@@ -51,6 +52,7 @@ class BaseFHIRViewTest(TestCase):
         delete_all_cases()
         cls.user.delete(deleted_by=None)
         cls.domain_obj.delete()
+        super().tearDownClass()
 
 
 class TestFHIRGetView(BaseFHIRViewTest):
