@@ -140,7 +140,9 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             })
             try:
                 request_new_domain(
-                    self.request, reg_form, is_new_user=True
+                    self.request,
+                    reg_form.cleaned_data['project_name'],
+                    is_new_user=True
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -319,7 +321,11 @@ class RegisterDomainView(TemplateView):
             return render(request, 'error.html', context)
 
         try:
-            domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
+            domain_name = request_new_domain(
+                request,
+                form.cleaned_data['hr_name'],
+                is_new_user=self.is_new_user
+            )
         except NameUnavailableException:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
