@@ -80,7 +80,6 @@ branches:
   - fr/smart-oauth-views # Farid April 7
   - rp/fix-2fa-hyperlink # Rynhard April 8
   - rp/fix-broken-link-2.0 # Rynhard April 8
-  - kev/markdown-help-modal # Kevin Apr 9
   - ce/multidropdown-webapps
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
   - sr/ush-ff  # Sravan April 12
@@ -89,5 +88,6 @@ branches:
   - jls/case-search-case-list-show-related-properties # Jenny April 12
   - gh/fix-email-large-ucrs # Graham April 14
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
+  - kev/markdown-case-views # Kevin Apr 9
 
 submodules: {}
