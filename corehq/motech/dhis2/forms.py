@@ -312,7 +312,7 @@ class DataValueMapCreateForm(DataValueMapBaseForm):
             twbscrispy.InlineField('category_option_combo_id'),
             twbscrispy.InlineField('comment'),
             twbscrispy.StrictButton(
-                mark_safe(f'<i class="fa fa-plus"></i> {_("Add")}'),
+                mark_safe(f'<i class="fa fa-plus"></i> {_("Add")}'),  # nosec: no user input
                 css_class='btn-primary',
                 type='submit',
             )
