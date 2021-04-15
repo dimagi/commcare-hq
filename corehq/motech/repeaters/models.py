@@ -133,6 +133,7 @@ from .const import (
     RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
+    force_update_repeaters_views,
     get_cancelled_repeat_record_count,
     get_failure_repeat_record_count,
     get_pending_repeat_record_count,
@@ -374,10 +375,15 @@ class Repeater(QuickCachedDocumentMixin, Document):
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
             cls = self.__class__
+        # force views to catch up with the change before invalidating the cache
+        # for consistency of stale_query
+        force_update_repeaters_views()
         # clear cls.by_domain (i.e. filtered by doc type)
         Repeater.by_domain.clear(cls, self.domain)
+        Repeater.by_domain.clear(cls, self.domain, stale_query=True)
         # clear Repeater.by_domain (i.e. not filtered by doc type)
         Repeater.by_domain.clear(Repeater, self.domain)
+        Repeater.by_domain.clear(Repeater, self.domain, stale_query=True)
 
     @classmethod
     @quickcache(['cls.__name__', 'domain', 'stale_query'], timeout=60 * 60, memoize_timeout=10)
