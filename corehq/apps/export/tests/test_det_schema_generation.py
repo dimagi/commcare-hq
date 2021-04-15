@@ -60,6 +60,7 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
                 "event_duration": "properties.event_duration",
                 "event_score": "properties.event_score",
                 "indices.activity": "indices.parent.case_id",
+                "indices.foo": "indices.sibling.case_id",
                 "location": "properties.location",
                 "modified_on": "properties.modified_on",
                 "name": "properties.case_name",
