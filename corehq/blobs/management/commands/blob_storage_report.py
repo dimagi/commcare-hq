@@ -12,7 +12,7 @@ from six.moves.urllib.parse import unquote
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 
-from corehq.apps.hqadmin.views.data import get_db_from_db_name
+from corehq.apps.hqwebapp.doc_lookup import get_db_from_db_name
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.util.decorators import change_log_level
