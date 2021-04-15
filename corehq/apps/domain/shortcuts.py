@@ -3,10 +3,10 @@ Shortcuts for working with domains and users.
 """
 
 
-def create_domain(name, active=True):
+def create_domain(name, active=True, use_sql_backend=False):
     """Create domain without secure submissions for tests"""
     return Domain.get_or_create_with_name(name=name, is_active=active,
-                                          secure_submissions=False)
+                                          secure_submissions=False, use_sql_backend=use_sql_backend)
 
 
 def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, password_hashed=False, **kwargs):
