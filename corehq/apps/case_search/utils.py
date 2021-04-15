@@ -145,7 +145,6 @@ def get_related_case_relationships(app, case_type):
     """
     Get unique case relationships used by search details in any modules that
     match the given case type and are configured for case search.
-    It will miss related cases that are referenced only by calculated properties
 
     Returns a set of paths, e.g. {"parent", "host", "parent/parent"}
     """
