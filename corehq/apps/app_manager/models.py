@@ -120,7 +120,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     expire_get_latest_app_release_by_location_cache,
@@ -1220,10 +1220,9 @@ class FormBase(DocumentSchema):
 
     def default_name(self):
         app = self.get_app()
-        return trans(
+        return clean_trans(
             self.name,
-            [app.default_language] + app.langs,
-            include_lang=False
+            [app.default_language] + app.langs
         )
 
     @property
@@ -2294,10 +2293,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def default_name(self, app=None):
         if not app:
             app = self.get_app()
-        return trans(
+        return clean_trans(
             self.name,
-            [app.default_language] + app.langs,
-            include_lang=False
+            [app.default_language] + app.langs
         )
 
     def rename_lang(self, old_lang, new_lang):
@@ -5811,7 +5809,7 @@ class DeleteFormRecord(DeleteRecord):
     def undo(self):
         app = Application.get(self.app_id)
         if self.module_unique_id is not None:
-            name = trans(self.form.name, app.default_language, include_lang=False)
+            name = clean_trans(self.form.name, app.default_language)
             module = app.get_module_by_unique_id(
                 self.module_unique_id,
                 error=_("Could not find form '{}'").format(name)

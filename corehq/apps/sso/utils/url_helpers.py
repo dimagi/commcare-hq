@@ -11,6 +11,10 @@ def get_saml_acs_url(identity_provider):
     return _get_full_sso_url("sso_saml_acs", identity_provider)
 
 
+def get_saml_login_url(identity_provider):
+    return _get_full_sso_url("sso_saml_login", identity_provider)
+
+
 def get_saml_sls_url(identity_provider):
     return _get_full_sso_url("sso_saml_sls", identity_provider)
 

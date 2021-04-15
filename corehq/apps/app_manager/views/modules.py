@@ -72,7 +72,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
 from corehq.apps.app_manager.util import (
     generate_xmlns,
     is_usercase_in_use,
@@ -638,7 +638,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit("name"):
         name = request.POST.get("name", None)
         module["name"][lang] = name
-        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-module_name': clean_trans(module.name, [lang])}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):

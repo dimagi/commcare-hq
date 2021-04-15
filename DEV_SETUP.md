@@ -138,6 +138,14 @@ Next, install the appropriate requirements (only one is necessary).
 
       $ pip install -r requirements/dev-requirements.txt
 
+* Recommended for developers or others with custom requirements. Use this
+  `pip install ...` workflow for initial setup only. Then use commands in
+  `local.in`.
+
+      $ cp requirements/local.in.sample requirements/local.in
+      # customize requirements/local.in as desired
+      $ pip install -r requirements/local.in
+
 * For production environments
 
       $ pip install -r requirements/prod-requirements.txt
@@ -224,7 +232,7 @@ following should cover the needs of most developers.
     # Or, omit the '-d' option to keep the containers attached in the foreground
     $ ./scripts/docker up
     # Optionally, bring up only specific containers (add '-d' to detach)
-    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio formplayer
     ```
 
 1. If you are planning on running Formplayer from source, stop the formplayer

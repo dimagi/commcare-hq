@@ -288,7 +288,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform.exists():
                 xform.set_name(name)
                 save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
 
     if should_edit('comment'):
         form.comment = request.POST['comment']

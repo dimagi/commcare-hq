@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -154,7 +153,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
             if 'case' in context and context['case'].name:
-                return mark_safe(context['case'].name)
+                return context['case'].name
             else:
                 return _('View Case')
 
@@ -229,7 +228,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self, self.get_case(row))
+            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,
@@ -240,10 +239,3 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    def date_to_json(self, date):
-        if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string(USER_DATETIME_FORMAT_WITH_SEC))
-        else:
-            return ''

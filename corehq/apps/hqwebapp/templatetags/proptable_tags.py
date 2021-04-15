@@ -17,6 +17,7 @@ from django import template
 from django.template.defaultfilters import yesno
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 
 import pytz
 from jsonobject.exceptions import BadValueError
@@ -98,17 +99,21 @@ def _to_html(val, key=None, level=0, timeago=False):
             return ""
 
     if isinstance(val, dict):
-        ret = "".join(
-            ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (_key_format(k, v), recurse(k, v))
-             for k, v in val.items()] +
-            ["</dl>"])
+        ret = format_html(
+            "<dl {}>{}</dl>",
+            mark_safe("class='well'") if level == 0 else '',  # nosec: no user input
+            format_html_join(
+                "",
+                "<dt>{}</dt><dd>{}</dd>",
+                [(_key_format(k, v), recurse(k, v)) for k, v in val.items()]
+            )
+        )
 
     elif _is_list_like(val):
-        ret = "".join(
-            ["<dl>"] +
-            ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
-            ["</dl>"])
+        ret = format_html(
+            "<dl>{}</dl>",
+            format_html_join("", "<dt>{}</dt><dd>{}</dd>", [(key, recurse(None, v)) for v in val])
+        )
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
@@ -117,8 +122,8 @@ def _to_html(val, key=None, level=0, timeago=False):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = mark_safe("<time{timeago} title='{title}' datetime='{iso}'>{display}</time>".format(
-            timeago=" class='timeago'" if timeago else "",
+        ret = format_html("<time{timeago} title='{title}' datetime='{iso}'>{display}</time>".format(
+            timeago=mark_safe(" class='timeago'") if timeago else "",  # nosec: no user input
             title=iso,
             iso=iso,
             display=safe_strftime(val, fmt)
@@ -129,7 +134,7 @@ def _to_html(val, key=None, level=0, timeago=False):
 
         ret = escape(val)
 
-    return mark_safe(ret)
+    return ret
 
 
 @attr.s
@@ -173,8 +178,11 @@ def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
 
     processor = VALUE_DISPLAY_PROCESSORS.get(prop_def.process, None)
     if processor:
-        val = processor(val, data)
-
+        try:
+            val = processor(val, data)
+        except Exception:
+            # ignore exceptions from date parsing
+            pass
     if isinstance(val, datetime.datetime):
         if not prop_def.is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
@@ -185,9 +193,7 @@ def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
         val = _to_html(val, timeago=prop_def.timeago)
 
     if prop_def.format:
-        val = prop_def.format.format(val)
-
-    val = mark_safe(val)
+        val = format_html(prop_def.format, val)
 
     return {
         "expr": expr_name,
@@ -262,7 +268,7 @@ def get_tables_as_columns(*args, **kwargs):
     return sections
 
 
-def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, parse_dates=False):
+def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, date_fields=None):
     """
     Get a default single table layout definition for `keys` split across
     `num_columns` columns.
@@ -272,10 +278,13 @@ def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None
 
     """
     phonetime_fields = phonetime_fields or set()
-    process = "date" if parse_dates else None
+    date_fields = date_fields or set()
     layout = chunked(
         [
-            DisplayConfig(expr=prop, is_phone_time=prop in phonetime_fields, has_history=True, process=process)
+            DisplayConfig(
+                expr=prop, is_phone_time=prop in phonetime_fields, has_history=True,
+                process="date" if prop in date_fields else None
+            )
             for prop in keys
         ],
         num_columns

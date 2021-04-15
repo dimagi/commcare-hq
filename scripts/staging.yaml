@@ -61,22 +61,41 @@ branches:
   - sr/es-alias # Sravan Nov 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - sr/ush-ff+sr/ucr-cs+nh/reminders  # Sravan April 12
   - nh/reminders  # Norman Jan 26
-  - fr/ethiopian-date-widget-webapps                            # Farid Jan 29
   - smh/bulk-upload-web-users # Steph Feb 22
-  - sr/geocoder  # Sravan Feb 25
-  - mk/fhir/data-dictionary # MK Feb 26
-  - mk/fhir/api-2 # MK Feb 26
-  - mk/fhir/data-dictionary-upload-2 # MK Mar 9
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-  #- ap/translation-update # Amit March 16
-  - ap/escape-html-underscore # Amit March 16
   - fr/consumer-user             # Farid March 17
-  - bmb/upgrade-js-xpath  # Biyeun March 18
-  - feature/USH-606-conditional-alert-modal # Jenny March 18
-  - kev/repeat-translation-inner-group # Kevin Mar 22
-  - mjr/xss_accounting # Matt Mar 24
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - bmb/ff-skip-fixtures-on-restore  # Biyeun March 25
+  - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
+  # - sk/get_display_data # Simon March 30
+  - sk/consolidate-doc-lookup # Simon March 30
+  - sr/ucr-cs  # Sravan March 31
+  - bmb/sso-token-encryption  # Biyeun Apr 1
+  - sr/pagedSessions  # Sravan April 2
+  - ap/escape-html-in-app-manager # Amit Apr 2
+  - ap/escape-html-in-cloudcare # Amit Apr 2
+  - ap/escape-html-in-hqwebapp # Amit Apr 2
+  - ap/escape-html-in-multimedia # Amit Apr 2
+  - ap/escape-html-in-reports # Amit Apr 2
+  - ap/escape-html-in-users # Amit Apr 2
+  - ap/escape-templates-in-datainterfaces # Amit Apr 2
+  - ap/escape-html-in-remaining-apps # Amit Apr 5
+  - sr/jumptoErrors # Sravan April 6
+  - mk/form-mm-exports-filters # MK April 8
+  - fr/smart-oauth-views # Farid April 7
+  - rp/fix-2fa-hyperlink # Rynhard April 8
+  - rp/fix-broken-link-2.0 # Rynhard April 8
+  - kev/markdown-help-modal # Kevin Apr 9
+  - ce/multidropdown-webapps
+  - gh/remove-filters-from-saved-ucrs # Graham Apr 9
+  - sr/ush-ff  # Sravan April 12
+  - rp/remove_superuser_impersonation #Rynhard April 12
+  - ap/update-django-to-2-2-20  # Amit April 12
+  - jls/case-search-case-list-show-related-properties # Jenny April 12
+  - gh/fix-email-large-ucrs # Graham April 14
+  - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
+  - ce/stale-repeaters  # Danny/Cal Apr 14
+
 submodules: {}
