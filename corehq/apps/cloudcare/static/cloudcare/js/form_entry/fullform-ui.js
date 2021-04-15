@@ -602,8 +602,16 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.navigateTo = function () {
-            if (self.parent.collapsible !== undefined && !self.parent.showChildren()) {
-                self.parent.toggleChildren();
+            // toggle nested collapsible Groups
+            var hasParent = self.parent !== undefined;
+            var currentNode = self;
+            while (hasParent) {
+                hasParent = currentNode.parent !== undefined;
+                var parent = currentNode.parent;
+                if (parent !== undefined && parent.collapsible !== undefined && !parent.showChildren()) {
+                    parent.toggleChildren();
+                }
+                currentNode = parent;
             }
             var el = $("label[for='" + self.entry.entryId + "']");
             $('html, body').animate({
