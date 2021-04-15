@@ -34,7 +34,7 @@ class SessionEndpointTests(TestCase):
       </push>
     </stack>
   </endpoint>"""
-        self.form.session_endpoint_ids = ['patient_id']
+        self.form.session_endpoint_id = 'patient_id'
         files = self.factory.app.create_all_files()
         self.assertIn(endpoint_xml, files['suite.xml'])
 
@@ -50,6 +50,6 @@ class SessionEndpointTests(TestCase):
       </push>
     </stack>
   </endpoint>"""
-        self.module.session_endpoint_ids = ['patient_id']
+        self.module.session_endpoint_id = 'patient_id'
         files = self.factory.app.create_all_files()
         self.assertIn(endpoint_xml, files['suite.xml'])
