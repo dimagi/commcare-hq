@@ -206,7 +206,7 @@ class HQRequestFilter(Filter):
             record.username = request.couch_user.username if getattr(request, 'couch_user', None) else ''
             record.hq_url = request.path
         else:
-            record.domain = record.username = record.hq_url = None
+            record.domain = record.username = record.hq_url = '-'
         return True
 
 
@@ -222,7 +222,7 @@ class CeleryTaskFilter(Filter):
             record.task_id = task.request.id
             record.task_name = task.name
         else:
-            record.task_id = record.task_name = None
+            record.task_id = record.task_name = '-'
         return True
 
 
