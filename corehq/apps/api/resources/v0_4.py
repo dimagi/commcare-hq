@@ -375,7 +375,7 @@ class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecific
 
     def obj_get_list(self, bundle, domain, **kwargs):
         return sorted(get_apps_in_domain(domain, include_remote=False),
-                      key=lambda app: getattr(app, 'date_created') or datetime.min)
+                      key=lambda app: app.date_created or datetime.min)
 
     def obj_get(self, bundle, **kwargs):
         # support returning linked applications upon receiving an application request
