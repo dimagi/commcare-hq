@@ -73,7 +73,7 @@ from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
     WebUserInvitationForm,
 )
-from corehq.apps.registration.utils import activate_new_user
+from corehq.apps.registration.utils import activate_new_user_via_reg_form
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
@@ -987,8 +987,12 @@ class UserInvitationView(object):
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
-                    user = activate_new_user(form, created_by=invited_by_user,
-                                             created_via=USER_CHANGE_VIA_INVITATION, domain=invitation.domain)
+                    user = activate_new_user_via_reg_form(
+                        form,
+                        created_by=invited_by_user,
+                        created_via=USER_CHANGE_VIA_INVITATION,
+                        domain=invitation.domain
+                    )
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
