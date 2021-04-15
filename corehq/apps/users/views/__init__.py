@@ -522,7 +522,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
         if show_es_issue:
             messages.error(
                 self.request,
-                mark_safe(_(
+                mark_safe(_(  # nosec: no user input
                     "We might be experiencing issues fetching the entire list "
                     "of user roles right now. This issue is likely temporary and "
                     "nothing to worry about, but if you keep seeing this for "

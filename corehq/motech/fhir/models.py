@@ -34,10 +34,6 @@ class FHIRResourceType(models.Model):
     # For a list of resource types, see http://hl7.org/fhir/resourcelist.html
     name = models.CharField(max_length=255, validators=[validate_supported_type])
 
-    # `template` offers a way to define a FHIR resource if it cannot be
-    # built using only mapped case properties.
-    template = JSONField(default=dict, null=True, blank=True)
-
     class Meta:
         unique_together = ('case_type', 'fhir_version')
 
@@ -217,11 +213,10 @@ def _build_fhir_resource(
     if not fhir_resource and skip_empty:
         return None
 
-    fhir_resource = deepmerge({
-        **resource_type.template,
+    fhir_resource.update({
         'id': info.case_id,
         'resourceType': resource_type.name,  # Always required
-    }, fhir_resource)
+    })
     resource_type.validate_resource(fhir_resource)
     return fhir_resource
 
@@ -303,37 +298,3 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
         )
     except FHIRResourceType.DoesNotExist:
         return None
-
-
-def deepmerge(a, b):
-    """
-    Merges ``b`` into ``a``.
-
-    >>> foo = {'one': {'two': 2, 'three': 42}}
-    >>> bar = {'one': {'three': 3}}
-    >>> {**foo, **bar}
-    {'one': {'three': 3}}
-    >>> deepmerge(foo, bar)
-    {'one': {'two': 2, 'three': 3}}
-
-    Dicts and lists are recursed. Other data types are replaced.
-
-    >>> foo = {'one': [{'two': 2}, 42]}
-    >>> bar = {'one': [{'three': 3}]}
-    >>> deepmerge(foo, bar)
-    {'one': [{'two': 2, 'three': 3}, 42]}
-
-    """
-    if isinstance(a, dict) and isinstance(b, dict):
-        for key in b:
-            if key in a:
-                a[key] = deepmerge(a[key], b[key])
-            else:
-                a[key] = b[key]
-        return a
-    elif isinstance(a, list) and isinstance(b, list):
-        return list(deepmerge(aa, bb) for aa, bb in zip_longest(a, b))
-    elif b is None:
-        return a
-    else:
-        return b

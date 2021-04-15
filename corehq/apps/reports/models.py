@@ -3,8 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import html
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -110,7 +109,6 @@ class TempCommCareUser(CommCareUser):
             _id=uuid,
             date_joined=datetime.utcnow(),
             is_active=False,
-            metadata={},
             first_name='',
             last_name='',
             filter_flag=filter_flag
@@ -126,11 +124,11 @@ class TempCommCareUser(CommCareUser):
     @property
     def username_in_report(self):
         if self.filter_flag == HQUserType.UNKNOWN:
-            final = mark_safe('%s <strong>[unregistered]</strong>' % html.escape(self.username))
+            final = format_html('{} <strong>[unregistered]</strong>', self.username)
         elif self.filter_flag == HQUserType.DEMO_USER:
-            final = mark_safe('<strong>%s</strong>' % html.escape(self.username))
+            final = format_html('<strong>{}</strong>', self.username)
         else:
-            final = mark_safe('<strong>%s</strong> (%s)' % tuple(map(html.escape, [self.username, self.user_id])))
+            final = format_html('<strong>{}</strong> ({})', self.username, self.user_id)
         return final
 
     @property

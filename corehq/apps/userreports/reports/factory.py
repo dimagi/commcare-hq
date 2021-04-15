@@ -10,7 +10,6 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.specs import (
-    AgeInMonthsBucketsColumn,
     AggregateDateColumn,
     ArrayAggLastValueReportColumn,
     ExpandedColumn,
@@ -86,7 +85,6 @@ from custom.nutrition_project.ucr.sum_when_templates import (
 
 class ReportColumnFactory(object):
     class_map = {
-        'age_in_months_buckets': AgeInMonthsBucketsColumn,
         'aggregate_date': AggregateDateColumn,
         'expanded': ExpandedColumn,
         'expression': ExpressionColumn,

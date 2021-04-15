@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -154,7 +153,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
             if 'case' in context and context['case'].name:
-                return mark_safe(context['case'].name)
+                return context['case'].name
             else:
                 return _('View Case')
 

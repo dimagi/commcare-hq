@@ -4,7 +4,9 @@ import re
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.utils import html, safestring
+from django.utils import html
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -203,15 +205,14 @@ def can_add_extra_mobile_workers(request):
     return has_privilege(request, privileges.ALLOW_EXCESS_USERS)
 
 
-def user_display_string(username, first_name="", last_name=""):
-    full_name = "{} {}".format(first_name or '', last_name or '').strip()
+def user_display_string(username, first_name='', last_name=''):
+    full_name = '{} {}'.format(first_name or '', last_name or '').strip()
 
-    def parts():
-        yield '%s' % html.escape(raw_username(username))
-        if full_name:
-            yield ' "%s"' % html.escape(full_name)
+    result = mark_safe(html.escape(raw_username(username)))  # nosec: escaped
+    if full_name:
+        result = format_html('{} "{}"', result, full_name)
 
-    return safestring.mark_safe(''.join(parts()))
+    return result
 
 
 def user_location_data(location_ids):

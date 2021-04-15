@@ -39,8 +39,6 @@
   {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
   {% initial_page_data 'media_refs' refs %}
   {% initial_page_data 'media_info' media_info %}
-  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% initial_page_data 'uploaders' uploaders_js %}
   {% registerurl 'app_multimedia_ajax' domain app.get_id %}
   {% registerurl "hqmedia_remove_logo" domain app.id %}
