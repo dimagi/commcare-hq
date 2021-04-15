@@ -83,7 +83,6 @@ branches:
   - ce/multidropdown-webapps
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
   - sr/ush-ff  # Sravan April 12
-  - rp/remove_superuser_impersonation #Rynhard April 12
   - ap/update-django-to-2-2-20  # Amit April 12
   - jls/case-search-case-list-show-related-properties # Jenny April 12
   - gh/fix-email-large-ucrs # Graham April 14
