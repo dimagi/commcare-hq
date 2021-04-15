@@ -52,14 +52,38 @@ _soft_assert_registration_issues = soft_assert(
 
 
 def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
-    username = form.cleaned_data['email']
-    password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
+    new_user = activate_new_user(
+        username=form.cleaned_data['email'],
+        password=form.cleaned_data['password'],
+        created_by=created_by,
+        created_via=created_via,
+        first_name=full_name[0],
+        last_name=full_name[1],
+        is_domain_admin=is_domain_admin,
+        domain=domain,
+        ip=ip,
+        atypical_user=form.cleaned_data.get('atypical_user', False),
+    )
+    return new_user
+
+
+def activate_new_user(
+    username, password, created_by, created_via, first_name=None, last_name=None,
+    is_domain_admin=True, domain=None, ip=None, atypical_user=False
+):
     now = datetime.utcnow()
 
-    new_user = WebUser.create(domain, username, password, created_by, created_via, is_admin=is_domain_admin)
-    new_user.first_name = full_name[0]
-    new_user.last_name = full_name[1]
+    new_user = WebUser.create(
+        domain,
+        username,
+        password,
+        created_by,
+        created_via,
+        is_admin=is_domain_admin
+    )
+    new_user.first_name = first_name
+    new_user.last_name = last_name
     new_user.email = username
     new_user.subscribed_to_commcare_users = False
     new_user.eula.signed = True
@@ -74,7 +98,7 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
     new_user.last_login = now
     new_user.date_joined = now
     new_user.last_password_set = now
-    new_user.atypical_user = form.cleaned_data.get('atypical_user', False)
+    new_user.atypical_user = atypical_user
     new_user.save()
 
     return new_user
