@@ -1176,7 +1176,7 @@ def quick_find(request):
     elif redirect and request.couch_user.is_superuser:
         return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), result.doc_id))
     else:
-        return JsonResponse(doc_info)
+        return JsonResponse(doc_info.to_json())
 
 
 def osdd(request, template='osdd.xml'):
