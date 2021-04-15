@@ -117,6 +117,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
+from corehq.util.couch import stale_ok
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
@@ -132,6 +133,7 @@ from .const import (
     RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
+    force_update_repeaters_views,
     get_cancelled_repeat_record_count,
     get_failure_repeat_record_count,
     get_pending_repeat_record_count,
@@ -377,15 +379,23 @@ class Repeater(QuickCachedDocumentMixin, Document):
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
             cls = self.__class__
+        # force views to catch up with the change before invalidating the cache
+        # for consistency of stale_query
+        force_update_repeaters_views()
         # clear cls.by_domain (i.e. filtered by doc type)
         Repeater.by_domain.clear(cls, self.domain)
+        Repeater.by_domain.clear(cls, self.domain, stale_query=True)
         # clear Repeater.by_domain (i.e. not filtered by doc type)
         Repeater.by_domain.clear(Repeater, self.domain)
+        Repeater.by_domain.clear(Repeater, self.domain, stale_query=True)
 
     @classmethod
-    @quickcache(['cls.__name__', 'domain'], timeout=60 * 60, memoize_timeout=10)
-    def by_domain(cls, domain):
+    @quickcache(['cls.__name__', 'domain', 'stale_query'], timeout=60 * 60, memoize_timeout=10)
+    def by_domain(cls, domain, stale_query=False):
         key = [domain]
+        stale_kwargs = {}
+        if stale_query:
+            stale_kwargs['stale'] = stale_ok()
         if cls.__name__ in get_all_repeater_types():
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
@@ -403,7 +413,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
             endkey=key + [{}],
             include_docs=True,
             reduce=False,
-            wrap_doc=False
+            wrap_doc=False,
+            **stale_kwargs
         )
 
         return [cls.wrap(repeater_doc['doc']) for repeater_doc in raw_docs
