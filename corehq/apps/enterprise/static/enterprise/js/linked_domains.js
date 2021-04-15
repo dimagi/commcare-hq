@@ -134,11 +134,11 @@ hqDefine("enterprise/js/linked_domains", [
     };
 
     $(function () {
-        var view_data = initialPageData.get('view_data');
+        var viewData = initialPageData.get('view_data');
         var csrfToken = $("#csrfTokenContainer").val();
         setRMI(initialPageData.reverse('linked_domains_rmi'), csrfToken);
 
-        var model = LinkedDomainsViewModel(view_data);
+        var model = LinkedDomainsViewModel(viewData);
         $("#domain_links").koApplyBindings(model);
     });
 });
