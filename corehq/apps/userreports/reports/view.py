@@ -412,9 +412,15 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def sanitize_page(cls, page):
         result = []
         for row in page:
-            result.append({k: escape(v) for (k, v) in row.items()})
+            result.append({k: cls._sanitize_column(v) for (k, v) in row.items()})
 
         return result
+
+    def _sanitize_column(col):
+        if isinstance(col, str):
+            return escape(col)
+
+        return col
 
     def get_ajax(self, params):
         sort_column = params.get('iSortCol_0')
