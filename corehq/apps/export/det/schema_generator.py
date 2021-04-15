@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.models import FormExportInstance, CaseExportInstance
+from corehq.apps.export.models import FormExportInstance, CaseExportInstance, CaseIndexExportColumn
 from corehq.apps.userreports import datatypes
 
 PROPERTIES_PREFIX = 'properties.'
@@ -65,16 +65,11 @@ class CaseDETSchemaHelper(DefaultDETSchemaHelper):
     def __init__(self, dd_property_types):
         self.dd_property_types = dd_property_types
 
-    @staticmethod
-    def transform_path(input_path):
-
-        # todo: this could be made smarter in the future for multi-parentage use cases
-        def _is_index_reference(path):
-            return path.startswith("indices.") and path.count(".") == 1
-
-        if _is_index_reference(input_path):
+    def get_path(self, input_column):
+        if isinstance(input_column, CaseIndexExportColumn):
             return PARENT_INDEX_PATH  # as could this
 
+        input_path = input_column.item.readable_path
         return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
 
     def get_map_via(self, export_item):
