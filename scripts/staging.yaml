@@ -69,7 +69,7 @@ branches:
   - fr/consumer-user             # Farid March 17
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
   - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
-  # - sk/get_display_data # Simon March 30
+   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
   - bmb/sso-token-encryption  # Biyeun Apr 1
