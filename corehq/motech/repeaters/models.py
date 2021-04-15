@@ -352,6 +352,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
             next_check=now,
             payload_id=payload.get_id
         )
+        metrics_counter('commcare.repeaters.new_record', tags={
+            'domain': self.domain,
+            'doc_type': self.doc_type
+        })
         repeat_record.save()
         repeat_record.attempt_forward_now()
         return repeat_record
