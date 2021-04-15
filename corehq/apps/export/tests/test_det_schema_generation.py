@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 from io import BytesIO
@@ -11,7 +10,6 @@ from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_form_export_instance,
     generate_from_case_export_instance,
-    CaseDETSchemaHelper,
     FormDETSchemaHelper)
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
