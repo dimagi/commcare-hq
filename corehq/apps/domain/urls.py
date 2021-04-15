@@ -71,6 +71,7 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.enterprise.views import LinkedDomainsView
 from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -181,6 +182,7 @@ domain_settings = [
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
+    url(r'^linked_domains/$', LinkedDomainsView.as_view(), name=LinkedDomainsView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),

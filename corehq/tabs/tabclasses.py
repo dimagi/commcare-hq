@@ -1688,6 +1688,10 @@ class ProjectSettingsTab(UITab):
         if feature_flag_items and user_is_admin and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
+        if toggles.ERM_DEVELOPMENT.enabled(self.domain) and user_is_admin:
+            release_management_items = _get_release_management_items(self.domain)
+            items.append((_('Enterprise Release Management'), release_management_items))
+
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
@@ -1928,6 +1932,19 @@ def _get_feature_flag_items(domain):
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
     return feature_flag_items
+
+
+def _get_release_management_items(domain):
+    release_management_items = []
+    release_management_items.append({
+        'title': _('Linked Project Spaces'),
+        'url': reverse('linked_domains', args=[domain])
+    })
+    release_management_items.append({
+        'title': _('Linked Project Space History'),
+        'url': reverse('domain_report_dispatcher', args=[domain, 'linked_domains_history'])
+    })
+    return release_management_items
 
 
 class MySettingsTab(UITab):
