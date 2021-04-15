@@ -7,9 +7,6 @@ from importlib import import_module
 
 from django.conf import settings
 from django.http import Http404
-from django.utils import html
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 import pytz
