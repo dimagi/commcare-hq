@@ -177,6 +177,8 @@ def edited_classes(context, label_class, field_class):
 class B3MultiField(LayoutObject):
     template = 'hqwebapp/crispy/multi_field.html'
 
+    # Because fields will be passed as-is to the HTML,
+    # care should be taken to ensure they escape user input appropriately
     def __init__(self, field_label, *fields, **kwargs):
         self.fields = list(fields)
         self.label_html = field_label
@@ -190,17 +192,19 @@ class B3MultiField(LayoutObject):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = ''
 
         errors = self._get_errors(form, self.fields)
         if len(errors) > 0:
             self.css_class += " has-error"
 
+        html = ''
         for field in self.fields:
             html += render_field(field, form, form_style, context, template_pack=template_pack)
+        html = mark_safe(html)  # nosec: this is joining together fields which themselves are safe
+
         context.update({
-            'label_html': mark_safe(self.label_html),
-            'field_html': mark_safe(html),
+            'label_html': self.label_html,
+            'field_html': html,
             'multifield': self,
             'error_list': errors,
             'help_bubble_text': self.help_bubble_text,
