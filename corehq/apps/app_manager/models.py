@@ -1007,7 +1007,7 @@ class FormBase(DocumentSchema):
     case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
-    session_endpoint_ids = StringListProperty()  # See toggles.SESSION_ENDPOINTS
+    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
 
     @classmethod
     def wrap(cls, data):
@@ -2198,7 +2198,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
-    session_endpoint_ids = StringListProperty()  # See toggles.SESSION_ENDPOINTS
+    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
 
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
