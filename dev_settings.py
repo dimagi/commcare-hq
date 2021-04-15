@@ -6,6 +6,7 @@ Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
 import os
+import settingshelper
 
 LOCAL_APPS = (
     'django_extensions',
@@ -121,3 +122,15 @@ FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 
 # use console email by default
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+if settingshelper.is_testing():
+    S3_BLOB_DB_SETTINGS = {
+        "url": "http://localhost:9980",
+        "access_key": "admin-key",
+        "secret_key": "admin-secret",
+        "config": {
+            "connect_timeout": 3,
+            "read_timeout": 5,
+            "signature_version": "s3"
+        },
+    }
