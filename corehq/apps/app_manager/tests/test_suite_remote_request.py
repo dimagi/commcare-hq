@@ -217,7 +217,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
 
-    @flag_enabled('CASE_CLAIM_AUTOLAUNCH')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_case_search_auto_launch(self, *args):
         self.module.search_config.auto_launch = True
         suite = self.app.create_suite()
