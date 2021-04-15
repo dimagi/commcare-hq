@@ -174,9 +174,6 @@ def get_related_case_results(domain, cases, paths):
         parts = path.split("/")
         for index, identifier in enumerate(parts):
             fragment = "/".join(parts[:index + 1])
-            if not fragment:
-                continue
-
             if fragment in results_cache:
                 current_cases = results_cache[fragment]
             else:
