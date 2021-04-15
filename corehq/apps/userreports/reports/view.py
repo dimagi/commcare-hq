@@ -416,7 +416,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
         return result
 
-    def _sanitize_column(col):
+    @classmethod
+    def _sanitize_column(cls, col):
         if isinstance(col, str):
             return escape(col)
 
@@ -571,7 +572,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def sanitize_export_table(cls, table):
         result = []
         for row in table:
-            result.append([escape(x) for x in row])
+            result.append([cls._sanitize_column(x) for x in row])
 
         return result
 
