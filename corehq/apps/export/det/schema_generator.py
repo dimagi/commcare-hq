@@ -41,6 +41,9 @@ class DefaultDETSchemaHelper(object):
     """
     Helper to do datatype transformations, etc. during schema generation
     """
+    def get_path(self, input_column):
+        return self.transform_path(input_column.item.readable_path)
+
     @staticmethod
     def transform_path(input_path):
         return input_path
@@ -221,7 +224,7 @@ def _add_rows_for_table(input_table, output_table, helper=None):
 
 def _get_det_row_for_export_column(column, helper):
     return DETRow(
-        source_field=helper.transform_path(column.item.readable_path),
+        source_field=helper.get_path(column),
         field=column.label,
         map_via=helper.get_map_via(column.item)
     )
