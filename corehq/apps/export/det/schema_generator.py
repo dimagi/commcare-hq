@@ -27,7 +27,6 @@ CASE_API_PATH_MAP = {
     'type': 'properties.case_type',
     'user_id': 'user_id',
 }
-PARENT_INDEX_PATH = 'indices.parent.case_id'
 
 FORM_API_PATH_MAP = {
     'xmlns': 'form.@xmlns',
@@ -67,7 +66,11 @@ class CaseDETSchemaHelper(DefaultDETSchemaHelper):
 
     def get_path(self, input_column):
         if isinstance(input_column, CaseIndexExportColumn):
-            return PARENT_INDEX_PATH  # as could this
+            # this is an obscure but correct reference to the index reference ID
+            # typically "parent", occasionally "host", rarely miscellaneous other things...
+            # https://github.com/dimagi/commcare-hq/pull/29530/files#r613936070
+            index_ref_id = input_column.item.label.split('.')[0]
+            return f'indices.{index_ref_id}.case_id'
 
         input_path = input_column.item.readable_path
         return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
