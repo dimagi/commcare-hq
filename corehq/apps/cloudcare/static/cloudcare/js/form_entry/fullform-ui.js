@@ -617,6 +617,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });
+            el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
         };
     }
 
