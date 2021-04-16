@@ -26,6 +26,7 @@ class TestRelatedCases(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestRelatedCases, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
         cls.factory = CaseFactory(domain=cls.domain)
 
         cls.greatgranddad = cls._case_structure('Ymir', None, 'granddad')
@@ -39,6 +40,14 @@ class TestRelatedCases(TestCase):
         cls.other_dad = cls._case_structure('Thor', cls.other_granddad, 'dad')
 
         cls.factory.create_or_update_cases([cls.grandkid, cls.kid2, cls.other_dad])
+
+        cls.web_user = WebUser.create(cls.domain, 'test-user', 'passmein', created_by=None, created_via=None)
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.domain_obj.delete()
+        super().tearDownClass()
 
     @staticmethod
     def _case_structure(name, parent, case_type):
@@ -75,17 +84,10 @@ class TestRelatedCases(TestCase):
     @flag_enabled('ADD_LIMITED_FIXTURES_TO_CASE_RESTORE')
     def test_locations_in_restore(self):
         case_id = self.dad.case_id
-
-        domain_obj = create_domain(self.domain)
-        user = WebUser.create(self.domain, 'test-user', 'passmein', created_by=None, created_via=None)
-
-        self.addCleanup(delete_all_users)
-        self.addCleanup(domain_obj.delete)
-
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
 
-        response = self._generate_restore(case_id, user)
+        response = self._generate_restore(case_id)
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
@@ -95,8 +97,8 @@ class TestRelatedCases(TestCase):
             locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
         self.assertIn(locations_content, response_content)
 
-    def _generate_restore(self, case_id, user):
-        self.client.login(username=user.username, password=user.password)
+    def _generate_restore(self, case_id):
+        self.client.login(username=self.web_user.username, password=self.web_user.password)
         url = reverse("migration_restore", args=[self.domain, case_id])
         hmac_header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, url)
         return self.client.get(url, HTTP_X_MAC_DIGEST=hmac_header_value)
