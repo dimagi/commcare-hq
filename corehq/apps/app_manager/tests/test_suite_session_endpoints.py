@@ -25,6 +25,13 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         builder.new_question(name='name', label='Name')
         self.form.source = builder.tostring(pretty_print=True).decode('utf-8')
 
+    def test_empty_string_yields_no_endpoint(self):
+        self.form.session_endpoint_id = ''
+        self.assertXmlDoesNotHaveXpath(
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
     def test_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'patient_id'
         self.assertXmlPartialEqual(
