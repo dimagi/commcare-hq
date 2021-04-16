@@ -309,8 +309,8 @@ class RetireUserTestCase(TestCase):
         form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
         self.assertEqual(0, len(form_ids))
 
-        user_case = self.commcare_user.get_usercase()
-        self.assertEqual(2, len(user_case.xform_ids))
+        usercase = self.commcare_user.get_usercase()
+        self.assertEqual(2, len(usercase.xform_ids))
 
         self.commcare_user.retire(deleted_by=None)
 
