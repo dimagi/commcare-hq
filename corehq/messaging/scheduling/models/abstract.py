@@ -49,6 +49,7 @@ class Schedule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
     deleted = models.BooleanField(default=False)
+    paused = models.BooleanField(default=False)
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients
