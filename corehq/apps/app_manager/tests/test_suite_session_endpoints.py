@@ -1,17 +1,23 @@
-from unittest.mock import patch
+from django.test import SimpleTestCase
 
-from django.test import TestCase
-
-from corehq import toggles
-from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.util.test_utils import flag_enabled
+
+from .app_factory import AppFactory
+from .util import (
+    TestXmlMixin,
+    patch_get_xform_resource_overrides,
+    patch_validate_xform,
+)
 
 
-class SessionEndpointTests(TestCase):
+@patch_validate_xform()
+@patch_get_xform_resource_overrides()
+@flag_enabled('SESSION_ENDPOINTS')
+class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         self.domain = 'test-domain'
-        toggles.SESSION_ENDPOINTS.set(self.domain, True, toggles.NAMESPACE_DOMAIN)
         self.factory = AppFactory(build_version='2.51.0', domain=self.domain)
         self.module, self.form = self.factory.new_basic_module('basic', 'patient')
 
@@ -19,37 +25,42 @@ class SessionEndpointTests(TestCase):
         builder.new_question(name='name', label='Name')
         self.form.source = builder.tostring(pretty_print=True).decode('utf-8')
 
-    def tearDown(self):
-        toggles.SESSION_ENDPOINTS.set(self.domain, False, toggles.NAMESPACE_DOMAIN)
-
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_form_session_endpoint_id(self, mock):
-        endpoint_xml = b"""
-  <endpoint>
-    <argument id="patient_id"/>
-    <stack>
-      <push>
-        <command value="'m0-f0'"/>
-        <datum id="patient_id" value="instance('commcaresession')/session/data/patient_id"/>
-      </push>
-    </stack>
-  </endpoint>"""
+    def test_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'patient_id'
-        files = self.factory.app.create_all_files()
-        self.assertIn(endpoint_xml, files['suite.xml'])
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint>
+                    <argument id="patient_id"/>
+                    <stack>
+                    <push>
+                        <command value="'m0-f0'"/>
+                        <datum id="patient_id" value="instance('commcaresession')/session/data/patient_id"/>
+                    </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_case_list_session_endpoint_id(self, mock):
-        endpoint_xml = b"""
-  <endpoint>
-    <argument id="patient_id"/>
-    <stack>
-      <push>
-        <command value="'m0-case-list'"/>
-        <datum id="patient_id" value="instance('commcaresession')/session/data/patient_id"/>
-      </push>
-    </stack>
-  </endpoint>"""
+    def test_case_list_session_endpoint_id(self):
         self.module.session_endpoint_id = 'patient_id'
-        files = self.factory.app.create_all_files()
-        self.assertIn(endpoint_xml, files['suite.xml'])
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint>
+                    <argument id="patient_id"/>
+                    <stack>
+                    <push>
+                        <command value="'m0-case-list'"/>
+                        <datum id="patient_id" value="instance('commcaresession')/session/data/patient_id"/>
+                    </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
