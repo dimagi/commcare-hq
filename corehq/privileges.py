@@ -48,7 +48,7 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 
 LOCATIONS = 'locations'
 
-USER_CASE = 'user_case'
+USERCASE = 'user_case'
 DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto update cases, etc.
 
 TEMPLATED_INTENTS = 'templated_intents'
@@ -106,7 +106,7 @@ MAX_PRIVILEGES = [
     REPORT_BUILDER_5,
     REPORT_BUILDER_15,
     REPORT_BUILDER_30,
-    USER_CASE,
+    USERCASE,
     DATA_CLEANUP,
     TEMPLATED_INTENTS,
     CUSTOM_INTENTS,

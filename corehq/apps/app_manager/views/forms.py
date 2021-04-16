@@ -710,7 +710,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         form.get_unique_id()
         app.save()
 
-    allow_usercase = domain_has_privilege(request.domain, privileges.USER_CASE)
+    allow_usercase = domain_has_privilege(request.domain, privileges.USERCASE)
     valid_index_names = list(DEFAULT_CASE_INDEX_IDENTIFIERS.values())
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash

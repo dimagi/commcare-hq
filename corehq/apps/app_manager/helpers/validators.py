@@ -284,7 +284,7 @@ class ApplicationValidator(ApplicationBaseValidator):
             return any(m.uses_usercase() for m in app.get_modules())
 
         errors = []
-        if app_uses_usercase(self.app) and not domain_has_privilege(self.domain, privileges.USER_CASE):
+        if app_uses_usercase(self.app) and not domain_has_privilege(self.domain, privileges.USERCASE):
             errors.append({
                 'type': 'subscription',
                 'message': _('Your application is using User Properties and your current subscription does not '
