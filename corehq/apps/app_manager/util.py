@@ -33,7 +33,7 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError,
     XFormException,
 )
-from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.tasks import create_usercases
 from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
@@ -369,7 +369,7 @@ def enable_usercase(domain_name):
         if not domain_obj.usercase_enabled:
             domain_obj.usercase_enabled = True
             domain_obj.save()
-            create_user_cases.delay(domain_name)
+            create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):
