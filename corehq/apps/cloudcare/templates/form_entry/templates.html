@@ -148,10 +148,9 @@
           </div>
         </form>
       </div>
-      <div id="scroll-bottom" class="btn btn-default" style="position: fixed; bottom: 35px" title="Scroll to bottom" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
-        <a title="Jump to Errored Questions">
-          ▼
-        </a>
+      <div id="scroll-bottom" class="btn btn-primary" style="position: fixed; bottom: 35px" title="Scroll to bottom" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
+        <i class='fa fa-location-arrow'></i>
+            {% trans "Next Required/Errored Question" %}
       </div>
     </div>
   </div>

@@ -303,7 +303,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.jumpToErrors = function() {
             var erroredQuestions = self.erroredQuestions();
             for (var i = erroredQuestions.length - 1; i >= 0; i--) {
-                if (!self.currentJumpPoint){
+                if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)){
                     self.currentJumpPoint = erroredQuestions[i];
                     break;
                 }
@@ -314,10 +314,6 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
                     else {
                         self.currentJumpPoint = erroredQuestions[i + 1];
                     }
-                    break;
-                }
-                else {
-                    self.currentJumpPoint = erroredQuestions[0];
                     break;
                 }
             }
