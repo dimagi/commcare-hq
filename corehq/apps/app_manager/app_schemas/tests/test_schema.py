@@ -252,7 +252,7 @@ class SchemaTest(SimpleTestCase):
                             subsets["parent"]["name"]))
             self.assertEqual(subsets["parent"]["structure"], {"case_name": {"description": ""}})
 
-    def test_get_session_schema_with_user_case(self):
+    def test_get_session_schema_with_usercase(self):
         module, form = self.factory.new_basic_module('village', 'village')
         with patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use') as mock1, \
                 patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use') as mock2:
@@ -275,7 +275,7 @@ class SchemaTest(SimpleTestCase):
                 },
             })
 
-    def test_get_casedb_schema_with_user_case(self):
+    def test_get_casedb_schema_with_usercase(self):
         module, form = self.factory.new_basic_module('village', 'village')
         self.factory.form_uses_usercase(form, update={
             'name': '/data/username',

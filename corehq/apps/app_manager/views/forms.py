@@ -76,7 +76,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 )
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_SUBSTRING_MATCHES,
+    USERCASE_XPATH_SUBSTRING_MATCHES,
     actions_use_usercase,
     advanced_actions_use_usercase,
     enable_usercase,
@@ -710,7 +710,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         form.get_unique_id()
         app.save()
 
-    allow_usercase = domain_has_privilege(request.domain, privileges.USER_CASE)
+    allow_usercase = domain_has_privilege(request.domain, privileges.USERCASE)
     valid_index_names = list(DEFAULT_CASE_INDEX_IDENTIFIERS.values())
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
@@ -754,7 +754,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
             'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
-            'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
+            'usercase_substring': USERCASE_XPATH_SUBSTRING_MATCHES,
         },
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}

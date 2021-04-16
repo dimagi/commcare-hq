@@ -33,7 +33,7 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError,
     XFormException,
 )
-from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.tasks import create_usercases
 from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
@@ -53,7 +53,7 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#host",
 ]
 
-USER_CASE_XPATH_SUBSTRING_MATCHES = [
+USERCASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
     UserCaseXPath().case(),
 ]
@@ -111,9 +111,9 @@ def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None
 def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
-    # case, see xpath_references_user_case()
+    # case, see xpath_references_usercase()
     # Assumes xpath has already been dot interpolated as needed.
-    for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
+    for substring in USERCASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
 
     return _check_xpath_for_matches(
@@ -122,11 +122,11 @@ def xpath_references_case(xpath):
     )
 
 
-def xpath_references_user_case(xpath):
+def xpath_references_usercase(xpath):
     # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,
-        substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
+        substring_matches=USERCASE_XPATH_SUBSTRING_MATCHES,
     )
 
 
@@ -369,7 +369,7 @@ def enable_usercase(domain_name):
         if not domain_obj.usercase_enabled:
             domain_obj.usercase_enabled = True
             domain_obj.save()
-            create_user_cases.delay(domain_name)
+            create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):

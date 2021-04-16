@@ -231,7 +231,7 @@ class SMSSurveyContent(Content):
         phone_entry_or_number = (
             phone_entry or
             self.get_two_way_entry_or_phone_number(
-                recipient, try_user_case=False, domain_for_toggles=logged_event.domain)
+                recipient, try_usercase=False, domain_for_toggles=logged_event.domain)
         )
 
         if phone_entry_or_number is None:
