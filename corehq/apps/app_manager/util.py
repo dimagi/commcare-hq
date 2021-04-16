@@ -111,7 +111,7 @@ def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None
 def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
-    # case, see xpath_references_user_case()
+    # case, see xpath_references_usercase()
     # Assumes xpath has already been dot interpolated as needed.
     for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
@@ -122,7 +122,7 @@ def xpath_references_case(xpath):
     )
 
 
-def xpath_references_user_case(xpath):
+def xpath_references_usercase(xpath):
     # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,

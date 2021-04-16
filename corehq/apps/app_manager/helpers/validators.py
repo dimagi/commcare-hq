@@ -42,7 +42,7 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference,
     split_path,
     xpath_references_case,
-    xpath_references_user_case,
+    xpath_references_usercase,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
@@ -967,7 +967,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
             form_filter_references_case = (
                 xpath_references_case(interpolated_form_filter) or
-                xpath_references_user_case(interpolated_form_filter)
+                xpath_references_usercase(interpolated_form_filter)
             )
 
             if form_filter_references_case:
