@@ -14,6 +14,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.ext.couchdbkit import *
 
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.models import Domain
