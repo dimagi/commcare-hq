@@ -3,7 +3,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import enable_usercase
-from corehq.apps.callcenter.sync_user_case import sync_usercases
+from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
 from corehq.apps.data_interfaces.tests.util import create_empty_rule

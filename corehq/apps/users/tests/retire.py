@@ -291,7 +291,7 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_all_case_forms_deleted(self):
-        from corehq.apps.callcenter.sync_user_case import sync_usercase
+        from corehq.apps.callcenter.sync_usercase import sync_usercase
         sync_usercase(self.commcare_user)
 
         usercase_id = self.commcare_user.get_usercase_id()

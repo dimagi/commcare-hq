@@ -13,7 +13,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.callcenter.sync_user_case import (
+from corehq.apps.callcenter.sync_usercase import (
     sync_call_center_user_case,
     sync_usercase,
 )
