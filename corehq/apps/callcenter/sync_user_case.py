@@ -47,7 +47,7 @@ class _UserCaseHelper(object):
         for transaction in transactions:
             transaction.form.archive()
 
-    def create_user_case(self, commcare_user, fields):
+    def create_usercase(self, commcare_user, fields):
         self.case_blocks.append(CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
@@ -104,7 +104,7 @@ def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
         return case and case.closed and not user_case_should_be_closed
 
     if not case:
-        user_case_helper.create_user_case(commcare_user, fields)
+        user_case_helper.create_usercase(commcare_user, fields)
     else:
         if case_should_be_reopened(case, close):
             user_case_helper.re_open_case(case)
