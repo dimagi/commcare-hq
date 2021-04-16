@@ -20,12 +20,12 @@ from corehq.util.test_utils import flag_enabled
 from ..views import get_case_hierarchy_for_restore
 
 
-class TestRelatedCases(TestCase):
+class TestCaseRestore(TestCase):
     domain = 'related-cases-domain'
 
     @classmethod
     def setUpClass(cls):
-        super(TestRelatedCases, cls).setUpClass()
+        super(TestCaseRestore, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         cls.factory = CaseFactory(domain=cls.domain)
 
