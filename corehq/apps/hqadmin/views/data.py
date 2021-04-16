@@ -82,7 +82,7 @@ def raw_doc_lookup(doc_id, db_name=None):
             response["raw_data"] = raw_data
         result_dict = result.asdict()
         result_dict["doc"] = json.dumps(
-            result.get_serialized_doc(), indent=4, sort_keys=True, cls=CommCareJSONEncoder
+            serialized_doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder
         )
         response.update(result_dict)
     if db_name:
