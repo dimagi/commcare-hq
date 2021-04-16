@@ -16,7 +16,6 @@ def _clean_json(doc):
         return doc
     doc.pop('domain', None)
     doc.pop('doc_type', None)
-    doc.pop('_id', None)
     doc.pop('_rev', None)
     for key, val in doc.items():
         if isinstance(val, dict):
@@ -93,3 +92,7 @@ def _get_missing_multimedia(app, old_multimedia_ids=None):
 def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
+
+
+def is_linked_report(report):
+    return report.report_meta.master_id

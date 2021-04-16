@@ -1,0 +1,269 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-weight_height_v1",
+    "display_name": "Weight and Height Records V1 (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/6595DEFD-60DA-4102-A704-F400D40F5F05"
+        },
+        {
+          "type": "not",
+          "filter": {
+            "type": "boolean_expression",
+            "operator": "in",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "weight_provided",
+                "last_date_weight_taken"
+              ]
+            },
+            "property_value": [
+              "",
+              null
+            ]
+          }
+        },
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "indexed_case",
+              "case_expression": {
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "form_info",
+                    "child_care_case_id"
+                  ]
+                },
+                "value_expression": {
+                  "type": "identity"
+                }
+              },
+              "index": "parent"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "member_residential_status"
+            }
+          },
+          "property_value": "permanent_resident"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "username"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "received_on"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "child_care_case_id",
+        "display_name": "child_care_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "form_info",
+            "child_care_case_id"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "dob",
+        "display_name": "dob",
+        "datatype": "date",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "member_defaults",
+            "dob"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "gender",
+        "display_name": "gender",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "member_defaults",
+            "sex"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "last_date_weight_taken",
+        "display_name": "last_date_weight_taken",
+        "datatype": "date",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "weight_provided",
+            "last_date_weight_taken"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "zscore_grading_wfa",
+        "display_name": "zscore_grading_wfa",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "weight_provided",
+            "zscore_grading_wfa"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "zscore_grading_wfh",
+        "display_name": "zscore_grading_wfh",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "height_provided",
+            "zscore_grading_wfh"
+          ]
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

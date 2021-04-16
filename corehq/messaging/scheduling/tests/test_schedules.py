@@ -44,8 +44,8 @@ class BaseScheduleTest(TestCase):
         cls.domain = 'scheduling-test'
         cls.domain_obj = Domain(name=cls.domain, default_timezone='America/New_York')
         cls.domain_obj.save()
-        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password')
-        cls.user2 = CommCareUser.create(cls.domain, 'user2', 'password')
+        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password', None, None)
+        cls.user2 = CommCareUser.create(cls.domain, 'user2', 'password', None, None)
 
     @classmethod
     def tearDownClass(cls):
@@ -927,7 +927,7 @@ class MonthlyScheduleTest(TestCase):
         cls.domain = 'scheduling-test'
         cls.domain_obj = Domain(name=cls.domain, default_timezone='America/New_York')
         cls.domain_obj.save()
-        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password')
+        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password', None, None)
         cls.schedule = TimedSchedule.create_simple_monthly_schedule(
             cls.domain,
             TimedEvent(time=time(12, 0)),
@@ -1049,7 +1049,7 @@ class EndOfMonthScheduleTest(TestCase):
         cls.domain = 'scheduling-test'
         cls.domain_obj = Domain(name=cls.domain, default_timezone='America/New_York')
         cls.domain_obj.save()
-        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password')
+        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password', None, None)
         cls.schedule = TimedSchedule.create_simple_monthly_schedule(
             cls.domain,
             TimedEvent(time=time(12, 0)),
@@ -1362,8 +1362,8 @@ class AlertTest(TestCase):
         self.domain = 'alert-test'
         self.domain_obj = Domain(name=self.domain, default_timezone='America/New_York')
         self.domain_obj.save()
-        self.user1 = CommCareUser.create(self.domain, 'user1', 'password')
-        self.user2 = CommCareUser.create(self.domain, 'user2', 'password')
+        self.user1 = CommCareUser.create(self.domain, 'user1', 'password', None, None)
+        self.user2 = CommCareUser.create(self.domain, 'user2', 'password', None, None)
         self.schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
 
     def tearDown(self):

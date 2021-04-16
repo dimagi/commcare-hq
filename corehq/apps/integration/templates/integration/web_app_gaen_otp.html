@@ -1,0 +1,21 @@
+{% extends "integration/base_cloudcare_template.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load static %}
+{% load compress %}
+
+{% block stylesheets %}
+  {{ block.super }}
+    <link type="text/css" rel="stylesheet" href="{% static 'integration/css/dialerstyle.css' %}">
+{% endblock %}
+
+
+{% block title %}{%trans 'Exposure Notification OTP'%}{% endblock %}
+
+{% block widget_content %}
+    <p>&nbsp;</p>
+    <p class="text-center h3">{%trans 'OTP Code for'%} {{ case_name }}</p></p>
+    <p class="text-center h1">{{ styled_otp_code }}</p>
+    <p class="text-center"><a href="#" onclick="window.close()">{%trans 'Close OTP and Return' %}</a></p>
+
+{% endblock %}

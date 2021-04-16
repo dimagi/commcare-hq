@@ -18,7 +18,7 @@ from soil.progress import get_task_status
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.decorators import LoginAndDomainMixin, api_auth
 from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -145,8 +145,11 @@ class DailySavedExportMixin(object):
         self._priv_check()
         return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
 
-    def create_new_export_instance(self, schema):
-        instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        instance = super(DailySavedExportMixin, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         instance.is_daily_saved_export = True
 
         span = datespan_from_beginning(self.domain_object, get_timezone(self.domain, self.request.couch_user))
@@ -177,8 +180,11 @@ class DashboardFeedMixin(DailySavedExportMixin):
         if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
             raise Http404
 
-    def create_new_export_instance(self, schema):
-        instance = super(DashboardFeedMixin, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        instance = super(DashboardFeedMixin, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         instance.export_format = "html"
         return instance
 
@@ -213,8 +219,8 @@ class ODataFeedMixin(object):
             """),
         }
 
-    def create_new_export_instance(self, schema):
-        instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(schema, export_settings=export_settings)
         instance.is_odata_config = True
         instance.transform_dates = False
         return instance
@@ -247,7 +253,7 @@ class ODataFeedMixin(object):
         return export_instance
 
 
-class GenerateSchemaFromAllBuildsView(View):
+class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
     urlname = 'build_full_schema'
 
     def export_cls(self, type_):
@@ -386,7 +392,7 @@ def can_view_form_exports(couch_user, domain):
 
 
 def can_view_case_exports(couch_user, domain):
-    return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
+    return ExportsPermissionsManager('case', domain, couch_user).has_case_export_permissions
 
 
 def clean_odata_columns(export_instance):

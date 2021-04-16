@@ -44,7 +44,9 @@ def patch_diffs(doc_diffs, log_cases=False):
     pending_diffs = []
     dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     for kind, case_id, diffs in doc_diffs:
-        assert kind == "CommCareCase", (kind, case_id)
+        if kind != "CommCareCase":
+            log.warning("cannot patch %s: %s", kind, case_id)
+            continue
         dd_count("commcare.couchsqlmigration.case.patch")
         try:
             patch_case(case_id, diffs)
@@ -62,14 +64,15 @@ def patch_diffs(doc_diffs, log_cases=False):
 
 def patch_case(case_id, diffs):
     case_diffs = [d.json_diff for d in diffs if d.kind != "stock state"]
-    try:
-        couch_case = get_couch_case(case_id)
-    except CaseNotFound:
-        raise CannotPatch(case_diffs)
-    assert couch_case.domain == get_domain(), (couch_case, get_domain())
-    case = PatchCase(couch_case, case_diffs)
-    form = PatchForm(case)
-    process_patch(form)
+    if case_diffs:
+        try:
+            couch_case = get_couch_case(case_id)
+        except CaseNotFound:
+            raise CannotPatch(case_diffs)
+        assert couch_case.domain == get_domain(), (couch_case, get_domain())
+        case = PatchCase(couch_case, case_diffs)
+        form = PatchForm(case)
+        process_patch(form)
     patch_ledgers([d for d in diffs if d.kind == "stock state"])
 
 
@@ -104,8 +107,8 @@ class PatchCase:
             self._dynamic_properties = props
             if props or has_known_props(self.diffs) or self.indices:
                 updates.append(const.CASE_ACTION_UPDATE)
-            if self._should_close():
-                updates.append(const.CASE_ACTION_CLOSE)
+        if self._should_close():
+            updates.append(const.CASE_ACTION_CLOSE)
 
     def __hash__(self):
         return hash(self.case_id)
@@ -114,8 +117,10 @@ class PatchCase:
         return getattr(self.case, name)
 
     def _should_close(self):
-        return (self.case.closed
-            and any(d.path == ["closed"] and not d.new_value for d in self.diffs))
+        return self.case.closed and (
+            any(d.path == ["closed"] and not d.new_value for d in self.diffs)
+            or is_missing_in_sql(self.diffs)
+        )
 
     def dynamic_case_properties(self):
         return self._dynamic_properties
@@ -126,6 +131,8 @@ class PatchCase:
     def indices(self):
         diffs = [d for d in self.diffs if d.path[0] == "indices"]
         if not diffs:
+            if is_missing_in_sql(self.diffs):
+                yield from self.case.indices
             return
         for diff in diffs:
             if diff.path != ["indices", "[*]"]:
@@ -313,7 +320,9 @@ def diff_to_json(diff, new_value=None):
 
 
 def is_patchable(diff):
-    return diff.path[0] not in UNPATCHABLE_PROPS
+    return not (diff.path[0] in UNPATCHABLE_PROPS or (
+        list(diff.path) == ["closed"] and not diff.old_value and diff.new_value
+    ))
 
 
 class CannotPatch(Exception):

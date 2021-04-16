@@ -70,6 +70,15 @@ def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
     )]
 
 
+def get_case_ids_that_exist(domain, case_ids):
+    """Returns the IDs in `case_ids` that actually exist in the domain"""
+    # This is inefficient, but I don't see another way to do it without a new couch view
+    return [
+        doc['_id'] for doc in iter_docs(CommCareCase.get_db(), case_ids)
+        if doc['domain'] == domain
+    ]
+
+
 def get_open_case_ids(domain, owner_id):
     """
     Get all open case ids for a given owner

@@ -152,3 +152,83 @@ class ReportModuleTests(SimpleTestCase):
             purge_report_from_mobile_ucr(report_config)
 
         self.assertEqual(len(app.modules[0].report_configs), 1)
+
+
+class OverwriteModuleDetailTests(SimpleTestCase):
+
+    def setUp(self):
+        self.attrs_dict1 = {
+            'columns': True,
+            'filter': True,
+            'sort_elements': True,
+            'sort_nodeset_columns': True,
+            'custom_variables': True,
+            'custom_xml': True,
+            'case_tile_configuration': True,
+            'print_template': True
+        }
+        self.attrs_dict2 = {
+            'columns': True,
+            'filter': True,
+            'sort_elements': False,
+            'sort_nodeset_columns': False,
+            'custom_variables': False,
+            'custom_xml': False,
+            'case_tile_configuration': False,
+            'print_template': False
+        }
+        self.attrs_dict3 = {
+            'columns': False,
+            'filter': False,
+            'sort_elements': False,
+            'sort_nodeset_columns': False,
+            'custom_variables': False,
+            'custom_xml': False,
+            'case_tile_configuration': True,
+            'print_template': False
+        }
+
+        self.app = Application.new_app('domain', "Untitled Application")
+        self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
+        self.src_module_detail_type = getattr(self.src_module.case_details, "short")
+        self.header_ = getattr(self.src_module_detail_type.columns[0], 'header')
+        self.header_['en'] = 'status'
+        self.filter_ = setattr(self.src_module_detail_type, 'filter', 'a > b')
+        self.sort_nodeset_columns = setattr(self.src_module_detail_type, 'sort_nodeset_columns', True)
+        self.custom_variables = setattr(self.src_module_detail_type, 'custom_variables', 'def')
+        self.custom_xml = setattr(self.src_module_detail_type, 'custom_xml', 'ghi')
+        self.print_template = getattr(self.src_module_detail_type, 'print_template')
+        self.print_template['name'] = 'test'
+        self.case_tile_configuration = setattr(self.src_module_detail_type, 'persist_tile_on_forms', True)
+
+    def test_overwrite_all(self):
+        dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+        dest_module_detail_type = getattr(dest_module.case_details, "short")
+        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict1)
+        self.assertEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
+
+    def test_overwrite_filter_column(self):
+        dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+        dest_module_detail_type = getattr(dest_module.case_details, "short")
+        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict2)
+
+        self.assertEqual(self.src_module_detail_type.columns, dest_module_detail_type.columns)
+        self.assertEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
+        self.remove_attrs(dest_module_detail_type)
+        self.assertNotEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
+
+    def test_overwrite_other_configs(self):
+        dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+        dest_module_detail_type = getattr(dest_module.case_details, "short")
+        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict3)
+
+        self.assertNotEqual(str(self.src_module_detail_type.columns), str(dest_module_detail_type.columns))
+        self.assertNotEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
+        self.assertEqual(self.src_module_detail_type.persist_tile_on_forms,
+                 dest_module_detail_type.persist_tile_on_forms)
+
+    def remove_attrs(self, dest_module_detail_type):
+        delattr(self.src_module_detail_type, 'filter')
+        delattr(self.src_module_detail_type, 'columns')
+        delattr(dest_module_detail_type, 'filter')
+        delattr(dest_module_detail_type, 'columns')

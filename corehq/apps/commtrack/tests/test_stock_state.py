@@ -230,17 +230,13 @@ class StockStateConsumptionTest(StockStateTest):
         commtrack_settings = self.domain_obj.commtrack_settings
 
         def _update_consumption_config(min_transactions, min_window, optimal_window):
-            save_settings = False
             if not hasattr(commtrack_settings, 'consumptionconfig'):
                 commtrack_settings.consumptionconfig = ConsumptionConfig()
                 commtrack_settings.consumptionconfig.commtrack_settings = commtrack_settings
-                save_settings = True
             commtrack_settings.consumptionconfig.min_transactions = min_transactions
             commtrack_settings.consumptionconfig.min_window = min_window
             commtrack_settings.consumptionconfig.optimal_window = optimal_window
             commtrack_settings.consumptionconfig.save()
-            if save_settings:
-                commtrack_settings.save()
 
         _reset = functools.partial(_update_consumption_config, 0, 3, 100)  # should fall in range
 

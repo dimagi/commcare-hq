@@ -15,14 +15,13 @@ class BaseIDProvider(metaclass=ABCMeta):
 
 
 class DocTypeIDProvider(BaseIDProvider):
-    def __init__(self, doc_types):
-        self.doc_types = doc_types
+    def __init__(self, doc_type):
+        self.doc_type = doc_type
 
     def get_doc_ids(self, domain):
-        for doc_type in self.doc_types:
-            doc_class = get_document_class_by_doc_type(doc_type)
-            doc_ids = get_doc_ids_in_domain_by_type(domain, doc_type)
-            yield doc_class, doc_ids
+        doc_class = get_document_class_by_doc_type(self.doc_type)
+        doc_ids = get_doc_ids_in_domain_by_type(domain, self.doc_type)
+        yield doc_class, doc_ids
 
 
 class ViewKeyGenerator(object):
@@ -65,10 +64,6 @@ class ViewIDProvider(BaseIDProvider):
         self.view_name = view_name
         self.key_generator = key_generator
 
-    @property
-    def doc_types(self):
-        return [self.doc_type]
-
     def get_doc_ids(self, domain):
         doc_class = get_document_class_by_doc_type(self.doc_type)
         key_kwargs = self.key_generator(self.doc_type, domain)
@@ -81,32 +76,13 @@ class ViewIDProvider(BaseIDProvider):
         return [(doc_class, doc_ids)]
 
 
-class UserIDProvider(BaseIDProvider):
-    def __init__(self, include_mobile_users=True, include_web_users=True):
-        self.include_mobile_users = include_mobile_users
-        self.include_web_users = include_web_users
-
-    @property
-    def doc_types(self):
-        doc_types = []
-        if self.include_mobile_users:
-            doc_types.append('CommCareUser')
-        if self.include_web_users:
-            doc_types.append('WebUser')
-        return doc_types
+class WebUserIDProvider(BaseIDProvider):
+    doc_type = 'WebUser'
 
     def get_doc_ids(self, domain):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
-        from corehq.apps.users.models import CommCareUser
         from corehq.apps.users.models import WebUser
-        if self.include_mobile_users:
-            user_ids = get_all_user_ids_by_domain(
-                domain, include_web_users=False, include_mobile_users=True
-            )
-            yield CommCareUser, list(user_ids)
-
-        if self.include_web_users:
-            user_ids = get_all_user_ids_by_domain(
-                domain, include_web_users=True, include_mobile_users=False
-            )
-            yield WebUser, list(user_ids)
+        user_ids = get_all_user_ids_by_domain(
+            domain, include_web_users=True, include_mobile_users=False
+        )
+        yield WebUser, list(user_ids)

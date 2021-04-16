@@ -168,7 +168,7 @@ class TestExpandedColumn(TestCase):
 
     def _new_case(self, properties):
         id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=id,
             case_type=self.case_type,

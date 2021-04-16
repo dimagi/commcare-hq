@@ -21,7 +21,7 @@ class TestDemoUser(TestCase):
         delete_all_users()
         cls.domain = 'main-domain'
         cls.project = create_domain(cls.domain)
-        cls.user = CommCareUser.create(cls.domain, 'test@main-domain.commcarehq.org', 'secret')
+        cls.user = CommCareUser.create(cls.domain, 'test@main-domain.commcarehq.org', 'secret', None, None)
         factory = CaseFactory()
         factory.create_case(owner_id=cls.user._id, update={'custom_prop': 'custom_value'})
 

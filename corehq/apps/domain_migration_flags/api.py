@@ -111,6 +111,14 @@ def any_migrations_in_progress(domain, strict=False):
     ).exists()
 
 
+def all_domains_with_migrations_in_progress():
+    toggle_enabled = set(DATA_MIGRATION.get_enabled_domains())
+    flag_set = set(DomainMigrationProgress.objects.filter(
+        migration_status=MigrationStatus.IN_PROGRESS
+    ).values_list('domain', flat=True))
+    return toggle_enabled | flag_set
+
+
 def reset_caches(domain, slug):
     any_migrations_in_progress(domain, strict=True)
     get_migration_status(domain, slug, strict=True)

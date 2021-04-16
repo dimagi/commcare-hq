@@ -16,7 +16,9 @@ from corehq.apps.userreports.expressions.date_specs import (
     DiffDaysExpressionSpec,
     MonthEndDateExpressionSpec,
     MonthStartDateExpressionSpec,
-    AddHoursExpressionSpec)
+    AddHoursExpressionSpec,
+    UTCNow
+)
 from corehq.apps.userreports.expressions.list_specs import (
     FilterItemsExpressionSpec,
     FlattenExpressionSpec,
@@ -65,6 +67,7 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
+_utcnow = functools.partial(_simple_expression_generator, UTCNow)
 
 
 def _property_name_expression(spec, context):
@@ -328,6 +331,7 @@ class ExpressionFactory(object):
         'month_start_date': _month_start_date_expression,
         'month_end_date': _month_end_date_expression,
         'diff_days': _diff_days_expression,
+        'utcnow': _utcnow,
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
         'get_subcases': _get_subcases_expression,

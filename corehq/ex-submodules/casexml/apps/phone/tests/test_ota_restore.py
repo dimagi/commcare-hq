@@ -55,7 +55,7 @@ class SimpleOtaRestoreTest(TestCase):
 
         def assertRegistrationData(key, val):
             if val is None:
-                template = '<data key="{prefix}_{key}" />'
+                template = '<data key="{prefix}_{key}"/>'
             else:
                 template = '<data key="{prefix}_{key}">{val}</data>'
             self.assertIn(
@@ -177,7 +177,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
 
         # check v2
         expected_v2_case_block = """
-        <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="{user_id}" xmlns="http://commcarehq.org/case/transaction/v2" >
+        <case case_id="asdf" user_id="{user_id}" date_modified="2010-06-29T13:42:50.000000Z" xmlns="http://commcarehq.org/case/transaction/v2" >
             <create>
                 <case_type>test_case_type</case_type>
                 <case_name>test case name</case_name>

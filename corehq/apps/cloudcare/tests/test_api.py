@@ -29,12 +29,14 @@ class ReadableQuestionsAPITest(TestCase):
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
-            cls.password
+            cls.password,
+            None,
+            None,
         )
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.project.delete()
         super(ReadableQuestionsAPITest, cls).tearDownClass()
 

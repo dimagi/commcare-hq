@@ -4,7 +4,7 @@ import re
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms.fields import *
+from django.forms.fields import CharField, BooleanField, ChoiceField, IntegerField
 from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -17,12 +17,9 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.layout import Div
 
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids
-from corehq.apps.app_manager.models import Application
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
@@ -862,6 +859,10 @@ class BackendForm(Form):
     name = CharField(
         label=ugettext_noop("Name")
     )
+    display_name = CharField(
+        label=ugettext_noop("Display Name"),
+        required=False,
+    )
     description = CharField(
         label=ugettext_noop("Description"),
         widget=forms.Textarea,
@@ -885,6 +886,16 @@ class BackendForm(Form):
         label=ugettext_lazy("Inbound API Key"),
         disabled=True,
     )
+    opt_out_keywords = CharField(
+        required=False,
+        label=ugettext_noop("List of opt out keywords"),
+        help_text=ugettext_lazy("A comma-separated list of keywords")
+    )
+    opt_in_keywords = CharField(
+        required=False,
+        label=ugettext_noop("List of opt in keywords"),
+        help_text=ugettext_lazy("A comma-separated list of keywords")
+    )
 
     @property
     def is_global_backend(self):
@@ -894,8 +905,11 @@ class BackendForm(Form):
     def general_fields(self):
         fields = [
             crispy.Field('name', css_class='input-xxlarge'),
+            crispy.Field('display_name', css_class='input-xxlarge'),
             crispy.Field('description', css_class='input-xxlarge', rows="3"),
             crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+            crispy.Field('opt_out_keywords'),
+            crispy.Field('opt_in_keywords')
         ]
 
         if not self.is_global_backend:
@@ -1001,6 +1015,20 @@ class BackendForm(Form):
                 return []
             else:
                 return [domain.strip() for domain in value.split(",")]
+
+    def clean_opt_out_keywords(self):
+        keywords = self.cleaned_data.get('opt_out_keywords')
+        if not keywords:
+            return []
+        else:
+            return [kw.strip().upper() for kw in keywords.split(',')]
+
+    def clean_opt_in_keywords(self):
+        keywords = self.cleaned_data.get('opt_in_keywords')
+        if not keywords:
+            return []
+        else:
+            return [kw.strip().upper() for kw in keywords.split(',')]
 
     def clean_reply_to_phone_number(self):
         value = self.cleaned_data.get("reply_to_phone_number")
@@ -1115,145 +1143,6 @@ class BackendMapForm(Form):
         return self._clean_backend_id(value)
 
 
-class SendRegistrationInvitationsForm(Form):
-
-    PHONE_TYPE_ANDROID_ONLY = 'ANDROID'
-    PHONE_TYPE_ANY = 'ANY'
-
-    PHONE_CHOICES = (
-        (PHONE_TYPE_ANDROID_ONLY, ugettext_lazy("Android Only")),
-        (PHONE_TYPE_ANY, ugettext_lazy("Android or Other")),
-    )
-
-    phone_numbers = TrimmedCharField(
-        label=ugettext_lazy("Phone Number(s)"),
-        required=True,
-        widget=forms.Textarea,
-    )
-
-    app_id = ChoiceField(
-        label=ugettext_lazy("Application"),
-        required=True,
-    )
-
-    action = CharField(
-        initial='invite',
-        widget=forms.HiddenInput(),
-    )
-
-    registration_message_type = ChoiceField(
-        required=True,
-        choices=DEFAULT_CUSTOM_CHOICES,
-    )
-
-    custom_registration_message = TrimmedCharField(
-        label=ugettext_lazy("Registration Message"),
-        required=False,
-        widget=forms.Textarea,
-    )
-
-    phone_type = ChoiceField(
-        label=ugettext_lazy("Recipient phones are"),
-        required=True,
-        choices=PHONE_CHOICES,
-    )
-
-    make_email_required = ChoiceField(
-        label=ugettext_lazy("Make email required at registration"),
-        required=True,
-        choices=ENABLED_DISABLED_CHOICES,
-    )
-
-    @property
-    def android_only(self):
-        return self.cleaned_data.get('phone_type') == self.PHONE_TYPE_ANDROID_ONLY
-
-    @property
-    def require_email(self):
-        return self.cleaned_data.get('make_email_required') == ENABLED
-
-    def set_app_id_choices(self):
-        app_ids = get_built_app_ids(self.domain)
-        choices = []
-        for app_doc in iter_docs(Application.get_db(), app_ids):
-            # This will return both Application and RemoteApp docs, but
-            # they both have a name attribute
-            choices.append((app_doc['_id'], app_doc['name']))
-        choices.sort(key=lambda x: x[1])
-        self.fields['app_id'].choices = choices
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain')
-
-        super(SendRegistrationInvitationsForm, self).__init__(*args, **kwargs)
-        self.set_app_id_choices()
-
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Div(
-                'app_id',
-                crispy.Field(
-                    'phone_numbers',
-                    placeholder=_("Enter phone number(s) in international "
-                        "format. Example: +27..., +91...,"),
-                ),
-                'phone_type',
-                InlineField('action'),
-                css_class='modal-body',
-            ),
-            hqcrispy.FieldsetAccordionGroup(
-                _("Advanced"),
-                crispy.Field(
-                    'registration_message_type',
-                    data_bind='value: registration_message_type',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'custom_registration_message',
-                        placeholder=_("Enter registration SMS"),
-                    ),
-                    data_bind='visible: showCustomRegistrationMessage',
-                ),
-                'make_email_required',
-                active=False
-            ),
-            crispy.Div(
-                twbscrispy.StrictButton(
-                    _("Cancel"),
-                    data_dismiss='modal',
-                    css_class="btn btn-default",
-                ),
-                twbscrispy.StrictButton(
-                    _("Send Invitation"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                ),
-                css_class='modal-footer',
-            ),
-        )
-
-    def clean_phone_numbers(self):
-        value = self.cleaned_data.get('phone_numbers', '')
-        phone_list = [strip_plus(s.strip()) for s in value.split(',')]
-        phone_list = [phone for phone in phone_list if phone]
-        if len(phone_list) == 0:
-            raise ValidationError(_("This field is required."))
-        for phone_number in phone_list:
-            validate_phone_number(phone_number)
-        return list(set(phone_list))
-
-    def clean_custom_registration_message(self):
-        value = self.cleaned_data.get('custom_registration_message')
-        if self.cleaned_data.get('registration_message_type') == CUSTOM:
-            if not value:
-                raise ValidationError(_("Please enter a message"))
-            return value
-
-        return None
-
-
 class InitiateAddSMSBackendForm(Form):
     action = CharField(
         initial='new_backend',
@@ -1284,7 +1173,7 @@ class InitiateAddSMSBackendForm(Form):
                 InlineField('action'),
                 Div(InlineField('hq_api_id', css_class="ko-select2"), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
-                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
+                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),  # nosec: no user input
                     css_class='btn-primary',
                     type='submit',
                     style="margin-left:5px;"
@@ -1347,11 +1236,11 @@ class SubscribeSMSForm(Form):
             )
         )
 
+    # TODO: test this still saves
     def save(self, commtrack_settings):
-        save_settings = False
         if not hasattr(commtrack_settings, 'alertconfig'):
             commtrack_settings.alertconfig = AlertConfig()
-            save_settings = True
+
         alert_config = commtrack_settings.alertconfig
         alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
         alert_config.stock_out_commodities = self.cleaned_data.get("stock_out_commodities", False)
@@ -1360,8 +1249,6 @@ class SubscribeSMSForm(Form):
 
         alert_config.commtrack_settings = commtrack_settings
         alert_config.save()
-        if save_settings:
-            commtrack_settings.save()
 
 
 class ComposeMessageForm(forms.Form):

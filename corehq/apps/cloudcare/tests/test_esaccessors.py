@@ -7,6 +7,7 @@ from mock import MagicMock, patch
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -14,6 +15,7 @@ from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
 
 
+@es_test
 class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod
@@ -52,37 +54,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
         self.es.indices.refresh(USER_INDEX)
         return user
 
-    def test_login_as_user_query_user_data(self):
-        self._send_user_to_es(user_data={'wild': 'child', 'wall': 'flower'})
-        self._send_user_to_es(user_data={})
-        self._send_user_to_es()
-        self._send_user_to_es(user_data={'wild': 'wrong'})
-
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(),
-                'child',
-                10,
-                0,
-                user_data_fields=['wild'],
-            ).count(),
-            1
-        )
-
-        # Do not fuzzy match
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(),
-                'chil',
-                10,
-                0,
-                user_data_fields=['wild'],
-            ).count(),
-            0
-        )
-
     def test_login_as_user_query_username(self):
         self._send_user_to_es(username='superman')
         self._send_user_to_es(username='superwoman')
@@ -97,24 +68,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 0,
             ).count(),
             2,
-        )
-
-    def test_login_as_user_query_username_or_user_data(self):
-        self._send_user_to_es(username='superman')
-        self._send_user_to_es(username='batman', user_data={'wild': 'nope'})
-        self._send_user_to_es(username='robin', user_data={'wild': 'super'})
-        self._send_user_to_es(username='superwoman', user_data={'wild': 'super'})
-
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(),
-                'super',
-                10,
-                0,
-                user_data_fields=['wild'],
-            ).count(),
-            3,
         )
 
     def test_login_as_user_query_all(self):
@@ -143,8 +96,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     MagicMock(username='batman'),
                     None,
                     10,
-                    0,
-                    []
+                    0
                 ).count(),
                 1
             )
@@ -161,8 +113,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     MagicMock(username='batman'),
                     None,
                     10,
-                    0,
-                    []
+                    0
                 ).count(),
                 2
             )

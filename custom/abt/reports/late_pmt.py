@@ -93,7 +93,7 @@ class LatePMTUsers(SqlData):
 class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     report_title = "Late PMT"
     slug = 'late_pmt'
-    name = "Late PMT"
+    name = "Late PMT 2019"
 
     languages = (
         'en',

@@ -3,6 +3,8 @@ import math
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -31,6 +33,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
 )
 from corehq.apps.reports import util
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_case_counts_closed_by_user,
@@ -95,8 +98,17 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
-        user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.raw_username, user_link)
+        if self._has_form_view_permission():
+            user_link = self.get_raw_user_link(user)
+            return self.table_cell(user.raw_username, user_link)
+        return self.table_cell(user.raw_username)
+
+    def _has_form_view_permission(self):
+        return self.request.couch_user.has_permission(
+            self.request.domain,
+            'view_report',
+            data='corehq.apps.reports.standard.inspect.SubmitHistory'
+        )
 
     def get_raw_user_link(self, user):
         raise NotImplementedError
@@ -131,13 +143,10 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
-        user_link_template = '<a href="%(link)s">%(username)s</a>'
+        user_link_template = '<a href="{link}">{username}</a>'
         base_link = SubmitHistory.get_url(domain=self.domain)
         link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        return user_link_template % {
-            'link': link,
-            'username': user.username_in_report,
-        }
+        return format_html(user_link_template, link=link, username=user.username_in_report)
 
 
 class MultiFormDrilldownMixin(object):
@@ -707,7 +716,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
         ) and not export:
             raise BadRequestError(
-                _('Query selects too many users. Please modify your filters to select fewer users')
+                _('Query selects too many users. Please modify your filters to select fewer than {} users').format(
+                    USER_QUERY_LIMIT,
+                )
             )
         selected_users = self.selected_simplified_users
         track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))
@@ -718,13 +729,13 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (simplified_user.user_id, form['app_id'], form['xmlns'].lower())
+                        (simplified_user.user_id, form['app_id'], form['xmlns'])
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(simplified_user)] +
-                    [self.table_cell(row_data, zerostyle=True) for row_data in row] +
-                    [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
+                    [self.get_user_link(simplified_user)]
+                    + [self.table_cell(row_data, zerostyle=True) for row_data in row]
+                    + [self.table_cell(row_sum, format_html("<strong>{}</strong>", row_sum))]
                 )
                 totals = [totals[i] + col.get('sort_key')
                           for i, col in enumerate(row[1:])]
@@ -956,7 +967,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             results.get(json_format_date(date), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="text-muted">0</span>' if c == 0 else c for c in date_cols]
+        styled_zero = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
+        styled_date_cols = [styled_zero if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
@@ -1067,7 +1079,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
                 _fmt_ts(stats.get('max')),
-                stats.get('count', 0),
+                self.table_cell(stats.get('count', 0)),
             ])
 
         total_data = get_form_duration_stats_for_users(
@@ -1079,12 +1091,14 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             self.datespan.enddate_utc,
             by_submission_time=self.by_submission_time,
         )
-        self.total_row = ["All Users",
-                          _fmt_ts(total_data.get('avg')),
-                          _fmt_ts(total_data.get('std_deviation')),
-                          _fmt_ts(total_data.get('min')),
-                          _fmt_ts(total_data.get('max')),
-                          total_data.get('count', 0)]
+        self.total_row = [
+            "All Users",
+            _fmt_ts(total_data.get('avg')),
+            _fmt_ts(total_data.get('std_deviation')),
+            _fmt_ts(total_data.get('min')),
+            _fmt_ts(total_data.get('max')),
+            self.table_cell(total_data.get('count', 0)),
+        ]
         return rows
 
 
@@ -1117,7 +1131,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         try:
             return self._get_rows()
         except TooMuchDataError as e:
-            return [['<span class="label label-danger">{}</span>'.format(e)] + ['--'] * 5]
+            return [[format_html('<span class="label label-danger">{}</span>', e)] + ['--'] * 5]
 
     def _get_rows(self):
         rows = []
@@ -1195,7 +1209,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     def _format_td_status(self, td, use_label=True):
         status = list()
-        template = '<span class="label %(klass)s">%(status)s</span>'
+        template = '<span class="label {klass}">{status}</span>'
         klass = "label-default"
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
@@ -1222,13 +1236,13 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                     status = [_("same")]
 
         if use_label:
-            return template % dict(status=", ".join(status), klass=klass)
+            return format_html(template, status=", ".join(status), klass=klass)
         else:
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn btn-default" href="%s">View Form</a>' % absolute_reverse(
-            'render_form_data', args=[self.domain, instance_id])
+        return format_html('<a class="btn btn-default" href="{}">View Form</a>', absolute_reverse(
+            'render_form_data', args=[self.domain, instance_id]))
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
@@ -1257,7 +1271,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @property
     @memoized
     def activity_times(self):
-        all_times = []
         users = _get_selected_users(self.domain, self.request)
         user_ids = [user.user_id for user in users]
         xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
@@ -1321,6 +1334,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
+        # Apply the fix made in https://github.com/gak/pygooglechart/pull/25/
+        #   since a new version is not yet released
+        ScatterChart.BASE_URL = 'https://chart.googleapis.com/chart'
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
@@ -1349,7 +1365,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
         # our google charts library doesn't support unicode
         # TODO: replace with some in JS (d3?)
-        chart.set_axis_labels('y', [''] + [day_names[n].encode('ascii', 'replace') for n in days] + [''])
+        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
@@ -1548,7 +1564,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return format_html('<a href="{}" target="_blank">{}</a>', href, value)
 
     @staticmethod
     def _make_url(base_url, params):
@@ -1927,12 +1943,13 @@ def _get_raw_user_link(user, url, filter_class):
     filter_class is expected to be either ExpandedMobileWorkerFilter or a
     subclass of it, such as the CaseListFilter
     """
-    user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
-    user_link = user_link_template % {
-        'link': url,
-        'params': urlencode(filter_class.for_user(user.user_id)),
-        'username': user.username_in_report,
-    }
+    user_link_template = '<a href="{link}?{params}">{username}</a>'
+    user_link = format_html(
+        user_link_template,
+        link=url,
+        params=urlencode(filter_class.for_user(user.user_id)),
+        username=user.username_in_report,
+    )
     return user_link
 
 

@@ -12,7 +12,7 @@
     </table>
     <div class="page-footer">
       <button class="btn btn-primary js-done">
-        <i class="fa"></i> {% trans "Save" %}
+        {% trans "Done" %}
       </button>
     </div>
   </div>
@@ -27,7 +27,7 @@
     <select class="form-control js-lang">
       <% _.each(langs, function(lang) { %>
       <option <% if (lang === currentLang) { %>selected<% } %>>
-      <%= lang %>
+      <%- lang %>
       </option>
       <% }) %>
     </select>

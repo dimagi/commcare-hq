@@ -4,7 +4,9 @@ import re
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.utils import html, safestring
+from django.utils import html
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -16,6 +18,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.util.model_log import log_model_change
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 
@@ -202,15 +205,14 @@ def can_add_extra_mobile_workers(request):
     return has_privilege(request, privileges.ALLOW_EXCESS_USERS)
 
 
-def user_display_string(username, first_name="", last_name=""):
-    full_name = "{} {}".format(first_name or '', last_name or '').strip()
+def user_display_string(username, first_name='', last_name=''):
+    full_name = '{} {}'.format(first_name or '', last_name or '').strip()
 
-    def parts():
-        yield '%s' % html.escape(raw_username(username))
-        if full_name:
-            yield ' "%s"' % html.escape(full_name)
+    result = mark_safe(html.escape(raw_username(username)))  # nosec: escaped
+    if full_name:
+        result = format_html('{} "{}"', result, full_name)
 
-    return safestring.mark_safe(''.join(parts()))
+    return result
 
 
 def user_location_data(location_ids):
@@ -307,3 +309,21 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     if sync_datetime > last_sync.sync_date:
         return True
     return False
+
+
+def log_user_role_update(domain, user, by_user, updated_via):
+    """
+    :param domain: domain name
+    :param user: couch user that got updated
+    :param by_user: django/couch user that made the update
+    :param updated_via: web/bulk_importer
+    """
+    user_role = user.get_role(domain)
+    message = "role: None"
+    if user_role:
+        if user_role.get_qualified_id() == 'admin':
+            message = f"role: {user_role.name}"
+        else:
+            message = f"role: {user_role.name}[{user_role.get_id}]"
+    message += f", updated_via: {updated_via}"
+    log_model_change(by_user, user.get_django_user(), message=message)

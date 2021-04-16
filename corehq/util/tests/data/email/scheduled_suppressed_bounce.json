@@ -1,0 +1,92 @@
+{
+    "eventType": "Bounce",
+    "bounce": {
+        "bounceType": "Permanent",
+        "bounceSubType": "Suppressed",
+        "bouncedRecipients": [
+            {
+                "emailAddress": "permanent.suppressed@company.org",
+                "action": "failed",
+                "status": "5.1.1",
+                "diagnosticCode": "Amazon SES has suppressed sending to this address because it has a recent history of bouncing as an invalid address. For more information about how to remove an address from the suppression list, see the Amazon SES Developer Guide: http://docs.aws.amazon.com/ses/latest/DeveloperGuide/remove-from-suppressionlist.html "
+            }
+        ],
+        "timestamp": "2020-07-28T00:28:28.622Z",
+        "feedbackId": "redacted",
+        "reportingMTA": "dns; amazonses.com"
+    },
+    "mail": {
+        "timestamp": "2020-07-28T00:28:28.000Z",
+        "source": "noreplyemail@company.com",
+        "sourceArn": "arn:aws:ses:redacted:identity/noreplyemail@company.com",
+        "sourceIp": "255.255.255.255",
+        "sendingAccountId": "redacted",
+        "messageId": "redacted",
+        "destination": [
+            "permanent.suppressed@company.org",
+            "john.doe@agency.gov"
+        ],
+        "headersTruncated": false,
+        "headers": [
+            {
+                "name": "Received",
+                "value": "from server-name (ec2-redacted.compute-1.amazonaws.com [redacted]) by email-smtp.amazonaws.com with SMTP (SimpleEmailService-d-redacted) id redacted; Tue, 28 Jul 2020 00:28:28 +0000 (UTC)"
+            },
+            {
+                "name": "Content-Type",
+                "value": "multipart/alternative; boundary=\"===============7698755700248601042==\""
+            },
+            {
+                "name": "MIME-Version",
+                "value": "1.0"
+            },
+            {
+                "name": "Subject",
+                "value": "Invitation from John Doe to join CommCareHQ"
+            },
+            {
+                "name": "From",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "To",
+                "value": "permanent.suppressed@company.org"
+            },
+            {
+                "name": "Cc",
+                "value": "john.doe@agency.gov"
+            },
+            {
+                "name": "Date",
+                "value": "Tue, 28 Jul 2020 00:28:28 -0000"
+            },
+            {
+                "name": "Message-ID",
+                "value": "<redacted@server-name>"
+            },
+            {
+                "name": "Return-Path",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "X-SES-CONFIGURATION-SET",
+                "value": "fake-email-events"
+            }
+        ],
+        "commonHeaders": {
+            "returnPath": "noreplyemail@company.com",
+            "from": [
+                "noreplyemail@company.com"
+            ],
+            "date": "Tue, 28 Jul 2020 00:28:28 -0000",
+            "to": [
+                "permanent.suppressed@company.org"
+            ],
+            "cc": [
+                "john.doe@agency.gov"
+            ],
+            "messageId": "<redacted@server-name>",
+            "subject": "Invitation from John Doe to join CommCareHQ"
+        }
+    }
+}

@@ -1,7 +1,10 @@
 import copy
+import decimal
 import json
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db.utils import DataError
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -137,11 +140,21 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                     setattr(self.commtrack_settings.consumptionconfig, field,
                             data['consumption_' + field])
 
-            self.commtrack_settings.save()
-            for attr in ('consumptionconfig', 'stockrestoreconfig', 'stocklevelsconfig'):
-                submodel = getattr(self.commtrack_settings, attr)
-                submodel.commtrack_settings = self.commtrack_settings
-                submodel.save()
+            try:
+                self.commtrack_settings.save()
+                for attr in ('consumptionconfig', 'stockrestoreconfig', 'stocklevelsconfig'):
+                    submodel = getattr(self.commtrack_settings, attr)
+                    submodel.commtrack_settings = self.commtrack_settings
+                    submodel.save()
+            except (decimal.InvalidOperation, DataError):      # capture only decimal errors and integer overflows
+                try:
+                    # Get human-readable messages
+                    self.commtrack_settings.stocklevelsconfig.full_clean()
+                    self.commtrack_settings.consumptionconfig.full_clean()
+                except ValidationError as e:
+                    for key, msgs in dict(e).items():
+                        for msg in msgs:
+                            messages.error(request, _("Could not save {}: {}").format(key, msg))
 
             for loc_type in LocationType.objects.filter(domain=self.domain).all():
                 # This will update stock levels based on commtrack config

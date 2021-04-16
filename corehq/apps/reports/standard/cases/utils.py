@@ -5,7 +5,7 @@ from corehq.apps.es import forms as form_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.locations.dbaccessors import (
     get_users_location_ids,
-    user_ids_at_locations,
+    mobile_user_ids_at_locations,
     user_ids_at_locations_and_descendants,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -37,7 +37,7 @@ def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):
     return owner_ids
 
 
-def query_all_project_data(query, domain, mobile_user_and_group_slugs):
+def all_project_data_filter(domain, mobile_user_and_group_slugs):
     # Show everything but stuff we know for sure to exclude
     user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
     ids_to_exclude = _get_special_owner_ids(
@@ -48,15 +48,15 @@ def query_all_project_data(query, domain, mobile_user_and_group_slugs):
         demo=HQUserType.DEMO_USER not in user_types,
         commtrack=False,
     )
-    return query.NOT(case_es.owner(ids_to_exclude))
+    return filters.NOT(case_es.owner(ids_to_exclude))
 
 
-def query_deactivated_data(query, domain):
+def deactivated_case_owners(domain):
     owner_ids = (user_es.UserES()
                  .show_only_inactive()
                  .domain(domain)
                  .get_ids())
-    return query.OR(case_es.owner(owner_ids))
+    return case_es.owner(owner_ids)
 
 
 def get_case_owners(request, domain, mobile_user_and_group_slugs):
@@ -163,16 +163,16 @@ def _get_location_accessible_ids(request):
         request.domain,
         request.couch_user
     ))
-    accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+    accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
     return accessible_ids
 
 
 def query_location_restricted_cases(query, request):
     accessible_ids = _get_location_accessible_ids(request)
-    return query.OR(case_es.owner(accessible_ids))
+    return query.filter(case_es.owner(accessible_ids))
 
 
 def query_location_restricted_forms(query, request):
     accessible_ids = _get_location_accessible_ids(request)
-    return query.OR(form_es.user_id(accessible_ids))
+    return query.filter(form_es.user_id(accessible_ids))

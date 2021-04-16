@@ -229,7 +229,7 @@ class ConditionalExpressionSpec(JsonObject):
     """
     This expression returns ``"legal" if doc["age"] > 21 else "underage"``:
 
-    .. code::json
+    .. code:: json
 
        {
            "type": "conditional",

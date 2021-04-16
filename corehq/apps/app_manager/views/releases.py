@@ -52,6 +52,7 @@ from corehq.apps.app_manager.exceptions import (
     BuildConflictException,
     ModuleIdMissingException,
     PracticeUserException,
+    XFormValidationFailed,
 )
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
@@ -73,8 +74,9 @@ from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     login_or_api_key,
     track_domain_request,
+    LoginAndDomainMixin,
 )
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import queries
 from corehq.apps.es.apps import AppES, build_comment, version
 from corehq.apps.hqwebapp.views import BasePageView
@@ -202,7 +204,8 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id)
+        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id),
+        'can_edit_apps': request.couch_user.can_edit_apps(),
     }
     if not app.is_remote_app():
         context.update({
@@ -307,6 +310,10 @@ def save_copy(request, domain, app_id):
             return JsonResponse({
                 'error': _("There is already a version build in progress. Please wait.")
             }, status=400)
+        except XFormValidationFailed:
+            return JsonResponse({
+                'error': _("Unable to validate forms.")
+            }, status=400)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -362,7 +369,7 @@ def revert_to_copy(request, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
-        copy.convert_to_application()
+        copy = copy.convert_to_application()
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(

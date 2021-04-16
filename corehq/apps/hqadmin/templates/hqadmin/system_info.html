@@ -65,13 +65,6 @@
             <td>
               {{ rabbitmq.msg }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
               <hr>
-              {% trans "Celery Heartbeat " %}
-              {% if heartbeat.success %}
-                <span class="label label-success">OK</span>
-              {% else %}
-                <span class="label label-danger">DOWN</span>
-              {% endif %}
-              <hr>
               {{ celery_stats|safe }}<br>
             </td>
             <td>

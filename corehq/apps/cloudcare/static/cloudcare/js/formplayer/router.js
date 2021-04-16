@@ -1,14 +1,13 @@
-/*global FormplayerFrontend, Util */
-
-FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
-    SessionNavigate.Router = Marionette.AppRouter.extend({
+/* global Backbone, Marionette */
+hqDefine("cloudcare/js/formplayer/router", function () {
+    var Util = hqImport("cloudcare/js/formplayer/utils/util");
+    var Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
             "home/:id": "landingPageApp", // Show app in landing page mode (LandingPageAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
-            "local/:path": "localInstall",
             "restore_as/:page/:query": "listUsers",
             "restore_as/:page/": "listUsers",
             "restore_as": "listUsers",
@@ -18,22 +17,28 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
 
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
+        menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
+        sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
+        usersController = hqImport("cloudcare/js/formplayer/users/controller");
     var API = {
         listApps: function () {
-            FormplayerFrontend.regions.breadcrumb.empty();
-            FormplayerFrontend.Apps.Controller.listApps();
+            FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+            Util.setStickyQueryInputs({});
+            appsController.listApps();
         },
         singleApp: function (appId) {
-            var user = FormplayerFrontend.request('currentUser');
-            FormplayerFrontend.regions.breadcrumb.empty();
+            var user = FormplayerFrontend.getChannel().request('currentUser');
+            FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
-            FormplayerFrontend.Apps.Controller.singleApp(appId);
+            appsController.singleApp(appId);
         },
         landingPageApp: function (appId) {
-            FormplayerFrontend.Apps.Controller.landingPageApp(appId);
+            appsController.landingPageApp(appId);
         },
         selectApp: function (appId, isInitial) {
-            FormplayerFrontend.Menus.Controller.selectMenu({
+            menusController.selectMenu({
                 'appId': appId,
                 'isInitial': isInitial,
             });
@@ -42,11 +47,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            if (!urlObject.appId && !urlObject.installReference) {
+            if (!urlObject.appId) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
-                FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+                menusController.selectMenu(urlObject);
             }
         },
         listUsers: function (page, query) {
@@ -55,22 +60,19 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             if (_.isNaN(page)) {
                 page = 1;
             }
-            FormplayerFrontend.Users.Controller.listUsers(page, query);
+            usersController.listUsers(page, query);
         },
         listSettings: function () {
-            FormplayerFrontend.Apps.Controller.listSettings();
+            appsController.listSettings();
         },
         showDetail: function (caseId, detailTabIndex, isPersistent) {
-            FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex, isPersistent);
+            menusController.selectDetail(caseId, detailTabIndex, isPersistent);
         },
-        listSessions: function () {
-            SessionNavigate.SessionList.Controller.listSessions();
+        listSessions: function (pageNumber, pageSize) {
+            sessionsController.listSessions(pageNumber, pageSize);
         },
         getSession: function (sessionId) {
-            FormplayerFrontend.request("getSession", sessionId);
-        },
-        localInstall: function (path) {
-            FormplayerFrontend.trigger("localInstall", path);
+            FormplayerFrontend.getChannel().request("getSession", sessionId);
         },
         /**
          * renderResponse
@@ -91,9 +93,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             response.appId = urlObject.appId;
 
+             if (response.notification) {
+                FormplayerFrontend.getChannel().request("handleNotification", response.notification);
+             }
+
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = new FormplayerFrontend.Menus.Collections.MenuSelect(
+            menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
                 response,
                 { parse: true }
             );
@@ -103,10 +109,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
             FormplayerFrontend.navigate(encodedUrl);
 
-            FormplayerFrontend.Menus.Controller.showMenu(menuCollection);
+            menusController.showMenu(menuCollection);
         },
     };
-    API = SessionNavigate.Middleware.apply(API);
+    API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = Util.currentUrlToObject();
@@ -138,7 +144,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     FormplayerFrontend.on("menu:select", function (index) {
         var urlObject = Util.currentUrlToObject();
-        urlObject.addStep(index);
+        if (index === undefined) {
+            urlObject.setQueryData(undefined, false);
+            urlObject.setForceManualAction(true);
+        } else {
+            urlObject.addStep(index);
+            urlObject.setForceManualAction(false);
+        }
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
@@ -147,6 +159,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         var urlObject = Util.currentUrlToObject();
         urlObject.setPage(page);
         Util.setUrlToObject(urlObject);
+        API.listMenus();
+    });
+
+    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setCasesPerPage(casesPerPage);
+        Util.setUrlToObject(urlObject);
+        Util.savePerPageLimitCookie('cases', casesPerPage);
         API.listMenus();
     });
 
@@ -171,7 +191,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
         var urlObject = Util.currentUrlToObject();
-        urlObject.setQuery(queryDict);
+        urlObject.setQueryData(queryDict, true);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
@@ -190,9 +210,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.showDetail(caseId, detailTabIndex, isPersistent);
     });
 
-    FormplayerFrontend.on("sessions", function () {
-        FormplayerFrontend.navigate("/sessions");
-        API.listSessions();
+    FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {
+        FormplayerFrontend.navigate("/sessions", pageNumber, pageSize);
+        API.listSessions(pageNumber, pageSize);
     });
 
     FormplayerFrontend.on("getSession", function (sessionId) {
@@ -204,12 +224,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.renderResponse(menuResponse);
     });
 
-    SessionNavigate.start = function () {
-        return new SessionNavigate.Router({
-            controller: API,
-        });
-    };
-
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
@@ -218,16 +232,16 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         var options = {
             'appId': urlObject.appId,
             'steps': urlObject.steps,
+            'queryData': urlObject.queryData,
         };
-        FormplayerFrontend.Menus.Controller.selectMenu(options);
+        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
     });
 
-
-    FormplayerFrontend.on("localInstall", function (path) {
-        var urlObject = new Util.CloudcareUrl({
-            'installReference': path,
-        });
-        Util.setUrlToObject(urlObject);
-        FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
-    });
+    return {
+        start: function () {
+            return new Router({
+                controller: API,
+            });
+        },
+    };
 });

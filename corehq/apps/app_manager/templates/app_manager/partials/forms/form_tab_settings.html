@@ -71,24 +71,6 @@
             {% include "app_manager/partials/forms/shadow_parent_select.html" %}
           {% endif %}
 
-          {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
-            <div class="form-group">
-              <label class="control-label col-sm-2">
-                {% trans "Disallow editing form in Form Builder" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "Disallow editing form in Form Builder" %}"
-                      data-content="{% blocktrans %}For custom forms that the Form Builder breaks,
-                                                    use this option to disallow editing in the Form Builder.{% endblocktrans %}"
-                ></span>
-              </label>
-              <div class="col-sm-4" id="no-vellum">
-                <input type="checkbox" value="true"
-                       data-bind="checked: no_vellum"/>
-                <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
-              </div>
-            </div>
-          {% endif %}
-
           {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
             {% include "app_manager/partials/forms/custom_instances.html" %}
           {% endif %}

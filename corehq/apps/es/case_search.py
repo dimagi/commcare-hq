@@ -25,27 +25,21 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
 
 
 class CaseSearchES(CaseES):
-    index = CASE_SEARCH_ALIAS
+    index = "case_search"
 
     @property
     def builtin_filters(self):
-        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
-
-    @property
-    def _case_property_queries(self):
-        """
-        Returns all current case_property queries
-        """
-        try:
-            return self.es_query['query']['filtered']['query']['bool']['must']
-        except (KeyError, TypeError):
-            return []
+        return [
+            case_property_filter,
+            blacklist_owner_id,
+            external_id,
+            indexed_on,
+        ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
@@ -100,7 +94,7 @@ class CaseSearchES(CaseES):
         """
         return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
 
-    def xpath_query(self, domain, xpath):
+    def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
 
         Enter an arbitrary XPath predicate in the context of the case. Also supports related case lookups.
@@ -110,9 +104,11 @@ class CaseSearchES(CaseES):
         - date ranges: "first_came_online >= '2017-08-12' or died <= '2020-11-15"
         - numeric ranges: "age >= 100 and height < 1.25"
         - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
+
+        If fuzzy is true, all equality checks will be treated as fuzzy.
         """
         from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath))
+        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
@@ -270,13 +266,21 @@ def _base_property_query(case_property_name, query):
         CASE_PROPERTIES_PATH,
         queries.filtered(
             query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name)
         )
     )
 
 
 def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
+
+
+def external_id(external_id):
+    return filters.term('external_id', external_id)
+
+
+def indexed_on(gt=None, gte=None, lt=None, lte=None, eq=None):
+    return filters.date_range('@indexed_on', gt=None, gte=None, lt=None, lte=None, eq=None)
 
 
 def flatten_result(hit, include_score=False):

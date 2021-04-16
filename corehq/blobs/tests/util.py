@@ -24,6 +24,8 @@ def new_meta(**kw):
     kw.setdefault("domain", "test")
     kw.setdefault("parent_id", "test")
     kw.setdefault("type_code", blobs.CODES.tempfile)
+    if kw["type_code"] == blobs.CODES.form_xml:
+        kw.setdefault("compressed_length", -1)
     return BlobMeta(**kw)
 
 

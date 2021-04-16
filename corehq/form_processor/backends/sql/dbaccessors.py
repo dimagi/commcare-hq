@@ -816,6 +816,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
 
     @staticmethod
+    def get_case_ids_that_exist(domain, case_ids):
+        result = []
+        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
+            result.extend(CommCareCaseSQL.objects
+                          .using(db_name)
+                          .filter(domain=domain, case_id__in=case_ids_chunk)
+                          .values_list('case_id', flat=True))
+        return result
+
+    @staticmethod
     def get_case_xform_ids(case_id):
         with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
@@ -1112,7 +1122,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids, include_closed=True):
+    def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
@@ -1128,6 +1138,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 referenced_id__in=case_ids)
             if not include_closed:
                 query = query.filter(case__closed=False)
+            if exclude_for_case_type:
+                query = query.exclude(referenced_type=exclude_for_case_type)
             extension_case_ids.update(query.values_list('case_id', flat=True))
         return list(extension_case_ids)
 
@@ -1345,14 +1357,14 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             assert isinstance(entry_ids, list)
 
         return list(LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s, %s, %s, %s, %s)',
             [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s)',
             [[case_id]]
         ))
 
@@ -1431,7 +1443,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s)',
             [case_ids]
         )
         ret = {case_id: {} for case_id in case_ids}

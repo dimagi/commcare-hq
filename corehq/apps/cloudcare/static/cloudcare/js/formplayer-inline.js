@@ -1,8 +1,7 @@
-/*global $:false, window:false */
-(function () {
-    var alertHtml = function (message, alert_class) {
+hqDefine("cloudcare/js/formplayer-inline", function () {
+    var alertHtml = function (message, cssClass) {
         return (
-            "<div class='alert " + (alert_class || 'alert-info') + "'>" +
+            "<div class='alert " + (cssClass || 'alert-info') + "'>" +
             "<button type='button' class='close' data-dismiss='alert'>&times;</button>" +
             message +
             "</div>"
@@ -31,7 +30,7 @@
                 data.session_data = $.extend(data.session_data, options.sessionData);
 
                 data = $.extend(data, {
-                    onsubmit: function (xml) {
+                    onsubmit: function () {
                         $target.html(alertHtml(gettext('Form successfully submitted!'), 'alert-success'));
                         options.onsubmit();
                     },
@@ -41,7 +40,7 @@
                             'alert-danger'
                         ));
                     },
-                    onload: function (adapter, resp) {
+                    onload: function () {
                         options.onload();
                     },
                 });
@@ -52,7 +51,7 @@
                 data.domain = options.domain;
                 data.username = options.username;
                 data.restoreAs = options.restoreAs;
-                var sess = new WebFormSession(data);
+                var sess = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession(data);
                 sess.load($target, options.lang);
             },
         });
@@ -103,4 +102,4 @@
 
         return false;
     });
-}());
+});

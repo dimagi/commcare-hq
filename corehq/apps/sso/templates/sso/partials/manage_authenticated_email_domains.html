@@ -1,0 +1,63 @@
+{% load i18n %}
+
+{# requires sso/js/edit_identity_provider #}
+
+<div id="email-domain-manager"
+     class="form-inline ko-template">
+  <div class="panel panel-modern-gray panel-form-only">
+    <div class="panel-body">
+      <fieldset>
+        <legend>{% trans "Authenticated Email Domains" %}</legend>
+        <p>
+          {% blocktrans %}
+            Users with email addresses ending in these domain names must
+            log in with SSO if the Identity Provider is active.
+          {% endblocktrans %}
+        </p>
+        <p data-bind="if: showNoObjectsMessage">
+          {% blocktrans %}
+            There are no email domains associated with this identity provider.
+            Please add one below.
+          {% endblocktrans %}
+        </p>
+        <ul data-bind="foreach: linkedObjects">
+          <li>
+            @ <strong data-bind="text: $data"
+                      style="padding-right: 10px;"></strong>
+            (<button type="button"
+                     class="btn-link"
+                     data-bind="click: $parent.removeObject">remove</button>)
+          </li>
+        </ul>
+        <p class="text-danger"
+           style="padding-left: 10px;"
+           data-bind="text: asyncHandlerError,
+                      visible: asyncHandlerError"></p>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="panel panel-modern-gray panel-form-only">
+    <div class="panel-body">
+      <div class="input-group">
+        <div class="input-group-addon">@</div>
+        <input data-bind="textInput: newObject"
+               type="text"
+               class="form-control" />
+      </div>
+      <button type="button"
+              data-bind="click: addObject,
+                         css: {
+                           'btn-primary': isNewObjectValid,
+                           'btn-disabled': isAddDisabled
+                         }"
+              class="btn">
+        {% trans "Add Email Domain" %}
+      </button>
+      <span class="text-danger"
+            style="padding-left: 10px;"
+            data-bind="text: addObjectError,
+                       visible: addObjectError"></span>
+    </div>
+  </div>
+</div>

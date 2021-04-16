@@ -6,8 +6,7 @@ from django.urls import resolve, reverse
 from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
-from corehq import privileges, toggles
-from corehq.apps.analytics import ab_tests
+from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
@@ -23,6 +22,7 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'env': get_environment_friendly_name(),
+        'secure_cookies': settings.SECURE_COOKIES,
     }
 
 
@@ -37,28 +37,21 @@ def is_commtrack(project, request):
 
 
 def get_per_domain_context(project, request=None):
-    from corehq import toggles
     custom_logo_url = None
-    if (project and project.has_custom_logo and
-            domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
+    if (project and project.has_custom_logo
+            and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
-    def allow_report_issue(user, domain):
-        if toggles.ICDS.enabled(domain) and user.is_commcare_user():
-            role = user.get_domain_membership(domain, allow_mirroring=True).role
-            if not role:
-                return False
-        return user.has_permission(domain, 'report_an_issue')
-
     if getattr(request, 'couch_user', None) and project:
-        allow_report_an_issue = allow_report_issue(request.couch_user, project.name)
+        allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
     elif settings.ENTERPRISE_MODE:
         if not getattr(request, 'couch_user', None):
             allow_report_an_issue = False
         elif request.couch_user.is_web_user():
             allow_report_an_issue = True
         else:
-            allow_report_an_issue = allow_report_issue(request.couch_user, request.couch_user.domain)
+            user = request.couch_user
+            allow_report_an_issue = user.has_permission(user.domain, 'report_an_issue')
     else:
         allow_report_an_issue = True
 
@@ -107,27 +100,36 @@ def current_url_name(request):
         url_name = None
 
     return {
-        'current_url_name': url_name
+        'current_url_name': url_name,
     }
 
 
 def js_api_keys(request):
-    if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
+    if getattr(request, 'couch_user', None) and not request.couch_user.analytics_enabled:
         return {}  # disable js analytics
-    return {
+    api_keys = {
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
+    if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
+        del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
+    return api_keys
 
 
 def js_toggles(request):
     if not getattr(request, 'couch_user', None):
         return {}
-    if not getattr(request, 'project', None):
+
+    domain = None
+    if getattr(request, 'project', None):
+        domain = request.project.name
+    elif getattr(request, 'domain', None):
+        domain = request.domain
+
+    if not domain:
         return {}
-    from corehq import toggles, feature_previews
-    domain = request.project.name
+
     return {
         'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
@@ -205,7 +207,7 @@ def mobile_experience(request):
     mobile_ux_cookie_name = ''
     if (hasattr(request, 'couch_user') and
             hasattr(request, 'user_agent') and
-            settings.SERVER_ENVIRONMENT in ['production', 'staging', 'localdev']):
+            settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
         mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
         show_mobile_ux_warning = (
             not request.COOKIES.get(mobile_ux_cookie_name) and

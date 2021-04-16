@@ -66,8 +66,10 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         domain,
         username,
         password,
+        created_by=None,
+        created_via=None,
         phone_numbers=[TEST_NUMBER],
-        user_data=user_data,
+        metadata=user_data,
         first_name=first_name,
         last_name=last_name
     )
@@ -138,7 +140,7 @@ def get_ota_balance_xml(project, user):
 def extract_balance_xml(xml_payload):
     balance_blocks = etree.fromstring(xml_payload).findall('{http://commcarehq.org/ledger/v1}balance')
     if balance_blocks:
-        return [etree.tostring(bb) for bb in balance_blocks]
+        return [etree.tostring(bb, encoding='utf-8') for bb in balance_blocks]
     return []
 
 

@@ -52,7 +52,7 @@ ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
 LOCAL_LOGGING_CONFIG = {
     'loggers': {
-        'auditcare': {
+        'corehq.apps.auditcare': {
             'handlers': ['null'],
             'level': 'WARNING',
         },
@@ -67,7 +67,7 @@ LOCAL_LOGGING_CONFIG = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
@@ -87,9 +87,6 @@ COUCH_DATABASES = {
 }
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
-
-# Use faster compressor that doesn't do source maps
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 

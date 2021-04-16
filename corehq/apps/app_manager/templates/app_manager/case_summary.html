@@ -185,7 +185,7 @@
       <ul data-bind="foreach: $data">
         <li>
           <span data-bind="html: $root.moduleFormReference(formId)"></span>
-          <!-- ko: if: conditions -->
+          <!-- ko if: conditions -->
           <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
             <li>
               <i class="fa fa-sitemap"></i>

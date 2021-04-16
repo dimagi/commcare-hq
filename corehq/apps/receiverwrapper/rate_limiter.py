@@ -124,7 +124,7 @@ def _report_current_global_submission_thresholds():
     for window, value, threshold in global_submission_rate_limiter.iter_rates():
         metrics_gauge('commcare.xform_submissions.global_threshold', threshold, tags={
             'window': window
-        })
+        }, multiprocess_mode='max')
         metrics_gauge('commcare.xform_submissions.global_usage', value, tags={
             'window': window
-        })
+        }, multiprocess_mode='max')

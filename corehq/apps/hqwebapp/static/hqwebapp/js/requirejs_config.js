@@ -5,9 +5,9 @@ requirejs.config({
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
-        "knockout": "knockout/dist/knockout.debug",
+        "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
-        "datatables": "datatables/media/js/jquery.dataTables.min",
+        "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
@@ -30,6 +30,9 @@ requirejs.config({
         "nvd3/nv.d3.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',
+        },
+        "hqwebapp/js/lib/modernizr": {
+            exports: 'Modernizr',
         },
     },
     packages: [{

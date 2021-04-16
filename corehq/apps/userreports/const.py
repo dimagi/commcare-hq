@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.change_feed import topics
@@ -20,6 +21,7 @@ DATA_SOURCE_MISSING_APP_ERROR_MESSAGE = _(
 UCR_SQL_BACKEND = "SQL"
 
 DEFAULT_MAXIMUM_EXPANSION = 10
+LENIENT_MAXIMUM_EXPANSION = 50
 
 UCR_CELERY_QUEUE = 'ucr_queue'
 UCR_INDICATOR_CELERY_QUEUE = 'ucr_indicator_queue'
@@ -46,7 +48,7 @@ VALID_REFERENCED_DOC_TYPES = [
 ]
 
 ASYNC_INDICATOR_QUEUE_TIME = timedelta(minutes=5)
-ASYNC_INDICATOR_CHUNK_SIZE = 100
+ASYNC_INDICATOR_CHUNK_SIZE = getattr(settings, 'ASYNC_INDICATOR_CHUNK_SIZE', 100)
 ASYNC_INDICATOR_MAX_RETRIES = 20
 
 XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'

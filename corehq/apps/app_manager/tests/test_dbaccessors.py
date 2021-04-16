@@ -4,7 +4,6 @@ from couchdbkit.exceptions import NoResultFound
 
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
-    get_all_app_ids,
     get_all_built_app_ids_and_versions,
     get_app,
     get_app_cached,
@@ -176,10 +175,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
             self.domain, app_ids_in_domain
         )
         self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
-
-    def test_get_all_app_ids_for_domain(self):
-        app_ids = get_all_app_ids(self.domain)
-        self.assertEqual(len(app_ids), 3)
 
     def test_get_latest_built_app_ids_and_versions(self):
         build_ids_and_versions = get_latest_app_ids_and_versions(self.domain)

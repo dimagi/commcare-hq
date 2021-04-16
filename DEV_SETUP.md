@@ -26,6 +26,9 @@ Postgres and Couch data.
 * CouchDB
   * From a non-Docker install: Copy `/var/lib/couchdb2/`
   * From a Docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+  
+* Shared Directory
+  * If you are following the default instructions, copy the `sharedfiles` directory from the HQ root folder, otherwise copy the directory referenced by `SHARED_DRIVE_ROOT` in `localsettings.py`
 
 Save those backups to somewhere you'll be able to access from the new environment.
 
@@ -48,7 +51,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
-      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxslt1-dev libpq-dev
+      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
 
 
 ##### macOS Notes
@@ -57,11 +60,24 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
       $ sudo python get-pip.py
       $ sudo pip install virtualenvwrapper --ignore-installed six
+      
+- For downloading Python 3.6 consider:
+    1. Using [pyenv](https://github.com/pyenv/pyenv-installer)
+    2. Using homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
   - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
   - [pango](https://www.pango.org/) (available via homebrew)
+  - libxmlsec1 (install with homebrew)
+
+  
+##### xmlsec
+
+`xmlsec` is a `pip` dependency that will require some non-`pip`-installable
+packages. The above notes should have covered these requirements for linux and macOS, 
+but if you are on a different platform or still experiencing issues,
+please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/). 
 
 
 #### Set up virtual environment
@@ -92,7 +108,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
    script, say, ~/.bashrc, or ~/.zshrc. For example:
 
        $ cat <<EOF >> ~/.bashrc
-       export WORKON_HOME=\$HOME/venv
+       export WORKON_HOME=~/venv
        export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
        source /usr/local/bin/virtualenvwrapper.sh
        EOF
@@ -100,6 +116,10 @@ Save those backups to somewhere you'll be able to access from the new environmen
 1. Activate your virtual environment:
 
        $ workon cchq
+
+1. Ensure your vitualenv `pip` is up-to-date:
+
+       $ python3 -m pip install --upgrade pip
 
 
 #### Clone repo and install requirements
@@ -109,6 +129,7 @@ Once all the dependencies are in order, please do the following:
     $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
+    $ git-hooks/install.sh
     $ setvirtualenvproject  # optional - sets this directory as the project root
 
 Next, install the appropriate requirements (only one is necessary).
@@ -116,6 +137,14 @@ Next, install the appropriate requirements (only one is necessary).
 * Recommended for those developing CommCare HQ
 
       $ pip install -r requirements/dev-requirements.txt
+
+* Recommended for developers or others with custom requirements. Use this
+  `pip install ...` workflow for initial setup only. Then use commands in
+  `local.in`.
+
+      $ cp requirements/local.in.sample requirements/local.in
+      # customize requirements/local.in as desired
+      $ pip install -r requirements/local.in
 
 * For production environments
 
@@ -150,28 +179,68 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 Once you have completed the above steps, you can use Docker to build
 and run all of the service containers. There are detailed instructions
 for setting up Docker in the [docker folder](docker/README.md). But the
-following should cover the needs of most developers:
+following should cover the needs of most developers.
 
+
+1. Install docker packages.
+
+    **Mac**: see [Install Docker Desktop on
+    Mac](https://docs.docker.com/docker-for-mac/install/) for docker
+    installation and setup.
+
+    **Linux**:
+
+    ```sh
+    # install docker
     $ sudo apt install docker.io
-    $ pip install docker-compose
+
+    # ensure docker is running
+    $ systemctl is-active docker || sudo systemctl start docker
+    # add your user to the `docker` group
     $ sudo adduser $USER docker
-
-Log in as yourself again, to activate membership of the "docker" group:
-
+    # login as yourself again to activate membership of the "docker" group
     $ su - $USER
 
-Ensure the Docker service is running:
+    # re-activate your virtualenv (with your venv tool of choice)
+    # (virtualenvwrapper)
+    $ workon cchq
 
-    $ sudo service docker status
+    # or (pyenv)
+    $ pyenv activate cchq
 
-Bring up the Docker containers for the services you probably need:
+    # or (virtualenv)
+    $ source $WORKON_HOME/cchq/bin/activate
+    ```
 
-    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+1. Install the `docker-compose` python library.
 
-or, to detach and run in the background, use the `-d` option:
+    ```sh
+    $ pip install docker-compose
+    ```
 
-    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+1. Ensure the elasticsearch config files are world-readable (their containers
+   will fail to start otherwise).
 
+    ```sh
+    chmod 0644 ./docker/files/elasticsearch*.yml
+    ```
+
+1. Bring up the docker containers.
+
+    ```sh
+    $ ./scripts/docker up -d
+    # Or, omit the '-d' option to keep the containers attached in the foreground
+    $ ./scripts/docker up
+    # Optionally, bring up only specific containers (add '-d' to detach)
+    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio formplayer
+    ```
+
+1. If you are planning on running Formplayer from source, stop the formplayer
+   container.
+
+    ```sh
+    $ ./scripts/docker stop formplayer
+    ```
 
 ### (Optional) Copying data from an existing HQ install
 
@@ -201,6 +270,10 @@ If you previously created backups of another HQ install's data, you can now copy
         $ ./scripts/docker start couch
 
   * Fire up Fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+  
+* Shared Directory
+  * If you are following the default instructions, move/merge the `sharedfiles` directory into the HQ root, otherwise do so into the `SHARED_DRIVE_ROOT` directory referenced in `localsettings.py`
+
 
 
 ### Set up your Django environment
@@ -232,41 +305,38 @@ names to the aliases.
 
     $ ./manage.py ptop_es_manage --flip_all_aliases
 
-### Installing Bower
+### Installing Yarn
 
-We use Bower to manage our JavaScript dependencies. In order to download the required JavaScript packages,
-you'll need to install `bower` and run `bower install`. Follow these steps to install:
+We use Yarn to manage our JavaScript dependencies. It is able to install older `bower` dependencies/repositories that we still need 
+and `npm` repositories. Eventually we will move fully to `npm`, but for now you will need `yarn` to manage `js` repositories.
 
-1. If you do not already have npm:
+In order to download the required JavaScript packages, you'll need to install `yarn` and run `yarn install`. Follow these steps to install:
 
-    For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
-    repository. Run the following commands:
+1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install#mac-stable) to install Yarn.
 
-        $ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-        $ sudo apt-get install -y nodejs
-
-    For macOS: Install with Homebrew:
-
-        $ brew install node
-
-    For others: install [npm](https://www.npmjs.com/)
-
-2. Install Bower:
-
-        $ sudo npm -g install bower
-
-3. Run Bower with:
-
-        $ bower install
-
-
-### Install JS-XPATH
-
-This is required for the server side xpath validation. See [package.json](package.json) for exact version.
+2. Install dependencies with:
 
 ```
-npm install dimagi/js-xpath#v0.0.2-rc1
+yarn install --frozen-lockfile
 ```
+
+NOTE: if you are making changes to `package.json`, please run `yarn install` without the `--frozen-lockfile` flag so that `yarn.lock` will get updated.
+
+
+#### Troubleshooting Javascript dependency installation
+
+Depending on your operating system, and what version of `nodejs` and `npm` you have locally, 
+you might run into issues. Here are minimum version requirements for these packages. 
+
+    $ npm --version
+    $ 6.14.4
+    $ node --version
+    $ v12.18.1
+
+On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The easiest way to get onto the current nodejs v12 is 
+
+    $ curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+    $ sudo apt-get install -y nodejs
 
 ### Using LESS: 2 Options
 
@@ -300,7 +370,7 @@ Formplayer is a Java service that allows us to use applications on the web inste
 
 In `localsettings.py`:
 ```
-FORMPLAYER_URL = 'http://localhost:8010'
+FORMPLAYER_URL = 'http://localhost:8080'
 LOCAL_APPS += ('django_extensions',)
 ```
 
@@ -313,9 +383,9 @@ Then you need to have Formplayer running.
 Prerequisites:
 + Install Java
 
-      $ sudo apt install openjdk-8-jre
+      $ sudo apt install default-jre
 
-+ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
++ [Initialize Formplayer database](https://github.com/dimagi/formplayer#building-and-running).
   The password for the "commcarehq" user is in the localsettings.py file
   in the `DATABASES` dictionary.
 
@@ -325,20 +395,21 @@ Prerequisites:
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.
 
-    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o application.properties
     $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 
 Thereafter, to run Formplayer, navigate to the dir where you installed them
 above (probably the repo root), and run:
 
-    $ java -jar formplayer.jar --spring.config.name=formplayer
+    $ java -jar formplayer.jar
 
 This starts a process in the foreground, so you'll need to keep it open as long
-as you plan on using Formplayer. If Formplayer stops working, you can try
-re-fetching it using the same command above. Feel free to add it to your
-`hammer` command or wherever.
+as you plan on using Formplayer.
 
-    $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+To keep Formplayer up to date with the version used in production, you can add
+the `curl` commands above to your `hammer` command, or whatever script you use
+for updating your dev environment.
+
 
 #### Browser Settings
 
@@ -360,10 +431,21 @@ Then run the following separately:
     $ ./manage.py runserver 0.0.0.0:8000
 
     # Keeps elasticsearch index in sync
-    $ ./manage.py run_ptop --all
+    # You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
+    $ ./manage.py run_ptop --all --processor-chunk-size=1
+
+    # You can also run individual pillows with the following.
+    # Pillow names can be found in settings.py
+    $ ./manage.py run_ptop --pillow-name=CaseSearchToElasticsearchPillow --processor-chunk-size=1
+
 
     # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
     $ celery -A corehq worker -l info
+
+For celery, you may need to add a "-Q" argument based on the queue you want to listen to.
+For example, to use case importer with celery locally you need to run
+`celery -A corehq worker -l info -Q case_import_queue`
+
 
 Create a superuser for your local environment
 
@@ -411,6 +493,10 @@ To run a particular test or subset of tests
     $ ./manage.py test corehq/apps/app_manager
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
+    
+To use the `pdb` debugger in tests, include the `s` flag:
+
+    $ ./manage.py test -s <test.module.path>[:<TestClass>[.<test_name>]]
 
 If database tests are failing because of a `permission denied` error, give your
 Postgres user permissions to create a database.
@@ -432,6 +518,15 @@ Or, to drop the current test DB and create a fresh one
 See `corehq.tests.nose.HqdbContext` for full description
 of `REUSE_DB` and `--reusedb`.
 
+### Accessing the test shell and database
+
+The `CCHQ_TESTING` environment variable allows you to run management commands in the context of your test environment rather than your dev environment.
+This is most useful for shell or direct database access:
+
+    $ CCHQ_TESTING=1 ./manage.py dbshell
+    
+    $ CCHQ_TESTING=1 ./manage.py shell
+
 ### Running tests by tag
 You can run all tests with a certain tag as follows:
 
@@ -450,14 +545,19 @@ See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
 
 ### Setup
 
-In order to run the JavaScript tests you'll need to install the required npm packages:
+Make sure javascript packages are installed with the following. Please see the section on 
+installing `yarn` above for more details.
 
-    $ npm install
+It's recommended to install grunt globally (with `yarn`) in order to use grunt from the command line:
 
-It's recommended to install grunt globally in order to use grunt from the command line:
+    $ yarn global add grunt
+    $ yarn global add grunt-cli
 
-    $ npm install -g grunt
-    $ npm install -g grunt-cli
+You'll then need to add the yarn bin folder to your path:
+    
+    $ export PATH="$(yarn global bin):$PATH"
+    
+More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
 In order for the tests to run the __development server needs to be running on port 8000__.
 
@@ -465,11 +565,11 @@ In order for the tests to run the __development server needs to be running on po
 
 To run all JavaScript tests in all the apps:
 
-    $ grunt mocha
+    $ grunt test
 
 To run the JavaScript tests for a particular app run:
 
-    $ grunt mocha:<app_name> // (e.g. grunt mocha:app_manager)
+    $ grunt test:<app_name> // (e.g. grunt test:app_manager)
 
 To list all the apps available to run:
 
@@ -489,12 +589,6 @@ Occasionally you will see an app specified with a `#`, like `app_manager#b3`. Th
 ```
 http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
 ```
-
-### Continuous JavaScript testing
-
-By running the `watch` command, it's possible to continuously run the JavaScript test suite while developing
-
-    $ grunt watch:<app_name>  // (e.g. grunt watch:app_manager)
 
 ## Sniffer
 
@@ -524,7 +618,7 @@ run the Python tests when saving py files as follows:
 
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
-(recommended to install pyinotify or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
+(recommended to install pywatchman or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
 
 ## Other links
 

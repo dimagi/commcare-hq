@@ -228,7 +228,7 @@ class TestSubscriptionForm(BaseAccountingTest):
         self.domain2.save()
 
         self.web_user = WebUser.create(
-            self.domain.name, generator.create_arbitrary_web_user_name(), 'testpwd'
+            self.domain.name, generator.create_arbitrary_web_user_name(), 'testpwd', None, None
         )
 
         self.account = BillingAccount.get_or_create_account_by_domain(

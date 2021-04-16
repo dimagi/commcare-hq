@@ -1,4 +1,3 @@
-import datetime
 import json
 import re
 from base64 import b64encode
@@ -6,18 +5,16 @@ from io import BytesIO
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_POST
 
 import qrcode
 from memoized import memoized
-from tastypie.models import ApiKey
 from two_factor.models import PhoneDevice
 from two_factor.utils import default_device
 from two_factor.views import (
@@ -30,7 +27,7 @@ from two_factor.views import (
     SetupView,
 )
 
-from dimagi.utils.couch import CriticalSection
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -43,8 +40,10 @@ from corehq.apps.domain.decorators import (
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign, update_session_language
-from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
+from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
+    HQApiKeyForm,
     HQDeviceValidationForm,
     HQEmptyForm,
     HQPasswordChangeForm,
@@ -53,6 +52,7 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
@@ -133,20 +133,10 @@ class MyAccountSettingsView(BaseMyAccountView):
         # this is only here to add the login_required decorator
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
-    def get_api_key_status(self):
-        api_query = ApiKey.objects.filter(user=self.request.user)
-        if api_query.exists():
-            api_key = api_query.order_by('-created').first()
-            return ugettext_lazy("API Key has been active since {}").format(
-                api_key.created.strftime('%d %B %Y')
-            ), True
-        return ugettext_lazy("No API Key has been generated"), False
-
     @property
     @memoized
     def settings_form(self):
         language_choices = langcodes.get_all_langs_for_select()
-        api_key_status, api_key_exists = self.get_api_key_status()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         try:
             domain = self.request.domain
@@ -155,17 +145,15 @@ class MyAccountSettingsView(BaseMyAccountView):
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
                 self.request.POST,
-                api_key_status=api_key_status,
-                api_key_exists=api_key_exists,
                 domain=domain,
                 existing_user=self.request.couch_user,
+                request=self.request,
             )
         else:
             form = UpdateMyAccountInfoForm(
-                api_key_status=api_key_status,
-                api_key_exists=api_key_exists,
                 domain=domain,
                 existing_user=self.request.couch_user,
+                request=self.request,
             )
         form.load_language(language_choices)
         return form
@@ -301,8 +289,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.password_change_form,
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'hide_password_feedback': has_custom_clean_password(),
         }
 
     @method_decorator(sensitive_post_parameters())
@@ -391,7 +378,7 @@ def _show_link_to_webapps(user):
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
     template_name = 'two_factor/profile/disable.html'
-    page_title = ugettext_lazy("Disable Two Factor Authentication")
+    page_title = ugettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -472,16 +459,6 @@ class BaseProjectDataView(BaseDomainView):
         return reverse('data_interfaces_default', args=[self.domain])
 
 
-@require_POST
-@login_required
-def new_api_key(request):
-    api_key = ApiKey.objects.get_or_create(user=request.user)[0]
-    api_key.key = api_key.generate_key()
-    api_key.created = datetime.datetime.now()
-    api_key.save()
-    return HttpResponse(_('{} (copy this in a secure place)').format(api_key.key))
-
-
 @quickcache(['data'])
 def get_qrcode(data):
     """
@@ -522,5 +499,92 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
         qrcode = get_qrcode(qrcode_data)
 
         context = self.get_context_data(**kwargs)
-        context['qrcode_64'] = b64encode(qrcode)
+        context['qrcode_64'] = b64encode(qrcode).decode('utf8')
         return self.render_to_response(context)
+
+
+class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
+    page_title = ugettext_lazy("API Keys")
+    urlname = "user_api_keys"
+
+    template_name = "settings/user_api_keys.html"
+
+    @property
+    def base_query(self):
+        return HQApiKey.objects.filter(user=self.request.user)
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("API Key"),
+            _("Project"),
+            _("IP Allowlist"),
+            _("Created"),
+            _("Delete"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for api_key in self.base_query.order_by('-created').all():
+            redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+            yield {
+                "itemData": {
+                    "id": api_key.id,
+                    "name": api_key.name,
+                    "key": redacted_key,
+                    "domain": api_key.domain or _('All Projects'),
+                    "ip_allowlist": (
+                        ", ".join(api_key.ip_allowlist)
+                        if api_key.ip_allowlist else _("All IP Addresses")
+                    ),
+                    "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                "template": "base-user-api-key-template",
+            }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    create_item_form_class = "form form-horizontal"
+
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return HQApiKeyForm(self.request.POST, couch_user=self.request.couch_user)
+        return HQApiKeyForm(couch_user=self.request.couch_user)
+
+    def get_create_item_data(self, create_form):
+        try:
+            new_api_key = create_form.create_key(self.request.user)
+        except DuplicateApiKeyName:
+            return {'error': _(f"Api Key with name \"{create_form.cleaned_data['name']}\" already exists.")}
+        copy_key_message = _("Copy this in a secure place. It will not be shown again.")
+        return {
+            'itemData': {
+                'id': new_api_key.id,
+                'name': new_api_key.name,
+                'key': f"{new_api_key.key} ({copy_key_message})",
+                "domain": new_api_key.domain or _('All Projects'),
+                'ip_allowlist': new_api_key.ip_allowlist,
+                'created': new_api_key.created.isoformat()
+            },
+            'template': 'new-user-api-key-template',
+        }
+
+    def get_deleted_item_data(self, item_id):
+        deleted_key = HQApiKey.objects.get(id=item_id)
+        deleted_key.delete()
+        return {
+            'itemData': {
+                'name': deleted_key.name,
+            },
+            'template': 'deleted-user-api-key-template',
+        }

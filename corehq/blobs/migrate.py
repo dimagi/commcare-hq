@@ -287,7 +287,7 @@ class BlobDbBackendMigrator(BlobDbMigrator):
         meta = doc["_obj_not_json"]
         self.total_blobs += 1
         try:
-            content = meta.open(db=self.db.old_db)
+            content = self.db.old_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
             if not self.db.new_db.exists(key=meta.key):
                 self.save_backup(doc)

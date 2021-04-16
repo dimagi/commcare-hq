@@ -36,7 +36,9 @@ from corehq.apps.case_search.models import (
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
+    LoginAndDomainMixin,
 )
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
     USE_PARENT_LOCATION_CHOICE,
@@ -45,12 +47,12 @@ from corehq.apps.domain.forms import (
     PrivacySecurityForm,
     ProjectSettingsForm,
 )
-from corehq.apps.domain.models import LICENSES, Domain
-from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
@@ -140,6 +142,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
             'project_description': self.domain_object.project_description,
             'default_timezone': self.domain_object.default_timezone,
+            'default_geocoder_location': self.domain_object.default_geocoder_location,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_type': self.initial_call_center_type,
@@ -192,6 +195,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def page_context(self):
         return {
             'basic_info_form': self.basic_info_form,
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN
         }
 
     def post(self, request, *args, **kwargs):
@@ -317,6 +321,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "secure_sessions": self.domain_object.secure_sessions,
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
+            "ga_opt_out": self.domain_object.ga_opt_out,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -390,11 +395,11 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         else:
             disable_case_search(self.domain)
 
-        CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
+        config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
-            'fuzzy_properties': updated_fuzzies,
-            'ignore_patterns': updated_ignore_patterns,
         })
+        config.ignore_patterns.set(updated_ignore_patterns)
+        config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)
 
     @property
@@ -404,6 +409,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
         return {
             'case_types': sorted(list(case_types)),
+            'case_search_url': reverse("case_search", args=[self.domain]),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
                 'fuzzy_properties': {
@@ -488,12 +494,12 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
-        self.extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+
+        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        self.extra_context['hide_password_feedback'] = has_custom_clean_password()
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)

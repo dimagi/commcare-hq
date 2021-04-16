@@ -43,10 +43,11 @@ class HqTestFinderPlugin(Plugin):
 
     INCLUDE_DIRS = [
         "corehq/ex-submodules/*",
-        "submodules/auditcare-src",
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
+        "extensions/*/*",
+        "custom",
     ]
 
     def options(self, parser, env):

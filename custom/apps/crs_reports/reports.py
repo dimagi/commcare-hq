@@ -1,13 +1,14 @@
 from datetime import timedelta
 import datetime
 from django.utils.translation import ugettext_noop
-from django.utils import html
+from django.utils.html import format_html
 from casexml.apps.case.models import CommCareCase
 from django.urls import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.es import filters
+from corehq.apps.es.cases import CaseES
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
@@ -47,13 +48,18 @@ def visit_completion_counter(case):
 
 
 class HNBCReportDisplay(CaseDisplay):
+    date_format = "'%d-%m-%Y'"
+
+    def __init__(self, report, case):
+        super().__init__(case, report.timezone, report.individual)
+        self.report = report
 
     @property
     def dob(self):
         if 'date_birth' not in self.case:
             return '---'
         else:
-            return self.report.date_to_json(self.case['date_birth'])
+            return self._dateprop('date_birth')
 
     @property
     def visit_completion(self):
@@ -75,10 +81,11 @@ class HNBCReportDisplay(CaseDisplay):
     def case_link(self):
         case_id, case_name = self.case['_id'], self.case['mother_name']
         try:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug])),
-                html.escape(case_name),
-            ))
+            return format_html(
+                "<a class='ajax_dialog' href='{}'>{}</a>",
+                reverse('crs_details_report', args=[self.case["domain"], case_id, self.report.slug]),
+                case_name,
+            )
         except NoReverseMatch:
             return "%s (bad ID format)" % case_name
 
@@ -106,40 +113,24 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     @property
     @memoized
-    def case_es(self):
-        return ReportCaseES(self.domain)
-
-    def build_es_query(self, case_type=None, afilter=None, status=None):
-
-        def _domain_term():
-            return {"term": {"domain.exact": self.domain}}
-
-        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
-        if case_type:
-            subterms.append({"term": {"type.exact": case_type}})
-
-        if status:
-            subterms.append({"term": {"closed": (status == 'closed')}})
-
-        es_query = {
-            'query': {
-                'filtered': {
-                    'query': {"match_all": {}},
-                    'filter': {'and': subterms}
-                }
-            },
-            'sort': self.get_sorting_block(),
-            'from': self.pagination.start,
-            'size': self.pagination.count,
-        }
-
-        return es_query
-
-    @property
-    @memoized
     def es_results(self):
-        query = self.build_es_query(case_type=self.case_type, afilter=self.case_filter, status=self.case_status)
-        return self.case_es.run_query(query)
+        query = CaseES('report_cases').domain(self.domain)
+        if self.case_type:
+            query = query.case_type(self.case_type)
+
+        if self.case_filter:
+            query = query.filter(self.case_filter)
+
+        if self.case_status:
+            query = query.filter(filters.term("closed", self.case_status == 'closed'))
+
+        query = (
+            query
+            .set_sorting_block(self.get_sorting_block())
+            .start(self.pagination.start)
+            .size(self.pagination.count)
+        )
+        return query.run().hits
 
     @property
     def headers(self):
@@ -156,7 +147,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @property
     def rows(self):
         case_displays = (HNBCReportDisplay(self, restore_property_dict(self.get_case(case)))
-                         for case in self.es_results['hits'].get('hits', []))
+                         for case in self.es_results)
 
         for disp in case_displays:
             yield [
@@ -188,17 +179,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             filters.append({'term': {'owner_id': individual}})
         return filters
 
-    def date_to_json(self, date):
-        if date:
-            try:
-                date = force_to_datetime(date)
-                return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                        .ui_string('%d-%m-%Y'))
-            except ValueError:
-                return ''
-        else:
-            return ''
-
 
 class HBNCMotherReport(BaseHNBCReport):
 
@@ -211,24 +191,23 @@ class HBNCMotherReport(BaseHNBCReport):
     def case_filter(self):
         now = datetime.datetime.utcnow()
         fromdate = now - timedelta(days=42)
-        filters = BaseHNBCReport.base_filters(self)
-        filters.append({'term': {'pp_case_filter.#value': "1"}})
-        filters.append({'range': {'date_birth.#value': {"gte": json_format_date(fromdate)}}})
+        _filters = BaseHNBCReport.base_filters(self)
+        _filters.append(filters.term('pp_case_filter.#value', '1'))
+        _filters.append(filters.range(gte=json_format_date(fromdate)))
         status = self.request_params.get('PNC_status', '')
-
-        or_stmt = []
 
         if status:
             if status == 'On Time':
                 for i in range(1, 8):
-                    filters.append({'term': {'case_pp_%s_done.#value' % i: 'yes'}})
+                    _filters.append(filters.term('case_pp_%s_done.#value' % i, 'yes'))
             else:
+                or_stmt = []
                 for i in range(1, 8):
-                    or_stmt.append({"not": {'term': {'case_pp_%s_done.#value' % i: 'yes'}}})
-                or_stmt = {'or': or_stmt}
-                filters.append(or_stmt)
+                    or_stmt.append(filters.not_term('case_pp_%s_done.#value' % i, 'yes'))
+                if or_stmt:
+                    _filters.append(filters.OR(*or_stmt))
 
-        return {'and': filters} if filters else {}
+        return filters.AND(*_filters)
 
 CUSTOM_REPORTS = (
     (_('Custom Reports'), (

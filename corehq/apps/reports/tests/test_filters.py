@@ -1,3 +1,7 @@
+from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
@@ -19,7 +23,8 @@ from corehq.apps.reports.filters.forms import (
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembership, WebUser
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -221,3 +226,109 @@ class TestCaseListFilter(TestCase):
 
 def _make_filter(slug, value):
     return {'slug': slug, 'value': value}
+
+
+class TestEMWFilterOutput(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'emwf-filter-output-test'
+        cls.user = WebUser(username='test@cchq.com', domains=[cls.domain])
+        cls.user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='MYROLE')]
+        from corehq.apps.reports.tests.filters.user_list import dummy_user_list
+
+        for user in dummy_user_list:
+            user_obj = CouchUser.get_by_username(user['username'])
+            if user_obj:
+                user_obj.delete('')
+        cls.user_list = []
+        for user in dummy_user_list:
+            user_obj = CommCareUser.create(**user) if user['doc_type'] == 'CommcareUser'\
+                else WebUser.create(**user)
+            user_obj.save()
+            cls.user_list.append(user_obj)
+
+    def setUp(self):
+        super().setUp()
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+        self._send_users_to_es()
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
+        for user in cls.user_list:
+            user.delete(deleted_by='')
+        super().tearDownClass()
+
+    def _send_users_to_es(self):
+        for user_obj in self.user_list:
+            send_to_elasticsearch('users', transform_user_for_elasticsearch(user_obj.to_json()))
+        self.es.indices.refresh(USER_INDEX)
+
+    def test_with_active_slug(self):
+        mobile_user_and_group_slugs = ['t__0']
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.user,
+        )
+        user_ids = user_query.values_list('_id', flat=True)
+        expected_ids = ['active1', 'active2']
+        self.assertCountEqual(user_ids, expected_ids)
+
+    def test_with_deactivated_slug(self):
+        mobile_user_and_group_slugs = ['t__5']
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.user,
+        )
+        user_ids = user_query.values_list('_id', flat=True)
+        expected_ids = ['deactive2', 'deactive1']
+        self.assertCountEqual(user_ids, expected_ids)
+
+    def test_with_webuser_slug(self):
+        mobile_user_and_group_slugs = ['t__6']
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.user,
+        )
+        user_ids = user_query.values_list('_id', flat=True)
+        expected_ids = ['web1']
+        self.assertCountEqual(user_ids, expected_ids)
+
+    def test_with_active_type_and_inactive_user_slug(self):
+        mobile_user_and_group_slugs = ['t__0', 'u__deactive1']
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.user,
+        )
+        user_ids = user_query.values_list('_id', flat=True)
+        expected_ids = ['active1', 'active2', 'deactive1']
+        self.assertCountEqual(user_ids, expected_ids)
+
+    def test_with_deactivated_type_and_active_user_slug(self):
+        mobile_user_and_group_slugs = ['t__5', 'u__active1']
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.user,
+        )
+        user_ids = user_query.values_list('_id', flat=True)
+        expected_ids = ['deactive1', 'deactive2', 'active1']
+        self.assertCountEqual(user_ids, expected_ids)
+
+    def test_with_web_type_and_active_deactivated_user_slug(self):
+        mobile_user_and_group_slugs = ['t__6', 'u__active1', 'u__deactive1']
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.user,
+        )
+        user_ids = user_query.values_list('_id', flat=True)
+        expected_ids = ['web1', 'active1', 'deactive1']
+        self.assertCountEqual(user_ids, expected_ids)

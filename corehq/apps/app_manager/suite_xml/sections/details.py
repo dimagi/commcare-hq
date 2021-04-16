@@ -190,9 +190,8 @@ class DetailContributor(SectionContributor):
                     if target_form.is_registration_form(module.case_type):
                         d.actions.append(self._get_reg_form_action(module))
 
-                if module_offers_search(module) and "search" not in id:
-                    # Add the search action only if this isn't a search detail
-                    d.actions.append(self._get_case_search_action(module))
+                if module_offers_search(module):
+                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -211,7 +210,7 @@ class DetailContributor(SectionContributor):
                 etree.fromstring("<variables>{}</variables>".format(custom_variables))
             ]
             d.variables.extend([
-                load_xmlobject_from_string(etree.tostring(e), xmlclass=DetailVariable)
+                load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
                 for e in custom_variable_elements
             ])
 
@@ -296,17 +295,23 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def _get_case_search_action(module):
+    def _get_case_search_action(module, in_search=False):
         relevant_kwarg = {}
-        if module.search_config.search_button_display_condition:
+        if not in_search and module.search_config.search_button_display_condition:
             relevant_kwarg = dict(
                 relevant=XPath(module.search_config.search_button_display_condition),
             )
+        allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain) and not in_search
         action = Action(
             display=Display(
-                text=Text(locale_id=id_strings.case_search_locale(module))
+                text=Text(locale_id=(
+                    id_strings.case_search_again_locale(module) if in_search
+                    else id_strings.case_search_locale(module)
+                ))
             ),
             stack=Stack(),
+            auto_launch=allow_auto_launch and module.search_config.auto_launch,
+            redo_last=in_search,
             **relevant_kwarg
         )
         frame = PushFrame()
@@ -502,13 +507,13 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     return columns
 
 
-def get_instances_for_module(app, module, additional_xpaths=None):
+def get_instances_for_module(app, module, detail_section_elements):
     """
     This method is used by CloudCare when filtering cases.
     """
     modules = list(app.get_modules())
     helper = DetailsHelper(app, modules)
-    details = DetailContributor(None, app, modules).get_section_elements()
+    details = detail_section_elements
     detail_mapping = {detail.id: detail for detail in details}
     details_by_id = detail_mapping
     detail_ids = [helper.get_detail_id_safe(module, detail_type)
@@ -516,9 +521,6 @@ def get_instances_for_module(app, module, additional_xpaths=None):
                   if enabled]
     detail_ids = [_f for _f in detail_ids if _f]
     xpaths = set()
-
-    if additional_xpaths:
-        xpaths.update(additional_xpaths)
 
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())

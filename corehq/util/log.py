@@ -5,6 +5,7 @@ from logging import Filter
 import traceback
 from datetime import timedelta, datetime
 
+from celery._state import get_current_task
 from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
@@ -205,7 +206,23 @@ class HQRequestFilter(Filter):
             record.username = request.couch_user.username if getattr(request, 'couch_user', None) else ''
             record.hq_url = request.path
         else:
-            record.domain = record.username = record.hq_url = None
+            record.domain = record.username = record.hq_url = '-'
+        return True
+
+
+class CeleryTaskFilter(Filter):
+    """
+    Filter that adds custom context to log records for celery task ID and name.
+
+    This lets you add custom log formatters to include this information.
+    """
+    def filter(self, record):
+        task = get_current_task()
+        if task and task.request:
+            record.task_id = task.request.id
+            record.task_name = task.name
+        else:
+            record.task_id = record.task_name = '-'
         return True
 
 
@@ -264,6 +281,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
     granularity = min(50, length or 50)
     start = datetime.now()
 
+    info_prefix = '' if oneline else f'{prefix} '
+
     def draw(position, done=False):
         overall_position = offset + position
         overall_percent = overall_position / length if length > 0 else 1
@@ -286,10 +305,11 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         stream.flush()
 
     if oneline != "concise":
-        print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
+        print("{}Started at {:%Y-%m-%d %H:%M:%S}".format(info_prefix, start), file=stream)
     should_update = step_calculator(length, granularity)
     i = 0
     try:
+        draw(i)
         for i, x in enumerate(iterable, start=1):
             yield x
             if should_update(i):
@@ -298,8 +318,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         draw(i, done=True)
     if oneline != "concise":
         end = datetime.now()
-        print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
-        print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)
+        print("{}Finished at {:%Y-%m-%d %H:%M:%S}".format(info_prefix, end), file=stream)
+        print("{}Elapsed time: {}".format(info_prefix, display_seconds((end - start).total_seconds())), file=stream)
 
 
 def step_calculator(length, granularity):
@@ -311,14 +331,18 @@ def step_calculator(length, granularity):
     """
     def should_update(i):
         assert i, "divide by zero protection"
-        nonlocal next_update
+        nonlocal next_update, max_wait
         now = datetime.now()
         if now > next_update:
             rate = i / (now - start).total_seconds()  # iterations / second
-            secs = min(max(twice_per_dot / rate, 0.1), 300)  # seconds / dot / 2
+            secs = min(max(twice_per_dot / rate, 0.1), max_wait)  # seconds / dot / 2
             next_update = now + timedelta(seconds=secs)
+            if secs == max_wait < 300:
+                max_wait = min(max_wait * 2, 300)
             return True
         return False
+    # start with short delay to compensate for excessive initial estimates
+    max_wait = 10
     twice_per_dot = max(length / granularity, 1) / 2  # iterations / dot / 2
     start = next_update = datetime.now()
     return should_update

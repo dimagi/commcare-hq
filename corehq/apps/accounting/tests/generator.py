@@ -59,7 +59,7 @@ def create_arbitrary_web_user_name(is_dimagi=False):
     return "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
 
 
-def billing_account(web_user_creator, web_user_contact):
+def billing_account(web_user_creator, web_user_contact, is_customer_account=False):
     account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
     currency = Currency.objects.get(code=settings.DEFAULT_CURRENCY)
     billing_account = BillingAccount.objects.create(
@@ -68,6 +68,9 @@ def billing_account(web_user_creator, web_user_contact):
         currency=currency,
     )
     arbitrary_contact_info(billing_account, web_user_contact)
+    if is_customer_account:
+        billing_account.is_customer_billing_account = True
+        billing_account.save()
     return billing_account
 
 
@@ -128,9 +131,16 @@ def arbitrary_domain():
 
 
 @unit_testing_only
+def arbitrary_domain_and_subscriber():
+    domain = arbitrary_domain()
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
+    return domain, subscriber
+
+
+@unit_testing_only
 def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
-    commcare_user = CommCareUser.create(domain, username, 'test123')
+    commcare_user = CommCareUser.create(domain, username, 'test123', None, None)
     commcare_user.is_active = is_active
     return commcare_user
 

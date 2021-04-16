@@ -1,0 +1,339 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-suppl_nutrition_thr_pw_lw_v1",
+    "display_name": "Supplementary Nutrition THR (for Pregnant/Lactating Women) V1 (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {
+      "type": "property_path",
+      "property_path": [
+        "form",
+        "thr_details_group",
+        "update_cases_of_women_received_thr"
+      ]
+    },
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/4FAB81D4-BBAF-424E-8DB1-96478791DB01"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "username"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "received_on"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "maternal_care_case_id",
+        "display_name": "maternal_care_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "women_case_id"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "woman_case_id",
+        "display_name": "woman_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_days_thr_given",
+        "display_name": "number_of_days_thr_given",
+        "datatype": "integer",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "thr_details_group",
+              "number_of_days_thr_given"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "current_month_thr_days_calc",
+        "display_name": "current_month_thr_days_calc",
+        "datatype": "integer",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "current_month_thr_days_calc"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "edd",
+        "display_name": "edd",
+        "datatype": "date",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "edd"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "maternal_care_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "add",
+        "display_name": "add",
+        "datatype": "date",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "add"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "maternal_care_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "member_residential_status",
+        "display_name": "member_residential_status",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_residential_status"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "disability",
+        "display_name": "disability",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "disability"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "family_unit_caste",
+        "display_name": "family_unit_caste",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "family_unit_caste"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "family_unit_religion",
+        "display_name": "family_unit_religion",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "family_unit_religion"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      },
+      "maternal_care_case": {
+        "value_expression": {
+          "type": "identity"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "property_path",
+          "property_path": [
+            "women_case_id"
+          ]
+        }
+      },
+      "member_case": {
+        "type": "indexed_case",
+        "case_expression": {
+          "type": "named",
+          "name": "maternal_care_case"
+        },
+        "index": "parent"
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

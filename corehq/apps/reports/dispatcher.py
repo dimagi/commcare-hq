@@ -8,6 +8,7 @@ from django.views.generic.base import View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
+from corehq.apps.domain.utils import get_custom_domain_module
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -72,8 +73,9 @@ class ReportDispatcher(View):
         """
         return True
 
-    def get_reports(self, domain):
-        attr_name = self.map_name
+    @classmethod
+    def get_reports(cls, domain):
+        attr_name = cls.map_name
         from corehq import reports
         if domain:
             domain_obj = Domain.get_by_name(domain)
@@ -87,7 +89,7 @@ class ReportDispatcher(View):
 
         corehq_reports = process(getattr(reports, attr_name, ()))
 
-        module_name = settings.DOMAIN_MODULE_MAP.get(domain)
+        module_name = get_custom_domain_module(domain)
         if module_name is None:
             custom_reports = ()
         else:
@@ -100,19 +102,21 @@ class ReportDispatcher(View):
 
         return corehq_reports + custom_reports
 
-    def get_report(self, domain, report_slug, *args):
+    @classmethod
+    def get_report(cls, domain, report_slug, *args):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
         """
-        for name, group in self.get_reports(domain):
+        for name, group in cls.get_reports(domain):
             for report in group:
                 if report.slug == report_slug:
                     return report
 
+    @classmethod
     @quickcache(['domain', 'report_slug'], timeout=300)
-    def get_report_class_name(self, domain, report_slug):
-        report_cls = self.get_report(domain, report_slug)
+    def get_report_class_name(cls, domain, report_slug):
+        report_cls = cls.get_report(domain, report_slug)
         return report_cls.__module__ + '.' + report_cls.__name__ if report_cls else ''
 
     def _redirect_slug(self, slug):

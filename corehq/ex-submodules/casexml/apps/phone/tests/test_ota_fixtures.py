@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.blobs import get_blob_db
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
     FixtureDataType, FixtureTypeField,
@@ -26,7 +27,7 @@ class OtaFixtureTest(TestCase):
     def setUpClass(cls):
         super(OtaFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
-        cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic')
+        cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic', None, None)
         cls.group1 = Group(domain=DOMAIN, name='group1', case_sharing=True, users=[cls.user._id])
         cls.group1.save()
         cls.group2 = Group(domain=DOMAIN, name='group2', case_sharing=True, users=[cls.user._id])
@@ -61,19 +62,26 @@ class OtaFixtureTest(TestCase):
 
         if has_groups:
             expected = _get_group_fixture(self.user.get_id, [self.group1, self.group2])
-            check_xml_line_by_line(self, expected, ElementTree.tostring(fixture_xml[0]))
+            check_xml_line_by_line(self, expected, ElementTree.tostring(fixture_xml[0], encoding='utf-8'))
 
         if item_lists:
             for i, item_list_tag in enumerate(item_lists):
                 data_type, data_item = self.item_lists[item_list_tag]
                 item_list_xml = [
-                    ElementTree.tostring(fixture)
+                    ElementTree.tostring(fixture, encoding='utf-8')
                     for fixture in fixture_xml if item_list_tag in fixture.attrib.get("id")
                 ]
                 self.assertEqual(len(item_list_xml), 1)
 
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
+
+    def test_skip_fixture(self):
+        device = MockDevice(self.domain, self.restore_user)
+        restore = device.sync().payload.decode('utf-8')
+        self.assertIn('<fixture ', restore)
+        restore_without_fixture = device.sync(skip_fixtures=True).payload.decode('utf-8')
+        self.assertNotIn('<fixture ', restore_without_fixture)
 
 
 @use_sql_backend
@@ -113,7 +121,7 @@ def _get_item_list_fixture(user_id, tag, fixture_item):
     return template.format(
         user_id=user_id,
         tag=tag,
-        item_xml=ElementTree.tostring(fixture_item.to_xml())
+        item_xml=ElementTree.tostring(fixture_item.to_xml(), encoding='utf-8')
     )
 
 

@@ -95,9 +95,9 @@ class OutputPaginator(object):
         if self.file:
             self.file.close()
         prefix = '{}{}_'.format(TEMP_FILE_PREFIX, self.export_id)
-        fileobj = tempfile.NamedTemporaryFile(prefix=prefix, mode='wb', delete=False)
-        self.path = fileobj.name
-        self.file = gzip.GzipFile(fileobj=fileobj)
+        with tempfile.NamedTemporaryFile(prefix=prefix, mode='wb', delete=False) as fileobj:
+            self.path = fileobj.name
+            self.file = gzip.GzipFile(filename=self.path, mode='wb')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()

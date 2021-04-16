@@ -1,39 +1,31 @@
 import logging
 from functools import wraps
+from typing import Callable, Optional
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
-import attr
-import requests
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.structures import CaseInsensitiveDict
 
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.motech.auth import HTTPBearerAuth
-from corehq.motech.const import (
-    BASIC_AUTH,
-    BEARER_AUTH,
-    DIGEST_AUTH,
-    REQUEST_TIMEOUT,
+from corehq.motech.auth import AuthManager, BasicAuthManager
+from corehq.motech.const import REQUEST_TIMEOUT
+from corehq.motech.models import RequestLog, RequestLogEntry
+from corehq.motech.utils import (
+    get_endpoint_url,
+    pformat_json,
+    unpack_request_args,
 )
-from corehq.motech.models import RequestLog
-from corehq.motech.utils import pformat_json, unpack_request_args
-
-
-@attr.s(frozen=True)
-class RequestLogEntry:
-    domain = attr.ib()
-    payload_id = attr.ib()
-    method = attr.ib()
-    url = attr.ib()
-    headers = attr.ib()
-    params = attr.ib()
-    data = attr.ib()
-    error = attr.ib()
-    response_status = attr.ib()
-    response_body = attr.ib()
+from corehq.util.metrics import metrics_counter
+from corehq.util.urlsanitize.urlsanitize import (
+    CannotResolveHost,
+    InvalidURL,
+    PossibleSSRFAttempt,
+    sanitize_user_input_url,
+)
+from corehq.util.view_utils import absolute_reverse
 
 
 def log_request(self, func, logger):
@@ -43,16 +35,19 @@ def log_request(self, func, logger):
         log_level = logging.INFO
         request_error = ''
         response_status = None
+        response_headers = {}
         response_body = ''
         try:
             response = func(method, url, *args, **kwargs)
             response_status = response.status_code
+            response_headers = response.headers
             response_body = response.content
         except Exception as err:
             log_level = logging.ERROR
             request_error = str(err)
             if getattr(err, 'response', None) is not None:
                 response_status = err.response.status_code
+                response_headers = err.response.headers
                 response_body = pformat_json(err.response.text)
             raise
         else:
@@ -60,8 +55,17 @@ def log_request(self, func, logger):
         finally:
             params, data, headers = unpack_request_args(method, args, kwargs)
             entry = RequestLogEntry(
-                self.domain_name, self.payload_id, method, url, headers, params, data,
-                request_error, response_status, response_body
+                domain=self.domain_name,
+                payload_id=self.payload_id,
+                method=method,
+                url=url,
+                headers=headers,
+                params=params,
+                data=data,
+                error=request_error,
+                response_status=response_status,
+                response_headers=response_headers,
+                response_body=response_body,
             )
             logger(log_level, entry)
 
@@ -79,125 +83,142 @@ class Requests(object):
     Requests as a context manager.
     """
 
-    def __init__(self, domain_name, base_url, username, password,
-                 verify=True, notify_addresses=None, payload_id=None, logger=None, auth_type=None):
+    def __init__(
+        self,
+        domain_name: str,
+        base_url: Optional[str],
+        *,
+        verify: bool = True,
+        auth_manager: AuthManager,
+        notify_addresses: Optional[list] = None,
+        payload_id: Optional[str] = None,
+        logger: Optional[Callable] = None,
+    ):
         """
         Initialise instance
 
         :param domain_name: Domain to store logs under
         :param base_url: Remote API base URL
-        :param username: Remote API username
-        :param password: Remote API plaintext password
         :param verify: Verify SSL certificate?
+        :param auth_manager: AuthManager instance to manage
+            authentication
         :param notify_addresses: A list of email addresses to notify of
             errors.
         :param payload_id: The ID of the case or form submission
             associated with this request
         :param logger: function called after a request has been sent:
                         `logger(log_level, log_entry: RequestLogEntry)`
-        :param auth_type: which auth to use, defaults to basic
         """
         self.domain_name = domain_name
         self.base_url = base_url
-        self.username = username
-        self.password = password
         self.verify = verify
-        self.notify_addresses = [] if notify_addresses is None else notify_addresses
+        self.auth_manager = auth_manager
+        self.notify_addresses = notify_addresses if notify_addresses else []
         self.payload_id = payload_id
-        self._session = None
         self.logger = logger or RequestLog.log
-        self.auth = self._get_auth(auth_type)
         self.send_request = log_request(self, self._send_request, self.logger)
+        self._session = None
 
     def __enter__(self):
-        self._session = requests.Session()
+        self._session = self.auth_manager.get_session()
         return self
 
     def __exit__(self, *args):
         self._session.close()
         self._session = None
 
-    def _get_auth(self, auth_type):
-        if auth_type == BASIC_AUTH:
-            auth = HTTPBasicAuth(self.username, self.password)
-        elif auth_type == DIGEST_AUTH:
-            auth = HTTPDigestAuth(self.username, self.password)
-        elif auth_type == BEARER_AUTH:
-            auth = HTTPBearerAuth(self.username, self.password)
-        else:
-            auth = (self.username, self.password)
-        return auth
-
-    def _send_request(self, method, *args, **kwargs):
+    def _send_request(self, method, url, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
+        sanitize_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
-            response = self._session.request(method, *args, **kwargs)
+            response = self._session.request(method, url, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
-            with requests.Session() as session:
-                response = session.request(method, *args, **kwargs)
+            with self.auth_manager.get_session() as session:
+                response = session.request(method, url, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response
 
-    def get_url(self, uri):
-        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
-
-    def delete(self, uri, **kwargs):
+    def delete(self, endpoint, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request('DELETE', self.get_url(uri),
-                                 auth=self.auth, **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('DELETE', url, **kwargs)
 
-    def get(self, uri, *args, **kwargs):
+    def get(self, endpoint, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
-        return self.send_request('GET', self.get_url(uri), *args,
-                                 auth=self.auth, **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('GET', url, *args, **kwargs)
 
-    def post(self, uri, data=None, json=None, *args, **kwargs):
+    def post(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request('POST', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=self.auth, **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('POST', url, *args,
+                                 data=data, json=json, **kwargs)
 
-    def put(self, uri, data=None, json=None, *args, **kwargs):
+    def put(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request('PUT', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=self.auth, **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('PUT', url, *args,
+                                 data=data, json=json, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)
         notify_exception(None, message, details)
 
     def notify_error(self, message, details=None):
+        from corehq.motech.views import ConnectionSettingsListView
+
         if not self.notify_addresses:
             return
         message_lines = [
             message,
-            f'Project space: {self.domain_name}',
-            f'Remote API base URL: {self.base_url}',
-            f'Remote API username: {self.username}',
+            '',
+            _('Project space: {}').format(self.domain_name),
+            _('Remote API base URL: {}').format(self.base_url),
         ]
         if self.payload_id:
-            message_lines.append(f'Payload ID: {self.payload_id}')
+            message_lines.append(_('Payload ID: {}').format(self.payload_id))
         if details:
-            message_lines.extend(['', '', details])
+            message_lines.extend(['', details])
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[self.domain_name])
+        message_lines.extend([
+            '',
+            _('*Why am I getting this email?*'),
+            _('This address is configured in CommCare HQ as a notification '
+              'address for integration errors.'),
+            '',
+            _('*How do I unsubscribe?*'),
+            _('Open Connection Settings in CommCare HQ ({}) and remove your '
+              'email address from the "Addresses to send notifications" field '
+              'for remote connections. If necessary, please provide an '
+              'alternate address.').format(connection_settings_url),
+        ])
         send_mail_async.delay(
-            'MOTECH Error',
+            _('MOTECH Error'),
             '\r\n'.join(message_lines),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
         )
+
+
+def get_basic_requests(domain_name, base_url, username, password, **kwargs):
+    """
+    Returns a Requests instance with basic auth.
+    """
+    kwargs['auth_manager'] = BasicAuthManager(username, password)
+    return Requests(domain_name, base_url, **kwargs)
 
 
 def parse_request_exception(err):
@@ -218,14 +239,16 @@ def parse_request_exception(err):
     return err_request, err_response
 
 
-def simple_post(domain, url, data, *, headers, auth, verify,
+def simple_post(domain, url, data, *, headers, auth_manager, verify,
                 notify_addresses=None, payload_id=None):
     """
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
     """
     if isinstance(data, str):
-        data = data.encode('utf-8')  # can't pass unicode to http request posts
+        # Encode as UTF-8, otherwise requests will send data containing
+        # non-ASCII characters as 'data:application/octet-stream;base64,...'
+        data = data.encode('utf-8')
     default_headers = CaseInsensitiveDict({
         "content-type": "text/xml",
         "content-length": str(len(data)),
@@ -233,14 +256,40 @@ def simple_post(domain, url, data, *, headers, auth, verify,
     default_headers.update(headers)
     requests = Requests(
         domain,
-        base_url='',
-        username=None,
-        password=None,
+        base_url=url,
         verify=verify,
+        auth_manager=auth_manager,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
-    # Use ``Requests.send_request()`` instead of ``Requests.post()`` to
-    # pass full URL.
-    return requests.send_request('POST', url, data=data, auth=auth,
-                                 headers=default_headers)
+    try:
+        response = requests.post(None, data=data, headers=default_headers)
+    except Exception as err:
+        requests.notify_error(str(err))
+        raise
+    if not 200 <= response.status_code < 300:
+        message = f'HTTP status code {response.status_code}: {response.text}'
+        requests.notify_error(message)
+    return response
+
+
+def sanitize_user_input_url_for_repeaters(url, domain, src):
+    try:
+        sanitize_user_input_url(url)
+    except (CannotResolveHost, InvalidURL):
+        pass
+    except PossibleSSRFAttempt as e:
+        if settings.DEBUG and e.reason == 'is_loopback':
+            pass
+        else:
+            metrics_counter('commcare.repeaters.ssrf_attempt', tags={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason
+            })
+            notify_exception(None, 'Possible SSRF Attempt', details={
+                'domain': domain,
+                'src': src,
+                'reason': e.reason,
+            })
+            raise

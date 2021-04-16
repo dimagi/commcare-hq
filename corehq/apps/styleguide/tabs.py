@@ -77,7 +77,7 @@ class SGExampleTab(BaseSGTab):
                 _("Simple Crispy Form"),
                 url=reverse(DefaultSimpleCrispyFormSectionView.urlname)
             ),
-            dropdown_dict(None, is_divider=True),
+            self.divider,
             dropdown_dict(
                 _("Style Guide"),
                 url=reverse(MainStyleGuideView.urlname)

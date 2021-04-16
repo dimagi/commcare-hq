@@ -12,6 +12,7 @@ from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
 from corehq.apps.users.models import CommCareUser
 from corehq.const import MISSING_APP_ID
@@ -20,6 +21,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
 
+@es_test
 class MaltGeneratorTest(TestCase):
 
     DOMAIN_NAME = "test"
@@ -54,7 +56,7 @@ class MaltGeneratorTest(TestCase):
     def _setup_domain_user(cls):
         cls.domain = Domain(name=cls.DOMAIN_NAME)
         cls.domain.save()
-        cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****')
+        cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****', None, None)
         cls.user.save()
         cls.user_id = cls.user._id
 

@@ -55,13 +55,13 @@ class ViewTestCase(TestCase):
 
         cls.username = 'bananafana'
         cls.password = '*******'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(ViewTestCase, cls).tearDownClass()
 

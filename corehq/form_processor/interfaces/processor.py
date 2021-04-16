@@ -20,7 +20,8 @@ from ..system_action import system_action
 from ..utils import should_use_sql_backend
 
 
-class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id', 'actions'])):
+class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata',
+        ['case', 'is_creation', 'previous_owner_id', 'actions'])):
     def merge(self, other):
         return CaseUpdateMetadata(
             case=self.case,
@@ -107,6 +108,7 @@ class FormProcessorInterface(object):
             if not lock.acquire(blocking=False):
                 raise XFormLockError(xform_id)
         except RedisError:
+            logging.warning('Redis error when locking %s, continuing with no lock', xform_id)
             lock = None
         return lock
 

@@ -133,8 +133,8 @@ def preset_instances(app, instance_name):
         return Instance(**kwargs)
 
 
-@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 @memoized
+@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 def generic_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
@@ -172,17 +172,14 @@ def location_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-@register_factory('related_locations')
-def related_locations_fixture_instances(app, instance_name):
-    if instance_name == 'related_locations' and toggles.RELATED_LOCATIONS.enabled(app.domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
-
-
 def get_all_instances_referenced_in_xpaths(app, xpaths):
     instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
     unknown_instance_ids = set()
     for xpath in xpaths:
+        if not xpath:
+            continue
+
         instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
             try:

@@ -80,6 +80,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             self.domain.name,
             Permissions(
                 edit_apps=True,
+                view_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
                 view_roles=True,
@@ -95,7 +96,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.commcare_users = []
         for role in [self.custom_role] + self.user_roles:
             web_user = WebUser.create(
-                self.other_domain.name, generator.create_arbitrary_web_user_name(), 'test123'
+                self.other_domain.name, generator.create_arbitrary_web_user_name(), 'test123', None, None
             )
             web_user.is_active = True
             web_user.add_domain_membership(self.domain.name, role_id=role.get_id)
@@ -178,7 +179,9 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 edit_locations=True,
                 view_locations=True,
                 edit_apps=True,
-                edit_data=True
+                view_apps=True,
+                edit_data=True,
+                edit_reports=True
             )
             user_role.save()
 

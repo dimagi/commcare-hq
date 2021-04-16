@@ -2,8 +2,6 @@ import datetime
 import io
 import json
 import logging
-import re
-import sys
 import uuid
 
 from django import forms
@@ -29,7 +27,7 @@ from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, lazy
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -44,8 +42,6 @@ from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
-from pyzxcvbn import zxcvbn
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -96,8 +92,8 @@ from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
     CallCenterOwnerOptionsView,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.auth import get_active_users_by_email
+from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -110,14 +106,18 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, SECURE_SESSION_TIMEOUT
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
+    SECURE_SESSION_TIMEOUT
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
+
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
+
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -315,6 +315,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    default_geocoder_location = Field(
+        widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
+        label=ugettext_noop("Default project location"),
+        required=False,
+        help_text=ugettext_lazy("Please select your project's default location.")
+    )
+
     logo = ImageField(
         label=ugettext_lazy("Custom Logo"),
         required=False,
@@ -381,8 +388,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -420,6 +427,12 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean_default_geocoder_location(self):
+        data = self.cleaned_data.get('default_geocoder_location')
+        if isinstance(data, dict):
+            return data
+        return json.loads(data or '{}')
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -491,6 +504,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
+        domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
@@ -522,6 +536,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
+        if not domain_has_privilege(self.domain, privileges.GEOCODER):
+            del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -569,7 +585,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
         required=False,
-        help_text=ugettext_lazy(mark_safe(
+        help_text=mark_safe_lazy(ugettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers."
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -585,8 +601,9 @@ class PrivacySecurityForm(forms.Form):
     secure_sessions_timeout = IntegerField(
         label=ugettext_lazy("Inactivity Timeout Length"),
         required=False,
-        help_text=ugettext_lazy("Override the default {}-minute length of the inactivity timeout. Has "
-                                "no effect unless inactivity timeout is in use").format(settings.SECURE_TIMEOUT)
+        help_text=ugettext_lazy("Override the default {}-minute length of the inactivity timeout. Has no effect "
+                                "unless inactivity timeout is on. Note that when this is updated, users may need "
+                                "to log out and back in for it to take effect.").format(settings.SECURE_TIMEOUT)
     )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
@@ -607,6 +624,10 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("All mobile workers in this project will be required to have a strong password")
     )
+    ga_opt_out = BooleanField(
+        label=ugettext_lazy("Disable Google Analytics"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -621,8 +642,10 @@ class PrivacySecurityForm(forms.Form):
         self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
         self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
         self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
+        self.helper[8] = twbscrispy.PrependedText('ga_opt_out', '')
 
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(8)
             self.helper.layout.pop(7)
             self.helper.layout.pop(6)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
@@ -648,6 +671,7 @@ class PrivacySecurityForm(forms.Form):
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
         domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
+
         domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
@@ -659,6 +683,7 @@ class PrivacySecurityForm(forms.Form):
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
         domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+        domain.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
 
         domain.save()
 
@@ -866,6 +891,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Check this box to trigger a hand-off email to the partner when this form is submitted."
         ),
     )
+    use_custom_auto_case_update_hour = forms.ChoiceField(
+        label=ugettext_lazy("Choose specific time for custom auto case update rules to run"),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    auto_case_update_hour = forms.IntegerField(
+        label=ugettext_lazy("Hour of the day, in UTC, for rules to run (0-23)"),
+        required=False,
+        min_value=0,
+        max_value=23,
+    )
     use_custom_auto_case_update_limit = forms.ChoiceField(
         label=ugettext_lazy("Set custom auto case update rule limits"),
         required=True,
@@ -966,6 +1005,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
                 crispy.Field(
+                    'use_custom_auto_case_update_hour',
+                    data_bind='value: use_custom_auto_case_update_hour',
+                ),
+                crispy.Div(
+                    crispy.Field('auto_case_update_hour'),
+                    data_bind="visible: use_custom_auto_case_update_hour() === 'Y'",
+                ),
+                crispy.Field(
                     'use_custom_odata_feed_limit',
                     data_bind="value: use_custom_odata_feed_limit",
                 ),
@@ -992,6 +1039,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     @property
     def current_values(self):
         return {
+            'use_custom_auto_case_update_hour': self['use_custom_auto_case_update_hour'].value(),
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
             'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
@@ -1008,6 +1056,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_auto_case_update_hour(self):
+        if self.cleaned_data.get('use_custom_auto_case_update_hour') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('auto_case_update_hour')
+        if not value:
+            raise forms.ValidationError(_("This field is required"))
+
+        return value
 
     def clean_auto_case_update_limit(self):
         if self.cleaned_data.get('use_custom_auto_case_update_limit') != 'Y':
@@ -1059,6 +1117,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']
+        domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
         domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
@@ -1093,55 +1152,17 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-        strength = legacy_get_password_strength(txt)
-        message = _('Password is not strong enough. Requirements: 1 special character, '
-                    '1 number, 1 capital letter, minimum length of 8 characters.')
-    else:
-        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-        message = _('Password is not strong enough. Try making your password more complex.')
-    if strength['score'] < 2:
+    message = validate_password_rules(txt)
+    if message:
         raise forms.ValidationError(message)
     return txt
-
-
-def legacy_get_password_strength(value):
-    # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
-    # initial score rigged to reach 2 when all requirements are met
-    score = -2
-    if SPECIAL.search(value):
-        score += 1
-    if NUMBER.search(value):
-        score += 1
-    if UPPERCASE.search(value):
-        score += 1
-    if len(value) >= 8:
-        score += 1
-    return {"score": score}
-
-
-def _get_uppercase_unicode_regexp():
-    # rather than add another dependency (regex library)
-    # http://stackoverflow.com/a/17065040/10840
-    uppers = ['[']
-    for i in range(sys.maxunicode):
-        c = chr(i)
-        if c.isupper():
-            uppers.append(c)
-    uppers.append(']')
-    upper_group = "".join(uppers)
-    return re.compile(upper_group, re.UNICODE)
-
-SPECIAL = re.compile(r"\W", re.UNICODE)
-NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
-UPPERCASE = _get_uppercase_unicode_regexp()
 
 
 class NoAutocompleteMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        if settings.DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS:
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
@@ -1155,7 +1176,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
@@ -1262,13 +1283,12 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
-    new_password1 = forms.CharField(label=ugettext_lazy("New password"),
-                                    widget=forms.PasswordInput(
-                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
-                                    help_text=mark_safe("""
-                                    <span data-bind="text: passwordHelp, css: color">
-                                    """))
+class HQSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(
+        label=ugettext_lazy("New password"),
+        widget=forms.PasswordInput(attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">')  # nosec: no user input
+    )
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)

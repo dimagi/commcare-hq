@@ -4,7 +4,7 @@ hqDefine("reports/js/report_config_models", [
     'underscore',
     'analytix/js/google',
     'reports/js/standard_hq_report',
-    'jquery-ui/ui/datepicker',
+    'jquery-ui/ui/widgets/datepicker',
 ], function (
     $,
     ko,

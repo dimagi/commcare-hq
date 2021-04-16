@@ -5,6 +5,7 @@ from django.core.cache import cache
 from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
+from corehq.apps.es.tests.utils import es_test
 from mock import patch
 from openpyxl import load_workbook
 
@@ -673,6 +674,7 @@ class WriterTest(SimpleTestCase):
         self.assertTrue(export_save.called)
 
 
+@es_test
 class ExportTest(SimpleTestCase):
 
     @classmethod

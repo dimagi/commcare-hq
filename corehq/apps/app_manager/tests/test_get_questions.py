@@ -265,7 +265,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         questions = form.get_questions(['en'])
         self.assertEqual([], questions)
 
-    def save_to_case_in_groups(self):
+    def test_save_to_case_in_groups(self):
         """Ensure that save to case questions have the correct group and repeat context
         when there are no other questions in that group
 
@@ -285,3 +285,36 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
 
         self.assertEqual(repeat_question['repeat'], '/data/a_repeat')
         self.assertEqual(repeat_question['group'], '/data/a_repeat')
+
+    def test_fixture_references(self):
+        form_with_fixtures = self.app.new_form(
+            self.app.get_module(0).id,
+            name="Form with Fixtures",
+            lang='en',
+            attachment=self.get_xml('form_with_fixtures').decode('utf-8')
+        )
+        questions = form_with_fixtures.get_questions(['en'], include_fixtures=True)
+        self.assertEqual(questions[0], {
+            "comment": None,
+            "constraint": None,
+            "data_source": {
+                "instance_id": "country",
+                "instance_ref": "jr://fixture/item-list:country",
+                "nodeset": "instance('country')/country_list/country",
+                "label_ref": "name",
+                "value_ref": "id",
+            },
+            "group": None,
+            "hashtagValue": "#form/lookup-table",
+            "is_group": False,
+            "label": "I'm a lookup table!",
+            "label_ref": "lookup-table-label",
+            "options": [],
+            "relevant": None,
+            "repeat": None,
+            "required": False,
+            "setvalue": None,
+            "tag": "select1",
+            "type": "Select",
+            "value": "/data/lookup-table"
+        })

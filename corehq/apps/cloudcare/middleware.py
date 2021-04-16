@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 
@@ -27,4 +28,5 @@ class CloudcareMiddleware(MiddlewareMixin):
         couch_user = getattr(request, 'couch_user', None)
         if couch_user:
             if request.COOKIES.get(FORMPLAYER_SESSION_COOKIE_NAME) != couch_user.user_id:
-                response.set_cookie(FORMPLAYER_SESSION_COOKIE_NAME, couch_user.user_id)
+                response.set_cookie(FORMPLAYER_SESSION_COOKIE_NAME, couch_user.user_id,
+                                    secure=settings.SECURE_COOKIES)

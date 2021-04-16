@@ -105,10 +105,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             'domain': domain,
             'app': app,
         })
-    if not app.vellum_case_management and not app.is_remote_app():
-        # Soft assert but then continue rendering; template will contain a user-facing warning
-        _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-        _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
     if (form is not None and "usercase_preload" in getattr(form, "actions", {})
             and form.actions.usercase_preload.preload):
         _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
@@ -283,7 +279,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             for slug in uploader_slugs
         ]
         context.update({
-            "sessionid": request.COOKIES.get('sessionid'),
             "uploaders": uploaders,
             "uploaders_js": [u.js_options for u in uploaders],
             "refs": {
@@ -305,7 +300,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             app,
             request.couch_user.username
         ),
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
     confirm = request.session.pop('CONFIRM', False)

@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script type="text/template" id="query-view-list-template">
   <form>
@@ -7,17 +8,48 @@
       <tbody>
       </tbody>
     </table>
-    <button class="btn btn-default" type="submit" id="query-submit-button">
-      <div>Submit</div>
+    <button class="btn btn-default" type="button" id="query-clear-button">
+      <div>{% trans "Clear" %}</div>
+    </button>
+    <button class="btn btn-primary" type="submit" id="query-submit-button">
+      <div>{% trans "Submit" %}</div>
     </button>
   </form>
 </script>
 
+
+
 <script type="text/template" id="query-view-item-template">
   <td class="col-sm-2">
-    <div><%- text ? text : "" %></div>
+    <div>
+      <%- text ? text : "" %>
+      <% if (typeof hint !== "undefined" && hint !== null) { %>
+      <div class="hq-help pull-right">
+        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
+          <i class="fa fa-question-circle icon-question-sign"></i>
+        </a>
+      </div>
+      <% } %>
+    </div>
+  </td>
   </td>
   <td class="col-sm-2">
-    <input type="text" class="query-field form-control">
+    <% if (input == "select1") { %>
+      <select class="query-field form-control"  data-receive="<%- receive %>">
+        <option value=""></option>
+        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
+          <option value="<%- i %>" <% if (value === i) { %>selected<% } %>>
+            <%- itemsetChoices[i] %>
+          </option>
+        <% } %>
+      <select>
+    <% } else if (input == "daterange") { %>
+      <input type="text" class="daterange query-field form-control" value="<%- value %>">
+    <% } else if (input == "address") { %>
+      <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
+      </div>
+    <% } else { %>
+      <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
+    <% } %>
   </td>
 </script>

@@ -3,12 +3,16 @@ from datetime import datetime
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm
-from django.utils.safestring import mark_safe
+from django.contrib.postgres.forms import SimpleArrayField
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 from two_factor.forms import (
     DeviceValidationForm,
     MethodForm,
@@ -20,18 +24,16 @@ from two_factor.models import get_available_phone_methods
 from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.validators import validate_international_phonenumber
-from corehq.apps.users.models import CouchUser
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
+from corehq.apps.users.models import CouchUser, HQApiKey
 
 
-class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
-
+class HQPasswordChangeForm(PasswordChangeForm):
     new_password1 = forms.CharField(label=_('New password'),
                                     widget=forms.PasswordInput(),
-                                    help_text=mark_safe("""
-                                    <span data-bind="text: passwordHelp, css: color">
-                                    """))
+                                    help_text='<span data-bind="text: passwordHelp, css: color">')
 
     def __init__(self, user, *args, **kwargs):
 
@@ -59,11 +61,6 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
                 )
             ),
         )
-
-    def clean_old_password(self):
-        from corehq.apps.hqwebapp.utils import decode_password
-        self.cleaned_data['old_password'] = decode_password(self.cleaned_data['old_password'])
-        return super(HQPasswordChangeForm, self).clean_old_password()
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)
@@ -254,6 +251,59 @@ class HQPhoneNumberForm(PhoneNumberForm):
                 ),
             )
         )
+
+
+class HQApiKeyForm(forms.Form):
+    ALL_DOMAINS = ''
+    name = forms.CharField()
+    ip_allowlist = SimpleArrayField(
+        forms.GenericIPAddressField(
+            protocol='ipv4',
+        ),
+        label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
+        required=False,
+    )
+    domain = forms.ChoiceField(
+        required=False,
+        help_text=ugettext_lazy("Limit the key's access to a single project space")
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.couch_user = kwargs.pop('couch_user')
+        super().__init__(*args, **kwargs)
+
+        user_domains = self.couch_user.get_domains()
+        all_domains = (self.ALL_DOMAINS, _('All Projects'))
+        self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
+        self.helper = HQFormHelper()
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                ugettext_lazy("Add New API Key"),
+                crispy.Field('name'),
+                crispy.Field('domain'),
+                crispy.Field('ip_allowlist'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
+                    css_class='btn btn-primary',
+                    type='submit'
+                )
+            )
+        )
+
+    def create_key(self, user):
+        try:
+            HQApiKey.objects.get(name=self.cleaned_data['name'], user=user)
+            raise DuplicateApiKeyName
+        except HQApiKey.DoesNotExist:
+            new_key = HQApiKey.objects.create(
+                name=self.cleaned_data['name'],
+                ip_allowlist=self.cleaned_data['ip_allowlist'],
+                user=user,
+                domain=self.cleaned_data['domain'] or '',
+            )
+            return new_key
 
 
 class HQEmptyForm(forms.Form):

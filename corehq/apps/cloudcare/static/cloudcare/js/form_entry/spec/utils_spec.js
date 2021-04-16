@@ -1,17 +1,18 @@
 describe('Formplayer utils', function () {
     it('Should determine if two answers are equal', function () {
-        var result;
+        var answersEqual = hqImport("cloudcare/js/form_entry/utils").answersEqual,
+            result;
 
-        result = Formplayer.Utils.answersEqual('ben', 'bob');
+        result = answersEqual('ben', 'bob');
         assert.isFalse(result);
 
-        result = Formplayer.Utils.answersEqual('ben', 'ben');
+        result = answersEqual('ben', 'ben');
         assert.isTrue(result);
 
-        result = Formplayer.Utils.answersEqual(['b', 'e', 'n'], ['b', 'o', 'b']);
+        result = answersEqual(['b', 'e', 'n'], ['b', 'o', 'b']);
         assert.isFalse(result);
 
-        result = Formplayer.Utils.answersEqual(['b', 'e', 'n'], ['b', 'e', 'n']);
+        result = answersEqual(['b', 'e', 'n'], ['b', 'e', 'n']);
         assert.isTrue(result);
     });
 });

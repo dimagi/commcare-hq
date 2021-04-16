@@ -6,6 +6,7 @@ import uuid
 from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
 from functools import wraps
+from io import BytesIO
 from signal import SIGINT
 
 from django.conf import settings
@@ -18,6 +19,7 @@ from django.test import TestCase, override_settings
 import attr
 import mock
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil.parser import parse as parse_date
 from gevent.pool import Pool
 from nose.tools import nottest
 from testil import tempdir
@@ -83,7 +85,7 @@ from corehq.util.test_utils import (
 from .. import casedifftool
 from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
-from ..diffrule import ANY
+from ..diffrule import ANY, NOT_DELETED
 from ..management.commands.migrate_domain_from_couch_to_sql import (
     CACHED,
     COMMIT,
@@ -93,6 +95,7 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     RESET,
     STATS,
 )
+from ..patches import patch_XFormInstance_get_xml
 from ..statedb import init_state_db, open_state_db
 from ..util import UnhandledError
 
@@ -308,7 +311,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             return get_result(self_, sql_form, couch_form)
 
         @staticmethod
-        def maybe_process_xforms_for_cases(xforms, casedb):
+        def maybe_process_xforms_for_cases(xforms, casedb, timing_context=None):
             if any(f.form_id == form_id for f in xforms):
                 assert len(xforms) == 1, xforms
                 stock = StockProcessingResult(xforms[0])
@@ -472,6 +475,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration()
         self.assertEqual(self._get_form_ids('XFormError'), {'im-a-bad-form'})
 
+    def test_form_migration_integrity_error_resulting_in_missing_form(self):
+        self.submit_form(SIMPLE_FORM_XML)
+        with mock.patch.object(mod, "save_migrated_models", side_effect=mod.IntegrityError):
+            self.do_migration(diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
+
+    def test_form_migration_exception_resulting_in_missing_form(self):
+        self.submit_form(SIMPLE_FORM_XML)
+        with mock.patch.object(mod, "save_migrated_models", side_effect=Exception):
+            self.do_migration(diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
+
     def test_duplicate_form_migration(self):
         with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml', encoding='utf-8') as f:
             duplicate_form_xml = f.read()
@@ -490,7 +505,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -502,7 +517,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         # submit a new form with a different case update
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='newtype',
@@ -642,7 +657,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_basic_case_migration_case_name(self):
         case_id = uuid.uuid4().hex
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 case_type='migrate',
                 create=True,
@@ -652,7 +667,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         )
 
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 update={'name': 'test21'},
             ).as_text(),
@@ -1095,27 +1110,27 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
-        user = CommCareUser.create(self.domain_name, "mobile-user", "123")
+        user = CommCareUser.create(self.domain_name, "mobile-user", "123", None, None)
         # NOTE user is deleted when domain is deleted in tearDown
         with self.patch_migration_chunk_size(1):
             self.do_migration(live=True, diffs=IGNORE)
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
-            user.retire()
+            user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
-            user.retire()
+            user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         self.do_migration(finish=True)
         self.do_migration(COMMIT)
-        user.retire()
-        user.unretire()
+        user.retire(deleted_by=None)
+        user.unretire(unretired_by=None)
 
     def test_delete_cases_during_migration(self):
         from corehq.apps.hqcase.tasks import delete_exploded_cases
@@ -1466,6 +1481,30 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration(finish=True)
         self.assertEqual(self._get_case_ids(), {"test-case"})
 
+    def test_missing_form_referenced_by_case(self):
+        form = self.submit_form(make_test_form("missing-form"))
+        self.submit_form(make_test_form("present-form", age=28))
+        self.assertEqual(self._get_form_ids(), {"present-form", "missing-form"})
+        form.delete_attachment("form.xml")
+        XFormInstance.get_db().delete_doc(form.form_id)
+
+        self.do_migration(finish=True, diffs=IGNORE)
+        self.do_migration(forms="missing", diffs=IGNORE)
+
+        form_ids = self._get_form_ids()
+        self.assertIn("present-form", form_ids)
+        self.assertNotIn("missing-form", form_ids)
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self.compare_diffs(missing={"XFormInstance": 1}, diffs=[
+            Diff("test-case", "diff", ["?"],
+                old={'forms': {'missing-form': 'missing'}},
+                new={'forms': {'missing-form': 'missing'}}),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='missing-form', new=''),
+        ])
+        statedb = open_state_db(self.domain_name, self.state_dir, readonly=False)
+        missing_forms = list(statedb.iter_missing_doc_ids("XFormInstance"))
+        self.assertEqual(missing_forms, ["missing-form"])
+
     def test_form_with_extra_xml_blob_metadata(self):
         form = create_form_with_extra_xml_blob_metadata(self.domain_name)
         self.do_migration(finish=True)
@@ -1498,6 +1537,17 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
 
+    def test_form_with_malformed_received_on(self):
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        doc = form.to_json()
+        doc["received_on"] = "2013-05-23T08:33:54+00:00Z"
+        XFormInstance.get_db().save_doc(doc)
+        self.do_migration()
+        self.assertEqual(
+            self._get_form("test-form").received_on,
+            parse_date("2013-05-23T08:33:54"),
+        )
+
     def test_case_with_malformed_date_modified(self):
         bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
         assert bad_xml.count("2015-08-014") == 1, bad_xml
@@ -1510,6 +1560,32 @@ class MigrationTestCase(BaseMigrationTestCase):
         case = self._get_case("test-case")
         self.assertEqual(case.xform_ids, ["test-form"])
         self.assertEqual(case.modified_on, datetime(2015, 8, 14, 0, 0))
+
+    def test_case_with_malformed_date_modified_us(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"12-31-2014"')
+        assert bad_xml.count("12-31-2014") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "12-31-2014"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2014, 12, 31, 0, 0))
+
+    def test_case_with_malformed_date_modified_us_with_time(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"10/13/14 00:00:00"')
+        assert bad_xml.count("10/13/14 00:00:00") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "10/13/14 00:00:00"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2014, 10, 13, 0, 0))
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -1606,6 +1682,69 @@ class LedgerMigrationTests(BaseMigrationTestCase):
             Diff(kind="stock state", path=['last_modified_form_id'], old=form2, new=form1),
         ])
 
+    def test_noop_ledger_transfer(self):
+        received = timedelta(days=-5)
+        form = self.submit_form(TEST_FORM, received)
+        # Patch ledger transfer into form data and XML since it produces
+        # an error that causes the form to saved as XFormError.
+        form.form_data["stock"] = {
+            "transfer": {
+                "@date": "",
+                "@dest": "",
+                "@section-id": "kits-received",
+                "@xmlns": "http://commcarehq.org/ledger/v1",
+                "entry": {
+                    "@id": "7db0c357720ff00ad17597f941a0e900",
+                    "@quantity": "8"
+                }
+            }
+        }
+        form.save()
+        replace_form_xml(form, TEST_FORM.replace(
+            "<n0:case\n",
+            """<stock>
+                <n0:transfer date="" dest=""
+                    section-id="kits-received"
+                    xmlns:n0="http://commcarehq.org/ledger/v1">
+                    <n0:entry id="7db0c357720ff00ad17597f941a0e900" quantity="8"/>
+                </n0:transfer>
+            </stock>
+            <n0:case\n"""
+        ))
+        self.do_migration()
+        self.assertEqual(self._get_form_ids(), {form.form_id})
+
+    def test_ledger_balance_without_product(self):
+        received = timedelta(days=-5)
+        form = self.submit_form(TEST_FORM, received)
+        # Patch ledger transfer into form data and XML since it produces
+        # an error that causes the form to saved as XFormError.
+        form.form_data["stock"] = {
+            "balance": {
+                "@date": "",
+                "@entity-id": "410a1240",
+                "@section-id": "stock",
+                "@xmlns": "http://commcarehq.org/ledger/v1",
+                "entry": {
+                    "@id": "",
+                    "@quantity": "147"
+                }
+            }
+        }
+        form.save()
+        replace_form_xml(form, TEST_FORM.replace(
+            "<n0:case\n",
+            """<stock>
+                <n0:balance date=""
+                    entity-id="410a1240"
+                    section-id="stock" xmlns:n0="http://commcarehq.org/ledger/v1">
+                    <n0:entry id="" quantity="147"/>
+                </n0:balance>
+            </stock><n0:case\n"""
+        ))
+        self.do_migration()
+        self.assertEqual(self._get_form_ids(), {form.form_id})
+
     def fix_missing_ledger_diffs(self, form1, form2, diffs):
         self.assert_backend("sql")
         self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
@@ -1664,7 +1803,7 @@ class TestHelperFunctions(TestCase):
             user_id=couch_form.user_id,
         )
         self.addCleanup(delete_blob)
-        with mod.patch_XFormInstance_get_xml():
+        with patch_XFormInstance_get_xml():
             mod._migrate_form_attachments(sql_form, couch_form)
         self.assertEqual(sql_form.form_data, couch_form.form_data)
         xml = sql_form.get_xml()
@@ -1713,6 +1852,12 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
     ]}
     get_blob_db().metadb.new(key=uuid.uuid4().hex, **args).save()
     return form
+
+
+def replace_form_xml(form, xml):
+    blobs = get_blob_db()
+    meta = blobs.metadb.get(parent_id=form.form_id, key=form.blobs["form.xml"].key)
+    blobs.put(BytesIO(xml.encode('utf-8')), meta=meta)
 
 
 @nottest
@@ -1812,7 +1957,7 @@ class Diff:
     path = attr.ib(default=ANY)
     old = attr.ib(default=ANY)
     new = attr.ib(default=ANY)
-    kind = attr.ib(default=ANY)
+    kind = attr.ib(default=NOT_DELETED)
     reason = attr.ib(default=ANY)
     __hash__ = None
 

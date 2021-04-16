@@ -82,9 +82,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # only do this if the database contains the citus extension
             return
 
-        from custom.icds_reports.utils.migrations import (
-            create_citus_distributed_table, create_citus_reference_table
-        )
+        from custom.icds_core.db import create_citus_reference_table
+        from custom.icds_core.db import create_citus_distributed_table
         with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:
@@ -96,8 +95,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip=skip_log)
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
+        self.log_table_rebuild(initiated_by, source, skip=skip_log, diffs=diffs)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -367,9 +366,9 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.build_table(initiated_by=initiated_by, source=source)
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
         for adapter in self.all_adapters:
-            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
 
     def drop_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
@@ -452,12 +451,12 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
             logger.error(f"Invalid index specified on {table_name} ({index.column_ids})")
     constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
     columns_and_indices = sql_columns + extra_indices + constraints
-    # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
-    # is that valid?
+    current_table = metadata.tables.get(table_name)
+    if current_table is not None:
+        metadata.remove(current_table)
     return sqlalchemy.Table(
         table_name,
         metadata,
-        extend_existing=True,
         *columns_and_indices
     )
 

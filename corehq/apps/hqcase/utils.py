@@ -7,6 +7,8 @@ from django.template.loader import render_to_string
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import property_changed_in_action
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es import filters
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -18,6 +20,7 @@ from corehq.form_processor.exceptions import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
+CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 
@@ -122,30 +125,15 @@ def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
 
 
 def get_case_by_identifier(domain, identifier):
-    # circular import
-    from corehq.apps.api.es import CaseES
-    case_es = CaseES(domain)
-    case_accessors = CaseAccessors(domain)
 
-    def _query_by_type(i_type):
-        q = case_es.base_query(
-            terms={
-                i_type: identifier,
-            },
-            fields=['_id', i_type],
-            size=1
-        )
-        response = case_es.run_query(q)
-        raw_docs = response['hits']['hits']
-        if raw_docs:
-            return case_accessors.get_case(raw_docs[0]['_id'])
+    case_accessors = CaseAccessors(domain)
 
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
-        case = _query_by_type(identifier_type)
-        if case is not None:
-            return case
-
+        result = CaseES().domain(domain).filter(
+            filters.term(identifier_type, identifier)).get_ids()
+        if result:
+            return case_accessors.get_case(result[0])
     # Try by case id
     try:
         case_by_id = case_accessors.get_case(identifier)
@@ -162,7 +150,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
-    case_block = ElementTree.tostring(ElementTree.XML(case_block)).decode('utf-8')
+    case_block = ElementTree.tostring(ElementTree.XML(case_block), encoding='utf-8').decode('utf-8')
 
     return submit_case_blocks(
         case_block,
@@ -184,7 +172,7 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
     if owner_id:
         kwargs['owner_id'] = owner_id
 
-    return CaseBlock(case_id, **kwargs)
+    return CaseBlock.deprecated_init(case_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
@@ -201,7 +189,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
+        ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8'),
         domain,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,

@@ -4,24 +4,26 @@ from django.test import TestCase, Client
 
 from corehq.apps.data_interfaces.views import XFormManagementView
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import WebUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
+@es_test
 class XFormManagementTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         reset_es_index(XFORM_INDEX_INFO)
         cls.domain = create_domain('xform-management-test')
-        cls.web_user = WebUser.create('xform-management-test', 'test', 'test',
+        cls.web_user = WebUser.create('xform-management-test', 'test', 'test', None, None,
                                       is_superuser=True)
         Client().force_login(cls.web_user.get_django_user())
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user.delete()
+        cls.web_user.delete(deleted_by=None)
         cls.domain.delete()
 
     def test_get_xform_ids__sanity_check(self):

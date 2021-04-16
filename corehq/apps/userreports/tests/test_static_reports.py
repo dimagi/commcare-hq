@@ -28,17 +28,22 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
         self.assertEqual(["example", "dimagi"], wrapped.domains)
 
     def test_get_all_json(self):
-        with override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'json')]):
+        path = self.get_path('static_report_config', 'json')
+        with patch("corehq.apps.userreports.models.static_ucr_report_paths", return_value=[path]), \
+             override_settings(STATIC_UCR_REPORTS=[path]):
             all = list(StaticReportConfiguration.all())
-            self.assertEqual(2, len(all))
-            example, dimagi = all
+            self.assertEqual(4, len(all))
+            example, dimagi, example1, dimagi1 = all
             self.assertEqual('example', example.domain)
+            self.assertEqual('example', example1.domain)
             self.assertEqual('dimagi', dimagi.domain)
+            self.assertEqual('dimagi', dimagi1.domain)
             for config in all:
                 self.assertEqual('Custom Title', config.title)
 
     def test_get_all_yaml(self):
-        with override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'yaml')]):
+        with patch("corehq.apps.userreports.models.static_ucr_report_paths", return_value=[]), \
+             override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'yaml')]):
             all = list(StaticReportConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all

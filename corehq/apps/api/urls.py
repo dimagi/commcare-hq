@@ -9,7 +9,6 @@ from corehq.apps.api.domain_metadata import (
     GIRResource,
     MaltResource,
 )
-from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
     FormAttachmentAPI,
@@ -34,8 +33,9 @@ from corehq.apps.fixtures.resources.v0_1 import (
     LookupTableItemResource,
     LookupTableResource,
 )
+from corehq.apps.hqcase.urls import case_api_urlpatterns
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
-from corehq.apps.sms.resources import v0_5 as sms_v0_5
 
 API_LIST = (
     ((0, 3), (
@@ -76,13 +76,12 @@ API_LIST = (
         DomainForms,
         DomainCases,
         DomainUsernames,
-        sms_v0_5.UserSelfRegistrationResource,
-        sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCaseResource,
         v0_5.ODataFormResource,
         LookupTableResource,
         LookupTableItemResource,
+        v0_5.MessagingEventResource,
     )),
 )
 
@@ -91,6 +90,14 @@ class CommCareHqApi(Api):
 
     def top_level(self, request, api_name=None, **kwargs):
         return HttpResponseNotFound()
+
+
+def versioned_apis(api_list):
+    for version, resources in api_list:
+        api = CommCareHqApi(api_name='v%d.%d' % version)
+        for R in resources:
+            api.register(R())
+        yield url(r'^', include(api.urls))
 
 
 def api_url_patterns():
@@ -112,18 +119,8 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.table_urlname)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$',
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
-    for version, resources in API_LIST:
-        api = CommCareHqApi(api_name='v%d.%d' % version)
-        for R in resources:
-            api.register(R())
-        yield url(r'^', include(api.urls))
-    # HACK: fix circular import here, to fix later
-    try:
-        from pact.api import PactAPI
-    except ImportError:
-        pass # maybe pact isn't installed
-    for view_class in DomainAPI.__subclasses__():
-        yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
+    yield url(r'v0.6/case/', include(case_api_urlpatterns))
+    yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
@@ -159,16 +156,35 @@ ADMIN_API_LIST = (
 )
 
 
-USER_API_LIST = (
+# these APIs are duplicated to /hq/admin/global for backwards compatibility
+GLOBAL_USER_API_LIST = (
     UserDomainsResource,
 )
 
+NON_GLOBAL_USER_API_LIST = (
+    v0_5.IdentityResource,
+)
 
-def api_url_patterns():
+
+USER_API_LIST = GLOBAL_USER_API_LIST + NON_GLOBAL_USER_API_LIST
+
+
+def get_global_api_url_patterns(resources):
     api = CommCareHqApi(api_name='global')
-    for resource in ADMIN_API_LIST + USER_API_LIST:
+    for resource in resources:
         api.register(resource())
         yield url(r'^', include(api.urls))
 
 
-admin_urlpatterns = list(api_url_patterns())
+admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
+                    list(get_global_api_url_patterns(GLOBAL_USER_API_LIST))
+
+
+VERSIONED_USER_API_LIST = (
+    ((0, 5), USER_API_LIST),
+)
+
+
+user_urlpatterns = list(versioned_apis(VERSIONED_USER_API_LIST))
+
+waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')

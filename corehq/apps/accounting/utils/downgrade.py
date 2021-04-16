@@ -165,7 +165,7 @@ def _send_overdue_notice(invoice, communication_model, context):
 
 def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription):
     from corehq.apps.domain.views.accounting import DomainBillingStatementsView, DomainSubscriptionView
-    from corehq.apps.accounting.views import EnterpriseBillingStatementsView
+    from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
 
     context = {
         'total': format(total, '7.2f'),

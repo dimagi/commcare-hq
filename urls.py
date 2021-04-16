@@ -4,8 +4,10 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
-from corehq.apps.accounting.urls import \
-    domain_specific as accounting_domain_specific
+from corehq.extensions import extension_points
+from corehq.apps.enterprise.urls import \
+    domain_specific as enterprise_domain_specific
+from corehq.apps.api.urls import user_urlpatterns as user_api_urlpatterns
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -21,7 +23,10 @@ from corehq.apps.hqwebapp.urls import legacy_prelogin
 from corehq.apps.hqwebapp.views import (
     apache_license,
     bsd_license,
+    no_permissions,
+    not_found,
     redirect_to_dimagi,
+    server_error,
 )
 from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
@@ -38,10 +43,9 @@ except ImportError:
 
 admin.autodiscover()
 
-handler500 = 'corehq.apps.hqwebapp.views.server_error'
-handler404 = 'corehq.apps.hqwebapp.views.not_found'
-handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
-
+handler500 = server_error
+handler404 = not_found
+handler403 = no_permissions
 
 
 domain_specific = [
@@ -50,7 +54,7 @@ domain_specific = [
     url(r'^api/', include('corehq.apps.api.urls')),
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
-    url(r'^enterprise/', include(accounting_domain_specific)),
+    url(r'^enterprise/', include(enterprise_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),
     url(r'^groups/', include('corehq.apps.groups.urls')),
@@ -73,13 +77,10 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.icds_reports.urls')),
-    url(r'^', include('custom.icds.urls')),
-    url(r'^', include('custom.icds.data_management.urls')),
-    url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
+    url(r'^', include('corehq.motech.fhir.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
@@ -88,17 +89,24 @@ domain_specific = [
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
+    url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
+
+for url_module in extension_points.domain_specific_urls():
+    domain_specific.append(url(r'^', include(url_module)))
+
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
-    url(r'^auditcare/', include('auditcare.urls')),
+    url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
+    url(r'^api/', include(user_api_urlpatterns)),
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
+    url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -112,11 +120,13 @@ urlpatterns = [
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
+    url(r'^trumpia/', include('corehq.messaging.smsbackends.trumpia.urls')),
     url(r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^turn/', include('corehq.messaging.smsbackends.turn.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^infobip/', include('corehq.messaging.smsbackends.infobip.urls')),
+    url(r'^pinpoint/', include('corehq.messaging.smsbackends.amazon_pinpoint.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),

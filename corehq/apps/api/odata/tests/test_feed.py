@@ -17,10 +17,12 @@ from corehq.apps.export.models import (
     FormExportInstance,
     TableConfiguration,
 )
+from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
+@es_test
 class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
@@ -107,6 +109,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
         )
 
 
+@es_test
 class TestODataFormFeed(TestCase, FormOdataTestMixin):
 
     @classmethod

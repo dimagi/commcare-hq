@@ -23,7 +23,7 @@
     <div class="btn-toolbar">
       <a class="btn btn-default" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>
       <a class="btn btn-default" href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}">Disable/Enable User Account</a>
-      <a class="btn btn-default {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Disable Two-Factor Authentication</a>
+      <a class="btn btn-default {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Temporarily Disable Two-Factor Authentication</a>
     </div>
     <h3>{% trans "Domains" %}</h3>
     <div class="col-md-6">

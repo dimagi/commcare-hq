@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
@@ -66,7 +66,7 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 
     @property
     def page_name(self):
-        return mark_safe("%s <small>Internal</small>" % self.page_title)
+        return format_html("{} <small>Internal</small>", self.page_title)
 
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
@@ -92,6 +92,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
+            'use_custom_auto_case_update_hour': 'Y' if self.domain_object.auto_case_update_hour else 'N',
+            'auto_case_update_hour': self.domain_object.auto_case_update_hour,
             'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
             'use_custom_odata_feed_limit': 'Y' if self.domain_object.odata_feed_limit else 'N',
@@ -445,12 +447,31 @@ def toggle_diff(request, domain):
     other_domain = params.get('domain')
     diff = []
     if Domain.get_by_name(other_domain):
-        diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
-                for t in feature_previews.all_previews() + toggles.all_toggles()
-                if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
-                and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
-        diff.sort(key=lambda x: x['label'])
+        diff = [{
+            'slug': t.slug,
+            'label': t.label,
+            'url': reverse(ToggleEditView.urlname, args=[t.slug]),
+            'tag_name': _('Preview'),
+            'tag_css_class': 'default',
+            'tag_index': -1,
+        } for t in feature_previews.all_previews() if _can_copy_toggle(t, request.domain, other_domain)]
+        diff.extend([{
+            'slug': t.slug,
+            'label': t.label,
+            'url': reverse(ToggleEditView.urlname, args=[t.slug]),
+            'tag_name': t.tag.name,
+            'tag_css_class': t.tag.css_class,
+            'tag_index': t.tag.index,
+        } for t in toggles.all_toggles() if _can_copy_toggle(t, request.domain, other_domain)])
+        diff.sort(key=lambda x: (x['tag_index'], x['label']))
     return json_response(diff)
+
+
+def _can_copy_toggle(toggle, domain, other_domain):
+    return (
+        toggle.enabled(domain, toggles.NAMESPACE_DOMAIN)
+        and not toggle.enabled(other_domain, toggles.NAMESPACE_DOMAIN)
+    )
 
 
 @login_and_domain_required

@@ -150,7 +150,7 @@ The form returned in `get_create_form()` should make use of
                 InlineField('breed'),
                 InlineField('dob'),
                 StrictButton(
-                    mark_safe('<i class="icon-plus"></i> %s' % "Create Puppy"),
+                    format_html('<i class="fa fa-plus"></i> {}', "Create Puppy"),
                     css_class='btn-primary',
                     type='submit'
                 )
@@ -261,19 +261,28 @@ You should add the following to your `base-puppy-template` knockout template:
                 Update Puppy
             </button>
 
-            <div class="modal hide fade"
+            <div class="modal fade"
                  data-bind="
                     attr: {
                         id: 'update-puppy-' + id
                     }
                  ">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3>
-                        Update puppy <strong data-bind="text: name"></strong>:
-                    </h3>
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button"
+                                    class="close"
+                                    data-dismiss="modal"
+                                    aria-hidden="true">&times;</button>
+                            <h3>
+                                Update puppy <strong data-bind="text: name"></strong>:
+                            </h3>
+                        </div>
+                        <div class="modal-body">
+                            <div data-bind="html: updateForm"></div>
+                        </div>
+                    </div>
                 </div>
-                <div data-bind="html: updateForm"></div>
             </div>
         </td>
     </script>

@@ -24,10 +24,16 @@ class TestCompressMigration(TestCase):
 
         self.blob_metas, self.not_founds = [], set()
         for domain, type_code in (('a', CODES.form_xml), ('a', CODES.application), ('b', CODES.form_xml)):
+            meta = new_meta(domain=domain, type_code=type_code, compressed_length=None)
             self.blob_metas.append(
-                self.db.put(BytesIO(data), meta=new_meta(domain=domain, type_code=type_code))
+                self.db.put(BytesIO(data), meta=meta)
             )
-            lost = new_meta(domain=domain, type_code=CODES.form_xml, content_length=42)
+            lost = new_meta(
+                domain=domain,
+                type_code=CODES.form_xml,
+                content_length=42,
+                compressed_length=None,
+            )
             lost.save()
             self.blob_metas.append(lost)
             self.not_founds.add((
@@ -55,6 +61,11 @@ class TestCompressMigration(TestCase):
         self._test_compress(1, 'a')
 
     def _test_compress(self, expected_count, domain=None):
+        self.assertTrue(all(
+            not meta.is_compressed
+            for meta in self.blob_metas
+            if meta.type_code == CODES.form_xml
+        ))
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
 

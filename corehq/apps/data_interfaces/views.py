@@ -46,6 +46,7 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
     bulk_upload_cases_to_group,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -105,7 +106,7 @@ def default_data_view_url(request, domain):
     if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
 
-    if request.couch_user.can_edit_data:
+    if request.couch_user.can_edit_data():
         return CaseReassignmentInterface.get_url(domain)
 
     raise Http404()
@@ -511,7 +512,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)
-            OTPMiddleware().process_request(_request)
+            OTPMiddleware(lambda req: None)(_request)
 
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(
@@ -602,11 +603,10 @@ def find_by_id(request, domain):
     })
 
 
-
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Close Cases")
+    page_title = ugettext_lazy("Automatically Update Cases")
 
     limit_text = ugettext_lazy("rules per page")
     empty_notification = ugettext_lazy("You have no case rules.")
@@ -630,7 +630,11 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     def page_context(self):
         context = self.pagination_context
-        context['help_site_url'] = 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases'
+        domain_obj = Domain.get_by_name(self.domain)
+        context.update({
+            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'time': f"{domain_obj.auto_case_update_hour}:00" if domain_obj.auto_case_update_hour else _('midnight'),
+        })
         return context
 
     @property

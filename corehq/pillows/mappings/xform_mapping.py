@@ -2,10 +2,10 @@ from django.conf import settings
 
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings import NULL_VALUE
-from corehq.util.elastic import es_index
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from corehq.util.elastic import prefix_for_tests
+from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME
 
-XFORM_INDEX = es_index(settings.ES_XFORM_INDEX_NAME)
+XFORM_INDEX = prefix_for_tests(settings.ES_XFORM_INDEX_NAME)
 
 XFORM_MAPPING = {
     "date_detection": False,
@@ -127,11 +127,12 @@ if settings.ES_XFORM_DISABLE_ALL:
     XFORM_MAPPING["_all"] = {"enabled": False}
 
 XFORM_ES_TYPE = 'xform'
-XFORM_ALIAS = "xforms"
+XFORM_ALIAS = prefix_for_tests("xforms")
 
 XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=XFORM_INDEX,
     alias=XFORM_ALIAS,
     type=XFORM_ES_TYPE,
     mapping=XFORM_MAPPING,
+    hq_index_name=XFORM_HQ_INDEX_NAME,
 )

@@ -1,5 +1,6 @@
 hqDefine('userreports/js/configure_report', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+        multiselectUtils = hqImport('hqwebapp/js/multiselect_utils'),
         reportBuilder = hqImport('userreports/js/report_config').reportBuilder;
 
     $(function () {
@@ -31,6 +32,12 @@ hqDefine('userreports/js/configure_report', function () {
                 (initialPageData.get('at_report_limit') && !existing_report)),
         });
         $("#reportConfig").koApplyBindings(reportConfig);
+        multiselectUtils.createFullMultiselectWidget(
+            'domain-selector',
+            gettext("Linked projects"),
+            gettext("Projects to copy to"),
+            gettext("Search projects")
+        );
         window._bindingsApplied = true;
     });
 });

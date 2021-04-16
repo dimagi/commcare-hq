@@ -1,9 +1,10 @@
+from corehq.apps.users.models import DomainMembershipError
 from django import template
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 
 from corehq.tabs.config import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
+from corehq.tabs.extension_points import uitab_classes
 from corehq.tabs.utils import path_starts_with_url
 
 
@@ -45,7 +46,9 @@ def get_all_tabs(request, domain, couch_user, project):
     """
     all_tabs = []
     instantiation_errors = []
-    for tab_class in MENU_TABS:
+    tab_classes = list(MENU_TABS)
+    tab_classes.extend(uitab_classes())
+    for tab_class in tab_classes:
         try:
             tab = tab_class(
                 request, domain=domain,
@@ -86,12 +89,21 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
+        role_rev = None
+        try:
+            if couch_user:
+                user_role = couch_user.get_role(domain, allow_mirroring=True)
+                role_rev = user_role._rev if user_role else None
+        except DomainMembershipError:
+            role_rev = None
+
         context.dicts[0]['active_tab'] = active_tab
         flat = context.flatten()
         flat.update({
             'tabs': visible_tabs,
+            'role_rev': role_rev
         })
-        return mark_safe(render_to_string('tabs/menu_main.html', flat))
+        return render_to_string('tabs/menu_main.html', flat)
 
 
 @register.tag(name="format_main_menu")
@@ -130,7 +142,7 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    return mark_safe(render_to_string(
+    return render_to_string(
         'hqwebapp/partials/navigation_left_sidebar.html',
         {'sections': sections}
-    ))
+    )

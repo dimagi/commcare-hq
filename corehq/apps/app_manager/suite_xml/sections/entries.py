@@ -33,6 +33,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.util.timer import time_method
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
@@ -57,6 +58,7 @@ class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_select
 
 
 class EntriesContributor(SuiteContributorByModule):
+    @time_method()
     def get_module_contributions(self, module):
         return self.entries_helper.entry_for_module(module)
 
@@ -85,15 +87,12 @@ class EntriesHelper(object):
         return datums_meta
 
     @staticmethod
-    def get_filter_xpath(module, delegation=False):
+    def get_filter_xpath(module):
         filter = module.case_details.short.filter
         if filter:
             xpath = '[%s]' % interpolate_xpath(filter)
         else:
             xpath = ''
-        if delegation:
-            xpath += "[index/parent/@case_type = '%s']" % module.case_type
-            xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
     @staticmethod
@@ -105,10 +104,13 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_parent_filter(relationship, parent_id):
-        return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
-            relationship=relationship,
-            parent_id=parent_id,
-        )
+        if relationship is None:
+            return ""
+        else:
+            return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
+                relationship=relationship,
+                parent_id=parent_id,
+            )
 
     @staticmethod
     def get_userdata_autoselect(key, session_id, mode):
@@ -824,14 +826,19 @@ class EntriesHelper(object):
             Return the datums of the first form in the given module
             """
             datums_ = []
-            if module_:
-                try:
-                    # assume that all forms in the module have the same case management
-                    form = module_.get_form(0)
-                except FormNotFoundException:
-                    pass
-                else:
-                    datums_.extend(self.get_datums_meta_for_form_generic(form))
+            if not module_:
+                return datums_
+
+            if module_.module_type == 'shadow' and module_.shadow_module_version > 1:
+                module_ = module_.source_module
+
+            try:
+                # assume that all forms in the module have the same case management
+                form = module_.get_form(0)
+            except FormNotFoundException:
+                pass
+            else:
+                datums_.extend(self.get_datums_meta_for_form_generic(form))
 
             return datums_
 

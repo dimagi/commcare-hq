@@ -25,6 +25,9 @@ class CaseType(models.Model):
     class Meta(object):
         unique_together = ('domain', 'name')
 
+    def __str__(self):
+        return self.name or super().__str__()
+
     @classmethod
     def get_or_create(cls, domain, case_type):
         key = 'data-dict-case-type-{domain}-{type}'.format(
@@ -36,6 +39,11 @@ class CaseType(models.Model):
             except CaseType.DoesNotExist:
                 case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
             return case_type_obj
+
+    def save(self, *args, **kwargs):
+        from .util import get_data_dict_case_types
+        get_data_dict_case_types.clear(self.domain)
+        return super(CaseType, self).save(*args, **kwargs)
 
 
 class CaseProperty(models.Model):
@@ -58,6 +66,11 @@ class CaseProperty(models.Model):
 
     class Meta(object):
         unique_together = ('case_type', 'name')
+
+    def __str__(self):
+        if self.name and self.case_type.name:
+            return f'{self.case_type.name}.{self.name}'
+        return super().__str__()
 
     @classmethod
     def get_or_create(cls, name, case_type, domain):

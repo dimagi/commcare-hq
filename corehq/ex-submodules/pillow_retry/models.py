@@ -31,6 +31,7 @@ def path_from_object(obj):
 
 
 class PillowError(models.Model):
+    id = models.BigAutoField(primary_key=True)
     doc_id = models.CharField(max_length=255, null=False)
     pillow = models.CharField(max_length=255, null=False, db_index=True)
     date_created = models.DateTimeField()

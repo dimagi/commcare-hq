@@ -27,6 +27,7 @@ from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .diffrule import ANY
+from .patches import migration_patches
 from .rebuildcase import rebuild_and_diff_cases
 from .retrydb import (
     couch_form_exists,
@@ -86,14 +87,15 @@ def diff_cases(couch_cases, log_cases=False):
     for sql_case in get_sql_cases(case_ids):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
-        couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
+        doc_type = couch_cases[case_id]['doc_type']
+        diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
         if diffs:
             dd_count("commcare.couchsqlmigration.case.has_diff")
         if changes:
             dd_count("commcare.couchsqlmigration.case.did_change")
         data.doc_ids.append(case_id)
-        data.diffs.append((couch_case['doc_type'], case_id, diffs))
-        data.changes.append((couch_case['doc_type'], case_id, changes))
+        data.diffs.append((doc_type, case_id, diffs))
+        data.changes.append((doc_type, case_id, changes))
         if log_cases:
             log.info("case %s -> %s diffs", case_id, len(diffs))
 
@@ -114,15 +116,15 @@ def diff_case(sql_case, couch_case, dd_count):
     diffs = check_domains(case_id, couch_case, sql_json)
     changes = []
     if diffs:
-        return couch_case, diffs, changes
+        return diffs, changes
     diffs = diff(couch_case, sql_json)
     if diffs:
         if is_case_patched(case_id, diffs):
-            return couch_case, [], []
+            return [], []
         form_diffs = diff_case_forms(couch_case, sql_json)
         if form_diffs:
             diffs.extend(form_diffs)
-            return couch_case, diffs, changes
+            return diffs, changes
         original_couch_case = couch_case
         dd_count("commcare.couchsqlmigration.case.rebuild.couch")
         try:
@@ -140,12 +142,12 @@ def diff_case(sql_case, couch_case, dd_count):
                 dd_count("commcare.couchsqlmigration.case.rebuild.error")
                 log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
             if not diffs and is_case_patched(case_id, diff(original_couch_case, sql_json)):
-                return original_couch_case, [], []
+                return [], []
         if diffs:
             diffs.extend(diff_case_forms(couch_case, sql_json))
         else:
             changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
-    return couch_case, diffs, changes
+    return diffs, changes
 
 
 def check_domains(case_id, couch_json, sql_json):
@@ -393,14 +395,18 @@ def diff_case_forms(couch_json, sql_json):
 
 
 def diff_form_state(form_id, *, in_couch=False):
-    in_couch = in_couch or couch_form_exists(form_id)
-    in_sql = sql_form_exists(form_id)
-    couch_miss = "missing"
-    if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
-        couch_miss = MISSING_BLOB_PRESENT
-        log.warning("couch form missing, blob present: %s", form_id)
-    old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
-    new = {"form_state": FORM_PRESENT if in_sql else "missing"}
+    if form_id is None:
+        old = {"form_state": "unknown"}
+        new = {"form_state": "unknown"}
+    else:
+        in_couch = in_couch or couch_form_exists(form_id)
+        in_sql = sql_form_exists(form_id)
+        couch_miss = "missing"
+        if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
+            couch_miss = MISSING_BLOB_PRESENT
+            log.warning("couch form missing, blob present: %s", form_id)
+        old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
+        new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
 
 
@@ -468,7 +474,6 @@ def find_form_ids_updating_case(case_id):
 
 @contextmanager
 def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
-    from .couchsqlmigration import migration_patches
     global _diff_state
     _diff_state = WorkerState(domain, no_action_case_forms, cutoff_date)
     try:

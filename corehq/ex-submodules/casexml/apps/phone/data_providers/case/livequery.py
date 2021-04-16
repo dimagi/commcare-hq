@@ -37,6 +37,7 @@ from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
+from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 
 
@@ -261,6 +262,16 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
+            metrics_histogram(
+                'commcare.restore.case_load',
+                len(sync_ids),
+                'cases',
+                RESTORE_CASE_LOAD_BUCKETS,
+                tags={
+                    'domain': accessor.domain,
+                    'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
+                }
+            )
             compile_response(
                 timing_context,
                 restore_state,
@@ -354,3 +365,6 @@ def compile_response(timing_context, restore_state, response, batches, update_pr
 
         done += len(cases)
         update_progress(done)
+
+
+RESTORE_CASE_LOAD_BUCKETS = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000]

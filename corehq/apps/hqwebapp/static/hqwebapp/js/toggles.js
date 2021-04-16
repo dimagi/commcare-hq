@@ -10,7 +10,7 @@ hqDefine('hqwebapp/js/toggles', [
         if (typeof value === 'undefined') {
             throw new Error(
                 'Toggle ' + toggleName + ' not recognized. Must be one of: \n\n' +
-                _.sortBy(_.keys(allToggles).join("\n"))
+                _.sortBy(_.keys(allToggles)).join("\n")
             );
         }
         return value;

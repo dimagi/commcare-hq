@@ -1,12 +1,20 @@
-/* globals hqDefine, hqImport, $, _, django */
-
-hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/main',
+    'hqwebapp/js/ui_elements/ui-element-input-map',
+], function (
+    $,
+    _,
+    hqMain,
+    uiInputMap
+) {
     'use strict';
     var module = {};
 
     var KeyValList = function (guid, modal_title) {
         var that = this;
-        hqImport("hqwebapp/js/main").eventize(this);
+        hqMain.eventize(this);
         this.ui = $('<div class="enum-pairs" />');
         this.value = {};
         this.translated_value = {};
@@ -41,7 +49,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
         $enumModal.append($modalDialog);
 
 
-        $('#hq-modal-home').append($enumModal);
+        $('#hq-content').append($enumModal);
 
         $('#' + this.modal_id).on('hide.bs.modal', function () {
             var $inputMap = $(this).find('form .hq-input-map'),
@@ -59,7 +67,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
 
         $('#' + this.modal_id + ' a').click(function () {
             if ($(this).attr('data-enum-action') === 'add') {
-                $(this).parent().parent().find('fieldset').append(hqImport('hqwebapp/js/ui-element').input_map(true).ui);
+                $(this).parent().parent().find('fieldset').append(uiInputMap.new(true).ui);
                 $(this).parent().parent().find('fieldset input.enum-key').last().focus();
             }
             if (!$(this).attr('data-dismiss'))
@@ -87,8 +95,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
                     this.$edit_view.text('');
                 }
                 for (var key in this.value) {
-                    $modal_fields.append(hqImport('hqwebapp/js/ui-element').input_map(true).val(key, this.value[key], this.translated_value[key]).ui);
-                    this.$edit_view.append(hqImport('hqwebapp/js/ui-element').input_map(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
+                    $modal_fields.append(uiInputMap.new(true).val(key, this.value[key], this.translated_value[key]).ui);
+                    this.$edit_view.append(uiInputMap.new(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
                 }
             }
 

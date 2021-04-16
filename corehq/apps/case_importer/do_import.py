@@ -9,8 +9,6 @@ from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
-from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
-from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
@@ -18,42 +16,70 @@ from soil.progress import TaskProgressManager
 from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
+from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.timer import TimingContext
 
 from . import exceptions
 from .const import LookupErrors
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
-CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 ALL_LOCATIONS = 'ALL_LOCATIONS'
 
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
-    importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback)
-    return importer.do_import(spreadsheet)
+    has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
+    if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+        sub_domains = set()
+        import_results = _ImportResults()
+        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+            if row_num == 1:
+                continue  # skip first row (header row)
+            sheet_domain = row.get('domain')
+            if sheet_domain != domain and sheet_domain not in mirror_domains:
+                err = exceptions.CaseRowError(column_name='domain')
+                err.title = _('Invalid domain')
+                err.message = _('Following rows contain invalid value for domain column.')
+                import_results.add_error(row_num, err)
+            else:
+                sub_domains.add(sheet_domain)
+        for sub_domain in sub_domains:
+            importer = _TimedAndThrottledImporter(
+                sub_domain,
+                config,
+                task,
+                record_form_callback,
+                import_results,
+                multi_domain=True
+            )
+            importer.do_import(spreadsheet)
+        return import_results.to_json()
+    else:
+        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback, multi_domain=False)
+        return importer.do_import(spreadsheet)
 
 
 class _Importer(object):
-    def __init__(self, domain, config, task, record_form_callback):
+    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
         self.domain = domain
         self.config = config
         self.task = task
         self.record_form_callback = record_form_callback
-
-        self.results = _ImportResults()
-
+        self.results = import_results or _ImportResults()
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
+        self.multi_domain = multi_domain
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
@@ -63,6 +89,11 @@ class _Importer(object):
                     continue  # skip first row (header row)
 
                 try:
+                    # check if there's a domain column, if true it's value should
+                    # match the current domain, else skip the row.
+                    if self.multi_domain:
+                        if self.domain != row.get('domain'):
+                            continue
                     self.import_row(row_num, row)
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
@@ -166,8 +197,8 @@ class _Importer(object):
 
 
 class _TimedAndThrottledImporter(_Importer):
-    def __init__(self, domain, config, task, record_form_callback):
-        super().__init__(domain, config, task, record_form_callback)
+    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
+        super().__init__(domain, config, task, record_form_callback, import_results, multi_domain)
 
         self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
         self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
@@ -245,7 +276,8 @@ class _CaseImportRow(object):
         self.parent_id = fields_to_update.pop('parent_id', None)
         self.parent_external_id = fields_to_update.pop('parent_external_id', None)
         self.parent_type = fields_to_update.pop('parent_type', self.config.case_type)
-        self.parent_ref = fields_to_update.pop('parent_ref', 'parent')
+        self.parent_relationship_type = fields_to_update.pop('parent_relationship_type', 'child')
+        self.parent_identifier = fields_to_update.pop('parent_identifier', None)
         self.to_close = fields_to_update.pop('close', False)
         self.uploaded_owner_name = fields_to_update.pop('owner_name', None)
         self.uploaded_owner_id = fields_to_update.pop('owner_id', None)
@@ -255,6 +287,21 @@ class _CaseImportRow(object):
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
             raise exceptions.BlankExternalId()
+
+    def validate_parent_column(self):
+        # host_id column is used to create extension cases. Run below validations
+        #   when user tries to create extension cases
+
+        if self.parent_relationship_type == 'child':
+            return
+        elif self.parent_relationship_type == 'extension':
+            if not self.parent_identifier:
+                raise exceptions.InvalidParentId(_(
+                    "'parent_identifier' column must be provided "
+                    "when 'parent_relationship_type' column is set to 'extension'"
+                ))
+        else:
+            raise exceptions.InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
 
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids
@@ -297,7 +344,13 @@ class _CaseImportRow(object):
                     search_field, search_id, self.domain, self.parent_type)
                 _log_case_lookup(self.domain)
                 if parent_case:
-                    return {self.parent_ref: (parent_case.type, parent_case.case_id)}
+                    self.validate_parent_column()
+                    if self.parent_relationship_type == 'child':
+                        identifier = self.parent_identifier or 'parent'
+                        return {identifier: (parent_case.type, parent_case.case_id)}
+                    elif self.parent_relationship_type == 'extension':
+                        identifier = self.parent_identifier
+                        return {identifier: (parent_case.type, parent_case.case_id, "extension")}
                 raise exceptions.InvalidParentId(column)
 
     def _get_date_opened(self):
@@ -464,8 +517,12 @@ def _populate_updated_fields(config, row):
             continue
 
         if update_field_name in RESERVED_FIELDS:
-            raise exceptions.InvalidCustomFieldNameException(
-                _('Field name "{}" is reserved').format(update_field_name))
+            if update_field_name == 'parent_ref':
+                raise exceptions.InvalidCustomFieldNameException(
+                    _('Field name "{}" is deprecated. Please use "parent_identifier" instead.'))
+            else:
+                raise exceptions.InvalidCustomFieldNameException(
+                    _('Field name "{}" is reserved').format(update_field_name))
 
         if isinstance(update_value, str) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an

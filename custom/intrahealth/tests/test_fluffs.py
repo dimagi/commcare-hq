@@ -27,7 +27,7 @@ class TestFluffs(IntraHealthTestCase):
             xml = f.read()
             xml_obj = ElementTree.fromstring(xml)
             xml_obj[2][4].text = cls.mobile_worker.get_id
-            xml = ElementTree.tostring(xml_obj)
+            xml = ElementTree.tostring(xml_obj, encoding='utf-8')
             cls.taux = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True

@@ -139,7 +139,7 @@ def get_index_map(indices):
 
 class CaseToXMLMixin(object):
     def to_xml(self, version, include_case_on_closed=False):
-        from xml.etree import cElementTree as ElementTree
+        from lxml import etree as ElementTree
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:
@@ -148,7 +148,7 @@ class CaseToXMLMixin(object):
                 elem = get_case_element(self, ('close'), version)
         else:
             elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem)
+        return ElementTree.tostring(elem, encoding='utf-8')
 
 
 class AbstractCommCareCase(CaseToXMLMixin):
@@ -293,7 +293,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
         }
 
     def to_xml(self, version, include_case_on_closed=False):
-        from xml.etree import cElementTree as ElementTree
+        from lxml import etree as ElementTree
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:
@@ -302,7 +302,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
                 elem = get_case_element(self, ('close'), version)
         else:
             elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem)
+        return ElementTree.tostring(elem, encoding='utf-8')
 
     def get_attachment_server_url(self, name):
         """

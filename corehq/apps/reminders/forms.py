@@ -124,7 +124,7 @@ class RecordListField(Field):
 
 class KeywordForm(Form):
     domain = None
-    survey_keyword_id = None
+    keyword_id = None
     keyword = CharField(label=ugettext_noop("Keyword"))
     description = TrimmedCharField(label=ugettext_noop("Description"))
     override_open_sessions = BooleanField(
@@ -212,6 +212,9 @@ class KeywordForm(Form):
     def __init__(self, *args, **kwargs):
         if 'domain' in kwargs:
             self.domain = kwargs.pop('domain')
+
+        if 'keyword_id' in kwargs:
+            self.keyword_id = kwargs.pop('keyword_id')
 
         self.process_structured_sms = False
         if 'process_structured' in kwargs:
@@ -460,7 +463,7 @@ class KeywordForm(Form):
         if len(value.split()) > 1:
             raise ValidationError(_("Keyword should be one word."))
         duplicate = Keyword.get_keyword(self.domain, value)
-        if duplicate and duplicate.couch_id != self.survey_keyword_id:
+        if duplicate and duplicate.couch_id != self.keyword_id:
             raise ValidationError(_("Keyword already exists."))
         return value
 

@@ -129,7 +129,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(date_identified = '', '', format_date(date(if(date_identified = '', 0, date_identified)),'short'))"/>
+          <xpath function="if(date_identified = '', '', format-date(date(date_identified), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>

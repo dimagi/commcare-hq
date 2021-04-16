@@ -32,7 +32,7 @@ class ExplodeCasesDbTest(TestCase):
         delete_all_cases()
         cls.domain = Domain(name='foo')
         cls.domain.save()
-        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password')
+        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password', None, None)
         cls.user_id = cls.user._id
 
     def setUp(self):
@@ -46,13 +46,13 @@ class ExplodeCasesDbTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(ExplodeCasesDbTest, cls).tearDownClass()
 
     @run_with_all_backends
     def test_simple(self):
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
             user_id=self.user_id,
@@ -71,7 +71,7 @@ class ExplodeCasesDbTest(TestCase):
 
     @run_with_all_backends
     def test_skip_user_case(self):
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
             user_id=self.user_id,
@@ -92,7 +92,7 @@ class ExplodeCasesDbTest(TestCase):
     def test_parent_child(self):
         parent_id = uuid.uuid4().hex
         parent_type = 'exploder-parent-type'
-        parent_block = CaseBlock(
+        parent_block = CaseBlock.deprecated_init(
             create=True,
             case_id=parent_id,
             user_id=self.user_id,
@@ -101,7 +101,7 @@ class ExplodeCasesDbTest(TestCase):
         ).as_text()
 
         child_id = uuid.uuid4().hex
-        child_block = CaseBlock(
+        child_block = CaseBlock.deprecated_init(
             create=True,
             case_id=child_id,
             user_id=self.user_id,

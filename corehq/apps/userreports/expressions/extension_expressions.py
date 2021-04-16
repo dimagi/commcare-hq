@@ -1,12 +1,7 @@
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
-
-CUSTOM_UCR_EXPRESSIONS = [
-    ('indexed_case',
-     'corehq.apps.userreports.expressions.extension_expressions.indexed_case_expression'),
-]
 
 
 class IndexedCaseExpressionSpec(JsonObject):

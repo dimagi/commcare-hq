@@ -18,7 +18,7 @@ class ReportTestCase(TestCase):
         cls.domain = create_domain('test-domain')
         cls.web_user = WebUser.get_by_username('test')
         if not cls.web_user:
-            cls.web_user = WebUser.create('test-domain', 'test', 'test')
+            cls.web_user = WebUser.create('test-domain', 'test', 'test', None, None)
 
         SQLProduct.objects.create(
             domain=cls.domain.name,
@@ -197,6 +197,6 @@ class ReportTestCase(TestCase):
             cls.recouvrement_table.drop(connection, checkfirst=True)
             cls.livraison_table.drop(connection, checkfirst=True)
         cls.engine.dispose()
-        cls.web_user.delete()
+        cls.web_user.delete(deleted_by=None)
         cls.domain.delete()
         super(ReportTestCase, cls).tearDownClass()

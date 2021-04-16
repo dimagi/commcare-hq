@@ -32,6 +32,7 @@ from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.models import TruncatingCharField
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext import jsonobject
@@ -53,18 +54,6 @@ LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
-
-
-class TruncatingCharField(models.CharField):
-    """
-    http://stackoverflow.com/a/3460942
-    """
-
-    def get_prep_value(self, value):
-        value = super(TruncatingCharField, self).get_prep_value(value)
-        if value:
-            return value[:self.max_length]
-        return value
 
 
 @attr.s
@@ -97,6 +86,12 @@ class Attachment(IsImageMixin):
                     self.properties.update(width=img_size[0], height=img_size[1])
                 except IOError:
                     self.content_type = 'application/octet-stream'
+
+    def has_size(self):
+        if not hasattr(self.raw_content, 'size'):
+            return False
+
+        return self.raw_content.size is not None
 
     @property
     @memoized
@@ -151,6 +146,7 @@ class Attachment(IsImageMixin):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
+        # TODO remove when Django 1 is no longer supported
         if fileobj is None:
             assert not isinstance(self.raw_content, BlobMeta), repr(self)
             # work around Django 1.11 bug, fixed in 2.0
@@ -1395,6 +1391,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.form_id == other.form_id
         )
 
+    def __hash__(self):
+        return hash((self.case_id, self.type, self.form_id))
+
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         """Get or create a form transaction for a the given form and case.
@@ -1598,6 +1597,19 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     def location(self):
         from corehq.apps.locations.models import SQLLocation
         return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
+
+    @property
+    def sql_location(self):
+        return self.location
+
+    @property
+    @memoized
+    def sql_product(self):
+        from corehq.apps.products.models import SQLProduct
+        try:
+            return SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
+        except SQLProduct.DoesNotExist:
+            return None
 
     @property
     def location_id(self):

@@ -163,5 +163,17 @@ class CommCareFeatureSupportMixin(object):
     def enable_multi_master(self):
         return (
             self._require_minimum_version('2.47.4')
-            or toggles.MULTI_MASTER_BYPASS_VERSION_CHECK.enabled(self.domain)
-        ) and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(self.domain)
+            and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(self.domain)
+        )
+
+    @property
+    def enable_search_prompt_appearance(self):
+        return self._require_minimum_version('2.50')
+
+    @property
+    def enable_markdown_tables(self):
+        return self._require_minimum_version('2.50')
+
+    @property
+    def enable_default_value_expression(self):
+        return self._require_minimum_version('2.51')

@@ -121,7 +121,7 @@ def _create_commtrack_config_if_needed(domain):
             caption='Stock-out',
         ),
     ])
-    config.save()   # save actions
+    config.save()   # save actions, and sync couch
 
 
 def _enable_commtrack_previews(domain):
@@ -171,33 +171,6 @@ def due_date_monthly(day, from_end=False, past_period=0):
     y = month_seq // 12
     m = month_seq % 12 + 1
     return date(y, m, min(day, monthrange(y, m)[1]))
-
-
-def submit_mapping_case_block(user, index):
-    mapping = user.get_location_map_case()
-
-    if mapping:
-        caseblock = CaseBlock(
-            create=False,
-            case_id=mapping.case_id,
-            index=index
-        )
-    else:
-        caseblock = CaseBlock(
-            create=True,
-            case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
-            case_id=location_map_case_id(user),
-            owner_id=user._id,
-            index=index,
-            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
-            user_id=const.COMMTRACK_USERNAME,
-        )
-
-    submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
-        user.domain,
-        device_id=__name__ + ".submit_mapping_case_block"
-    )
 
 
 def location_map_case_id(user):

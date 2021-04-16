@@ -53,13 +53,13 @@ class MessageLogReportTest(TestCase):
         super(MessageLogReportTest, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         cls.factory = RequestFactory()
-        cls.couch_user = WebUser.create(None, "phone_report_test", "foobar")
+        cls.couch_user = WebUser.create(None, "phone_report_test", "foobar", None, None)
         cls.couch_user.add_domain_membership(cls.domain, is_admin=True)
         cls.couch_user.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete()
+        cls.couch_user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super(MessageLogReportTest, cls).tearDownClass()
 

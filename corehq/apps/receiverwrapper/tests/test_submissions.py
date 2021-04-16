@@ -13,7 +13,7 @@ from mock import patch
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
@@ -22,11 +22,14 @@ from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
+from couchforms.exceptions import InvalidSubmissionFileExtensionError
+
+
 class BaseSubmissionTest(TestCase):
     def setUp(self):
         super(BaseSubmissionTest, self).setUp()
         self.domain = create_domain("submit")
-        self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar")
+        self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar", None, None)
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
@@ -36,7 +39,7 @@ class BaseSubmissionTest(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         self.domain.delete()
         super(BaseSubmissionTest, self).tearDown()
 
@@ -112,14 +115,34 @@ class SubmissionTest(BaseSubmissionTest):
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
 
+    def test_submit_with_non_bmp_chars(self):
+        self._test(
+            form="form_data_with_non_bmp_chars.xml",
+            xmlns='http://commcarehq.org/test/submit',
+        )
+        case_id = 'ad38211be256653bceac8e2156475667'
+        case = CaseAccessors(self.domain.name).get_case(case_id)
+        self.assertEqual(case.name, "👕 👖 👔 👗 👙")
+
     @softer_assert()
     def test_submit_deprecated_form(self):
-        self._submit('simple_form.xml')
+        self._submit('simple_form.xml')  # submit a form to try again as duplicate
         response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
         xform_id = response['X-CommCareHQ-FormID']
         form = FormAccessors(self.domain.name).get_form(xform_id)
         self.assertEqual(1, len(form.history))
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
+
+    def test_invalid_form_submission_file_extension(self):
+        response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
+        expected_error = InvalidSubmissionFileExtensionError()
+        self.assertEqual(response.status_code, expected_error.status_code)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'{expected_error.message}'
+            f'</message></OpenRosaResponse>'
+        )
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
@@ -175,7 +198,7 @@ class PracticeMobileWorkerSubmissionTest(BaseSubmissionTest):
         # skip any authorization
         self.client = Client()
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
     def test_ignore_all_practice_mobile_worker_submissions_in_demo_mode(self, user_stub, *_):
         # ignore submission if from a practice mobile worker and HQ is ignoring all demo user submissions
@@ -198,10 +221,10 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         response = self._submit('simple_form.xml')
         self.assertTrue('X-CommCareHQ-FormID' in response, 'Non Demo user ID form not processed in normal mode')
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
     @softer_assert()
-    def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub, *_):
+    def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub):
         user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml')
         self.assertTrue('X-CommCareHQ-FormID' in response, 'Normal user form not processed in non-demo mode')
@@ -211,16 +234,16 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertFalse('X-CommCareHQ-FormID' in response,
                          'Practice mobile worker form processed in non-demo mode')
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
-    def test_invalid_form_xml(self, *_):
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
+    def test_invalid_form_xml(self):
         response = self._submit('invalid_form_xml.xml')
         self.assertTrue(response.status_code, 422)
         self.assertTrue("There was an error processing the form: Invalid XML" in response.content.decode('utf-8'))
 
-    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     @patch('corehq.apps.receiverwrapper.util._notify_ignored_form_submission')
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
-    def test_notification(self, user_stub, notification, *_):
+    def test_notification(self, user_stub, notification):
         user_stub.return_value = self.couch_user
         self.couch_user.is_demo_user = True
 
@@ -247,6 +270,7 @@ class SubmissionTestSQL(SubmissionTest):
                 if att.name != "form.xml"
             )
 
+        # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
             "image": BytesIO(b"fake image"),
             "file": BytesIO(b"text file"),
@@ -261,9 +285,11 @@ class SubmissionTestSQL(SubmissionTest):
         old_form = acc.get_form(new_form.deprecated_form_id)
         self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
-        self.assertEqual(list_attachments(old_form),
+        self.assertEqual(
+            list_attachments(old_form),
             [("file", b"text file"), ("image", b"fake image")])
-        self.assertEqual(list_attachments(new_form),
+        self.assertEqual(
+            list_attachments(new_form),
             [("file", b"text file"), ("image", b"other fake image")])
 
 

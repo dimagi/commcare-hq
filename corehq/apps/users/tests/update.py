@@ -15,7 +15,7 @@ class UpdateTestCase(TestCase):
         password = "password"
         self.domain = Domain(name='my-domain')
         self.domain.save()
-        self.couch_user = CommCareUser.create(self.domain.name, self.username, password)
+        self.couch_user = CommCareUser.create(self.domain.name, self.username, password, None, None)
         self.couch_user.save()
         
     def testAddRemovePhoneNumbers(self):

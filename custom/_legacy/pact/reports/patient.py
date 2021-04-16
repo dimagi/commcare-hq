@@ -2,8 +2,8 @@ import logging
 from django.urls import reverse
 from django.http import Http404
 import json
-from django.utils.safestring import mark_safe
-from corehq.apps.api.es import ReportXFormES
+from django.utils.html import format_html
+from corehq.apps.api.es import ReportFormESView
 from corehq.apps.hqwebapp.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.view_helpers import case_hierarchy_context
@@ -12,7 +12,7 @@ from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import PactPatientCase
 from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
-from pact.utils import pact_script_fields
+from pact.utils import pact_script_fields, get_by_case_id_form_es_query
 
 
 class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
@@ -22,7 +22,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     hide_filters = True
     filters = []
     ajax_pagination = True
-    xform_es = ReportXFormES(PACT_DOMAIN)
+    xform_es = ReportFormESView(PACT_DOMAIN)
 
     default_sort = {
         "received_on": "desc"
@@ -119,21 +119,20 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         if not self.patient_id:
             return None
 
-        full_query = ReportXFormES.by_case_id_query(self.request.domain, self.patient_id)
+        fields = [
+            "_id",
+            "received_on",
+            "form.meta.timeEnd",
+            "form.meta.timeStart",
+            "form.meta.username",
+            "form.#type",
+        ]
+        full_query = (get_by_case_id_form_es_query(self.pagination.start, self.pagination.count, self.patient_id)
+            .source(fields).raw_query)
         full_query.update({
-            "fields": [
-                "_id",
-                "received_on",
-                "form.meta.timeEnd",
-                "form.meta.timeStart",
-                "form.meta.username",
-                "form.#type",
-            ],
             "sort": self.get_sorting_block(),
-            "size": self.pagination.count,
-            "from": self.pagination.start
+            "script_fields": pact_script_fields()
         })
-        full_query['script_fields'] = pact_script_fields()
         res = self.xform_es.run_query(full_query)
         return res
 
@@ -141,11 +140,13 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     def rows(self):
         if self.patient_id:
             def _format_row(row_field_dict):
-                yield mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
-                reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
+                yield format_html(
+                    "<a class='ajax_dialog' href='{}'>View</a>",
+                    reverse('render_form_data', args=[self.domain, row_field_dict['_id']])
+                )
                 yield self.format_date(row_field_dict["received_on"].replace('_', ' '))
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
-                if row_field_dict["script_encounter_date"] != None:
+                if row_field_dict["script_encounter_date"] is not None:
                     yield row_field_dict["script_encounter_date"]
                 else:
                     yield "---"
@@ -157,4 +158,4 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
                 pass
             else:
                 for result in res['hits']['hits']:
-                    yield list(_format_row(result['fields']))
+                    yield list(_format_row(result))

@@ -9,12 +9,14 @@ from corehq.apps.data_analytics.esaccessors import (
     get_app_submission_breakdown_es,
 )
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases
 
 
+@es_test
 class MaltAnalyticsTest(SimpleTestCase):
 
     @classmethod

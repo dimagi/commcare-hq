@@ -1,7 +1,0 @@
-{% if more_than_one_week %}
-AWC {{ awc }}  antisana baten ICDS CAS application-o mamung form ba dakanirangkoba ka∙jaha.  Ka·sapae Block Level Helpdesk ba Supervisorni dakchakaniko bi∙bo
-{% endif %}
-
-{% if more_than_one_month %}
-AWC {{ awc }} ja sana baten ICDS CAS application-o  mamung form ba dakanirangkoba submit ka∙jaha. Ka·sapae Block Level Helpdesk ba Supervisorni dakchakaniko bi∙bo
-{% endif %}

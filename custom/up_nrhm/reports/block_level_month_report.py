@@ -79,7 +79,8 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
             config['enddate'] = (
                 config['startdate'] + relativedelta(months=1) - relativedelta(days=1)
             ).replace(hour=23, minute=59, second=59)
-            data.append(ASHAFacilitatorsData(config).data)
+            for index, row_data in ASHAFacilitatorsData(config).data.items():
+                data.append(row_data)
             config['startdate'] += relativedelta(months=1)
 
         rows = [[

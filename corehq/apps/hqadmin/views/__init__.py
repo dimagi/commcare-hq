@@ -11,7 +11,6 @@ from corehq.apps.hqadmin.views.operations import (
 from corehq.apps.hqadmin.views.reports import (
     DownloadGIRView,
     DownloadMALTView,
-    top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
@@ -23,7 +22,6 @@ from corehq.apps.hqadmin.views.system import (
 )
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
-    AuthenticateAs,
     DisableTwoFactorView,
     DisableUserView,
     DomainAdminRestoreView,

@@ -19,10 +19,11 @@ from corehq.apps.es.aggregations import (
     TopHitsAggregation,
 )
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
 
 
+@es_test
 class TestAggregations(ElasticTestMixin, SimpleTestCase):
 
     def test_bad_aggregation_name(self):
@@ -33,13 +34,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_nesting_aggregations(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -168,13 +171,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_range_aggregation(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -205,13 +210,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_stats_aggregation(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -232,13 +239,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_extended_stats_aggregation(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -259,13 +268,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_top_hits_aggregation(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -300,13 +311,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_missing_aggregation(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -329,13 +342,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_date_histogram(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -378,13 +393,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_nested_aggregation(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {
@@ -407,13 +424,15 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
     def test_terms_aggregation_with_order(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "aggs": {

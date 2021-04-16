@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 from functools import wraps
 
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.http import HttpResponse
 
 from corehq.util.soft_assert.api import soft_assert
 
+auth_logger = logging.getLogger("commcare_auth")
 _soft_assert = soft_assert(notify_admins=True)
 
 
@@ -59,11 +61,19 @@ def validate_request_hmac(setting_name, ignore_if_debug=False, audit_user='syste
             _soft_assert(shared_key, 'Missing shared auth setting: {}'.format(setting_name))
             expected_digest = request.META.get('HTTP_X_MAC_DIGEST', None)
             if not expected_digest or not shared_key:
+                auth_logger.info(
+                    "Request rejected reason=%s request=%s",
+                    "hmac:missing_key" if not shared_key else "hmac:missing_header", request.path
+                )
                 return HttpResponse(status=401)
 
             digest = get_hmac_digest(shared_key, data)
 
             if expected_digest != digest:
+                auth_logger.info(
+                    "Request rejected reason=%s request=%s",
+                    "hmac:digest_mismatch", request.path
+                )
                 return HttpResponse(status=401)
 
             request.audit_user = audit_user

@@ -17,5 +17,18 @@
         </text>
       </template>
     </field>
+    <action auto_launch="false" redo_last="true">
+      <display>
+        <text>
+          <locale id="case_search.m0.again"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <mark/>
+          <command value="'search_command.m0'"/>
+        </push>
+      </stack>
+    </action>
   </detail>
 </partial>

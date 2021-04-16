@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script type="text/template" id="menu-view-list-template">
   <div class="module-menu-container">
@@ -29,12 +30,12 @@
   <td class="module-column module-column-icon">
     <% if (imageUrl) { %>
     <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+      <%- _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
     <% } else { %>
     <div class="module-icon-container badge-container">
       <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+      <%- _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
     <% } %>
   </td>
@@ -54,7 +55,7 @@
   <td class="module-column module-column-icon">
     <% if (imageUrl) { %>
     <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+      <%- _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
     <% } else { %>
     <div class="module-icon-container badge-container">
@@ -63,7 +64,7 @@
       <% } else { %>
       <i class="fa fa-folder module-icon" aria-hidden="true"></i>
       <% } %>
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+      <%- _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
     <% } %>
   </td>
@@ -73,10 +74,10 @@
 </script>
 
 <script type="text/template" id="menu-view-grid-item-template">
-  <div class="col-xs-6 col-sm-4 col-lg-3">
+  <div class="col-xs-6 col-sm-4 col-md-3">
     <% if (imageUrl) { %>
     <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+      <%- _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
     <% } else { %>
     <div class="gridicon gridicon-circle badge-container">
@@ -85,7 +86,7 @@
       <% } else { %>
       <i class="fa fa-folder gridicon-icon" aria-hidden="true"></i>
       <% } %>
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+      <%- _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
     <% } %>
     <div class="module-column-name text-center">
@@ -99,7 +100,7 @@
   <div class="clearfix visible-sm"></div>
   <% } %>
   <% if (menuIndex % 4 === 3) { %>
-  <div class="clearfix visible-lg"></div>
+  <div class="clearfix visible-md visible-lg"></div>
   <% } %>
 </script>
 
@@ -108,18 +109,31 @@
     <div class="page-header menu-header">
       <h1 class="page-title"><%- title %></h1>
     </div>
-    <div class="<% if (environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) { %>container<% } %>">
+    <div class="<% if (environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) { %>container<% } %>">
       <div class="row menus-container"></div>
     </div>
   </div>
 </script>
 
 <script type="text/template" id="breadcrumb-item-template">
-  <%= data %>
+  <%- data %>
 </script>
 
 <script type="text/template" id="breadcrumb-list-template">
   <ol class="breadcrumb">
     <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
+    <div class="pull-right dropdown dropdown-menu-right" id="form-menu">
+    </div>
   </ol>
+</script>
+
+<script type="text/template" id="form-menu-template">
+   <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></i>
+   <ul class="dropdown-menu dropdown-menu-right">
+     <li class="dropdown-header">{% trans "Languages" %}</li>
+   </ul>
+</script>
+
+<script type="text/template" id="language-option-template">
+  <a class="lang" id="<%- lang %>"><%- lang %></a>
 </script>

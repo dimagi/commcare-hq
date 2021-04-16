@@ -74,6 +74,7 @@ class Command(BaseCommand):
                 "parameter. Example value: 20180109-20190109"
             ),
         )
+        add_argument('--domain', help="Limit migration to a single domain")
         add_argument(
             '--process_day_by_day',
             action='store_true',

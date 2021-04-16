@@ -144,10 +144,4 @@ class Command(BaseCommand):
             succeeded=True,
         )
         record.add_attempt(success_attempt)
-
-        mock_response = MagicMock()
-        mock_response.status_code = response_status
-        repeater = record.repeater
-        repeater.generator.handle_success(mock_response, repeater.payload_doc(record), record)
-
         record.save()

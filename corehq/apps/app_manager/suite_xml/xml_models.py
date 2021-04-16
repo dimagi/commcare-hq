@@ -204,6 +204,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
+    lazy = SimpleBooleanField('resource/@lazy', true="true", false="false")
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -212,10 +213,23 @@ class PracticeUserRestoreResource(AbstractResource):
 
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_image', 'media_audio')
+    ORDER = ('text', 'media_image', 'media_audio', 'hint')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+    hint = NodeField('hint', 'self')
+
+
+class Hint(Display):
+    ROOT_NAME = 'hint'
+
+
+class Itemset(XmlObject):
+    ROOT_NAME = 'itemset'
+    nodeset = StringField('@nodeset')
+    value_ref = StringField('value/@ref')
+    label_ref = StringField('label/@ref')
+    sort_ref = StringField('sort/@ref')
 
 
 class DisplayNode(XmlObject):
@@ -497,6 +511,12 @@ class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
     key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
+    receive = StringField('@receive', required=False)
+    input_ = StringField('@input', required=False)
+    default_value = StringField('@default', required=False)
+
+    itemset = NodeField('itemset', Itemset)
 
 
 class RemoteRequestPost(XmlObject):
@@ -516,6 +536,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    default_search = SimpleBooleanField("@default_search", "true", "false")
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -717,6 +738,8 @@ class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
+    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):
@@ -825,7 +848,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node)
+                s = etree.tostring(field.template.node, encoding='utf-8')
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:

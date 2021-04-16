@@ -1,7 +1,0 @@
-{% if location_names and timeframe == 'week' %}
-Ka·mao on·sogipa AWC-rang anitisa ba una baten ICDS CAS applicationo mamung activityrangko dakjaha: {{ location_names }}. Ka·sapae uamangna dakchakaniko onna gita nirokatbo.
-{% endif %}
-
-{% if location_names and timeframe == 'month' %}
-Ka·mao on·sogipa AWCrang jasa-na baten ICDS CAS application-o mamung dakanirangko dakjaha: {{ location_names }}. Ka·sapae uamangna dakachakaniko onna gita nikrokatbo.
-{% endif %}

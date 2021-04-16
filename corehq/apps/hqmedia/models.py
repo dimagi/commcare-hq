@@ -35,7 +35,7 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
@@ -647,7 +647,7 @@ class ModuleMediaMixin(MediaMixin):
             for column in details.get_columns():
                 if column.format == 'enum-image':
                     for map_item in column.enum:
-                        icon = trans(map_item.value, [lang] + self.get_app().langs, include_lang=False)
+                        icon = clean_trans(map_item.value, [lang] + self.get_app().langs)
                         if icon:
                             media.append(ApplicationMediaReference(icon, media_class=CommCareImage,
                                                                    is_menu_media=True, **kwargs))
@@ -744,7 +744,7 @@ class FormMediaMixin(MediaMixin):
         if self.form_type != 'shadow_form':
             xform_count = self.memoized_xform().rename_media(old_path, new_path)
             if xform_count:
-                self.source = etree.tostring(self.memoized_xform().xml).decode('utf-8')
+                self.source = etree.tostring(self.memoized_xform().xml, encoding='utf-8').decode('utf-8')
 
         return menu_count + xform_count
 

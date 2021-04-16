@@ -17,6 +17,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.data_analytics.esaccessors import get_mobile_users
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.export.dbaccessors import (
@@ -41,7 +42,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 )
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import es_query
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.dates import iso_string_to_datetime
@@ -108,16 +108,10 @@ def cases_in_last(domain, days, case_type=None):
     then = json_format_datetime(now - timedelta(days=int(days)))
     now = json_format_datetime(now)
 
-    q = {"query": {
-        "range": {
-            "modified_on": {
-                "from": then,
-                "to": now}}}}
-    query_params = {"domain.exact": domain, 'closed': False}
+    query = CaseES().domain(domain).modified_range(gte=then, lte=now).is_closed(False)
     if case_type:
-        query_params["type.exact"] = case_type
-    data = es_query(params=query_params, q=q, es_index='cases', size=1)
-    return data['hits']['total'] if data.get('hits') else 0
+        query = query.case_type(case_type)
+    return query.count()
 
 
 def inactive_cases_in_last(domain, days):
@@ -126,17 +120,8 @@ def inactive_cases_in_last(domain, days):
     """
     now = datetime.utcnow()
     then = json_format_datetime(now - timedelta(days=int(days)))
-    now = json_format_datetime(now)
 
-    q = {"query":
-             {"bool": {
-                 "must_not": {
-                     "range": {
-                         "modified_on": {
-                             "from": then,
-                             "to": now }}}}}}
-    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
-    return data['hits']['total'] if data.get('hits') else 0
+    return CaseES().domain(domain).modified_range(lt=then).is_closed(False).count()
 
 
 def forms(domain, *args):
@@ -148,7 +133,7 @@ def forms_in_last(domain, days):
     Returns the number of forms submitted in the last given number of days
     """
     then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).submitted(gte=then).size(0).run().total
+    return FormES().domain(domain).submitted(gte=then).count()
 
 
 def j2me_forms_in_last(domain, days):
@@ -156,7 +141,7 @@ def j2me_forms_in_last(domain, days):
     Returns the number of forms submitted by j2me in the last given number of days
     """
     then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).j2me_submissions(gte=then).size(0).run().total
+    return FormES().domain(domain).j2me_submissions(gte=then).count()
 
 
 def j2me_forms_in_last_bool(domain, days):
@@ -393,8 +378,8 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
         "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
         "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
-        "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
-        "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+        "cp_sms_ever": CALC_FNS["sms_in_last_bool"](dom),
+        "cp_sms_30_d": CALC_FNS["sms_in_last_bool"](dom, 30),
         "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
         "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
         "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
@@ -404,7 +389,7 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
         "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
         "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
-        "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
+        "cp_j2me_90_d_bool": CALC_FNS["j2me_forms_in_last_bool"](dom, 90),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),

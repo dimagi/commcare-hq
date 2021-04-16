@@ -16,6 +16,7 @@ from django import template
 from django.template.defaultfilters import yesno
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 
 import pytz
 from jsonobject.exceptions import BadValueError
@@ -43,12 +44,12 @@ def _parse_date_or_datetime(val):
             return None
 
         # datetime is a subclass of date
-        if isinstance(val, datetime.date):
+        if isinstance(val, datetime.date) or not isinstance(val, str):
             return val
 
         try:
             dt = iso_string_to_datetime(val)
-        except BadValueError:
+        except ValueError:
             try:
                 return DateProperty().wrap(val)
             except BadValueError:
@@ -83,17 +84,21 @@ def _to_html(val, key=None, level=0, timeago=False):
             return ""
 
     if isinstance(val, dict):
-        ret = "".join(
-            ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (_key_format(k, v), recurse(k, v))
-             for k, v in val.items()] +
-            ["</dl>"])
+        ret = format_html(
+            "<dl {}>{}</dl>",
+            mark_safe("class='well'") if level == 0 else '',  # nosec: no user input
+            format_html_join(
+                "",
+                "<dt>{}</dt><dd>{}</dd>",
+                [(_key_format(k, v), recurse(k, v)) for k, v in val.items()]
+            )
+        )
 
     elif _is_list_like(val):
-        ret = "".join(
-            ["<dl>"] +
-            ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
-            ["</dl>"])
+        ret = format_html(
+            "<dl>{}</dl>",
+            format_html_join("", "<dt>{}</dt><dd>{}</dd>", [(key, recurse(None, v)) for v in val])
+        )
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
@@ -102,15 +107,19 @@ def _to_html(val, key=None, level=0, timeago=False):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
-            "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
+        ret = format_html(
+            "<time {} title='{}' datetime='{}'>{}</time>",
+            mark_safe("class='timeago'") if timeago else "",  # nosec: no user input
+            iso,
+            iso,
+            safe_strftime(val, fmt))
     else:
         if val is None:
             val = '---'
 
         ret = escape(val)
 
-    return mark_safe(ret)
+    return ret
 
 
 def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
@@ -139,12 +148,12 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     val = eval_expr(expr, data)
 
     if prop_def.pop('parse_date', None):
-        val = _parse_date_or_datetime(val)
-    # is_utc is deprecated in favor of is_phone_time
-    # but preserving here for backwards compatibility
-    # is_utc = False is just reinterpreted as is_phone_time = True
-    is_phone_time = prop_def.pop('is_phone_time',
-                                 not prop_def.pop('is_utc', True))
+        try:
+            val = _parse_date_or_datetime(val)
+        except Exception:
+            # ignore exceptions from date parsing
+            pass
+    is_phone_time = prop_def.pop('is_phone_time', False)
     if isinstance(val, datetime.datetime):
         if not is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
@@ -154,9 +163,9 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     try:
         val = conditional_escape(processors[process](val))
     except KeyError:
-        val = mark_safe(_to_html(val, timeago=timeago))
+        val = _to_html(val, timeago=timeago)
     if format:
-        val = mark_safe(format.format(val))
+        val = format_html(format, val)
 
     return {
         "expr": expr_name,
@@ -228,7 +237,7 @@ def get_tables_as_columns(*args, **kwargs):
     return sections
 
 
-def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=True):
+def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, date_fields=None):
     """
     Get a default single table layout definition for `keys` split across
     `num_columns` columns.
@@ -237,17 +246,24 @@ def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=Tru
     (See corehq.util.timezones.conversions.PhoneTime for more context.)
 
     """
-
-    # is_phone_time isn't necessary on non-datetime columns,
-    # but doesn't hurt either, and is easier than trying to detect.
-    # I believe no caller uses this on non-phone-time datetimes
-    # but if something does, we'll have to do this in a more targetted way
-    layout = chunked([{"expr": prop, "is_phone_time": assume_phonetimes, "has_history": True}
-                      for prop in keys], num_columns)
+    phonetime_fields = phonetime_fields or set()
+    date_fields = date_fields or set()
+    layout = chunked(
+        [
+            {
+                "expr": prop,
+                "is_phone_time": prop in phonetime_fields,
+                "has_history": True,
+                "parse_date": prop in date_fields
+            }
+            for prop in keys
+        ],
+        num_columns
+    )
 
     return [
         {
             "name": name,
-            "layout": layout
+            "layout": list(layout)
         }
     ]

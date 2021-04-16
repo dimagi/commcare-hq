@@ -56,13 +56,13 @@ input:invalid {
 }
 
 
-.required .caption::before {
+.required .caption::before,
+.required-group .gr-header .caption::before {
   content: '*';
   font-weight: bold;
   color: #c0392b;
   margin: 0 3px;
-  right: 0;
-  position: absolute;
+  float: left;
 }
 
 .caption {
@@ -74,7 +74,7 @@ input:invalid {
 }
 
 .map {
-  width: 400px;
+  width: 100%;
   height: 250px;
   background: #eee;
   max-width: none !important;

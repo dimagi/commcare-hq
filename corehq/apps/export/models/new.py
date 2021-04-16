@@ -40,7 +40,6 @@ from soil.progress import set_task_progress
 from corehq import feature_previews
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
-    get_case_properties,
 )
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
@@ -704,6 +703,11 @@ class ExportInstanceFilters(DocumentSchema):
             return True
         elif self.can_access_all_locations:
             return False
+        elif not self.accessible_location_ids:
+            # if accessible_location_ids is empty, then in theory the user could
+            # have access to all data if can_access_all_locations was ever set
+            # to False. We need to prevent this from ever happening.
+            return False
         else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
                 request.domain, request.couch_user
@@ -744,7 +748,7 @@ class ExportInstance(BlobMixin, Document):
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
 
-    # Whether to typset the cells in Excel 2007+ exports
+    # Whether to typeset the cells in Excel 2007+ exports
     format_data_in_excel = BooleanProperty(default=False)
 
     # Whether the export is de-identified
@@ -821,16 +825,16 @@ class ExportInstance(BlobMixin, Document):
         return None
 
     @classmethod
-    def _new_from_schema(cls, schema):
+    def _new_from_schema(cls, schema, export_settings=None):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True):
+    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True, export_settings=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
         else:
-            instance = cls._new_from_schema(schema)
+            instance = cls._new_from_schema(schema, export_settings)
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
         instance.app_id = schema.app_id
@@ -1114,11 +1118,19 @@ class CaseExportInstance(ExportInstance):
         return self.case_type
 
     @classmethod
-    def _new_from_schema(cls, schema):
-        return cls(
-            domain=schema.domain,
-            case_type=schema.case_type,
-        )
+    def _new_from_schema(cls, schema, export_settings=None):
+        if export_settings is not None:
+            return cls(
+                domain=schema.domain,
+                case_type=schema.case_type,
+                export_format=export_settings.cases_filetype,
+                transform_dates=export_settings.cases_auto_convert,
+            )
+        else:
+            return cls(
+                domain=schema.domain,
+                case_type=schema.case_type,
+            )
 
     def get_filters(self):
         if self.filters:
@@ -1183,12 +1195,23 @@ class FormExportInstance(ExportInstance):
         return xmlns_to_name(self.domain, self.xmlns, self.app_id)
 
     @classmethod
-    def _new_from_schema(cls, schema):
-        return cls(
-            domain=schema.domain,
-            xmlns=schema.xmlns,
-            app_id=schema.app_id,
-        )
+    def _new_from_schema(cls, schema, export_settings=None):
+        if export_settings is not None:
+            return cls(
+                domain=schema.domain,
+                xmlns=schema.xmlns,
+                app_id=schema.app_id,
+                export_format=export_settings.forms_filetype,
+                transform_dates=export_settings.forms_auto_convert,
+                format_data_in_excel=export_settings.forms_auto_format_cells,
+                split_multiselects=export_settings.forms_expand_checkbox,
+            )
+        else:
+            return cls(
+                domain=schema.domain,
+                xmlns=schema.xmlns,
+                app_id=schema.app_id,
+            )
 
     def get_filters(self):
         if self.filters:
@@ -1214,7 +1237,7 @@ class SMSExportInstance(ExportInstance):
     name = "Messages"
 
     @classmethod
-    def _new_from_schema(cls, schema):
+    def _new_from_schema(cls, schema, export_settings=None):
         main_table = TableConfiguration(
             label='Messages',
             path=MAIN_TABLE,
@@ -1823,7 +1846,7 @@ class FormExportDataSchema(ExportDataSchema):
         xform_schema = cls._generate_schema_from_xform(
             xform,
             app.langs,
-            app.master_id,  # If it's not a copy, must be current
+            app.origin_id,  # If it's not a copy, must be current
             app.version,
         )
 
@@ -2132,18 +2155,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.master_id,  # If not copy, must be current app
+            app.origin_id,  # If not copy, must be current app
             app.version,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
-                app.master_id,
+                app.origin_id,
                 app.version,
             ))
 
         case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
-            app.master_id,
+            app.origin_id,
             app.version,
         ))
         case_schemas.append(current_schema)

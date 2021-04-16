@@ -10,72 +10,158 @@
   {% registerurl 'domain_links' '---' %}
   {% registerurl 'app_settings' domain '---' %}
 
-  <div id="domain_links" class="ko-template">
-    <div data-bind="visible: !master_link && !linked_domains().length">
-      <p>
-        {% trans "This project has no links to other projects." %}
-      </p>
+  {% if not is_master_domain and not is_linked_domain %}
+    <div class="alert alert-info">
+      {% trans "This project has no links to other projects." %}
     </div>
-    <div data-bind="if: master_link">
-      <h2>{% trans "Project Link" %}</h2>
+  {% endif %}
 
-      <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
-      <div>
-        <table class="table table-striped table-hover">
-          <thead>
-          <tr>
-            <th>{% trans "Linked Model" %}</th>
-            <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody data-bind="foreach: model_status">
-          <tr>
-            <td data-bind="text: name"></td>
-            <td data-bind="text: last_update"></td>
-            <td>
-              <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
-                {% trans "Overwrite" %}
-              </button>
-              <button class="btn btn-default disabled" data-bind="visible: showSpinner">
-                <i class="fa fa-spinner"></i>
-              </button>
-              <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
-                <i class="fa fa-check"></i> {% trans "Success" %}
-              </button>
-              <button class="btn btn-danger disabled" data-bind="visible: hasError">
-                <i class="fa fa-times"></i> {% trans "Error" %}
-              </button>
-              <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+  {% if is_master_domain %}
+    {% comment %}
+      Keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
+      to race condition problems if the tabs aren't visible when its document ready handler runs.
+    {% endcomment %}
+    <ul class="nav nav-tabs sticky-tabs">
+      {% if is_linked_domain %}
+        <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
+      {% endif %}
+      <li{% if not is_linked_domain %} class="active"{% endif %}><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-release">{% trans "Release Content" %}</a></li>
+    </ul>
+    <div class="spacer"></div>
+  {% elif is_linked_domain %}
+    <h2>{% trans "Project Link" %}</h2>  {# header for the only tab that will be displayed #}
+  {% endif %}
+
+  <div id="domain_links" class="ko-template">
+    <div class="tab-content">
+      {% if is_linked_domain %}
+        <div class="tab-pane fade in active" id="tabs-master">
+          <div data-bind="if: master_link">
+            <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
+            <div>
+              <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                  <th class="col-sm-5">{% trans "Linked Model" %}</th>
+                  <th class="col-sm-2">{% trans "Last Updated" %} ({{ timezone }})</th>
+                  <th class="col-sm-5"></th>
+                </tr>
+                </thead>
+                <tbody data-bind="foreach: model_status">
+                <tr>
+                  <td data-bind="text: name"></td>
+                  <td data-bind="text: last_update"></td>
+                  <td data-bind="css: {'has-error': error}">
+                    <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
+                      {% trans "Overwrite" %}
+                    </button>
+                    <button class="btn btn-default disabled" data-bind="visible: showSpinner">
+                      <i class="fa fa-spinner"></i>
+                    </button>
+                    <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
+                      <i class="fa fa-check"></i> {% trans "Success" %}
+                    </button>
+                    <button class="btn btn-danger disabled" data-bind="visible: error">
+                      <i class="fa fa-times"></i> {% trans "Error" %}
+                    </button>
+                    <span class="help-block" data-bind="visible: error, text: error"></span>
+                    <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <div class="tab-pane fade{% if not is_linked_domain %} in active{% endif %}" id="tabs-linked">
+        <div data-bind="if: linked_domains().length">
+          <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+              <th>{% trans "Project Name" %}</th>
+              <th>{% trans "Last Updated" %} ({{ timezone }})</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: linked_domains">
+            <tr>
+              <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
+              <td data-bind="text: last_update"></td>
+              <td>
+                <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)">
+                  <i class="fa fa-trash"></i>
+                  {% trans 'Delete Link' %}
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-    <div data-bind="if: linked_domains().length">
-      <h2>{% trans "Projects Linked to this one" %}</h2>
-      <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-          <th>{% trans "Project Name" %}</th>
-          <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody data-bind="foreach: linked_domains">
-        <tr>
-          <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
-          <td data-bind="text: last_update"></td>
-          <td>
-            <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)">
-              <i class="fa fa-trash"></i>
-              {% trans 'Delete' %}
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+      <div class="tab-pane fade" id="tabs-release">
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-3 col-md-2 control-label">
+              {% trans "Models" %}
+            </label>
+            <div class="col-sm-9 col-md-10 controls">
+              <select multiple class="form-control"
+                      data-bind="selectedOptions: modelsToRelease,
+                                 multiselect: {
+                                     selectableHeaderTitle: '{% trans_html_attr "All content" %}',
+                                     selectedHeaderTitle: '{% trans_html_attr "Content to release" %}',
+                                     searchItemTitle: '{% trans_html_attr "Search content" %}',
+                                }">
+                {% for model in view_data.master_model_status %}
+                  <option value="{% html_attr model %}">{{ model.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 col-md-2 control-label">
+              {% trans "Projects" %}
+            </label>
+            <div class="col-sm-9 col-md-10 controls">
+              <select multiple class="form-control"
+                      data-bind="selectedOptions: domainsToRelease,
+                                 multiselect: {
+                                     selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
+                                     selectedHeaderTitle: '{% trans_html_attr "Projects to release to" %}',
+                                     searchItemTitle: '{% trans_html_attr "Search projects" %}',
+                                }">
+                {% for link in view_data.linked_domains %}
+                  {% if not linked_domain.is_remote %}
+                    <option value="{{ link.linked_domain }}">{{ link.linked_domain }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 col-md-2 control-label" for="build-apps">
+              {% trans "Create and release new build for apps" %}
+            </label>
+            <div class="col-sm-9 col-md-10 controls">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" data-bind="checked: buildAppsOnRelease" />
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+              <button type="button" class="btn btn-primary" data-bind="click: createRelease, enable: enableReleaseButton">
+                <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: releaseInProgress"></i>
+                {% trans "Create Release" %}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 {% endblock %}

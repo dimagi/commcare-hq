@@ -1,4 +1,4 @@
-from xml.etree import cElementTree as ElementTree
+from lxml import etree as ElementTree
 from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
 import six
@@ -47,10 +47,10 @@ class OpenRosaResponse(object):
 
     def etree(self):
         elem = ElementTree.Element('OpenRosaResponse')
-        elem.attrib = {'xmlns': RESPONSE_XMLNS}
+        elem.set('xmlns', RESPONSE_XMLNS)
         msg_elem = ElementTree.Element('message')
         if self.nature:
-            msg_elem.attrib = {'nature': self.nature}
+            msg_elem.set('nature', self.nature)
         msg_elem.text = six.text_type(self.message)
         elem.append(msg_elem)
         return elem

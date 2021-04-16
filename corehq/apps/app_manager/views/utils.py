@@ -1,7 +1,9 @@
 import json
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
@@ -27,6 +29,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import (
     Application,
     CustomIcon,
+    ShadowModule,
     enable_usercase_if_necessary,
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
@@ -87,7 +90,7 @@ def back_to_main(request, domain, app_id, module_id=None, form_id=None,
             raise Http404()
 
     if form is not None:
-        view_name = 'view_form' if form.no_vellum else 'form_source'
+        view_name = 'form_source' if form.can_edit_in_vellum else 'view_form'
         args.append(form.unique_id)
     elif module is not None:
         view_name = 'view_module'
@@ -115,7 +118,7 @@ def get_langs(request, app):
 
 
 def set_lang_cookie(response, lang):
-    response.set_cookie('lang', encode_if_unicode(lang))
+    response.set_cookie('lang', lang, secure=settings.SECURE_COOKIES)
 
 
 def bail(request, domain, app_id, not_found=""):
@@ -124,10 +127,6 @@ def bail(request, domain, app_id, not_found=""):
     else:
         messages.error(request, 'Oops! We could not complete your request. Please try again')
     return back_to_main(request, domain, app_id)
-
-
-def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -341,7 +340,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             ))
     else:
         master_build = master_app_id_or_build
-    master_app_id = master_build.master_id
+    master_app_id = master_build.origin_id
 
     previous = app.get_latest_build_from_upstream(master_app_id)
     if (
@@ -374,7 +373,8 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         app.reapply_overrides()
         app.save()
 
-    app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
+    app.domain_link.update_last_pull('app', user_id, model_detail=AppLinkDetail(app_id=app._id).to_json())
+    return app
 
 
 def clear_xmlns_app_id_cache(domain):
@@ -436,3 +436,126 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
         media_object = media_objects[multimedia_id]
         total_size[media_object.doc_type] += media_object.content_length
     return total_size
+
+
+def _copy_as_dict(attribute):
+    return deepcopy(dict(attribute))
+
+
+def _copy_list_of_dict(attribute):
+    dict_list = [dict(schema) for schema in attribute]
+    return deepcopy(dict_list)
+
+
+SHADOW_MODULE_PROPERTIES_TO_COPY = [
+    ('case_details', deepcopy),
+    ('ref_details', deepcopy),
+    ('case_list', deepcopy),
+    ('referral_list', deepcopy),
+    ('task_list', deepcopy),
+    ('parent_select', None),
+    ('search_config', None),
+]
+
+
+MODULE_BASE_PROPERTIES_TO_COPY = [
+    ('module_filter', None),
+    ('put_in_root', None),
+
+    ('fixture_select', deepcopy),
+    ('report_context_tile', None),
+    ('auto_select_case', None),
+    ('is_training_module', None),
+    ('case_list_form', deepcopy),
+
+    # deepcopy cannot handle DictProperty, so convert to normal python dict first
+    ('media_image', _copy_as_dict),
+    ('media_audio', _copy_as_dict),
+    ('custom_icons', _copy_list_of_dict),
+    ('use_default_image_for_all', None),
+    ('use_default_audio_for_all', None),
+]
+
+
+def handle_shadow_child_modules(app, shadow_parent):
+    """Creates or deletes shadow child modules if the parent module requires
+
+    Used primarily when changing the "source module id" of a shadow module
+    """
+    changes = False
+
+    if shadow_parent.shadow_module_version == 1:
+        # For old-style shadow modules, we don't create any child-shadows
+        return False
+
+    if not shadow_parent.source_module_id:
+        return False
+
+    # if the source module is a child, but not a shadow, then the shadow should have the same parent
+    source = app.get_module_by_unique_id(shadow_parent.source_module_id)
+    if source.root_module_id != shadow_parent.root_module_id:
+        shadow_parent.root_module_id = source.root_module_id
+        changes = True
+
+    source_module_children = [
+        m for m in app.get_modules()
+        if m.root_module_id == shadow_parent.source_module_id
+        and m.module_type != 'shadow'
+    ]
+    source_module_children_ids = [
+        source_module_child.unique_id for source_module_child in source_module_children
+    ]
+
+    shadow_parent_children = [
+        m for m in app.get_modules()
+        if m.root_module_id == shadow_parent.unique_id
+    ]  # All the child shadows that already exist
+
+    # Delete child modules that no longer have a source
+    unneeded_module_ids = [
+        child.unique_id for child in shadow_parent_children
+        if child.source_module_id not in source_module_children_ids
+    ]
+    for unneeded_module_id in unneeded_module_ids:
+        changes = True
+        app.delete_module(unneeded_module_id)
+
+    # We need to create child modules for those source children that don't have them
+    existing_child_shadow_sources = [
+        child.source_module_id for child in shadow_parent_children
+    ]  # The set of source children ids that already have shadows
+    needed_modules = [
+        source_child for source_child in source_module_children
+        if source_child.unique_id not in existing_child_shadow_sources
+    ]
+    for source_child in needed_modules:
+        changes = True
+        new_shadow = ShadowModule.new_module(source_child.default_name(app=app), app.default_language)
+        new_shadow.source_module_id = source_child.unique_id
+        new_shadow.root_module_id = shadow_parent.unique_id
+
+        # BaseModule properties
+        for prop, transform in MODULE_BASE_PROPERTIES_TO_COPY:
+            new_value = getattr(source_child, prop)
+            setattr(new_shadow, prop, transform(new_value) if transform is not None else new_value)
+
+        # ShadowModule properties
+        for prop, transform in SHADOW_MODULE_PROPERTIES_TO_COPY:
+            new_value = getattr(source_child, prop)
+            setattr(new_shadow, prop, transform(new_value) if transform is not None else new_value)
+
+        # move excluded form ids
+        source_child_form_ids = set(
+            f.unique_id
+            for f in app.get_module_by_unique_id(new_shadow.source_module_id).get_forms()
+        )
+        new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & source_child_form_ids)
+        shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - source_child_form_ids)
+
+        app.add_module(new_shadow)
+
+    if changes:
+        app.move_child_modules_after_parents()
+        app.save()
+
+    return changes

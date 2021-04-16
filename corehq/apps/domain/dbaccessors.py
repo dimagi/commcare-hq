@@ -79,9 +79,7 @@ def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
         'HQGroupExportConfiguration',
         'Group',
         'UserRole',
-        'PerformanceConfiguration',
         'ReportConfiguration',
-        'CaseReminderHandler',
         'LinkedApplication',
     ]
     doc_type = doc_class.__name__
@@ -123,11 +121,15 @@ def iter_domains():
 
 
 def deleted_domain_exists(domain):
+    if isinstance(domain, Domain):
+        domain = domain.name  # double check just in case
     row = Domain.get_db().view('domain/deleted_domains', key=domain, reduce=True).one()
     return bool(row)
 
 
 def domain_exists(domain):
+    if isinstance(domain, Domain):
+        domain = domain.name  # double check just in case
     row = Domain.get_db().view('domain/domains', key=domain, reduce=True).one()
     return bool(row)
 

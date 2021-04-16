@@ -15,7 +15,7 @@ class TestFormProcessorCouch(TestCase):
     def setUpClass(cls):
         super(TestFormProcessorCouch, cls).setUpClass()
         cls.case_id = uuid.uuid4().hex
-        case = CaseBlock(
+        case = CaseBlock.deprecated_init(
             create=True,
             case_id=cls.case_id,
             user_id='user1',

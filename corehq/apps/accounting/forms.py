@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -75,6 +76,9 @@ from corehq.apps.accounting.utils import (
     get_money_str,
     has_subscription_already_ended,
     make_anchor_tag,
+)
+from corehq.apps.accounting.utils.software_plans import (
+    upgrade_subscriptions_to_latest_plan_version,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -144,6 +148,20 @@ class BillingAccountBasicForm(forms.Form):
         choices=PreOrPostPay.CHOICES
     )
     account_basic = forms.CharField(widget=forms.HiddenInput, required=False)
+    block_hubspot_data_for_all_users = forms.BooleanField(
+        label="Enable Block Hubspot Data",
+        required=False,
+        initial=False,
+        help_text="Users in any projects connected to this account will not "
+                  "have data sent to Hubspot",
+    )
+    block_email_domains_from_hubspot = forms.CharField(
+        label="Block Email Domains From Hubspot Data",
+        required=False,
+        help_text="(ex: dimagi.com, commcarehq.org) Anyone with a username or "
+                  "email matching an email-domain here, regardless of "
+                  "project membership, will not have data synced with Hubspot.",
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -163,6 +181,8 @@ class BillingAccountBasicForm(forms.Form):
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
                 'pre_or_post_pay': account.pre_or_post_pay,
+                'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
+                'block_email_domains_from_hubspot': ', '.join(account.block_email_domains_from_hubspot),
             }
         else:
             kwargs['initial'] = {
@@ -186,14 +206,14 @@ class BillingAccountBasicForm(forms.Form):
         if account is not None:
             additional_fields.append(hqcrispy.B3MultiField(
                 "Active Status",
-                crispy.Field(
+                hqcrispy.MultiInlineField(
                     'is_active',
                     data_bind="checked: is_active",
                 ),
             ))
             additional_fields.append(hqcrispy.B3MultiField(
                 "Customer Billing Account",
-                crispy.Field(
+                hqcrispy.MultiInlineField(
                     'is_customer_billing_account',
                     data_bind="checked: is_customer_billing_account",
                 ),
@@ -228,6 +248,18 @@ class BillingAccountBasicForm(forms.Form):
                     ),
                     data_bind="visible: showActiveAccounts"
                 ))
+            additional_fields.extend([
+                hqcrispy.B3MultiField(
+                    "Block Hubspot Data for All Users",
+                    hqcrispy.MultiInlineField(
+                        'block_hubspot_data_for_all_users',
+                    ),
+                ),
+                crispy.Field(
+                    'block_email_domains_from_hubspot',
+                    css_class='input-xxlarge',
+                ),
+            ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Basic Information',
@@ -332,6 +364,12 @@ class BillingAccountBasicForm(forms.Form):
             )
         return transfer_subs
 
+    def clean_block_email_domains_from_hubspot(self):
+        email_domains = self.cleaned_data['block_email_domains_from_hubspot']
+        if email_domains:
+            return [e.strip() for e in email_domains.split(r',')]
+        return []  # Do not return a list with an empty string
+
     @transaction.atomic
     def create_account(self):
         name = self.cleaned_data['name']
@@ -365,6 +403,8 @@ class BillingAccountBasicForm(forms.Form):
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
+        account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
+        account.block_email_domains_from_hubspot = self.cleaned_data['block_email_domains_from_hubspot']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -535,7 +575,7 @@ class SubscriptionForm(forms.Form):
         if is_existing:
             # circular import
             from corehq.apps.accounting.views import (
-                ViewSoftwarePlanVersionView, ManageBillingAccountView
+                SoftwarePlanVersionView, ManageBillingAccountView
             )
             from corehq.apps.domain.views.settings import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
@@ -553,7 +593,7 @@ class SubscriptionForm(forms.Form):
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
                     'plan_version_url': reverse(
-                        ViewSoftwarePlanVersionView.urlname,
+                        SoftwarePlanVersionView.urlname,
                         args=[subscription.plan_version.plan.id, subscription.plan_version_id]
                     ),
                     'plan_name': subscription.plan_version,
@@ -774,14 +814,14 @@ class SubscriptionForm(forms.Form):
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
-                raise forms.ValidationError(mark_safe(_(
+                raise forms.ValidationError(format_html(_(
                     "Please update 'Client Contact Emails' "
-                    '<strong><a href=%(link)s target="_blank">here</a></strong> '
-                    "before using Billing Account <strong>%(account)s</strong>."
-                ) % {
-                    'link': reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                    'account': account.name,
-                }))
+                    '<strong><a href={link} target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>{account}</strong>."
+                ),
+                    link=reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    account=account.name,
+                ))
 
         start_date = self.cleaned_data.get('start_date')
         if not start_date:
@@ -877,7 +917,47 @@ class ChangeSubscriptionForm(forms.Form):
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
+            note=self.cleaned_data['subscription_change_note'],
             internal_change=True,
+        )
+
+
+class BulkUpgradeToLatestVersionForm(forms.Form):
+    upgrade_note = forms.CharField(
+        label="Note",
+        required=True,
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, old_plan_version, web_user, *args, **kwargs):
+        self.old_plan_version = old_plan_version
+        self.web_user = web_user
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Upgrade All Subscriptions To Latest Version",
+                'upgrade_note',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Upgrade All",
+                    type="submit",
+                    css_class="btn-primary disable-on-submit",
+                ),
+            ),
+        )
+
+    @transaction.atomic
+    def upgrade_subscriptions(self):
+        upgrade_subscriptions_to_latest_plan_version(
+            self.old_plan_version,
+            self.web_user,
+            self.cleaned_data['upgrade_note'],
         )
 
 
@@ -930,7 +1010,7 @@ class CreditForm(forms.Form):
         amount = self.cleaned_data['amount']
         field_metadata = CreditAdjustment._meta.get_field('amount')
         if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
-            raise ValidationError(mark_safe(_(
+            raise ValidationError(mark_safe(_(  # nosec: no user input
                 'Amount over maximum size.  If you need support for '
                 'quantities this large, please <a data-toggle="modal" '
                 'data-target="#modalReportIssue" href="#modalReportIssue">'
@@ -1068,11 +1148,14 @@ class SuppressSubscriptionForm(forms.Form):
 
         invoices = self.subscription.invoice_set.all()
         if invoices:
-            raise ValidationError(mark_safe(
-                "Cannot suppress subscription. Suppress these invoices first: %s"
-                % ', '.join(['<a href="{edit_url}">{name}</a>'.format(
-                        edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
-                        name=invoice.invoice_number,
+            raise ValidationError(format_html(
+                "Cannot suppress subscription. Suppress these invoices first: {}",
+                format_html_join(
+                    ', ',
+                    '<a href="{}">{}</a>',
+                    [(
+                        reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
+                        invoice.invoice_number,
                     ) for invoice in invoices])
             ))
 
@@ -1242,15 +1325,24 @@ class SoftwarePlanVersionForm(forms.Form):
         label="New Role Description",
         widget=forms.Textarea,
     )
+    upgrade_subscriptions = forms.BooleanField(
+        label="Automatically upgrade all subscriptions on the "
+              "previous version of this plan to this version immediately.",
+        required=False,
+    )
 
     new_product_rate = None
 
-    def __init__(self, plan, plan_version, *args, **kwargs):
+    def __init__(self, plan, plan_version, admin_web_user, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
+        self.admin_web_user = admin_web_user
         self.is_update = False
 
         super(SoftwarePlanVersionForm, self).__init__(*args, **kwargs)
+
+        if not self.plan.is_customer_software_plan:
+            del self.fields['upgrade_subscriptions']
 
         self.fields['privileges'].choices = list(self.available_privileges)
         self.fields['role_slug'].choices = [
@@ -1263,144 +1355,158 @@ class SoftwarePlanVersionForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
-        self.helper.layout = crispy.Layout(
-            'update_version',
-            crispy.Fieldset(
-                "Permissions",
+
+        permissions_fieldset = crispy.Fieldset(
+            "Permissions",
+            hqcrispy.B3MultiField(
+                "Role Type",
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'select-role-type-template', "
+                              " data: role"
+                              "}, "
+                ),
+            ),
+            crispy.Div(
                 hqcrispy.B3MultiField(
-                    "Role Type",
+                    'Role',
+                    InlineField(
+                        'role_slug',
+                        data_bind="value: role.existing.roleSlug",
+                        css_class="input-xxlarge",
+                        style="width: 100%;",
+                    ),
                     crispy.Div(
                         data_bind="template: {"
-                                  " name: 'select-role-type-template', "
-                                  " data: role"
+                                  " name: 'selected-role-privileges-template', "
+                                  " data: {"
+                                  "     privileges: role.existing.selectedPrivileges,"
+                                  "     hasNoPrivileges: role.existing.hasNoPrivileges"
+                                  " }"
+                                  "}, "
+                    ),
+                    data_bind="visible: role.isRoleTypeExisting",
+                ),
+            ),
+            crispy.Div(
+                hqcrispy.B3MultiField(
+                    "Privileges",
+                    InlineField('privileges', data_bind="selectedOptions: role.new.privileges"),
+                    crispy.Div(
+                        data_bind="template: {"
+                                  " name: 'privileges-match-role-template', "
+                                  " data: {"
+                                  "     role: role.new.matchingRole"
+                                  " },"
+                                  " if: role.new.hasMatchingRole"
                                   "}, "
                     ),
                 ),
+                crispy.Field('create_new_role', data_bind="value: role.new.allowCreate"),
                 crispy.Div(
-                    hqcrispy.B3MultiField(
-                        'Role',
-                        InlineField(
-                            'role_slug',
-                            data_bind="value: role.existing.roleSlug",
-                            css_class="input-xxlarge",
-                            style="width: 100%;",
-                        ),
-                        crispy.Div(
-                            data_bind="template: {"
-                                      " name: 'selected-role-privileges-template', "
-                                      " data: {"
-                                      "     privileges: role.existing.selectedPrivileges,"
-                                      "     hasNoPrivileges: role.existing.hasNoPrivileges"
-                                      " }"
-                                      "}, "
-                        ),
-                        data_bind="visible: role.isRoleTypeExisting",
-                    ),
+                    'new_role_slug',
+                    'new_role_name',
+                    'new_role_description',
+                    data_bind="visible: role.new.allowCreate",
+                    css_class="well",
                 ),
-                crispy.Div(
-                    hqcrispy.B3MultiField(
-                        "Privileges",
-                        InlineField('privileges', data_bind="selectedOptions: role.new.privileges"),
-                        crispy.Div(
-                            data_bind="template: {"
-                                      " name: 'privileges-match-role-template', "
-                                      " data: {"
-                                      "     role: role.new.matchingRole"
-                                      " },"
-                                      " if: role.new.hasMatchingRole"
-                                      "}, "
-                        ),
-                    ),
-                    crispy.Field('create_new_role', data_bind="value: role.new.allowCreate"),
-                    crispy.Div(
-                        'new_role_slug',
-                        'new_role_name',
-                        'new_role_description',
-                        data_bind="visible: role.new.allowCreate",
-                        css_class="well",
-                    ),
-                    data_bind="visible: role.isRoleTypeNew",
-                ),
+                data_bind="visible: role.isRoleTypeNew",
             ),
-            crispy.Fieldset(
-                "Features",
-                InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
-                hqcrispy.B3MultiField(
-                    "Add Feature",
-                    InlineField('select2_feature_id', css_class="input-xxlarge",
-                                data_bind="value: featureRates.select2.value"),
-                    StrictButton(
-                        "Select Feature",
-                        css_class="btn-primary",
-                        data_bind="event: {click: featureRates.apply}, "
-                                  "visible: featureRates.select2.isExisting",
-                        style="margin-left: 5px;"
-                    ),
-                ),
-                crispy.Div(
-                    css_class="alert alert-danger",
-                    data_bind="text: featureRates.error, visible: featureRates.showError"
-                ),
-                hqcrispy.B3MultiField(
-                    "Feature Type",
-                    InlineField(
-                        'new_feature_type',
-                        data_bind="value: featureRates.rateType",
-                    ),
-                    crispy.Div(
-                        StrictButton(
-                            "Create Feature",
-                            css_class="btn-primary",
-                            data_bind="event: {click: featureRates.createNew}",
+        )
 
-                        ),
-                        style="margin: 10px 0;"
-                    ),
-                    data_bind="visible: featureRates.select2.isNew",
-                ),
-                crispy.Div(
-                    data_bind="template: {"
-                              "name: 'feature-rate-form-template', foreach: featureRates.rates"
-                              "}",
+        features_fieldset = crispy.Fieldset(
+            "Features",
+            InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
+            hqcrispy.B3MultiField(
+                "Add Feature",
+                InlineField('select2_feature_id', css_class="input-xxlarge",
+                            data_bind="value: featureRates.select2.value"),
+                StrictButton(
+                    "Select Feature",
+                    css_class="btn-primary",
+                    data_bind="event: {click: featureRates.apply}, "
+                              "visible: featureRates.select2.isExisting",
+                    style="margin-left: 5px;"
                 ),
             ),
-            crispy.Fieldset(
-                "Products",
-                InlineField('product_rates', data_bind="value: productRates.ratesString"),
-                hqcrispy.B3MultiField(
-                    "Add Product",
-                    InlineField('product_rate_id', css_class="input-xxlarge",
-                                data_bind="value: productRates.select2.value"),
+            crispy.Div(
+                css_class="alert alert-danger",
+                data_bind="text: featureRates.error, visible: featureRates.showError"
+            ),
+            hqcrispy.B3MultiField(
+                "Feature Type",
+                InlineField(
+                    'new_feature_type',
+                    data_bind="value: featureRates.rateType",
+                ),
+                crispy.Div(
                     StrictButton(
-                        "Select Product",
+                        "Create Feature",
                         css_class="btn-primary",
-                        data_bind="event: {click: productRates.apply}, "
-                                  "visible: productRates.select2.isExisting",
-                        style="margin-left: 5px;"
+                        data_bind="event: {click: featureRates.createNew}",
+
                     ),
+                    style="margin: 10px 0;"
                 ),
-                crispy.Div(
-                    css_class="alert alert-danger",
-                    data_bind="text: productRates.error, visible: productRates.showError",
-                ),
-                hqcrispy.B3MultiField(
-                    "Product Type",
-                    crispy.Div(
-                        StrictButton(
-                            "Create Product",
-                            css_class="btn-primary",
-                            data_bind="event: {click: productRates.createNew}",
-                        ),
-                        style="margin: 10px 0;"
-                    ),
-                    data_bind="visible: productRates.select2.isNew",
-                ),
-                crispy.Div(
-                    data_bind="template: {"
-                              "name: 'product-rate-form-template', foreach: productRates.rates"
-                              "}",
+                data_bind="visible: featureRates.select2.isNew",
+            ),
+            crispy.Div(
+                data_bind="template: {"
+                          "name: 'feature-rate-form-template', foreach: featureRates.rates"
+                          "}",
+            ),
+        )
+
+        products_fieldset = crispy.Fieldset(
+            "Products",
+            InlineField('product_rates', data_bind="value: productRates.ratesString"),
+            hqcrispy.B3MultiField(
+                "Add Product",
+                InlineField('product_rate_id', css_class="input-xxlarge",
+                            data_bind="value: productRates.select2.value"),
+                StrictButton(
+                    "Select Product",
+                    css_class="btn-primary",
+                    data_bind="event: {click: productRates.apply}, "
+                              "visible: productRates.select2.isExisting",
+                    style="margin-left: 5px;"
                 ),
             ),
+            crispy.Div(
+                css_class="alert alert-danger",
+                data_bind="text: productRates.error, visible: productRates.showError",
+            ),
+            hqcrispy.B3MultiField(
+                "Product Type",
+                crispy.Div(
+                    StrictButton(
+                        "Create Product",
+                        css_class="btn-primary",
+                        data_bind="event: {click: productRates.createNew}",
+                    ),
+                    style="margin: 10px 0;"
+                ),
+                data_bind="visible: productRates.select2.isNew",
+            ),
+            crispy.Div(
+                data_bind="template: {"
+                          "name: 'product-rate-form-template', foreach: productRates.rates"
+                          "}",
+            ),
+        )
+
+        layout_fields = [
+            'update_version',
+            permissions_fieldset,
+            features_fieldset,
+            products_fieldset
+        ]
+        if self.plan.is_customer_software_plan:
+            layout_fields.append(crispy.Fieldset(
+                "Manage Existing Subscriptions",
+                'upgrade_subscriptions'
+            ))
+        layout_fields.append(
             hqcrispy.FormActions(
                 StrictButton(
                     'Update Plan Version',
@@ -1409,6 +1515,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
             )
         )
+        self.helper.layout = crispy.Layout(*layout_fields)
 
     @property
     def available_privileges(self):
@@ -1657,6 +1764,18 @@ class SoftwarePlanVersionForm(forms.Form):
             request,
             'The version for %s Software Plan was successfully updated.' % new_version.plan.name
         )
+
+        if self.plan.is_customer_software_plan and self.cleaned_data['upgrade_subscriptions']:
+            upgrade_subscriptions_to_latest_plan_version(
+                self.plan_version,
+                self.admin_web_user,
+                upgrade_note="Immediately upgraded when creating a new version."
+            )
+            messages.success(
+                request,
+                "All subscriptions on the previous version of this plan were "
+                "also upgraded to this new version."
+            )
 
 
 class FeatureRateForm(forms.ModelForm):
@@ -2394,14 +2513,15 @@ class InvoiceInfoForm(forms.Form):
             ManageBillingAccountView,
         )
         if not invoice.is_wire and not invoice.is_customer_invoice:
-            subscription_link = mark_safe(make_anchor_tag(
+            subscription_link = make_anchor_tag(
                 reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
-                '{plan_name} ({start_date} - {end_date})'.format(
+                format_html(
+                    '{plan_name} ({start_date} - {end_date})',
                     plan_name=subscription.plan_version,
                     start_date=subscription.date_start,
                     end_date=subscription.date_end,
                 )
-            ))
+            )
         else:
             subscription_link = 'N/A'
 
@@ -2426,16 +2546,13 @@ class InvoiceInfoForm(forms.Form):
         self.helper.layout[0].extend([
             hqcrispy.B3TextField(
                 'account',
-                mark_safe(
-                    '<a href="%(account_link)s">'
-                    '%(account_name)s'
-                    '</a>' % {
-                        'account_link': reverse(
-                            ManageBillingAccountView.urlname,
-                            args=(invoice.account.id,)
-                        ),
-                        'account_name': invoice.account.name,
-                    }
+                format_html(
+                    '<a href="{}">Super {}</a>',
+                    reverse(
+                        ManageBillingAccountView.urlname,
+                        args=(invoice.account.id,)
+                    ),
+                    invoice.account.name
                 ),
             ),
             hqcrispy.B3TextField(
@@ -2608,7 +2725,7 @@ class CreateAdminForm(forms.Form):
                 css_id="select-admin-username",
             ),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % "Add Admin"),
+                format_html('<i class="fa fa-plus"></i> {}', 'Add Admin'),
                 css_class="btn-primary disable-on-submit",
                 type="submit",
             )
@@ -2646,77 +2763,6 @@ class CreateAdminForm(forms.Form):
         return user
 
 
-class EnterpriseSettingsForm(forms.Form):
-    restrict_domain_creation = forms.BooleanField(
-        label=ugettext_lazy("Restrict Project Space Creation"),
-        required=False,
-        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
-            "to create new project spaces."),
-    )
-    restrict_signup = forms.BooleanField(
-        label=ugettext_lazy("Restrict User Signups"),
-        required=False,
-        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
-    )
-    restrict_signup_message = forms.CharField(
-        label="Signup Restriction Message",
-        required=False,
-        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
-        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain', None)
-        self.account = kwargs.pop('account', None)
-        kwargs['initial'] = {
-            "restrict_domain_creation": self.account.restrict_domain_creation,
-            "restrict_signup": self.account.restrict_signup,
-            "restrict_signup_message": self.account.restrict_signup_message,
-        }
-        super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_id = 'enterprise-settings-form'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Edit Enterprise Settings"),
-                PrependedText('restrict_domain_creation', ''),
-                crispy.Div(
-                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
-                ),
-                crispy.Div(
-                    crispy.Field('restrict_signup_message'),
-                    data_bind='visible: restrictSignup',
-                ),
-            )
-        )
-        self.helper.layout.append(
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update Enterprise Settings"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            )
-        )
-
-    def clean_restrict_signup_message(self):
-        message = self.cleaned_data['restrict_signup_message']
-        if self.cleaned_data['restrict_signup'] and not message:
-            raise ValidationError(_("If restricting signups, a message is required."))
-        return message
-
-    def save(self, account):
-        account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
-        account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
-        account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
-        account.save()
-        return True
-
-
 class TriggerDowngradeForm(forms.Form):
     domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
 
@@ -2740,6 +2786,36 @@ class TriggerDowngradeForm(forms.Form):
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Downgrade",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+
+class TriggerAutopaymentsForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerAutopaymentsForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Autopayments Details',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Autopayments for Project",
                     css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),

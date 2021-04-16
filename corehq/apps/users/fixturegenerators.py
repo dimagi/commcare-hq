@@ -1,4 +1,4 @@
-from xml.etree import cElementTree as ElementTree
+from lxml import etree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.xml import get_data_element

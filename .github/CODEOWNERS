@@ -25,7 +25,7 @@
 
 /corehq/apps/accounting/ @dannyroberts @biyeun
 /corehq/apps/analytics/ @orangejenny
-/corehq/apps/app_manager/ @orangejenny @proteusvacuum
+/corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/case_search/ @proteusvacuum
 /corehq/apps/change_feed/ @dannyroberts
@@ -33,6 +33,8 @@
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
 /corehq/apps/couch_sql_migration/ @millerdev
+/corehq/apps/domain/decorators.py @esoergel
+/corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel @proteusvacuum
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/locations/ @esoergel
@@ -40,8 +42,8 @@
 /corehq/apps/locations/static/ @esoergel @orangejenny
 /corehq/apps/locations/templates/ @esoergel @orangejenny
 /corehq/apps/ota/ @snopoke
-/corehq/apps/reports/standard/cases/ @proteusvacuum
-/corehq/apps/receiverwrapper/ @snopoke @proteusvacuum
+/corehq/apps/reports/standard/cases/ @proteusvacuum @esoergel
+/corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/sms*/ @millerdev @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
 /corehq/apps/styleguide/ @orangejenny
@@ -55,8 +57,8 @@
 /corehq/ex-submodules/pillowtop @dannyroberts
 
 /custom/icds_reports/ @calellowitz @Rohit25negi
-/custom/icds_reports/templates/ @czue @calellowitz @Rohit25negi
-/custom/icds_reports/static/ @czue @calellowitz @Rohit25negi
+/custom/icds_reports/templates/ @calellowitz @Rohit25negi
+/custom/icds_reports/static/ @calellowitz @Rohit25negi
 
 /docs/js-guide/ @orangejenny @millerdev
 

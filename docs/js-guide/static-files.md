@@ -10,7 +10,7 @@ Collectstatic is a Django management command that combs through each app's `stat
 
 During deploy, `manage.py collectstatic --noinput -v 0` is executed during the `__do_collecstatic` phase. The exact static files directory is defined by `settings.STATIC_ROOT`, and the default is named `staticfiles`.
 
-Since Django Compressor is run after `collectstatic`, this movement of `less` files poses an issue for files that reference relative imports outside of the app's `static` directory. For instance, `style`'s `variables.less` references `bootstrap/variables.less`, which is in the `bower_components` directory.
+Since Django Compressor is run after `collectstatic`, this movement of `less` files poses an issue for files that reference relative imports outside of the app's `static` directory. For instance, `style`'s `variables.less` references `bootstrap/variables.less`, which is in the `node_modules` directory.
 
 In order to fix the moved references, it is required that
 `manage.py fix_less_imports_collectstatic` is run after `collectstatic`.

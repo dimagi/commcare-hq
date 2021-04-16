@@ -58,7 +58,7 @@ class SlidingWindowRateCounter(AbstractRateCounter):
             timestamp = time.time()
         counts = [
             self.grain_counter.get(scope, timestamp - i * self.grain_duration,
-                                   key_is_active=(i is 0))
+                                   key_is_active=(i == 0))
             for i in range(self.grains_per_window + 1)
         ]
         earliest_grain_count = counts.pop()

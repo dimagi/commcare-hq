@@ -1,7 +1,8 @@
+from django.conf import settings
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import ElasticsearchIndexInfo, TEST_HQ_INDEX_NAME
 from pillowtop.pillow.interface import ConstructedPillow
 
 
@@ -24,7 +25,8 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
     index=TEST_ES_INDEX,
     alias=TEST_ES_ALIAS,
     type=TEST_ES_TYPE,
-    mapping=TEST_ES_MAPPING
+    mapping=TEST_ES_MAPPING,
+    hq_index_name=TEST_HQ_INDEX_NAME
 )
 
 
@@ -33,14 +35,15 @@ def get_doc_count(es, index, refresh_first=True):
         # we default to calling refresh since ES might have stale data
         es.indices.refresh(index)
     stats = es.indices.stats(index)
-    return stats['indices'][index]['total']['docs']['count']
+    return list(stats['indices'].values())[0]['total']['docs']['count']
 
 
 def get_index_mapping(es, index, doc_type):
-    def _format_mapping_for_es_version(mapping):
-        return mapping[index]['mappings'][doc_type]
     try:
-        return _format_mapping_for_es_version(es.indices.get_mapping(index, doc_type))
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            return es.indices.get_mapping(index).get(index, {}).get('mappings', {})
+        else:
+            return es.indices.get_mapping(index, doc_type).get(index, {}).get('mappings', {}).get(doc_type, {})
     except TransportError:
         return {}
 

@@ -1,5 +1,6 @@
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import ugettext as _
@@ -10,31 +11,43 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
-from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
-from corehq.apps.users.util import normalize_username
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    Invitation,
+    UserRole,
+)
+from corehq.apps.users.util import normalize_username, log_user_role_update
+from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
-    'location_code', 'role',
+    'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)'
+    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -266,65 +279,117 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
-    ret = {"errors": [], "rows": []}
+DomainInfo = namedtuple('DomainInfo', [
+    'validators', 'can_assign_locations', 'location_cache',
+    'roles_by_name', 'profiles_by_name', 'group_memoizer'
+])
 
-    group_memoizer = group_memoizer or GroupMemoizer(domain)
-    group_memoizer.load_all()
+
+def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+    domain_info_by_domain = {}
+
+    def _get_domain_info(domain):
+        domain_info = domain_info_by_domain.get(domain)
+        if domain_info:
+            return domain_info
+        if domain == upload_domain:
+            domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
+        else:
+            domain_group_memoizer = GroupMemoizer(domain)
+        domain_group_memoizer.load_all()
+        can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+        location_cache = None
+        if can_assign_locations:
+            location_cache = SiteCodeToLocationCache(domain)
+
+        domain_obj = Domain.get_by_name(domain)
+        allowed_group_names = [group.name for group in domain_group_memoizer.groups]
+        roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+        profiles_by_name = {}
+        definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
+        if definition:
+            profiles_by_name = {
+                profile.name: profile
+                for profile in definition.get_profiles()
+            }
+        domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
+        validators = get_user_import_validators(
+            domain_obj,
+            domain_user_specs,
+            allowed_group_names,
+            list(roles_by_name),
+            list(profiles_by_name),
+            upload_domain
+        )
+
+        domain_info = DomainInfo(
+            validators,
+            can_assign_locations,
+            location_cache,
+            roles_by_name,
+            profiles_by_name,
+            domain_group_memoizer
+        )
+        domain_info_by_domain[domain] = domain_info
+        return domain_info
+
+    ret = {"errors": [], "rows": []}
 
     current = 0
 
-    can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-    if can_assign_locations:
-        location_cache = SiteCodeToLocationCache(domain)
-
-    domain_obj = Domain.get_by_name(domain)
-    allowed_group_names = [group.name for group in group_memoizer.groups]
-    roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
-    validators = get_user_import_validators(domain_obj, user_specs, allowed_group_names, list(roles_by_name))
     try:
         for row in user_specs:
             if update_progress:
                 update_progress(current)
                 current += 1
+            log_user_create = False
+            log_role_update = False
 
             username = row.get('username')
+            domain = row.get('domain') or upload_domain
+            username = normalize_username(str(username), domain) if username else None
             status_row = {
                 'username': username,
                 'row': row,
             }
 
+            domain_info = _get_domain_info(domain)
+
             try:
-                for validator in validators:
+                for validator in domain_info.validators:
                     validator(row)
             except UserUploadError as e:
                 status_row['flag'] = str(e)
                 ret['rows'].append(status_row)
                 continue
 
-            data = row.get('data')
+            data = row.get('data', {})
             email = row.get('email')
             group_names = list(map(str, row.get('group') or []))
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
             phone_number = row.get('phone-number')
-            uncategorized_data = row.get('uncategorized_data')
+            uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
-            location_codes = row.get('location_code') or []
+            location_codes = row.get('location_code', []) if 'location_code' in row else None
             if location_codes and not isinstance(location_codes, list):
                 location_codes = [location_codes]
-            # ignore empty
-            location_codes = [code for code in location_codes if code]
-            role = row.get('role', '')
+            if location_codes is not None:
+                # ignore empty
+                location_codes = [code for code in location_codes if code]
+            role = row.get('role', None)
+            profile = row.get('user_profile', None)
+            web_user = row.get('web_user')
 
             try:
-                username = normalize_username(str(username), domain) if username else None
                 password = str(password) if password else None
 
                 is_active = spec_value_to_boolean_or_none(row, 'is_active')
                 is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
                 send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
+                remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
 
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -340,29 +405,52 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                     # note: explicitly not including "None" here because that's the default value if not set.
                     # False means it was set explicitly to that value
-                    if is_account_confirmed is False:
+                    if is_account_confirmed is False and not web_user:
                         raise UserUploadError(_(
-                            f"You can only set 'Is Account Confirmed' to 'False' on a new User."
+                            "You can only set 'Is Account Confirmed' to 'False' on a new User."
                         ))
 
                     if is_password(password):
                         user.set_password(password)
+                        # overwrite password in results so we do not save it to the db
+                        status_row['row']['password'] = 'REDACTED'
                     status_row['flag'] = 'updated'
                 else:
                     kwargs = {}
-                    if is_account_confirmed is not None:
+                    if is_account_confirmed is not None and not web_user:
                         kwargs['is_account_confirmed'] = is_account_confirmed
-                    user = CommCareUser.create(domain, username, password, commit=False, **kwargs)
+                    user = CommCareUser.create(domain, username, password, created_by=upload_user,
+                                               created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
+                    log_user_create = True
                     status_row['flag'] = 'created'
 
                 if phone_number:
                     user.add_phone_number(_fmt_phone(phone_number), default=True)
                 if name:
                     user.set_full_name(str(name))
-                if data:
-                    user.user_data.update(data)
+
+                # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
+                for key, value in user.user_data.items():
+                    if key not in data:
+                        data[key] = value
+                if profile:
+                    profile_obj = domain_info.profiles_by_name[profile]
+                    data[PROFILE_SLUG] = profile_obj.id
+                    for key in profile_obj.fields.keys():
+                        user.pop_metadata(key)
+                try:
+                    user.update_metadata(data)
+                except ValueError as e:
+                    raise UserUploadError(str(e))
                 if uncategorized_data:
-                    user.user_data.update(uncategorized_data)
+                    user.update_metadata(uncategorized_data)
+
+                # Clear blank user data so that it can be purged by remove_unused_custom_fields_from_users_task
+                for key in dict(data, **uncategorized_data):
+                    value = user.metadata[key]
+                    if value is None or value == '':
+                        user.pop_metadata(key)
+
                 if language:
                     user.language = language
                 if email:
@@ -370,13 +458,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 if is_active is not None:
                     user.is_active = is_active
 
-                if can_assign_locations:
+                if domain_info.can_assign_locations and location_codes is not None:
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
                     # the user's information is updated, or none of it
+                    # Do not update location info if the column is not included at all
                     location_ids = []
                     for code in location_codes:
-                        loc = get_location_from_site_code(code, location_cache)
+                        loc = get_location_from_site_code(code, domain_info.location_cache)
                         location_ids.append(loc.location_id)
 
                     locations_updated = set(user.assigned_location_ids) != set(location_ids)
@@ -389,11 +478,72 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         user.reset_locations(location_ids, commit=False)
 
                 if role:
-                    user.set_role(domain, roles_by_name[role].get_qualified_id())
+                    role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
+                    user_current_role = user.get_role(domain=domain)
+                    log_role_update = not (user_current_role
+                                        and user_current_role.get_qualified_id() == role_qualified_id)
+                    if log_role_update:
+                        user.set_role(domain, role_qualified_id)
+
+                if web_user:
+                    user.update_metadata({'login_as_user': web_user})
 
                 user.save()
+                if log_user_create:
+                    user.log_user_create(upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                if log_role_update:
+                    log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                if web_user:
+                    if not upload_user.can_edit_web_users():
+                        raise UserUploadError(_(
+                            "Only users with the edit web users permission can upload web users"
+                        ))
+                    current_user = CouchUser.get_by_username(web_user)
+                    if remove_web_user:
+                        if not current_user or not current_user.is_member_of(domain):
+                            raise UserUploadError(_(
+                                "You cannot remove a web user that is not a member of this project. {web_user} is not a member.").format(web_user=web_user)
+                            )
+                        else:
+                            current_user.delete_domain_membership(domain)
+                            current_user.save()
+                    else:
+                        if not role:
+                            raise UserUploadError(_(
+                                "You cannot upload a web user without a role. {web_user} does not have a role").format(web_user=web_user)
+                            )
+                        if not current_user and is_account_confirmed:
+                            raise UserUploadError(_(
+                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.").format(web_user=web_user)
+                            )
+                        if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
+                            current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
 
-                if send_account_confirmation_email:
+                        elif not current_user or not current_user.is_member_of(domain):
+                            invite, invite_created = Invitation.objects.update_or_create(
+                                email=web_user,
+                                domain=domain,
+                                defaults={
+                                    'invited_by': upload_user.user_id,
+                                    'invited_on': datetime.utcnow(),
+                                    'supply_point': user.location_id,
+                                    'role': role_qualified_id
+                                },
+                            )
+                            if invite_created and send_account_confirmation_email:
+                                invite.send_activation_email()
+
+                        elif current_user.is_member_of(domain):
+                            # edit existing user in the domain
+                            current_user.set_role(domain, role_qualified_id)
+                            if location_codes is not None:
+                                if user.location_id:
+                                    current_user.set_location(domain, user.location_id)
+                                else:
+                                    current_user.unset_location(domain)
+                            current_user.save()
+
+                if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
 
                 if is_password(password):
@@ -403,12 +553,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                     user.get_django_user(use_primary_db=True).check_password(password)
 
-                for group in group_memoizer.by_user_id(user.user_id):
+                for group in domain_info.group_memoizer.by_user_id(user.user_id):
                     if group.name not in group_names:
                         group.remove_user(user)
 
                 for group_name in group_names:
-                    group_memoizer.by_name(group_name).add_user(user, save=False)
+                    domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
 
             except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = str(e)
@@ -416,7 +566,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
             ret["rows"].append(status_row)
     finally:
         try:
-            group_memoizer.save_all()
+            for domain_info in domain_info_by_domain.values():
+                domain_info.group_memoizer.save_all()
         except BulkSaveError as e:
             _error_message = (
                 "Oops! We were not able to save some of your group changes. "

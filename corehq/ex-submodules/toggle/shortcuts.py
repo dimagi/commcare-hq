@@ -8,6 +8,10 @@ def toggle_enabled(slug, item, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
     """
+    from corehq.toggles import NAMESPACE_EMAIL_DOMAIN
+    if namespace == NAMESPACE_EMAIL_DOMAIN and '@' in item:
+        item = item.split('@')[-1]
+
     item = namespaced_item(item, namespace)
     if not settings.UNIT_TESTING or getattr(settings, 'DB_ENABLED', True):
         toggle = Toggle.cached_get(slug)
@@ -35,6 +39,7 @@ def set_toggle(slug, item, enabled, namespace=None):
             static_toggle = static_toggles_by_slug[slug]
             if static_toggle.save_fn:
                 static_toggle.save_fn(item, enabled)
+        return True
 
 
 def namespaced_item(item, namespace):
@@ -48,9 +53,9 @@ def parse_toggle(entry):
     Split a toggle entry into the namespace an the item.
     :return: tuple(namespace, item)
     """
-    from corehq.toggles import NAMESPACE_DOMAIN
+    from corehq.toggles import NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN
     namespace = None
-    if entry.startswith(NAMESPACE_DOMAIN):
+    if entry.startswith((NAMESPACE_DOMAIN + ':', NAMESPACE_EMAIL_DOMAIN + ':')):
         namespace, entry = entry.split(":")
     return namespace, entry
 

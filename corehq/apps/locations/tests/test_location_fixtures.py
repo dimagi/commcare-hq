@@ -21,8 +21,8 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.custom_data_fields.models import (
-    CustomDataField,
     CustomDataFieldsDefinition,
+    Field,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -38,14 +38,12 @@ from ..fixtures import (
     flat_location_fixture_generator,
     get_location_fixture_queryset,
     location_fixture_generator,
-    related_locations_fixture_generator,
     should_sync_flat_fixture,
     should_sync_hierarchical_fixture,
     should_sync_locations,
 )
 from ..models import (
     LocationFixtureConfiguration,
-    LocationRelation,
     LocationType,
     SQLLocation,
     make_location,
@@ -105,14 +103,12 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     # Adding this feature flag allows rendering of hierarchical fixture where requested
     # and wont interfere with flat fixture generation
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-    def _assert_fixture_matches_file(self, xml_name, desired_locations, flat=False, related=False):
+    def _assert_fixture_matches_file(self, xml_name, desired_locations, flat=False):
         if flat:
             generator = flat_location_fixture_generator
-        elif related:
-            generator = related_locations_fixture_generator
         else:
             generator = location_fixture_generator
-        fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1])
+        fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1], encoding='utf-8')
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
@@ -131,13 +127,13 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         self.user = create_restore_user(self.domain, 'user', '123')
 
     def tearDown(self):
-        self.user._couch_user.delete()
+        self.user._couch_user.delete(deleted_by=None)
         for lt in self.location_types.values():
             lt.expand_to = None
             lt._expand_from_root = False
             lt._expand_from = None
             lt.include_without_expanding = None
-            lt.include_only = []
+            lt.include_only.set([])
             lt.save()
         for loc in self.locations.values():
             loc.location_type.refresh_from_db()
@@ -146,7 +142,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_metadata(self):
@@ -164,9 +160,9 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         )
         location_db = LocationSet([location])
         data_fields = [
-            CustomDataField(slug='best_swordsman'),
-            CustomDataField(slug='in_westeros'),
-            CustomDataField(slug='appeared_in_num_episodes'),
+            Field(slug='best_swordsman'),
+            Field(slug='in_westeros'),
+            Field(slug='appeared_in_num_episodes'),
         ]
         fixture = _location_to_fixture(location_db, location, location_type, data_fields)
         location_data = {
@@ -316,7 +312,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         # I want all all the cities, but am at the state level
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
-        location_type.include_only = [self.location_types['state'], self.location_types['county']]
+        location_type.include_only.set([self.location_types['state'], self.location_types['county']])
         location_type.save()
         # include county and state
         self.assert_fixture_queryset_equals_locations(
@@ -327,7 +323,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     def test_include_only_location_types_hierarchical(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
-        location_type.include_only = [self.location_types['state'], self.location_types['county']]
+        location_type.include_only.set([self.location_types['state'], self.location_types['county']])
         location_type.save()
 
         self._assert_fixture_matches_file(
@@ -406,7 +402,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1]).decode('utf-8')
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1], encoding='utf-8').decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
@@ -436,12 +432,12 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.fields = [
-            CustomDataField(slug='baseball_team'),
-            CustomDataField(slug='favorite_passtime'),
-        ]
+        cls.loc_fields.set_fields([
+            Field(slug='baseball_team'),
+            Field(slug='favorite_pastime'),
+        ])
         cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
+        cls.field_slugs = [f.slug for f in cls.loc_fields.get_fields()]
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
@@ -450,7 +446,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     @classmethod
     def tearDownClass(cls):
         cls.loc_fields.delete()
-        cls.user._couch_user.delete()
+        cls.user._couch_user.delete(deleted_by=None)
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
@@ -523,7 +519,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_simple_location_fixture(self):
@@ -610,11 +606,11 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
     def test_include_only_location_types(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
-        location_type.include_only = [
+        location_type.include_only.set([
             self.location_types['state'],
             self.location_types['county'],
             self.location_types['city'],
-        ]
+        ])
         location_type.save()
         # include county and state
         self.assert_fixture_queryset_equals_locations([
@@ -625,104 +621,6 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
             'Suffolk',
             'Boston',
         ])
-
-
-@flag_enabled("RELATED_LOCATIONS")
-@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
-    """
-    - State
-        - County
-            - City
-    """
-    location_type_names = ['state', 'county', 'city']
-    location_structure = TEST_LOCATION_STRUCTURE
-
-    @classmethod
-    def setUpClass(cls):
-        super(RelatedLocationFixturesTest, cls).setUpClass()
-        cls.user = create_restore_user(cls.domain, 'user', '123')
-        cls.relation = LocationRelation.objects.create(
-            location_a=cls.locations["Cambridge"],
-            location_b=cls.locations["Boston"]
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user._couch_user.delete()
-        super(RelatedLocationFixturesTest, cls).tearDownClass()
-
-    def tearDown(self):
-        self.user._couch_user.reset_locations([])
-
-    def test_related_locations(self, *args):
-        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
-        self._assert_fixture_matches_file(
-            'related_location_flat_fixture',
-            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
-            flat=True
-        )
-        self._assert_fixture_matches_file(
-            'related_location',
-            ['Boston', 'Cambridge'],
-            related=True
-        )
-
-    def test_related_locations_parent_location(self, *args):
-        # verify that being assigned to a parent location pulls in sub location's relations
-        self.user._couch_user.add_to_assigned_locations(self.locations['Middlesex'])
-        self._assert_fixture_matches_file(
-            'related_location_flat_fixture',
-            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
-            flat=True
-        )
-        self._assert_fixture_matches_file(
-            'related_location',
-            ['Boston', 'Cambridge'],
-            related=True
-        )
-
-    def test_related_locations_with_distance(self, *args):
-        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
-        self.relation.distance = 5
-        self.relation.save()
-        self.addCleanup(lambda: LocationRelation.objects.filter(pk=self.relation.pk).update(distance=None))
-        self._assert_fixture_matches_file(
-            'related_location_with_distance_flat_fixture',
-            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
-            flat=True
-        )
-        self._assert_fixture_matches_file(
-            'related_location_with_distance',
-            ['Boston', 'Cambridge'],
-            related=True
-        )
-
-    def test_should_sync_when_changed(self, *args):
-        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
-        last_sync_time = datetime.utcnow()
-        sync_log = SimplifiedSyncLog(date=last_sync_time)
-        locations_queryset = SQLLocation.objects.filter(pk=self.locations['Boston'].pk)
-
-        restore_state = MockRestoreState(self.user, RestoreParams())
-
-        self.assertFalse(should_sync_locations(sync_log, locations_queryset, restore_state))
-        self.assertEqual(
-            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 0)
-
-        LocationRelation.objects.create(location_a=self.locations["Revere"], location_b=self.locations["Boston"])
-        self.assertTrue(should_sync_locations(SimplifiedSyncLog(date=last_sync_time), locations_queryset, restore_state))
-
-        # length 2 for index definition + data
-        self.assertEqual(
-            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
-
-    def test_force_empty_when_user_has_no_locations(self, *args):
-        sync_log = SimplifiedSyncLog(date=datetime.utcnow())
-        # no relations have been touched since this SimplifiedSyncLog, but it still pushes down the empty list
-        self.assertEqual(
-            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
-
 
 
 class ShouldSyncLocationFixturesTest(TestCase):
@@ -740,7 +638,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
             code="state",
         )
         password = "What have I got in my pocket"
-        cls.user = CommCareUser.create(cls.domain, cls.username, password)
+        cls.user = CommCareUser.create(cls.domain, cls.username, password, None, None)
         cls.user.save()
         cls.location_type.save()
 

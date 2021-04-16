@@ -15,11 +15,11 @@ hqDefine('case_search/js/case_search', [
         self.type = ko.observable();
         self.owner_id = ko.observable();
         self.customQueryAddition = ko.observable();
-        self.includeClosed = ko.observable(false);
         self.results = ko.observableArray();
         self.count = ko.observable();
         self.took = ko.observable();
         self.query = ko.observable();
+        self.profile = ko.observable();
         self.case_data_url = caseDataUrl;
         self.xpath = ko.observable();
         self.parameters = ko.observableArray();
@@ -37,31 +37,56 @@ hqDefine('case_search/js/case_search', [
             self.parameters.remove(this);
         };
 
-        self.submit = function () {
+        self.showResults = ko.computed(function () {
+            return !_.isUndefined(self.count()) && !_.isNaN(parseInt(self.count()));
+        });
+
+        self.searchButtonIcon = ko.observable("fa fa-search");
+        self.profileButtonIcon = ko.observable("fa fa-clock-o");
+
+        self._submit = function (postData) {
+            postData = postData || {};
             self.results([]);
             self.count("-");
             self.took(null);
             self.query(null);
+            self.profile(null);
+            self.searchButtonIcon("fa fa-spin fa-refresh");
+            self.profileButtonIcon("fa fa-spin fa-refresh");
             $.post({
                 url: window.location.href,
-                data: {q: JSON.stringify({
+                data: _.extend(postData, {q: JSON.stringify({
                     type: self.type(),
                     owner_id: self.owner_id(),
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
-                    includeClosed: self.includeClosed(),
                     xpath: self.xpath(),
                 }
-                )},
+                )}),
                 success: function (data) {
                     self.results(data.values);
                     self.count(data.count);
                     self.took(data.took);
                     self.query(data.query);
+                    if (postData.include_profile) {
+                        self.profile(data.profile);
+                    }
+                    self.searchButtonIcon("fa fa-search");
+                    self.profileButtonIcon("fa fa-clock-o");
                 },
                 error: function (response) {
                     alertUser.alert_user(response.responseJSON.message, 'danger');
                 },
+            });
+        };
+
+        self.search = function () {
+            self._submit();
+        };
+
+        self.searchWithProfile = function () {
+            self._submit({
+                include_profile: true,
             });
         };
 

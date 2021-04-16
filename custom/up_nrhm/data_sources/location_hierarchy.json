@@ -1,5 +1,8 @@
 {
-    "domains": ["up-nrhm"],
+    "domains": [
+        "up-nrhm",
+        "nhm-af-up"
+    ],
     "server_environment": ["production"],
     "config": {
         "referenced_doc_type": "CommCareUser",

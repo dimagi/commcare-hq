@@ -76,9 +76,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SQLStockLevelsConfig',
             fields=[
-                ('emergency_level', models.DecimalField(decimal_places=2, default=0.5, max_digits=3)),
-                ('understock_threshold', models.DecimalField(decimal_places=2, default=1.5, max_digits=3)),
-                ('overstock_threshold', models.DecimalField(decimal_places=2, default=3, max_digits=3)),
+                ('emergency_level', models.DecimalField(decimal_places=2, default=0.5, max_digits=4)),
+                ('understock_threshold', models.DecimalField(decimal_places=2, default=1.5, max_digits=4)),
+                ('overstock_threshold', models.DecimalField(decimal_places=2, default=3, max_digits=4)),
                 ('commtrack_config', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
                                                           primary_key=True, serialize=False,
                                                           to='commtrack.SQLCommtrackConfig')),

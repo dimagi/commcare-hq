@@ -40,7 +40,8 @@ logger = logging.getLogger('export_migration')
 
 
 @task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(domain, export_ids, exports_type, username, filters, download_id,
+def populate_export_download_task(domain, export_ids, exports_type, username,
+                                  filters, download_id, owner_id,
                                   filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
@@ -89,6 +90,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
                 mimetype=file_format.mimetype,
                 content_disposition=safe_filename_header(filename, file_format.extension),
                 download_id=download_id,
+                owner_ids=[owner_id],
             )
 
     for email_request in email_requests:

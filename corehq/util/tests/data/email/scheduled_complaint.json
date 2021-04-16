@@ -1,0 +1,93 @@
+{
+    "eventType": "Complaint",
+    "complaint": {
+        "complaintSubType": null,
+        "complainedRecipients": [
+            {
+                "emailAddress": "alicedoe@univeristy.edu"
+            },
+            {
+                "emailAddress": "janedoe@company.com"
+            }
+        ],
+        "timestamp": "2020-07-16T03:16:55.129Z",
+        "feedbackId": "redacted",
+        "userAgent": "Yahoo!-Mail-Feedback/2.0",
+        "complaintFeedbackType": "abuse",
+        "arrivalDate": "2020-07-16T03:02:25.000Z"
+    },
+    "mail": {
+        "timestamp": "2020-07-16T03:02:22.000Z",
+        "source": "noreplyemail@company.com",
+        "sourceArn": "arn:aws:ses:us-east-1:redacted:identity/noreplyemail@company.com",
+        "sourceIp": "35.175.35.59",
+        "sendingAccountId": "redacted",
+        "messageId": "redacted",
+        "destination": [
+            "alicedoe@univeristy.edu",
+            "janedoe@company.com"
+        ],
+        "headersTruncated": false,
+        "headers": [
+            {
+                "name": "Received",
+                "value": "from server-name (ec2-fake.compute-1.amazonaws.com [redacted]) by email-smtp.amazonaws.com with SMTP (SimpleEmailService-d-redacted) id redacted; Thu, 16 Jul 2020 03:02:22 +0000 (UTC)"
+            },
+            {
+                "name": "Content-Type",
+                "value": "multipart/alternative; boundary=\"===============2410380162893072365==\""
+            },
+            {
+                "name": "MIME-Version",
+                "value": "1.0"
+            },
+            {
+                "name": "Subject",
+                "value": "Invitation from Alice Doe to join CommCareHQ"
+            },
+            {
+                "name": "From",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "To",
+                "value": "alicedoe@univeristy.edu"
+            },
+            {
+                "name": "Cc",
+                "value": "janedoe@company.com"
+            },
+            {
+                "name": "Date",
+                "value": "Thu, 16 Jul 2020 03:02:22 -0000"
+            },
+            {
+                "name": "Message-ID",
+                "value": "<redacted@server-name>"
+            },
+            {
+                "name": "Return-Path",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "X-SES-CONFIGURATION-SET",
+                "value": "fake-email-events"
+            }
+        ],
+        "commonHeaders": {
+            "returnPath": "noreplyemail@company.com",
+            "from": [
+                "noreplyemail@company.com"
+            ],
+            "date": "Thu, 16 Jul 2020 03:02:22 -0000",
+            "to": [
+                "alicedoe@univeristy.edu"
+            ],
+            "cc": [
+                "janedoe@company.com"
+            ],
+            "messageId": "<redacted@server-name>",
+            "subject": "Invitation from Alice Doe to join CommCareHQ"
+        }
+    }
+}

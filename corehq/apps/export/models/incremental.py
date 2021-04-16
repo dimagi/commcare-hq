@@ -158,7 +158,7 @@ def _send_incremental_export(export, checkpoint):
         'Accept': 'application/json'
     }
     files = {'file': (checkpoint.filename, checkpoint.get_blob(), 'text/csv')}
-    requests.post(uri='', files=files, headers=headers)
+    requests.post(endpoint='', files=files, headers=headers)
 
 
 def _get_requests(checkpoint, export):

@@ -3,21 +3,23 @@ from abc import ABC, abstractmethod
 
 from dimagi.utils.couch.database import iter_docs
 
-from . import NotFound, get_blob_db
+from . import NotFound, get_blob_db, CODES
 from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
-from .zipdb import ZipBlobDB
+from .targzipdb import TarGzipBlobDB
 
 
 class BlobDbBackendExporter(object):
 
-    def __init__(self, filename):
-        self.db = ZipBlobDB(filename)
+    def __init__(self, filename, already_exported):
+        self.db = TarGzipBlobDB(filename)
+        self._already_exported = already_exported or set()
+        self.src_db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
 
     def __enter__(self):
-        pass
+        self.db.open('w:gz')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()
@@ -26,14 +28,17 @@ class BlobDbBackendExporter(object):
 
     def process_object(self, meta):
         self.total_blobs += 1
+        if meta.key in self._already_exported:
+            # This object is already in an another dump
+            return
+
         try:
-            content = meta.open()
+            content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
             self.not_found += 1
         else:
             with content:
                 self.db.copy_blob(content, key=meta.key)
-        return True
 
 
 class BlobExporter(ABC):
@@ -45,7 +50,8 @@ class BlobExporter(ABC):
     def slug(self):
         raise NotImplementedError
 
-    def migrate(self, filename, chunk_size=100, limit_to_db=None, force=False):
+    def migrate(self, filename, chunk_size=100, limit_to_db=None,
+                already_exported=None, force=False):
         if not self.domain:
             raise ExportError("Must specify domain")
 
@@ -55,7 +61,7 @@ class BlobExporter(ABC):
                 "To re-run the export use 'reset'".format(self.slug)
             )
 
-        migrator = BlobDbBackendExporter(filename)
+        migrator = BlobDbBackendExporter(filename, already_exported)
         with migrator:
             self._migrate(migrator, chunk_size, limit_to_db)
         print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
@@ -71,9 +77,11 @@ class ExportByDomain(BlobExporter):
 
     def _migrate(self, migrator, chunk_size, limit_to_db):
         from corehq.apps.dump_reload.sql.dump import get_all_model_iterators_builders_for_domain
+        from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
 
+        iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP['blobs.BlobMeta']
         builders = get_all_model_iterators_builders_for_domain(
-            BlobMeta, self.domain, limit_to_db)
+            BlobMeta, self.domain, iterator_builders, limit_to_db)
         for model_class, builder in builders:
             for iterator in builder.iterators():
                 for obj in iterator:

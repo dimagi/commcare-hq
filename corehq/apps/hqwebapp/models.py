@@ -1,14 +1,15 @@
 from collections import namedtuple
+from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from tastypie.models import ApiKey
+import architect
+from oauth2_provider.settings import APPLICATION_MODEL
 
 from corehq.util.markup import mark_up_urls
+from corehq.util.models import ForeignValue, foreign_value_init
 from corehq.util.quickcache import quickcache
-
-from .signals import *
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
 
@@ -55,6 +56,51 @@ class MaintenanceAlert(models.Model):
             return ''
 
 
-class ApiKeySettings(models.Model):
-    api_key = models.OneToOneField(ApiKey, on_delete=models.CASCADE)
-    ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list, null=True, blank=True)
+class UserAgent(models.Model):
+    MAX_LENGTH = 255
+
+    value = models.CharField(max_length=MAX_LENGTH, db_index=True)
+
+
+@architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
+@foreign_value_init
+class UserAccessLog(models.Model):
+    TYPE_LOGIN = 'login'
+    TYPE_LOGOUT = 'logout'
+    TYPE_FAILURE = 'failure'
+
+    ACTIONS = (
+        (TYPE_LOGIN, 'Login'),
+        (TYPE_LOGOUT, 'Logout'),
+        (TYPE_FAILURE, 'Login Failure')
+    )
+
+    id = models.BigAutoField(primary_key=True)
+    user_id = models.CharField(max_length=255, db_index=True)
+    action = models.CharField(max_length=20, choices=ACTIONS)
+    ip = models.GenericIPAddressField(blank=True, null=True)
+    user_agent_fk = models.ForeignKey(
+        UserAgent, null=True, on_delete=models.PROTECT, db_column="user_agent_id")
+    user_agent = ForeignValue(user_agent_fk, truncate=True)
+    path = models.CharField(max_length=255, blank=True)
+    timestamp = models.DateTimeField(default=datetime.utcnow)
+
+    def __str__(self):
+        return f'{self.timestamp}: {self.user_id} - {self.action}'
+
+
+class HQOauthApplication(models.Model):
+    application = models.OneToOneField(
+        APPLICATION_MODEL,
+        on_delete=models.CASCADE,
+        related_name='hq_application',
+    )
+    pkce_required = models.BooleanField(default=True)
+
+
+def pkce_required(client_id):
+    try:
+        application = HQOauthApplication.objects.get(application__client_id=client_id)
+        return application.pkce_required
+    except HQOauthApplication.DoesNotExist:
+        return False

@@ -1,0 +1,26 @@
+{% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <title>{% trans "Thank you for logging in!" %}</title>
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+    {% include 'hqwebapp/includes/less.html' %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
+  </head>
+  <body>
+    <div class="hq-container">
+      <div class="container-fluid">
+        <div class="page-header">
+          <h1>{% trans "Thank you for logging in!" %}</h1>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <p>
+              {% trans "You may close this window and return to your work." %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,232 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-suppl_nutrition_thr_v1",
+    "display_name": "Supplementary Nutrition THR V1 (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/4FAB81D4-BBAF-424E-8DB1-96478791DB01"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/116A78AD-E839-4BD4-BA13-A534A4A85B3B"
+            }
+          ]
+        },
+        {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "nutrition_services_to_pw_lw_check"
+                ]
+              },
+              "property_value": "thr_type_snd"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "thr_given_to_children_0_3_check"
+                ]
+              },
+              "property_value": "yes"
+            }
+          ]
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "username"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "received_on"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "day",
+        "display_name": "day",
+        "datatype": "date",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_children_0_3",
+        "display_name": "number_of_children_0_3",
+        "datatype": "integer",
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "number_of_children_0_3"
+            ]
+          },
+          "default_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_pw_lm",
+        "display_name": "number_of_pw_lm",
+        "datatype": "integer",
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "number_of_pw_lm"
+            ]
+          },
+          "default_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

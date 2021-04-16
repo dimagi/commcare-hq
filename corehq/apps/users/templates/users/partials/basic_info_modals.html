@@ -11,7 +11,7 @@
           <h3 class="modal-title">{% blocktrans with phone_number.number as number %}Delete +{{ number }}
             ?{% endblocktrans %}</h3>
         </div>
-        <form class="form form-horizontal hq-form disable-on-submit"
+        <form class="form form-horizontal disable-on-submit"
               name="delete_phone_number"
           {% if user_type == "mobile" %}
               action="{% url "delete_phone_number" domain couch_user.couch_id %}"
@@ -42,7 +42,7 @@
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">{% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}</h4>
           </div>
-          <form class="form form-horizontal hq-form disable-on-submit"
+          <form class="form form-horizontal disable-on-submit"
                 name="reverify_phone_number"
                 action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
                 method="post">

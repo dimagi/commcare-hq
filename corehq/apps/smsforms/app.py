@@ -102,6 +102,10 @@ def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]
 
 
+def get_events_from_responses(responses):
+    return [r.event for r in responses if r.event]
+
+
 def submit_unfinished_form(session):
     """
     Gets the raw instance of the session's form and submits it. This is used with
@@ -116,6 +120,10 @@ def submit_unfinished_form(session):
     # Get and clean the raw xml
     try:
         response = FormplayerInterface(session.session_id, session.domain).get_raw_instance()
+        # Formplayer's ExceptionResponseBean includes the exception message,
+        # stautus ("error"), url, and type ("text")
+        if response.get('status') == 'error':
+            raise TouchformsError(response.get('exception'))
         xml = response['output']
     except InvalidSessionIdException:
         return

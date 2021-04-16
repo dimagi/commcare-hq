@@ -20,6 +20,7 @@ class HqDeploy(models.Model):
     user = models.CharField(max_length=100)
     environment = models.CharField(max_length=100, null=True)
     diff_url = models.CharField(max_length=255, null=True)
+    commit = models.CharField(max_length=255, null=True)
 
     class Meta():
         ordering = ["-date"]

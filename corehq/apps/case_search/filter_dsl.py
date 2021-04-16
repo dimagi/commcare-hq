@@ -14,6 +14,7 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
     case_property_range_query,
+    case_property_text_query,
     exact_case_property_text_query,
     reverse_index_case_query,
 )
@@ -24,6 +25,10 @@ class CaseFilterError(Exception):
     def __init__(self, message, filter_part):
         self.filter_part = filter_part
         super(CaseFilterError, self).__init__(message)
+
+
+class TooManyRelatedCasesError(CaseFilterError):
+    pass
 
 
 def print_ast(node):
@@ -69,8 +74,10 @@ NEQ = "!="
 ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
 
 
-def build_filter_from_ast(domain, node):
+def build_filter_from_ast(domain, node, fuzzy=False):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
+
+    If fuzzy is true, all equality operations will be treated as fuzzy.
     """
 
     def _walk_related_cases(node):
@@ -116,13 +123,15 @@ def build_filter_from_ast(domain, node):
         """
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
-        new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
-        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
+
+        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query, fuzzy=fuzzy)
         if es_query.count() > MAX_RELATED_CASES:
-            raise CaseFilterError(
+            raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
                 new_query
             )
+
         return es_query.scroll_ids()
 
     def _child_case_lookup(case_ids, identifier):
@@ -178,6 +187,8 @@ def build_filter_from_ast(domain, node):
 
             if value == '':
                 q = case_property_missing(case_property_name)
+            elif fuzzy:
+                q = case_property_text_query(case_property_name, value, fuzziness='AUTO')
             else:
                 q = exact_case_property_text_query(case_property_name, value)
 
@@ -242,14 +253,14 @@ def build_filter_from_ast(domain, node):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath):
+def build_filter_from_xpath(domain, xpath, fuzzy=False):
     error_message = _(
         "We didn't understand what you were trying to do with {}. "
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
     try:
-        return build_filter_from_ast(domain, parse_xpath(xpath))
+        return build_filter_from_ast(domain, parse_xpath(xpath), fuzzy=fuzzy)
     except TypeError as e:
         text_error = re.search(r"Unknown text '(.+)'", str(e))
         if text_error:
@@ -264,29 +275,3 @@ def build_filter_from_xpath(domain, xpath):
             bad_part = lex_token_error.groups()[1]
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
-
-
-def get_properties_from_ast(node):
-    """Returns a list of case properties referenced in the XPath expression
-
-    Skips malformed parts of the XPath expression
-    """
-    columns = set()
-
-    def visit(node):
-        if not hasattr(node, 'op'):
-            return
-
-        if node.op in ([EQ, NEQ] + list(COMPARISON_MAPPING.keys())):
-            columns.add(serialize(node.left))
-
-        if node.op in list(OPERATOR_MAPPING.keys()):
-            visit(node.left)
-            visit(node.right)
-
-    visit(node)
-    return list(columns)
-
-
-def get_properties_from_xpath(xpath):
-    return get_properties_from_ast(parse_xpath(xpath))

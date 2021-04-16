@@ -1411,18 +1411,14 @@ Keep in mind that the only variables available for formatting are
 | "%b (%y)" | "Sep (08)"        |
 +-----------+-------------------+
 
-IntegerBucketsColumn and AgeInMonthsBucketsColumn
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+IntegerBucketsColumn
+~~~~~~~~~~~~~~~~~~~~
 
 Bucket columns allow you to define a series of ranges with corresponding names,
 then group together rows where a specific field's value falls within those ranges.
 These ranges are inclusive, since they are implemented using the ``between`` operator.
 It is the user's responsibility to make sure the ranges do not overlap; if a value
 falls into multiple ranges, it is undefined behavior which bucket it will be assigned to.
-
-There are two types: ``integer_buckets`` for integer values, and
-``age_in_months_buckets``, where the given field must be a date
-and the buckets are based on the number of months since that date.
 
 Here's an example that groups children based on their age at the time of
 registration:
@@ -1444,24 +1440,6 @@ registration:
 
 The ``"ranges"`` attribute maps conditional expressions to labels. If the field's value
 does not fall into any of these ranges, the row will receive the ``"else_"`` value, if provided.
-
-Here's an example using ``age_in_months_buckets``:
-
-.. code:: json
-
-   {
-       "display": "Age Group",
-       "column_id": "age_group",
-       "type": "age_in_months_buckets",
-       "field": "dob",
-       "ranges": {
-            "0_to_5": [0, 5],
-            "6_to_11": [6, 11],
-            "12_to_35": [12, 35],
-            "36_to_59": [36, 59],
-            "60_to_71": [60, 71],
-       }
-   }
 
 SumWhenColumn and SumWhenTemplateColumn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2249,10 +2227,13 @@ They conform to a slightly different style:
        }
    }
 
-Having defined the data source you need to add the path to the data
-source file to the ``STATIC_DATA_SOURCES`` setting in ``settings.py``.
+Having defined the data source you need to use the ``static_ucr_data_source_paths``
+extension point to make CommCare aware of your data source.
 Now when the static data source pillow is run it will pick up the data
 source and rebuild it.
+
+Alternatively, the legacy method is to add the path to the data
+source file to the ``STATIC_DATA_SOURCES`` setting in ``settings.py``.
 
 Changes to the data source require restarting the pillow which will
 rebuild the SQL table. Alternately you can use the UI to rebuild the
@@ -2275,6 +2256,13 @@ Static configurable reports have the following style:
        }
    }
 
+Having defined the report you need to use the ``static_ucr_report_paths``
+extension point to make CommCare aware of your report.
+
+Alternatively, the legacy method is to add the path to the data
+source file to the ``STATIC_UCR_REPORTS`` setting in ``settings.py``.
+
+
 Custom configurable reports
 ---------------------------
 
@@ -2292,21 +2280,32 @@ Extending User Configurable Reports
 When building a custom report for a client, you may find that you want
 to extend UCR with custom functionality. The UCR framework allows
 developers to write custom expressions, and register them with the
-framework. To do so, simply add a tuple to the
-``CUSTOM_UCR_EXPRESSIONS`` setting list. The first item in the tuple is
-the name of the expression type, the second item is the path to a
-function with a signature like conditional_expression(spec, context)
-that returns an expression object. e.g.:
+framework. To do so:
+
+1. Define a function that returns an expression object
 
 ::
 
-   # settings.py
+    def custom_expression(spec, context):
+        ...
 
-   CUSTOM_UCR_EXPRESSIONS = [
-       ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
-   ]
+2. Extend the ``custom_ucr_expressions`` extension point:
 
-Following are some custom expressions that are currently available.
+::
+
+    from corehq.apps.userreports.extension_points import custom_ucr_expressions
+
+    @custom_ucr_expressions.extend()
+    def ucr_expressions():
+        return [
+            ('expression_name', 'path.to.custom_expression'),
+        ]
+
+See also:
+
+* CommCare Extension documentation for more details on using extensions.
+* ``custom_ucr_expressions`` docstring for full extension point details.
+
 
 -  ``location_type_name``: A way to get location type from a location
    document id.

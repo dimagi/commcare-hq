@@ -7,7 +7,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 TEST_ES_PREFIX = 'test_'
 
 
-def es_index(index):
+def prefix_for_tests(index):
     prefix = '' if not settings.UNIT_TESTING else TEST_ES_PREFIX
     return "{}{}".format(prefix, index)
 

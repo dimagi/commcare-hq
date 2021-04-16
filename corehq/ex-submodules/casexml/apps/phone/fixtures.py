@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.models import OTARestoreUser
 from casexml.apps.case.xml import V1, V2
 from django.conf import settings

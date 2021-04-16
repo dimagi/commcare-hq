@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from memoized import memoized
+
 from sqlalchemy import distinct, func
 from sqlalchemy.sql import and_, label, operators, or_, select
 
@@ -12,6 +14,7 @@ class BaseQuery(metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
+    @memoized
     def sql_table(self):
         return self.sql_adapter.get_table()
 
@@ -192,7 +195,6 @@ class CaseQueryTotalLegacy(BaseQuery):
         )).group_by(
             self.sql_table.c.owner_id
         )
-
         return self._run_query(query)
 
 

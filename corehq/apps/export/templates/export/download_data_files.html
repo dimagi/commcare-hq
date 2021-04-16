@@ -71,50 +71,45 @@
       <div class="spacer"></div>
       <div class="row">
         <div class="col-sm-9 col-md-8 col-lg-8">
-          <form action="#" method="POST" enctype="multipart/form-data">
+          <form action="#" method="POST" enctype="multipart/form-data" class="form form-horizontal">
             {% csrf_token %}
             <fieldset>
               <legend>{% trans "Upload file for transfer" %}</legend>
 
-              <div class="row">
-                <div class="form-group">
-                  <label class="control-label col-md-2 requiredField">
-                    {% trans "Description" %}<span class="asteriskField">*</span>
-                  </label>
-                  <div class="controls col-md-6">
-                    <input class="textinput textInput form-control"
-                           name="description"
-                           required=""
-                           type="text" />
-                  </div>
+              <div class="form-group">
+                <label class="control-label col-md-2 requiredField">
+                  {% trans "Description" %}<span class="asteriskField">*</span>
+                </label>
+                <div class="controls col-md-6">
+                  <input class="textinput textInput form-control"
+                         name="description"
+                         required=""
+                         type="text" />
                 </div>
               </div>
 
-              <div class="row">
-                <div class="form-group">
-                  <label class="control-label col-md-2 requiredField">
-                    {% trans "File" %}<span class="asteriskField">*</span>
-                  </label>
-                  <div class="controls col-md-6">
-                    <input name="file"
-                           required=""
-                           type="file" />
-                  </div>
+              <div class="form-group">
+                <label class="control-label col-md-2 requiredField">
+                  {% trans "File" %}<span class="asteriskField">*</span>
+                </label>
+                <div class="controls col-md-6">
+                  <input name="file"
+                         required=""
+                         type="file" />
                 </div>
               </div>
-              <div class="row">
-                <div class="form-group">
-                  <label class="control-label col-md-2 requiredField">
-                    {% trans "Delete after" %}<span class="asteriskField">*</span>
-                  </label>
-                  <div class="controls col-md-6">
-                    <select name="ttl">
-                      <option value="12">{% trans "12 hours" %}</option>
-                      <option selected="selected" value="24">{% trans "1 day" %}</option>
-                      <option value="48">{% trans "2 days" %}</option>
-                      <option value="72">{% trans "3 days" %}</option>
-                    </select>
-                  </div>
+
+              <div class="form-group">
+                <label class="control-label col-md-2 requiredField">
+                  {% trans "Delete after" %}<span class="asteriskField">*</span>
+                </label>
+                <div class="controls col-md-6">
+                  <select name="ttl" class="form-control">
+                    <option value="12">{% trans "12 hours" %}</option>
+                    <option selected="selected" value="24">{% trans "1 day" %}</option>
+                    <option value="48">{% trans "2 days" %}</option>
+                    <option value="72">{% trans "3 days" %}</option>
+                  </select>
                 </div>
               </div>
 

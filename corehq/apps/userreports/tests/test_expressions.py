@@ -1267,18 +1267,20 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
         super(TestGetCaseSharingGroupsExpression, self).tearDown()
 
     @run_with_all_backends
     def test_no_groups(self):
-        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
+        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123',
+                                   created_by=None, created_via=None)
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 
     @run_with_all_backends
     def test_single_group(self):
-        user = CommCareUser.create(domain=self.domain, username='test_single', password='123')
+        user = CommCareUser.create(domain=self.domain, username='test_single', password='123',
+                                   created_by=None, created_via=None)
         group = Group(domain=self.domain, name='group_single', users=[user._id], case_sharing=True)
         group.save()
 
@@ -1288,7 +1290,8 @@ class TestGetCaseSharingGroupsExpression(TestCase):
 
     @run_with_all_backends
     def test_multiple_groups(self):
-        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
+        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123',
+                                   created_by=None, created_via=None)
         group1 = Group(domain=self.domain, name='group1', users=[user._id], case_sharing=True)
         group1.save()
         group2 = Group(domain=self.domain, name='group2', users=[user._id], case_sharing=True)
@@ -1299,7 +1302,8 @@ class TestGetCaseSharingGroupsExpression(TestCase):
 
     @run_with_all_backends
     def test_wrong_domain(self):
-        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123',
+                                   created_by=None, created_via=None)
         group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
         group.save()
 
@@ -1328,18 +1332,20 @@ class TestGetReportingGroupsExpression(TestCase):
         for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
         super(TestGetReportingGroupsExpression, self).tearDown()
 
     @run_with_all_backends
     def test_no_groups(self):
-        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
+        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123',
+                                   created_by=None, created_via=None)
         reporting_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(reporting_groups), 0)
 
     @run_with_all_backends
     def test_multiple_groups(self):
-        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
+        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123',
+                                   created_by=None, created_via=None)
         group1 = Group(domain=self.domain, name='group1', users=[user._id])
         group1.save()
         group2 = Group(domain=self.domain, name='group2', users=[user._id], case_sharing=True)
@@ -1350,7 +1356,8 @@ class TestGetReportingGroupsExpression(TestCase):
 
     @run_with_all_backends
     def test_wrong_domain(self):
-        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123',
+                                   created_by=None, created_via=None)
         group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
         group.save()
 

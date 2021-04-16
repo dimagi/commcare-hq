@@ -36,7 +36,7 @@ class CaseBugTestCouchOnly(TestCase):
         If a form and a case share an ID it's a conflict
         """
         conflict_id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id=conflict_id,
             create=True,
         ).as_text()
@@ -65,7 +65,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         Ensure that form processor fails on empty id
         """
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id='',
             create=True,
         ).as_text()
@@ -75,14 +75,14 @@ class CaseBugTest(TestCase, TestFileMixin):
 
     def _test_datatypes_in_various_properties(self, value):
         case_id = uuid.uuid4().hex
-        create_caseblock = CaseBlock(
+        create_caseblock = CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=value,
             case_name=value,
             case_type=value,
             create=True,
         ).as_text()
-        update_caseblock = CaseBlock(
+        update_caseblock = CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=value,
             update={
@@ -118,7 +118,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
         post_case_blocks([
-            CaseBlock(create=True, case_id=case_id).as_xml()
+            CaseBlock.deprecated_init(create=True, case_id=case_id).as_xml()
         ])
         xml_data = self.get_xml('duplicate_case_properties')
         result = submit_form_locally(xml_data, 'test-domain')
@@ -132,11 +132,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         """Ensure we can submit a form with multiple blocks for the same case"""
         case_id = uuid.uuid4().hex
         case_blocks = [
-            CaseBlock(create=True, case_id=case_id, update={
+            CaseBlock.deprecated_init(create=True, case_id=case_id, update={
                 'p1': 'v1',
                 'p2': 'v2',
             }).as_text(),
-            CaseBlock(case_id=case_id, update={
+            CaseBlock.deprecated_init(case_id=case_id, update={
                 'p2': 'v4',
                 'p3': 'v3',
             }).as_text(),
@@ -161,7 +161,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         """submitting to a deleted case should succeed and affect the case"""
         case_id = uuid.uuid4().hex
         xform, [case] = post_case_blocks([
-            CaseBlock(create=True, case_id=case_id, user_id='whatever',
+            CaseBlock.deprecated_init(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
         ], domain="test-domain")
         cases = CaseAccessors("test-domain")
@@ -172,7 +172,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertTrue(case.is_deleted)
 
         xform, [case] = post_case_blocks([
-            CaseBlock(create=False, case_id=case_id, user_id='whatever',
+            CaseBlock.deprecated_init(create=False, case_id=case_id, user_id='whatever',
                       update={'foo': 'not_bar'}).as_xml()
         ])
         self.assertEqual('not_bar', case.dynamic_case_properties()['foo'])
@@ -183,10 +183,10 @@ class CaseBugTest(TestCase, TestFileMixin):
         case_id2 = uuid.uuid4().hex
         # updates before create and case blocks for different cases interleaved
         blocks = [
-            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
-            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
-            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
-            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
+            CaseBlock.deprecated_init(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
+            CaseBlock.deprecated_init(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
+            CaseBlock.deprecated_init(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
+            CaseBlock.deprecated_init(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
         ]
 
         xform, cases = post_case_blocks(blocks)
@@ -318,7 +318,7 @@ class TestCaseHierarchy(TestCase):
         case_id1 = uuid.uuid4().hex
         case_id2 = uuid.uuid4().hex
         form_id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id=case_id1,
             create=True,
         ).as_text()
@@ -327,7 +327,7 @@ class TestCaseHierarchy(TestCase):
             CaseAccessors().get_case(case_id2)
 
         # form with same ID submitted but now has a new case transaction
-        new_case_block = CaseBlock(
+        new_case_block = CaseBlock.deprecated_init(
             case_id=case_id2,
             create=True,
             case_type='t1',

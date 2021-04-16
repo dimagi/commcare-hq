@@ -35,15 +35,25 @@
   </p>
   <p>
     {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <a class="btn btn-default" data-bind="attr: {href: compareUnbuiltChangesUrl}, visible: savedApps().length">
+      <a class="btn btn-default" data-bind="
+                attr: {href: compareUnbuiltChangesUrl},
+                visible: savedApps().length,
+                click: function () { return trackClick('Compare App Versions: Clicked Version Preview'); }
+                ">
         <i class="fa fa-exchange"></i>
-        {% trans "Version Preview" %}
+        {% trans "Preview" %}
+      </a>
+    {% endif %}
+    {% if user.is_superuser %}
+      <a class="btn btn-default" href="{% url "app_build_timings" %}?app_id={{ app.id }}" target="_blank">
+        <i class="fa fa-clock-o"></i>
+        {% trans "Timing" %}
       </a>
     {% endif %}
     <button class="btn btn-primary" data-bind="
             click: function() {
-                hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
-                          return makeNewBuild();
+              trackClick('Clicked Make New Version')
+              return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}">
@@ -189,6 +199,7 @@
                   saveParams: {'build_id': id},
                   saveValueName: 'comment',
                   errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+                  disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
               "></inline-edit>
         </div>
       </div><!-- .panel-body -->
@@ -200,6 +211,9 @@
                             $parent.previousBuildId($index()),
                             $data.id())
                           },
+                    click: function () {
+                        return trackClick('Compare App Versions: Clicked View Changes');
+                    }
                     visible: $parent.previousBuildId($index())">
             <i class="fa fa-exchange"></i>
             {% trans "View Changes" %}

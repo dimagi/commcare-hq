@@ -29,6 +29,8 @@ class LocationGroupTest(TestCase):
             cls.domain.name,
             'username',
             'password',
+            created_by=None,
+            created_via=None,
             first_name='Bob',
             last_name='Builder',
         )
@@ -98,7 +100,7 @@ class LocationGroupTest(TestCase):
         expected_id = self.loc.sql_location.case_sharing_group_object()._id
         self.assertEqual(
             expected_id,
-            self.loc.group_id
+            self.loc.location_id
         )
 
     def test_not_real_groups(self):

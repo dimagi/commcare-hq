@@ -1,0 +1,76 @@
+{
+    "eventType": "Send",
+    "mail": {
+        "commonHeaders": {
+            "date": "Tue, 04 Aug 2020 17:02:30 -0000",
+            "from": [
+                "noreplyemail@company.com"
+            ],
+            "messageId": "redacted",
+            "returnPath": "noreplyemail@company.com",
+            "subject": "Case List Explorer: Requested export excel data",
+            "to": [
+                "jdoe@company-associate.com"
+            ]
+        },
+        "destination": [
+            "jdoe@company-associate.com"
+        ],
+        "headers": [
+            {
+                "name": "Received",
+                "value": "from server-name (ec2-redacted.ap-south-1.compute.amazonaws.com [redacted]) by email-smtp.amazonaws.com with SMTP (SimpleEmailService-d-redacted) id redacted for jdoe@company-associate.com; Tue, 04 Aug 2020 17:02:30 +0000 (UTC)"
+            },
+            {
+                "name": "Content-Type",
+                "value": "multipart/alternative; boundary=\"===============3031937687065119655==\""
+            },
+            {
+                "name": "MIME-Version",
+                "value": "1.0"
+            },
+            {
+                "name": "Subject",
+                "value": "Case List Explorer: Requested export excel data"
+            },
+            {
+                "name": "From",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "To",
+                "value": "jdoe@company-associate.com"
+            },
+            {
+                "name": "Date",
+                "value": "Tue, 04 Aug 2020 17:02:30 -0000"
+            },
+            {
+                "name": "Message-ID",
+                "value": "<redacted8@server-name>"
+            },
+            {
+                "name": "Return-Path",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "X-SES-CONFIGURATION-SET",
+                "value": "fake-email-events"
+            }
+        ],
+        "headersTruncated": false,
+        "messageId": "redacted",
+        "sendingAccountId": "redacted",
+        "source": "noreplyemail@company.com",
+        "sourceArn": "arn:aws:ses:redacted:identity/noreplyemail@company.com",
+        "tags": {
+            "ses:caller-identity": ["ses-smtp-user.redacted"],
+            "ses:configuration-set": ["fake-email-events"],
+            "ses:from-domain": ["company.com"],
+            "ses:operation": ["SendSmtpEmail"],
+            "ses:source-ip": ["255.255.255.255"]
+        },
+        "timestamp": "2020-08-04T17:02:30.779Z"
+
+    }
+}

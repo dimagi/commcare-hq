@@ -1,26 +1,12 @@
+{% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 <legend>
   {% trans "Case Search and Claim" %}
 </legend>
 
 <div data-bind="with: search">
-
-  <script type="text/html" id="property_template" class="hide">
-    <tr>
-      <td class="col-sm-4">
-        <input class="form-control" type="text" data-bind="value: property.name"/>
-      </td>
-      <td class="col-sm-6">
-        <input class="form-control" type="text" data-bind="value: property.label"/>
-      </td>
-      <td class="col-sm-2">
-        <i style="cursor: pointer;" class="fa fa-remove"
-           data-bind="click: $parent.removeProperty"></i>
-      </td>
-    </tr>
-  </script>
-
   <form>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
@@ -31,12 +17,17 @@
         <table class="table table-condensed">
           <thead data-bind="visible: searchProperties().length > 0">
           <tr>
-            <th class="col-sm-5">{% trans "Case Property" %}</th>
-            <th class="col-sm-6">{% trans "Display Text" %}</th>
-            <th class="col-sm-1">&nbsp;</th>
+            <th class="col-sm-1"></th>
+            <th class="col-sm-4">{% trans "Case Property" %}</th>
+            <th class="col-sm-4">{% trans "Display Text" %}</th>
+            {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled %}
+              <th class="col-sm-2">{% trans "Other Options" %}</th>
+            {% endif %}
+            <th class="col-sm-1"></th>
           </tr>
           </thead>
-          <tbody data-bind="template: { name: 'property_template', foreach: searchProperties, as: 'property' }">
+          <tbody data-bind="foreach: searchProperties, sortableList: searchProperties">
+            {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
         <p>
@@ -68,12 +59,12 @@
               <input class="form-control" type="text" data-bind="value: property"/>
             </td>
             <td class="col-sm-6">
-              <input
-                class="form-control"
-                type="text"
+              <textarea
+                class="form-control vertical-resize"
+                rows="1"
                 data-bind="value: defaultValue"
                 spellcheck="false"
-              />
+              ></textarea>
             </td>
             <td class="col-sm-2">
               <i style="cursor: pointer;" class="fa fa-remove"
@@ -95,62 +86,128 @@
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label for="search-display-condition" class="control-label">
-            {% trans "Display condition" %}
-          </label>
-          <input type="text"
-                 class="form-control"
-                 id="search-display-condition"
-                 spellcheck="false"
-                 data-bind="value: searchButtonDisplayCondition"
-          >
-          <p class="help-block">
-            {% blocktrans %}
-              If this XPath expression evaluates to false, the case search button will not be
-              displayed. If no expression is given, the button will always be displayed.
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <label for="claim-relevant-condition" >
-            {% trans "Only claim cases that fulfill the following condition" %}
-          </label>
-          <input type="text"
-                 data-bind="value: relevant"
-                 class="form-control"
-                 id="claim-relevant-condition"
-                 spellcheck="false"
-          />
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: default_relevant">
+      <div class="panel-body" data-bind="with: searchConfig">
+        <div class="form-horizontal">
+          <div class="form-group">
+            {% if show_search_workflow %}
+              <div class="form-group">
+                <label class="control-label {% css_label_class %}" for="search-workflow">
+                  {% trans "Web Apps Search Workflow" %}
+                  <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
+                        data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the \"classic\" case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a \"Search Cases\" module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks \"See More\" to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. User never sees the results of the casedb." %}">
+                  </span>
+                </label>
+                <div class="{% css_field_class %}">
+                  <select class="form-control" data-bind="value: workflow" id="search-workflow">
+                    <option value="classic">{% trans "Normal Case List" %}</option>
+                    <option value="auto_launch">{% trans "Search First" %}</option>
+                    <option value="see_more">{% trans "See More" %}</option>
+                    <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
+                  </select>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="form-group" data-bind="slideVisible: !autoLaunch()">
+            <label for="search_command_label" class="{% css_label_class %} control-label">
+              {% trans "Button Label on Case List" %}
+              <span class="hq-help-template" data-title="{% trans "Button Label on Case List" %}"
+                    data-content="{% trans_html_attr "This text will be used for the first search button users see, on the case list." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="search_again_label" class="{% css_label_class %} control-label">
+              {% trans "Button Label on Search Results" %}
+              <span class="hq-help-template" data-title="{% trans "Button Label for on Search Results" %}"
+                    data-content="{% trans_html_attr "This text will be used for the search button displayed at the bottom of search results, so users can search again." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              {% input_trans module.search_config.again_label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
+            </div>
+          </div>
+          <div class="form-group" data-bind="slideVisible: !autoLaunch()">
+            <label for="search-display-condition" class="control-label {% css_label_class %}">
+              {% trans "Display Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
+                    data-content="{% trans_html_attr "If this XPath expression evaluates to false, the case search button will not be displayed on the case list. If no expression is given, the button will always be displayed on the case list." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <textarea class="form-control vertical-resize"
+                       id="search-display-condition"
+                       spellcheck="false"
+                       data-bind="value: searchButtonDisplayCondition"
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="search-filter" class="control-label {% css_label_class %}">
+              {% trans "Search Filter" %}
+              <span class="hq-help-template" data-title="{% trans "Search Filter" %}"
+                    data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
+            </label>
+            <div class="{% css_field_class %}">
+              <textarea data-bind="value: searchFilter"
+                        class="form-control vertical-resize"
+                        id="search-filter"
+                        spellcheck="false"
+              ></textarea>
+              <p class="help-block">
+                <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
+                  <i class="fa fa-mail-reply"></i>
+                  {% trans "Copy case list filter" %}
+                </button>
+                {% trans "Example: age > 5" %}
+              </p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="claim-relevant-condition" class="control-label {% css_label_class %}">
+              {% trans "Claim Condition" %}
+              <span class="hq-help-template" data-title="{% trans "Claim Condition" %}"
+                    data-content="{% trans_html_attr "If this expression evaluates to false, no case will be claimed." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <textarea data-bind="value: searchAdditionalRelevant"
+                        class="form-control vertical-resize"
+                        id="claim-relevant-condition"
+                        spellcheck="false"
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}" for="search-default-relevant">
               {% trans "Don't claim cases already owned by the user" %}
             </label>
+            <div class="checkbox {% css_field_class %}">
+              <label>
+                <input type="checkbox" id="search-default-relevant" data-bind="checked: searchDefaultRelevant">
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="blacklisted-user-ids" >
-            {% trans "Don't search cases owned by the following ids" %}
-          </label>
-          <input type="text"
-                 data-bind="value: blacklistedOwnerIdsExpression"
-                 class="form-control"
-                 id="blacklisted-user-ids"
-                 spellcheck="false"
-          />
-          <p class="help-block">
-            {% blocktrans %}
-              An XPath expression that will evaluate to a space separated list of ids. For example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
-            {% endblocktrans %}
-          </p>
-        </div>
-        <div class="form-group">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" data-bind="checked: includeClosed"> {% trans "Include closed cases in search results" %}
+          <div class="form-group">
+            <label for="blacklisted-user-ids" class="control-label {% css_label_class %}">
+              {% trans "Don't search cases owned by the following ids" %}
+              <span class="hq-help-template" data-title="{% trans "Ignore Owners" %}"
+                    data-content="{% trans_html_attr "An XPath expression that will evaluate to a space separated list of ids." %}">
+              </span>
             </label>
+            <div class="{% css_field_class %}">
+              <textarea data-bind="value: blacklistedOwnerIdsExpression"
+                        class="form-control vertical-resize"
+                        id="blacklisted-user-ids"
+                        spellcheck="false"
+              ></textarea>
+              <p class="help-block">
+                {% blocktrans %}
+                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
+                {% endblocktrans %}
+              </p>
+            </div>
           </div>
         </div>
       </div>

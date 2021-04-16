@@ -112,7 +112,7 @@ def _get_form_designer_view(request, domain, app, module, form):
         ))
         return back_to_main(request, domain, app_id=app.id)
 
-    if form.no_vellum:
+    if not form.can_edit_in_vellum:
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
             "However, your administrator has locked this form against editing "
@@ -200,9 +200,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
-    data.extend(
-        sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())
-    )
+    data.extend(item_lists_by_domain(domain))
     kw = {}
     if "pretty" in request.GET:
         kw["indent"] = 2
@@ -238,7 +236,6 @@ def _get_base_vellum_options(request, domain, form, displayLang):
                 'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
             },
             'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
-            'sessionid': request.COOKIES.get('sessionid'),
         },
     }
 
@@ -275,7 +272,6 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
             "meta/location",
         ] + _get_core_context_scheduler_data_nodes(module, form),
         'activityUrl': reverse('ping'),
-        'sessionid': request.COOKIES.get('sessionid'),
         'externalLinks': {
             'changeSubscription': reverse("domain_subscription_view",
                                           kwargs={'domain': domain}),
@@ -327,6 +323,7 @@ def _get_vellum_features(request, domain, app):
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
+        'markdown_tables': app.enable_markdown_tables,
     })
     return vellum_features
 

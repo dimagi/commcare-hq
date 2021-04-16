@@ -6,6 +6,7 @@ from corehq.apps.reminders.views import (
     EditNormalKeywordView,
     EditStructuredKeywordView,
     KeywordsListView,
+    link_keywords,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
         name=EditStructuredKeywordView.urlname),
     url(r'^keywords/normal/edit/(?P<keyword_id>[\w-]+)/$',
         EditNormalKeywordView.as_view(), name=EditNormalKeywordView.urlname),
+    url(r'^link_keywords/$', link_keywords, name='link_keywords'),
 ]

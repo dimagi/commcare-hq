@@ -1,4 +1,5 @@
 from copy import deepcopy
+from django.contrib.admin.models import LogEntry
 
 from django.test import TestCase
 
@@ -6,13 +7,25 @@ from mock import patch, mock
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.importer import (
     create_or_update_users_and_groups,
 )
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, Permissions, UserRole
+from corehq.apps.users.models import (
+    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation
+)
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.extensions.interface import disable_extensions
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -22,16 +35,52 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         delete_all_users()
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
 
-        permissions = Permissions(edit_apps=True, view_reports=True)
+        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
+        cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'admin')
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
+
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain_name,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='key',
+                is_required=False,
+                label='Key',
+                regex='^[A-G]',
+                regex_msg='Starts with A-G',
+            ),
+            Field(
+                slug='mode',
+                is_required=False,
+                label='Mode',
+                choices=['major', 'minor']
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='melancholy',
+            fields={'mode': 'minor'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        cls.other_domain.delete()
+        cls.patcher.stop()
+        cls.definition.delete()
         super().tearDownClass()
 
     def tearDown(self):
+        Invitation.objects.all().delete()
         delete_all_users()
 
     @property
@@ -61,6 +110,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id='missing')],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
 
         self.assertIsNone(self.user)
@@ -74,9 +125,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=self.loc1.site_code)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
@@ -89,6 +142,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         result = create_or_update_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code='unknownsite')],
+            self.uploading_user
         )
         self.assertEqual(len(result["rows"]), 1)
 
@@ -99,14 +153,16 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
-        self.assertTrue(self.loc2._id in self.user.user_data.get('commcare_location_ids'))
+        self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_remove(self):
@@ -116,6 +172,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
 
         # deassign all locations
@@ -123,11 +181,13 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[], user_id=self.user._id)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
 
         # user should have no locations
         self.assertEqual(self.user.location_id, None)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), None)
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -137,24 +197,26 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            self.uploading_user
         )
 
         # user's primary location should be loc1
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc1._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc1._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         # reassign to loc2
         create_or_update_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
+            self.uploading_user
         )
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_ids'), self.loc2._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_ids'), self.loc2._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -164,18 +226,20 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # first assign to loc1
         create_or_update_users_and_groups(
             self.domain.name,
-            [self._get_spec(location_code=[self.loc1.site_code])]
+            [self._get_spec(location_code=[self.loc1.site_code])],
+            self.uploading_user
         )
 
         # reassign to loc2
         create_or_update_users_and_groups(
             self.domain.name,
-            [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)]
+            [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
+            self.uploading_user
         )
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
     def setup_locations(self):
@@ -190,6 +254,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=1234)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.full_name, "1234")
 
@@ -202,8 +268,203 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=None)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.full_name, "")
+
+    def test_metadata(self):
+        # Set metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#'})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
+
+        # Update metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'Bb'}, user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'Bb'})
+
+        # Clear metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': ''}, user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+
+        # Allow falsy but non-blank values
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'play_count': 0})
+
+    def test_uncategorized_data(self):
+        # Set data
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(uncategorized_data={'tempo': 'presto'})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'presto'})
+
+        # Update data
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(uncategorized_data={'tempo': 'andante'}, user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
+
+        # Clear metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+
+    def test_uncategorized_data_clear(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'tempo': 'andante'})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_metadata_ignore_system_fields(self):
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+            'key': 'F#',
+        })
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'key': 'G#',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+    def test_metadata_profile(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#', PROFILE_SLUG: self.profile.id})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'key': 'F#',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_metadata_profile_redundant(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'minor'})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+        # Profile fields shouldn't actually be added to user_data
+        self.assertEqual(self.user.user_data, {
+            'commcare_project': 'mydomain',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_metadata_profile_blank(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': ''})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_metadata_profile_conflict(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'major'})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
+
+    def test_metadata_profile_unknown(self):
+        bad_id = self.profile.id + 100
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: bad_id})],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], "Could not find profile with id {}".format(bad_id))
 
     def test_upper_case_email(self):
         """
@@ -214,6 +475,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(email=email)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.email, email.lower())
 
@@ -222,14 +485,36 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
+
+    def test_tracking_updates(self):
+        self.assertEqual(LogEntry.objects.count(), 0)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(role=self.role.name)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        log_entry = LogEntry.objects.order_by('action_time').first()
+        self.assertEqual(
+            log_entry.change_message,
+            f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+        log_entry = LogEntry.objects.order_by('action_time').last()
+        self.assertEqual(
+            log_entry.change_message,
+            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
 
     def test_blank_is_active(self):
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(is_active='')],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertTrue(self.user.is_active)
 
@@ -238,6 +523,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec()],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertIsNotNone(self.user)
 
@@ -245,6 +532,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id=self.user._id, username='')],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
 
     def test_update_user_numeric_username(self):
@@ -252,6 +541,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=123)],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.domain.name))
@@ -262,6 +553,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         user = self.user
         self.assertIsNotNone(user)
@@ -292,19 +585,150 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 ),
             ],
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )
         self.assertEqual(mock_account_confirm_email.call_count, 1)
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
 
+    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    def test_upload_invite_web_user(self, mock_send_activation_email):
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    web_user='a@a.com',
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                    role=self.role.name
+                )
+            ],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)
+
+    @mock.patch('corehq.apps.user_importer.importer.Invitation')
+    def test_upload_add_web_user(self, mock_invitation_class):
+        username = 'a@a.com'
+        web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
+        mock_invite = mock_invitation_class.return_value
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertFalse(mock_invite.send_activation_email.called)
+        self.assertTrue(web_user.is_member_of(self.domain.name))
+
+    def test_upload_edit_web_user(self):
+        username = 'a@a.com'
+        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', role=self.role.name)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertEqual(web_user.get_role(self.domain.name).name, self.role.name)
+
+    def test_remove_web_user(self):
+        username = 'a@a.com'
+        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', remove_web_user='True')],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertFalse(web_user.is_member_of(self.domain.name))
+
+    def test_multi_domain(self):
+        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
+        dm.save()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username=123, domain=self.other_domain.name)],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertIsNotNone(
+            CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
+        )
+
+    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    def test_update_pending_user_role(self, mock_send_activation_email):
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    web_user='a@a.com',
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                    role=self.role.name
+                )
+            ],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)
+        self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
+        self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role._id)
+
+        added_user_id = self.user._id
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    web_user='a@a.com',
+                    user_id=added_user_id,
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                    role=self.other_role.name
+                )
+            ],
+            [],
+            self.uploading_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)  # invite only sent once
+        self.assertEqual(len(Invitation.by_email('a@a.com')), 1)  # only one invite associated with user
+        self.assertEqual(self.user.get_role(self.domain.name).name, self.other_role.name)
+        self.assertEqual(Invitation.by_email('a@a.com')[0].role, self.other_role.get_qualified_id())
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain(name=cls.domain_name)
+        cls.domain.strong_mobile_passwords = True
+        cls.domain.save()
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.patcher.stop()
+        super().tearDownClass()
+
     def setUp(self):
         super(TestUserBulkUploadStrongPassword, self).setUp()
         delete_all_users()
-        self.domain_name = 'mydomain'
-        self.domain = Domain(name=self.domain_name)
-        self.domain.strong_mobile_passwords = True
-        self.domain.save()
         self.user_specs = [{
             'username': 'tswift',
             'user_id': '1989',
@@ -315,10 +739,6 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             'password': 'TaylorSwift89!',
             'email': None
         }]
-
-    def tearDown(self):
-        self.domain.delete()
-        super(TestUserBulkUploadStrongPassword, self).tearDown()
 
     def test_duplicate_password(self):
         user_spec = [{
@@ -336,9 +756,12 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list(user_spec + self.user_specs),
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
+    @disable_extensions('corehq.apps.domain.extension_points.validate_password_rules')
     def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
@@ -347,5 +770,52 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             [],
+            self.uploading_user,
+            mock.MagicMock()
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+
+
+class TestUserUploadRecord(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        delete_all_users()
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
+        cls.spec = {
+            'username': 'hello',
+            'name': 'Another One',
+            'password': 123,
+        }
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        UserUploadRecord.objects.all().delete()
+        super().tearDownClass()
+
+    def tearDown(self):
+        delete_all_users()
+
+    def test_user_upload_record(self):
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            user_id='5'
+        )
+        upload_record.save()
+
+        task_result = import_users_and_groups.si(
+            self.domain.name,
+            [self.spec],
+            [],
+            self.uploading_user,
+            upload_record.pk
+        ).apply()
+        rows = task_result.result
+
+        upload_record.refresh_from_db()
+        self.assertEqual(rows['messages'], upload_record.result)

@@ -5,7 +5,7 @@ import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
@@ -21,7 +21,7 @@ USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == '
 if USE_PARTITIONED_DATABASE:
     DATABASES.update({
         'proxy': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_proxy',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -36,7 +36,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p1': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p1',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -50,7 +50,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p2': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p2',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -68,17 +68,16 @@ if USE_PARTITIONED_DATABASE:
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
     'icds-ucr': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',
+        'NAME': os.environ.get('UCR_CITUS_DB', 'commcare_ucr_citus'),
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'citus_master',
         'PORT': '5432',
         'TEST': {
-            # use the same DB for tests to skip expensive setup time in Travs
-            'NAME': 'commcare_ucr_citus',
             'SERIALIZE': False,
+            'NAME': 'test_commcare_ucr_citus'
         },
     },
 })
@@ -113,9 +112,16 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch'
-ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_HOST = 'elasticsearch2'
+ELASTICSEARCH_PORT = 6200  # ES 2 port
 ELASTICSEARCH_MAJOR_VERSION = 2
+# to enable v7 ES tests
+if os.environ.get('ELASTICSEARCH_7_PORT'):
+    ELASTICSEARCH_HOST = 'elasticsearch'
+    ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_7_PORT'))
+
+if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
 S3_BLOB_DB_SETTINGS = {
     "url": "http://minio:9980/",
@@ -135,8 +141,6 @@ SHARED_DRIVE_ROOT = '/sharedfiles'
 ALLOWED_HOSTS = ['*']
 #FIX_LOGGER_ERROR_OBFUSCATION = True
 
-# faster compressor that doesn't do source maps
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
@@ -167,39 +171,39 @@ JAR_SIGN = {
     "key_pass": "onetwothreefourfive",
 }
 
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
-
-AUDIT_ADMIN_VIEWS = False
-
 SECRET_KEY = 'secrettravis'
 
 # No logging
+
 LOCAL_LOGGING_CONFIG = {
-    'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
-        }
-    },
     'loggers': {
         '': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
         },
-        'pillowtop': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+        'django': {
+            'handler': 'console',
+            'level': 'ERROR',
+            'propagate': False,
         },
         'notify': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
         },
+        'kafka': {
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
+        },
+        'commcare_auth': {
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
+        }
     }
 }
-
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
@@ -224,7 +228,8 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     COMPRESS_OFFLINE = False
 
-    FORMPLAYER_URL = 'http://formplayer:8010'
+    FORMPLAYER_URL = 'http://formplayer:8080'
+    FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10
@@ -234,11 +239,22 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
-LOCAL_APPS = ()
-
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
     'aaa-data': 'default',
-    'icds-ucr-citus': 'icds-ucr',
+    'icds-ucr-citus': 'icds-ucr'
 }
+
+if os.path.exists("extensions/icds/custom/icds"):
+    # code is not present in fork PR builds
+    LOCAL_APPS = (
+        # these are necessary to facilitate ICDS tests
+        "custom.icds",
+        "custom.icds_reports",
+    )
+    COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
+
+    LOCAL_CUSTOM_DB_ROUTING = {
+        "icds_reports": "icds-ucr-citus"
+    }

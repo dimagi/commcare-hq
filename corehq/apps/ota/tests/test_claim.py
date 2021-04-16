@@ -11,6 +11,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.exceptions import CaseNotFound
 
 DOMAIN = 'test_domain'
 USERNAME = 'lina.stern@ras.ru'
@@ -28,19 +29,19 @@ class CaseClaimTests(TestCase):
     def setUp(self):
         super(CaseClaimTests, self).setUp()
         self.domain = create_domain(DOMAIN)
-        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
+        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD, None, None)
         self.host_case_id = uuid4().hex
         self.host_case_name = 'Dmitri Bashkirov'
         self.host_case_type = 'person'
         self.create_case()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
         super(CaseClaimTests, self).tearDown()
 
     def create_case(self):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=self.host_case_id,
             case_name=self.host_case_name,
@@ -111,8 +112,18 @@ class CaseClaimTests(TestCase):
         first_claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(first_claim)
 
+    @run_with_all_backends
+    def test_claim_case_other_domain(self):
+        malicious_domain = 'malicious_domain'
+        domain_obj = create_domain(malicious_domain)
+        self.addCleanup(domain_obj.delete)
+        claim_id = claim_case(malicious_domain, self.user.user_id, self.host_case_id,
+                              host_type=self.host_case_type, host_name=self.host_case_name)
+        with self.assertRaises(CaseNotFound):
+            CaseAccessors(malicious_domain).get_case(claim_id)
+
     def _close_case(self, case_id):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=False,
             case_id=case_id,
             close=True

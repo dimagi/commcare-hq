@@ -89,14 +89,14 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
     @classmethod
     def make_web_user(cls, location):
         username = ''.join(random.sample(string.ascii_letters, 8))
-        user = WebUser.create(cls.domain, username, 'password')
+        user = WebUser.create(cls.domain, username, 'password', None, None)
         user.set_location(cls.domain, cls.locations[location])
         return user
 
     @classmethod
     def make_mobile_user(cls, location):
         username = ''.join(random.sample(string.ascii_letters, 8))
-        user = CommCareUser.create(cls.domain, username, 'password')
+        user = CommCareUser.create(cls.domain, username, 'password', None, None)
         user.set_location(cls.locations[location])
         return user
 
@@ -116,8 +116,8 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         boston_user = cls.make_mobile_user('Boston')
         cls.boston_form = cls.make_form(boston_user)
 
-        cls.locationless_web_user = WebUser.create(cls.domain, 'joeshmoe', 'password')
-        cls.project_admin = WebUser.create(cls.domain, 'kennedy', 'password')
+        cls.locationless_web_user = WebUser.create(cls.domain, 'joeshmoe', 'password', None, None)
+        cls.project_admin = WebUser.create(cls.domain, 'kennedy', 'password', None, None)
 
     @classmethod
     def extra_teardown(cls):
@@ -155,12 +155,12 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestAccessRestrictions, cls).setUpClass()
-        cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password')
+        cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password', None, None)
         cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'])
         cls.restrict_user_to_assigned_locations(cls.suffolk_user)
 
         def make_mobile_worker(username, location):
-            worker = CommCareUser.create(cls.domain, username, '123')
+            worker = CommCareUser.create(cls.domain, username, '123', None, None)
             worker.set_location(cls.locations[location])
             UserESFake.save_doc(worker._doc)
             return worker
@@ -171,7 +171,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.suffolk_user.delete()
+        cls.suffolk_user.delete(deleted_by=None)
         delete_all_users()
         super(TestAccessRestrictions, cls).tearDownClass()
 

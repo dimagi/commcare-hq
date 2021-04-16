@@ -60,7 +60,7 @@
     </field>
     <field>
         <header width="0"><text/></header>
-        <template><text><xpath function="if(last_party = '', '', format_date(date(if(last_party = '', 0, last_party)),'short'))"/></text></template>
+        <template><text><xpath function="if(last_party = '', '', format-date(date(last_party), '%d/%m/%y'))"/></text></template>
     </field>
     <field>
         <header>
@@ -70,7 +70,7 @@
     </field>
     <field>
         <header width="0"><text/></header>
-        <template><text><xpath function="if(last_beer = '', '', format_date(date(if(last_beer = '', 0, last_beer)),'short'))"/></text></template>
+        <template><text><xpath function="if(last_beer = '', '', format-date(date(last_beer), '%d/%m/%y'))"/></text></template>
     </field>
 </detail>
 <detail id="m0_case_long">
@@ -91,13 +91,13 @@
         <header>
             <text><locale id="m0.case_long.case_last_party_3.header"/></text>
         </header>
-        <template><text><xpath function="if(last_party = '', '', format_date(date(if(last_party = '', 0, last_party)),'short'))"/></text></template>
+        <template><text><xpath function="if(last_party = '', '', format-date(date(last_party), '%d/%m/%y'))"/></text></template>
     </field>
     <field>
         <header>
             <text><locale id="m0.case_long.case_last_beer_4.header"/></text>
         </header>
-        <template><text><xpath function="if(last_beer = '', '', format_date(date(if(last_beer = '', 0, last_beer)),'short'))"/></text></template>
+        <template><text><xpath function="if(last_beer = '', '', format-date(date(last_beer), '%d/%m/%y'))"/></text></template>
     </field>
 </detail>
 <entry>

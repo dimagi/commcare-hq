@@ -69,6 +69,8 @@ class TestLocationTypeOwnership(TestCase):
             self.domain,
             'username',
             'password',
+            created_by=None,
+            created_via=None,
             first_name='Location types',
             last_name='Tester',
         )
@@ -79,7 +81,7 @@ class TestLocationTypeOwnership(TestCase):
         super(TestLocationTypeOwnership, cls).tearDownClass()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     def test_no_case_sharing(self):
         no_case_sharing_type = make_loc_type('no-case-sharing', domain=self.domain)

@@ -65,25 +65,6 @@ class BasePayloadGenerator(object):
             "</data>" % datetime.utcnow()
         )
 
-    def handle_success(self, response, payload_doc, repeat_record):
-        """handle a successful post
-
-        e.g. could be used to store something to the payload_doc once a
-        response is recieved
-
-        """
-        return True
-
-    def handle_failure(self, response, payload_doc, repeat_record):
-        """handle a failed post
-        """
-        return True
-
-    def handle_exception(self, exception, repeat_record):
-        """handle an exception
-        """
-        return True
-
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
@@ -239,7 +220,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
     def get_test_payload(self, domain):
         from casexml.apps.case.mock import CaseBlock
-        return CaseBlock(
+        return CaseBlock.deprecated_init(
             case_id='test-case-%s' % uuid4().hex,
             create=True,
             case_type='test',
@@ -321,10 +302,10 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
-            'time': datetime.utcnow(),
+            'time': json_format_datetime(datetime.utcnow()),
             'uid': uuid4().hex,
-            'username': self.repeater.username,
-            'user_id': CouchUser.get_by_username(self.repeater.username).user_id,
+            'username': self.repeater.connection_settings.username,
+            'user_id': CouchUser.get_by_username(self.repeater.connection_settings.username).user_id,
             'device_id': "ReferCaseRepeater",
         })
 
@@ -432,6 +413,18 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_test_payload(self, domain):
         return self.get_payload(None, _get_test_form(domain))
+
+
+class FormDictPayloadGenerator(BasePayloadGenerator):
+    format_name = 'form_dict'
+    format_label = _('Python dictionary')
+
+    def get_payload(self, repeat_record, form) -> dict:
+        return form.to_json()
+
+    @property
+    def content_type(self):
+        return 'application/x-python'
 
 
 class UserPayloadGenerator(BasePayloadGenerator):

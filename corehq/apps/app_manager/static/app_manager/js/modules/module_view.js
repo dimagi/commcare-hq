@@ -1,12 +1,15 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
+        $('.multiselect-caselist').select2();
+        $('.overwrite-danger').on("click", function () {
+            hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
+        });
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
-
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;
@@ -31,6 +34,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     langs: moduleBrief.langs,
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
                     parentModules: initial_page_data('parent_case_modules'),
+                    allCaseModules: initial_page_data('all_case_modules'),
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,
@@ -38,9 +42,15 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     contextVariables: state,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
-                    includeClosed: options.include_closed,
+                    searchDefaultRelevant: options.search_default_relevant,
+                    searchAdditionalRelevant: options.search_additional_relevant,
+                    autoLaunch: options.auto_launch,
+                    defaultSearch: options.default_search,
                     defaultProperties: options.default_properties || [],
                     searchButtonDisplayCondition: options.search_button_display_condition,
+                    searchCommandLabel: options.search_command_label,
+                    searchAgainLabel: options.search_again_label,
+                    searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                 });
 
@@ -210,7 +220,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#sourceModuleForms').koApplyBindings(new ShadowModule(
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
-                shadowOptions.excluded_form_ids
+                shadowOptions.excluded_form_ids,
+                shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {

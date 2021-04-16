@@ -11,10 +11,7 @@ from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.consumption import (
-    ConsumptionConfiguration,
-    ConsumptionHelper,
-)
+from casexml.apps.stock.consumption import ConsumptionConfiguration
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
 
@@ -89,7 +86,10 @@ class CommtrackConfig(models.Model):
         default_product_ids = []
         if self.stockrestoreconfig.use_dynamic_product_list:
             default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
-        case_filter = lambda stub: stub.type in set(self.stockrestoreconfig.force_consumption_case_types)
+
+        def case_filter(stub):
+            return stub.type in set(self.stockrestoreconfig.force_consumption_case_types)
+
         return StockSettings(
             section_to_consumption_types=self.stockrestoreconfig.section_to_consumption_types,
             consumption_config=self.get_consumption_config(),
@@ -157,7 +157,12 @@ class ActionConfig(models.Model):
         return self.action in STOCK_ACTION_ORDER
 
     def __repr__(self):
-        return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
+        return '{action} ({subaction}): {caption} ({_keyword})'.format(
+            action=self.action,
+            subaction=self.subaction,
+            caption=self.caption,
+            _keyword=self._keyword,
+        )
 
     def to_json(self):
         return {
@@ -193,9 +198,9 @@ class ConsumptionConfig(models.Model):
 
 class StockLevelsConfig(models.Model):
     # All of these are in months
-    emergency_level = models.DecimalField(default=0.5, max_digits=3, decimal_places=2)
-    understock_threshold = models.DecimalField(default=1.5, max_digits=3, decimal_places=2)
-    overstock_threshold = models.DecimalField(default=3, max_digits=3, decimal_places=2)
+    emergency_level = models.DecimalField(default=0.5, max_digits=4, decimal_places=2)
+    understock_threshold = models.DecimalField(default=1.5, max_digits=4, decimal_places=2)
+    overstock_threshold = models.DecimalField(default=3, max_digits=5, decimal_places=2)
 
     commtrack_config = models.OneToOneField(
         CommtrackConfig,
@@ -308,6 +313,10 @@ class StockState(models.Model):
     include_archived = models.Manager()
 
     @property
+    def last_modified(self):
+        return self.last_modified_date
+
+    @property
     def entry_id(self):
         return self.product_id
 
@@ -329,15 +338,8 @@ class StockState(models.Model):
     @property
     @memoized
     def consumption_helper(self):
-        return ConsumptionHelper(
-            domain=self.get_domain(),
-            case_id=self.case_id,
-            section_id=self.section_id,
-            entry_id=self.product_id,
-            daily_consumption=self.daily_consumption,
-            balance=self.balance,
-            sql_location=self.sql_location,
-        )
+        from corehq.apps.reports.commtrack.util import get_consumption_helper_from_ledger_value
+        return get_consumption_helper_from_ledger_value(self.domain, self)
 
     @property
     def months_remaining(self):

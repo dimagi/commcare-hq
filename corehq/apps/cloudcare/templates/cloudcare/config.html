@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% requirejs_main "cloudcare/js/config" %}
+
 {% block stylesheets %}
   <style>
     #cloudcare-app-settings-form label.radio {
@@ -13,10 +15,6 @@
       width: 20%;
     }
   </style>
-{% endblock %}
-
-{% block js %}{{ block.super }}
-  <script src="{% static "cloudcare/js/config.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}

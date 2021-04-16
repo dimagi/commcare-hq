@@ -9,8 +9,6 @@ import warnings
 
 from django.conf import settings
 from django.http import HttpResponse
-from django.template import RequestContext
-from django.shortcuts import render_to_response as django_r_to_r
 import json
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
@@ -29,55 +27,6 @@ def get_site_domain():
 
 def get_static_url_prefix():
     return '' if settings.STATIC_CDN else 'http://' + get_site_domain()
-
-
-def render_to_response(req, template_name, dictionary=None, **kwargs):
-    """Proxies calls to django.shortcuts.render_to_response, to avoid having
-       to include the global variables in every request. This is a giant hack,
-       and there's probably a much better solution."""
-
-    def _tab_order_sorter(app1, app2):
-        """Sort apps, based on the tab_order property in the config, if it exists.
-           Anything with a value specified comes before everything else, which
-           is arbitrarily sorted at the end."""
-        app1_order = int(app1["taborder"]) if "taborder" in app1 else sys.maxsize
-        app2_order = int(app2["taborder"]) if "taborder" in app2 else sys.maxsize
-        return app1_order - app2_order
-
-    rs_dict = {
-        "apps":  sorted(settings.INSTALLED_APPS, _tab_order_sorter),
-        "debug": settings.DEBUG,
-    }
-
-    # A NEW KIND OF LUNACY: inspect the stack to find out
-    # which app this function is being called from
-    tb = traceback.extract_stack(limit=2)
-    sep = os.sep
-    if sep == '\\':
-        # if windows, the file separator itself needs to be
-        # escaped again
-        sep = "\\\\"
-    m = re.match(r'^.+%s(.+?)%sviews\.py$' % (sep, sep), tb[-2][0])
-    if m is not None:
-        app_type = m.group(1)
-
-        # note which app this func was called from, so the tmpl
-        # can mark the tab (or some other type of nav) as active
-        rs_dict["active_tab"] = app_type
-
-    # allow the dict argument to
-    # be omitted without blowing up
-    if dictionary is not None:
-        rs_dict.update(dictionary)
-
-    # unless a context instance has been provided,
-    # default to RequestContext, to get all of
-    # the TEMPLATE_CONTEXT_PROCESSORS working
-    if "context_instance" not in kwargs:
-        kwargs["context_instance"] = RequestContext(req)
-
-    # pass on the combined dicts to the original function
-    return django_r_to_r(template_name, rs_dict, **kwargs)
 
 
 def parse_int(arg_keys=[], kwarg_keys=[]):
@@ -154,7 +103,6 @@ def json_request(params, lenient=True, booleans_as_strings=False):
     return d
 
 
-# get_ip was stolen verbatim from auditcare.utils
 # this is not intended to be an all-knowing IP address regex
 IP_RE = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
@@ -170,8 +118,7 @@ def get_ip(request):
     """
 
     # if neither header contain a value, just use local loopback
-    ip_address = request.META.get('HTTP_X_FORWARDED_FOR',
-        request.META.get('REMOTE_ADDR', '127.0.0.1'))
+    ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1'))
     if ip_address:
         # make sure we have one and only one IP
         try:

@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ awc }} అంగన్ వాడీ {{ beneficiary }} ప్రసవం అయిన వారం రోజుల్లో ప్రసవానంతర జాగ్రత్తలపై తెలియజేయడానికి కనీసం ఒక్క సారైనా వెళ్ళినట్లుగా రిపోర్టు చేయలేదు.

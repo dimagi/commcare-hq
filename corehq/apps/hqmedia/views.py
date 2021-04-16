@@ -51,7 +51,6 @@ from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import (
-    ALLOWED_EXTENSIONS,
     get_spreadsheet,
     open_spreadsheet_download_ref,
 )
@@ -85,7 +84,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import SpreadsheetFileExtError
+from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError
 
 transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60 * 60)
 
@@ -150,7 +149,6 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
         context.update({
             'uploaders': self.upload_controllers,
             'uploaders_js': [u.js_options for u in self.upload_controllers],
-            "sessionid": self.request.COOKIES.get('sessionid'),
         })
         return context
 
@@ -173,7 +171,6 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if self.app is None:
             raise Http404(self)
         context.update({
-            "sessionid": self.request.COOKIES.get('sessionid'),
             "multimedia_state": self.app.check_media_state(),
         })
         return context
@@ -311,9 +308,9 @@ class ManageMultimediaPathsView(BaseMultimediaTemplateView):
     def post(self, request, *args, **kwargs):
         handle = request.FILES['bulk_upload_file']
         extension = os.path.splitext(handle.name)[1][1:].strip().lower()
-        if extension not in ALLOWED_EXTENSIONS:
+        if extension not in valid_extensions:
             messages.error(request, _("Please choose a file with one of the following extensions: "
-                                      "{}").format(", ".join(ALLOWED_EXTENSIONS)))
+                                      "{}").format(", ".join(valid_extensions)))
             return self.get(request, *args, **kwargs)
 
         meta = transient_file_store.write_file(handle, handle.name, self.domain)
@@ -384,27 +381,6 @@ def download_multimedia_paths(request, domain, app_id):
         app_name=app.name,
         app_version=app.version)
     return export_response(temp, Format.XLS_2007, filename)
-
-
-@toggles.MULTI_MASTER_LINKED_DOMAINS.required_decorator()
-@require_can_edit_apps
-@require_POST
-def copy_multimedia(request, domain, app_id):
-    app = get_app(domain, app_id)
-    other_app_id = request.POST.get("app_id")
-    other_app = get_app(domain, other_app_id)
-
-    paths = app.all_media_paths()
-    count = 0
-    for path in paths:
-        if path not in app.multimedia_map:
-            app.multimedia_map[path] = other_app.multimedia_map[path]
-            count += 1
-    if count:
-        app.save()
-
-    messages.success(request, "Copied {} multimedia items.".format(count))
-    return redirect("app_settings", domain=domain, app_id=app_id)
 
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')

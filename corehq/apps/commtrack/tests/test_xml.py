@@ -544,7 +544,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
     def test_xform_id_added_to_case_xform_list_only_once(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         submissions = [balance_submission([amount]) for amount in initial_amounts]
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=False,
             case_id=self.sp.case_id,
             user_id='jack',
@@ -593,7 +593,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         self.group.save()
 
         self.restore_user = self.user.to_ota_restore_user()
-        self.sp_block = CaseBlock(
+        self.sp_block = CaseBlock.deprecated_init(
             case_id=self.sp.case_id,
         ).as_xml()
 

@@ -34,7 +34,7 @@ class CallCenterLocationOwnerTest(TestCase):
         cls.domain.save()
 
         # Create user
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None)
 
         # Create locations
         LocationType.objects.get_or_create(
@@ -53,7 +53,7 @@ class CallCenterLocationOwnerTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
 
     def tearDown(self):

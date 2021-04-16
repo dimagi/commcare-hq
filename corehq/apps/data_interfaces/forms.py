@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -34,7 +34,7 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 
 
@@ -146,7 +146,7 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                format_html('<i class="fa fa-plus"></i> {}', _("Add Group")),
                 css_class='btn-primary',
                 type="submit"
             )
@@ -215,7 +215,7 @@ class AddCaseToGroupForm(forms.Form):
                 'case_identifier'
             ),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
+                format_html('<i class="fa fa-plus"></i> {}', _("Add Case")),
                 css_class='btn-primary',
                 type="submit"
             )
@@ -421,7 +421,7 @@ class CaseRuleCriteriaForm(forms.Form):
         raise ValueError(_("Invalid JSON object given"))
 
     def set_case_type_choices(self, initial):
-        case_types = [''] + list(get_case_types_for_domain_es(self.domain))
+        case_types = [''] + list(get_case_types_for_domain(self.domain))
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules

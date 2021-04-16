@@ -42,11 +42,11 @@ class CustomRecipientTest(TestCase):
             parent=self.parent_location
         )
 
-        self.user = CommCareUser.create(self.domain, 'test', 'test')
+        self.user = CommCareUser.create(self.domain, 'test', 'test', None, None)
         self.user.set_location(self.child_location)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.child_location.delete()
         self.parent_location.delete()
         self.child_location_type.delete()

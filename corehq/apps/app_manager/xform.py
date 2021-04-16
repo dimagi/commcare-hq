@@ -40,7 +40,7 @@ from .exceptions import (
 )
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
-VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 
 
 def parse_xml(string):
@@ -254,7 +254,7 @@ class WrappedNode(object):
         return self.xml is not None
 
     def render(self):
-        return ET.tostring(self.xml)
+        return ET.tostring(self.xml, encoding='utf-8')
 
 
 class ItextNodeGroup(object):
@@ -296,7 +296,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([bytes.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
+        return sorted([bytes.strip(ET.tostring(v.xml, encoding='utf-8')) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -366,11 +366,11 @@ def raise_if_none(message):
     return decorator
 
 
-class CaseBlock(object):
+class XFormCaseBlock(object):
 
     @classmethod
     def make_parent_case_block(cls, xform, node_path, parent_path, case_id_xpath=None):
-        case_block = CaseBlock(xform, node_path)
+        case_block = XFormCaseBlock(xform, node_path)
         id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=case_id_xpath)
         xform.add_bind(
             nodeset='%scase/@case_id' % node_path,
@@ -597,7 +597,7 @@ def validate_xform(domain, source):
     if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
-    source = ET.tostring(parse_xml(source))
+    source = ET.tostring(parse_xml(source), encoding='utf-8')
     try:
         validation_results = formplayer_api.validate_form(source)
     except FormplayerAPIException:
@@ -634,7 +634,7 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        return ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
+        return ET.tostring(self.xml, encoding='utf-8').decode('utf-8') if self.xml is not None else ''
 
     @property
     @raise_if_none("Can't find <model>")
@@ -690,7 +690,7 @@ class XForm(WrappedNode):
         return self.media_references("image", lang=lang)
 
     def audio_references(self, lang=None):
-        return self.media_references("audio", lang=lang) + self.media_references("expanded-audio", lang=lang)
+        return self.media_references("audio", lang=lang)
 
     def video_references(self, lang=None):
         return self.media_references("video", lang=lang) + self.media_references("video-inline", lang=lang)
@@ -790,8 +790,8 @@ class XForm(WrappedNode):
                     translation.remove(node.xml)
 
         def replace_ref_s(xmlstring, find, replace):
-            find = find.encode('ascii', 'xmlcharrefreplace')
-            replace = replace.encode('ascii', 'xmlcharrefreplace')
+            find = find.encode('utf-8', 'xmlcharrefreplace')
+            replace = replace.encode('utf-8', 'xmlcharrefreplace')
             return xmlstring.replace(find, replace)
 
         xf_string = self.render()
@@ -971,9 +971,25 @@ class XForm(WrappedNode):
 
         return list(self.translations().keys())
 
+    def get_external_instances(self):
+        """
+        Get a dictionary of all "external" instances, like:
+        {
+          "country": "jr://fixture/item-list:country"
+        }
+        """
+        instance_nodes = self.model_node.findall('{f}instance')
+        instance_dict = {}
+        for instance_node in instance_nodes:
+            instance_id = instance_node.attrib.get('id')
+            src = instance_node.attrib.get('src')
+            if instance_id and src:
+                instance_dict[instance_id] = src
+        return instance_dict
+
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False):
+                      exclude_select_with_itemsets=False, include_fixtures=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -987,8 +1003,9 @@ class XForm(WrappedNode):
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
+        :param include_fixtures: add fixture data for questions that we can infer it from
         """
-        from corehq.apps.app_manager.util import first_elem
+        from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
         def _get_select_question_option(item):
             translation = self._get_label_text(item, langs)
@@ -1016,6 +1033,7 @@ class XForm(WrappedNode):
         # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self._get_control_nodes()
         leaf_data_nodes = self._get_leaf_data_nodes()
+        external_instances = self.get_external_instances()
 
         for cnode in control_nodes:
             node = cnode.node
@@ -1050,6 +1068,24 @@ class XForm(WrappedNode):
             }
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
+
+            if include_fixtures and cnode.node.find('{f}itemset').exists():
+                itemset_node = cnode.node.find('{f}itemset')
+                nodeset = itemset_node.attrib.get('nodeset')
+                fixture_data = {
+                    'nodeset': nodeset,
+                }
+                if itemset_node.find('{f}label').exists():
+                    fixture_data['label_ref'] = itemset_node.find('{f}label').attrib.get('ref')
+                if itemset_node.find('{f}value').exists():
+                    fixture_data['value_ref'] = itemset_node.find('{f}value').attrib.get('ref')
+
+                fixture_id = extract_instance_id_from_nodeset_ref(nodeset)
+                if fixture_id:
+                    fixture_data['instance_id'] = fixture_id
+                    fixture_data['instance_ref'] = external_instances.get(fixture_id)
+
+                question['data_source'] = fixture_data
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
@@ -1358,7 +1394,7 @@ class XForm(WrappedNode):
         if 'usercase_update' in actions and actions['usercase_update'].update:
             self._add_usercase_bind(usercase_path)
             usercase_block = _make_elem('{x}commcare_usercase')
-            case_block = CaseBlock(self, usercase_path)
+            case_block = XFormCaseBlock(self, usercase_path)
             case_block.add_update_block(actions['usercase_update'].update)
             usercase_block.append(case_block.elem)
             self.data_node.append(usercase_block)
@@ -1534,14 +1570,14 @@ class XForm(WrappedNode):
             case_block = None
         else:
             extra_updates = {}
-            case_block = CaseBlock(self)
+            case_block = XFormCaseBlock(self)
             module = form.get_module()
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
                     DELEGATION_ID = 'delegation_id'
                     outer_block = _make_elem('{x}cc_delegation_stub', {DELEGATION_ID: ''})
-                    delegation_case_block = CaseBlock(self, path)
+                    delegation_case_block = XFormCaseBlock(self, path)
                     delegation_case_block.add_close_block('true()')
                     session_delegation_id = "instance('commcaresession')/session/data/%s" % DELEGATION_ID
                     path_to_delegation_id = self.resolve_path("%s@%s" % (path, DELEGATION_ID))
@@ -1633,7 +1669,7 @@ class XForm(WrappedNode):
                     subcase_node = parent_node
                     path = base_path
 
-                subcase_block = CaseBlock(self, path)
+                subcase_block = XFormCaseBlock(self, path)
                 subcase_node.insert(0, subcase_block.elem)
                 subcase_block.add_create_block(
                     relevance=self.action_relevance(subcase.condition),
@@ -1787,7 +1823,7 @@ class XForm(WrappedNode):
             path = tag + '/'
             base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
-            case_block = CaseBlock(self, path=path)
+            case_block = XFormCaseBlock(self, path=path)
 
             if bind_case_id_xpath:
                 self.add_bind(
@@ -1897,7 +1933,7 @@ class XForm(WrappedNode):
 
             path, subcase_node = get_action_path(action)
 
-            open_case_block = CaseBlock(self, path)
+            open_case_block = XFormCaseBlock(self, path)
             subcase_node.insert(0, open_case_block.elem)
             open_case_block.add_create_block(
                 relevance=self.action_relevance(action.open_condition),
@@ -1996,7 +2032,7 @@ class XForm(WrappedNode):
             for parent_path, updates in sorted(updates_by_case.items()):
                 node = make_nested_subnode(parent_base, parent_path)
                 node_path = '%sparents/%s/' % (base_node_path or '', parent_path)
-                parent_case_block = CaseBlock.make_parent_case_block(
+                parent_case_block = XFormCaseBlock.make_parent_case_block(
                     self,
                     node_path,
                     parent_path,

@@ -9,6 +9,7 @@ from corehq.form_processor.reprocess import reprocess_unfinished_stub
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -39,7 +40,8 @@ def reprocess_archive_stubs():
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter(attempts__lt=3)
-    metrics_gauge('commcare.unfinished_archive_stubs', len(stubs))
+    metrics_gauge('commcare.unfinished_archive_stubs', len(stubs),
+        multiprocess_mode=MPM_MAX)
     start = time.time()
     cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:

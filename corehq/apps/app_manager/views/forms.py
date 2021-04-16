@@ -25,6 +25,7 @@ from lxml import etree
 from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -65,7 +66,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    MappingItem,
     ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
@@ -237,12 +237,14 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @api_domain_view
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
+@waf_allow('XSS_BODY')
 @login_or_digest
 def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
@@ -286,7 +288,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform.exists():
                 xform.set_name(name)
                 save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
 
     if should_edit('comment'):
         form.comment = request.POST['comment']
@@ -349,11 +351,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     "a release notes form <TODO messaging>")},
                 status_code=400
             )
-    if should_edit('no_vellum'):
-        form.no_vellum = request.POST['no_vellum'] == 'true'
-    if (should_edit("form_links_xpath_expressions") and
-            should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+    if (should_edit("form_links_xpath_expressions")
+            and should_edit("form_links_form_ids")
+            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -501,6 +501,7 @@ def new_form(request, domain, app_id, module_unique_id):
     )
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
@@ -517,9 +518,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     if conflict is not None:
         return conflict
 
-    current_xml = form.source
-    dmp = diff_match_patch()
-    xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    xml = apply_patch(patch, form.source)
     xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
@@ -531,6 +530,11 @@ def patch_xform(request, domain, app_id, form_unique_id):
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return json_response(response_json)
+
+
+def apply_patch(patch, text):
+    dmp = diff_match_patch()
+    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
@@ -760,7 +764,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
     }
 

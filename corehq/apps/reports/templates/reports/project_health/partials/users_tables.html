@@ -24,7 +24,7 @@
   <h2>{% trans "New High Performing Users" %}</h2>
   <p class="lead">
     {% blocktrans %}
-      These are workers who submitted {{ threshold }} forms this month and didn't last month.
+      These are workers who submitted {{ threshold }} forms last month and didn't the previous month.
     {% endblocktrans %}
   </p>
   {% with last_month.get_newly_performing as user_list %}

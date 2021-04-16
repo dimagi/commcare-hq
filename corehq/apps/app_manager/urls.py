@@ -79,6 +79,7 @@ from corehq.apps.app_manager.views import (
     undo_delete_module,
     update_build_comment,
     update_linked_whitelist,
+    upgrade_shadow_module,
     validate_form_for_build,
     validate_module_for_build,
     view_app,
@@ -89,7 +90,6 @@ from corehq.apps.app_manager.views import (
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
-from corehq.apps.hqmedia.views import copy_multimedia
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -187,7 +187,7 @@ urlpatterns = [
 
     url(r'^undo_delete_app/(?P<record_id>[\w-]+)/$', undo_delete_app,
         name='undo_delete_app'),
-    url(r'^undo_delete_module/(?P<record_id>[\w-]+)/$', undo_delete_module,
+    url(r'^undo_delete_module/$', undo_delete_module,
         name='undo_delete_module'),
     url(r'^undo_delete_form/(?P<record_id>[\w-]+)/$', undo_delete_form,
         name='undo_delete_form'),
@@ -214,7 +214,6 @@ urlpatterns = [
 
     # multimedia stuff
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
-    url(r'^copy_multimedia/(?P<app_id>[\w-]+)/$', copy_multimedia, name='copy_multimedia'),
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',
@@ -239,6 +238,8 @@ urlpatterns = [
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', rearrange, name='rearrange'),
     url(r'^move_child_modules_after_parents/(?P<app_id>[\w-]+)/$', move_child_modules_after_parents,
         name='move_child_modules_after_parents'),
+    url(r'^upgrade_shadow_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
+        upgrade_shadow_module, name='upgrade_shadow_module'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', odk_qr_code, name='odk_qr_code'),
     url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', odk_media_qr_code, name='odk_media_qr_code'),

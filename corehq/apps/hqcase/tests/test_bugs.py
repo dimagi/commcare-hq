@@ -23,11 +23,11 @@ class OtaRestoreBugTest(TestCase):
         domain = create_domain(good_domain)
         bad_domain = 'bad-domain'
         create_domain(bad_domain)
-        user = CommCareUser.create(good_domain, format_username('user', good_domain), 'secret')
+        user = CommCareUser.create(good_domain, format_username('user', good_domain), 'secret', None, None)
 
         def _submit_case(domain):
             case_id = uuid.uuid4().hex
-            case_block = CaseBlock(
+            case_block = CaseBlock.deprecated_init(
                 create=True,
                 case_id=case_id,
                 case_name='donald',

@@ -8,6 +8,8 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
+from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -76,6 +78,9 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
+
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
 
 class ExportListHelper(object):
@@ -260,6 +265,15 @@ class ExportListHelper(object):
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
+    @staticmethod
+    def get_location_restriction_names(accessible_location_ids):
+        location_restrictions = []
+        if accessible_location_ids:
+            locations = SQLLocation.objects.filter(location_id__in=accessible_location_ids)
+            for location in locations:
+                location_restrictions.append(location.display_name)
+        return location_restrictions
+
     def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
@@ -278,20 +292,13 @@ class ExportListHelper(object):
                 export.last_accessed, download_url
             )
 
-        location_restrictions = []
-        locations = []
-        if export.filters.accessible_location_ids:
-            locations = SQLLocation.objects.filter(location_id__in=export.filters.accessible_location_ids)
-        for location in locations:
-            location_restrictions.append(location.display_name)
-
         return {
             'groupId': None,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
             'index': None,  # This can be removed when we're off legacy exports
             'fileData': file_data,
             'isLocationSafeForUser': export.filters.is_location_safe_for_user(self.request),
-            'locationRestrictions': location_restrictions,
+            'locationRestrictions': self.get_location_restriction_names(export.filters.accessible_location_ids),
             'taskStatus': _get_task_status_json(export._id),
             'updatingData': False,
         }
@@ -476,10 +483,11 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = ugettext_lazy('''
+    lead_text = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
-    ''')
+    '''))
     is_odata = False
 
     @method_decorator(login_and_domain_required)
@@ -508,9 +516,13 @@ class BaseExportListView(BaseProjectDataView):
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
-            'lead_text': mark_safe(self.lead_text),
-            "export_filter_form": (DashboardFeedFilterForm(self.domain_object)
-                                   if self.include_saved_filters else None),
+            'lead_text': self.lead_text,
+            "export_filter_form": (
+                DashboardFeedFilterForm(
+                    self.domain_object,
+                    couch_user=self.request.couch_user,
+                ) if self.include_saved_filters else None
+            ),
             'create_url': '#createExportOptionsModal',
         }
 
@@ -547,6 +559,7 @@ def get_exports_page(request, domain):
     })
 
 
+@location_safe
 @login_and_domain_required
 @require_GET
 def get_saved_export_progress(request, domain):
@@ -559,6 +572,7 @@ def get_saved_export_progress(request, domain):
     })
 
 
+@location_safe
 @login_and_domain_required
 @require_POST
 def toggle_saved_export_enabled(request, domain):
@@ -575,6 +589,7 @@ def toggle_saved_export_enabled(request, domain):
     })
 
 
+@location_safe
 @login_and_domain_required
 @require_POST
 def update_emailed_export_data(request, domain):
@@ -621,6 +636,7 @@ class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
 
 
 @require_POST
+@location_safe
 @login_and_domain_required
 def commit_filters(request, domain):
     permissions = ExportsPermissionsManager(request.POST.get('model_type'), domain, request.couch_user)
@@ -638,7 +654,11 @@ def commit_filters(request, domain):
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
     domain_object = Domain.get_by_name(domain)
-    filter_form = DashboardFeedFilterForm(domain_object, form_data)
+    filter_form = DashboardFeedFilterForm(
+        domain_object,
+        form_data,
+        couch_user=request.couch_user
+    )
     if filter_form.is_valid():
         old_can_access_all_locations = export.filters.can_access_all_locations
         old_accessible_location_ids = export.filters.accessible_location_ids
@@ -657,6 +677,9 @@ def commit_filters(request, domain):
                 rebuild_saved_export(export_id, manual=True)
         return json_response({
             'success': True,
+            'locationRestrictions': ExportListHelper.get_location_restriction_names(
+                export.filters.accessible_location_ids
+            ),
         })
     else:
         return json_response({
@@ -990,7 +1013,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
 
     @property
     def lead_text(self):
-        return _("""
+        return format_html(_("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=63013347"
            id="js-odata-track-learn-more"
@@ -999,10 +1022,9 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
         </a><br />
         This feature allows {odata_feed_limit} feed configurations. Need more?
         Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
-        """).format(
+        """),
             odata_feed_limit=self.odata_feed_limit,
-            sales_email=settings.SALES_EMAIL,
-        )
+            sales_email=settings.SALES_EMAIL,)
 
     @property
     def page_context(self):

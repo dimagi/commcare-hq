@@ -350,7 +350,7 @@ def clear_app_cache(request, domain):
         startkey=[domain],
         limit=1,
     ).all()
-    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user)
 
 
 def get_apps_base_context(request, domain, app):
@@ -411,6 +411,7 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
+            'show_shadow_module_v1': toggles.V1_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
@@ -473,14 +474,14 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
         messages.error(request, _("Creating linked app failed. {}").format(error))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[from_domain, app_id]))
 
-    linked_app = create_linked_app(from_domain, from_app.master_id, to_domain, link_app_name)
+    linked_app = create_linked_app(from_domain, from_app.origin_id, to_domain, link_app_name)
     try:
         update_linked_app(linked_app, from_app, request.couch_user.get_id)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={},
-                                                 args=[from_domain, from_app.master_id]))
+                                                 args=[from_domain, from_app.origin_id]))
 
     messages.success(request, _('Application successfully copied and linked.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[to_domain, linked_app.get_id]))
@@ -489,6 +490,9 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
 def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
     app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
+    if is_linked_app(app_copy):
+        app_copy = app_copy.convert_to_application()
+        app_copy.save()
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -672,7 +676,7 @@ def new_app(request, domain):
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Module", lang)
+        module = Module.new_module("Untitled Menu", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
         form_args = [module.id, form.id]

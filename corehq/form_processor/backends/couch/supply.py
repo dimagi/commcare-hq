@@ -5,12 +5,6 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.form_processor.abstract_models import AbstractSupplyInterface
-from corehq.util.soft_assert import soft_assert
-
-_supply_point_dynamically_created = soft_assert(
-    to='{}@{}'.format('skelly', 'dimagi.com'),
-    exponential_backoff=False,
-)
 
 
 class SupplyPointCouch(AbstractSupplyInterface):
@@ -20,14 +14,6 @@ class SupplyPointCouch(AbstractSupplyInterface):
         sp = location.linked_supply_point()
         if not sp:
             sp = make_supply_point(location.domain, location)
-
-            if not settings.UNIT_TESTING:
-                _supply_point_dynamically_created(False, 'supply_point_dynamically_created, {}, {}, {}'.format(
-                    location.name,
-                    sp.case_id,
-                    location.domain,
-                ))
-
         return sp
 
     @classmethod

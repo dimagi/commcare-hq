@@ -114,6 +114,10 @@ class PartitionedModel(models.Model):
 
     @property
     def partition_value(self):
+        if self.partition_attr not in self.__dict__ and self.pk is None:
+            # prevent infinite recursion in db router
+            raise AttributeError(
+                f"unknown partition value for unsaved {type(self).__name__}")
         return getattr(self, self.partition_attr)
 
     @property
