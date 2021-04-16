@@ -45,7 +45,7 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-def sync_user_cases_if_applicable(user, spawn_task):
+def sync_usercases_if_applicable(user, spawn_task):
     if settings.UNIT_TESTING and not user.project:
         return
     if (user.project.call_center_config.enabled or user.project.usercase_enabled):
