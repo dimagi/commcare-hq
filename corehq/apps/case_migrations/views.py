@@ -21,13 +21,14 @@ from casexml.apps.phone.xml import (
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.locations.fixtures import (
-    FlatLocationSerializer
-)
+from corehq.apps.locations.fixtures import FlatLocationSerializer
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import WEBAPPS_CASE_MIGRATION, ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
+from corehq.toggles import (
+    ADD_LIMITED_FIXTURES_TO_CASE_RESTORE,
+    WEBAPPS_CASE_MIGRATION,
+)
 from corehq.util import reverse
 
 from .forms import MigrationForm
