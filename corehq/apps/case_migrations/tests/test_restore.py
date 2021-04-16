@@ -5,8 +5,12 @@ from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
+from mock import patch
+
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from casexml.apps.phone.restore import CachedResponse
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.fixtures import FlatLocationSerializer
@@ -42,6 +46,12 @@ class TestCaseRestore(TestCase):
         cls.factory.create_or_update_cases([cls.grandkid, cls.kid2, cls.other_dad])
 
         cls.web_user = WebUser.create(cls.domain, 'test-user', 'passmein', created_by=None, created_via=None)
+        cls.restore_payload_path = RestorePayloadPathCache(domain=cls.domain, user_id=cls.dad.case_id,
+                                                           sync_log_id=None, device_id=None)
+
+    def tearDown(self):
+        # clear up cache after each test
+        self.restore_payload_path.invalidate()
 
     @classmethod
     def tearDownClass(cls):
@@ -96,6 +106,25 @@ class TestCaseRestore(TestCase):
                                                                SQLLocation.active_objects):
             locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
         self.assertIn(locations_content, response_content)
+
+    def test_caching(self):
+        # no cache set
+        self.assertIsNone(self.restore_payload_path.get_value())
+        self.assertFalse(CachedResponse(self.restore_payload_path.get_value()))
+
+        self._generate_restore(self.dad.case_id)
+
+        payload_path = self.restore_payload_path.get_value()
+        # cache path set
+        self.assertIsNotNone(payload_path)
+        cached_response = CachedResponse(payload_path)
+        # cache file available
+        self.assertTrue(cached_response)
+
+        with patch('corehq.apps.case_migrations.views._generate_payload') as generate_payload:
+            # fetch restore from cache successfully
+            self._generate_restore(self.dad.case_id)
+            self.assertEqual(generate_payload.call_count, 0)
 
     def _generate_restore(self, case_id):
         self.client.login(username=self.web_user.username, password=self.web_user.password)

@@ -6,7 +6,13 @@ from django.utils.translation import ugettext as _
 from django.views.generic import FormView
 
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import RestoreContent, RestoreResponse
+from casexml.apps.phone.const import INITIAL_SYNC_CACHE_TIMEOUT
+from casexml.apps.phone.restore import (
+    CachedResponse,
+    RestoreContent,
+    RestoreResponse,
+)
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import (
     get_case_element,
     get_registration_element_for_case,
@@ -79,17 +85,45 @@ def migration_restore(request, domain, case_id):
     except CaseNotFound:
         raise Http404
 
-    with RestoreContent('Case[{}]'.format(case_id)) as content:
+    return _get_case_restore_response(domain, case)
+
+
+def _get_case_restore_response(domain, case):
+    restore_payload_path = RestorePayloadPathCache(domain=domain, user_id=case.case_id, sync_log_id=None,
+                                                   device_id=None)
+    payload_file_path = restore_payload_path.get_value()
+    cached_response = CachedResponse(payload_file_path)
+
+    if cached_response:
+        response = cached_response
+    else:
+        payload = _generate_payload(domain, case)
+        _cache_payload(domain, case.case_id, payload, restore_payload_path)
+        response = RestoreResponse(payload)
+    return response.get_http_response()
+
+
+def _generate_payload(domain, case):
+    with RestoreContent('Case[{}]'.format(case.case_id)) as content:
         content.append(get_registration_element_for_case(case))
-        for case in get_case_hierarchy_for_restore(case):
+        for child_case in get_case_hierarchy_for_restore(case):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
-            content.append(get_case_element(case, ('create', 'update'), V2))
+            content.append(get_case_element(child_case, ('create', 'update'), V2))
         if ADD_LIMITED_FIXTURES_TO_CASE_RESTORE.enabled(domain):
-            _add_limited_fixtures(domain, case_id, content)
+            _add_limited_fixtures(domain, case.case_id, content)
         payload = content.get_fileobj()
+    return payload
 
-    return RestoreResponse(payload).get_http_response()
+
+def _cache_payload(domain, case_id, payload, restore_payload_path):
+    cached_response = CachedResponse.save_for_later(
+        payload,
+        INITIAL_SYNC_CACHE_TIMEOUT,
+        domain,
+        case_id,
+    )
+    restore_payload_path.set_value(cached_response.name, INITIAL_SYNC_CACHE_TIMEOUT)
 
 
 def _add_limited_fixtures(domain, case_id, content):
