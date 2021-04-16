@@ -40,8 +40,8 @@ from corehq.apps.export.exceptions import (
     ExportFormValidationException,
 )
 from corehq.apps.export.export import (
-    _get_export_query,
     get_export_download,
+    get_export_query,
     get_export_size,
 )
 from corehq.apps.export.forms import (
@@ -442,7 +442,7 @@ def prepare_form_multimedia(request, domain):
 
     export = view_helper.get_export(export_specs[0]['export_id'])
     filters = filter_form.get_export_filters(request, filter_form_data)
-    export_es_query = _get_export_query(export, filters)
+    export_es_query = get_export_query(export, filters)
 
     if media_export_is_too_big(export_es_query):
         return json_response({
