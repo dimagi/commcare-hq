@@ -128,7 +128,7 @@ def user_id_to_username(user_id, use_name_if_available=False):
 
 @quickcache(['user_id'])
 def cached_user_id_to_username(user_id):
-    if not user_id or user_id in WEIRD_USER_IDS:
+    if not user_id or (user_id in WEIRD_USER_IDS and user_id != DEMO_USER_ID):
         return None
 
     return user_id_to_username(user_id)
