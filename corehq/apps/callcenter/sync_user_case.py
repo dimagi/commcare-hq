@@ -239,12 +239,12 @@ def _iter_sync_usercase_helpers(user):
         )
 
 
-def sync_user_cases(user):
+def sync_usercases(user):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
 
-    This is also called to create user cases when the usercase is used for the
+    This is also called to create usercases when the usercase is used for the
     first time.
     """
     with CriticalSection(get_sync_lock_key(user._id)):

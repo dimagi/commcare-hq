@@ -3,7 +3,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import enable_usercase
-from corehq.apps.callcenter.sync_user_case import sync_user_cases
+from corehq.apps.callcenter.sync_user_case import sync_usercases
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
@@ -41,7 +41,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
 
         username = normalize_username("mobile_worker_1", self.domain)
         self.mobile_worker = CommCareUser.create(self.domain, username, "123", None, None)
-        sync_user_cases(self.mobile_worker)
+        sync_usercases(self.mobile_worker)
 
         self.checkin_case = CaseFactory(self.domain).create_case(
             case_type="checkin",
