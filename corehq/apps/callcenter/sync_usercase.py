@@ -93,7 +93,7 @@ def _domain_has_new_fields(domain, field_names):
     return False
 
 
-def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
+def _get_sync_usercase_helper(commcare_user, case_type, owner_id, case=None):
     domain = commcare_user.domain
     fields = _get_user_case_fields(commcare_user, case_type, owner_id)
     case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
@@ -188,7 +188,8 @@ def _iter_call_center_case_helpers(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        yield _get_sync_user_case_helper(user, config.case_type, owner_id, case)
+        yield _get_sync_usercase_helper(user, config.case_type, owner_id, case)
+
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
@@ -232,7 +233,7 @@ def sync_usercase(user):
 
 def _iter_sync_usercase_helpers(user):
     if user.project.usercase_enabled:
-        yield _get_sync_user_case_helper(
+        yield _get_sync_usercase_helper(
             user,
             USERCASE_TYPE,
             user.get_id
