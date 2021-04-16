@@ -294,12 +294,12 @@ class RetireUserTestCase(TestCase):
         from corehq.apps.callcenter.sync_user_case import sync_usercase
         sync_usercase(self.commcare_user)
 
-        user_case_id = self.commcare_user.get_usercase_id()
+        usercase_id = self.commcare_user.get_usercase_id()
 
         # other user submits form against the case (should get deleted)
         caseblock = CaseBlock.deprecated_init(
             create=False,
-            case_id=user_case_id,
+            case_id=usercase_id,
         )
         submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
@@ -317,7 +317,7 @@ class RetireUserTestCase(TestCase):
         for form_id in user_case.xform_ids:
             self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
 
-        self.assertTrue(CaseAccessors(self.domain).get_case(user_case_id).is_deleted)
+        self.assertTrue(CaseAccessors(self.domain).get_case(usercase_id).is_deleted)
 
     @run_with_all_backends
     def test_forms_touching_live_case_not_deleted(self):
