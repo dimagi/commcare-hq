@@ -286,9 +286,9 @@ class DiffTestCases(SimpleTestCase):
             'type': 'commcare-user'
         }
 
-        user_case_diffs = json_diff(couch_case, sql_case)
-        self.assertEqual(2, len(user_case_diffs))
-        filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs + REAL_DIFFS)
+        usercase_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(2, len(usercase_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, usercase_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_usercase_diff_bad(self):
@@ -303,9 +303,9 @@ class DiffTestCases(SimpleTestCase):
             'type': 'commcare-user'
         }
 
-        user_case_diffs = json_diff(couch_case, sql_case)
-        self.assertEqual(1, len(user_case_diffs))
-        filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs)
+        usercase_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(1, len(usercase_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, usercase_diffs)
         self.assertEqual(filtered, [
             FormJsonDiff(
                 diff_type='missing', path=('hq_user_id',),
