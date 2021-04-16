@@ -23,7 +23,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import trap_extra_setup
 from custom.covid.rules.custom_actions import close_cases_assigned_to_checkin
-from custom.covid.rules.custom_criteria import associated_user_case_closed
+from custom.covid.rules.custom_criteria import associated_usercase_closed
 
 
 @use_sql_backend
@@ -72,7 +72,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
             )
         self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
-        self.assertTrue(associated_user_case_closed(self.checkin_case, None))
+        self.assertTrue(associated_usercase_closed(self.checkin_case, None))
 
     def test_custom_action(self):
         rule = create_empty_rule(
