@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('commtrack', '0004_populate_config_models'),
+        ('commtrack', '0005_populate_config_models'),
     ]
 
     operations = [
