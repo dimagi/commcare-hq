@@ -21,7 +21,6 @@ class UserGenerationCache(GenerationCache):
         "users/phone_users_by_domain",
         "users/web_users_by_domain",
         "users/by_default_phone",
-        "users/admins_by_domain",
         "users/by_username",
         "domain/old_users",
     ]
