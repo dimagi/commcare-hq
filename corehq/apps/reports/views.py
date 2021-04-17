@@ -120,6 +120,7 @@ from corehq.apps.saved_reports.tasks import (
 )
 from corehq.apps.userreports.util import \
     default_language as ucr_default_language
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
@@ -640,8 +641,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @property
     @memoized
     def scheduled_report_form(self):
-        web_users = WebUser.view('users/web_users_by_domain', reduce=False,
-                               key=self.domain, include_docs=True).all()
         initial = self.report_notification.to_json()
         kwargs = {'initial': initial}
         if self.request.method == "POST":
@@ -651,7 +650,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             args = ()
             selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
 
-        web_user_emails = [u.get_email() for u in web_users]
+        web_user_emails = [
+            WebUser.wrap(row['doc']).get_email()
+            for row in get_all_user_rows(self.domain, include_web_users=True,
+                                         include_mobile_users=False, include_docs=True)
+        ]
         for email in selected_emails:
             if email not in web_user_emails:
                 web_user_emails = [email] + web_user_emails
