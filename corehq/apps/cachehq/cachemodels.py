@@ -19,7 +19,6 @@ class UserGenerationCache(GenerationCache):
     views = [
         "users/by_domain",
         "users/phone_users_by_domain",
-        "users/web_users_by_domain",
         "users/by_default_phone",
         "users/by_username",
         "domain/old_users",
