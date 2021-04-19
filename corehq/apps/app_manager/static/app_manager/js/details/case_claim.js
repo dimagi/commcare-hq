@@ -54,6 +54,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             },
         });
         self.nodesetValid = ko.computed(function () {
+            if (self.nodeset() === null) {
+                return true;
+            }
             var itemLists = _.map(get('js_options').item_lists, function (item) {
                     return itemsetValue(item);
                 });
@@ -69,7 +72,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             }
             return false;
         });
-        subscribeToSave(self, ['nodeset', 'label', 'value', 'sort'], saveButton);
+        subscribeToSave(self,
+            ['nodeset', 'label', 'value', 'sort', 'instance_id', 'instance_uri'], saveButton);
 
         return self;
     };
