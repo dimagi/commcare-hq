@@ -87,5 +87,6 @@ branches:
   # - kev/markdown-case-views # Kevin Apr 9
   - bmb/get-account-rename  # Biyeun Apr 19
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
+  - dependabot/pip/requirements/freezegun-1.1.0 # Joel Apr 19
 
 submodules: {}
