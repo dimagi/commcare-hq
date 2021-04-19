@@ -85,5 +85,6 @@ branches:
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - sr/sort-cs # Sravan April 19
   # - kev/markdown-case-views # Kevin Apr 9
+  - bmb/get-account-rename  # Biyeun Apr 19
 
 submodules: {}
