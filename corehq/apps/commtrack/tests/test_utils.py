@@ -26,7 +26,7 @@ class CommtrackUtilsTest(TestCase):
         make_domain_commtrack(domain_obj)
         self.assertTrue(domain_obj.commtrack_enabled)
         self.assertTrue(domain_obj.locations_enabled)
-        config = SQLCommtrackConfig.for_domain(domain_obj.name)
+        config = CommtrackConfig.for_domain(domain_obj.name)
         self.assertEqual(config.to_json(), {
             'domain': 'test-make-domain-commtrack',
             'actions': [{
