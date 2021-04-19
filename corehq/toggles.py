@@ -637,13 +637,6 @@ MM_CASE_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-NEW_MULTIMEDIA_UPLOADER = StaticToggle(
-    'new_multimedia_uploader',
-    'Display new multimedia uploader',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'ICDS: Visit Scheduler',
@@ -1433,6 +1426,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
     'Allows sending of incremental CSV exports to a particular endpoint',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Incremental+Data+Exports"
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1813,6 +1807,27 @@ RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     """
 )
 
+BLOCK_RESTORES = StaticToggle(
+    'block_restores',
+    'Block Restores Immediately with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag for EMERGENCY PURPOSES ONLY if a project's restore is causing
+    system-wide issues that aren't caught by rate limiting or other mechanisms.
+    """
+)
+
+SKIP_FIXTURES_ON_RESTORE = StaticToggle(
+    'skip_fixtures_on_restore',
+    'Skip Fixture Syncs on Restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Use this flag to skip fixtures on restores for certain project spaces.
+    """
+)
+
 SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'skip_updating_user_reporting_metadata',
     'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
@@ -2017,13 +2032,29 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
     'COVID: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
 )
-
 
 FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
+)
+
+ERM_DEVELOPMENT = StaticToggle(
+    'erm_development',
+    'Flag to put enterprise release management work behind',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
+    'fixtures_in_case_restore',
+    'Allow limited fixtures to be available in case restore for SMS workflows',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

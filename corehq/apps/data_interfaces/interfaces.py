@@ -83,7 +83,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
         for row in self.es_results['hits'].get('hits', []):
             case = self.get_case(row)
-            display = CaseDisplay(self, case)
+            display = CaseDisplay(case, self.timezone, self.individual)
             yield [
                 format_html(
                     checkbox_format,

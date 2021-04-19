@@ -19,9 +19,10 @@ class TestAuditMiddleware(SimpleTestCase):
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_no_audit(self.request)
 
-    def test_admin_view_is_audited_with_default_settings(self):
+    def test_admin_view_is_audited_with_audit_admin_views_setting(self):
         func = make_view(module="django.contrib.admin")
-        with configured_middleware() as ware:
+        settings = Settings(AUDIT_ADMIN_VIEWS=True)
+        with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
 
@@ -41,13 +42,17 @@ class TestAuditMiddleware(SimpleTestCase):
 
     def test_audit_views_setting(self):
         func = make_view("ChangeMyPasswordView", "corehq.apps.settings.views")
-        with configured_middleware() as ware:
+        settings = Settings(AUDIT_VIEWS=[
+            "corehq.apps.settings.views.ChangeMyPasswordView",
+        ])
+        with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
 
     def test_audit_modules_setting(self):
         func = make_view("ClassView", "corehq.apps.reports")
-        with configured_middleware() as ware:
+        settings = Settings(AUDIT_MODULES=["corehq.apps.reports"])
+        with configured_middleware(settings) as ware:
             ware.process_view(self.request, func, ARGS, KWARGS)
         self.assert_audit(self.request)
 
@@ -119,6 +124,12 @@ class TestAuditMiddleware(SimpleTestCase):
         self.assertEqual(audit_doc.user, "username")
         self.assertEqual(audit_doc.save_count, 1)
 
+    def test_audit_save_error_does_not_disrupt_response(self):
+        self.request.audit_doc = AuditSaveErrorDoc(user=None)
+        with configured_middleware() as ware:
+            ware(self.request)
+        self.assertEqual(self.request.audit_doc.save_count, 1)
+
     def assert_audit(self, request):
         audit_doc = getattr(request, "audit_doc", None)
         self.assertEqual(audit_doc, EXPECTED_AUDIT, "audit expected")
@@ -158,6 +169,13 @@ class FakeAuditDoc(Config):
             self.save_count += 1
         else:
             self.save_count = 1
+
+
+class AuditSaveErrorDoc(FakeAuditDoc):
+
+    def save(self):
+        super().save()
+        raise Exception("cannot save")
 
 
 ARGS = ()  # positional view args are not audited, therefore are empty

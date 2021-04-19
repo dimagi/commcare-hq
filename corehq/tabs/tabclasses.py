@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
-from django.utils.html import escape, strip_tags
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html, strip_tags
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -907,10 +906,11 @@ class ApplicationsTab(UITab):
 
     @classmethod
     def make_app_title(cls, app):
-        return mark_safe("%s%s" % (
-            escape(strip_tags(app.name)) or '(Untitled)',
+        return format_html(
+            '{}{}',
+            strip_tags(app.name) or _('(Untitled)'),
             ' (Remote)' if is_remote_app(app) else '',
-        ))
+        )
 
     @property
     def dropdown_items(self):
@@ -1303,8 +1303,8 @@ class ProjectUsersTab(UITab):
                         couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
                     if couch_user.is_deleted():
-                        username += " (%s)" % _("Deleted")
-                    return mark_safe(username)
+                        username = format_html('{} ({})', username, _("Deleted"))
+                    return username
                 else:
                     return None
 
@@ -1380,8 +1380,8 @@ class ProjectUsersTab(UITab):
                         not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
-                        username += " (%s)" % _("Deleted")
-                    return mark_safe(username)
+                        username = format_html('{} ({})', username, _('Deleted'))
+                    return username
                 else:
                     return None
 
@@ -1848,7 +1848,8 @@ def _get_integration_section(domain):
             },
             {
                 'title': _('Data Forwarding Records'),
-                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+                'url': reverse('domain_report_dispatcher',
+                               args=[domain, _get_repeat_record_report(domain)])
             },
             {
                 'title': _(MotechLogListView.page_title),
@@ -2142,7 +2143,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
                 {'title': _('View raw documents'),
@@ -2161,11 +2161,7 @@ class AdminTab(UITab):
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
             ]
-            user_operations = [
-                {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname),
-                 'icon': 'fa fa-user-secret'},
-            ] + user_operations + [
+            user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
@@ -2231,3 +2227,15 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+
+
+def _get_repeat_record_report(domain):
+    from corehq.motech.repeaters.models import are_repeat_records_migrated
+    from corehq.motech.repeaters.views import (
+        DomainForwardingRepeatRecords,
+        SQLRepeatRecordReport,
+    )
+
+    if are_repeat_records_migrated(domain):
+        return SQLRepeatRecordReport.slug
+    return DomainForwardingRepeatRecords.slug

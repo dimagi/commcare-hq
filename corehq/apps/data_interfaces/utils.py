@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
@@ -7,6 +9,7 @@ from soil import DownloadBase
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
@@ -116,11 +119,16 @@ def property_references_parent(case_property):
     )
 
 
-def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel=False):
+def operate_on_payloads(
+    repeat_record_ids: List[str],
+    domain: str,
+    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    use_sql: bool,
+    task: Optional = None,
+    from_excel: bool = False,
+):
     if not repeat_record_ids:
         return {'messages': {'errors': [_('No payloads specified')]}}
-    if not action:
-        return {'messages': {'errors': [_('No action specified')]}}
 
     response = {
         'errors': [],
@@ -133,22 +141,30 @@ def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel
         DownloadBase.set_progress(task, 0, len(repeat_record_ids))
 
     for record_id in repeat_record_ids:
-        valid_record = _validate_record(record_id, domain)
+        if use_sql:
+            record = _get_sql_repeat_record(domain, record_id)
+        else:
+            record = _get_couch_repeat_record(domain, record_id)
 
-        if valid_record:
+        if record:
             try:
-                message = ''
                 if action == 'resend':
-                    valid_record.fire(force_send=True)
+                    record.fire(force_send=True)
                     message = _("Successfully resent repeat record (id={})").format(record_id)
                 elif action == 'cancel':
-                    valid_record.cancel()
-                    valid_record.save()
+                    if use_sql:
+                        record.state = RECORD_CANCELLED_STATE
+                    else:
+                        record.cancel()
+                    record.save()
                     message = _("Successfully cancelled repeat record (id={})").format(record_id)
                 elif action == 'requeue':
-                    valid_record.requeue()
-                    valid_record.save()
+                    record.requeue()
+                    if not use_sql:
+                        record.save()
                     message = _("Successfully requeued repeat record (id={})").format(record_id)
+                else:
+                    raise ValueError(f'Unknown action {action!r}')
                 response['success'].append(message)
                 success_count = success_count + 1
             except Exception as e:
@@ -161,18 +177,32 @@ def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel
     if from_excel:
         return response
 
-    response["success_count_msg"] = \
-        _("Successfully {action} {count} form(s)".format(action=action, count=success_count))
+    if success_count:
+        response["success_count_msg"] = _(
+            "Successfully performed {action} action on {count} form(s)"
+        ).format(action=action, count=success_count)
+    else:
+        response["success_count_msg"] = ''
 
     return {"messages": response}
 
 
-def _validate_record(r, domain):
+def _get_couch_repeat_record(domain, record_id):
     from corehq.motech.repeaters.models import RepeatRecord
+
     try:
-        payload = RepeatRecord.get(r)
+        couch_record = RepeatRecord.get(record_id)
     except ResourceNotFound:
         return None
-    if payload.domain != domain:
+    if couch_record.domain != domain:
         return None
-    return payload
+    return couch_record
+
+
+def _get_sql_repeat_record(domain, record_id):
+    from corehq.motech.repeaters.models import SQLRepeatRecord
+
+    try:
+        return SQLRepeatRecord.objects.get(domain=domain, pk=record_id)
+    except SQLRepeatRecord.DoesNotExist:
+        return None

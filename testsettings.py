@@ -80,9 +80,6 @@ CELERY_TASK_ALWAYS_EAGER = True
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
 
-# required by auditcare tests
-AUDIT_ADMIN_VIEWS = False
-
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
@@ -128,14 +125,6 @@ LOGGING = {
     'loggers': {},
 }
 
-# Default custom databases to use the same configuration as the default
-# This is so that all devs don't have to run citus locally
-if 'icds-ucr' not in DATABASES:
-    DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
-    # use a different name otherwise migrations don't get run
-    DATABASES['icds-ucr']['NAME'] = 'commcarehq_icds_ucr'
-    del DATABASES['icds-ucr']['TEST']['NAME']  # gets set by `helper.assign_test_db_names`
-
 helper.assign_test_db_names(DATABASES)
 
 # See comment under settings.SMS_QUEUE_ENABLED
@@ -163,3 +152,5 @@ if os.path.exists("extensions/icds/custom/icds"):
     if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
         COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
         CUSTOM_DB_ROUTING["icds_reports"] = "icds-ucr-citus"
+
+FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"

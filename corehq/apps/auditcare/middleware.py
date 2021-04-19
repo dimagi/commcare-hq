@@ -14,28 +14,20 @@ class AuditMiddleware:
         """
         Audit middleware needs to be enabled on site after the login/user info
         is instantiated on the request object.
+
+        Auditing is controlled by three settings:
+        - AUDIT_ALL_VIEWS: When true other settings are ignored.
+        - AUDIT_VIEWS: List of fully qualified view names to audit.
+        - AUDIT_MODULES: List of fully qualified module names to audit.
+        - AUDIT_ADMIN_VIEWS: Audit admin views in `django.contrib.admin`
+            and `reversion.admin` modules
         """
         self.get_response = get_response
         self.active = any(getattr(settings, name, False) for name in [
-            "AUDIT_ALL_VIEWS", "AUDIT_VIEWS", "AUDIT_MODULES"
+            "AUDIT_ALL_VIEWS", "AUDIT_VIEWS", "AUDIT_MODULES", "AUDIT_ADMIN_VIEWS"
         ])
         self.audit_modules = tuple(settings.AUDIT_MODULES)
         self.audit_views = set(settings.AUDIT_VIEWS)
-
-        if not getattr(settings, 'AUDIT_ALL_VIEWS', False):
-            if not self.audit_views:
-                log.warning(
-                    "You do not have the AUDIT_VIEWS settings variable setup. "
-                    "If you want to setup central view call audit events, "
-                    "please add the property and populate it with fully "
-                    "qualified view names."
-                )
-            elif not self.audit_modules:
-                log.warning(
-                    "You do not have the AUDIT_MODULES settings variable "
-                    "setup. If you want to setup central module audit events, "
-                    "please add the property and populate it with module names."
-                )
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
@@ -50,19 +42,11 @@ class AuditMiddleware:
         return None
 
     def __call__(self, request):
-        """
-        For auditing views, we need to verify on the response whether or not the
-        permission was granted, we infer this from the status code. Update the
-        audit document set in the request object.
-
-        We also need to add the user field when it was not initially inferred from the sessionid,
-        such as when using Api Key, Basic Auth, Digest Auth, or HMAC auth.
-        """
         response = None
         try:
             response = self.get_response(request)
         finally:
-            self._update_audit(request, response)
+            self._save_audit(request, response)
         return response
 
     def should_audit(self, view_func):
@@ -81,7 +65,16 @@ class AuditMiddleware:
             )
         )
 
-    def _update_audit(self, request, response):
+    def _save_audit(self, request, response):
+        """
+        Save the audit document set in the request object.
+
+        For auditing views, we need to verify on the response whether or not the
+        permission was granted, we infer this from the status code. We also need
+        to add the user field when it was not initially inferred from the
+        sessionid, such as when using Api Key, Basic Auth, Digest Auth, or HMAC
+        auth.
+        """
         audit_doc = getattr(request, 'audit_doc', None)
         if audit_doc:
             if not audit_doc.user:
@@ -91,4 +84,7 @@ class AuditMiddleware:
                     audit_doc.user = request.couch_user.username
             if response is not None:
                 audit_doc.status_code = response.status_code
-            audit_doc.save()
+            try:
+                audit_doc.save()
+            except Exception:
+                log.exception("error saving view audit")
