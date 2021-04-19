@@ -51,5 +51,4 @@ class SsoBackend(ModelBackend):
             return None
 
         request.sso_login_error = None
-        # todo what happens with 2FA required here?
         return user
