@@ -586,6 +586,17 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_form, sql_form)
 
+    def test_form_time_value_diff(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "form": {"end_time": "11:49:00"},
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "form": {"end_time": "11:49:00.000"},
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
+
     def test_form_with_number_with_extra_leading_zero(self):
         couch_form = {
             "doc_type": "XFormInstance",

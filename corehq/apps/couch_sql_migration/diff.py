@@ -52,6 +52,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'server_modified_on', old=None),
 
         Ignore('diff', check=has_date_values),
+        Ignore('diff', check=has_equivalent_times),
         Ignore('diff', check=sql_number_has_leading_zero),
         Ignore(check=is_text_xmlns),
     ],
@@ -343,6 +344,19 @@ def has_close_dates(old_obj, new_obj, rule, diff):
 
 def has_date_values(old_obj, new_obj, rule, diff):
     return _both_dates(diff.old_value, diff.new_value)
+
+
+def has_equivalent_times(old_obj, new_obj, rule, diff):
+    return normalize_time(diff.old_value) == diff.new_value
+
+
+def normalize_time(value):
+    if isinstance(value, str) and TIME_FORMAT.match(value):
+        return value + ".000"
+    return value
+
+
+TIME_FORMAT = re.compile(r"^\d\d:\d\d:\d\d$")
 
 
 def sql_number_has_leading_zero(old_obj, new_obj, rule, diff):
