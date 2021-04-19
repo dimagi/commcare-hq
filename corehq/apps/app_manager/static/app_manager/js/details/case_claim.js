@@ -38,8 +38,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 else {
                     self.instance_id(value);
                     var itemList = _.filter(get('js_options').item_lists, function (item) {
-                            return item.id === value;
-                        });
+                        return item.id === value;
+                    });
                     if (itemList && itemList.length === 1) {
                         self.instance_uri(itemList[0]['uri']);
                         self.nodeset(itemsetValue(itemList[0]));
