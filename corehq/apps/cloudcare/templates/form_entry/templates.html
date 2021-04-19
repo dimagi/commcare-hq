@@ -114,21 +114,48 @@
           <div class="question-container">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
-          <div class="form-actions form-group" data-bind="visible: showSubmitButton">
+          <div class="row" data-bind="visible: erroredQuestions().length > 0">
+            <div class="col-sm-12 alert alert-warning">
+              <h3>
+                {% trans "Please correct below answers before submitting. You can use the left side button to jump to all errored questions one by one to correct them" %}
+              </h3>
+              <ul data-bind="foreach: erroredQuestions">
+                  <li>
+                      <a href="#" data-bind="click: navigateTo, text: caption_markdown() || caption()"></a>
+                      <span class="error-message server-error-message" data-bind="
+                                visible: serverError,
+                                text: serverError
+                            "></span>
+                      <span class="error-message server-error-message" data-bind="
+                                ifnot: serverError
+                            ">
+                      {% trans "An answer is required." %}
+                      </span>
+                      </li>
+                  </li>
+              </ul>
+            </div>
+          </div>
+          <div id="submit-button" class="form-actions form-group" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"
                      data-bind="enable: enableSubmitButton">
-                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton()"></i>
+                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"></i>
                 <!-- ko text: submitText --><!-- /ko -->
               </button>
             </div>
           </div>
         </form>
       </div>
+      <div id="scroll-bottom" class="btn btn-primary" style="position: fixed; bottom: 35px" title="Scroll to bottom" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
+        <i class='fa fa-location-arrow'></i>
+            {% trans "Next Required/Errored Question" %}
+      </div>
     </div>
   </div>
 </script>
+
 
 <script type="text/html" id="question-fullform-ko-template">
   <!-- ko if: datatype() !== 'info' -->
