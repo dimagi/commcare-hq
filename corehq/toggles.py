@@ -2040,9 +2040,9 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
     'COVID: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
 )
-
 
 FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
@@ -2050,4 +2050,19 @@ FHIR_INTEGRATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
+)
+
+ERM_DEVELOPMENT = StaticToggle(
+    'erm_development',
+    'Flag to put enterprise release management work behind',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
+    'fixtures_in_case_restore',
+    'Allow limited fixtures to be available in case restore for SMS workflows',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

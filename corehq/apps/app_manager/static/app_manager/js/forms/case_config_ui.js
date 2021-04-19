@@ -297,7 +297,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 'case_type', 'reference_id', 'condition', 'case_properties', 'case_preload', 'close_condition', 'allow',
             ]);
         };
-        var userCaseTransactionMapping = function (model) {
+        var usercaseTransactionMapping = function (model) {
             return baseMapping(model, ['case_properties', 'case_preload']);
         };
 
@@ -465,8 +465,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         };
 
 
-        var userCaseTransaction = function (data, caseConfig) {
-            var self = baseTransaction(userCaseTransactionMapping, caseConfig.saveUsercaseButton, 'User Case Management', data, caseConfig, true);
+        var usercaseTransaction = function (data, caseConfig) {
+            var self = baseTransaction(usercaseTransactionMapping, caseConfig.saveUsercaseButton, 'User Case Management', data, caseConfig, true);
 
             self.case_type = function () {
                 return 'commcare-user';
@@ -688,7 +688,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     caseConfig,
                     true
                 );
-                return userCaseTransaction({
+                return usercaseTransaction({
                     case_properties: case_properties,
                     case_preload: case_preload,
                     allow: {
@@ -709,7 +709,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, caseConfig);
             },
             from_usercase_transaction: function (usercase_transaction) {
-                var o = ko.mapping.toJS(usercase_transaction, userCaseTransactionMapping(usercase_transaction));
+                var o = ko.mapping.toJS(usercase_transaction, usercaseTransactionMapping(usercase_transaction));
                 var x = caseConfigUtils.propertyArrayToDict([], o.case_properties);
                 var case_properties = x[0];
                 var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);

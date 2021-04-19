@@ -8,7 +8,6 @@ from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.app_manager.util import enable_usercase
-from corehq.apps.callcenter.sync_user_case import sync_user_cases
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser

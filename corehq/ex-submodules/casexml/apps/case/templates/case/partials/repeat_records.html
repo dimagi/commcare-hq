@@ -23,7 +23,7 @@
       <td>{{ repeat_record.state|lower }}</td>
       <td>
         {% for attempt in repeat_record.attempts %}
-          <div>{{ attempt.datetime }}: {{ attempt.message }}</div>
+          <div>{{ attempt.created_at }}: {{ attempt.message }}</div>
         {% endfor %}
       </td>
       <td>

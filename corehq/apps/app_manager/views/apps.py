@@ -981,7 +981,7 @@ def move_child_modules_after_parents(request, domain, app_id):
 
 @require_GET
 @require_can_edit_apps
-def drop_user_case(request, domain, app_id):
+def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)
     for module in app.get_modules():
         for form in module.get_forms():

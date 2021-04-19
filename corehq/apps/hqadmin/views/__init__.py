@@ -1,6 +1,5 @@
 from corehq.apps.hqadmin.views.data import (
     doc_in_es,
-    get_db_from_db_name,
     raw_doc,
 )
 from corehq.apps.hqadmin.views.operations import (
@@ -22,7 +21,6 @@ from corehq.apps.hqadmin.views.system import (
 )
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
-    AuthenticateAs,
     DisableTwoFactorView,
     DisableUserView,
     DomainAdminRestoreView,
