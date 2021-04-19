@@ -18,6 +18,9 @@ from corehq.apps.sso.decorators import (
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
+from corehq.apps.sso.utils.session_helpers import (
+    store_saml_data_in_session,
+)
 
 
 @identity_provider_required
@@ -63,12 +66,7 @@ def sso_saml_acs(request, idp_slug):
         if 'AuthNRequestID' in request.session:
             del request.session['AuthNRequestID']
 
-        request.session['samlUserdata'] = request.saml2_auth.get_attributes()
-        request.session['samlNameId'] = request.saml2_auth.get_nameid()
-        request.session['samlNameIdFormat'] = request.saml2_auth.get_nameid_format()
-        request.session['samlNameIdNameQualifier'] = request.saml2_auth.get_nameid_nq()
-        request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
-        request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
+        store_saml_data_in_session(request)
 
         user = auth.authenticate(
             request=request,
