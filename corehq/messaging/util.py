@@ -120,10 +120,3 @@ class MessagingRuleProgressHelper(object):
             return 100
 
         return int(round(100.0 * current / total, 0))
-
-
-def show_messaging_dashboard(domain, couch_user):
-    return (
-        not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain)
-        or couch_user.is_superuser
-    )

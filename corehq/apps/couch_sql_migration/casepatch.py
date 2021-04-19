@@ -44,7 +44,9 @@ def patch_diffs(doc_diffs, log_cases=False):
     pending_diffs = []
     dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     for kind, case_id, diffs in doc_diffs:
-        assert kind == "CommCareCase", (kind, case_id)
+        if kind != "CommCareCase":
+            log.warning("cannot patch %s: %s", kind, case_id)
+            continue
         dd_count("commcare.couchsqlmigration.case.patch")
         try:
             patch_case(case_id, diffs)
@@ -318,7 +320,9 @@ def diff_to_json(diff, new_value=None):
 
 
 def is_patchable(diff):
-    return diff.path[0] not in UNPATCHABLE_PROPS
+    return not (diff.path[0] in UNPATCHABLE_PROPS or (
+        list(diff.path) == ["closed"] and not diff.old_value and diff.new_value
+    ))
 
 
 class CannotPatch(Exception):

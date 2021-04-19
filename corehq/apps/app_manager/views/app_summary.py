@@ -51,9 +51,9 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'app_langs': app.langs,
             'app_id': app.id,
             'app_name': app.name,
-            'read_only': is_linked_app(app) or app.id != app.master_id,
+            'read_only': is_linked_app(app) or app.id != app.origin_id,
             'app_version': app.version,
-            'latest_app_id': app.master_id,
+            'latest_app_id': app.origin_id,
         }
 
     @property
@@ -111,7 +111,7 @@ class FormSummaryDiffView(AppSummaryView):
 
     @property
     def app(self):
-        return self.get_app(self.first_app.master_id)
+        return self.get_app(self.first_app.origin_id)
 
     @property
     def first_app(self):
@@ -125,7 +125,7 @@ class FormSummaryDiffView(AppSummaryView):
     def page_context(self):
         context = super(FormSummaryDiffView, self).page_context
 
-        if self.first_app.master_id != self.second_app.master_id:
+        if self.first_app.origin_id != self.second_app.origin_id:
             # This restriction is somewhat arbitrary, as you might want to
             # compare versions between two different apps on the same domain.
             # However, it breaks a bunch of assumptions in the UI
@@ -138,7 +138,7 @@ class FormSummaryDiffView(AppSummaryView):
 
         context.update({
             'page_type': 'form_diff',
-            'app_id': self.app.master_id,
+            'app_id': self.app.origin_id,
             'first': first,
             'second': second,
         })

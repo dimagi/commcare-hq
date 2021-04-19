@@ -9,7 +9,6 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datetimepicker
 from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import SSOEnterpriseSettingsForm
@@ -41,10 +40,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     async_handlers = [
         SSOExemptUsersAdminAsyncHandler,
     ]
-
-    @use_datetimepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -85,12 +80,17 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         if 'sp_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_cert_public,
-                f"{self.identity_provider.slug}_sp_public.cert"
+                f"{self.identity_provider.slug}_sp_public.cer"
+            )
+        if 'idp_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.idp_cert_public,
+                f"{self.identity_provider.slug}_idp_public.cer"
             )
         if 'sp_rollover_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_rollover_cert_public,
-                f"{self.identity_provider.slug}_sp_rollover_public.cert"
+                f"{self.identity_provider.slug}_sp_rollover_public.cer"
             )
         return super().get(request, args, kwargs)
 
@@ -98,7 +98,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     @memoized
     def edit_enterprise_idp_form(self):
         if self.request.method == 'POST':
-            return SSOEnterpriseSettingsForm(self.identity_provider, self.request.POST)
+            return SSOEnterpriseSettingsForm(
+                self.identity_provider, self.request.POST, self.request.FILES
+            )
         return SSOEnterpriseSettingsForm(self.identity_provider)
 
     def post(self, request, *args, **kwargs):
@@ -110,4 +112,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             # we redirect here to force the memoized identity_provider property
             # to re-fetch its data.
             return HttpResponseRedirect(self.page_url)
+        else:
+            messages.error(
+                request,
+                _("Please check form for errors.")
+            )
         return self.get(request, *args, **kwargs)

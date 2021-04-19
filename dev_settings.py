@@ -6,6 +6,7 @@ Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
 import os
+import settingshelper
 
 LOCAL_APPS = (
     'django_extensions',
@@ -52,7 +53,7 @@ ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
 LOCAL_LOGGING_CONFIG = {
     'loggers': {
-        'auditcare': {
+        'corehq.apps.auditcare': {
             'handlers': ['null'],
             'level': 'WARNING',
         },
@@ -88,9 +89,6 @@ COUCH_DATABASES = {
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
-# Use faster compressor that doesn't do source maps
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
-
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
 #  make celery synchronous
@@ -124,3 +122,15 @@ FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 
 # use console email by default
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+if settingshelper.is_testing():
+    S3_BLOB_DB_SETTINGS = {
+        "url": "http://localhost:9980",
+        "access_key": "admin-key",
+        "secret_key": "admin-secret",
+        "config": {
+            "connect_timeout": 3,
+            "read_timeout": 5,
+            "signature_version": "s3"
+        },
+    }

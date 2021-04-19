@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/StructureMap",
+  "id": "file:StructureMap.schema.json",
   "$ref": "#/definitions/StructureMap",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "StructureMap": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -181,7 +181,7 @@
     "StructureMap_Structure": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -231,7 +231,7 @@
     "StructureMap_Group": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -300,7 +300,7 @@
     "StructureMap_Input": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -349,7 +349,7 @@
     "StructureMap_Rule": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -409,7 +409,7 @@
     "StructureMap_Source": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -794,7 +794,7 @@
     "StructureMap_Target": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -907,7 +907,7 @@
     "StructureMap_Parameter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",
@@ -962,7 +962,7 @@
     "StructureMap_Dependent": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A Map of relationships between 2 structures that can be used to transform data.",

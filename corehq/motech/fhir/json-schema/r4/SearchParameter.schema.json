@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/SearchParameter",
+  "id": "file:SearchParameter.schema.json",
   "$ref": "#/definitions/SearchParameter",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "SearchParameter": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A search parameter that defines a named search item that can be used to search/filter on a resource.",
@@ -297,7 +297,7 @@
     "SearchParameter_Component": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A search parameter that defines a named search item that can be used to search/filter on a resource.",

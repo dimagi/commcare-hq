@@ -93,6 +93,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         defer.reject();
                     },
                 };
+                var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
                 options.data = JSON.stringify({
                     "username": user.username,
                     "restoreAs": user.restoreAs,
@@ -100,11 +101,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "app_id": params.appId,
                     "locale": displayOptions.language,
                     "selections": params.steps,
-                    "offset": params.page * 10,
+                    "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
                     "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
+                    "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
                     "useLiveQuery": user.useLiveQuery,

@@ -20,6 +20,10 @@ app_manager
    UI and tooling for configuring and releasing CommCare applications.
    Form Builder, for configuring forms themselves, is called here but
    is primarily stored in the separate `Vellum <https://github.com/dimagi/Vellum/>`_ repo.
+auditcare
+    A couch-based set of auditing tools. All page views in CommCare HQ are recorded in auditcare.
+    This backs the User Audit Log report, which allows admins to view a given user's historical actions.
+    Doing non-user-based queries is prohibitively slow.
 cloudcare
    Web Apps, a web-based interface for data entry, with essentially the same functionality
    as CommCare Mobile, but available via HQ to both web and mobile users. This app contains the HQ
@@ -151,7 +155,7 @@ These apps are developer-facing tools.
 cachehq
    Caching functinality for CouchDB.
 case_migrations
-   Functionality to support users defining and excuting data migrations on cases. Candidate for deprecation.
+   Functionality to support users defining and excuting data migrations on cases. Most of this logic can potentially be deprecated, but the case-specific restore defined in this app **is** in use, by the SMS self-registration workflow. The restore URL isn't referenced in HQ but is referenced in the formplayer repo, in `RestoreFactory <https://github.com/dimagi/formplayer/blob/15a3cc3ad6ed198b971ff5f9cc61379928826fde/src/main/java/org/commcare/formplayer/services/RestoreFactory.java#L666>`_
 change_feed
    Infrastructure for propagating changes in primary data stores (couch, postgres) to secondary sources (ElasticSearch).
 cleanup

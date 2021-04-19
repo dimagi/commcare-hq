@@ -1,14 +1,18 @@
 import json
 
+from django.conf import settings
+from django.contrib import auth
 from django.http import (
     HttpResponse,
     HttpResponseServerError,
     HttpResponseRedirect,
+    Http404,
 )
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
-from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
+from corehq.apps.domain.decorators import login_required
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
@@ -66,6 +70,17 @@ def sso_saml_acs(request, idp_slug):
         request.session['samlNameIdSPNameQualifier'] = request.saml2_auth.get_nameid_spnq()
         request.session['samlSessionIndex'] = request.saml2_auth.get_session_index()
 
+        user = auth.authenticate(
+            request=request,
+            username=request.session['samlNameId'],
+            idp_slug=idp_slug,
+            is_handshake_successful=True,
+        )
+
+        if user:
+            auth.login(request, user)
+            return redirect("homepage")
+
         # todo for debugging purposes to dump into the response below
         request_session_data = {
             "samlUserdata": request.session['samlUserdata'],
@@ -75,11 +90,6 @@ def sso_saml_acs(request, idp_slug):
             "samlNameIdSPNameQualifier": request.session['samlNameIdSPNameQualifier'],
             "samlSessionIndex": request.session['samlSessionIndex'],
         }
-
-        # todo redirect here?
-        saml_relay = OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data)
-
-        # todo this is the point where we would initiate a django auth session
 
     else:
         error_reason = request.saml2_auth.get_last_error_reason()
@@ -92,6 +102,25 @@ def sso_saml_acs(request, idp_slug):
         "processed_response": processed_response,
         "saml_relay": saml_relay,
         "request_session_data": request_session_data,
+        "login_error": getattr(request, 'sso_login_error', None),
+    }), 'text/json')
+
+
+@use_saml2_auth
+@login_required
+def sso_debug_user_data(request, idp_slug):
+    """
+    Test utility for showing SAML data on the staging environment.
+    """
+    if settings.SERVER_ENVIRONMENT not in ['staging']:
+        raise Http404()
+    return HttpResponse(json.dumps({
+        "samlUserdata": request.session.get('samlUserdata'),
+        "samlNameId": request.session.get('samlNameId'),
+        "samlNameIdFormat": request.session.get('samlNameIdFormat'),
+        "samlNameIdNameQualifier": request.session.get('samlNameIdNameQualifier'),
+        "samlNameIdSPNameQualifier": request.session.get('samlNameIdSPNameQualifier'),
+        "samlSessionIndex": request.session.get('samlSessionIndex'),
     }), 'text/json')
 
 

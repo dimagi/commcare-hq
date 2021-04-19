@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -29,15 +30,6 @@
             "property_name": "xmlns"
           },
           "property_value": "http://openrosa.org/formdesigner/F8AE9C85-38E3-4B84-BD16-0198C4907FD9"
-        },
-        {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "expression": {
-            "type": "property_name",
-            "property_name": "app_id"
-          },
-          "property_value": "b3c758f7c79e47e3a503115894f18503"
         }
       ]
     },
@@ -142,6 +134,41 @@
         "column_id": "child_safe_and_alive",
         "datatype": "string",
         "display_name": "child_safe_and_alive"
+      },
+      {
+        "type": "expression",
+        "column_id": "mother_safe_and_alive",
+        "display_name": "mother_safe_and_alive",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "delivery_details",
+              "mother_safe_and_alive"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "female_death_type",
+        "display_name": "female_death_type",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "delivery_details",
+              "mother_death_details_group",
+              "female_death_type"
+            ]
+          }
+        }
       },
       {
         "type": "expression",

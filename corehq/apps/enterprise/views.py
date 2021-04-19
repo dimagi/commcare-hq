@@ -43,7 +43,8 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 
-from corehq.apps.export.utils import get_default_export_settings_for_domain
+from corehq.apps.export.utils import get_default_export_settings_if_available
+
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.const import USER_DATE_FORMAT
 
@@ -113,13 +114,14 @@ def enterprise_dashboard_email(request, domain, slug):
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_settings(request, domain):
-    export_settings = get_default_export_settings_for_domain(domain)
+    export_settings = get_default_export_settings_if_available(domain)
 
     if request.method == 'POST':
         form = EnterpriseSettingsForm(request.POST, domain=domain, account=request.account,
                                       username=request.user.username, export_settings=export_settings)
     else:
-        form = EnterpriseSettingsForm(domain=domain, account=request.account, export_settings=export_settings)
+        form = EnterpriseSettingsForm(domain=domain, account=request.account, username=request.user.username,
+                                      export_settings=export_settings)
 
     context = {
         'account': request.account,
@@ -139,8 +141,10 @@ def enterprise_settings(request, domain):
 @login_and_domain_required
 @require_POST
 def edit_enterprise_settings(request, domain):
-    export_settings = get_default_export_settings_for_domain(domain)
-    form = EnterpriseSettingsForm(request.POST, domain=domain, account=request.account, export_settings=export_settings)
+    export_settings = get_default_export_settings_if_available(domain)
+    form = EnterpriseSettingsForm(request.POST, username=request.user.username,
+                                  domain=domain,
+                                  account=request.account, export_settings=export_settings)
 
     if form.is_valid():
         form.save(request.account)

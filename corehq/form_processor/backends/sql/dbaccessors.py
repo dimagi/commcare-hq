@@ -816,6 +816,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
 
     @staticmethod
+    def get_case_ids_that_exist(domain, case_ids):
+        result = []
+        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
+            result.extend(CommCareCaseSQL.objects
+                          .using(db_name)
+                          .filter(domain=domain, case_id__in=case_ids_chunk)
+                          .values_list('case_id', flat=True))
+        return result
+
+    @staticmethod
     def get_case_xform_ids(case_id):
         with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(

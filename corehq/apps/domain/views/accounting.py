@@ -18,7 +18,7 @@ from django.http import (
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -896,14 +896,13 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 form.process_subscription_management()
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except (NewSubscriptionError, SubscriptionAdjustmentError) as e:
-                messages.error(self.request, mark_safe(
+                messages.error(self.request, format_html(
                     'This request will require Ops assistance. '
-                    'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
-                    ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
-                        'error': str(e),
-                        'ops_email': settings.ACCOUNTS_EMAIL,
-                    }
-                ))
+                    'Please explain to <a href="mailto:{ops_email}">{ops_email}</a>'
+                    ' what you\'re trying to do and report the following error: <strong>"{error}"</strong>',
+                    error=str(e),
+                    ops_email=settings.ACCOUNTS_EMAIL)
+                )
         return self.get(request, *args, **kwargs)
 
     @property

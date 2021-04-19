@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/SupplyRequest",
+  "id": "file:SupplyRequest.schema.json",
   "$ref": "#/definitions/SupplyRequest",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "SupplyRequest": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A record of a request for a medication, substance or device used in the healthcare setting.",
@@ -120,7 +120,7 @@
     "SupplyRequest_OrderedItem": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A record of a request for a medication, substance or device used in the healthcare setting.",
@@ -147,7 +147,7 @@
     "SupplyRequest_Requester": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A record of a request for a medication, substance or device used in the healthcare setting.",

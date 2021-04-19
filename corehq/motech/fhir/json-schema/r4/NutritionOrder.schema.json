@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/NutritionOrder",
+  "id": "file:NutritionOrder.schema.json",
   "$ref": "#/definitions/NutritionOrder",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "NutritionOrder": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
@@ -113,7 +113,7 @@
     "NutritionOrder_OralDiet": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
@@ -168,7 +168,7 @@
     "NutritionOrder_Nutrient": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
@@ -188,7 +188,7 @@
     "NutritionOrder_Texture": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
@@ -208,7 +208,7 @@
     "NutritionOrder_Supplement": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
@@ -251,7 +251,7 @@
     "NutritionOrder_EnteralFormula": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",
@@ -314,7 +314,7 @@
     "NutritionOrder_Administration": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A request to supply a diet, formula feeding (enteral) or oral nutritional supplement to a patient/resident.",

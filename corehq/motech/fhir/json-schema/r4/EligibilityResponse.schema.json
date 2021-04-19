@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/EligibilityResponse",
+  "id": "file:EligibilityResponse.schema.json",
   "$ref": "#/definitions/EligibilityResponse",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "EligibilityResponse": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
@@ -108,7 +108,7 @@
     "EligibilityResponse_Insurance": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
@@ -135,7 +135,7 @@
     "EligibilityResponse_BenefitBalance": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
@@ -201,7 +201,7 @@
     "EligibilityResponse_Financial": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",
@@ -254,7 +254,7 @@
     "EligibilityResponse_Error": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides eligibility and plan details from the processing of an Eligibility resource.",

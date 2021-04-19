@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/OperationOutcome",
+  "id": "file:OperationOutcome.schema.json",
   "$ref": "#/definitions/OperationOutcome",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "OperationOutcome": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A collection of error, warning or information messages that result from a system action.",
@@ -37,7 +37,7 @@
     "OperationOutcome_Issue": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A collection of error, warning or information messages that result from a system action.",

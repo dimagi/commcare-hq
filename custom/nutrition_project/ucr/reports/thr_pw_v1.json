@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -15,11 +16,7 @@
       "woman_case_id",
       "supervisor_id",
       "flw_id",
-      "month",
-      "member_residential_status",
-      "disability",
-      "family_unit_caste",
-      "family_unit_religion"
+      "month"
     ],
     "filters": [
       {
@@ -94,30 +91,30 @@
       {
         "display": "Residential Status",
         "column_id": "member_residential_status",
-        "type": "field",
-        "field": "member_residential_status",
-        "aggregation": "simple"
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "member_residential_status"
       },
       {
         "display": "Disability",
         "column_id": "disability",
-        "type": "field",
-        "field": "disability",
-        "aggregation": "simple"
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "disability"
       },
       {
         "display": "Caste",
         "column_id": "family_unit_caste",
-        "type": "field",
-        "field": "family_unit_caste",
-        "aggregation": "simple"
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "family_unit_caste"
       },
       {
         "display": "Religion",
         "column_id": "family_unit_religion",
-        "type": "field",
-        "field": "family_unit_religion",
-        "aggregation": "simple"
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "family_unit_religion"
       },
       {
         "display": "woman_case_id",

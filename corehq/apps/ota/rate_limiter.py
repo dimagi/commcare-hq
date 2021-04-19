@@ -6,7 +6,7 @@ from corehq.project_limits.rate_limiter import (
     RateLimiter,
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
-from corehq.toggles import RATE_LIMIT_RESTORES, NAMESPACE_DOMAIN
+from corehq.toggles import RATE_LIMIT_RESTORES, NAMESPACE_DOMAIN, BLOCK_RESTORES
 from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.metrics import metrics_counter
 
@@ -37,6 +37,8 @@ SHOULD_RATE_LIMIT_RESTORES = not settings.ENTERPRISE_MODE and not settings.UNIT_
 def rate_limit_restore(domain):
     if RATE_LIMIT_RESTORES.enabled(domain, namespace=NAMESPACE_DOMAIN):
         return _rate_limit_restore(domain)
+    elif BLOCK_RESTORES.enabled(domain, namespace=NAMESPACE_DOMAIN):
+        return True
     else:
         _rate_limit_restore_test(domain)
         return False

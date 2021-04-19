@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/TestScript",
+  "id": "file:TestScript.schema.json",
   "$ref": "#/definitions/TestScript",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "TestScript": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -217,7 +217,7 @@
     "TestScript_Origin": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -245,7 +245,7 @@
     "TestScript_Destination": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -273,7 +273,7 @@
     "TestScript_Metadata": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -302,7 +302,7 @@
     "TestScript_Link": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -330,7 +330,7 @@
     "TestScript_Capability": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -411,7 +411,7 @@
     "TestScript_Fixture": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -443,7 +443,7 @@
     "TestScript_Variable": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -520,7 +520,7 @@
     "TestScript_Rule": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -546,7 +546,7 @@
     "TestScript_Param": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -574,7 +574,7 @@
     "TestScript_Ruleset": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -601,7 +601,7 @@
     "TestScript_Rule1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -629,7 +629,7 @@
     "TestScript_Param1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -657,7 +657,7 @@
     "TestScript_Setup": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -679,7 +679,7 @@
     "TestScript_Action": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -699,7 +699,7 @@
     "TestScript_Operation": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -853,7 +853,7 @@
     "TestScript_RequestHeader": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -881,7 +881,7 @@
     "TestScript_Assert": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1125,7 +1125,7 @@
     "TestScript_Rule2": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1153,7 +1153,7 @@
     "TestScript_Param2": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1181,7 +1181,7 @@
     "TestScript_Ruleset1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1209,7 +1209,7 @@
     "TestScript_Rule3": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1237,7 +1237,7 @@
     "TestScript_Param3": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1265,7 +1265,7 @@
     "TestScript_Test": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1303,7 +1303,7 @@
     "TestScript_Action1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1323,7 +1323,7 @@
     "TestScript_Teardown": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",
@@ -1345,7 +1345,7 @@
     "TestScript_Action2": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A structured set of tests against a FHIR server implementation to determine compliance against the FHIR specification.",

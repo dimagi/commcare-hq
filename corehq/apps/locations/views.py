@@ -7,7 +7,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_http_methods
@@ -52,7 +52,6 @@ from .exceptions import LocationConsistencyError
 from .forms import (
     LocationFilterForm,
     LocationFormSet,
-    RelatedLocationForm,
     UsersAtLocationForm,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
@@ -147,11 +146,13 @@ def check_pending_locations_import(redirect=False):
                     # redirect to import status page
                     return HttpResponseRedirect(status_url)
                 else:
-                    messages.warning(request, mark_safe(
-                        _("Organizations can't be edited until "
-                          "<a href='{}''>current bulk upload</a> "
-                          "has finished.").format(status_url)
-                    ))
+                    warning_message = format_html(
+                        _("Organizations can't be edited until the "
+                          "<a href='{}'>current bulk upload</a> "
+                          "has finished."),
+                        status_url
+                    )
+                    messages.warning(request, warning_message)
                     return view_fn(request, domain, *args, **kwargs)
             else:
                 return view_fn(request, domain, *args, **kwargs)
@@ -757,17 +758,6 @@ class EditLocationView(BaseEditLocationView):
         return form
 
     @property
-    @memoized
-    def related_location_form(self):
-        if not toggles.RELATED_LOCATIONS.enabled(self.request.domain):
-            return None
-
-        return RelatedLocationForm(
-            self.domain, self.location,
-            data=self.request.POST if self.request.method == "POST" else None,
-        )
-
-    @property
     def active_products(self):
         return [(p.product_id, p.name)
                 for p in SQLProduct.objects.filter(domain=self.domain, is_archived=False).all()]
@@ -782,9 +772,7 @@ class EditLocationView(BaseEditLocationView):
             name = _("View {name} <small>{type}</small>")
         else:
             name = _("Edit {name} <small>{type}</small>")
-        return mark_safe(name.format(
-            name=self.location.name, type=self.location.location_type_name
-        ))
+        return format_html(name, name=self.location.name, type=self.location.location_type_name)
 
     @property
     def can_edit_commcare_users(self):
@@ -803,7 +791,6 @@ class EditLocationView(BaseEditLocationView):
             make_form_readonly(self.location_form.location_form)
             make_form_readonly(self.location_form.custom_location_data.form)
             make_form_readonly(self.products_form)
-            make_form_readonly(self.related_location_form)
             make_form_readonly(self.users_form)
         elif not self.can_edit_users_in_location:
             make_form_readonly(self.users_form)
@@ -811,7 +798,6 @@ class EditLocationView(BaseEditLocationView):
         context.update({
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
-            'related_location_form': self.related_location_form,
             'can_edit_commcare_users': self.can_edit_commcare_users,
             'can_edit_users_in_location': self.can_edit_users_in_location,
         })
@@ -834,15 +820,6 @@ class EditLocationView(BaseEditLocationView):
         self.location.save()
         return self.form_valid()
 
-    def related_location_form_post(self, request, *args, **kwargs):
-        if self.related_location_form.is_valid():
-            self.related_location_form.save()
-            return self.form_valid()
-        else:
-            self.request.method = "GET"
-            self.form_tab = 'related_location'
-            return self.get(request, *args, **kwargs)
-
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         if self.request.is_view_only:
@@ -864,9 +841,6 @@ class EditLocationView(BaseEditLocationView):
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
-        elif (self.request.POST['form_type'] == "related_location"
-              and toggles.RELATED_LOCATIONS.enabled(request.domain)):
-            return self.related_location_form_post(request, *args, **kwargs)
         else:
             raise Http404()
 

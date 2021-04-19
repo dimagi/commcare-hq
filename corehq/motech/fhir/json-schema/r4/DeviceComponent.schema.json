@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/DeviceComponent",
+  "id": "file:DeviceComponent.schema.json",
   "$ref": "#/definitions/DeviceComponent",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "DeviceComponent": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "The characteristics, operational status and capabilities of a medical-related component of a medical device.",
@@ -98,7 +98,7 @@
     "DeviceComponent_ProductionSpecification": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "The characteristics, operational status and capabilities of a medical-related component of a medical device.",

@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ExpansionProfile",
+  "id": "file:ExpansionProfile.schema.json",
   "$ref": "#/definitions/ExpansionProfile",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ExpansionProfile": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -205,7 +205,7 @@
     "ExpansionProfile_FixedVersion": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -246,7 +246,7 @@
     "ExpansionProfile_ExcludedSystem": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -274,7 +274,7 @@
     "ExpansionProfile_Designation": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -294,7 +294,7 @@
     "ExpansionProfile_Include": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -313,7 +313,7 @@
     "ExpansionProfile_Designation1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -338,7 +338,7 @@
     "ExpansionProfile_Exclude": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",
@@ -357,7 +357,7 @@
     "ExpansionProfile_Designation2": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Resource to define constraints on the Expansion of a FHIR ValueSet.",

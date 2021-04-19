@@ -2,10 +2,9 @@ from django.http import Http404
 
 from couchdbkit import ResourceNotFound
 
-from corehq import toggles
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, DEFAULT_EXPORT_SETTINGS, EXCEL_DASHBOARD
 from corehq.toggles import MESSAGE_LOG_METADATA
 
 
@@ -54,19 +53,13 @@ def get_export(export_type, domain, export_id=None, username=None):
     raise Exception("Unexpected export type received %s" % export_type)
 
 
-def get_default_export_settings_for_domain(domain):
+def get_default_export_settings_if_available(domain):
     """
-    Only creates settings if the the subscription level supports it
-    Currently only available to Enterprise accounts with the DEFAULT_EXPORT_SETTINGS FF enabled
+    Only creates settings if the domain has the DEFAULT_EXPORT_SETTINGS privilege
     """
-    if not toggles.DEFAULT_EXPORT_SETTINGS.enabled(domain):
-        return None
-
     settings = None
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
-    # currently only available for enterprise customers
-    supported_editions = [SoftwarePlanEdition.ENTERPRISE]
-    if current_subscription.plan_version.plan.edition in supported_editions:
+    if current_subscription and domain_has_privilege(domain, DEFAULT_EXPORT_SETTINGS):
         from corehq.apps.export.models import DefaultExportSettings
         settings = DefaultExportSettings.objects.get_or_create(account=current_subscription.account)[0]
 

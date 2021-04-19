@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ImagingManifest",
+  "id": "file:ImagingManifest.schema.json",
   "$ref": "#/definitions/ImagingManifest",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ImagingManifest": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
@@ -67,7 +67,7 @@
     "ImagingManifest_Study": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
@@ -109,7 +109,7 @@
     "ImagingManifest_Series": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",
@@ -147,7 +147,7 @@
     "ImagingManifest_Instance": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A text description of the DICOM SOP instances selected in the ImagingManifest; or the reason for, or significance of, the selection.",

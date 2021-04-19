@@ -2,14 +2,14 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/utils/email',
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
-    'jquery-mousewheel',
-    'datetimepicker/build/jquery.datetimepicker.full.min',
 ], function (
     $,
     ko,
     _,
+    emailUtils,
     initialPageData,
     models
 ) {
@@ -19,15 +19,9 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             requestContext: {
                 idpSlug: initialPageData.get('idp_slug'),
             },
-            validateNewObjectFn: function (newObject) {
-                // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-                var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // eslint-disable-line no-useless-escape
-                return re.test(newObject);
-            },
+            validateNewObjectFn: emailUtils.validateEmail,
         });
         $('#sso-exempt-user-manager').koApplyBindings(ssoExemptUserManager);
         ssoExemptUserManager.init();
-
-        $("#id_date_idp_cert_expiration").datetimepicker();
     });
 });
