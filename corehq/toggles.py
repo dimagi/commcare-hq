@@ -2053,7 +2053,9 @@ ERM_DEVELOPMENT = StaticToggle(
 
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'fixtures_in_case_restore',
-    'Allow limited fixtures to be available in case restore for SMS workflows',
+    'Allow limited fixtures to be available in case restore for SMS workflows. '
+    'WARNING: To be used only for small templates since the performance implication has not been evaluated. '
+    'Do not enable on your own.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
