@@ -568,11 +568,29 @@ class InvalidSessionEndpoint(Exception):
 
 def set_session_endpoint(module_or_form, raw_endpoint_id, app):
     raw_endpoint_id = raw_endpoint_id.strip()
-    cleaned_endpoint_id = slugify(raw_endpoint_id)
-    if cleaned_endpoint_id != raw_endpoint_id:
+    cleaned_id = slugify(raw_endpoint_id)
+    if cleaned_id != raw_endpoint_id:
         raise InvalidSessionEndpoint(_(
             "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
             "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
-        ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_endpoint_id))
+        ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
 
-    module_or_form.session_endpoint_id = cleaned_endpoint_id
+    if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
+        raise InvalidSessionEndpoint(_(
+            "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+        ).format(endpoint_id=cleaned_id))
+
+    module_or_form.session_endpoint_id = cleaned_id
+
+
+def _is_duplicate_endpoint_id(new_id, old_id, app):
+    if not new_id or new_id == old_id:
+        return False
+
+    all_endpoint_ids = []
+    for module in app.modules:
+        all_endpoint_ids.append(module.session_endpoint_id)
+        for form in module.get_suite_forms():
+            all_endpoint_ids.append(form.session_endpoint_id)
+
+    return new_id in all_endpoint_ids
