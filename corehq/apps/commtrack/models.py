@@ -56,6 +56,9 @@ class CommtrackConfig(models.Model):
         self.actionconfig_set.set(actions, bulk=False)
         self.set_actionconfig_order([a.id for a in actions])
 
+    def action_by_keyword(self, keyword):
+        return dict((a.keyword.lower(), a) for a in self.all_actions).get(keyword.lower())
+
     @classmethod
     def for_domain(cls, domain):
         return cls.objects.filter(domain=domain).first()
