@@ -284,6 +284,7 @@ def get_master_model_status(domain, apps, fixtures, reports, keywords, ignore_mo
             })
 
     linked_models = dict(LINKED_MODELS)
+
     for app in apps.values():
         update = {
             'type': MODEL_APP,
@@ -293,6 +294,7 @@ def get_master_model_status(domain, apps, fixtures, reports, keywords, ignore_mo
             'can_update': True
         }
         model_status.append(update)
+
     for fixture in fixtures.values():
         update = {
             'type': MODEL_FIXTURE,
@@ -302,6 +304,7 @@ def get_master_model_status(domain, apps, fixtures, reports, keywords, ignore_mo
             'can_update': fixture.is_global,
         }
         model_status.append(update)
+
     for report in reports.values():
         report = ReportConfiguration.get(report.get_id)
         update = {
