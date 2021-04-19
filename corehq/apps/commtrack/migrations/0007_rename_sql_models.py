@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('commtrack', '0005_remove_sqlcommtrackconfig_couch_id'),
+        ('commtrack', '0006_remove_sqlcommtrackconfig_couch_id'),
     ]
 
     operations = [
