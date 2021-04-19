@@ -259,7 +259,9 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
             bucket_tag=bucket_tag, buckets=timing_buckets, bucket_unit='s',
             tags=tags
         )
-        timer_name = ".".join(metric.split('.')[1:])  # remove the 'commcare.' prefix
+        timer_name = metric
+        if metric.startswith('commcare.'):
+            timer_name = ".".join(metric.split('.')[1:])  # remove the 'commcare.' prefix
         add_breadcrumb(
             category="timing",
             message=f"{timer_name}: {timer.duration:0.3f}",
