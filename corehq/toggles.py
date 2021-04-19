@@ -1567,8 +1567,7 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
 SESSION_ENDPOINTS = StaticToggle(
     'session_endpoints',
     'Enable session endpoints',
-
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Support external Android apps calling in to an endpoint in a '
                 'CommCare app. (Used by the Reminders App)',
