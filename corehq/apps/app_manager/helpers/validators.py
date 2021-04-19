@@ -32,7 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     PracticeUserException,
     SuiteValidationError,
-    UserCaseXPathValidationError,
+    UsercaseXPathValidationError,
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
@@ -79,7 +79,7 @@ class ApplicationBaseValidator(object):
                 'module': cve.module,
                 'form': cve.form,
             })
-        except UserCaseXPathValidationError as ucve:
+        except UsercaseXPathValidationError as ucve:
             errors.append({
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
