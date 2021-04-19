@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -559,3 +560,19 @@ def handle_shadow_child_modules(app, shadow_parent):
         app.save()
 
     return changes
+
+
+class InvalidSessionEndpoint(Exception):
+    pass
+
+
+def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+    raw_endpoint_id = raw_endpoint_id.strip()
+    cleaned_endpoint_id = slugify(raw_endpoint_id)
+    if cleaned_endpoint_id != raw_endpoint_id:
+        raise InvalidSessionEndpoint(_(
+            "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
+            "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
+        ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_endpoint_id))
+
+    module_or_form.session_endpoint_id = cleaned_endpoint_id
