@@ -47,7 +47,7 @@ class _UserCaseHelper(object):
         for transaction in transactions:
             transaction.form.archive()
 
-    def create_user_case(self, commcare_user, fields):
+    def create_usercase(self, commcare_user, fields):
         self.case_blocks.append(CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
@@ -93,7 +93,7 @@ def _domain_has_new_fields(domain, field_names):
     return False
 
 
-def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
+def _get_sync_usercase_helper(commcare_user, case_type, owner_id, case=None):
     domain = commcare_user.domain
     fields = _get_user_case_fields(commcare_user, case_type, owner_id)
     case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
@@ -104,7 +104,7 @@ def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
         return case and case.closed and not user_case_should_be_closed
 
     if not case:
-        user_case_helper.create_user_case(commcare_user, fields)
+        user_case_helper.create_usercase(commcare_user, fields)
     else:
         if case_should_be_reopened(case, close):
             user_case_helper.re_open_case(case)
@@ -188,7 +188,8 @@ def _iter_call_center_case_helpers(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        yield _get_sync_user_case_helper(user, config.case_type, owner_id, case)
+        yield _get_sync_usercase_helper(user, config.case_type, owner_id, case)
+
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
@@ -232,19 +233,19 @@ def sync_usercase(user):
 
 def _iter_sync_usercase_helpers(user):
     if user.project.usercase_enabled:
-        yield _get_sync_user_case_helper(
+        yield _get_sync_usercase_helper(
             user,
             USERCASE_TYPE,
             user.get_id
         )
 
 
-def sync_user_cases(user):
+def sync_usercases(user):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
 
-    This is also called to create user cases when the usercase is used for the
+    This is also called to create usercases when the usercase is used for the
     first time.
     """
     with CriticalSection(get_sync_lock_key(user._id)):

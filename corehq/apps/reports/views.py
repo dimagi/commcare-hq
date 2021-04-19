@@ -22,7 +22,7 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -1022,20 +1022,20 @@ class CaseDataView(BaseProjectReportSectionView):
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
-        display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
 
         def _get_case_url(case_id):
             return absolute_reverse(self.urlname, args=[self.domain, case_id])
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
+        display = wrapped_case.get_display_config()
         default_properties = _get_tables_as_rows(data, display)
         dynamic_data = wrapped_case.dynamic_properties()
 
         for section in display:
             for row in section['layout']:
                 for item in row:
-                    dynamic_data.pop(item.get("expr"), None)
+                    dynamic_data.pop(item.expr, None)
 
         if dynamic_data:
             dynamic_keys = sorted(dynamic_data.keys())
@@ -1090,7 +1090,6 @@ class CaseDataView(BaseProjectReportSectionView):
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
             "show_properties_edit": show_properties_edit,
-            "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
             "ledgers": ledger_map,
@@ -1324,14 +1323,15 @@ def close_case_view(request, domain, case_id):
     else:
         device_id = __name__ + ".close_case_view"
         form_id = close_case(case_id, domain, request.couch_user, device_id)
-        msg = _('''Case {name} has been closed.
+        msg = format_html(
+            _('''Case {name} has been closed.
             <a href="{url}" class="post-link">Undo</a>.
             You can also reopen the case in the future by archiving the last form in the case history.
-        '''.format(
+        '''),
             name=case.name,
             url=reverse('undo_close_case', args=[domain, case_id, form_id]),
-        ))
-        messages.success(request, mark_safe(msg), extra_tags='html')
+        )
+        messages.success(request, msg, extra_tags='html')
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
@@ -1406,10 +1406,8 @@ def _get_form_context(request, domain, instance):
     except AssertionError:
         raise Http404()
 
-    display = request.project.get_form_display(instance)
     context = {
         "domain": domain,
-        "display": display,
         "timezone": timezone,
         "instance": instance,
         "user": request.couch_user,
@@ -1788,7 +1786,7 @@ class EditFormInstance(View):
         instance_id = self.kwargs.get('instance_id', None)
 
         def _error(msg):
-            messages.error(request, mark_safe(msg))
+            messages.error(request, msg)
             url = reverse('render_form_data', args=[domain, instance_id])
             return HttpResponseRedirect(url)
 
@@ -1845,20 +1843,20 @@ class EditFormInstance(View):
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
                 case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
                 if case.closed:
-                    return _error(_(
+                    message = format_html(_(
                         'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
-                        'case before editing the form'
-                    ).format(
+                        'case before editing the form'),
                         case_url=reverse('case_data', args=[domain, case.case_id]),
                         case_name=case.name,
-                    ))
-                elif case.is_deleted:
-                    return _error(
-                        _('Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
-                            case_url=reverse('case_data', args=[domain, case.case_id]),
-                            case_name=case.name,
-                        )
                     )
+                    return _error(message)
+                elif case.is_deleted:
+                    message = format_html(_(
+                        'Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.'),
+                        case_url=reverse('case_data', args=[domain, case.case_id]),
+                        case_name=case.name,
+                    )
+                    return _error(message)
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
@@ -1934,8 +1932,8 @@ def archive_form(request, domain, instance_id):
     }
 
     msg_template = "{notif} <a href='{url}' class='post-link'>{undo}</a>" if instance.is_archived else '{notif}'
-    msg = msg_template.format(**params)
-    messages.add_message(request, notify_level, mark_safe(msg), extra_tags='html')
+    msg = format_html(msg_template, **params)
+    messages.add_message(request, notify_level, msg, extra_tags='html')
 
     return HttpResponseRedirect(redirect)
 

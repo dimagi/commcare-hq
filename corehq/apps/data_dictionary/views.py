@@ -375,7 +375,7 @@ def _process_bulk_upload(bulk_file, domain):
                 if len(row) < expected_columns_in_prop_sheet:
                     error = _('Not enough columns')
                 else:
-                    error, fhir_resource_prop_path, remove_path = None, None, None
+                    error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
                     name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
                     if import_fhir_data:
                         fhir_resource_prop_path, remove_path = row[5:]
