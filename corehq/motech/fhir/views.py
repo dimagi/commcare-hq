@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_api_key, require_superuser
+from corehq.apps.domain.decorators import api_key_auth
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
@@ -44,8 +44,7 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 
 
 @require_GET
-@login_or_api_key
-@require_superuser
+@api_key_auth
 @toggles.FHIR_INTEGRATION.required_decorator()
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
@@ -70,8 +69,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 
 
 @require_GET
-@login_or_api_key
-@require_superuser
+@api_key_auth
 @toggles.FHIR_INTEGRATION.required_decorator()
 def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)
