@@ -69,14 +69,12 @@ branches:
   - fr/consumer-user             # Farid March 17
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
   - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
-  - sk/get_display_data # Simon March 30
-  - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
   - sr/pagedSessions  # Sravan April 2
   - sr/jumptoErrors # Sravan April 6
   - mk/form-mm-exports-filters-2 # MK April 16
   - fr/smart-oauth-views # Farid April 7
-  - ce/multidropdown-webapps
+  - ce/index-deletion
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
   - sr/ush-ff  # Sravan April 12
   - jls/case-search-case-list-show-related-properties # Jenny April 12
