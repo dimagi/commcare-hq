@@ -17,6 +17,7 @@ from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
 WHATSAPP_LIMITATION_ERROR_CODE = 63032
 TO_FROM_BLACKLIST_ERROR = 21610
+REGION_PERMISSION_ERROR = 21408
 
 WHATSAPP_PREFIX = "whatsapp:"
 WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
@@ -108,6 +109,8 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
             elif e.code == TO_FROM_BLACKLIST_ERROR:
                 msg.set_gateway_error("Message From/To pair violates a gateway blacklist rule")
                 return
+            elif e.code == REGION_PERMISSION_ERROR:
+                msg.set_gateway_error("Destination region not enabled for this backend.")
             else:
                 raise
 
