@@ -9,6 +9,7 @@ from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -24,7 +25,7 @@ from dimagi.utils.logging import notify_exception
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
-# Lightweight class used to store the dirtyness of a case/owner pair.
+# Lightweight class used to store the dirtiness of a case/owner pair.
 DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
 
 
@@ -52,7 +53,8 @@ class CaseProcessingResult(object):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.domain and not toggles.LIVEQUERY_SYNC.enabled(self.domain):
+        domain_obj = Domain.get_by_name(self.domain)
+        if self.domain and domain_obj and not domain_obj.use_livequery:
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
@@ -143,7 +145,8 @@ def _get_or_update_cases(xforms, case_db):
 
 def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
-    if toggles.LIVEQUERY_SYNC.enabled(domain):
+    domain_obj = Domain.get_by_name(domain)
+    if domain_obj and domain.use_livequery:
         return []
 
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
