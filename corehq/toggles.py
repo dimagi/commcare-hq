@@ -1095,14 +1095,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
-    'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',

@@ -42,7 +42,6 @@ from corehq.apps.users.models import DomainMembershipError, UserRole, DomainPerm
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds_core.view_utils import is_icds_cas_project
 
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 
@@ -1183,14 +1182,9 @@ class CommCareUserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        if is_icds_cas_project(self.domain) and not self.couch_user.is_domain_admin(self.domain):
-            roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
-                                              use_qualified_id=False)
-            self.fields['role_id'].choices = roles
-        else:
-            roles = UserRole.by_domain(self.domain)
-            self.fields['role_id'].choices = [('', _('All Roles'))] + [
-                (role._id, role.name or _('(No Name)')) for role in roles]
+        roles = UserRole.by_domain(self.domain)
+        self.fields['role_id'].choices = [('', _('All Roles'))] + [
+            (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.fields['domains'].choices = [(self.domain, self.domain)]
         if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
@@ -1228,26 +1222,12 @@ class CommCareUserFilterForm(forms.Form):
 
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
-        restricted_role_access = (
-            is_icds_cas_project(self.domain)
-            and not self.couch_user.is_domain_admin(self.domain)
-        )
         if not role_id:
-            if restricted_role_access:
-                raise forms.ValidationError(_("Please select a role"))
-            else:
-                return None
+            return None
 
         role = UserRole.get(role_id)
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
-        if restricted_role_access:
-            try:
-                user_role_id = self.couch_user.get_role(self.domain).get_id
-            except DomainMembershipError:
-                user_role_id = None
-            if not role.accessible_by_non_admin_role(user_role_id):
-                raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
     def clean_search_string(self):
