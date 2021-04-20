@@ -4,7 +4,7 @@ from datetime import timedelta
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface, TouchformsError
 from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number, send_sms
-from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.sms.models import PhoneNumber, MessagingEvent
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
@@ -61,6 +61,10 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             xforms_session_couch_id=session.couch_id,
             messaging_subevent_id=logged_subevent.pk
         )
+        if not message:
+            logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+            return
+
         if isinstance(phone_entry_or_number, PhoneNumber):
             send_sms_to_verified_number(
                 phone_entry_or_number,
