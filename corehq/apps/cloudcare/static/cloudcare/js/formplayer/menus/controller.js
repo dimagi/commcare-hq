@@ -1,4 +1,4 @@
-/*global Backbone */
+/*global Backbone, DOMPurify */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),

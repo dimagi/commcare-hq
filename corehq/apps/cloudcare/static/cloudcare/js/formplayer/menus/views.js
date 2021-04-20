@@ -1,4 +1,4 @@
-/*global Marionette */
+/*global Marionette, DOMPurify */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
@@ -225,7 +225,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
-            var data = this.options.model.get('data').map(x => DOMPurify.sanitize(md.render(x)));
+            var data = this.options.model.get('data').map(function (x) {
+                return DOMPurify.sanitize(md.render(x));
+            });
             return {
                 data: data,
                 styles: this.options.styles,
