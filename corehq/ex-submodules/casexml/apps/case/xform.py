@@ -160,7 +160,8 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
     if tree_owners is None:
         tree_owners = set()
 
-    extension_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
+    extension_indices = [index for index in case.indices
+                         if index.referenced_id and index.relationship == CASE_INDEX_EXTENSION]
 
     unowned_host_cases = []
     for index in extension_indices:
@@ -173,7 +174,8 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
             unowned_host_cases.append(host_case)
 
     owner_ids = {case_db.get(index.referenced_id).owner_id
-                 for index in case.indices if case_db.get(index.referenced_id)} | tree_owners
+                 for index in case.indices
+                 if index.referenced_id and case_db.get(index.referenced_id)} | tree_owners
     potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
     more_than_one_owner_touched = len(owner_ids) > 1
     touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
@@ -183,8 +185,9 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
         if extension_indices:
             # If this case is an extension, each of the touched cases is also dirty
             for index in case.indices:
-                referenced_case = case_db.get(index.referenced_id)
-                yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
+                if index.referenced_id:
+                    referenced_case = case_db.get(index.referenced_id)
+                    yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
 
     if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
         tree_owners.add(case.owner_id)
@@ -222,13 +225,17 @@ def _validate_indices(case_db, case_updates):
         case = case_update.case
         if case.indices:
             for index in case.indices:
-                try:
-                    # call get and not doc_exists to force domain checking
-                    # see CaseDbCache._validate_case
-                    referenced_case = case_db.get(index.referenced_id)
-                    invalid = referenced_case is None
-                except IllegalCaseId:
-                    invalid = True
+                # deleted indices have no referenced id, but must be updated in the database
+                if index.referenced_id:
+                    try:
+                        # call get and not doc_exists to force domain checking
+                        # see CaseDbCache._validate_case
+                        referenced_case = case_db.get(index.referenced_id)
+                        invalid = referenced_case is None
+                    except IllegalCaseId:
+                        invalid = True
+                else:
+                    invalid = False
                 if invalid:
                     # fail hard on invalid indices
                     from distutils.version import LooseVersion
