@@ -555,7 +555,11 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
-        bulk_download_url = reverse("download_web_users", args=[self.domain])
+        from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+        if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(self.domain):
+            bulk_download_url = reverse(FilteredWebUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],

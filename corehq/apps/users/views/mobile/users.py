@@ -87,6 +87,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
+    require_can_edit_web_users,
 )
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.forms import (
@@ -122,6 +123,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq.toggles import (
+    DOMAIN_PERMISSIONS_MIRROR,
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
     PARALLEL_USER_IMPORTS
@@ -667,7 +669,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @property
     def page_context(self):
         if FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
-            bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
+            bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
         profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
@@ -1210,15 +1212,13 @@ class DownloadUsersStatusView(BaseUserSettingsView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-@method_decorator([FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
 class FilteredUserDownload(BaseManageCommCareUserView):
-    urlname = 'filter_and_download_commcare_users'
-    page_title = ugettext_noop('Filter and Download')
+    page_title = ugettext_noop('Filter and Download Users')
 
-    @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
         form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
-                              include_mobile_users=True)
+                              include_mobile_users=self.include_mobile_users,
+                              include_web_users=self.include_web_users)
         # To avoid errors on first page load
         form.empty_permitted = True
         context = self.main_context
@@ -1228,6 +1228,28 @@ class FilteredUserDownload(BaseManageCommCareUserView):
             "users/filter_and_download.html",
             context
         )
+
+
+@method_decorator([FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
+class FilteredCommCareUserDownload(FilteredUserDownload):
+    urlname = 'filter_and_download_commcare_users'
+    include_mobile_users = True
+    include_web_users = False
+
+    @method_decorator(require_can_edit_commcare_users)
+    def get(self, request, domain, *args, **kwargs):
+        return super().get(request, domain, *args, **kwargs)
+
+
+@method_decorator([DOMAIN_PERMISSIONS_MIRROR.required_decorator()], name='dispatch')
+class FilteredWebUserDownload(FilteredUserDownload):
+    urlname = 'filter_and_download_web_users'
+    include_mobile_users = False
+    include_web_users = True
+
+    @method_decorator(require_can_edit_web_users)
+    def get(self, request, domain, *args, **kwargs):
+        return super().get(request, domain, *args, **kwargs)
 
 
 class UsernameUploadMixin(object):
@@ -1413,7 +1435,7 @@ def download_commcare_users(request, domain):
         user_filters = form.cleaned_data
     else:
         return HttpResponseRedirect(
-            reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
+            reverse(FilteredCommCareUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
     if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
         track_workflow(request.couch_user.username, 'Domain filter used for mobile download')

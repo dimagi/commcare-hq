@@ -1206,14 +1206,21 @@ class UserFilterForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
 
+        fields = []
+        if self.include_mobile_users:
+            fields += crispy.Field('role_id', css_class="hqwebapp-select2")
+        fields += [crispy.Field('search_string')]
+        if self.include_mobile_users:
+            fields += [
+                crispy.Field('location_id'),
+                crispy.Field('columns'),
+            ]
+        fields += [crispy.Field('domains')]
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Users"),
-                crispy.Field('role_id', css_class="hqwebapp-select2"),
-                crispy.Field('search_string'),
-                crispy.Field('location_id'),
-                crispy.Field('columns'),
-                crispy.Field('domains'),
+                *fields,
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
