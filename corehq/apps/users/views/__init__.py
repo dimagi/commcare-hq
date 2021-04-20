@@ -997,7 +997,7 @@ class UserInvitationView(object):
                     invitation.accept_invitation_and_join_domain(user)
                     messages.success(
                         self.request,
-                        _('You have been added to the "{}"" project space.').format(self.domain)
+                        _('You have been added to the "{}" project space.').format(self.domain)
                     )
                     authenticated = authenticate(username=form.cleaned_data["email"],
                                                  password=form.cleaned_data["password"])
