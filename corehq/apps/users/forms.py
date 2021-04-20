@@ -1144,7 +1144,7 @@ class CommCareUserFormSet(object):
         return self.user_form.update_user()
 
 
-class CommCareUserFilterForm(forms.Form):
+class UserFilterForm(forms.Form):
     USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (
         ('all', ugettext_noop('All')),
@@ -1152,7 +1152,7 @@ class CommCareUserFilterForm(forms.Form):
     )
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
-        label=ugettext_lazy('Search by username'),
+        label=ugettext_lazy('Name or Username'),
         max_length=30,
         required=False
     )
@@ -1170,15 +1170,18 @@ class CommCareUserFilterForm(forms.Form):
         required=False,
         label=_('Project Spaces'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Add project spaces containing the desired mobile workers'),
+        help_text=_('Add project spaces containing the desired users'),
     )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
-        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
         self.couch_user = kwargs.pop('couch_user')
-        super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
+        self.include_mobile_users = kwargs.pop('include_mobile_users', False)
+        self.include_web_users = kwargs.pop('include_web_users', False)
+        if not(self.include_mobile_users ^ self.include_web_users):
+            raise AssertionError("UserFilterForm handles either mobile or web users")
+        super().__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
@@ -1196,7 +1199,8 @@ class CommCareUserFilterForm(forms.Form):
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
         self.helper.form_class = 'form-horizontal'
-        self.helper.form_action = reverse('download_commcare_users', args=[self.domain])
+        view_name = 'download_commcare_users' if self.include_mobile_users else 'download_web_users'
+        self.helper.form_action = reverse(view_name, args=[self.domain])
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'

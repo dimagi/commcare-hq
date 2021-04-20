@@ -91,13 +91,13 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.forms import (
     CommCareAccountForm,
-    CommCareUserFilterForm,
     CommCareUserFormSet,
     CommtrackUserForm,
     ConfirmExtraUserChargesForm,
     MultipleSelectionForm,
     NewMobileWorkerForm,
     SetUserPasswordForm,
+    UserFilterForm,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
@@ -1217,7 +1217,8 @@ class FilteredUserDownload(BaseManageCommCareUserView):
 
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
-        form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
+        form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
+                              include_mobile_users=True)
         # To avoid errors on first page load
         form.empty_permitted = True
         context = self.main_context
@@ -1392,7 +1393,7 @@ def count_users(request, domain):
     from corehq.apps.users.dbaccessors import get_commcare_users_by_filters
     if not FILTERED_BULK_USER_DOWNLOAD.enabled_for_request(request):
         raise Http404()
-    form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
+    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, include_mobile_users=True)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1407,7 +1408,7 @@ def count_users(request, domain):
 
 @require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
-    form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
+    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, include_mobile_users=True)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1417,7 +1418,7 @@ def download_commcare_users(request, domain):
     if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
         track_workflow(request.couch_user.username, 'Domain filter used for mobile download')
     is_web_download = False
-    if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
+    if form.cleaned_data['columns'] == UserFilterForm.USERNAMES_COLUMN_OPTION:
         res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,
                                                   owner_id=request.couch_user.get_id)
     else:
