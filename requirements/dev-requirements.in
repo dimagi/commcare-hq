@@ -14,7 +14,7 @@ git-build-branch
 # documentation
 Sphinx~=2.2.1
 sphinx-rtd-theme~=0.5.1
-docutils==0.16
+docutils==0.17.1
 sphinxcontrib-django~=0.5
 recommonmark
 graphviz==0.16

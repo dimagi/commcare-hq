@@ -181,7 +181,7 @@ dnspython==1.15.0
     # via
     #   -r base-requirements.in
     #   email-validator
-docutils==0.16
+docutils==0.17.1
     # via
     #   -r docs-requirements.in
     #   recommonmark
