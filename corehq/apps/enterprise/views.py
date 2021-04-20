@@ -43,24 +43,23 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 
-from corehq.apps.accounting.utils.subscription import get_account_or_404
 from corehq.apps.export.utils import get_default_export_settings_if_available
+
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.const import USER_DATE_FORMAT
 
 
 @always_allow_project_access
+@require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard(request, domain):
-    account = get_account_or_404(request, domain)
-
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
     context = {
-        'account': account,
+        'account': request.account,
         'domain': domain,
-        'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
+        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
             EnterpriseReport.DOMAINS,
             EnterpriseReport.WEB_USERS,
             EnterpriseReport.MOBILE_USERS,
@@ -74,17 +73,17 @@ def enterprise_dashboard(request, domain):
     return render(request, "enterprise/enterprise_dashboard.html", context)
 
 
+@require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
-    account = get_account_or_404(request, domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
     return JsonResponse({'total': report.total})
 
 
+@require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_download(request, domain, slug, export_hash):
-    account = get_account_or_404(request, domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
 
     redis = get_redis_client()
     content = redis.get(export_hash)
@@ -100,10 +99,10 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
                                   "download links expire after 24 hours."))
 
 
+@require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
-    account = get_account_or_404(request, domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
     email_enterprise_report.delay(domain, slug, request.couch_user)
     message = _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
@@ -112,23 +111,23 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
+@require_enterprise_admin
 @login_and_domain_required
 def enterprise_settings(request, domain):
-    account = get_account_or_404(request, domain)
     export_settings = get_default_export_settings_if_available(domain)
 
     if request.method == 'POST':
-        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account,
+        form = EnterpriseSettingsForm(request.POST, domain=domain, account=request.account,
                                       username=request.user.username, export_settings=export_settings)
     else:
-        form = EnterpriseSettingsForm(domain=domain, account=account, username=request.user.username,
+        form = EnterpriseSettingsForm(domain=domain, account=request.account, username=request.user.username,
                                       export_settings=export_settings)
 
     context = {
-        'account': account,
+        'account': request.account,
         'accounts_email': settings.ACCOUNTS_EMAIL,
         'domain': domain,
-        'restrict_signup': request.POST.get('restrict_signup', account.restrict_signup),
+        'restrict_signup': request.POST.get('restrict_signup', request.account.restrict_signup),
         'current_page': {
             'title': _('Enterprise Settings'),
             'page_name': _('Enterprise Settings'),
@@ -138,16 +137,17 @@ def enterprise_settings(request, domain):
     return render(request, "enterprise/enterprise_settings.html", context)
 
 
+@require_enterprise_admin
 @login_and_domain_required
 @require_POST
 def edit_enterprise_settings(request, domain):
-    account = get_account_or_404(request, domain)
     export_settings = get_default_export_settings_if_available(domain)
-    form = EnterpriseSettingsForm(request.POST, username=request.user.username, domain=domain,
-                                  account=account, export_settings=export_settings)
+    form = EnterpriseSettingsForm(request.POST, username=request.user.username,
+                                  domain=domain,
+                                  account=request.account, export_settings=export_settings)
 
     if form.is_valid():
-        form.save(account)
+        form.save(request.account)
         messages.success(request, "Account successfully updated.")
     else:
         return enterprise_settings(request, domain)
@@ -168,6 +168,7 @@ class BaseEnterpriseAdminView(BaseDomainView):
         return reverse(self.urlname, args=(self.domain,))
 
 
+@method_decorator(require_enterprise_admin, name='dispatch')
 class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'enterprise_billing_statements'
@@ -196,8 +197,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     @property
     def invoices(self):
-        account = self.account or get_account_or_404(self.request, self.request.domain)
-        invoices = CustomerInvoice.objects.filter(account=account)
+        invoices = CustomerInvoice.objects.filter(account=self.request.account)
         if not self.show_hidden:
             invoices = invoices.filter(is_hidden=False)
         if self.show_unpaid:
@@ -219,9 +219,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
         Returns the total balance of unpaid, unhidden invoices.
         Doesn't take into account the view settings on the page.
         """
-        account = self.account or get_account_or_404(self.request, self.request.domain)
         invoices = (CustomerInvoice.objects
-                    .filter(account=account)
+                    .filter(account=self.request.account)
                     .filter(date_paid__exact=None)
                     .filter(is_hidden=False))
         return invoices.aggregate(
