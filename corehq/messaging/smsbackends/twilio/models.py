@@ -111,6 +111,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 return
             elif e.code == REGION_PERMISSION_ERROR_CODE:
                 msg.set_gateway_error("Destination region not enabled for this backend.")
+                return
             else:
                 raise
 
