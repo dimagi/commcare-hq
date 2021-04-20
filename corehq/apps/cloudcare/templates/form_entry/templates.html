@@ -116,9 +116,13 @@
           </div>
           <div class="row" data-bind="visible: erroredQuestions().length > 0">
             <div class="col-sm-12 alert alert-warning">
-              <h3>
-                {% trans "Please correct below answers before submitting. You can use the left side button to jump to all errored questions one by one to correct them" %}
-              </h3>
+              <strong>
+                {% blocktrans %}
+                Please correct the answers below before submitting.
+                <br>
+                You can use the <i class='fa fa-warning'></i> button on the left-hand side of the screen to navigate between required fields.
+                {% endblocktrans %}
+              </strong>
               <ul data-bind="foreach: erroredQuestions">
                   <li>
                       <a href="#" data-bind="click: navigateTo, text: caption_markdown() || caption()"></a>
@@ -148,9 +152,9 @@
           </div>
         </form>
       </div>
-      <div id="scroll-bottom" class="btn btn-primary" style="position: fixed; bottom: 35px" title="Scroll to bottom" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
-        <i class='fa fa-location-arrow'></i>
-            {% trans "Next Required/Errored Question" %}
+      <div id="scroll-bottom" class="btn alert-danger" style="position: fixed; bottom: 35px" title="Jump between required/errored questions" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
+        <i class='fa fa-warning'></i>
+            {% trans "Next Question" %}
       </div>
     </div>
   </div>
