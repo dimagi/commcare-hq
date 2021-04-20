@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
 from corehq.apps.ota.views import (
+    app_aware_search,
     claim,
     get_next_id,
     heartbeat,
@@ -16,6 +17,7 @@ urlpatterns = [
     url(r'^admin_restore/(?P<app_id>[\w-]+)/$', DomainAdminRestoreView.as_view()),
     url(r'^restore/(?P<app_id>[\w-]+)/$', restore, name='app_aware_restore'),
     url(r'^search/$', search, name='remote_search'),
+    url(r'^search/(?P<app_id>[\w-]+)/$', app_aware_search, name='app_aware_remote_search'),
     url(r'^claim-case/$', claim, name='claim_case'),
     url(r'^heartbeat/(?P<app_build_id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
     url(r'^get_next_id/$', get_next_id, name='get_next_id'),
