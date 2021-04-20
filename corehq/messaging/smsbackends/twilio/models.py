@@ -16,6 +16,7 @@ from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 # https://www.twilio.com/docs/api/errors/reference
 INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
 WHATSAPP_LIMITATION_ERROR_CODE = 63032
+TO_FROM_BLACKLIST_ERROR = 21610
 
 WHATSAPP_PREFIX = "whatsapp:"
 WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
@@ -104,6 +105,9 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 notify_exception(None, f"Error with Twilio Whatsapp: {e}")
                 kwargs['skip_whatsapp'] = True
                 self.send(msg, orig_phone_number, *args, **kwargs)
+            elif e.code == TO_FROM_BLACKLIST_ERROR:
+                msg.set_gateway_error("Message From/To pair violates a gateway blacklist rule")
+                return
             else:
                 raise
 
