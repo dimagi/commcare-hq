@@ -19,7 +19,8 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.domain = 'test-domain'
         self.factory = AppFactory(build_version='2.51.0', domain=self.domain)
-        self.module, self.form = self.factory.new_basic_module('basic', 'patient')
+        self.case_type = 'patient'
+        self.module, self.form = self.factory.new_basic_module('basic', self.case_type)
 
         builder = XFormBuilder(self.form.name)
         builder.new_question(name='name', label='Name')
@@ -32,17 +33,36 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             "./endpoint",
         )
 
-    def test_form_session_endpoint_id(self):
-        self.form.session_endpoint_id = 'patient_id'
+    def test_registration_form_session_endpoint_id(self):
+        self.form.session_endpoint_id = 'my_form'
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint>
-                    <argument id="patient_id"/>
+                <endpoint id="my_form">
+                    <stack>
+                        <push>
+                            <command value="'m0-f0'"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
+    def test_followup_form_session_endpoint_id(self):
+        self.form.session_endpoint_id = 'my_form'
+        self.factory.form_requires_case(self.form, case_type=self.case_type)
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint id="my_form">
+                    <argument id="case_id"/>
                     <stack>
                     <push>
                         <command value="'m0-f0'"/>
-                        <datum id="patient_id" value="instance('commcaresession')/session/data/patient_id"/>
+                        <datum id="case_id" value="$case_id"/>
                     </push>
                     </stack>
                 </endpoint>
@@ -53,16 +73,14 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_case_list_session_endpoint_id(self):
-        self.module.session_endpoint_id = 'patient_id'
+        self.module.session_endpoint_id = 'my_case_list'
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint>
-                    <argument id="patient_id"/>
+                <endpoint id="my_case_list">
                     <stack>
                     <push>
                         <command value="'m0-case-list'"/>
-                        <datum id="patient_id" value="instance('commcaresession')/session/data/patient_id"/>
                     </push>
                     </stack>
                 </endpoint>
