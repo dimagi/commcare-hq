@@ -72,7 +72,6 @@ branches:
   - sk/get_display_data # Simon March 30
   - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
-  - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
   - sr/jumptoErrors # Sravan April 6
   - mk/form-mm-exports-filters-2 # MK April 16
@@ -85,7 +84,7 @@ branches:
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - sr/sort-cs # Sravan April 19
   # - kev/markdown-case-views # Kevin Apr 9
-  # - bmb/get-account-rename  # Biyeun Apr 19
+  - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
   # - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
   # - dependabot/pip/requirements/freezegun-1.1.0 # Joel Apr 19
   - mjr/ipv6_repeater_fix # Matt Apr 19
