@@ -756,7 +756,7 @@ class FormBaseValidator(object):
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
-            if module.root_module.put_in_root:
+            elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
