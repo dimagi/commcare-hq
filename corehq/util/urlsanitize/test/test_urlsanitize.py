@@ -3,7 +3,9 @@ import socket
 
 from testil import eq, assert_raises
 
-from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, CannotResolveHost, InvalidURL
+from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, InvalidURL
+from ..ip_resolver import CannotResolveHost
+from .mockipinfo import hostname_resolving_to_ips
 
 from django.test import SimpleTestCase
 
@@ -18,10 +20,10 @@ def setup_module():
 
     GOOGLE_IP = ipaddress.ip_address(socket.gethostbyname('google.com'))
     SUITE = [
-        ('https://google.com/', (RETURN, GOOGLE_IP)),
-        ('http://google.com/', (RETURN, GOOGLE_IP)),
-        ('http://google.com', (RETURN, GOOGLE_IP)),
-        ('http://foo.example.com/', (RAISE, CannotResolveHost())),
+        ('https://google.com/', (RETURN, 'ignored')),
+        ('http://google.com/', (RETURN, 'ignored')),
+        ('http://google.com', (RETURN, 'ignored')),
+        ('http://foo.example.com/', (RAISE, CannotResolveHost('foo.example.com'))),
         ('http://localhost/', (RAISE, PossibleSSRFAttempt('is_loopback'))),
         ('http://Localhost/', (RAISE, PossibleSSRFAttempt('is_loopback'))),
         ('http://169.254.169.254/latest/meta-data', (RAISE, PossibleSSRFAttempt('is_link_local'))),
@@ -40,10 +42,8 @@ def setup_module():
 
 def test_example_suite():
     for input_url, (result, value) in SUITE:
-        print(input_url)
-
         if result is RETURN:
-            eq(sanitize_user_input_url(input_url), value)
+            sanitize_user_input_url(input_url)
         elif result is RAISE:
             if type(value) == PossibleSSRFAttempt:
                 with assert_raises(PossibleSSRFAttempt, msg=lambda e: eq(e.reason, value.reason)):
@@ -58,11 +58,11 @@ def test_example_suite():
 def test_rebinding():
     """
     this test doesn't do much, it just checks that a known rebinding endpoint
-    and checks the output is one of the two expected values
+    is either valid, or pointing to a link local address
     """
     url = 'http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/'
     try:
-        eq(sanitize_user_input_url(url), ipaddress.IPv4Address('8.8.8.8'))  # this is one possible output
+        sanitize_user_input_url(url)
     except PossibleSSRFAttempt as e:
         eq(e.reason, 'is_link_local')
 
@@ -71,8 +71,7 @@ class SanitizeIPv6Tests(SimpleTestCase):
     def test_valid_ipv6_address_is_accepted(self):
         ip_text = '2607:f8b0:4006:806::2004'
         valid_ipv6 = f'http://[{ip_text}]'
-        expected_ip = ipaddress.ip_address(ip_text)
-        self.assertEqual(sanitize_user_input_url(valid_ipv6), expected_ip)
+        sanitize_user_input_url(valid_ipv6)
 
     def test_recognizes_empty_ipv6_as_ssrf_attempt(self):
         with self.assertRaises(PossibleSSRFAttempt) as cm:
@@ -95,3 +94,29 @@ class SanitizeIPv6Tests(SimpleTestCase):
     def test_address_with_port_can_cause_ssrf(self):
         with self.assertRaises(PossibleSSRFAttempt):
             sanitize_user_input_url('http://[::]:22')
+
+
+class SanitizeMultiIPTests(SimpleTestCase):
+    VALID_IP_1 = '172.217.12.206'
+    VALID_IP_2 = '98.137.11.164'
+    VALID_IP_3 = '74.6.231.21'
+
+    VALID_IPv6 = '2607:f8b0:4006:806::2004'
+
+    LOOPBACK_ADDRESS = '127.0.0.1'
+
+    def test_when_all_addresses_are_valid_does_not_raise_exception(self):
+        with hostname_resolving_to_ips('test_address', [self.VALID_IP_1, self.VALID_IP_2, self.VALID_IP_3]):
+            sanitize_user_input_url('http://test_addresss')
+
+    def test_when_any_address_is_invalid_an_exception_is_raised(self):
+        with hostname_resolving_to_ips(
+            'some.malicious.url',
+            [self.VALID_IP_1, self.LOOPBACK_ADDRESS, self.VALID_IP_3]
+        ):
+            with self.assertRaises(PossibleSSRFAttempt):
+                sanitize_user_input_url('http://some.malicious.url')
+
+    def test_mixed_valid_addresses_do_not_raise_exception(self):
+        with hostname_resolving_to_ips('test_address', [self.VALID_IPv6, self.VALID_IP_1]):
+            sanitize_user_input_url('http://test_address')

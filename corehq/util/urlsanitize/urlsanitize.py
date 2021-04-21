@@ -1,7 +1,5 @@
-import socket
-import ipaddress
 from urllib.parse import urlparse
-from .ip_resolver import resolve_ip
+from .ip_resolver import resolve_to_ips
 
 
 def sanitize_user_input_url(url):
@@ -19,12 +17,9 @@ def sanitize_user_input_url(url):
         raise InvalidURL()
     if scheme not in ['http', 'https']:
         raise PossibleSSRFAttempt('scheme not http(s)')
-    try:
-        ip_address_text = resolve_ip(hostname)
-    except socket.gaierror:
-        raise CannotResolveHost()
-    ip_address = ipaddress.ip_address(ip_address_text)
-    return sanitize_ip(ip_address)
+
+    for ip_address in resolve_to_ips(hostname):
+        sanitize_ip(ip_address)
 
 
 def sanitize_ip(ip_address):
@@ -48,10 +43,6 @@ class PossibleSSRFAttempt(Exception):
     def __init__(self, reason):
         super().__init__("Invalid URL")
         self.reason = reason
-
-
-class CannotResolveHost(Exception):
-    pass
 
 
 class InvalidURL(Exception):
