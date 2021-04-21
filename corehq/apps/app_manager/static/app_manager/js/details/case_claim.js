@@ -73,7 +73,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return false;
         });
         subscribeToSave(self,
-            ['nodeset', 'label', 'value', 'sort', 'instance_id', 'instance_uri'], saveButton);
+            ['nodeset', 'label', 'value', 'sort', 'instance_uri'], saveButton);
 
         return self;
     };
