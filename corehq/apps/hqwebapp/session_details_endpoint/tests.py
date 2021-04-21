@@ -31,8 +31,8 @@ class SessionDetailsViewTest(TestCase):
             'authToken': None,
             'domains': [cls.domain.name],
             'anonymous': False,
-            'enabled_toggles': {},
-            'enabled_previews': {},
+            'enabled_toggles': [],
+            'enabled_previews': [],
         }
         cls.url = reverse('session_details')
 
@@ -228,6 +228,6 @@ class SessionDetailsViewTest(TestCase):
         response = Client().post(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         expected_response = self.expected_response.copy()
-        expected_response['enabled_toggles'] = {'FORM_LINK_WORKFLOW': True}
-        expected_response['enabled_previews'] = {'CALC_XPATHS': True}
+        expected_response['enabled_toggles'] = ['FORM_LINK_WORKFLOW']
+        expected_response['enabled_previews'] = ['CALC_XPATHS']
         self.assertJSONEqual(response.content, expected_response)

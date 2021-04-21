@@ -75,6 +75,6 @@ class SessionDetailsView(View):
             'authToken': None,
             'domains': list(domains),
             'anonymous': False,
-            'enabled_toggles': toggles.toggle_values_by_name(user.username, domain, include_disabled=False),
-            'enabled_previews': feature_previews.preview_values_by_name(domain, include_disabled=False)
+            'enabled_toggles': list(toggles.toggle_values_by_name(user.username, domain, include_disabled=False)),
+            'enabled_previews': list(feature_previews.preview_values_by_name(domain, include_disabled=False))
         })
