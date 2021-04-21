@@ -36,8 +36,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-21 19:32+0000\n"
-"PO-Revision-Date: 2021-04-14 19:20+0000\n"
+"POT-Creation-Date: 2021-04-21 21:48+0000\n"
+"PO-Revision-Date: 2021-04-21 19:33+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -8542,10 +8542,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:113
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:114
-#, fuzzy
-#| msgid "Label for Registration Form"
 msgid "Label for Searching"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:123
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:124
@@ -11825,10 +11823,9 @@ msgstr ""
 "votre organisation</a>. "
 
 #: corehq/apps/commtrack/forms.py:124
-#, fuzzy, python-brace-format
-#| msgid "Default %(product_name)s"
+#, python-brace-format
 msgid "Default {product_name}"
-msgstr "%(product_name)s par défaut"
+msgstr ""
 
 #: corehq/apps/commtrack/forms.py:139
 msgid "Update Default Consumption Info"
@@ -20922,10 +20919,9 @@ msgid "1 Match Found"
 msgstr "1 correspondance trouvée"
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html:9
-#, fuzzy, python-format
-#| msgid "<%%= num %%> Matches Found"
+#, python-format
 msgid "<%%- num %%> Matches Found"
-msgstr "<%%= num %%> Correspondances trouvées"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html:13
 msgid "No Matches Found"
@@ -31352,7 +31348,7 @@ msgstr "Les traductions des IU ont été mises à jour !"
 msgid "Please select language to validate."
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:66
+#: corehq/apps/user_importer/importer.py:67
 #, python-brace-format
 msgid ""
 "'The column header '{old_name}' is deprecated, please use '{new_name}' "
@@ -31361,54 +31357,54 @@ msgstr ""
 "'L'en-tête de colonne '{old_name}' est obsolète, utilisez plutôt "
 "'{new_name}'."
 
-#: corehq/apps/user_importer/importer.py:76
+#: corehq/apps/user_importer/importer.py:80
 #, python-brace-format
 msgid "The following are {label} column headers: {headers}."
 msgstr ""
 "Les éléments suivants sont des en-têtes de colonnes {label} : {headers}."
 
-#: corehq/apps/user_importer/importer.py:269
+#: corehq/apps/user_importer/importer.py:273
 #, python-format
 msgid "Unexpected format received for site code '%(site_code)s'"
 msgstr "Format inattendu reçu pour le code site '%(site_code)s'"
 
-#: corehq/apps/user_importer/importer.py:277
+#: corehq/apps/user_importer/importer.py:281
 #, python-format
 msgid "Could not find organization with site code '%(site_code)s'"
 msgstr "Impossible de trouver l'organisation avec le code site '%(site_code)s'"
 
-#: corehq/apps/user_importer/importer.py:398
+#: corehq/apps/user_importer/importer.py:402
 #, python-brace-format
 msgid "User with ID '{user_id}' not found"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:403
+#: corehq/apps/user_importer/importer.py:407
 #, python-format
 msgid "Changing usernames is not supported: %(username)r to %(new_username)r"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:410
+#: corehq/apps/user_importer/importer.py:414
 msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:499
+#: corehq/apps/user_importer/importer.py:503
 msgid "Only users with the edit web users permission can upload web users"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:505
+#: corehq/apps/user_importer/importer.py:509
 #, python-brace-format
 msgid ""
 "You cannot remove a web user that is not a member of this project. "
 "{web_user} is not a member."
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:513
+#: corehq/apps/user_importer/importer.py:517
 #, python-brace-format
 msgid ""
 "You cannot upload a web user without a role. {web_user} does not have a role"
 msgstr ""
 
-#: corehq/apps/user_importer/importer.py:517
+#: corehq/apps/user_importer/importer.py:521
 #, python-brace-format
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
@@ -34692,10 +34688,8 @@ msgid "User account for %s created!"
 msgstr "Compte utilisateur pour %s créé ! "
 
 #: corehq/apps/users/views/__init__.py:1000
-#, fuzzy
-#| msgid "You are no longer part of the project %s"
 msgid "You have been added to the \"{}\" project space."
-msgstr "Vous ne faites plus partie du projet %s"
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py:1054
 msgid "Error while attempting resend"
@@ -38610,6 +38604,10 @@ msgstr ""
 msgid "Uploaded file does not contian any sheets."
 msgstr ""
 
+#: coverage-report/corehq_apps_users_forms_py.html:2150
+msgid "Specify Users At This Location"
+msgstr "Outros (negativos / indeterminados) "
+
 #: custom/_legacy/pact/models.py:321
 msgid "Follow-Up Date"
 msgstr "Date de suivi"
@@ -41449,11 +41447,14 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Login as Other User"
-#~ msgstr "S'identifier en tant qu'un autre utilisateur"
+#~ msgid "Button Label on Case List"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#~ msgid "Login as another user"
-#~ msgstr "S'identifier en tant qu'un autre utilisateur"
+#~ msgid "Button Label for on Search Results"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Please select a role"
+#~ msgstr "Criança com problemas de malnutrição"
 
 #~ msgid "Copy Multimedia from Another Application"
 #~ msgstr "Casos IRA Tratados"
@@ -41479,9 +41480,6 @@ msgstr "Saisir un JSON valide"
 
 #~ msgid "Add new repeat"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Outros (negativos / indeterminados) "
 
 #~ msgid "Related Locations"
 #~ msgstr "Casos IRA Tratados"
@@ -43528,6 +43526,9 @@ msgstr "Saisir un JSON valide"
 
 #~ msgid "This form "
 #~ msgstr "Manejo de Casos"
+
+#~ msgid "Label for Registration Form"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Source Module"
 #~ msgstr "Manejo de Casos"

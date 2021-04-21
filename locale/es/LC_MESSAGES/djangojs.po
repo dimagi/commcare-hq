@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-21 19:33+0000\n"
+"POT-Creation-Date: 2021-04-21 21:50+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3439,10 +3439,8 @@ msgid "Key contains an invalid character."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:303
-#, fuzzy
-#| msgid "Edit Mapping for "
 msgid "Edit mapping for <%- property %>"
-msgstr "Editar Mapeo para"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
 msgid "Not a valid email"
@@ -4215,10 +4213,8 @@ msgid "Delete Role: "
 msgstr "Eliminar Rol:"
 
 #: corehq/apps/users/static/users/js/roles.js:370
-#, fuzzy
-#| msgid "Are you sure you want to delete this request?"
 msgid "Are you sure you want to delete the role <%- role %>?"
-msgstr "¿Está seguro que desea eliminar esta solicitud?"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/roles_and_permissions.js:30
 msgid "View Only"

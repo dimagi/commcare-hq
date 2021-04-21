@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-21 19:33+0000\n"
+"POT-Creation-Date: 2021-04-21 21:50+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Rowena Luk <rluk@dimagi.com>, 2021\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -4064,10 +4064,8 @@ msgid "Delete Role: "
 msgstr "Supprimer rôle:"
 
 #: corehq/apps/users/static/users/js/roles.js:370
-#, fuzzy
-#| msgid "Are you sure you want to delete this request?"
 msgid "Are you sure you want to delete the role <%- role %>?"
-msgstr "Êtes-vous certain de vouloir supprimer cette requête?"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/roles_and_permissions.js:30
 msgid "View Only"
