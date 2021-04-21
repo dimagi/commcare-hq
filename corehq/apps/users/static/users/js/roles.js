@@ -36,17 +36,6 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
-                data.manageAppReleasePermissions = {
-                    all: data.permissions.manage_releases,
-                    specific: ko.utils.arrayMap(root.appsList, function (app) {
-                        return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.manage_releases_list.indexOf(app._id) !== -1,
-                        };
-                    }),
-                };
-
                 data.manageRoleAssignments = {
                     all: data.is_non_admin_editable,
                     specific: ko.utils.arrayMap(o.nonAdminRoles, function (role) {
@@ -284,12 +273,6 @@ hqDefine('users/js/roles',[
 
                 data.permissions.view_web_apps = data.webAppsPermissions.all;
                 data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
-                data.permissions.manage_releases = data.manageAppReleasePermissions.all;
-                data.permissions.manage_releases_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageAppReleasePermissions.specific, function (app) {
                     return app.value;
                 }), function (app) {
                     return app.path;
