@@ -116,7 +116,7 @@ class Requests(object):
         self.notify_addresses = notify_addresses if notify_addresses else []
         self.payload_id = payload_id
         self.logger = logger or RequestLog.log
-        self.send_request = log_request(self, self._send_request, self.logger)
+        self.send_request = log_request(self, self.send_request_unlogged, self.logger)
         self._session = None
 
     def __enter__(self):
@@ -127,7 +127,7 @@ class Requests(object):
         self._session.close()
         self._session = None
 
-    def _send_request(self, method, url, *args, **kwargs):
+    def send_request_unlogged(self, method, url, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
