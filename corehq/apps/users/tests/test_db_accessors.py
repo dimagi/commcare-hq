@@ -15,7 +15,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_user_docs_by_username,
     hard_delete_deleted_users,
 )
-from corehq.apps.users.dbaccessors.couch_users import get_user_id_by_username
+from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
