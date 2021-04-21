@@ -11,7 +11,7 @@ from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.middleware import TimeoutMiddleware
-from corehq.toggles import DISABLE_WEB_APPS
+from corehq import toggles
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -54,18 +54,18 @@ class SessionDetailsView(View):
             raise Http404
 
         domain = data.get('domain')
-        if domain and DISABLE_WEB_APPS.enabled(domain):
+        if domain and toggles.DISABLE_WEB_APPS.enabled(domain):
             return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
-        TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=data.get('domain'))
+        TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=domain)
         session.save()
 
         domains = set()
-        for domain in couch_user.domains:
-            domains.add(domain)
-            mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+        for member_domain in couch_user.domains:
+            domains.add(member_domain)
+            mirror_domains = DomainPermissionsMirror.mirror_domains(member_domain)
             domains.update(mirror_domains)
 
         return JsonResponse({
