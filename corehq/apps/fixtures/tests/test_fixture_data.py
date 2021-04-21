@@ -21,7 +21,7 @@ from corehq.apps.fixtures.models import (
     FixtureOwnership,
     FixtureTypeField,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 

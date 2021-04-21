@@ -80,7 +80,7 @@ from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_user_docs_by_username,
     user_exists,
 )
@@ -1389,7 +1389,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 @require_can_edit_commcare_users
 def count_users(request, domain):
-    from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
+    from corehq.apps.users.dbaccessors import get_commcare_users_by_filters
     if not FILTERED_BULK_USER_DOWNLOAD.enabled_for_request(request):
         raise Http404()
     form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
