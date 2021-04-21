@@ -69,8 +69,6 @@ class ConnectionSettingsForm(forms.ModelForm):
         ]
 
     def __init__(self, domain, *args, **kwargs):
-        from corehq.motech.views import ConnectionSettingsListView
-
         if kwargs.get('instance'):
             # `plaintext_password` is not a database field, and so
             # super().__init__() will not update `initial` with it. We
@@ -95,8 +93,13 @@ class ConnectionSettingsForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.domain = domain
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.layout = crispy.Layout(
+
+    @property
+    def helper(self):
+        from corehq.motech.views import ConnectionSettingsListView
+
+        helper = hqcrispy.HQFormHelper()
+        helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
             crispy.Field('url'),
@@ -125,6 +128,8 @@ class ConnectionSettingsForm(forms.ModelForm):
                 ),
             ),
         )
+
+        return helper
 
     @property
     def test_connection_button(self):
