@@ -63,7 +63,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
     location_safe,
@@ -968,7 +967,7 @@ class UserInvitationView(object):
 
             if request.method == "POST":
                 couch_user = CouchUser.from_django_user(request.user, strict=True)
-                self._invite(invitation, couch_user)
+                invitation.accept_invitation_and_join_domain(couch_user)
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
@@ -995,7 +994,11 @@ class UserInvitationView(object):
                     )
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
-                    self._invite(invitation, user)
+                    invitation.accept_invitation_and_join_domain(user)
+                    messages.success(
+                        self.request,
+                        _('You have been added to the "{}" project space.').format(self.domain)
+                    )
                     authenticated = authenticate(username=form.cleaned_data["email"],
                                                  password=form.cleaned_data["password"])
                     if authenticated is not None and authenticated.is_active:
@@ -1016,13 +1019,6 @@ class UserInvitationView(object):
         context.update({"form": form})
         return render(request, self.template, context)
 
-    def _invite(self, invitation, user):
-        self.invite(invitation, user)
-        invitation.is_accepted = True
-        invitation.save()
-        messages.success(self.request, self.success_msg)
-        send_confirmation_email(invitation)
-
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
 
@@ -1033,19 +1029,11 @@ class UserInvitationView(object):
     def inviting_entity(self):
         return self.domain
 
-    @property
-    def success_msg(self):
-        return _('You have been added to the "%s" project space.') % self.domain
-
     def redirect_to_on_success(self, email, domain):
         if Invitation.by_email(email).count() > 0 and not self.request.GET.get('no_redirect'):
             return reverse("domain_select_redirect")
         else:
             return reverse("domain_homepage", args=[domain,])
-
-    def invite(self, invitation, user):
-        user.add_as_web_user(invitation.domain, role=invitation.role,
-                             location_id=invitation.supply_point, program_id=invitation.program)
 
 
 @always_allow_project_access

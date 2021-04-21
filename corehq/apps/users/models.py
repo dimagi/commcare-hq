@@ -2732,6 +2732,45 @@ class Invitation(models.Model):
         else:
             return None
 
+    def _send_confirmation_email(self):
+        """
+        This sends the confirmation email to the invited_by user that their
+        invitation was accepted.
+        :return:
+        """
+        invited_user = self.email
+        subject = _('{} accepted your invitation to CommCare HQ').format(invited_user)
+        recipient = WebUser.get_by_user_id(self.invited_by).get_email()
+        context = {
+            'invited_user': invited_user,
+        }
+        html_content = render_to_string('domain/email/invite_confirmation.html',
+                                        context)
+        text_content = render_to_string('domain/email/invite_confirmation.txt',
+                                        context)
+        send_html_email_async.delay(
+            subject,
+            recipient,
+            html_content,
+            text_content=text_content
+        )
+
+    def accept_invitation_and_join_domain(self, web_user):
+        """
+        Call this method to confirm that a user has accepted the invite to
+        a domain and add them as a member to the domain in the invitation.
+        :param web_user: WebUser
+        """
+        web_user.add_as_web_user(
+            self.domain,
+            role=self.role,
+            location_id=self.supply_point,
+            program_id=self.program,
+        )
+        self.is_accepted = True
+        self.save()
+        self._send_confirmation_email()
+
 
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
