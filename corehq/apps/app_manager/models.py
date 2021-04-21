@@ -2615,6 +2615,11 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         """
         return any(not action.auto_select for action in self.actions.load_update_cases)
 
+    @staticmethod
+    def uses_parent_case():
+        # Safer to assume that AdvanceForm always uses parent case
+        return True
+
     @property
     def requires(self):
         return 'case' if self.requires_case() else 'none'
