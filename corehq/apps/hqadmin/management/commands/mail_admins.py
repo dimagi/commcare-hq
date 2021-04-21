@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
     def handle(self, message, **options):
         warnings.warn(
-            "mail_admins is deprecated. Use 'send_email --admins' instead.",
+            "mail_admins is deprecated. Use 'send_email --to-admins' instead.",
             DeprecationWarning,
         )
         if options['stdin']:

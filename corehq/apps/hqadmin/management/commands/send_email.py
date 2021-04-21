@@ -19,7 +19,7 @@ class Command(BaseCommand):
         parser.add_argument('--subject'),
         parser.add_argument('--stdin', action='store_true', default=False, help='Read message body from stdin'),
         parser.add_argument('--html', action='store_true', default=False, help='HTML payload'),
-        parser.add_argument('--admins', action='store_true', default=False,
+        parser.add_argument('--to-admins', action='store_true', default=False,
                             help='Send to the list of configured admin addresses'),
         parser.add_argument('--recipients', default='',
                             help='Comma-separated list of additional recipient emails'),
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             message = ' '.join(message)
 
         subject = options['subject']
-        admins = options['admins']
+        admins = options['to_admins']
         recipients = options['recipients']
         is_html = options['html']
 
