@@ -11,7 +11,6 @@ from corehq.util.metrics import create_metrics_event
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
-from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.util.log import send_HTML_email
 
@@ -42,7 +41,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user', help='User', default=False)
         parser.add_argument('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT)
-        parser.add_argument('--mail_admins', help='Mail Admins', default=False, action='store_true')
         parser.add_argument('--url', help='A link to a URL for the deploy', default=False)
         parser.add_argument(
             '--minutes',
@@ -118,17 +116,6 @@ class Command(BaseCommand):
                     settings.SERVER_ENVIRONMENT
                 )
             )
-
-        if options['mail_admins']:
-            message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
-            subject = 'Deploy Successful - {}'.format(options['environment'])
-            call_command('mail_admins', message_body, **{'subject': subject, 'html': True})
-            if settings.DAILY_DEPLOY_EMAIL:
-                recipient = settings.DAILY_DEPLOY_EMAIL
-
-                send_HTML_email(subject=subject,
-                                recipient=recipient,
-                                html_content=message_body)
 
         if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
             create_update_sentry_release()
