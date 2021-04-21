@@ -57,17 +57,31 @@ def get_all_commcare_users_by_domain(domain):
     return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
 
 
+def get_all_web_users_by_domain(domain):
+    """Returns all WebUsers by domain"""
+    from corehq.apps.users.models import WebUser
+    ids = get_all_user_ids_by_domain(domain, include_mobile_users=False)
+    return map(WebUser.wrap, iter_docs(WebUser.get_db(), ids))
+
+
 def get_mobile_usernames_by_filters(domain, user_filters):
     query = _get_es_query(domain, user_filters)
     return query.values_list('base_username', flat=True)
 
 
-def _get_es_query(domain, user_filters):
+def _get_es_query(domain, user_filters, include_mobile_users=False, include_web_users=False):
+    if not (include_mobile_users ^ include_web_users):
+        raise AssertionError("_get_es_query can get either mobile or web user query")
+
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
 
-    query = UserES().domain(domain).mobile_users().remove_default_filter('active')
+    query = UserES().domain(domain).remove_default_filter('active')
+    if include_mobile_users:
+        query = query.mobile_users()
+    if include_web_users:
+        query = query.web_users()
 
     if role_id:
         query = query.role_id(role_id)
@@ -79,9 +93,10 @@ def _get_es_query(domain, user_filters):
     return query
 
 
-def get_commcare_users_by_filters(domain, user_filters, count_only=False):
+def get_users_by_filters(domain, user_filters, count_only=False,
+                         include_mobile_users=False, include_web_users=False):
     """
-    Returns CommCareUsers in domain per given filters. If user_filters is empty
+    Returns users in domain per given filters. If user_filters is empty,
         returns all users in the domain
 
     args:
@@ -92,16 +107,23 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     kwargs:
         count_only: If True, returns count of search results
     """
+    if not (include_mobile_users ^ include_web_users):
+        raise AssertionError("get_users_by_filters can get either mobile or web users")
+
     if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
                 user_filters.get('location_id', None), count_only]):
-        return get_all_commcare_users_by_domain(domain)
+        if include_mobile_users:
+            return get_all_commcare_users_by_domain(domain)
+        if include_web_users:
+            return get_all_web_users_by_domain(domain)
 
-    query = _get_es_query(domain, user_filters)
+    query = _get_es_query(domain, user_filters, include_mobile_users=include_mobile_users,
+                          include_web_users=include_web_users)
 
     if count_only:
         return query.count()
     user_ids = query.scroll_ids()
-    return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
+    return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
 
 
 def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):

@@ -9,10 +9,11 @@ from corehq.apps.users.dbaccessors import (
     get_all_commcare_users_by_domain,
     get_all_user_ids,
     get_all_usernames_by_domain,
-    get_commcare_users_by_filters,
+    get_all_web_users_by_domain,
     get_deleted_user_by_username,
     get_existing_usernames,
     get_user_docs_by_username,
+    get_users_by_filters,
     hard_delete_deleted_users,
 )
 from corehq.apps.users.dbaccessors import get_user_id_by_username
@@ -112,7 +113,7 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain.delete()
         super(AllCommCareUsersTest, cls).tearDownClass()
 
-    def test_get_all_commcare_users_by_domain(self):
+    def test_get_users_by_filters(self):
         from corehq.util.elastic import ensure_index_deleted
         from corehq.elastic import get_es_new, send_to_elasticsearch
         from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
@@ -123,52 +124,91 @@ class AllCommCareUsersTest(TestCase):
         initialize_index_and_mapping(es, USER_INDEX_INFO)
         send_to_elasticsearch('users', self.ccuser_1.to_json())
         send_to_elasticsearch('users', self.ccuser_2.to_json())
+        send_to_elasticsearch('users', self.web_user.to_json())
         es.indices.refresh(USER_INDEX)
 
-        usernames = lambda users: [u.username for u in users]
-        # if no filters are passed, should return all cc-users in the domain
+        def usernames(users):
+            return [u.username for u in users]
+
+        # if no filters are passed, should return all users of given type in the domain
         self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {})),
+            usernames(get_users_by_filters(self.ccdomain.name, {}, include_mobile_users=True)),
             usernames([self.ccuser_2, self.ccuser_1])
         )
         self.assertEqual(
-            get_commcare_users_by_filters(self.ccdomain.name, {}, count_only=True),
+            get_users_by_filters(self.ccdomain.name, {}, count_only=True, include_mobile_users=True),
             2
         )
-        # can search by username
         self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'})),
+            usernames(get_users_by_filters(self.ccdomain.name, {}, include_web_users=True)),
+            usernames([self.web_user])
+        )
+        self.assertEqual(
+            get_users_by_filters(self.ccdomain.name, {}, count_only=True, include_web_users=True),
+            1
+        )
+        # can search by username
+        filters = {'search_string': 'user_1'}
+        self.assertItemsEqual(
+            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
             [self.ccuser_1.username]
         )
         self.assertEqual(
-            get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'}, count_only=True),
+            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
             1
         )
-        # can search by role_id
+        filters = {'search_string': 'webuser'}
         self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id})),
+            usernames(get_users_by_filters(self.ccdomain.name, filters, include_web_users=True)),
+            [self.web_user.username]
+        )
+        self.assertEqual(
+            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_web_users=True),
+            1
+        )
+        filters = {'search_string': 'notwebuser'}
+        self.assertItemsEqual(
+            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
+            []
+        )
+        self.assertEqual(
+            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
+            0
+        )
+        # can search by role_id
+        filters = {'role_id': self.custom_role._id}
+        self.assertItemsEqual(
+            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
             [self.ccuser_2.username]
         )
         self.assertEqual(
-            get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id}, count_only=True),
+            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
             1
         )
         # can search by location
+        filters = {'location_id': self.loc1._id}
         self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'location_id': self.loc1._id})),
+            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
             [self.ccuser_1.username]
         )
+        filters = {'location_id': self.loc1._id}
         self.assertEqual(
-            get_commcare_users_by_filters(self.ccdomain.name, {'location_id': self.loc1._id}, count_only=True),
+            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
             1
         )
 
         ensure_index_deleted(USER_INDEX)
 
-    def test_get_commcare_users_by_filters(self):
+    def test_get_all_commcare_users_by_domain(self):
         expected_users = [self.ccuser_2, self.ccuser_1]
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_commcare_users_by_domain(self.ccdomain.name)]
+        self.assertItemsEqual(actual_usernames, expected_usernames)
+
+    def test_get_all_web_users_by_domain(self):
+        expected_users = [self.web_user]
+        expected_usernames = [user.username for user in expected_users]
+        actual_usernames = [user.username for user in get_all_web_users_by_domain(self.ccdomain.name)]
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
     def test_get_all_usernames_by_domain(self):

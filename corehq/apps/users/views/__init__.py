@@ -572,13 +572,8 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
-    user_filters = {}
-    download = DownloadBase()
-    is_web_download = True
-    res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
-                                          is_web_download, owner_id=request.couch_user.get_id)
-    download.set_task(res)
-    return redirect(DownloadWebUsersStatusView.urlname, domain, download.download_id)
+    from corehq.apps.users.views.mobile.users import download_users
+    return download_users(request, domain, include_web_users=True)
 
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):

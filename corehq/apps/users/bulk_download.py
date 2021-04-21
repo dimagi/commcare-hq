@@ -19,7 +19,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors import (
-    get_commcare_users_by_filters,
+    get_users_by_filters,
     get_mobile_usernames_by_filters,
     get_all_user_rows,
     get_web_user_count,
@@ -195,7 +195,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     current_user_downloaded_count = 0
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
-        for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
+        for n, user in enumerate(get_users_by_filters(current_domain, user_filters, include_mobile_users=True)):
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([
                 group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
@@ -294,7 +294,7 @@ def parse_groups(groups):
 
 
 def count_users_and_groups(domain, user_filters, group_memoizer):
-    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    users_count = get_users_by_filters(domain, user_filters, count_only=True, include_mobile_users=True)
     groups_count = len(group_memoizer.groups)
 
     return users_count + groups_count
@@ -306,7 +306,8 @@ def dump_usernames(domain, download_id, user_filters, task, owner_id):
         domains_list = user_filters['domains']  # for instances of multi-domain download
     users_count = 0
     for download_domain in domains_list:
-        users_count += get_commcare_users_by_filters(download_domain, user_filters, count_only=True)
+        users_count += get_users_by_filters(download_domain, user_filters, count_only=True,
+                                            include_mobile_filters=True)
     DownloadBase.set_progress(task, 0, users_count)
 
     usernames = []

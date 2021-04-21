@@ -55,7 +55,7 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
@@ -122,12 +122,7 @@ from corehq.const import (
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,
 )
-from corehq.toggles import (
-    DOMAIN_PERMISSIONS_MIRROR,
-    FILTERED_BULK_USER_DOWNLOAD,
-    TWO_STAGE_USER_PROVISIONING,
-    PARALLEL_USER_IMPORTS
-)
+from corehq import toggles
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
@@ -668,7 +663,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
-        if FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
+        if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
             bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
@@ -1069,7 +1064,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        if PARALLEL_USER_IMPORTS.enabled(self.domain):
+        if toggles.PARALLEL_USER_IMPORTS.enabled(self.domain):
             if list(self.group_specs):
                 messages.error(
                     request,
@@ -1222,7 +1217,8 @@ class FilteredUserDownload(BaseManageCommCareUserView):
         # To avoid errors on first page load
         form.empty_permitted = True
         context = self.main_context
-        context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
+        count_view = "count_commcare_users" if self.include_mobile_users else "count_web_users"
+        context.update({'form': form, 'count_users_url': reverse(count_view, args=[domain])})
         return render(
             request,
             "users/filter_and_download.html",
@@ -1230,7 +1226,7 @@ class FilteredUserDownload(BaseManageCommCareUserView):
         )
 
 
-@method_decorator([FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
+@method_decorator([toggles.FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
 class FilteredCommCareUserDownload(FilteredUserDownload):
     urlname = 'filter_and_download_commcare_users'
     include_mobile_users = True
@@ -1241,7 +1237,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload):
         return super().get(request, domain, *args, **kwargs)
 
 
-@method_decorator([DOMAIN_PERMISSIONS_MIRROR.required_decorator()], name='dispatch')
+@method_decorator([toggles.DOMAIN_PERMISSIONS_MIRROR.required_decorator()], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload):
     urlname = 'filter_and_download_web_users'
     include_mobile_users = False
@@ -1411,18 +1407,33 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 
 @require_can_edit_commcare_users
-def count_users(request, domain):
-    from corehq.apps.users.dbaccessors import get_commcare_users_by_filters
-    if not FILTERED_BULK_USER_DOWNLOAD.enabled_for_request(request):
-        raise Http404()
-    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, include_mobile_users=True)
+@toggles.FILTERED_BULK_USER_DOWNLOAD.required_decorator()
+def count_commcare_users(request, domain):
+    return count_users(request, domain, include_mobile_users=True, include_web_users=False)
+
+
+@require_can_edit_web_users
+@toggles.DOMAIN_PERMISSIONS_MIRROR.required_decorator()
+def count_web_users(request, domain):
+    return count_users(request, domain, include_mobile_users=False, include_web_users=True)
+
+
+@login_and_domain_required
+def count_users(request, domain, include_mobile_users=False, include_web_users=False):
+    if not (include_mobile_users ^ include_web_users):
+        raise AssertionError("count_users can count either mobile or web users")
+
+    from corehq.apps.users.dbaccessors import get_users_by_filters
+    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
+                          include_mobile_users=include_mobile_users, include_web_users=include_web_users)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
     user_count = 0
     for domain in user_filters['domains']:
-        user_count += get_commcare_users_by_filters(domain, user_filters, count_only=True)
+        user_count += get_users_by_filters(domain, user_filters, include_mobile_users=include_mobile_users,
+                                           include_web_users=include_web_users, count_only=True)
     return json_response({
         'count': user_count
     })
@@ -1430,28 +1441,44 @@ def count_users(request, domain):
 
 @require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
-    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, include_mobile_users=True)
+    return download_users(request, domain, include_mobile_users=True)
+
+
+@login_and_domain_required
+def download_users(request, domain, include_mobile_users=False, include_web_users=False):
+    if not (include_mobile_users ^ include_web_users):
+        raise AssertionError("download_users can download either mobile or web users")
+
+    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
+                          include_mobile_users=include_mobile_users, include_web_users=include_web_users)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
-        return HttpResponseRedirect(
-            reverse(FilteredCommCareUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
+        view = FilteredCommCareUserDownload if include_mobile_users else FilteredWebUserDownload
+        return HttpResponseRedirect(reverse(view, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
     if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
-        track_workflow(request.couch_user.username, 'Domain filter used for mobile download')
-    is_web_download = False
+        user_type = 'mobile' if include_mobile_users else 'web'
+        track_workflow(request.couch_user.username, f'Domain filter used for {user_type} download')
     if form.cleaned_data['columns'] == UserFilterForm.USERNAMES_COLUMN_OPTION:
+        if not include_mobile_users:
+            raise AssertionError("USERNAME_COLUMN_OPTION only available for mobile users")
         res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,
                                                   owner_id=request.couch_user.get_id)
     else:
         res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
-                                              is_web_download, owner_id=request.couch_user.get_id)
+                                              include_web_users, owner_id=request.couch_user.get_id)
     download.set_task(res)
-    return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
+    if include_mobile_users:
+        view = DownloadUsersStatusView
+    if include_web_users:
+        from corehq.apps.users.views import DownloadWebUsersStatusView
+        view = DownloadWebUsersStatusView
+    return redirect(view.urlname, domain, download.download_id)
 
 
 @location_safe
-@method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
+@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
