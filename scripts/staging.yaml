@@ -85,6 +85,5 @@ branches:
   - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
   - dependabot/pip/requirements/freezegun-1.1.0 # Joel Apr 19
-  - dmr/fix-escaping-on-custom-icon-badges  # Danny/Cal Apr 20
 
 submodules: {}
