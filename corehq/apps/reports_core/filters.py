@@ -1,5 +1,5 @@
 from collections import namedtuple
-from datetime import datetime, time
+from datetime import date, datetime, time
 
 from django.conf import settings
 from django.urls import reverse
@@ -139,7 +139,9 @@ class DatespanFilter(BaseFilter):
 
         def date_or_nothing(param):
             if param:
-                if self.compare_as_string:
+                if isinstance(param, date):
+                    return datetime.combine(param, time())
+                elif self.compare_as_string:
                     return iso_string_to_date(param)
                 else:
                     return datetime.combine(iso_string_to_date(param), time())
