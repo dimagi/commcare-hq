@@ -115,12 +115,12 @@
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
           <div class="row" data-bind="visible: erroredQuestions().length > 0">
-            <div class="col-sm-12 alert alert-warning">
+            <div class="col-sm-12 alert alert-danger">
               <strong>
                 {% blocktrans %}
                 Please correct the answers below before submitting.
                 <br>
-                You can use the <i class='fa fa-warning'></i> button on the left-hand side of the screen to navigate between required fields.
+                You can use the <i class='fa fa-arrow-down'></i> button on the left-hand side of the screen to navigate between required fields.
                 {% endblocktrans %}
               </strong>
               <ul data-bind="foreach: erroredQuestions">
@@ -152,8 +152,8 @@
           </div>
         </form>
       </div>
-      <div id="scroll-bottom" class="btn alert-danger" style="position: fixed; bottom: 35px" title="Jump between required/errored questions" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
-        <i class='fa fa-warning'></i>
+      <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="Jump between required/errored questions" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
+        <i class='fa fa-arrow-down'> </i>
             {% trans "Next Question" %}
       </div>
     </div>
