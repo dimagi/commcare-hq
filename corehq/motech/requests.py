@@ -20,7 +20,6 @@ from corehq.motech.utils import (
 )
 from corehq.util.metrics import metrics_counter
 from corehq.util.urlsanitize.urlsanitize import (
-    CannotResolveHost,
     InvalidURL,
     PossibleSSRFAttempt,
     sanitize_user_input_url,
@@ -276,7 +275,7 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
 def sanitize_user_input_url_for_repeaters(url, domain, src):
     try:
         sanitize_user_input_url(url)
-    except (CannotResolveHost, InvalidURL):
+    except InvalidURL:
         pass
     except PossibleSSRFAttempt as e:
         if settings.DEBUG and e.reason == 'is_loopback':

@@ -14,6 +14,7 @@ from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import sanitize_user_input_url_for_repeaters
 from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+from corehq.util.urlsanitize.ip_resolver import CannotResolveHost
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -159,6 +160,13 @@ class ConnectionSettingsForm(forms.ModelForm):
         url = self.cleaned_data['url']
         try:
             sanitize_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+        except CannotResolveHost:
+            # Catching and wrapping this error means that unreachable hosts do not cause the form to be invalid.
+            # The reason this is important is because we want to accept configurations where the host has not
+            # been set up yet. Wrapping this value lets consumers check whether or not the host is recognized
+            # before making a potentially unsafe request to it (i.e. '::1' looks unresolvable to IPv4,
+            # but is actually the loopback address for IPv6)
+            return UnrecognizedHost(url)
         except PossibleSSRFAttempt:
             raise forms.ValidationError(_("Invalid URL"))
         return url
@@ -169,3 +177,11 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
         self.instance.last_token = None
         return super().save(commit)
+
+
+class UnrecognizedHost:
+    def __init__(self, hostname):
+        self.hostname = hostname
+
+    def __repr__(self):
+        return self.hostname

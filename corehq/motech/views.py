@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
-from corehq.motech.forms import ConnectionSettingsForm
+from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
 
@@ -254,6 +254,9 @@ def test_connection_settings(request, domain):
         })
     form = ConnectionSettingsForm(domain=domain, data=request.POST)
     if form.is_valid():
+        if isinstance(form.cleaned_data['url'], UnrecognizedHost):
+            return JsonResponse({"success": False, "response": "Unknown URL"})
+
         conn = form.save(commit=False)
         requests = conn.get_requests()
         try:
