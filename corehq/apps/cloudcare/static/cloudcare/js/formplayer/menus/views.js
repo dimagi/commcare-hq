@@ -227,7 +227,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var appId = Util.currentUrlToObject().appId;
             var data = this.options.model.get('data');
             var html = data.map(function (x) {
-                return DOMPurify.sanitize(md.render(x));
+                return DOMPurify.sanitize(md.renderInline(x));
             });
             return {
                 data: data,
