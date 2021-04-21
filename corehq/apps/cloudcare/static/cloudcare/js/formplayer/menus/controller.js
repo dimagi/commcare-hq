@@ -176,11 +176,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
             var obj = {};
-            obj.data = DOMPurify.sanitize(md.render(details[i]));
-            obj.markdown = true;
+            obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
+            if (!obj.style.displayFormat) {
+                obj.html = DOMPurify.sanitize(md.render(details[i]));
+            }
             detailModel.push(obj);
         }
         var detailCollection = new Backbone.Collection();
