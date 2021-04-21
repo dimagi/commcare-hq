@@ -115,12 +115,11 @@ from corehq.apps.users.models import (
     Invitation,
     UserRole,
     WebUser,
-    BulkUploadResponseWrapper,
 )
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
 )
-from corehq.apps.users.views.utils import get_editable_role_choices
+from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups

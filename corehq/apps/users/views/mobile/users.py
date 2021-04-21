@@ -98,7 +98,7 @@ from corehq.apps.users.forms import (
     NewMobileWorkerForm,
     SetUserPasswordForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, BulkUploadResponseWrapper
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -113,7 +113,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.views import (
     BaseEditUserView,
     BaseUserSettingsView,
-    get_domain_languages,
+    get_domain_languages, BulkUploadResponseWrapper,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
