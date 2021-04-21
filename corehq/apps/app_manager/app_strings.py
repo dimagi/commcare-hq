@@ -160,8 +160,8 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.case_search_locale(module), trans(module.search_config.command_label)
                 yield id_strings.case_search_again_locale(module), trans(module.search_config.again_label)
             else:
-                yield id_strings.case_search_locale(module), trans(CaseSearch.command_label)
-                yield id_strings.case_search_again_locale(module), trans(CaseSearch.again_label)
+                yield id_strings.case_search_locale(module), trans(CaseSearch.command_label.default())
+                yield id_strings.case_search_again_locale(module), trans(CaseSearch.again_label.default())
 
             # icon and audio not yet available
             for prop in module.search_config.properties:
