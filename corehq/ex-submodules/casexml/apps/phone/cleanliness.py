@@ -48,11 +48,11 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
     """
     Updates cleanliness for all domains
     """
-    for domain in Domain.get_all():
-        if domain.use_livequery:
+    for domain_obj in Domain.get_all():
+        if domain_obj.use_livequery:
             continue
         try:
-            set_cleanliness_flags_for_domain(domain.name, force_full=force_full)
+            set_cleanliness_flags_for_domain(domain_obj.name, force_full=force_full)
         except InvalidDomainError as e:
             notify_exception(None, six.text_type(e))
 
