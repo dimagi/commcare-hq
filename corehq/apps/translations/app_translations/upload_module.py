@@ -108,7 +108,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if len(displays) != len(hints) or len(displays) != len(properties):
 
             message = _(
-                'Expected {expected_count} case_search_display and case_search_hint'
+                'Expected {expected_count} case_search_display and case_search_hint '
                 'properties in  menu {index}, found {actual_label_count} for case_search_display and '
                 '{actual_hint_count} for case_search_hint'
                 'No Case Search config properties for menu {index} were updated.'
