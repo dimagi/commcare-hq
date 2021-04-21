@@ -85,13 +85,19 @@ class TestRelatedCases(TestCase):
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
 
+        # a location in different domain that should not be present
+        create_domain("random-domain")
+        another_location_type = LocationType.objects.create(domain="random-domain", name="Top", code="top")
+        SQLLocation.objects.create(domain="random-domain", name="Top Location",
+                                   location_type=another_location_type)
+
         response = self._generate_restore(case_id, user)
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
         locations_content = b""
-        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id,
-                                                               SQLLocation.active_objects):
+        locations = SQLLocation.active_objects.filter(domain=self.domain)
+        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id, locations):
             locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
         self.assertIn(locations_content, response_content)
 
