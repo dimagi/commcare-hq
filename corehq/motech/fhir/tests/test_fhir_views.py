@@ -1,11 +1,12 @@
 from datetime import datetime
 from uuid import uuid4
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
+from corehq.apps.api.resources.auth import LoginAuthentication
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -186,6 +187,30 @@ class TestFHIRSearchView(BaseFHIRViewTest):
         )
 
 
+class ViewsPermissionsTests(BaseFHIRViewTest):
+
+    def test_api_key_authenticated(self):
+        url = reverse(
+            "fhir_get_view",
+            args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID],
+        )
+        request = _get_request(url, self.django_user, self.api_key.key)
+        is_authenticated = LoginAuthentication().is_authenticated(request)
+        self.assertTrue(is_authenticated)
+
+    def test_superuser_not_authenticated(self):
+        self.django_user.is_superuser = True
+        self.django_user.save()
+
+        url = reverse(
+            "fhir_get_view",
+            args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID],
+        )
+        request = _get_request(url, self.django_user)
+        is_authenticated = LoginAuthentication().is_authenticated(request)
+        self.assertFalse(is_authenticated)
+
+
 def _setup_cases(owner_id):
     submit_case_blocks([
         _get_caseblock(PERSON_CASE_ID, 'person', owner_id, {'first_name': 'Fred'}).as_text(),
@@ -224,3 +249,14 @@ def _setup_mappings():
     add_case_property_with_resource_property_path(person_case_type, 'first_name', patient_resource_type,
                                                   '$.name[0].given[0]')
     add_case_type_with_resource_type(DOMAIN, 'test', 'Observation')
+
+
+def _get_request(path, user, api_key=None):
+    if api_key:
+        extra = {'HTTP_AUTHORIZATION': f'ApiKey {USERNAME}:{api_key}'}
+    else:
+        extra = {}
+    request = RequestFactory().get(path, **extra)
+    request.domain = DOMAIN
+    request.user = user
+    return request
