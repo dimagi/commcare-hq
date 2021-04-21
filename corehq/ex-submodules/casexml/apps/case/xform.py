@@ -53,8 +53,8 @@ class CaseProcessingResult(object):
         """
         Updates any dirtiness flags in the database.
         """
-        domain_obj = Domain.get_by_name(self.domain)
-        if self.domain and domain_obj and not domain_obj.use_livequery:
+        domain_obj = Domain.get_by_name(self.domain) if self.domain else None
+        if domain_obj and not domain_obj.use_livequery:
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
