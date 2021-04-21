@@ -465,15 +465,20 @@ def toggles_dict(username=None, domain=None):
                                                     t.enabled(domain, NAMESPACE_DOMAIN))}
 
 
-def toggle_values_by_name(username=None, domain=None):
+def toggle_values_by_name(username=None, domain=None, include_disabled=True):
     """
-    Loads all toggles into a dictionary for use in JS
+    Loads all toggles into a dictionary for use in JS & Formplayer
+    """
+    all_by_name = {
+        toggle_name: (toggle.enabled(username, NAMESPACE_USER) or toggle.enabled(domain, NAMESPACE_DOMAIN))
+        for toggle_name, toggle in all_toggles_by_name().items()
+    }
+    if include_disabled:
+        return all_by_name
 
-    all toggles (including those not enabled) are included
-    """
-    return {toggle_name: (toggle.enabled(username, NAMESPACE_USER) or
-                          toggle.enabled(domain, NAMESPACE_DOMAIN))
-            for toggle_name, toggle in all_toggles_by_name().items()}
+    return {
+        name: value for name, value in all_by_name.items() if value
+    }
 
 
 def _ensure_valid_namespaces(namespaces):

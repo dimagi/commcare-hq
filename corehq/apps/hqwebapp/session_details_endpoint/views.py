@@ -11,7 +11,7 @@ from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.middleware import TimeoutMiddleware
-from corehq import toggles
+from corehq import toggles, feature_previews
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -74,5 +74,7 @@ class SessionDetailsView(View):
             'superUser': user.is_superuser,
             'authToken': None,
             'domains': list(domains),
-            'anonymous': False
+            'anonymous': False,
+            'enabled_toggles': toggles.toggle_values_by_name(user.username, domain, include_disabled=False),
+            'enabled_previews': feature_previews.preview_values_by_name(domain, include_disabled=False)
         })
