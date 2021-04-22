@@ -45,12 +45,10 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
     if is_commcarecase(contact) and form.requires_case():
         session_data["additional_filters"] = {
             "case_id": case_id,
-            "footprint": "true" if form.uses_parent_case() else "false",
         }
     elif isinstance(contact, CouchUser):
         session_data["additional_filters"] = {
             "user_id": contact.get_id,
-            "footprint": "true"
         }
 
     kwargs = {}
