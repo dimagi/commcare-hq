@@ -892,7 +892,8 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def setup_users(self):
         self.user1 = WebUser.create(self.domain_name, 'hello@world.com', 'password', None, None,
-                                    email='hello@world.com', is_superuser=False)
+                                    email='hello@world.com', is_superuser=False, first_name='Sally',
+                                    last_name='Sitwell')
         self.uploading_user = WebUser.create(self.domain_name, 'upload@user.com', 'password', None, None,
                                              email='upload@user.com', is_superuser=True)
 
@@ -944,18 +945,36 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertIsNone(self.user_invite)
 
-    def test_empty_user_name(self):
+    def test_upload_existing_web_user(self):
         self.setup_users()
+        WebUser.create(self.other_domain.name, 'existing@user.com', 'abc', None, None, email='existing@user.com')
+        self.assertIsNone(Invitation.objects.filter(email='existing@user.com').first())
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(first_name=None, last_name=None)],
+            [{'username': 'existing@user.com',
+              'status': 'Active User',
+              'email': 'existing@user.com',
+              'role': self.role.name}],
             [],
             self.uploading_user,
             mock.MagicMock(),
             True
         )
-        self.assertEqual(self.user.first_name, "")
-        self.assertEqual(self.user.last_name, "")
+        self.assertIsNotNone(Invitation.objects.filter(email='existing@user.com').first())
+
+    def test_web_user_user_name_change(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(first_name='', last_name='')],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        # should not be changed
+        self.assertNotEqual(self.user.first_name, "")
+        self.assertNotEqual(self.user.last_name, "")
 
     def test_upper_case_email(self):
         self.setup_users()
@@ -1025,22 +1044,10 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user_invite.get_role_name(), self.other_role.name)
 
-    def test_blank_is_active(self):
-        self.setup_users()
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(is_active='')],
-            [],
-            self.uploading_user,
-            mock.MagicMock(),
-            True
-        )
-        self.assertTrue(self.user.is_active)
-
     def test_remove_user(self):
         self.setup_users()
         username = 'a@a.com'
-        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
+        WebUser.create(self.domain.name, username, 'password', None, None)
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username='a@a.com', remove='True')],
@@ -1119,3 +1126,63 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertIsNotNone(Invitation.objects.filter(email='123@email.com').first())
         self.assertEqual(Invitation.objects.filter(email='123@email.com').first().domain, self.other_domain.name)
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_web_user_location_add(self):
+        self.setup_users()
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        membership = self.user.get_domain_membership(self.domain_name)
+        # test that first location should be primary location
+        self.assertEqual(membership.location_id, self.loc1._id)
+        # test for multiple locations
+        self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], membership.assigned_location_ids)
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_web_user_location_remove(self):
+        self.setup_users()
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(location_code=[], user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        membership = self.user.get_domain_membership(self.domain_name)
+        self.assertEqual(membership.location_id, None)
+        self.assertListEqual(membership.assigned_location_ids, [])
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_invite_location_add(self):
+        self.setup_users()
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        self.assertEqual(self.user_invite.supply_point, self.loc1._id)
+
+    def setup_locations(self):
+        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+        self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
