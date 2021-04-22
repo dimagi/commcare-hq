@@ -225,13 +225,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
-            var data = this.options.model.get('data');
-            var html = data.map(function (x) {
-                return DOMPurify.sanitize(md.renderInline(x));
+            var data = this.options.model.get('data').map(function (datum) {
+                return {
+                    raw: datum,
+                    html: DOMPurify.sanitize(md.renderInline(datum)),
+                };
             });
             return {
                 data: data,
-                html: html,
                 styles: this.options.styles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
