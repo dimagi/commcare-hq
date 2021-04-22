@@ -902,7 +902,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     @property
     def user_invite(self):
-        return Invitation.objects.filter(email='invited@user.com').first()
+        return Invitation.objects.filter(domain=self.domain_name, email='invited@user.com').first()
 
     def _get_spec(self, delete_keys=None, **kwargs):
         spec = {
@@ -1051,6 +1051,42 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
+        self.assertIsNone(Invitation.objects.filter(domain=self.domain_name, email=username).first())
+
+    def test_remove_invited_user(self):
+        Invitation.objects.all().delete()
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec()],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        self.assertIsNotNone(self.user_invite)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(remove='True')],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        self.assertIsNone(self.user_invite)
+
+    def test_remove_uploading_user(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username=self.uploading_user.username, remove='True')],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            True
+        )
+        web_user = WebUser.get_by_username(self.uploading_user.username)
+        self.assertTrue(web_user.is_member_of(self.domain.name))
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_upload_invite(self, mock_send_activation_email):

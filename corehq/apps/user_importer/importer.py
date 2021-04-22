@@ -661,13 +661,13 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             check_can_upload_web_users(upload_user)
 
             user = CouchUser.get_by_username(username, strict=True)
-            if remove:
-                remove_web_user(domain, user, username, upload_user, is_web_upload=True)
             if user:
                 if username and user.username != username:
                     raise UserUploadError(_(
                         'Changing usernames is not supported: %(username)r to %(new_username)r'
                     ) % {'username': user.username, 'new_username': username})
+                if remove:
+                    remove_web_user(domain, user, username, upload_user, is_web_upload=True)
                 else:
                     membership = user.get_domain_membership(domain)
                     if membership:
@@ -692,24 +692,28 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 status_row['flag'] = 'updated'
 
             else:
-                if status == "Invited":
-                    try:
-                        invitation = Invitation.objects.get(domain=domain, email=username)
-                    except Invitation.DoesNotExist:
-                        raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
-                                                " {web_user} is not yet invited.").format(web_user=username))
-                    if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
-                        raise UserUploadError(_("The email has bounced for this user's invite. Please try "
-                                                "again with a different username").format(web_user=username))
-                user_invite_loc_id = None
-                if domain_info.can_assign_locations and location_codes is not None:
-                    # set invite location to first item in location_codes
-                    if len(location_codes) > 0:
-                        user_invite_loc = get_location_from_site_code(location_codes[0], domain_info.location_cache)
-                        user_invite_loc_id = user_invite_loc.location_id
-                create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
-                                                 user_invite_loc_id)
-                status_row['flag'] = 'invited'
+                if remove:
+                    remove_invited_web_user(domain, username)
+                    status_row['flag'] = 'updated'
+                else:
+                    if status == "Invited":
+                        try:
+                            invitation = Invitation.objects.get(domain=domain, email=username)
+                        except Invitation.DoesNotExist:
+                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
+                                                    " {web_user} is not yet invited.").format(web_user=username))
+                        if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
+                            raise UserUploadError(_("The email has bounced for this user's invite. Please try "
+                                                    "again with a different username").format(web_user=username))
+                    user_invite_loc_id = None
+                    if domain_info.can_assign_locations and location_codes is not None:
+                        # set invite location to first item in location_codes
+                        if len(location_codes) > 0:
+                            user_invite_loc = get_location_from_site_code(location_codes[0], domain_info.location_cache)
+                            user_invite_loc_id = user_invite_loc.location_id
+                    create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                     user_invite_loc_id)
+                    status_row['flag'] = 'invited'
 
             if role_updated:
                 log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
