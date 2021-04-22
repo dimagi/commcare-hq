@@ -2,7 +2,6 @@ from functools import cmp_to_key
 
 from dimagi.utils.logging import notify_exception
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.smsforms.api import (
     FormplayerInterface,
