@@ -229,7 +229,7 @@ faker==5.0.2
     # via -r base-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
-flake8==3.8.4
+flake8==3.9.1
     # via -r dev-requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
@@ -415,13 +415,13 @@ py-kissmetrics==1.1.0
     # via -r base-requirements.in
 pycco==0.5.1
     # via -r base-requirements.in
-pycodestyle==2.6.0
+pycodestyle==2.7.0
     # via flake8
 pycparser==2.20
     # via cffi
 pycryptodome==3.9.9
     # via -r base-requirements.in
-pyflakes==2.2.0
+pyflakes==2.3.1
     # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
