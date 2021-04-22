@@ -1,4 +1,5 @@
 import io
+import random
 
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
@@ -143,6 +144,8 @@ def import_build(request):
             return json_response({
                 'reason': 'build_number must be an int'
             }, status_code=400)
+    else:
+        build_number = random.randint(0, 100)
 
     session = requests.session()
 
