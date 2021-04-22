@@ -95,13 +95,13 @@ hqDefine('builds/js/edit-builds', [
     $("#menu-form").koApplyBindings(buildsMenu);
 
     function legacySupportViewModel() {
-         var self = {};
-         self.legacy_support_checked = ko.observable(false);
+        var self = {};
+        self.legacy_support_checked = ko.observable(false);
 
-         self.toggle_show_legacy = function() {
-               self.legacy_support_checked(!self.legacy_support_checked());
-         };
-         return self;
+        self.toggle_show_legacy = function() {
+            self.legacy_support_checked(!self.legacy_support_checked());
+        };
+        return self;
     }
     $("#legacy-support").koApplyBindings(new legacySupportViewModel());
 
