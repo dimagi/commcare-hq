@@ -51,7 +51,7 @@ class BaseFHIRViewTest(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def _client_get(self, path):
+    def _get_response(self, path):
         return self.client.get(
             path,
             HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}'
@@ -62,14 +62,14 @@ class TestFHIRGetView(BaseFHIRViewTest):
 
     def test_flag_not_enabled(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID])
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", TEST_CASE_ID])
         url = url.replace(FHIR_VERSION, 'A4')
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -79,14 +79,14 @@ class TestFHIRGetView(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     def test_missing_case_id(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", 'just-a-case-id'])
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_auth_bad_resource(self):
         # requesting for a patient i.e person but case id of a test case type
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", TEST_CASE_ID])
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -96,7 +96,7 @@ class TestFHIRGetView(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     def test_get(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID])
-        response = self._client_get(url)
+        response = self._get_response(url)
         response_json = response.json()
         self.assertEqual(
             response_json,
@@ -111,14 +111,14 @@ class TestFHIRGetView(BaseFHIRViewTest):
 class TestFHIRSearchView(BaseFHIRViewTest):
     def test_flag_not_enabled(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
         url = url.replace(FHIR_VERSION, 'A4')
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -128,7 +128,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     def test_no_patient_id(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"])
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -138,7 +138,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     def test_deleted_case(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={DELETED_CASE_ID}"
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -148,7 +148,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     def test_missing_case_id(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + "?patient_id=just-a-case-id"
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -159,7 +159,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
     def test_no_case_types_for_resource_type(self):
         url = reverse("fhir_search",
                       args=[DOMAIN, FHIR_VERSION, "DiagnosticReport"]) + f"?patient_id={PERSON_CASE_ID}"
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(),
@@ -169,7 +169,7 @@ class TestFHIRSearchView(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     def test_search(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
-        response = self._client_get(url)
+        response = self._get_response(url)
         self.assertEqual(
             response.json(),
             {
