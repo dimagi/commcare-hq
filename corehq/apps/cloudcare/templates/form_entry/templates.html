@@ -150,7 +150,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
-                <p align="left" data-bind="text: help"></p>
+                <p class="webapp-markdown-output" align="left" data-bind="html: help"></p>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</button>
@@ -382,6 +382,23 @@
         visible: helpText(),
     "></span>
 </script>
+<script type="text/html" id="multidropdown-entry-ko-template">
+  <select multiple class="form-control" data-bind="
+        foreach: options,
+        selectedOptions: rawAnswer,
+        attr: {
+            id: entryId,
+            'aria-required': $parent.required() ? 'true' : 'false',
+        },
+        valueAllowUnset: true,
+        ">
+    <option data-bind="value: id, text: text"></option>
+  </select>
+  <span class="help-block type" data-bind="
+        text: helpText(),
+        visible: helpText(),
+    "></span>
+</script>
 <script type="text/html" id="choice-label-entry-ko-template">
   <div class="row">
     <!-- ko foreach: choices -->
@@ -435,7 +452,7 @@
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>

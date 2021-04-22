@@ -8,6 +8,7 @@ from django.db import transaction
 
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
 from corehq.util.couchdb_management import couch_config
+from corehq.util.django_migrations import skip_on_fresh_install
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,7 @@ class PopulateSQLCommand(BaseCommand):
         return None
 
     @classmethod
+    @skip_on_fresh_install
     def migrate_from_migration(cls, apps, schema_editor):
         """
             Should only be called from within a django migration.

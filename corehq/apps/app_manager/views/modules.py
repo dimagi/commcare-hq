@@ -72,7 +72,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
 )
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
 from corehq.apps.app_manager.util import (
     generate_xmlns,
     is_usercase_in_use,
@@ -100,7 +100,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -188,6 +188,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
+    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
@@ -198,7 +199,9 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
-            'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
+            'item_lists': item_lists,
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'default_search': module.search_config.default_search if module_offers_search(module) else False,
@@ -638,7 +641,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit("name"):
         name = request.POST.get("name", None)
         module["name"][lang] = name
-        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-module_name': clean_trans(module.name, [lang])}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):

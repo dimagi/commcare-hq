@@ -9,7 +9,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import flag_enabled
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 
 
 class AutoCloseExtensionsTest(TestCase):

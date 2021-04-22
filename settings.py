@@ -460,6 +460,7 @@ EMAIL_USE_TLS = True
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
+SAAS_OPS_EMAIL = "saas-ops@example.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
@@ -746,21 +747,10 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_VIEWS = [
-    'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.users.AuthenticateAs',
-]
-
-AUDIT_MODULES = [
-    'corehq.apps.reports',
-    'corehq.apps.userreports',
-    'corehq.apps.data',
-    'corehq.apps.registration',
-    'corehq.apps.hqadmin',
-    'corehq.apps.accounting',
-    'corehq.apps.cloudcare',
-    'tastypie',
-]
+AUDIT_ALL_VIEWS = False
+AUDIT_VIEWS = []
+AUDIT_MODULES = []
+AUDIT_ADMIN_VIEWS = False
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -843,14 +833,25 @@ ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
 
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+
+
+def _pkce_required(client_id):
+    from corehq.apps.hqwebapp.models import pkce_required
+    return pkce_required(client_id)
+
+
 OAUTH2_PROVIDER = {
     # until we have clearer project-level checks on this, just expire the token every
     # 15 minutes to match HIPAA constraints.
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
+    'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
     },
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 
 
@@ -1220,7 +1221,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(task_name)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'formplayer_timing': {
             'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
@@ -1242,8 +1243,11 @@ LOGGING = {
         },
     },
     'filters': {
-        'hqcontext': {
+        'hqrequest': {
             '()': 'corehq.util.log.HQRequestFilter',
+        },
+        'celerytask': {
+            '()': 'corehq.util.log.CeleryTaskFilter',
         },
         'exclude_static': {
             '()': 'corehq.util.log.SuppressStaticLogs',
@@ -1272,7 +1276,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'couch-request-formatter',
-            'filters': ['hqcontext'],
+            'filters': ['hqrequest', 'celerytask'],
             'filename': COUCH_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs

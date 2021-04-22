@@ -2,10 +2,9 @@ import datetime
 import json
 
 import pytz
-from django.core import cache
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
-from django.utils import html
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 
 import dateutil
@@ -170,8 +169,10 @@ class CaseDisplay:
     def case_link(self):
         url = self.case_detail_url
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (
-                self.case_detail_url, html.escape(self.case_name_display)))
+            return format_html(
+                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+                self.case_detail_url,
+                self.case_name_display)
         else:
             return "%s (bad ID format)" % self.case_name
 
@@ -205,7 +206,7 @@ class CaseDisplay:
     def owner_display(self):
         owner_type, owner = self.owner
         if owner_type == 'group':
-            return '<span class="label label-default">%s</span>' % owner['name']
+            return format_html('<span class="label label-default">{}</span>', owner['name'])
         else:
             return owner['name']
     owner_name = owner_display
@@ -269,6 +270,7 @@ class SafeCaseDisplay(object):
             link = absolute_reverse('case_data', args=[self.case.get("domain"), self.case.get('_id')])
         except NoReverseMatch:
             return _("No link found")
-        return html.mark_safe(
-            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("View Case"))
-        )
+        return format_html(
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+            link,
+            _("View Case"))

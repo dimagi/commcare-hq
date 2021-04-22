@@ -101,7 +101,7 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
 )
 from corehq.elastic import ESError
@@ -981,7 +981,7 @@ def move_child_modules_after_parents(request, domain, app_id):
 
 @require_GET
 @require_can_edit_apps
-def drop_user_case(request, domain, app_id):
+def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)
     for module in app.get_modules():
         for form in module.get_forms():

@@ -17,7 +17,7 @@ from corehq.apps.dump_reload.sql.dump import (
 )
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )

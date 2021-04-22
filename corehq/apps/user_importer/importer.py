@@ -41,6 +41,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -49,7 +50,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain', 'remove', 'last_access_date (read only)',
+    'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
     'last_login (read only)', 'last_name', 'status', 'first_name',
 ]) | required_headers
 old_headers = {
@@ -58,7 +59,7 @@ old_headers = {
 }
 
 
-def check_headers(user_specs, is_web_upload=False):
+def check_headers(user_specs, domain, is_web_upload=False):
     messages = []
     headers = set(user_specs.fieldnames)
 
@@ -70,6 +71,10 @@ def check_headers(user_specs, is_web_upload=False):
                     old_name=old_name, new_name=new_name
                 ))
             headers.discard(old_name)
+
+    if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        allowed_headers.add('domain')
+
     illegal_headers = headers - allowed_headers
     if is_web_upload:
         missing_headers = web_required_headers - headers

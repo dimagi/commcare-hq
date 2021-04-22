@@ -8,12 +8,11 @@ from casexml.apps.phone.utils import (
     GLOBAL_USER_ID,
     get_or_cache_global_fixture,
 )
-
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
-
+from corehq.util.metrics import metrics_histogram
 from .utils import get_index_schema_node
 
 
@@ -49,6 +48,32 @@ def item_lists_by_domain(domain):
     return ret
 
 
+def item_lists_by_app(app):
+    LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
+    REPORT_FIXTURE = 'report_fixture'
+    lookup_lists = item_lists_by_domain(app.domain).copy()
+    for item in lookup_lists:
+        item['fixture_type'] = LOOKUP_TABLE_FIXTURE
+
+    report_configs = [
+        report_config
+        for module in app.get_report_modules()
+        for report_config in module.report_configs
+    ]
+    ret = list()
+    for config in report_configs:
+        uri = 'jr://fixture/commcare-reports:%s' % (config.uuid)
+        ret.append({
+            'id': config.uuid,
+            'uri': uri,
+            'path': "/rows/row",
+            'name': config.header.get(app.default_language),
+            'structure': {},
+            'fixture_type': REPORT_FIXTURE,
+        })
+    return lookup_lists + ret
+
+
 class ItemListsProvider(FixtureProvider):
     id = 'item-list'
 
@@ -62,10 +87,24 @@ class ItemListsProvider(FixtureProvider):
             else:
                 user_types[data_type._id] = data_type
         items = []
+        user_items_count = 0
         if global_types:
-            items.extend(self.get_global_items(global_types, restore_state))
+            global_items = self.get_global_items(global_types, restore_state)
+            items.extend(global_items)
         if user_types:
-            items.extend(self.get_user_items(user_types, restore_user))
+            user_items, user_items_count = self.get_user_items_and_count(user_types, restore_user)
+            items.extend(user_items)
+
+        metrics_histogram(
+            'commcare.fixtures.item_lists.user',
+            user_items_count,
+            bucket_tag='items',
+            buckets=[1, 100, 1000, 10000, 30000, 100000, 300000, 1000000],
+            bucket_unit='',
+            tags={
+                'domain': restore_user.domain
+            }
+        )
         return items
 
     def get_global_items(self, global_types, restore_state):
@@ -81,19 +120,21 @@ class ItemListsProvider(FixtureProvider):
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
-    def get_user_items(self, user_types, restore_user):
+    def get_user_items_and_count(self, user_types, restore_user):
+        user_items_count = 0
         items_by_type = defaultdict(list)
         for item in restore_user.get_fixture_data_items():
             data_type = user_types.get(item.data_type_id)
             if data_type:
                 self._set_cached_type(item, data_type)
                 items_by_type[data_type].append(item)
+                user_items_count += 1
 
         def get_items_by_type(data_type):
             return sorted(items_by_type.get(data_type, []),
                           key=attrgetter('sort_key'))
 
-        return self._get_fixtures(user_types, get_items_by_type, restore_user.user_id)
+        return self._get_fixtures(user_types, get_items_by_type, restore_user.user_id), user_items_count
 
     def _set_cached_type(self, item, data_type):
         # set the cached version used by the object so that it doesn't

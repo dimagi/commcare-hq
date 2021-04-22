@@ -36,7 +36,7 @@ from corehq.apps.userreports.util import (
     number_of_report_builder_reports,
     number_of_ucr_reports,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )

@@ -126,7 +126,7 @@ class Command(BaseCommand):
         Role(slug=privileges.REPORT_BUILDER_5, name='Report Builder, 5 report limit', description=''),
         Role(slug=privileges.REPORT_BUILDER_15, name='Report Builder, 15 report limit', description=''),
         Role(slug=privileges.REPORT_BUILDER_30, name='Report Builder, 30 report limit', description=''),
-        Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
+        Role(slug=privileges.USERCASE, name='User Case Management', description=''),
         Role(slug=privileges.DATA_CLEANUP, name='Data Management',
              description='Tools for cleaning up data, including editing submissions and archiving forms.'),
         Role(slug=privileges.TEMPLATED_INTENTS, name='Templated Intents',

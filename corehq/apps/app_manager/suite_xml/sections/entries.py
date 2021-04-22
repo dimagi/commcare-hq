@@ -28,7 +28,7 @@ from corehq.apps.app_manager.xpath import (
     CaseIDXPath,
     ItemListFixtureXpath,
     ProductInstanceXpath,
-    UserCaseXPath,
+    UsercaseXPath,
     XPath,
     interpolate_xpath,
     session_var,
@@ -298,7 +298,7 @@ class EntriesHelper(object):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
-            case = UserCaseXPath().case()
+            case = UsercaseXPath().case()
             datums.append(FormDatumMeta(
                 datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
                 case_type=USERCASE_TYPE,
@@ -511,7 +511,7 @@ class EntriesHelper(object):
                 )
             ]
         elif auto_select.mode == AUTO_SELECT_USERCASE:
-            case = UserCaseXPath().case()
+            case = UsercaseXPath().case()
             return SessionDatum(
                 id=action.case_session_var,
                 function=case.slash('@case_id')

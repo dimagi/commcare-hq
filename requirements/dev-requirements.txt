@@ -79,8 +79,10 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
-cryptography==3.4.6
-    # via pyopenssl
+cryptography==3.4.7
+    # via
+    #   jwcrypto
+    #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
 cssselect2==0.3.0
@@ -129,8 +131,6 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.1.4
     # via -r base-requirements.in
-django-debug-toolbar==3.1
-    # via -r dev-requirements.in
 django-extensions==3.1.1
     # via -r dev-requirements.in
 django-formtools==2.1
@@ -141,7 +141,7 @@ django-logentry-admin==1.0.6
     # via -r base-requirements.in
 https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
-django-oauth-toolkit==1.3.2
+django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
 django-otp==0.9.4
     # via
@@ -175,14 +175,13 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.19
+django==2.2.20
     # via
     #   -r base-requirements.in
     #   django-angular
     #   django-appconf
     #   django-braces
     #   django-bulk-update
-    #   django-debug-toolbar
     #   django-formtools
     #   django-logentry-admin
     #   django-oauth-toolkit
@@ -228,15 +227,13 @@ fakecouch==0.0.15
     # via -r test-requirements.in
 faker==5.0.2
     # via -r base-requirements.in
-fancycompleter==0.9.1
-    # via pdbpp
 fixture==1.5.11
     # via -r dev-requirements.in
 flake8==3.8.4
     # via -r dev-requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
-freezegun==0.3.15
+freezegun==1.1.0
     # via -r test-requirements.in
 gevent==1.4.0
     # via
@@ -250,6 +247,10 @@ gipc==1.1.0
     # via -r base-requirements.in
 git-build-branch==0.1.10
     # via -r dev-requirements.in
+gitdb==4.0.7
+    # via gitpython
+gitpython==3.1.14
+    # via transifex-client
 gnureadline==8.0.0
     # via -r dev-requirements.in
 graphviz==0.16
@@ -277,16 +278,13 @@ importlib-metadata==2.0.0
     # via
     #   flake8
     #   jsonschema
+    #   pep517
 intervaltree==3.1.0
     # via ddtrace
-ipdb==0.11
-    # via -r dev-requirements.in
 ipython-genutils==0.2.0
     # via traitlets
 ipython==7.16.1
-    # via
-    #   -r dev-requirements.in
-    #   ipdb
+    # via -r dev-requirements.in
 iso8601==0.1.13
     # via -r base-requirements.in
 isodate==0.6.0
@@ -320,6 +318,8 @@ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/whee
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
+jwcrypto==0.8
+    # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==4.2.2.post1
@@ -373,21 +373,21 @@ parso==0.7.1
     # via jedi
 pbr==5.5.0
     # via mock
-pdbpp==0.10.2
-    # via -r dev-requirements.in
+pep517==0.10.0
+    # via pip-tools
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==7.2.0
+pillow==8.1.2
     # via
     #   -r base-requirements.in
     #   cairosvg
     #   django-simple-captcha
     #   reportlab
-pip-tools==5.5.0
+pip-tools==6.1.0
     # via -r test-requirements.in
 ply==3.11
     # via
@@ -425,11 +425,10 @@ pyflakes==2.2.0
     # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.7.1
+pygments==2.8.1
     # via
     #   -r base-requirements.in
     #   ipython
-    #   pdbpp
     #   pycco
     #   sphinx
 pygooglechart==0.4.0
@@ -444,8 +443,6 @@ pyparsing==2.4.7
     # via packaging
 pyphen==0.9.5
     # via weasyprint
-pyrepl==0.9.0
-    # via fancycompleter
 pyrsistent==0.17.3
     # via jsonschema
 pysocks==1.7.1
@@ -470,6 +467,8 @@ python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
+python-slugify==4.0.1
+    # via transifex-client
 python-termstyle==0.1.10
     # via sniffer
 python3-saml==1.9.0
@@ -495,7 +494,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.0.6
     # via django-compressor
-recommonmark==0.6.0
+recommonmark==0.7.1
     # via -r dev-requirements.in
 redis==3.5.3
     # via
@@ -522,6 +521,7 @@ requests==2.24.0
     #   sphinx
     #   stripe
     #   tinys3
+    #   transifex-client
     #   twilio
 rjsmin==1.1.0
     # via django-compressor
@@ -546,6 +546,7 @@ six==1.15.0
     #   -r base-requirements.in
     #   django-braces
     #   django-compressor
+    #   django-oauth-toolkit
     #   django-simple-captcha
     #   django-statici18n
     #   django-transfer
@@ -554,7 +555,6 @@ six==1.15.0
     #   ethiopian-date-converter
     #   eulxml
     #   fixture
-    #   freezegun
     #   ghdiff
     #   html5lib
     #   isodate
@@ -580,6 +580,8 @@ six==1.15.0
     #   unittest2
 smartypants==2.0.1
     # via pycco
+smmap==4.0.0
+    # via gitdb
 sniffer==0.4.1
     # via -r dev-requirements.in
 snowballstemmer==2.0.0
@@ -622,9 +624,7 @@ sqlalchemy==1.3.19
     #   sqlagg
     #   sqlalchemy-postgres-copy
 sqlparse==0.3.1
-    # via
-    #   django
-    #   django-debug-toolbar
+    # via django
 stripe==2.54.0
     # via -r base-requirements.in
 suds-jurko==0.6
@@ -637,6 +637,7 @@ text-unidecode==1.3
     # via
     #   -r base-requirements.in
     #   faker
+    #   python-slugify
 tinycss2==1.0.2
     # via
     #   cairosvg
@@ -644,11 +645,13 @@ tinycss2==1.0.2
     #   weasyprint
 tinys3==0.1.12
     # via -r base-requirements.in
+toml==0.10.2
+    # via pep517
 traceback2==1.4.0
     # via unittest2
 traitlets==4.3.3
     # via ipython
-transifex-client==0.12.4
+transifex-client==0.14.2
     # via -r dev-requirements.in
 tropo-webapi-python==0.1.3
     # via -r base-requirements.in
@@ -687,8 +690,6 @@ werkzeug==1.0.1
     # via -r base-requirements.in
 wheel==0.36.2
     # via -r dev-requirements.in
-wmctrl==0.3
-    # via pdbpp
 wrapt==1.12.1
     # via deprecated
 xlrd==1.0.0
@@ -697,10 +698,12 @@ xlwt==1.3.0
     # via -r base-requirements.in
 xmlsec==1.3.9
     # via python3-saml
-yapf==0.30.0
+yapf==0.31.0
     # via -r dev-requirements.in
 zipp==3.2.0
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.0.1
@@ -711,7 +714,6 @@ setuptools==50.3.0
     #   cssselect2
     #   django-websocket-redis
     #   gunicorn
-    #   ipdb
     #   ipython
     #   jsonschema
     #   protobuf

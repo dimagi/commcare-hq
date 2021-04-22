@@ -28,12 +28,12 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
 
 
-@task(queue='background_queue')
+@task(queue='linked_domain_queue')
 def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
     pull_missing_multimedia_for_app_and_notify(domain, app_id, email)
 
 
-@task(queue='background_queue')
+@task(queue='linked_domain_queue')
 def push_models(master_domain, models, linked_domains, build_apps, username):
     ReleaseManager(master_domain, username).release(models, linked_domains, build_apps)
 
@@ -199,7 +199,7 @@ The following linked project spaces received content:
         return (html, text)
 
 
-@task(queue='background_queue')
+@task(queue='linked_domain_queue')
 def release_domain(master_domain, linked_domain, username, models, build_apps=False):
     manager = ReleaseManager(master_domain, username)
 
@@ -243,7 +243,7 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
     return manager.results()
 
 
-@task(queue='background_queue')
+@task(queue='linked_domain_queue')
 def send_linked_domain_release_email(results, master_domain, username, models, linked_domains):
     manager = ReleaseManager(master_domain, username)
 

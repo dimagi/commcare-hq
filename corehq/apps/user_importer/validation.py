@@ -6,7 +6,7 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
-from corehq.apps.users.dbaccessors.all_commcare_users import get_existing_usernames
+from corehq.apps.users.dbaccessors import get_existing_usernames
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 

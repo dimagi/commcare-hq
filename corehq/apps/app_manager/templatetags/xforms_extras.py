@@ -32,8 +32,13 @@ def _create_empty_indicator(lang):
     return ''
 
 
-@register.filter
-def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, strip_tags=False):
+def _trans(name,
+        langs=None,
+        include_lang=True,
+        use_delim=True,
+        prefix=False,
+        strip_tags=False,
+        generates_html=False):
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
@@ -69,22 +74,42 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, str
         affix = html.strip_tags(affix)
 
     pattern = '{affix}{name}' if prefix else '{name}{affix}'
-    return format_html(pattern, affix=affix, name=n)
+    if generates_html:
+        return format_html(pattern, affix=affix, name=n)
+    else:
+        return pattern.format(affix=affix, name=n)
+
+
+@register.filter(is_safe=True)
+def trans(name, langs=["default"]):
+    """
+    Generates a translation in the form of 'Translation [language] '
+    """
+    return _trans(name, langs)
 
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return trans(name, langs, use_delim=False, strip_tags=True) or EMPTY_LABEL
+    """
+    Generates an HTML-friendly translation, where the language is included as markup
+    i.e. 'Translation <span>language</span> '
+    """
+    return _trans(name, langs, use_delim=False, strip_tags=True, generates_html=True) or EMPTY_LABEL
 
 
 @register.filter
 def html_trans_prefix(name, langs=["default"]):
-    return trans(name, langs, use_delim=False, prefix=True) or EMPTY_LABEL
+    """
+    Generates an HTML-friendly translation, where the language markup is prepended
+    i.e. '<span>language</span> Translation'
+    """
+    return _trans(name, langs, use_delim=False, prefix=True, generates_html=True) or EMPTY_LABEL
 
 
-@register.filter
-def html_trans_prefix_delim(name, langs=["default"]):
-    return trans(name, langs, use_delim=True, prefix=True) or EMPTY_LABEL
+@register.filter(is_safe=True)
+def clean_trans(name, langs=None):
+    """Produces a simple translation without any language identifier"""
+    return _trans(name, langs=langs, include_lang=False)
 
 
 @register.filter
@@ -170,8 +195,3 @@ def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True):
             break
     options = {key: html.escapejs(value) for (key, value) in options.items()}
     return options
-
-
-@register.filter
-def clean_trans(name, langs=None):
-    return trans(name, langs=langs, include_lang=False)

@@ -15,7 +15,6 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
 from corehq.util.quickcache import quickcache
@@ -82,18 +81,11 @@ def select(request, do_not_redirect=False, next_view=None):
 
 @login_required
 def accept_all_invitations(request):
-    def _invite(invitation, user):
-        user.add_as_web_user(invitation.domain, role=invitation.role,
-                             location_id=invitation.supply_point, program_id=invitation.program)
-        invitation.is_accepted = True
-        invitation.save()
-        send_confirmation_email(invitation)
-
     user = request.couch_user
     invites = Invitation.by_email(user.username)
     for invitation in invites:
         if not invitation.is_expired:
-            _invite(invitation, user)
+            invitation.accept_invitation_and_join_domain(user)
             messages.success(request, _(f'You have been added to the "{invitation.domain}" project space.'))
     return HttpResponseRedirect(reverse('domain_select_redirect'))
 
