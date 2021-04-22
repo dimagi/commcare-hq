@@ -22,7 +22,7 @@ from .models import SQLXFormsSession
 COMMCONNECT_DEVICE_ID = "commconnect"
 
 
-def start_session(session, domain, contact, app, module, form, case_id=None, yield_responses=False,
+def start_session(session, domain, contact, app, form, case_id=None, yield_responses=False,
                   case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
