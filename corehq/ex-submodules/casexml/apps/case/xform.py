@@ -152,7 +152,7 @@ def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
     if domain:
         domain_obj = Domain.get_by_name(domain)
-        if domain_obj and domain.use_livequery:
+        if domain_obj and domain_obj.use_livequery:
             return []
 
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
