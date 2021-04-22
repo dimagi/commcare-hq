@@ -547,7 +547,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     check_can_upload_web_users(upload_user)
                     current_user = CouchUser.get_by_username(web_user)
                     if remove_web_user:
-                        remove_web_user(domain, user, username, upload_user)
+                        remove_web_user_from_domain(domain, current_user, username, upload_user)
                     else:
                         check_user_role(username, role)
                         if not current_user and is_account_confirmed:
@@ -655,7 +655,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             if user:
                 check_changing_username(user, username)
                 if remove:
-                    remove_web_user(domain, user, username, upload_user, is_web_upload=True)
+                    remove_web_user_from_domain(domain, user, username, upload_user, is_web_upload=True)
                 else:
                     membership = user.get_domain_membership(domain)
                     if membership:
@@ -744,7 +744,7 @@ def remove_invited_web_user(domain, username):
     invitation.delete()
 
 
-def remove_web_user(domain, user, username, upload_user, is_web_upload=False):
+def remove_web_user_from_domain(domain, user, username, upload_user, is_web_upload=False):
     if not user or not user.is_member_of(domain):
         if is_web_upload:
             remove_invited_web_user(domain, username)
