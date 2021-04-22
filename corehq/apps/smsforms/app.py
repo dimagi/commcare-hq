@@ -38,7 +38,8 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
-    session_data = CaseSessionDataHelper(domain, contact, case_id, app, form).get_session_data(COMMCONNECT_DEVICE_ID)
+    session_data = CaseSessionDataHelper(domain, contact, case_id, app, form).get_session_data(
+        COMMCONNECT_DEVICE_ID)
 
     kwargs = {}
     if is_commcarecase(contact):
