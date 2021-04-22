@@ -118,6 +118,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -1977,6 +1978,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
+    instance_name = StringProperty(default='casedb')
+
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
     persistent_case_context_xml = StringProperty(default='case_name')
@@ -2411,9 +2414,10 @@ class ModuleDetailsMixin(object):
         except Exception:
             return []
 
-    @property
-    def search_detail(self):
-        return deepcopy(self.case_details.short)
+    def search_detail(self, short_or_long):
+        detail = deepcopy(getattr(self.case_details, short_or_long))
+        detail.instance_name = RESULTS_INSTANCE
+        return detail
 
     def rename_lang(self, old_lang, new_lang):
         super(Module, self).rename_lang(old_lang, new_lang)
@@ -2428,7 +2432,8 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         if module_offers_search(self) and not self.case_details.short.custom_xml:
-            details.append(('search_short', self.search_detail, True))
+            details.append(('search_short', self.search_detail("short"), True))
+            details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
 
 
@@ -3120,9 +3125,10 @@ class AdvancedModule(ModuleBase):
     def all_forms_require_a_case(self):
         return all(form.requires_case() for form in self.get_forms())
 
-    @property
-    def search_detail(self):
-        return deepcopy(self.case_details.short)
+    def search_detail(self, short_or_long):
+        detail = deepcopy(getattr(self.case_details, short_or_long))
+        detail.instance_name = RESULTS_INSTANCE
+        return detail
 
     def get_details(self):
         details = [
@@ -3132,7 +3138,8 @@ class AdvancedModule(ModuleBase):
             ('product_long', self.product_details.long, False),
         ]
         if module_offers_search(self) and not self.case_details.short.custom_xml:
-            details.append(('search_short', self.search_detail, True))
+            details.append(('search_short', self.search_detail("short"), True))
+            details.append(('search_long', self.search_detail("long"), True))
         return details
 
     @property
