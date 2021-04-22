@@ -27,6 +27,6 @@ hqDefine('notifications/js/notifications_service_main', [
     };
     $(document).ready(initNotifications);
     return {
-        'initNotifications': initNotifications
-    }
+        'initNotifications': initNotifications,
+    };
 });
