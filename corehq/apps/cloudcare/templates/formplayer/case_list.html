@@ -74,11 +74,13 @@
   <% _.each(data, function(datum, index) { %>
   <% if (!(styles[index].widthHint === 0)) { %>
   <% if (styles[index].displayFormat === 'Image') { %>
-  <td class="module-caselist-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+  <td class="module-caselist-column"><img class="module-icon" src="<%- resolveUri(datum.raw) %>"/></td>
   <% } else if (styles[index].displayFormat === 'Graph') { %>
-  <td class="module-caselist-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
+  <td class="module-caselist-column"><iframe srcdoc="<%- datum.raw %>" height="300" width="300"></iframe></td>
+  <% } else if (typeof datum.html !== "undefined" && datum.html !== null) { %>
+  <td class="module-caselist-column"><%= datum.html %></td>
   <% } else { %>
-  <td class="module-caselist-column"><%- datum %></td>
+  <td class="module-caselist-column"><%- datum.raw %></td>
   <% } %>
   <% } %>
   <% }); %>
