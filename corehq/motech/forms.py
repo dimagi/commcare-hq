@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.motech.auth import api_auth_settings_choices
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import sanitize_user_input_url_for_repeaters
+from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
 from corehq.util.urlsanitize.ip_resolver import CannotResolveHost
 
@@ -159,7 +159,7 @@ class ConnectionSettingsForm(forms.ModelForm):
     def clean_url(self):
         url = self.cleaned_data['url']
         try:
-            sanitize_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+            validate_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
         except CannotResolveHost:
             # Catching and wrapping this error means that unreachable hosts do not cause the form to be invalid.
             # The reason this is important is because we want to accept configurations where the host has not

@@ -9,7 +9,7 @@ from ..ip_resolver import CannotResolveHost
 from ..urlsanitize import (
     InvalidURL,
     PossibleSSRFAttempt,
-    sanitize_user_input_url,
+    validate_user_input_url,
 )
 from .mockipinfo import hostname_resolving_to_ips
 
@@ -47,14 +47,14 @@ def setup_module():
 def test_example_suite():
     for input_url, (result, value) in SUITE:
         if result is RETURN:
-            sanitize_user_input_url(input_url)
+            validate_user_input_url(input_url)
         elif result is RAISE:
             if type(value) == PossibleSSRFAttempt:
                 with assert_raises(PossibleSSRFAttempt, msg=lambda e: eq(e.reason, value.reason)):
-                    sanitize_user_input_url(input_url)
+                    validate_user_input_url(input_url)
             else:
                 with assert_raises(type(value), msg=str(value)):
-                    sanitize_user_input_url(input_url)
+                    validate_user_input_url(input_url)
         else:
             raise Exception("result in suite should be RETURN or RAISE")
 
@@ -66,7 +66,7 @@ def test_rebinding():
     """
     url = 'http://A.8.8.8.8.1time.169.254.169.254.1time.repeat.rebind.network/'
     try:
-        sanitize_user_input_url(url)
+        validate_user_input_url(url)
     except PossibleSSRFAttempt as e:
         eq(e.reason, 'is_link_local')
 
@@ -75,29 +75,29 @@ class SanitizeIPv6Tests(SimpleTestCase):
     def test_valid_ipv6_address_is_accepted(self):
         ip_text = '2607:f8b0:4006:806::2004'
         valid_ipv6 = f'http://[{ip_text}]'
-        sanitize_user_input_url(valid_ipv6)
+        validate_user_input_url(valid_ipv6)
 
     def test_recognizes_empty_ipv6_as_ssrf_attempt(self):
         with self.assertRaises(PossibleSSRFAttempt) as cm:
-            sanitize_user_input_url('http://[::]')
+            validate_user_input_url('http://[::]')
 
         self.assertEqual(cm.exception.reason, 'is_reserved')
 
     def test_recognizes_all_zeros_as_ssrf_attempt(self):
         with self.assertRaises(PossibleSSRFAttempt) as cm:
-            sanitize_user_input_url('http://[0000:0000:0000:0000:0000:0000:0000:0000]')
+            validate_user_input_url('http://[0000:0000:0000:0000:0000:0000:0000:0000]')
 
         self.assertEqual(cm.exception.reason, 'is_reserved')
 
     def test_recognizes_trailing_one_as_ssrf_attempt(self):
         with self.assertRaises(PossibleSSRFAttempt) as cm:
-            sanitize_user_input_url('http://[::1]')
+            validate_user_input_url('http://[::1]')
 
         self.assertEqual(cm.exception.reason, 'is_loopback')
 
     def test_address_with_port_can_cause_ssrf(self):
         with self.assertRaises(PossibleSSRFAttempt):
-            sanitize_user_input_url('http://[::]:22')
+            validate_user_input_url('http://[::]:22')
 
 
 class SanitizeMultiIPTests(SimpleTestCase):
@@ -111,7 +111,7 @@ class SanitizeMultiIPTests(SimpleTestCase):
 
     def test_when_all_addresses_are_valid_does_not_raise_exception(self):
         with hostname_resolving_to_ips('test_address', [self.VALID_IP_1, self.VALID_IP_2, self.VALID_IP_3]):
-            sanitize_user_input_url('http://test_addresss')
+            validate_user_input_url('http://test_addresss')
 
     def test_when_any_address_is_invalid_an_exception_is_raised(self):
         with hostname_resolving_to_ips(
@@ -119,8 +119,8 @@ class SanitizeMultiIPTests(SimpleTestCase):
             [self.VALID_IP_1, self.LOOPBACK_ADDRESS, self.VALID_IP_3]
         ):
             with self.assertRaises(PossibleSSRFAttempt):
-                sanitize_user_input_url('http://some.malicious.url')
+                validate_user_input_url('http://some.malicious.url')
 
     def test_mixed_valid_addresses_do_not_raise_exception(self):
         with hostname_resolving_to_ips('test_address', [self.VALID_IPv6, self.VALID_IP_1]):
-            sanitize_user_input_url('http://test_address')
+            validate_user_input_url('http://test_address')

@@ -3,9 +3,9 @@ from urllib.parse import urlparse
 from .ip_resolver import resolve_to_ips
 
 
-def sanitize_user_input_url(url):
+def validate_user_input_url(url):
     """
-    Return ip address if the url is safe to make user-driven requests against
+    Raises an exception if the supplied URL is considered invalid or unsafe
 
     raise PossibleSSRFAttempt if the url resolves to a non-public ip address
     raise CannotResolveHost if the url host does not resolve
