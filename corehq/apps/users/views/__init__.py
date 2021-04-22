@@ -1256,7 +1256,7 @@ class UploadWebUsers(BaseManageWebUserView):
             self.group_specs = []
 
         try:
-            check_headers(self.user_specs, is_web_upload=True)
+            check_headers(self.user_specs, self.domain, is_web_upload=True)
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadWebUsers.urlname, args=[self.domain]))
