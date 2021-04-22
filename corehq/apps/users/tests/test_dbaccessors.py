@@ -4,7 +4,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     delete_all_users,
     get_all_commcare_users_by_domain,
     get_all_user_ids,
@@ -15,7 +15,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_user_docs_by_username,
     hard_delete_deleted_users,
 )
-from corehq.apps.users.dbaccessors.couch_users import get_user_id_by_username
+from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,

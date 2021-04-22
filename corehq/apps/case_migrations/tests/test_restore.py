@@ -11,7 +11,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.fixtures import FlatLocationSerializer
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.hmac_request import get_hmac_digest

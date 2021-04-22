@@ -168,9 +168,7 @@ from corehq.apps.reports.daterange import (
 )
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
-from corehq.apps.users.dbaccessors.couch_users import (
-    get_display_name_for_user_id,
-)
+from corehq.apps.users.dbaccessors import get_display_name_for_user_id
 from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
