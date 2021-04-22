@@ -19,7 +19,7 @@ from corehq.motech.utils import (
     unpack_request_args,
 )
 from corehq.util.metrics import metrics_counter
-from corehq.util.urlsanitize.urlsanitize import (
+from corehq.util.urlvalidate.urlvalidate import (
     InvalidURL,
     PossibleSSRFAttempt,
     validate_user_input_url,

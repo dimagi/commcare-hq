@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 
 from ..forms import ConnectionSettingsForm, UnrecognizedHost
 
-from corehq.util.urlsanitize.test.mockipinfo import hostname_resolving_to_ips, unresolvable_hostname
+from corehq.util.urlvalidate.test.mockipinfo import hostname_resolving_to_ips, unresolvable_hostname
 
 
 class ConnectionSettingsFormTests(SimpleTestCase):

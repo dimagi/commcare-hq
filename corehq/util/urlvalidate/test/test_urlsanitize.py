@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 from testil import assert_raises, eq
 
 from ..ip_resolver import CannotResolveHost
-from ..urlsanitize import (
+from ..urlvalidate import (
     InvalidURL,
     PossibleSSRFAttempt,
     validate_user_input_url,

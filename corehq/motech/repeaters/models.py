@@ -151,7 +151,7 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from ...util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):

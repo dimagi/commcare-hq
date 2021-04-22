@@ -13,8 +13,8 @@ from corehq.motech.auth import api_auth_settings_choices
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import validate_user_input_url_for_repeaters
-from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
-from corehq.util.urlsanitize.ip_resolver import CannotResolveHost
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 class ConnectionSettingsForm(forms.ModelForm):
