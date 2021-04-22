@@ -295,7 +295,7 @@ DomainInfo = namedtuple('DomainInfo', [
 ])
 
 
-def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id):
+def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id, send_email=True):
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
@@ -307,7 +307,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             'role': role_qualified_id
         },
     )
-    if invite_created:
+    if invite_created and send_email:
         invite.send_activation_email()
 
 
@@ -455,11 +455,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         raise UserUploadError(_(
                             "User with ID '{user_id}' not found"
                         ).format(user_id=user_id, domain=domain))
-
-                    if username and user.username != username:
-                        raise UserUploadError(_(
-                            'Changing usernames is not supported: %(username)r to %(new_username)r'
-                        ) % {'username': user.username, 'new_username': username})
+                    check_changing_username(user, username)
 
                     # note: explicitly not including "None" here because that's the default value if not set.
                     # False means it was set explicitly to that value
@@ -562,18 +558,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                             current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
 
                         elif not current_user or not current_user.is_member_of(domain):
-                            invite, invite_created = Invitation.objects.update_or_create(
-                                email=web_user,
-                                domain=domain,
-                                defaults={
-                                    'invited_by': upload_user.user_id,
-                                    'invited_on': datetime.utcnow(),
-                                    'supply_point': user.location_id,
-                                    'role': role_qualified_id
-                                },
-                            )
-                            if invite_created and send_account_confirmation_email:
-                                invite.send_activation_email()
+                            create_or_update_web_user_invite(web_user, domain, role_qualified_id, upload_user, user.location_id,
+                                                             send_email=send_account_confirmation_email)
 
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
@@ -667,10 +653,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
             user = CouchUser.get_by_username(username, strict=True)
             if user:
-                if username and user.username != username:
-                    raise UserUploadError(_(
-                        'Changing usernames is not supported: %(username)r to %(new_username)r'
-                    ) % {'username': user.username, 'new_username': username})
+                check_changing_username(user, username)
                 if remove:
                     remove_web_user(domain, user, username, upload_user, is_web_upload=True)
                 else:
@@ -743,6 +726,13 @@ def check_can_upload_web_users(upload_user):
         raise UserUploadError(_(
             "Only users with the edit web users permission can upload web users"
         ))
+
+
+def check_changing_username(user, username):
+    if username and user.username != username:
+        raise UserUploadError(_(
+            'Changing usernames is not supported: %(username)r to %(new_username)r'
+        ) % {'username': user.username, 'new_username': username})
 
 
 def remove_invited_web_user(domain, username):
