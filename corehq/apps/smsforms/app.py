@@ -40,17 +40,6 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
     # properties: .raw_username, .get_id, and .get_language_code
     session_data = CaseSessionDataHelper(domain, contact, case_id, app, form).get_session_data(COMMCONNECT_DEVICE_ID)
 
-    # since the API user is a superuser, force touchforms to query only
-    # the contact's cases by specifying it as an additional filter
-    if is_commcarecase(contact) and form.requires_case():
-        session_data["additional_filters"] = {
-            "case_id": case_id,
-        }
-    elif isinstance(contact, CouchUser):
-        session_data["additional_filters"] = {
-            "user_id": contact.get_id,
-        }
-
     kwargs = {}
     if is_commcarecase(contact):
         kwargs['restore_as_case_id'] = contact.case_id
