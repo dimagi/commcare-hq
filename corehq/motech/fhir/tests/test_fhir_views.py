@@ -190,25 +190,29 @@ class TestFHIRSearchView(BaseFHIRViewTest):
 class ViewsPermissionsTests(BaseFHIRViewTest):
 
     def test_api_key_authenticated(self):
-        url = reverse(
-            "fhir_get_view",
-            args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID],
-        )
-        request = _get_request(url, self.django_user, self.api_key.key)
-        is_authenticated = LoginAuthentication().is_authenticated(request)
-        self.assertTrue(is_authenticated)
+        for url in (
+            reverse("fhir_get_view",
+                    args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID]),
+            reverse("fhir_search",
+                    args=[DOMAIN, FHIR_VERSION, "Observation"])
+        ):
+            request = _get_request(url, self.django_user, self.api_key.key)
+            is_authenticated = LoginAuthentication().is_authenticated(request)
+            self.assertTrue(is_authenticated)
 
     def test_superuser_not_authenticated(self):
         self.django_user.is_superuser = True
         self.django_user.save()
 
-        url = reverse(
-            "fhir_get_view",
-            args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID],
-        )
-        request = _get_request(url, self.django_user)
-        is_authenticated = LoginAuthentication().is_authenticated(request)
-        self.assertFalse(is_authenticated)
+        for url in (
+            reverse("fhir_get_view",
+                    args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID]),
+            reverse("fhir_search",
+                    args=[DOMAIN, FHIR_VERSION, "Observation"])
+        ):
+            request = _get_request(url, self.django_user)
+            is_authenticated = LoginAuthentication().is_authenticated(request)
+            self.assertFalse(is_authenticated)
 
 
 def _setup_cases(owner_id):
