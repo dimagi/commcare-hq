@@ -1,10 +1,10 @@
-from django.test import SimpleTestCase
-from socket import AddressFamily, SocketKind
 from ipaddress import IPv4Address, IPv6Address
+from socket import AddressFamily, SocketKind
 
+from django.test import SimpleTestCase
+
+from ..ip_resolver import extract_ip, resolve_to_ips
 from .mockipinfo import hostname_resolving_to_ips
-
-from ..ip_resolver import resolve_to_ips, extract_ip
 
 INDEX_ADDRESS_FAMILY = 0
 

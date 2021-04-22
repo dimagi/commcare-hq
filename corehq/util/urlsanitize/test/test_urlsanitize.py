@@ -1,13 +1,17 @@
 import ipaddress
 import socket
 
-from testil import eq, assert_raises
-
-from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, InvalidURL
-from ..ip_resolver import CannotResolveHost
-from .mockipinfo import hostname_resolving_to_ips
-
 from django.test import SimpleTestCase
+
+from testil import assert_raises, eq
+
+from ..ip_resolver import CannotResolveHost
+from ..urlsanitize import (
+    InvalidURL,
+    PossibleSSRFAttempt,
+    sanitize_user_input_url,
+)
+from .mockipinfo import hostname_resolving_to_ips
 
 RAISE = object()
 RETURN = object()

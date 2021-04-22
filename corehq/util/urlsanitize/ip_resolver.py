@@ -1,15 +1,5 @@
-# from operator import itemgetter
-# from socket import getaddrinfo, gaierror
-import socket
 import ipaddress
-
-
-# def sort_ip_addresses(ip_addresses):
-#     return sorted(ip_addresses, key=itemgetter(0))
-
-# def resolve_ip(address, port=80):
-#     ips = sort_ip_addresses(socket.getaddrinfo(address, port))
-#     return extract_ip(ips[0])
+import socket
 
 
 def resolve_to_ips(hostname, port=80):

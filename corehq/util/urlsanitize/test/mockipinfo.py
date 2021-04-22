@@ -1,6 +1,7 @@
 from contextlib import contextmanager
-from corehq.util.urlsanitize.ip_resolver import CannotResolveHost
 from unittest.mock import patch
+
+from corehq.util.urlsanitize.ip_resolver import CannotResolveHost
 
 
 @contextmanager

@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+
 from .ip_resolver import resolve_to_ips
 
 
