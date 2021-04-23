@@ -129,6 +129,7 @@ from .const import (
     MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_MIGRATED_STATE,
     RECORD_PENDING_STATE,
     RECORD_STATES,
     RECORD_SUCCESS_STATE,
@@ -374,25 +375,31 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return None
 
     def register(self, payload):
+        """
+        Registers a SQLRepeatRecord.
+        """
         if not self.allowed_to_forward(payload):
             return
 
-        now = datetime.utcnow()
-        repeat_record = RepeatRecord(
-            repeater_id=self.get_id,
-            repeater_type=self.doc_type,
+        if SQLRepeatRecord.objects.filter(
             domain=self.domain,
-            registered_on=now,
-            next_check=now,
-            payload_id=payload.get_id
+            repeater_stub=self.repeater_stub,
+            payload_id=payload.get_id,
+            state__in=(RECORD_PENDING_STATE, RECORD_FAILURE_STATE),
+        ).exists():
+            # Payload is already waiting to be sent
+            return
+
+        self.repeater_stub.repeat_records.create(
+            domain=self.domain,
+            payload_id=payload.get_id,
+            registered_at=timezone.now(),
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
             'doc_type': self.doc_type
         })
-        repeat_record.save()
-        repeat_record.attempt_forward_now()
-        return repeat_record
+        attempt_forward_now(self.repeater_stub)
 
     def allowed_to_forward(self, payload):
         """
@@ -872,6 +879,7 @@ class RepeatRecord(Document):
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+    migrated = BooleanProperty(default=False)
 
     @property
     def record_id(self):
@@ -916,6 +924,8 @@ class RepeatRecord(Document):
             state = RECORD_SUCCESS_STATE
         elif self.cancelled:
             state = RECORD_CANCELLED_STATE
+        elif self.migrated:
+            state = RECORD_MIGRATED_STATE
         elif self.failure_reason:
             state = RECORD_FAILURE_STATE
         return state

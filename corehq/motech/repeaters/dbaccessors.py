@@ -365,3 +365,45 @@ def delete_all_repeaters():
     from .models import Repeater
     for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
         Repeater.wrap(repeater['doc']).delete()
+
+
+# Functions for evaluating scale
+def get_repeat_record_domain_total():
+    from corehq.motech.repeaters.dbaccessors import get_domains_that_have_repeat_records
+
+    return len(get_domains_that_have_repeat_records())
+
+
+def get_couch_repeater_total():
+    from corehq.motech.repeaters.dbaccessors import get_domains_that_have_repeat_records
+    from corehq.motech.repeaters.models import Repeater
+
+    total = 0
+    for domain in get_domains_that_have_repeat_records():
+        result = Repeater.get_db().view(
+            'repeaters/repeaters',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=True,
+        ).one()
+        total += result['value'] if result else 0
+    return total
+
+
+def get_couch_repeat_record_total():
+    from corehq.motech.repeaters.dbaccessors import get_domains_that_have_repeat_records
+    from corehq.motech.repeaters.models import RepeatRecord
+
+    total = 0
+    for domain in get_domains_that_have_repeat_records():
+        result = RepeatRecord.get_db().view(
+            'repeaters/repeat_records',
+            startkey=[domain, None, {}],
+            endkey=[domain, None],
+            include_docs=False,
+            reduce=True,
+            descending=True,
+        ).one()
+        total += result['value'] if result else 0
+    return total
