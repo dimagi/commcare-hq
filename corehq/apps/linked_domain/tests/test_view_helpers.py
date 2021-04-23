@@ -7,10 +7,10 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.view_helpers import (
-    build_app_view_models,
-    build_fixture_view_models,
-    build_keyword_view_models,
-    build_report_view_models,
+    build_app_view_model,
+    build_fixture_view_model,
+    build_keyword_view_model,
+    build_report_view_model,
     get_apps,
     get_fixtures,
     get_keywords,
@@ -25,7 +25,7 @@ from corehq.apps.userreports.models import (
 )
 
 
-def _create_report(domain, upstream_id=None):
+def _create_report(domain, title="report", upstream_id=None, should_save=True):
     data_source = DataSourceConfiguration(
         domain=domain,
         table_id=uuid.uuid4().hex,
@@ -35,31 +35,33 @@ def _create_report(domain, upstream_id=None):
     report = ReportConfiguration(
         domain=domain,
         config_id=data_source._id,
-        title='report',
+        title=title,
         report_meta=ReportMeta(created_by_builder=True, master_id=upstream_id),
     )
-    report.save()
+    if should_save:
+        report.save()
 
     return report
 
 
-def _create_keyword(domain, upstream_id=None):
+def _create_keyword(domain, name="ping", upstream_id=None, should_save=True):
     keyword = Keyword(
         domain=domain,
-        keyword="ping",
+        keyword=name,
         description="The description",
         override_open_sessions=True,
         upstream_id=upstream_id
     )
-    keyword.save()
+    if should_save:
+        keyword.save()
 
     return keyword
 
 
-def _create_fixture(domain):
+def _create_fixture(domain, tag="table", should_save=True):
     data_type = FixtureDataType(
         domain=domain,
-        tag="table",
+        tag=tag,
         fields=[
             FixtureTypeField(
                 field_name="fixture_property",
@@ -69,7 +71,8 @@ def _create_fixture(domain):
         item_attributes=[],
         is_global=True
     )
-    data_type.save()
+    if should_save:
+        data_type.save()
 
     return data_type
 
@@ -86,107 +89,103 @@ class TestBuildViewModels(TestCase):
         cls.domain_obj.delete()
         super(TestBuildViewModels, cls).tearDownClass()
 
-    def test_build_app_view_models(self):
+    def test_build_app_view_model_returns_match(self):
         app = Application.new_app(self.domain, "Test Application")
-        app.save()
-        self.addCleanup(app.delete)
-        expected_view_models = [
-            {
-                'type': 'app',
-                'name': 'Application (Test Application)',
-                'detail': {'app_id': f'{app._id}'},
-                'last_update': None,
-                'can_update': True
-            }
-        ]
+        # set _id rather than actually saving the object
+        app._id = 'abc123'
 
-        view_models = build_app_view_models({app._id: app})
+        expected_view_model = {
+            'type': 'app',
+            'name': 'Application (Test Application)',
+            'detail': {'app_id': 'abc123'},
+            'last_update': None,
+            'can_update': True
+        }
 
-        self.assertEqual(expected_view_models, view_models)
+        actual_view_model = build_app_view_model(app)
+        self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_app_view_models_when_empty(self):
-        upstream_apps = {}
-        expected_view_models = []
+    def test_build_app_view_model_with_none_returns_none(self):
+        app = None
+        view_model = build_app_view_model(app)
+        self.assertIsNone(view_model)
 
-        view_models = build_app_view_models(upstream_apps)
+    def test_build_app_view_model_with_empty_dict_returns_none(self):
+        app = {}
+        view_model = build_app_view_model(app)
+        self.assertIsNone(view_model)
 
-        self.assertEqual(expected_view_models, view_models)
+    def test_build_fixture_view_model_returns_match(self):
+        fixture = _create_fixture(self.domain, tag="test-table", should_save=False)
+        expected_view_model = {
+            'type': 'fixture',
+            'name': 'Lookup Table (test-table)',
+            'detail': {'tag': 'test-table'},
+            'last_update': None,
+            'can_update': True
+        }
 
-    def test_build_fixture_view_models(self):
-        fixture = _create_fixture(self.domain)
-        self.addCleanup(fixture.delete)
-        expected_view_models = [
-            {
-                'type': 'fixture',
-                'name': f'Lookup Table ({fixture.tag})',
-                'detail': {'tag': f'{fixture.tag}'},
-                'last_update': None,
-                'can_update': True
-            }
-        ]
+        actual_view_model = build_fixture_view_model(fixture)
+        self.assertEqual(expected_view_model, actual_view_model)
 
-        view_models = build_fixture_view_models({fixture._id: fixture})
+    def test_build_fixture_view_model_with_none_returns_none(self):
+        fixture = None
+        view_model = build_fixture_view_model(fixture)
+        self.assertIsNone(view_model)
 
-        self.assertEqual(expected_view_models, view_models)
+    def test_build_fixture_view_model_with_empty_returns_none(self):
+        fixture = {}
+        view_model = build_fixture_view_model(fixture)
+        self.assertIsNone(view_model)
 
-    def test_build_fixture_view_models_when_empty(self):
-        fixtures = {}
-        expected_view_models = []
+    def test_build_report_view_model(self):
+        report = _create_report(self.domain, title='report-test', should_save=False)
+        report._id = 'abc123'
+        expected_view_model = {
+            'type': 'report',
+            'name': 'Report (report-test)',
+            'detail': {'report_id': 'abc123'},
+            'last_update': None,
+            'can_update': True
+        }
 
-        view_models = build_fixture_view_models(fixtures)
+        actual_view_model = build_report_view_model(report)
+        self.assertEqual(expected_view_model, actual_view_model)
 
-        self.assertEqual(expected_view_models, view_models)
+    def test_build_report_view_model_with_none_returns_none(self):
+        report = None
+        view_model = build_report_view_model(report)
+        self.assertIsNone(view_model)
 
-    def test_build_report_view_models(self):
-        report = _create_report(self.domain)
-        self.addCleanup(report.delete)
-        expected_view_models = [
-            {
-                'type': 'report',
-                'name': f'Report ({report.title})',
-                'detail': {'report_id': f'{report._id}'},
-                'last_update': None,
-                'can_update': True
-            }
-        ]
+    def test_build_report_view_model_with_empty_returns_none(self):
+        report = {}
+        view_model = build_report_view_model(report)
+        self.assertIsNone(view_model)
 
-        view_models = build_report_view_models({report._id: report})
+    def test_build_keyword_view_model_returns_match(self):
+        keyword = _create_keyword(self.domain, name='keyword-test', should_save=False)
+        keyword.id = '100'
 
-        self.assertEqual(expected_view_models, view_models)
+        expected_view_model = {
+            'type': 'keyword',
+            'name': 'Keyword (keyword-test)',
+            'detail': {'keyword_id': '100', 'linked_keyword_id': None},
+            'last_update': None,
+            'can_update': True
+        }
 
-    def test_build_report_view_models_when_empty(self):
-        reports = {}
-        expected_view_models = []
+        actual_view_model = build_keyword_view_model(keyword)
+        self.assertEqual(expected_view_model, actual_view_model)
 
-        view_models = build_report_view_models(reports)
+    def test_build_keyword_view_model_with_none_returns_none(self):
+        keyword = None
+        view_model = build_keyword_view_model(keyword)
+        self.assertIsNone(view_model)
 
-        self.assertEqual(expected_view_models, view_models)
-
-    def test_build_keyword_view_models_original(self):
-        keyword = _create_keyword(self.domain)
-        self.addCleanup(keyword.delete)
-
-        expected_view_models = [
-            {
-                'type': 'keyword',
-                'name': f'Keyword ({keyword.keyword})',
-                'detail': {'keyword_id': f'{keyword.id}', 'linked_keyword_id': None},
-                'last_update': None,
-                'can_update': True
-            }
-        ]
-
-        view_models = build_keyword_view_models({keyword.id: keyword})
-
-        self.assertEqual(expected_view_models, view_models)
-
-    def test_build_keyword_view_models_when_empty(self):
-        keywords = {}
-        expected_view_models = []
-
-        view_models = build_keyword_view_models(keywords)
-
-        self.assertEqual(expected_view_models, view_models)
+    def test_build_keyword_view_model_with_empty_returns_none(self):
+        keyword = {}
+        view_model = build_keyword_view_model(keyword)
+        self.assertIsNone(view_model)
 
 
 class TestGetDataModels(TestCase):

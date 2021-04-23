@@ -19,7 +19,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_KEYWORD,
     MODEL_OTP_SETTINGS,
-    MODEL_REPORT,
+    MODEL_REPORT, LINKED_MODELS_MAP,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
@@ -82,61 +82,57 @@ def get_keywords(domain):
     return master_list, linked_list
 
 
-def build_app_view_models(apps):
-    linked_models = dict(LINKED_MODELS)
-    view_models = []
-    for app in apps.values():
-        view_model = build_view_model(
-            model_type=MODEL_APP,
-            name=f"{linked_models['app']} ({app.name})",
-            detail=AppLinkDetail(app_id=app._id).to_json()
-        )
-        view_models.append(view_model)
+def build_app_view_model(app):
+    if not app:
+        return None
 
-    return view_models
+    view_model = build_view_model(
+        model_type=MODEL_APP,
+        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({app.name})",
+        detail=AppLinkDetail(app_id=app._id).to_json()
+    )
 
-
-def build_fixture_view_models(fixtures):
-    linked_models = dict(LINKED_MODELS)
-    view_models = []
-    for fixture in fixtures.values():
-        view_model = build_view_model(
-            model_type=MODEL_FIXTURE,
-            name=f"{linked_models['fixture']} ({fixture.tag})",
-            detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
-            can_update=fixture.is_global
-        )
-        view_models.append(view_model)
-
-    return view_models
+    return view_model
 
 
-def build_report_view_models(reports):
-    linked_models = dict(LINKED_MODELS)
-    view_models = []
-    for report in reports.values():
-        view_model = build_view_model(
-            model_type=MODEL_REPORT,
-            name=f"{linked_models['report']} ({report.title})",
-            detail=ReportLinkDetail(report_id=report.get_id).to_json(),
-        )
-        view_models.append(view_model)
+def build_fixture_view_model(fixture):
+    if not fixture:
+        return None
 
-    return view_models
+    view_model = build_view_model(
+        model_type=MODEL_FIXTURE,
+        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({fixture.tag})",
+        detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
+        can_update=fixture.is_global
+    )
+
+    return view_model
 
 
-def build_keyword_view_models(keywords):
-    linked_models = dict(LINKED_MODELS)
-    view_models = []
-    for keyword in keywords.values():
-        view_model = build_view_model(
-            model_type=MODEL_KEYWORD,
-            name=f"{linked_models['keyword']} ({keyword.keyword})",
-            detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
-        )
-        view_models.append(view_model)
+def build_report_view_model(report):
+    if not report:
+        return None
 
-    return view_models
+    view_model = build_view_model(
+        model_type=MODEL_REPORT,
+        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({report.title})",
+        detail=ReportLinkDetail(report_id=report.get_id).to_json(),
+    )
+
+    return view_model
+
+
+def build_keyword_view_model(keyword):
+    if not keyword:
+        return None
+
+    view_model = build_view_model(
+        model_type=MODEL_KEYWORD,
+        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({keyword.keyword})",
+        detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
+    )
+
+    return view_model
 
 
 def build_other_view_models(domain, ignore_models=None):
@@ -186,17 +182,25 @@ def get_master_model_status(domain, apps, fixtures, reports, keywords, ignore_mo
     other_view_models = build_other_view_models(domain, ignore_models=ignore_models)
     view_models.extend(other_view_models)
 
-    app_view_models = build_app_view_models(apps)
-    view_models.extend(app_view_models)
+    for app in apps:
+        app_view_model = build_app_view_model(app)
+        if app_view_model:
+            view_models.append(app_view_model)
 
-    fixture_view_models = build_fixture_view_models(fixtures)
-    view_models.extend(fixture_view_models)
+    for fixture in fixtures:
+        fixture_view_model = build_fixture_view_model(fixture)
+        if fixture_view_model:
+            view_models.append(fixture_view_model)
 
-    report_view_models = build_report_view_models(reports)
-    view_models.extend(report_view_models)
+    for report in reports:
+        report_view_model = build_report_view_model(report)
+        if report_view_model:
+            view_models.append(report_view_model)
 
-    keyword_view_models = build_keyword_view_models(keywords)
-    view_models.extend(keyword_view_models)
+    for keyword in keywords:
+        keyword_view_model = build_keyword_view_model(keyword)
+        if keyword_view_model:
+            view_models.append(keyword_view_model)
 
     return view_models
 
