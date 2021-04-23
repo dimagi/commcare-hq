@@ -14,9 +14,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 });
             });
             $(".hq-help").hqHelp();
-        },
-        itemsetValue = function (item) {
-            return "instance('" + item.id + "')" + item.path;
         };
 
     var itemsetModel = function (options, saveButton) {
@@ -32,48 +29,35 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.lookupTableNodeset = ko.pureComputed({
             write: function (value) {
-                if (value === undefined) {
-                    self.nodeset(null);
-                }
-                else {
-                    self.instance_id(value);
-                    var itemList = _.filter(get('js_options').item_lists, function (item) {
-                        return item.id === value;
-                    });
-                    if (itemList && itemList.length === 1) {
-                        self.instance_uri(itemList[0]['uri']);
-                        self.nodeset(itemsetValue(itemList[0]));
-                    }
-                    else {
-                        self.nodeset(null);
+                self.nodeset(value);
+                var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
+                    matches = reg.exec(value);
+                if (matches && matches.length > 1) {
+                    var instanceId = matches[1],
+                        itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
+
+                    self.instance_id(instanceId);
+                    if (itemList) {
+                        self.instance_uri(itemList['uri']);
                     }
                 }
             },
             read: function () {
-                return self.instance_id();
+                // is the nodeset a lookup table that we know about?
+                var itemLists = get('js_options').item_lists,
+                    itemListNodesets = _.map(itemLists, function (item) {
+                        return "instance('" + item.id + "')" + item.path;
+                    });
+                if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
+
+                    return self.nodeset();
+                } else {
+                    return '';
+                }
             },
         });
-        self.nodesetValid = ko.computed(function () {
-            if (self.nodeset() === null) {
-                return true;
-            }
-            var itemLists = _.map(get('js_options').item_lists, function (item) {
-                    return itemsetValue(item);
-                });
-            if (self.nodeset().split("/").length === 0) {
-                return false;
-            }
-            var instancePart = self.nodeset().split("/")[0];
-            for (var i = itemLists.length - 1; i >= 0; i--) {
-                var groups = itemLists[i].split("/");
-                if (groups.length > 0 && groups[0] === instancePart) {
-                    return true;
-                }
-            }
-            return false;
-        });
-        subscribeToSave(self,
-            ['nodeset', 'label', 'value', 'sort', 'instance_uri'], saveButton);
+
+        subscribeToSave(self, ['nodeset', 'label', 'value', 'sort'], saveButton);
 
         return self;
     };
@@ -95,53 +79,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
-        self.appearanceFinal = ko.computed(function () {
-            var appearance = self.appearance();
-            if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
-                return 'fixture';
-            }
-            else {
-                return appearance;
-            }
-        });
-        self.dropdownLabels = ko.computed(function () {
-            if (self.appearance() === 'report_fixture') {
-                return {
-                    'labelPlaceholder': 'column_0',
-                    'valuePlaceholder': 'column_0',
-                    'optionsLabel': gettext("Mobile UCR Options"),
-                    'tableLabel': gettext("Mobile UCR Report"),
-                    'selectLabel': gettext("Select a Report..."),
-                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
-                };
-            }
-            else {
-                return {
-                    'labelPlaceholder': 'name',
-                    'valuePlaceholder': 'id',
-                    'optionsLabel': gettext("Lookup Table Options"),
-                    'tableLabel': gettext("Lookup Table"),
-                    'selectLabel': gettext("Select a Lookup Table..."),
-                    'advancedLabel': gettext("Advanced Lookup Table Options"),
-                };
-            }
-        });
 
         self.receiverExpression = ko.observable(options.receiverExpression);
-        self.itemListOptions = ko.computed(function () {
-            var itemLists = get('js_options').item_lists;
-            return _.map(
-                _.filter(itemLists, function (p) {
-                    return p.fixture_type === self.appearance();
-                }),
-                function (p) {
-                    return {
-                        "value": p.id,
-                        "name": p.name,
-                    };
-                }
-            );
-        });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
         subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
@@ -235,13 +174,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1") {
-                    var uri = searchProperties[i].itemset.instance_uri;
-                    if (uri !== null && uri.includes("commcare-reports")) {
-                        appearance = "report_fixture";
-                    }
-                    else {
-                        appearance = "lookup_table_fixture";
-                    }
+                    appearance = "fixture";
                 }
                 if (searchProperties[i].appearance === "address") {
                     appearance = "address";
@@ -288,7 +221,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
-                        appearance: p.appearanceFinal(),
+                        appearance: p.appearance(),
                         default_value: p.defaultValue(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
