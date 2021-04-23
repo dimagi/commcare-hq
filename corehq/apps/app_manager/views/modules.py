@@ -15,6 +15,7 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
@@ -135,7 +136,7 @@ def get_module_view_context(request, app, module, lang=None):
         'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
-            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
     }
     module_brief = {
@@ -194,11 +195,15 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
-            'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
+            'has_geocoder_privs': (
+                domain_has_privilege(app.domain, privileges.GEOCODER)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
+            ),
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
@@ -543,6 +548,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
+        "session_endpoint_id": None,
     }
 
     if attr not in attributes:
@@ -681,6 +687,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl = request.POST.getlist('excl_form_ids')
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
+    if should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id'].strip()
+        module.session_endpoint_id = slugify(raw_endpoint_id)
+        if module.session_endpoint_id != raw_endpoint_id:
+            msg = _(
+                "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
+                "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
+            ).format(invalid_id=raw_endpoint_id, valid_id=module.session_endpoint_id)
+            return HttpResponseBadRequest(msg)
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
