@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -124,6 +124,20 @@ def get_users_by_filters(domain, user_filters, count_only=False,
         return query.count()
     user_ids = query.scroll_ids()
     return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
+
+
+def get_invitations_by_filters(domain, user_filters, count_only=False):
+    """
+    Similar to get_users_by_filters, but applites to invitations,
+    and only looks at the 'search_string' filter, which is applies
+    to the invitations' emails.
+    """
+    search_string = user_filters.get("search_string", None)
+    filters = {"email__icontains": search_string} if search_string else {}
+    invitations = Invitation.by_domain(domain, **filters)
+    if count_only:
+        return invitations.count()
+    return invitations
 
 
 def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):

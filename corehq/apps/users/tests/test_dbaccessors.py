@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
@@ -12,6 +14,7 @@ from corehq.apps.users.dbaccessors import (
     get_all_web_users_by_domain,
     get_deleted_user_by_username,
     get_existing_usernames,
+    get_invitations_by_filters,
     get_user_docs_by_username,
     get_users_by_filters,
     hard_delete_deleted_users,
@@ -19,6 +22,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import (
     CommCareUser,
+    Invitation,
     Permissions,
     UserRole,
     WebUser,
@@ -198,6 +202,36 @@ class AllCommCareUsersTest(TestCase):
         )
 
         ensure_index_deleted(USER_INDEX)
+
+    def test_get_invitations_by_filters(self):
+        invitations = [
+            Invitation(domain=self.ccdomain.name, email='wolfgang@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow()),
+            Invitation(domain=self.ccdomain.name, email='sergei_p@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow()),
+            Invitation(domain=self.ccdomain.name, email='sergei_r@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow()),
+            Invitation(domain=self.ccdomain.name, email='ludwig@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow(), is_accepted=True),
+        ]
+        for inv in invitations:
+            inv.save()
+
+        self._assert_invitations({}, ["sergei_p@email.com", "sergei_r@email.com", "wolfgang@email.com"])
+        self._assert_invitations({"search_string": "Sergei"}, ["sergei_p@email.com", "sergei_r@email.com"])
+
+        for inv in invitations:
+            inv.delete()
+
+    def _assert_invitations(self, filters, expected_emails):
+        self.assertEqual(
+            {i.email for i in get_invitations_by_filters(self.ccdomain.name, filters)},
+            set(expected_emails)
+        )
+        self.assertEqual(
+            get_invitations_by_filters(self.ccdomain.name, filters, count_only=True),
+            len(expected_emails)
+        )
 
     def test_get_all_commcare_users_by_domain(self):
         expected_users = [self.ccuser_2, self.ccuser_1]
