@@ -491,8 +491,16 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
 
     columns = []
+    invisible_fields = set()
+    if detail.sort_nodeset_columns_for_detail():
+        invisible_fields = {column.field for column in detail.get_columns() if column.invisible}
+
     for column in detail.get_columns():
-        sort_element, order = sort_columns.pop(column.field, (None, None))
+        if not column.invisible and column.field in invisible_fields:
+            # assign sorting to invisible fields with the same field name
+            sort_element, order = None, None
+        else:
+            sort_element, order = sort_columns.pop(column.field, (None, None))
         if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
             columns.append(DetailColumnInfo(column, None, None))
         else:

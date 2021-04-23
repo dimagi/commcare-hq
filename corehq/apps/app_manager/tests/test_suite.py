@@ -524,6 +524,76 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             xml_partial, app.create_suite(),
             './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
 
+    def test_case_detail_tabs_with_nodesets_for_sorting_search_only_field(self, *args):
+        app_json = self.get_json("app_case_detail_tabs_with_nodesets")
+        app = Application.wrap(app_json)
+        # add duplicate column that gets displayed (2nd one is just for sorting)
+        # this is mostly done when the value is a date and you want to display
+        # a format that doesn't sort well
+        new_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        new_gender_col.format = "plain"
+        index = len(app.modules[0].case_details.long.columns) - 1
+        app.modules[0].case_details.long.columns.insert(index, new_gender_col)
+        app.modules[0].case_details.long.sort_nodeset_columns = True
+        xml_partial = """
+            <partial>
+                <detail nodeset="instance('commtrack:products')/some/data">
+                  <title>
+                    <text>
+                      <locale id="m0.case_long.tab.3.title"/>
+                    </text>
+                  </title>
+                  <field>
+                    <header>
+                      <text>
+                        <locale id="m0.case_long.case_calculated_property_5.header"/>
+                      </text>
+                    </header>
+                    <template>
+                      <text>
+                        <xpath function="$calculated_property">
+                          <variable name="calculated_property">
+                            <xpath function="column"/>
+                          </variable>
+                        </xpath>
+                      </text>
+                    </template>
+                  </field>
+                  <field>
+                    <header>
+                      <text>
+                        <locale id="m0.case_long.case_gender_6.header"/>
+                      </text>
+                    </header>
+                    <template>
+                      <text>
+                        <xpath function="gender"/>
+                      </text>
+                    </template>
+                  </field>
+                  <field>
+                    <header width="0">
+                      <text/>
+                    </header>
+                    <template width="0">
+                      <text>
+                        <xpath function="gender"/>
+                      </text>
+                    </template>
+                    <sort type="string" order="1" direction="ascending">
+                      <text>
+                        <xpath function="gender"/>
+                      </text>
+                    </sort>
+                  </field>
+                </detail>
+            </partial>"""
+        self.assertXmlPartialEqual(
+            xml_partial, app.create_suite(),
+            './detail[@id="m0_case_long"]/detail[3]')
+
     def test_case_detail_instance_adding(self, *args):
         # Tests that post-processing adds instances used in calculations
         # by any of the details (short, long, inline, persistent)
