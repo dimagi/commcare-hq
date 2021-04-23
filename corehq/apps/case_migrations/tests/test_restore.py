@@ -97,7 +97,7 @@ class TestRelatedCases(TestCase):
         response_content = next(response.streaming_content)
         locations_content = b""
         locations = SQLLocation.active_objects.filter(domain=self.domain)
-        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id, locations):
+        for xml_node in FlatLocationSerializer().get_xml_nodes(self.domain, 'locations', case_id, locations):
             locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
         self.assertIn(locations_content, response_content)
 
