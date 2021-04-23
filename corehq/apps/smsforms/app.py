@@ -21,8 +21,7 @@ from .models import SQLXFormsSession
 COMMCONNECT_DEVICE_ID = "commconnect"
 
 
-def start_session(session, domain, contact, app, form, case_id=None, yield_responses=False,
-                  case_for_case_submission=False):
+def start_session(session, domain, contact, app, form, case_id=None, yield_responses=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -31,9 +30,6 @@ def start_session(session, domain, contact, app, form, case_id=None, yield_respo
     
     Special params:
     yield_responses - If True, the list of xforms responses is returned, otherwise the text prompt for each is returned
-    session_type - XFORMS_SESSION_SMS or XFORMS_SESSION_IVR
-    case_for_case_submission - True if this is a submission that a case is making to alter another related case. For example, if a parent case is filling out
-        an SMS survey which will update its child case, this should be True.
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
