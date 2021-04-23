@@ -78,11 +78,50 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
     def test_child_module_form_session_endpoint_id(self):
         self.child_module_form.session_endpoint_id = 'my_form'
-        self.factory.form_requires_case(self.child_module_form, case_type=self.child_case_type, parent_case_type=self.parent_case_type)
+        self.factory.form_requires_case(
+            self.child_module_form,
+            case_type=self.child_case_type,
+            parent_case_type=self.parent_case_type
+        )
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_form">
+                    <argument id="parent_id"/>
+                    <argument id="case_id"/>
+                    <stack>
+                    <push>
+                        <command value="'m1-f0'"/>
+                        <datum id="parent_id" value="$parent_id"/>
+                        <datum id="case_id" value="$case_id"/>
+                    </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
+    def test_multiple_session_endpoints(self):
+        self.form.session_endpoint_id = 'my_form'
+        self.child_module_form.session_endpoint_id = 'my_child_form'
+        self.factory.form_requires_case(
+            self.child_module_form,
+            case_type=self.child_case_type,
+            parent_case_type=self.parent_case_type
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint id="my_form">
+                    <stack>
+                        <push>
+                            <command value="'m0-f0'"/>
+                        </push>
+                    </stack>
+                </endpoint>
+                <endpoint id="my_child_form">
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>

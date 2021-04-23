@@ -1,7 +1,5 @@
 from typing import List
 
-from django.utils.functional import cached_property
-
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
@@ -45,17 +43,14 @@ class SessionEndpointContributor(SuiteContributorByModule):
         id_string = id_strings.form_command(form)
         return self._make_session_endpoint(id_string, module, form.session_endpoint_id)
 
-    @cached_property
-    def _workflow_helper(self):
-        return WorkflowHelper(self.suite, self.app, self.modules)
-
     def _make_session_endpoint(self, id_string, module, endpoint_id):
         stack = Stack()
         frame = PushFrame()
         stack.add_frame(frame)
         frame.add_command(XPath.string(id_string))
         arguments = []
-        for child in self._workflow_helper.get_frame_children(id_string, module):
+        helper = WorkflowHelper(self.suite, self.app, self.modules)
+        for child in helper.get_frame_children(id_string, module):
             if isinstance(child, WorkflowDatumMeta):
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
