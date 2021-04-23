@@ -1,4 +1,3 @@
-import random
 from github import Github
 
 from django.core.management.base import BaseCommand, CommandError
@@ -12,24 +11,19 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('build_path', nargs='?')
         parser.add_argument('version', nargs='?')
-        parser.add_argument('build_number', nargs='?')
+        parser.add_argument('build_number', type=int, nargs='?')
         parser.add_argument(
             '-l',
             '--latest',
             action='store_true',
-            help="add the latest remote CommCare build version"
+            help="add the latest CommCare build version from GitHub"
         )
 
     def handle(self, build_path, version, build_number, **options):
         if options.get('latest'):
-            _create_build_from_latest_remote_version()
+            _create_build_with_latest_version()
         else:
             if build_path and version and build_number:
-                try:
-                    build_number = int(build_number)
-                except ValueError:
-                    raise CommandError("Build Number %r is not an integer" % build_number)
-
                 try:
                     CommCareBuild.create_from_zip(build_path, version, build_number)
                 except Exception as e:
@@ -40,13 +34,16 @@ class Command(BaseCommand):
                 raise CommandError("<build_path>, <version> or <build_number> not specified!")
 
 
-def _create_build_from_latest_remote_version():
+def _create_build_with_latest_version():
     version = _get_latest_commcare_build_version()
-    # arbitrary build_number
-    build_number = random.randint(0, 100)
 
-    CommCareBuild.create_without_artifacts(version, build_number)
-    _update_commcare_build_menu(version, build_number)
+    commcare_version_build = next(
+        (cc_build for cc_build in CommCareBuild.all_builds() if cc_build.version == version),
+        None
+    )
+    if commcare_version_build is None:
+        CommCareBuild.create_without_artifacts(version, None)
+        _update_commcare_build_menu(version)
 
 
 def _get_latest_commcare_build_version():
@@ -56,31 +53,26 @@ def _get_latest_commcare_build_version():
     return latest_release_tag.split('commcare_')[1]
 
 
-def _update_commcare_build_menu(version, build_number):
-    doc = CommCareBuildConfig.fetch()
-    _add_build_menu_item(doc, version, build_number)
-    _update_default_build_spec_to_version(doc, version)
+def _update_commcare_build_menu(version):
+    build_config_doc = CommCareBuildConfig.fetch()
+    _add_build_menu_item(build_config_doc, version)
+    _update_default_build_spec_to_version(build_config_doc, version)
 
-    CommCareBuildConfig.get_db().save_doc(doc)
+    build_config_doc.save()
     CommCareBuildConfig.clear_local_cache()
 
 
-def _add_build_menu_item(doc, version, build_number):
-    build_menu_items = doc.menu
+def _add_build_menu_item(build_config, version):
+    build_menu_items = build_config.menu
 
-    build_menu_item = next(
-        (build_item for build_item in build_menu_items if build_item.build.version == version),
-        None
-    )
-    if build_menu_item is None:
-        build = BuildSpec(version=version, build_number=build_number, latest=True)
-        build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version), j2me_enabled=False)
-        build_menu_items.append(build_menu_item)
+    build = BuildSpec(version=version, latest=True)
+    build_menu_item = BuildMenuItem(build=build, label="CommCare {}".format(version), j2me_enabled=False)
+    build_menu_items.append(build_menu_item)
 
 
-def _update_default_build_spec_to_version(doc, version):
+def _update_default_build_spec_to_version(build_config, version):
     major_version = version[0]
-    defaults = doc.defaults
+    defaults = build_config.defaults
 
     major_default_build_spec = next(
         (default for default in defaults if default.version.startswith(major_version)),

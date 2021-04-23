@@ -142,13 +142,15 @@
               <li>{% trans "Paste the latest version in the box above in the format x.y.z" %}</li>
               <li>{% trans "Click Import Build" %}</li>
               <li>
-                {% trans "You can alternatively follow" %}
+                {% blocktrans %}
+                You can alternatively follow
                 <a
                   href="https://github.com/dimagi/commcare-cloud/blob/master/docs/setup/new_environment.md#add-a-new-commcare-build"
                   target="_blank">
-                  {% trans "these steps" %}
+                  these steps
                 </a>
-                {% trans "to automatically get the latest version" %}
+                to automatically get the latest version
+                {% endblocktrans %}
               </li>
             </ol>
           </div>

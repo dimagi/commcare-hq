@@ -1,5 +1,4 @@
 import io
-import random
 
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
@@ -120,7 +119,8 @@ def import_build(request):
     """
     source = request.POST.get('source')
     version = request.POST.get('version')
-    build_number = request.POST.get('build_number')
+    # build_number must be strictly valid or None
+    build_number = request.POST.get('build_number') or None
 
     try:
         SemanticVersionProperty(required=True).validate(version)
@@ -144,8 +144,6 @@ def import_build(request):
             return json_response({
                 'reason': 'build_number must be an int'
             }, status_code=400)
-    else:
-        build_number = random.randint(0, 100)
 
     session = requests.session()
 
