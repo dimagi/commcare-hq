@@ -62,7 +62,7 @@ class TestDownloadMobileWorkers(TestCase):
         super().tearDownClass()
 
     def test_download(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name)
+        (headers, rows) = parse_web_users(self.domain_obj.name, {})
 
         rows = list(rows)
         self.assertEqual(3, len(rows))
