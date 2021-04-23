@@ -77,10 +77,8 @@
   <td class="module-caselist-column"><img class="module-icon" src="<%- resolveUri(datum.raw) %>"/></td>
   <% } else if (styles[index].displayFormat === 'Graph') { %>
   <td class="module-caselist-column"><iframe srcdoc="<%- datum.raw %>" height="300" width="300"></iframe></td>
-  <% } else if (typeof datum.html !== "undefined" && datum.html !== null) { %>
-  <td class="module-caselist-column"><%= datum.html %></td>
   <% } else { %>
-  <td class="module-caselist-column"><%- datum.raw %></td>
+  <td class="module-caselist-column"><%= datum.html %></td>
   <% } %>
   <% } %>
   <% }); %>
