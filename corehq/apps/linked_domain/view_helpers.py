@@ -1,6 +1,4 @@
-from django.db.models.expressions import RawSQL
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -11,6 +9,7 @@ from corehq.apps.fixtures.dbaccessors import (
 )
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS,
+    LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_CASE_SEARCH,
     MODEL_DATA_DICTIONARY,
@@ -19,11 +18,13 @@ from corehq.apps.linked_domain.const import (
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_KEYWORD,
     MODEL_OTP_SETTINGS,
-    MODEL_REPORT, LINKED_MODELS_MAP,
+    MODEL_REPORT,
+)
+from corehq.apps.linked_domain.dbaccessors import (
+    get_actions_in_domain_link_history,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
-    DomainLinkHistory,
     FixtureLinkDetail,
     KeywordLinkDetail,
     ReportLinkDetail,
@@ -82,54 +83,85 @@ def get_keywords(domain):
     return master_list, linked_list
 
 
-def build_app_view_model(app):
-    if not app:
-        return None
+def build_app_view_model(app, last_update=None):
+    can_update = False
+    name = _('Unknown App')
+    detail = None
 
-    view_model = build_view_model(
+    if app:
+        can_update = True
+        name = app.name
+        detail = AppLinkDetail(app_id=app._id).to_json()
+
+    view_model = build_linked_data_view_model(
         model_type=MODEL_APP,
-        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({app.name})",
-        detail=AppLinkDetail(app_id=app._id).to_json()
+        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({name})",
+        detail=detail,
+        last_update=last_update,
+        can_update=can_update
     )
 
     return view_model
 
 
-def build_fixture_view_model(fixture):
-    if not fixture:
-        return None
+def build_fixture_view_model(fixture, last_update=None):
+    can_update = False
+    name = _('Unknown Table')
+    detail = None
 
-    view_model = build_view_model(
+    if fixture:
+        can_update = fixture.is_global
+        name = fixture.tag
+        detail = FixtureLinkDetail(tag=fixture.tag).to_json()
+
+    view_model = build_linked_data_view_model(
         model_type=MODEL_FIXTURE,
-        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({fixture.tag})",
-        detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
-        can_update=fixture.is_global
+        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({name})",
+        detail=detail,
+        last_update=last_update,
+        can_update=can_update
     )
 
     return view_model
 
 
-def build_report_view_model(report):
-    if not report:
-        return None
+def build_report_view_model(report, last_update=None):
+    can_update = False
+    name = _("Unknown Report")
+    detail = None
 
-    view_model = build_view_model(
+    if report:
+        can_update = True
+        name = report.title
+        detail = ReportLinkDetail(report_id=report.get_id).to_json()
+
+    view_model = build_linked_data_view_model(
         model_type=MODEL_REPORT,
-        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({report.title})",
-        detail=ReportLinkDetail(report_id=report.get_id).to_json(),
+        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({name})",
+        detail=detail,
+        last_update=last_update,
+        can_update=can_update
     )
 
     return view_model
 
 
-def build_keyword_view_model(keyword):
-    if not keyword:
-        return None
+def build_keyword_view_model(keyword, last_update=None):
+    can_update = False
+    name = _("Deleted Keyword")
+    detail = None
 
-    view_model = build_view_model(
+    if keyword:
+        name = keyword.keyword
+        detail = KeywordLinkDetail(keyword_id=str(keyword.id)).to_json()
+        can_update = True
+
+    view_model = build_linked_data_view_model(
         model_type=MODEL_KEYWORD,
-        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({keyword.keyword})",
-        detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
+        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({name})",
+        detail=detail,
+        last_update=last_update,
+        can_update=can_update
     )
 
     return view_model
@@ -150,7 +182,7 @@ def build_other_view_models(domain, ignore_models=None):
             and (model != MODEL_HMAC_CALLOUT_SETTINGS or toggles.HMAC_CALLOUT.enabled(domain))
         ):
             view_models.append(
-                build_view_model(
+                build_linked_data_view_model(
                     model_type=model,
                     name=name,
                     detail=None,
@@ -161,7 +193,7 @@ def build_other_view_models(domain, ignore_models=None):
     return view_models
 
 
-def build_view_model(model_type, name, detail, last_update=None, can_update=True):
+def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True):
     return {
         'type': model_type,
         'name': name,
@@ -171,11 +203,10 @@ def build_view_model(model_type, name, detail, last_update=None, can_update=True
     }
 
 
-def get_master_model_status(domain, apps, fixtures, reports, keywords, ignore_models=None):
+def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None):
     """
-    Models that originated in this domain
-    In the context of linked domains, these are models used when "pushing" content
-    :return:
+    Based on the provided data models, build generic
+    :return: list of view models (dicts) used to render elements on the release content page
     """
     view_models = []
 
@@ -205,88 +236,100 @@ def get_master_model_status(domain, apps, fixtures, reports, keywords, ignore_mo
     return view_models
 
 
-def get_model_status(domain, master_link, apps, fixtures, reports, keywords):
+def pop_app_for_action(action, apps):
+    app = None
+    if action.model_detail:
+        app_id = action.wrapped_detail.app_id
+        app = apps.pop(app_id, None)
+
+    return app
+
+
+def pop_fixture_for_action(action, fixtures, domain):
+    fixture = None
+    if action.model_detail:
+        tag = action.wrapped_detail.tag
+        fixture = fixtures.pop(tag, None)
+        if not fixture:
+            fixture = get_fixture_data_type_by_tag(domain, tag)
+
+    return fixture
+
+
+def pop_report_for_action(action, reports):
+    report_id = action.wrapped_detail.report_id
+    try:
+        report = reports.get(report_id)
+        del reports[report_id]
+    except KeyError:
+        report = ReportConfiguration.get(report_id)
+
+    return report
+
+
+def pop_keyword_for_action(action, keywords):
+    keyword_id = action.wrapped_detail.linked_keyword_id
+    try:
+        keyword = keywords[keyword_id]
+        del keywords[keyword_id]
+    except KeyError:
+        keyword = Keyword.objects.get(id=keyword_id)
+
+    return keyword
+
+
+def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fixtures, reports, keywords):
     """
-    Models that originated in this domain's upstream domain
-    In the context of linked domains, these are models used when "pulling" content
+    Data models that originated in this domain's upstream domain that are available to pull
+    :return: list of view models (dicts) used to render linked data models that can be pulled
     """
-    model_status = []
-    if not master_link:
-        return model_status
+    linked_data_view_models = []
+
+    if not upstream_link:
+        return linked_data_view_models
 
     models_seen = set()
-    history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
-        'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
-        []
-    ))
-    linked_models = dict(LINKED_MODELS)
     timezone = get_timezone_for_request()
+    history = get_actions_in_domain_link_history(upstream_link)
     for action in history:
-        models_seen.add(action.model)
         if action.row_number != 1:
             # first row is the most recent
             continue
-        name = linked_models[action.model]
-        view_model = build_view_model(
-            model_type=action.model,
-            name=name,
-            detail=action.model_detail,
-            last_update=server_to_user_time(action.date, timezone)
-        )
-        if action.model == 'app':
-            app_name = _('Unknown App')
-            if action.model_detail:
-                detail = action.wrapped_detail
-                app = apps.pop(detail.app_id, None)
-                app_name = app.name if app else detail.app_id
-                if app:
-                    view_model['detail'] = action.model_detail
-                else:
-                    view_model['can_update'] = False
-            else:
-                view_model['can_update'] = False
-            view_model['name'] = '{} ({})'.format(name, app_name)
 
-        if action.model == 'fixture':
-            tag_name = _('Unknown Table')
-            can_update = False
-            if action.model_detail:
-                tag = action.wrapped_detail.tag
-                fixture = fixtures.pop(tag, None)
-                if not fixture:
-                    fixture = get_fixture_data_type_by_tag(domain, tag)
-                if fixture:
-                    tag_name = fixture.tag
-                    can_update = fixture.is_global
-            view_model['name'] = f'{name} ({tag_name})'
-            view_model['can_update'] = can_update
-        if action.model == 'report':
-            report_id = action.wrapped_detail.report_id
-            try:
-                report = reports.get(report_id)
-                del reports[report_id]
-            except KeyError:
-                report = ReportConfiguration.get(report_id)
-            view_model['name'] = f'{name} ({report.title})'
-        if action.model == 'keyword':
-            keyword_id = action.wrapped_detail.linked_keyword_id
-            try:
-                keyword = keywords[keyword_id].keyword
-                del keywords[keyword_id]
-            except KeyError:
-                try:
-                    keyword = Keyword.objects.get(id=keyword_id).keyword
-                except Keyword.DoesNotExist:
-                    keyword = ugettext_lazy("Deleted Keyword")
-                    view_model['can_update'] = False
-            view_model['name'] = f'{name} ({keyword})'
+        models_seen.add(action.model)
+        last_update = server_to_user_time(action.date, timezone)
 
-        model_status.append(view_model)
+        if action.model == MODEL_APP:
+            app = pop_app_for_action(action, apps)
+            view_model = build_app_view_model(app, last_update=last_update)
 
-    # Add in models and apps that have never been synced
-    model_status.extend(
-        get_master_model_status(
+        elif action.model == MODEL_FIXTURE:
+            fixture = pop_fixture_for_action(action, fixtures, domain)
+            view_model = build_fixture_view_model(fixture, last_update=last_update)
+
+        elif action.model == MODEL_REPORT:
+            report = pop_report_for_action(action, reports)
+            view_model = build_report_view_model(report, last_update=last_update)
+
+        elif action.model == MODEL_KEYWORD:
+            keyword = pop_keyword_for_action(action, keywords)
+            view_model = build_keyword_view_model(keyword, last_update=last_update)
+
+        else:
+            view_model = build_linked_data_view_model(
+                model_type=action.model,
+                name=LINKED_MODELS_MAP[action.model],
+                detail=action.model_detail,
+                last_update=last_update,
+            )
+
+        linked_data_view_models.append(view_model)
+
+    # Add data models that have never been pulled into the downstream domain before
+    # ignoring any models we have already added via domain history
+    linked_data_view_models.extend(
+        build_view_models_from_data_models(
             domain, apps, fixtures, reports, keywords, ignore_models=models_seen)
     )
 
-    return model_status
+    return linked_data_view_models

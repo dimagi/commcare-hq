@@ -77,11 +77,11 @@ from corehq.apps.linked_domain.util import (
     server_to_user_time,
 )
 from corehq.apps.linked_domain.view_helpers import (
+    build_pullable_view_models_from_data_models,
+    build_view_models_from_data_models,
     get_apps,
     get_fixtures,
     get_keywords,
-    get_master_model_status,
-    get_model_status,
     get_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -238,13 +238,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         master_reports, linked_reports = get_reports(self.domain)
         master_keywords, linked_keywords = get_keywords(self.domain)
 
-        # Models belonging to this domain's master domain, for the purpose of pulling
-        model_status = get_model_status(
+        view_models_to_pull = build_pullable_view_models_from_data_models(
             self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords
         )
 
-        # Models belonging to this domain, for the purpose of pushing to linked domains
-        master_model_status = get_master_model_status(
+        view_models_to_push = build_view_models_from_data_models(
             self.domain, master_apps, master_fixtures, master_reports, master_keywords
         )
 
@@ -255,8 +253,8 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'is_master_domain': bool(len(linked_domains)),
             'view_data': {
                 'master_link': self._link_context(master_link, timezone) if master_link else None,
-                'model_status': sorted(model_status, key=lambda m: m['name']),
-                'master_model_status': sorted(master_model_status, key=lambda m: m['name']),
+                'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
+                'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
                 'models': [
                     {'slug': model[0], 'name': model[1]}
