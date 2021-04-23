@@ -524,6 +524,179 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             xml_partial, app.create_suite(),
             './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
 
+    def test_case_detail_tabs_with_nodesets_for_sorting_search_only_field(self, *args):
+        app_json = self.get_json("app_case_detail_tabs_with_nodesets")
+        app = Application.wrap(app_json)
+
+        # update app to add in 2 new columns both with the field 'gender'
+
+        # 1. add a column to the 2nd tab that is marked as 'search only'.
+        #    This should get sorting applied to it
+        tab_spans = app.modules[0].case_details.long.get_tab_spans()
+
+        # 2. add a second column to the last tab which already has a 'gender' field
+        #    This should result in the 'gender' field being displayed as well
+        #    as being used for sorting
+        sorted_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        app.modules[0].case_details.long.columns.insert(tab_spans[1][1] - 1, sorted_gender_col)
+        plain_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        plain_gender_col.format = "plain"
+        index = len(app.modules[0].case_details.long.columns) - 1
+        app.modules[0].case_details.long.columns.insert(index, plain_gender_col)
+        app.modules[0].case_details.long.sort_nodeset_columns = True
+        xml_partial = """
+            <partial>
+                <detail id="m0_case_long">
+                    <title>
+                      <text>
+                        <locale id="cchq.case"/>
+                      </text>
+                    </title>
+                    <detail>
+                      <title>
+                        <text>
+                          <locale id="m0.case_long.tab.1.title"/>
+                        </text>
+                      </title>
+                      <field>
+                        <header>
+                          <text>
+                            <locale id="m0.case_long.case_name_1.header"/>
+                          </text>
+                        </header>
+                        <template>
+                          <text>
+                            <xpath function="case_name"/>
+                          </text>
+                        </template>
+                      </field>
+                      <field>
+                        <header>
+                          <text>
+                            <locale id="m0.case_long.case_artist_2.header"/>
+                          </text>
+                        </header>
+                        <template>
+                          <text>
+                            <xpath function="artist"/>
+                          </text>
+                        </template>
+                      </field>
+                      <field>
+                        <header>
+                          <text>
+                            <locale id="m0.case_long.case_plays_3.header"/>
+                          </text>
+                        </header>
+                        <template>
+                          <text>
+                            <xpath function="plays"/>
+                          </text>
+                        </template>
+                      </field>
+                    </detail>
+                    <detail nodeset="some/data">
+                      <title>
+                        <text>
+                          <locale id="m0.case_long.tab.2.title"/>
+                        </text>
+                      </title>
+                      <field>
+                        <header width="0">
+                          <text/>
+                        </header>
+                        <template width="0">
+                          <text>
+                            <xpath function="gender"/>
+                          </text>
+                        </template>
+                        <sort type="string" order="1" direction="ascending">
+                          <text>
+                            <xpath function="gender"/>
+                          </text>
+                        </sort>
+                      </field>
+                    </detail>
+                    <detail nodeset="instance('commtrack:products')/some/data">
+                      <title>
+                        <text>
+                          <locale id="m0.case_long.tab.3.title"/>
+                        </text>
+                      </title>
+                      <field>
+                        <header>
+                          <text>
+                            <locale id="m0.case_long.case_calculated_property_5.header"/>
+                          </text>
+                        </header>
+                        <template>
+                          <text>
+                            <xpath function="$calculated_property">
+                              <variable name="calculated_property">
+                                <xpath function="column"/>
+                              </variable>
+                            </xpath>
+                          </text>
+                        </template>
+                      </field>
+                      <field>
+                        <header>
+                          <text>
+                            <locale id="m0.case_long.case_calculated_property_6.header"/>
+                          </text>
+                        </header>
+                        <template>
+                          <text>
+                            <xpath function="$calculated_property">
+                              <variable name="calculated_property">
+                                <xpath function="column"/>
+                              </variable>
+                            </xpath>
+                          </text>
+                        </template>
+                      </field>
+                      <field>
+                        <header>
+                          <text>
+                            <locale id="m0.case_long.case_gender_7.header"/>
+                          </text>
+                        </header>
+                        <template>
+                          <text>
+                            <xpath function="gender"/>
+                          </text>
+                        </template>
+                      </field>
+                      <field>
+                        <header width="0">
+                          <text/>
+                        </header>
+                        <template width="0">
+                          <text>
+                            <xpath function="gender"/>
+                          </text>
+                        </template>
+                        <sort type="string" order="1" direction="ascending">
+                          <text>
+                            <xpath function="gender"/>
+                          </text>
+                        </sort>
+                      </field>
+                    </detail>
+                    <variables>
+                      <case_id function="./@case_id"/>
+                    </variables>
+                  </detail>
+
+            </partial>"""
+        self.assertXmlPartialEqual(
+            xml_partial, app.create_suite(),
+            './detail[@id="m0_case_long"]')
+
     def test_case_detail_instance_adding(self, *args):
         # Tests that post-processing adds instances used in calculations
         # by any of the details (short, long, inline, persistent)

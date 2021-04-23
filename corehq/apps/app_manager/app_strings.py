@@ -95,7 +95,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
             # To list app strings for properties used as sorting properties only
             if detail.sort_elements:
-                sort_only, sort_columns = get_sort_and_sort_only_columns(detail, detail.sort_elements)
+                sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), detail.sort_elements)
                 for field, sort_element, order in sort_only:
                     if sort_element.has_display_values():
                         column = create_temp_sort_column(sort_element, order)
