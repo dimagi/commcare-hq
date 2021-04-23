@@ -233,7 +233,7 @@ flake8==3.8.4
     # via -r dev-requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
-freezegun==0.3.15
+freezegun==1.1.0
     # via -r test-requirements.in
 gevent==1.4.0
     # via
@@ -247,6 +247,10 @@ gipc==1.1.0
     # via -r base-requirements.in
 git-build-branch==0.1.10
     # via -r dev-requirements.in
+gitdb==4.0.7
+    # via gitpython
+gitpython==3.1.14
+    # via transifex-client
 gnureadline==8.0.0
     # via -r dev-requirements.in
 graphviz==0.16
@@ -463,6 +467,8 @@ python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
+python-slugify==4.0.1
+    # via transifex-client
 python-termstyle==0.1.10
     # via sniffer
 python3-saml==1.9.0
@@ -515,6 +521,7 @@ requests==2.24.0
     #   sphinx
     #   stripe
     #   tinys3
+    #   transifex-client
     #   twilio
 rjsmin==1.1.0
     # via django-compressor
@@ -548,7 +555,6 @@ six==1.15.0
     #   ethiopian-date-converter
     #   eulxml
     #   fixture
-    #   freezegun
     #   ghdiff
     #   html5lib
     #   isodate
@@ -574,6 +580,8 @@ six==1.15.0
     #   unittest2
 smartypants==2.0.1
     # via pycco
+smmap==4.0.0
+    # via gitdb
 sniffer==0.4.1
     # via -r dev-requirements.in
 snowballstemmer==2.0.0
@@ -586,7 +594,7 @@ soupsieve==2.0.1
     # via beautifulsoup4
 sphinx-rtd-theme==0.5.1
     # via -r dev-requirements.in
-sphinx==2.2.2
+sphinx==3.5.4
     # via
     #   -r dev-requirements.in
     #   recommonmark
@@ -629,6 +637,7 @@ text-unidecode==1.3
     # via
     #   -r base-requirements.in
     #   faker
+    #   python-slugify
 tinycss2==1.0.2
     # via
     #   cairosvg
@@ -642,7 +651,7 @@ traceback2==1.4.0
     # via unittest2
 traitlets==4.3.3
     # via ipython
-transifex-client==0.12.4
+transifex-client==0.14.2
     # via -r dev-requirements.in
 tropo-webapi-python==0.1.3
     # via -r base-requirements.in

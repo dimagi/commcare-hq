@@ -11,7 +11,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.fixtures import FlatLocationSerializer
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.hmac_request import get_hmac_digest
@@ -85,13 +85,19 @@ class TestRelatedCases(TestCase):
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
 
+        # a location in different domain that should not be present
+        create_domain("random-domain")
+        another_location_type = LocationType.objects.create(domain="random-domain", name="Top", code="top")
+        SQLLocation.objects.create(domain="random-domain", name="Top Location",
+                                   location_type=another_location_type)
+
         response = self._generate_restore(case_id, user)
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
         locations_content = b""
-        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id,
-                                                               SQLLocation.active_objects):
+        locations = SQLLocation.active_objects.filter(domain=self.domain)
+        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id, locations):
             locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
         self.assertIn(locations_content, response_content)
 

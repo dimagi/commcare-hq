@@ -103,7 +103,6 @@ from corehq.tabs.utils import (
     regroup_sidebar_items,
     sidebar_to_dropdown,
 )
-from custom.icds_core.view_utils import is_icds_cas_project
 
 
 class ProjectReportsTab(UITab):
@@ -791,10 +790,9 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             edit_section = None
-            if not is_icds_cas_project(self.domain):
-                from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-                edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                    request=self._request, domain=self.domain)
+            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)
 
             if self.can_use_data_cleanup:
                 from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView

@@ -69,21 +69,21 @@ branches:
   - fr/consumer-user             # Farid March 17
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
   - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
-  - sk/get_display_data # Simon March 30
-  - sk/consolidate-doc-lookup # Simon March 30
   - sr/ucr-cs  # Sravan March 31
-  - bmb/sso-token-encryption  # Biyeun Apr 1
   - sr/pagedSessions  # Sravan April 2
   - sr/jumptoErrors # Sravan April 6
   - mk/form-mm-exports-filters-2 # MK April 16
   - fr/smart-oauth-views # Farid April 7
-  - ce/multidropdown-webapps
+  - ce/index-deletion
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
   - sr/ush-ff  # Sravan April 12
   - jls/case-search-case-list-show-related-properties # Jenny April 12
   - gh/fix-email-large-ucrs # Graham April 14
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - sr/sort-cs # Sravan April 19
-  # - kev/markdown-case-views # Kevin Apr 9
+  - kev/markdown-case-views # Kevin Apr 9
+  - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
+  - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
+  - sr/cs-bulk-translations # Sravan April 22
 
 submodules: {}

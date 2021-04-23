@@ -40,6 +40,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 required_headers = set(['username'])
 allowed_headers = set([
@@ -47,7 +48,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
+    'last_sync (read only)', 'web_user', 'remove_web_user'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -55,7 +56,7 @@ old_headers = {
 }
 
 
-def check_headers(user_specs):
+def check_headers(user_specs, domain):
     messages = []
     headers = set(user_specs.fieldnames)
 
@@ -67,6 +68,9 @@ def check_headers(user_specs):
                     old_name=old_name, new_name=new_name
                 ))
             headers.discard(old_name)
+
+    if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
     missing_headers = required_headers - headers

@@ -458,7 +458,6 @@ six==1.15.0
     #   pyzxcvbn
     #   qrcode
     #   quickcache
-    #   sphinx
     #   tenacity
     #   twilio
 smartypants==2.0.1
@@ -471,16 +470,24 @@ sortedcontainers==2.3.0
     # via intervaltree
 sphinx-rtd-theme==0.5.1
     # via -r docs-requirements.in
-sphinx==1.8.5
+sphinx==3.5.4
     # via
     #   -r docs-requirements.in
     #   recommonmark
     #   sphinx-rtd-theme
+sphinxcontrib-applehelp==1.0.2
+    # via sphinx
+sphinxcontrib-devhelp==1.0.2
+    # via sphinx
 sphinxcontrib-django==0.5.1
     # via -r docs-requirements.in
+sphinxcontrib-htmlhelp==1.0.3
+    # via sphinx
+sphinxcontrib-jsmath==1.0.1
+    # via sphinx
+sphinxcontrib-qthelp==1.0.3
+    # via sphinx
 sphinxcontrib-serializinghtml==1.1.4
-    # via sphinxcontrib-websupport
-sphinxcontrib-websupport==1.2.4
     # via sphinx
 sqlagg==0.17.2
     # via -r base-requirements.in

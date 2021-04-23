@@ -35,7 +35,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.tasks import create_usercases
 from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.app_manager.xpath import UserCaseXPath
+from corehq.apps.app_manager.xpath import UsercaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -55,7 +55,7 @@ CASE_XPATH_SUBSTRING_MATCHES = [
 
 USERCASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
-    UserCaseXPath().case(),
+    UsercaseXPath().case(),
 ]
 
 

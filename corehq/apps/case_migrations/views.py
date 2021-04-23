@@ -94,4 +94,5 @@ def migration_restore(request, domain, case_id):
 
 def _add_limited_fixtures(domain, case_id, content):
     serializer = FlatLocationSerializer()
-    content.extend(serializer.get_xml_nodes('locations', domain, case_id, SQLLocation.active_objects))
+    content.extend(serializer.get_xml_nodes('locations', domain, case_id,
+                                            SQLLocation.active_objects.filter(domain=domain)))

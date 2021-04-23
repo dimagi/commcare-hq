@@ -1,6 +1,7 @@
 import socket
 import ipaddress
 from urllib.parse import urlparse
+from .ip_resolver import resolve_ip
 
 
 def sanitize_user_input_url(url):
@@ -19,7 +20,7 @@ def sanitize_user_input_url(url):
     if scheme not in ['http', 'https']:
         raise PossibleSSRFAttempt('scheme not http(s)')
     try:
-        ip_address_text = socket.gethostbyname(hostname)
+        ip_address_text = resolve_ip(hostname)
     except socket.gaierror:
         raise CannotResolveHost()
     ip_address = ipaddress.ip_address(ip_address_text)

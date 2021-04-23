@@ -5,6 +5,7 @@ slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
+from memoized import memoized
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.util.quickcache import quickcache
@@ -60,7 +61,7 @@ def all_previews():
     return list(all_previews_by_name().values())
 
 
-@quickcache([])
+@memoized
 def all_previews_by_name():
     return all_toggles_by_name_in_scope(globals(), toggle_class=FeaturePreview)
 
@@ -70,9 +71,20 @@ def previews_dict(domain):
     return {t.slug: True for t in all_previews() if t.enabled(domain)}
 
 
-def preview_values_by_name(domain):
-    return {toggle_name: toggle.enabled(domain)
-            for toggle_name, toggle in all_previews_by_name().items()}
+def preview_values_by_name(domain, include_disabled=True):
+    """
+    Loads all feature previews into a dictionary for use in JS & Formplayer
+    """
+    all_by_name = {
+        toggle_name: toggle.enabled(domain)
+        for toggle_name, toggle in all_previews_by_name().items()
+    }
+    if include_disabled:
+        return all_by_name
+
+    return {
+        name: value for name, value in all_by_name.items() if value
+    }
 
 
 CALC_XPATHS = FeaturePreview(
