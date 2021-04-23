@@ -6,43 +6,26 @@ Migrating models from couch to postgres
 
 This is a step by step guide to migrating a single model from couch to postgres.
 
-Selecting a Model
-################
-
-To find all classes that descend from ``Document``:
-::
-
-    from dimagi.ext.couchdbkit import Document
-
-    def all_subclasses(cls):
-        return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in all_subclasses(c)])
-
-    sorted([str(s) for s in all_subclasses(Document)])
-
-To find how many documents of a given type exist in a given environment:
-::
-
-    from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class, get_deleted_doc_ids_by_class
-
-    len(list(get_doc_ids_by_class(MyDocumentClass) + get_deleted_doc_ids_by_class(MyDocumentClass)))
-
-There's a little extra value to migrating models that have dedicated views:
-::
-
-    grep -r MyDocumentClass . | grep _design.*map.js
-
-There's a lot of extra value in migrating areas where you're familiar with the code context.
-
-Ultimately, all progress is good.
-
 Conceptual Steps
 ################
 
-1. Add SQL model
-2. Wherever the couch document is saved, create or update the corresponding SQL model
-3. Migrate all existing couch documents
-4. Whenever a couch document is read, read from SQL instead
-5. Delete couch model and any related views
+This is a multi-deploy process that keeps two copies of the data - one in couch, one in sql - in sync until the final piece of code is deployed and the entire migration is complete.
+It has three phases:
+
+1. Add SQL models and sync code
+
+   * Define the new SQL models, based on the existing couch classes and using the `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_ to keep sql changes in sync with couch.
+   * Add the `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ to the couch class so that changes to couch documents get reflected in sql.
+   * Write a management command that subclasses `PopulateSQLCommand <https://github.com/dimagi/commcare-hq/blob/500040985e0aaffa9a220c65e81318a1afa4761b/corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py#L15>`_, which will create/update a corresponding SQL object for every couch document. This command will later be run by a django migration to migrate the data. For large servers, this command will also need to be run manually, outside of a deploy, to do the bulk of the migration.
+
+2. Switch app code to read/write in SQL
+
+   * Update all code references to the couch classes to instead refer to the SQL classes.
+   * Write a django migration that integrates with ``PopulateSQLCommand`` to ensure that all couch and sql data is synced.
+
+3. Remove couch
+
+   * Delete the couch classes, and remove the ``SyncSQLToCouchMixin`` from the SQL classes.
 
 Practical Steps
 ###############
@@ -145,3 +128,35 @@ This is the cleanup PR. Wait a few weeks after the previous PR to merge this one
 * Now that the couch model is gone, rename the sql model from ``SQLMyModel`` to ``MyModel``. Assuming you set up ``db_table`` in the initial PR, this should include removing the sql model's ``Meta`` class and adding a small django migration. `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26557/commits/beb9d10f6d8d0906524912ef94a8d049f06c38e8>`_.
 * Add the couch class to ``DELETABLE_COUCH_DOC_TYPES``. `Sample commit for Dhis2Connection <https://github.com/dimagi/commcare-hq/pull/26400/commits/2a6e93e19ab689cfaf0b4cdc89c9039cbee33139>`_.
 * Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migration docs <https://commcare-hq.readthedocs.io/migrations.html>`_
+
+Current State of Migration
+##########################
+
+The current state of the migration is available internally `here <https://docs.google.com/spreadsheets/d/1iayf898ktfSRXdjBVutj_AgH4WN9DrheMS6vgteqfFM/edit#gid=677779031>`_,
+which outlines approximate LOE, risk level, and notes on the remaining models.
+
+For a definitive account of remaining couch-based models, you can identify all classes that descend from ``Document``:
+::
+
+    from dimagi.ext.couchdbkit import Document
+
+    def all_subclasses(cls):
+        return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in all_subclasses(c)])
+
+    sorted([str(s) for s in all_subclasses(Document)])
+
+To find how many documents of a given type exist in a given environment:
+::
+
+    from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class, get_deleted_doc_ids_by_class
+
+    len(list(get_doc_ids_by_class(MyDocumentClass) + get_deleted_doc_ids_by_class(MyDocumentClass)))
+
+There's a little extra value to migrating models that have dedicated views:
+::
+
+    grep -r MyDocumentClass . | grep _design.*map.js
+
+There's a lot of extra value in migrating areas where you're familiar with the code context.
+
+Ultimately, all progress is good.

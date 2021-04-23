@@ -5,6 +5,8 @@ from testil import eq, assert_raises
 
 from ..urlsanitize import PossibleSSRFAttempt, sanitize_user_input_url, CannotResolveHost, InvalidURL
 
+from django.test import SimpleTestCase
+
 RAISE = object()
 RETURN = object()
 
@@ -63,3 +65,33 @@ def test_rebinding():
         eq(sanitize_user_input_url(url), ipaddress.IPv4Address('8.8.8.8'))  # this is one possible output
     except PossibleSSRFAttempt as e:
         eq(e.reason, 'is_link_local')
+
+
+class SanitizeIPv6Tests(SimpleTestCase):
+    def test_valid_ipv6_address_is_accepted(self):
+        ip_text = '2607:f8b0:4006:806::2004'
+        valid_ipv6 = f'http://[{ip_text}]'
+        expected_ip = ipaddress.ip_address(ip_text)
+        self.assertEqual(sanitize_user_input_url(valid_ipv6), expected_ip)
+
+    def test_recognizes_empty_ipv6_as_ssrf_attempt(self):
+        with self.assertRaises(PossibleSSRFAttempt) as cm:
+            sanitize_user_input_url('http://[::]')
+
+        self.assertEqual(cm.exception.reason, 'is_reserved')
+
+    def test_recognizes_all_zeros_as_ssrf_attempt(self):
+        with self.assertRaises(PossibleSSRFAttempt) as cm:
+            sanitize_user_input_url('http://[0000:0000:0000:0000:0000:0000:0000:0000]')
+
+        self.assertEqual(cm.exception.reason, 'is_reserved')
+
+    def test_recognizes_trailing_one_as_ssrf_attempt(self):
+        with self.assertRaises(PossibleSSRFAttempt) as cm:
+            sanitize_user_input_url('http://[::1]')
+
+        self.assertEqual(cm.exception.reason, 'is_loopback')
+
+    def test_address_with_port_can_cause_ssrf(self):
+        with self.assertRaises(PossibleSSRFAttempt):
+            sanitize_user_input_url('http://[::]:22')
