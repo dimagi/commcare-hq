@@ -80,6 +80,7 @@ from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.apps.users.bulk_download import get_domains_from_user_filters
 from corehq.apps.users.dbaccessors import (
     get_user_docs_by_username,
     user_exists,
@@ -100,7 +101,7 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UserFilterForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -1430,10 +1431,15 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
+
     user_count = 0
-    for domain in user_filters['domains']:
-        user_count += get_users_by_filters(domain, user_filters, include_mobile_users=include_mobile_users,
+    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    for current_domain in domains_list:
+        user_count += get_users_by_filters(current_domain, user_filters, include_mobile_users=include_mobile_users,
                                            include_web_users=include_web_users, count_only=True)
+        if include_web_users:
+            user_count += Invitation.by_domain(current_domain).count()
+
     return json_response({
         'count': user_count
     })

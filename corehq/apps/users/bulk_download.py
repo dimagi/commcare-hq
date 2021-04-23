@@ -186,7 +186,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    (is_multi_domain_download, domains_list) = _get_domains_from_filters(domain, user_filters)
+    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
@@ -234,7 +234,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 def parse_web_users(domain, user_filters, task=None, total_count=None):
     user_dicts = []
     max_location_length = 0
-    (is_multi_domain_download, domains_list) = _get_domains_from_filters(domain, user_filters)
+    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
     progress = 0
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
@@ -266,7 +266,7 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
-def _get_domains_from_filters(domain, user_filters):
+def get_domains_from_user_filters(domain, user_filters):
     domains_list = [domain]
     is_multi_domain_download = False
     if 'domains' in user_filters:
