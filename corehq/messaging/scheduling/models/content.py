@@ -262,7 +262,6 @@ class SMSSurveyContent(Content):
                 logged_subevent,
                 self.get_workflow(logged_event),
                 app,
-                module,
                 form
             )
 
@@ -284,7 +283,7 @@ class SMSSurveyContent(Content):
                 )
 
     def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
-            app, module, form):
+            app, form):
         # Close all currently open sessions
         SQLXFormsSession.close_all_open_sms_sessions(domain, recipient.get_id)
 
@@ -307,7 +306,6 @@ class SMSSurveyContent(Content):
                 domain,
                 recipient,
                 app,
-                module,
                 form,
                 case_id,
                 yield_responses=True
