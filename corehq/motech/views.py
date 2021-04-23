@@ -161,17 +161,21 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
             }
 
     def _get_item_data(self, connection_settings):
-        return {
+        data = {
             'id': connection_settings.id,
             'name': connection_settings.name,
             'url': connection_settings.url,
             'notifyAddresses': ', '.join(connection_settings.notify_addresses),
             'usedBy': ', '.join(connection_settings.used_by),
-            'editUrl': reverse(
+        }
+
+        if connection_settings.id is not None:
+            data['editUrl'] = reverse(
                 ConnectionSettingsDetailView.urlname,
                 kwargs={'domain': self.domain, 'pk': connection_settings.id}
-            ),
-        }
+            )
+
+        return data
 
     def get_deleted_item_data(self, item_id):
         connection_settings = ConnectionSettings.objects.get(
