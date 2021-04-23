@@ -1032,6 +1032,7 @@ class XForm(WrappedNode):
         # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
         # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self._get_control_nodes()
+        flattened_data_nodes = self._get_flattened_data_nodes()
         leaf_data_nodes = self._get_leaf_data_nodes()
         external_instances = self.get_external_instances()
 
@@ -1061,7 +1062,7 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "comment": self._get_comment(path),
+                "comment": self._get_comment(flattened_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self._get_setvalue(path),
                 "is_group": is_group,
@@ -1136,7 +1137,7 @@ class XForm(WrappedNode):
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                    "comment": self._get_comment(path),
+                    "comment": self._get_comment(flattened_data_nodes, path),
                     "setvalue": self._get_setvalue(path)
                 }
 
@@ -1293,9 +1294,9 @@ class XForm(WrappedNode):
         for_each_control_node(self.find('{h}body'))
         return control_nodes
 
-    def _get_comment(self, path):
+    def _get_comment(self, flattened_data_nodes, path):
         try:
-            return self._get_flattened_data_nodes()[path].attrib.get('{v}comment')
+            return flattened_data_nodes[path].attrib.get('{v}comment')
         except KeyError:
             return None
 
