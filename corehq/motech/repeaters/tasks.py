@@ -23,8 +23,10 @@ from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     MAX_RETRY_WAIT,
+    RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
     RECORDS_AT_A_TIME,
 )
 from .dbaccessors import (
@@ -33,8 +35,13 @@ from .dbaccessors import (
 )
 from .models import (
     RepeaterStub,
+    RepeatRecord,
+    RepeatRecordAttempt,
+    SQLRepeatRecord,
     domain_can_forward,
     get_payload,
+    has_failed,
+    is_queued,
     send_request,
 )
 
@@ -195,3 +202,57 @@ def process_repeater_stub(repeater_stub: RepeaterStub):
                                             repeat_record, payload)
             if should_retry:
                 break
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def revert_migrated(couch_record):
+    """
+    Unset the RepeatRecord "migrated" state, and set ``next_check`` for
+    RepeatRecords that need to be sent.
+
+    Used by the ``roll_back_record_migration`` management command.
+    """
+    couch_record.migrated = False
+    if is_queued(couch_record):
+        couch_record.next_check = datetime.utcnow()
+    try:
+        couch_record.save()
+    except:  # noqa: E722
+        logging.exception('Failed to revert migration for record: '
+                          f'{couch_record.record_id}')
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def migrate_to_couch(sql_record: SQLRepeatRecord):
+    """
+    Create a Couch RepeatRecord for a new SQLRepeatRecord.
+
+    Used by the ``roll_back_record_migration`` management command.
+    """
+    repeater_type = sql_record.repeater_stub.repeater.__class__.__name__
+    couch_record = RepeatRecord(
+        domain=sql_record.domain,
+        repeater_id=sql_record.repeater_stub.repeater_id,
+        repeater_type=repeater_type,
+        payload_id=sql_record.payload_id,
+        registered_on=sql_record.registered_at,
+        next_check=datetime.utcnow() if is_queued(sql_record) else None,
+
+        succeeded=sql_record.state == RECORD_SUCCESS_STATE,
+        cancelled=sql_record.state == RECORD_CANCELLED_STATE,
+        failure_reason=sql_record.failure_reason,
+
+        overall_tries=sql_record.num_attempts,
+        attempts=[RepeatRecordAttempt(
+            succeeded=a.state == RECORD_SUCCESS_STATE,
+            cancelled=a.state == RECORD_CANCELLED_STATE,
+            datetime=a.created_at,
+            failure_reason=a.message if has_failed(a) else '',
+            success_response=a.message if not has_failed(a) else '',
+        ) for a in sql_record.attempts],
+    )
+    couch_record.save()
+    # Set `couch_id` so that running the roll_back_record_migration
+    # command more than once will not migrate `sql_record` again.
+    sql_record.couch_id = couch_record.record_id  # Idempotent
+    sql_record.save()

@@ -1,5 +1,6 @@
-from datetime import datetime
 import csv
+from datetime import datetime
+from inspect import cleandoc
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -7,19 +8,18 @@ from couchdbkit import ResourceNotFound
 from openpyxl import Workbook
 
 from corehq.motech.repeaters.dbaccessors import (
-    get_repeat_record_count,
-    iter_repeat_records_by_domain,
+    iter_sql_repeat_records_by_domain,
 )
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    help = """
+    help = cleandoc("""
     Pass Repeater ID along with domain and State(Optional) or
     Pass a csv file path with a list of repeat records IDs to get a report(xlsx)
     with final state and message for all attempts(if available)
-    """
+    """)
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
@@ -54,10 +54,14 @@ class Command(BaseCommand):
         )
 
     def _add_row(self, repeat_record):
-        row = [repeat_record.get_id, repeat_record.payload_id, repeat_record.state, repeat_record.failure_reason]
-        repeat_record_attempts_count = len(repeat_record.attempts)
-        if repeat_record_attempts_count > self.max_attempts_in_sheet:
-            self.max_attempts_in_sheet = repeat_record_attempts_count
+        row = [
+            repeat_record.pk,
+            repeat_record.payload_id,
+            repeat_record.state,
+            repeat_record.failure_reason,
+        ]
+        if repeat_record.num_attempts > self.max_attempts_in_sheet:
+            self.max_attempts_in_sheet = repeat_record.num_attempts
         for attempt in repeat_record.attempts:
             row.append(attempt.message)
         self.ws.append(row)
@@ -105,8 +109,11 @@ class Command(BaseCommand):
             records = self.record_ids
             record_count = len(records)
         elif domain and repeater_id:
-            records = iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=state)
-            record_count = get_repeat_record_count(domain, repeater_id=repeater_id, state=state)
+            records, record_count = iter_sql_repeat_records_by_domain(
+                domain,
+                repeater_id,
+                [state] if state else None,
+            )
         else:
             raise CommandError("Insufficient Arguments")
 
@@ -114,7 +121,7 @@ class Command(BaseCommand):
             if isinstance(record, str):
                 record_id = record
                 try:
-                    record = RepeatRecord.get(record_id)
+                    record = SQLRepeatRecord.objects.get(pk=record_id)
                 except ResourceNotFound:
                     self.ws.append([record_id, '', 'Not Found'])
                     continue

@@ -2,25 +2,28 @@ import csv
 import datetime
 import re
 import time
+from http import HTTPStatus
+from inspect import cleandoc
+from unittest.mock import Mock
 
 from django.core.management.base import BaseCommand
 
-from mock import MagicMock
-
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
+from corehq.motech.repeaters.dbaccessors import (
+    iter_sql_repeat_records_by_domain,
+)
+from corehq.motech.repeaters.models import Repeater, SQLRepeatRecord
 
 
 class Command(BaseCommand):
-    help = """
+    help = cleandoc("""
     Perform an action on cancelled repeat records. You may optionally specify a regex to
-    filter records using --include or --exclude, an a sleep time with --sleep.
+    filter records using --include or --exclude, and a sleep time with --sleep.
     Specify multiple include or exclude params by space separating them.
 
     The default action retriggers records. You can specify --action=succeed which will
     call the success callbacks add a new successful attempt to the record
-    """
+    """)
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -38,7 +41,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--response_status',
-            default="200",
+            type=int,
+            default=200,
             help=("When --action=succeed, the status code for the mock response")
         )
         parser.add_argument(
@@ -94,10 +98,9 @@ class Command(BaseCommand):
                            for include_regex in include_regexps)
             return True  # No filter applied
 
-        records = list(filter(
-            meets_filter,
-            iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
-        ))
+        records, __ = iter_sql_repeat_records_by_domain(
+            domain, repeater_id, states=[RECORD_CANCELLED_STATE])
+        records = list(filter(meets_filter, records))
 
         if verbose:
             for record in records:
@@ -120,28 +123,41 @@ class Command(BaseCommand):
             for i, record in enumerate(records):
                 try:
                     if action == 'retrigger':
-                        if record.next_check is None:
-                            record.next_check = datetime.datetime.utcnow()
                         record.fire(force_send=True)
                     elif action == 'succeed':
                         self._succeed_record(record, success_message, response_status)
                 except Exception as e:
-                    print("{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e)))
-                    writer.writerow((record._id, record.payload_id, record.state, repr(e)))
+                    print(f"{i + 1}/{total_records}: EXCEPTION {e!r}")
+                    writer.writerow((record.pk, record.payload_id, record.state, repr(e)))
                 else:
-                    print("{}/{}: {}, {}".format(i + 1, total_records, record.state, record.attempts[-1].message))
-                    writer.writerow((record._id, record.payload_id, record.state, record.attempts[-1].message))
+                    print(f"{i + 1}/{total_records}: {record.state}, {record.last_message}")
+                    writer.writerow((record.pk, record.payload_id, record.state, record.last_message))
                 if sleep_time:
                     time.sleep(float(sleep_time))
 
         print("Wrote log of changes to {}".format(filename))
 
-    def _succeed_record(self, record, success_message, response_status):
-        success_attempt = RepeatRecordAttempt(
-            cancelled=False,
-            datetime=datetime.datetime.utcnow(),
-            success_response=success_message,
-            succeeded=True,
+    def _succeed_record(
+        self,
+        record: SQLRepeatRecord,
+        success_message: str,
+        response_status: int,
+    ):
+        """
+        Treats a SQLRepeatRecord as if it was sent successfully.
+
+        .. note::
+           This will call repeater.reset_next_attempt() as if a payload
+           was successfully sent.
+
+        """
+        try:
+            reason = HTTPStatus(response_status).phrase
+        except ValueError:
+            reason = ''
+        response = Mock(
+            status_code=response_status,
+            reason=reason,
+            text=success_message,
         )
-        record.add_attempt(success_attempt)
-        record.save()
+        record.add_success_attempt(response)

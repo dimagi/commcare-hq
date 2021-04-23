@@ -1,4 +1,7 @@
 import datetime
+from typing import Iterator, List, Optional, Tuple
+
+from django.db.models import QuerySet
 
 from dimagi.utils.parsing import json_format_datetime
 
@@ -136,6 +139,59 @@ def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=No
     return (queryset.order_by('-registered_at')[skip:skip + limit]
             .select_related('repeater_stub')
             .prefetch_related('sqlrepeatrecordattempt_set'))
+
+
+def iter_sql_repeat_records_by_domain(
+    domain: str,
+    repeater_id: Optional[str] = None,
+    states: Optional[List[str]] = None,
+    order_by: Optional[List[str]] = None,
+) -> Tuple[Iterator['SQLRepeatRecord'], int]:
+    """
+    Returns an iterator of SQLRepeatRecords, and the total count
+    """
+    from corehq.motech.repeaters.models import SQLRepeatRecord
+
+    queryset = SQLRepeatRecord.objects.filter(domain=domain)
+    if repeater_id:
+        queryset = queryset.filter(repeater__couch_id=repeater_id)
+    if states:
+        queryset = queryset.filter(state__in=states)
+    record_count = queryset.count()
+    if order_by:
+        queryset = queryset.order_by(order_by)
+
+    return (
+        prefetch_attempts(queryset, record_count),
+        record_count,
+    )
+
+
+def prefetch_attempts(
+    queryset: QuerySet,
+    record_count: int,
+    chunk_size: int = 1000,
+) -> Iterator['SQLRepeatRecord']:
+    """
+    Prefetches SQLRepeatRecordAttempts for SQLRepeatRecords. Paginates
+    querysets because prefetching loads both the primary queryset and
+    the prefetched queryset into memory.
+    """
+    for start, end in _pages(record_count, chunk_size):
+        yield from (queryset[start:end]
+                    .prefetch_related('sqlrepeatrecordattempt_set'))
+
+
+def _pages(total: int, page_size: int) -> Iterator[Tuple[int, int]]:
+    """
+    Return an interator of start-end pairs, given a total and page size.
+
+    >>> list(_pages(10, 4))
+    [(0, 4), (4, 8), (8, 10)]
+    """
+    for start in range(0, total, page_size):
+        end = min(start + page_size, total)
+        yield start, end
 
 
 def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):

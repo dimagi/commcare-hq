@@ -1,8 +1,13 @@
-import datetime
+import sys
 
 from django.core.management.base import BaseCommand
 
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.const import (
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+)
+from corehq.motech.repeaters.models import RepeaterStub, domain_can_forward
+from corehq.motech.repeaters.tasks import process_repeater_stub
 
 
 class Command(BaseCommand):
@@ -12,8 +17,17 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
-        next_year = datetime.datetime.utcnow() + datetime.timedelta(days=365)
-        records = RepeatRecord.all(domain=domain, due_before=next_year)  # Excludes succeeded and cancelled
-        for record in records:
-            record.fire(force_send=True)
-            print('{} {}'.format(record._id, 'successful' if record.succeeded else 'failed'))
+        if not domain_can_forward(domain):
+            print('Domain does not have Data Forwarding or Zapier Integration '
+                  'enabled.', file=sys.stderr)
+            sys.exit(1)
+        for repeater_stub in RepeaterStub.objects.filter(
+            domain=domain,
+            is_paused=False,
+            repeat_records__state__in=(RECORD_PENDING_STATE,
+                                       RECORD_FAILURE_STATE)
+            # Compare filters to RepeaterStubManager.all_ready(). This
+            # command will ignore whether RepeaterStub is waiting for a
+            # retry interval to pass.
+        ):
+            process_repeater_stub.delay(repeater_stub)
