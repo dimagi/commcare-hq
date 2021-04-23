@@ -13,7 +13,6 @@ from corehq.apps.formplayer_api.smsforms.api import (
     XFormsConfig,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
 
