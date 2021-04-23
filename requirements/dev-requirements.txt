@@ -401,7 +401,7 @@ prompt-toolkit==3.0.7
     # via ipython
 protobuf==3.13.0
     # via ddtrace
-psutil==5.7.3
+psutil==5.8.0
     # via -r dev-requirements.in
 psycogreen==1.0.2
     # via -r base-requirements.in
