@@ -92,6 +92,8 @@ from corehq.apps.app_manager.views.utils import (
     get_langs,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
+    InvalidSessionEndpoint,
+    set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -194,6 +196,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -543,6 +546,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
+        "session_endpoint_id": None,
     }
 
     if attr not in attributes:
@@ -681,6 +685,13 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl = request.POST.getlist('excl_form_ids')
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
+
+    if should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        try:
+            set_session_endpoint(module, raw_endpoint_id, app)
+        except InvalidSessionEndpoint as e:
+            return HttpResponseBadRequest(str(e))
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
