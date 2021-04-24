@@ -107,6 +107,7 @@ from corehq.apps.users.tasks import (
     bulk_download_users_async,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices
+from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
 
@@ -573,7 +574,7 @@ class ListWebUsersView(BaseRoleAccessView):
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
-    return download_users(request, domain, include_web_users=True)
+    return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):

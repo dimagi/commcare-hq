@@ -221,7 +221,7 @@ def get_mobile_user_ids(domain, include_inactive=True):
 
 
 def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
-                       include_inactive=True, count_only=False, include_docs=False):
+                      include_inactive=True, count_only=False, include_docs=False):
     from corehq.apps.users.models import CommCareUser, WebUser
     assert include_web_users or include_mobile_users
 

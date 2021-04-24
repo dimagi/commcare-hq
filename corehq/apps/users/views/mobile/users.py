@@ -124,6 +124,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq import toggles
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
@@ -1212,14 +1213,11 @@ class FilteredUserDownload(BaseManageCommCareUserView):
     page_title = ugettext_noop('Filter and Download Users')
 
     def get(self, request, domain, *args, **kwargs):
-        form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
-                              include_mobile_users=self.include_mobile_users,
-                              include_web_users=self.include_web_users)
+        form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=self.user_type)
         # To avoid errors on first page load
         form.empty_permitted = True
         context = self.main_context
-        count_view = "count_commcare_users" if self.include_mobile_users else "count_web_users"
-        context.update({'form': form, 'count_users_url': reverse(count_view, args=[domain])})
+        context.update({'form': form, 'count_users_url': reverse(self.count_view, args=[domain])})
         return render(
             request,
             "users/filter_and_download.html",
@@ -1230,8 +1228,8 @@ class FilteredUserDownload(BaseManageCommCareUserView):
 @method_decorator([toggles.FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
 class FilteredCommCareUserDownload(FilteredUserDownload):
     urlname = 'filter_and_download_commcare_users'
-    include_mobile_users = True
-    include_web_users = False
+    user_type = MOBILE_USER_TYPE
+    count_view = 'count_commcare_users'
 
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
@@ -1241,8 +1239,8 @@ class FilteredCommCareUserDownload(FilteredUserDownload):
 @method_decorator([toggles.DOMAIN_PERMISSIONS_MIRROR.required_decorator()], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload):
     urlname = 'filter_and_download_web_users'
-    include_mobile_users = False
-    include_web_users = True
+    user_type = WEB_USER_TYPE
+    count_view = 'count_web_users'
 
     @method_decorator(require_can_edit_web_users)
     def get(self, request, domain, *args, **kwargs):
@@ -1410,27 +1408,26 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 @require_can_edit_commcare_users
 @toggles.FILTERED_BULK_USER_DOWNLOAD.required_decorator()
 def count_commcare_users(request, domain):
-    return count_users(request, domain, include_mobile_users=True, include_web_users=False)
+    return _count_users(request, domain, MOBILE_USER_TYPE)
 
 
 @require_can_edit_web_users
 @toggles.DOMAIN_PERMISSIONS_MIRROR.required_decorator()
 def count_web_users(request, domain):
-    return count_users(request, domain, include_mobile_users=False, include_web_users=True)
+    return _count_users(request, domain, WEB_USER_TYPE)
 
 
 @login_and_domain_required
-def count_users(request, domain, include_mobile_users=False, include_web_users=False):
-    if not (include_mobile_users ^ include_web_users):
-        raise AssertionError("count_users can count either mobile or web users")
+def _count_users(request, domain, user_type):
+    if user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
+        raise AssertionError(f"Invalid user type for _count_users: {user_type}")
 
     from corehq.apps.users.dbaccessors import (
         count_mobile_users_by_filters,
         count_web_users_by_filters,
         count_invitations_by_filters,
     )
-    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
-                          include_mobile_users=include_mobile_users, include_web_users=include_web_users)
+    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1439,9 +1436,9 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
     user_count = 0
     (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
-        if include_mobile_users:
+        if user_type == MOBILE_USER_TYPE:
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
-        elif include_web_users:
+        else:
             user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += count_invitations_by_filters(current_domain, user_filters)
 
@@ -1452,37 +1449,36 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
 
 @require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
-    return download_users(request, domain, include_mobile_users=True)
+    return download_users(request, domain, user_type=MOBILE_USER_TYPE)
 
 
 @login_and_domain_required
-def download_users(request, domain, include_mobile_users=False, include_web_users=False):
-    if not (include_mobile_users ^ include_web_users):
-        raise AssertionError("download_users can download either mobile or web users")
+def download_users(request, domain, user_type):
+    if user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
+        raise AssertionError(f"Invalid user type for download_users: {user_type}")
 
-    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
-                          include_mobile_users=include_mobile_users, include_web_users=include_web_users)
+    form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
-        view = FilteredCommCareUserDownload if include_mobile_users else FilteredWebUserDownload
+        view = FilteredCommCareUserDownload if user_type == MOBILE_USER_TYPE else FilteredWebUserDownload
         return HttpResponseRedirect(reverse(view, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
     if form.cleaned_data['domains'] != [domain]:  # if additional domains added for download
-        user_type = 'mobile' if include_mobile_users else 'web'
+        user_type = 'mobile' if user_type == MOBILE_USER_TYPE else 'web'
         track_workflow(request.couch_user.username, f'Domain filter used for {user_type} download')
     if form.cleaned_data['columns'] == UserFilterForm.USERNAMES_COLUMN_OPTION:
-        if not include_mobile_users:
+        if user_type != MOBILE_USER_TYPE:
             raise AssertionError("USERNAME_COLUMN_OPTION only available for mobile users")
         res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,
                                                   owner_id=request.couch_user.get_id)
     else:
         res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
-                                              include_web_users, owner_id=request.couch_user.get_id)
+                                              (user_type == WEB_USER_TYPE), owner_id=request.couch_user.get_id)
     download.set_task(res)
-    if include_mobile_users:
+    if user_type == MOBILE_USER_TYPE:
         view = DownloadUsersStatusView
-    if include_web_users:
+    else:
         from corehq.apps.users.views import DownloadWebUsersStatusView
         view = DownloadWebUsersStatusView
     return redirect(view.urlname, domain, download.download_id)
