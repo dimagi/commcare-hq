@@ -105,6 +105,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         config.default_relevant = True
         self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")
 
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
@@ -118,6 +119,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./remote-request[1]"
         )
 
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -127,6 +129,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
     def test_duplicate_remote_request(self, *args):
         """
@@ -172,6 +175,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_case_search_filter(self, *args):
         search_filter = "rating > 3"
         self.module.search_config.search_filter = search_filter
@@ -217,7 +221,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
 
-    @flag_enabled('CASE_CLAIM_AUTOLAUNCH')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_case_search_auto_launch(self, *args):
         self.module.search_config.auto_launch = True
         suite = self.app.create_suite()
@@ -498,6 +502,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./remote-request[1]/instance[@id='states']",
         )
 
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_prompt_default_value(self, *args):
         """Setting the default to "default_value"
         """
