@@ -70,9 +70,6 @@ branches:
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - fr/consumer-user             # Farid March 17
   - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
-  - sr/ucr-cs  # Sravan March 31
-  - sr/pagedSessions  # Sravan April 2
   - sr/jumptoErrors # Sravan April 6
   - mk/form-mm-exports-filters-2 # MK April 16
   - fr/smart-oauth-views # Farid April 7
