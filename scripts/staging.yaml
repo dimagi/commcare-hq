@@ -61,7 +61,9 @@ branches:
   - sr/es-alias # Sravan Nov 18
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
+  - sr/cs-bulk-translations+sr/ush-ff+sr/ucr-cs+nh/reminders
   - sr/ush-ff+sr/ucr-cs+nh/reminders  # Sravan April 12
+  - sr/cs-bulk-translations # Sravan April 22
   - nh/reminders  # Norman Jan 26
   - smh/bulk-upload-web-users # Steph Feb 22
   - nh/fhir/repeater  # Norman Mar 1
@@ -84,7 +86,6 @@ branches:
   - kev/markdown-case-views # Kevin Apr 9
   - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-  - sr/cs-bulk-translations # Sravan April 22
   - jls/cross-domain-web-user-download # Jenny April 24
 
 submodules: {}
