@@ -21,8 +21,6 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from dimagi.utils.django.fields import TrimmedCharField
-
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
@@ -41,6 +39,7 @@ from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.models import UserRole, DomainPermissionsMirror
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -1177,10 +1176,9 @@ class UserFilterForm(forms.Form):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.domain = kwargs.pop('domain')
         self.couch_user = kwargs.pop('couch_user')
-        self.include_mobile_users = kwargs.pop('include_mobile_users', False)
-        self.include_web_users = kwargs.pop('include_web_users', False)
-        if not(self.include_mobile_users ^ self.include_web_users):
-            raise AssertionError("UserFilterForm handles either mobile or web users")
+        self.user_type = kwargs.pop('user_type')
+        if not(self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]):
+            raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
@@ -1199,7 +1197,7 @@ class UserFilterForm(forms.Form):
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
         self.helper.form_class = 'form-horizontal'
-        view_name = 'download_commcare_users' if self.include_mobile_users else 'download_web_users'
+        view_name = 'download_commcare_users' if self.user_type == MOBILE_USER_TYPE else 'download_web_users'
         self.helper.form_action = reverse(view_name, args=[self.domain])
 
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -1207,10 +1205,10 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = []
-        if self.include_mobile_users:
+        if self.user_type == MOBILE_USER_TYPE:
             fields += crispy.Field('role_id', css_class="hqwebapp-select2")
         fields += [crispy.Field('search_string')]
-        if self.include_mobile_users:
+        if self.user_type == MOBILE_USER_TYPE:
             fields += [
                 crispy.Field('location_id'),
                 crispy.Field('columns'),
