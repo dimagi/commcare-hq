@@ -3,6 +3,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 from django.conf import settings
+from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
@@ -21,6 +22,7 @@ from ..const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
+from ..migration_functions import create_repeaterstubs
 from ..models import (
     FormRepeater,
     RepeaterStub,
@@ -49,13 +51,9 @@ class RepeaterTestCase(TestCase):
             url='https://www.example.com/api/',
         )
         self.repeater.save()
-        self.repeater_stub = RepeaterStub.objects.create(
-            domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
-        )
+        self.repeater_stub = self.repeater.repeater_stub
 
     def tearDown(self):
-        self.repeater_stub.delete()
         self.repeater.delete()
         super().tearDown()
 
@@ -402,3 +400,122 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE):
             is_migrated = are_repeat_records_migrated(DOMAIN)
         self.assertTrue(is_migrated)
+
+
+class RepeaterStubOneToOneRepeaterTests(RepeaterFixtureMixin, TestCase):
+
+    def test_one_in_domain(self):
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+    def test_one_globally(self):
+        self.assertEqual(RepeaterStub.objects.filter(
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+    def test_only_one_in_domain(self):
+        with transaction.atomic():
+            # (Run in its own transaction so as not to mess with tearDown)
+            with self.assertRaises(IntegrityError):
+                RepeaterStub.objects.create(
+                    domain=DOMAIN,
+                    repeater_id=self.repeater.get_id,
+                )
+
+    def test_only_one_globally(self):
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                RepeaterStub.objects.create(
+                    domain='another-domain',
+                    repeater_id=self.repeater.get_id,
+                )
+
+
+class SaveDeleteRepeaterTests(TestCase):
+
+    def setUp(self):
+        self.repeater = FormRepeater(
+            domain=DOMAIN,
+            url='https://www.example.com/api/',
+        )
+
+    def tearDown(self):
+        try:
+            self.repeater.delete()
+        except TypeError:
+            # test_delete() causes tearDown() to throw TypeError because
+            # self.repeater is already deleted.
+            pass
+
+    def test_save_new(self):
+        with self.assertNumQueries(1):
+            self.repeater.save()
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+    def test_save_old(self):
+        self.repeater.save()
+        self.repeater.paused = True
+        with self.assertNumQueries(0):
+            self.repeater.save()
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+    def test_delete(self):
+        self.repeater.save()
+        with self.assertNumQueries(3):
+            # 1. SELECT ... FROM "repeaters_repeaterstub" ...
+            # 2. SELECT ... FROM "repeaters_repeatrecord" ...
+            # 3. DELETE FROM "repeaters_repeaterstub" ...
+            self.repeater.delete()
+        self.assertEqual(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).count(), 0)
+
+
+class TestMigrationCantDuplicate(RepeaterFixtureMixin, TestCase):
+
+    def test_migration_cant_duplicate(self):
+        self.assertEqual(RepeaterStub.objects.filter(
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+        create_repeaterstubs(None, None)
+        self.assertEqual(RepeaterStub.objects.filter(
+            repeater_id=self.repeater.get_id,
+        ).count(), 1)
+
+
+class PauseResumeRetireRepeaterTests(RepeaterFixtureMixin, TestCase):
+
+    def _get_repeater_stub(self):
+        return RepeaterStub.objects.get(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        )
+
+    def test_pause(self):
+        self.assertFalse(self._get_repeater_stub().is_paused)
+        self.repeater.pause()
+        self.assertTrue(self._get_repeater_stub().is_paused)
+
+    def test_resume(self):
+        repeater_stub = self._get_repeater_stub()
+        repeater_stub.is_paused = True
+        repeater_stub.save()
+
+        self.repeater.resume()
+        self.assertFalse(self._get_repeater_stub().is_paused)
+
+    def test_retire(self):
+        self.repeater.retire()
+        self.assertFalse(RepeaterStub.objects.filter(
+            domain=DOMAIN,
+            repeater_id=self.repeater.get_id,
+        ).exists())
