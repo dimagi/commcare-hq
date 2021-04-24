@@ -5,6 +5,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser, Invitation
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -69,18 +70,15 @@ def get_mobile_usernames_by_filters(domain, user_filters):
     return query.values_list('base_username', flat=True)
 
 
-def _get_es_query(domain, user_filters, include_mobile_users=False, include_web_users=False):
-    if not (include_mobile_users ^ include_web_users):
-        raise AssertionError("_get_es_query can get either mobile or web user query")
-
+def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
 
     query = UserES().domain(domain).remove_default_filter('active')
-    if include_mobile_users:
+    if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()
-    if include_web_users:
+    if user_type == WEB_USER_TYPE:
         query = query.web_users()
 
     if role_id:
@@ -94,32 +92,28 @@ def _get_es_query(domain, user_filters, include_mobile_users=False, include_web_
 
 
 def count_mobile_users_by_filters(domain, user_filters):
-    return _get_users_by_filters(domain, user_filters, count_only=True,
-                                 include_mobile_users=False, include_web_users=True)
+    return _get_users_by_filters(domain, MOBILE_USER_TYPE, user_filters, count_only=True)
 
 
 def count_web_users_by_filters(domain, user_filters):
-    return _get_users_by_filters(domain, user_filters, count_only=True,
-                                 include_mobile_users=True, include_web_users=False)
+    return _get_users_by_filters(domain, WEB_USER_TYPE, user_filters, count_only=True)
 
 
 def get_mobile_users_by_filters(domain, user_filters):
-    return _get_users_by_filters(domain, user_filters, count_only=False,
-                                 include_mobile_users=False, include_web_users=True)
+    return _get_users_by_filters(domain, MOBILE_USER_TYPE, user_filters, count_only=False)
 
 
 def get_web_users_by_filters(domain, user_filters):
-    return _get_users_by_filters(domain, user_filters, count_only=False,
-                                 include_mobile_users=True, include_web_users=False)
+    return _get_users_by_filters(domain, WEB_USER_TYPE, user_filters, count_only=False)
 
 
-def _get_users_by_filters(domain, user_filters, count_only=False,
-                         include_mobile_users=False, include_web_users=False):
+def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
     """
     Returns users in domain per given filters. If user_filters is empty,
         returns all users in the domain
 
     args:
+        user_type: MOBILE_USER_TYPE or WEB_USER_TYPE
         user_filters: a dict with below structure.
             {'role_id': <Role ID to filter users by>,
              'search_string': <string to search users by username>,
@@ -127,18 +121,14 @@ def _get_users_by_filters(domain, user_filters, count_only=False,
     kwargs:
         count_only: If True, returns count of search results
     """
-    if not (include_mobile_users ^ include_web_users):
-        raise AssertionError("_get_users_by_filters can get either mobile or web users")
-
     if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
                 user_filters.get('location_id', None), count_only]):
-        if include_mobile_users:
+        if user_type == MOBILE_USER_TYPE:
             return get_all_commcare_users_by_domain(domain)
-        if include_web_users:
+        if user_type == WEB_USER_TYPE:
             return get_all_web_users_by_domain(domain)
 
-    query = _get_es_query(domain, user_filters, include_mobile_users=include_mobile_users,
-                          include_web_users=include_web_users)
+    query = _get_es_query(domain, user_type, user_filters)
 
     if count_only:
         return query.count()
