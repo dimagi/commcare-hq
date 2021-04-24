@@ -85,5 +85,6 @@ branches:
   - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
   - sr/cs-bulk-translations # Sravan April 22
+  - jls/cross-domain-web-user-download # Jenny April 24
 
 submodules: {}
