@@ -65,7 +65,9 @@ branches:
   - sr/ush-ff+sr/ucr-cs+nh/reminders  # Sravan April 12
   - sr/cs-bulk-translations # Sravan April 22
   - nh/reminders  # Norman Jan 26
+  - smh/bulk-upload-web-users+jls/cross-domain-web-user-download
   - smh/bulk-upload-web-users # Steph Feb 22
+  - jls/cross-domain-web-user-download # Jenny April 24
   - nh/fhir/repeater  # Norman Mar 1
   - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
   - fr/consumer-user             # Farid March 17
@@ -83,6 +85,5 @@ branches:
   - kev/markdown-case-views # Kevin Apr 9
   - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-  - jls/cross-domain-web-user-download # Jenny April 24
 
 submodules: {}
