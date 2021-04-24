@@ -18,7 +18,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_form_ids,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_ids_by_domain,
     get_mobile_user_ids,
 )

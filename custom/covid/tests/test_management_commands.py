@@ -9,7 +9,7 @@ from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.apps.domain.shortcuts import create_domain

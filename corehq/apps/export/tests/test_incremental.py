@@ -20,7 +20,7 @@ from corehq.apps.export.models.incremental import (
     _generate_incremental_export,
     _send_incremental_export,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
