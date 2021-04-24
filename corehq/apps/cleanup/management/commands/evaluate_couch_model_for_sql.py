@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 continue
 
             if self.field_type(key) == self.FIELD_TYPE_INTEGER:
-                if int(value) != value:
+                if value is not None and int(value) != value:
                     self.update_field_type(key, self.FIELD_TYPE_DECIMAL)
 
             self.update_field_max_length(key, len(str(value)))
