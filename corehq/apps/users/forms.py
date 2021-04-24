@@ -1177,7 +1177,7 @@ class UserFilterForm(forms.Form):
         self.domain = kwargs.pop('domain')
         self.couch_user = kwargs.pop('couch_user')
         self.user_type = kwargs.pop('user_type')
-        if not(self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]):
+        if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
