@@ -1,8 +1,4 @@
 from django.db.models import Q
-from django.http import Http404
-from django_prbac.utils import has_privilege
-
-from corehq import privileges
 from corehq.apps.accounting.models import (
     Subscription,
     SoftwarePlanEdition,
@@ -11,19 +7,6 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SubscriptionType,
 )
-
-
-def get_account_or_404(request, domain):
-    account = BillingAccount.get_account_by_domain(domain)
-
-    if account is None:
-        raise Http404()
-
-    if not account.has_enterprise_admin(request.couch_user.username):
-        if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
-            raise Http404()
-
-    return account
 
 
 def assign_explicit_unpaid_subscription(domain_name, start_date, method, account=None,

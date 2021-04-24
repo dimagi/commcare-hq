@@ -9,6 +9,7 @@ from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -24,7 +25,7 @@ from dimagi.utils.logging import notify_exception
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
-# Lightweight class used to store the dirtyness of a case/owner pair.
+# Lightweight class used to store the dirtiness of a case/owner pair.
 DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
 
 
@@ -52,41 +53,47 @@ class CaseProcessingResult(object):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.domain and not toggles.LIVEQUERY_SYNC.enabled(self.domain):
-            flags_to_save = self.get_flags_to_save()
-            if should_create_flags_on_submission(self.domain):
-                assert settings.UNIT_TESTING  # this is currently only true when unit testing
-                all_touched_ids = set(flags_to_save.keys()) | self.get_clean_owner_ids()
-                to_update = {f.owner_id: f for f in OwnershipCleanlinessFlag.objects.filter(
-                    domain=self.domain,
-                    owner_id__in=list(all_touched_ids),
-                )}
-                for owner_id in all_touched_ids:
-                    if owner_id not in to_update:
-                        # making from scratch - default to clean, but set to dirty if needed
-                        flag = OwnershipCleanlinessFlag(domain=self.domain, owner_id=owner_id, is_clean=True)
-                        if owner_id in flags_to_save:
-                            flag.is_clean = False
-                            flag.hint = flags_to_save[owner_id]
-                        flag.save()
-                    else:
-                        # updating - only save if we are marking dirty or setting a hint
-                        flag = to_update[owner_id]
-                        if owner_id in flags_to_save and (flag.is_clean or not flag.hint):
-                            flag.is_clean = False
-                            flag.hint = flags_to_save[owner_id]
-                            flag.save()
-            else:
-                # only update the flags that are already in the database
-                flags_to_update = OwnershipCleanlinessFlag.objects.filter(
-                    Q(domain=self.domain),
-                    Q(owner_id__in=list(flags_to_save)),
-                    Q(is_clean=True) | Q(hint__isnull=True)
-                )
-                for flag in flags_to_update:
-                    flag.is_clean = False
-                    flag.hint = flags_to_save[flag.owner_id]
+        if not self.domain:
+            return
+
+        domain_obj = Domain.get_by_name(self.domain)
+        if domain_obj is not None and domain_obj.use_livequery:
+            return
+
+        flags_to_save = self.get_flags_to_save()
+        if should_create_flags_on_submission(self.domain):
+            assert settings.UNIT_TESTING  # this is currently only true when unit testing
+            all_touched_ids = set(flags_to_save.keys()) | self.get_clean_owner_ids()
+            to_update = {f.owner_id: f for f in OwnershipCleanlinessFlag.objects.filter(
+                domain=self.domain,
+                owner_id__in=list(all_touched_ids),
+            )}
+            for owner_id in all_touched_ids:
+                if owner_id not in to_update:
+                    # making from scratch - default to clean, but set to dirty if needed
+                    flag = OwnershipCleanlinessFlag(domain=self.domain, owner_id=owner_id, is_clean=True)
+                    if owner_id in flags_to_save:
+                        flag.is_clean = False
+                        flag.hint = flags_to_save[owner_id]
                     flag.save()
+                else:
+                    # updating - only save if we are marking dirty or setting a hint
+                    flag = to_update[owner_id]
+                    if owner_id in flags_to_save and (flag.is_clean or not flag.hint):
+                        flag.is_clean = False
+                        flag.hint = flags_to_save[owner_id]
+                        flag.save()
+        else:
+            # only update the flags that are already in the database
+            flags_to_update = OwnershipCleanlinessFlag.objects.filter(
+                Q(domain=self.domain),
+                Q(owner_id__in=list(flags_to_save)),
+                Q(is_clean=True) | Q(hint__isnull=True)
+            )
+            for flag in flags_to_update:
+                flag.is_clean = False
+                flag.hint = flags_to_save[flag.owner_id]
+                flag.save()
 
 
 def process_cases_with_casedb(xforms, case_db):
@@ -143,8 +150,10 @@ def _get_or_update_cases(xforms, case_db):
 
 def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
-    if toggles.LIVEQUERY_SYNC.enabled(domain):
-        return []
+    if domain:
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj and domain_obj.use_livequery:
+            return []
 
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
     for case_update_meta in touched_cases.values():

@@ -1,5 +1,5 @@
 import os
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
@@ -54,9 +54,6 @@ class DetailContributor(SectionContributor):
     section_name = 'details'
 
     def get_section_elements(self):
-        def include_sort(detail_type, detail):
-            return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
-
         if self.app.use_custom_suite:
             return []
 
@@ -69,11 +66,15 @@ class DetailContributor(SectionContributor):
                 if detail.custom_xml:
                     elements.append(self._get_custom_xml_detail(module, detail, detail_type))
                 else:
-                    detail_column_infos = get_detail_column_infos(
-                        detail_type,
-                        detail,
-                        include_sort=include_sort(detail_type, detail),
-                    )  # list of DetailColumnInfo named tuples
+                    if detail.sort_nodeset_columns_for_detail():
+                        # list of DetailColumnInfo named tuples
+                        detail_column_infos = get_detail_column_infos_for_tabs_with_sorting(detail)
+                    else:
+                        detail_column_infos = get_detail_column_infos(
+                            detail_type,
+                            detail,
+                            include_sort=detail_type.endswith('short'),
+                        )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
                         if detail.use_case_tiles:
                             helper = CaseTileHelper(self.app, module, detail,
@@ -427,14 +428,14 @@ class DetailsHelper(object):
 
 def get_nodeset_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
-    sort_elements = []
+    sort_elements = defaultdict(list)
     tab_spans = detail.get_tab_spans()
     for tab in detail.get_tabs():
         if tab.nodeset:
             tab_span = tab_spans[tab.id]
             for column in detail.columns[tab_span[0]:tab_span[1]]:
                 if column.invisible:
-                    sort_elements.append(SortElement(
+                    sort_elements[tab.id].append(SortElement(
                         field=column.field,
                         type='string',
                         direction='ascending'
@@ -470,25 +471,21 @@ def get_default_sort_elements(detail):
     return sort_elements
 
 
-def get_detail_column_infos(detail_type, detail, include_sort):
-    """
-    This is not intented to be a widely used format
-    just a packaging of column info into a form most convenient for rendering
-    """
-    DetailColumnInfo = namedtuple('DetailColumnInfo',
-                                  'column sort_element order')
+# This is not intended to be a widely used format
+# just a packaging of column info into a form most convenient for rendering
+DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
+
+def get_detail_column_infos(detail_type, detail, include_sort):
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
-    elif detail.sort_nodeset_columns_for_detail():
-        sort_elements = get_nodeset_sort_elements(detail)
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), sort_elements)
 
     columns = []
     for column in detail.get_columns():
@@ -504,6 +501,36 @@ def get_detail_column_infos(detail_type, detail, include_sort):
             columns.append(DetailColumnInfo(column, None, None))
         else:
             columns.append(DetailColumnInfo(column, sort_element, order))
+    return columns
+
+
+def get_detail_column_infos_for_tabs_with_sorting(detail):
+    """This serves the same purpose as `get_detail_column_infos` except
+    that it only applies to 'short' details that have tabs with nodesets and sorting
+    configured."""
+    sort_elements = get_nodeset_sort_elements(detail)
+
+    columns = []
+    tab_spans = detail.get_tab_spans()
+    detail_columns = list(detail.get_columns())  # do this to ensure we get the indexed values
+    for tab in detail.get_tabs():
+        tab_span = tab_spans[tab.id]
+        tab_columns = detail_columns[tab_span[0]:tab_span[1]]
+        if tab.nodeset and sort_elements[tab.id]:
+            tab_sorts = sort_elements[tab.id]
+            _, sort_columns = get_sort_and_sort_only_columns(tab_columns, tab_sorts)
+            for column in tab_columns:
+                if column.invisible:
+                    sort_element, order = sort_columns.pop(column.field, (None, None))
+                    columns.append(DetailColumnInfo(column, sort_element, order))
+                else:
+                    columns.append(DetailColumnInfo(column, None, None))
+        else:
+            columns.extend([
+                DetailColumnInfo(column, None, None)
+                for column in tab_columns
+            ])
+
     return columns
 
 

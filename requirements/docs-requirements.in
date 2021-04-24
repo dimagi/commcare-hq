@@ -1,7 +1,7 @@
 -r base-requirements.in
 
 django-extensions
-Sphinx~=1.8
+Sphinx~=3.5
 sphinx-rtd-theme~=0.3
 docutils==0.16
 sphinxcontrib-django~=0.3

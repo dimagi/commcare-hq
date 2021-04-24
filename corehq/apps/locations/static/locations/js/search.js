@@ -39,7 +39,7 @@ hqDefine('locations/js/search', [
     };
 
     var reloadLocationSearchSelect = function () {
-        $('#location_search_select').select2('val', null);
+        $('#location_search_select').val(null).trigger('change');
         enableLocationSearchSelect();
     };
 

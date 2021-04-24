@@ -2724,7 +2724,7 @@ class Invitation(models.Model):
     def get_role_name(self):
         if self.role:
             if self.role == 'admin':
-                return self.role
+                return _('Admin')
             else:
                 role_id = self.role[len('user-role:'):]
                 try:

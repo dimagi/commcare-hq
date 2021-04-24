@@ -11,7 +11,6 @@ from corehq.util.metrics import create_metrics_event
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
-from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.util.log import send_HTML_email
 
@@ -42,7 +41,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user', help='User', default=False)
         parser.add_argument('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT)
-        parser.add_argument('--mail_admins', help='Mail Admins', default=False, action='store_true')
         parser.add_argument('--url', help='A link to a URL for the deploy', default=False)
         parser.add_argument(
             '--minutes',
@@ -118,56 +116,3 @@ class Command(BaseCommand):
                     settings.SERVER_ENVIRONMENT
                 )
             )
-
-        if options['mail_admins']:
-            message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
-            subject = 'Deploy Successful - {}'.format(options['environment'])
-            call_command('mail_admins', message_body, **{'subject': subject, 'html': True})
-            if settings.DAILY_DEPLOY_EMAIL:
-                recipient = settings.DAILY_DEPLOY_EMAIL
-
-                send_HTML_email(subject=subject,
-                                recipient=recipient,
-                                html_content=message_body)
-
-        if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
-            create_update_sentry_release()
-            notify_sentry_deploy(minutes)
-
-
-def create_update_sentry_release():
-    from settingshelper import get_release_name, get_git_commit
-    release = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
-    headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
-    payload = {
-        'version': release,
-        'refs': [{
-            'repository': settings.SENTRY_REPOSITORY,
-            'commit': get_git_commit(settings.BASE_DIR)
-        }],
-        'projects': [settings.SENTRY_PROJECT_SLUG]
-    }
-    releases_url = f'https://sentry.io/api/0/organizations/{settings.SENTRY_ORGANIZATION_SLUG}/releases/'
-    response = requests.post(releases_url, headers=headers, json=payload)
-    if response.status_code == 208:
-        # already created so update
-        payload.pop('version')
-        requests.put('{}{}/'.format(releases_url, release), headers=headers, json=payload)
-
-
-def notify_sentry_deploy(duration_mins):
-    from settingshelper import get_release_name
-    headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
-    payload = {
-        'environment': settings.SERVER_ENVIRONMENT,
-    }
-    if duration_mins:
-        utcnow = datetime.utcnow()
-        payload.update({
-            'dateStarted': json_format_datetime(utcnow - timedelta(minutes=duration_mins)),
-            'dateFinished': json_format_datetime(utcnow),
-        })
-    version = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
-    org_slug = settings.SENTRY_ORGANIZATION_SLUG
-    releases_url = f'https://sentry.io/api/0/organizations/{org_slug}/releases/{version}/deploys/'
-    requests.post(releases_url, headers=headers, json=payload)

@@ -1025,13 +1025,3 @@ def pull_master_app(request, domain, app_id):
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def update_linked_whitelist(request, domain, app_id):
-    app = get_current_app(domain, app_id)
-    new_whitelist = json.loads(request.POST.get('whitelist'))
-    app.linked_whitelist = new_whitelist
-    app.save()
-    return HttpResponse()

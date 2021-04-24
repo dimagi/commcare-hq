@@ -1666,14 +1666,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     def requires_referral(self):
         return self.requires == "referral"
 
-    def uses_parent_case(self):
-        """
-        Returns True if any of the load/update properties references the
-        parent case; False otherwise
-        """
-        return any([name.startswith('parent/')
-            for name in self.actions.all_property_names()])
-
     def get_registration_actions(self, case_type):
         """
         :return: List of actions that create a case. Subcase actions are included
@@ -4051,9 +4043,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
-
-    # domains that are allowed to have linked apps with this master
-    linked_whitelist = StringListProperty()
 
     mobile_ucr_restore_version = StringProperty(
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
