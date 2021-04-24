@@ -101,7 +101,7 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UserFilterForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, Invitation
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -1424,7 +1424,7 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
     if not (include_mobile_users ^ include_web_users):
         raise AssertionError("count_users can count either mobile or web users")
 
-    from corehq.apps.users.dbaccessors import get_users_by_filters
+    from corehq.apps.users.dbaccessors import get_invitations_by_filters, get_users_by_filters
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
                           include_mobile_users=include_mobile_users, include_web_users=include_web_users)
     if form.is_valid():
@@ -1438,7 +1438,7 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
         user_count += get_users_by_filters(current_domain, user_filters, include_mobile_users=include_mobile_users,
                                            include_web_users=include_web_users, count_only=True)
         if include_web_users:
-            user_count += Invitation.by_domain(current_domain).count()
+            user_count += get_invitations_by_filters(current_domain, user_filters, count_only=True)
 
     return json_response({
         'count': user_count

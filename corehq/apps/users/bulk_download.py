@@ -19,12 +19,12 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors import (
+    get_invitations_by_filters,
     get_users_by_filters,
     get_mobile_usernames_by_filters,
-    get_all_user_rows,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, UserRole, Invitation
+from corehq.apps.users.models import UserRole
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -129,7 +129,6 @@ def get_user_role_name(domain_membership):
 
 
 def make_web_user_dict(user, location_cache, domain):
-    user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
     role_name = get_user_role_name(domain_membership)
     location_codes = get_location_codes(location_cache, domain_membership.location_id,
@@ -166,6 +165,7 @@ def make_invited_web_user_dict(invite, location_cache):
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
         'remove': '',
+        'domain': invite.domain,
     }
 
 
@@ -238,15 +238,14 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
     progress = 0
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
-        for user in get_all_user_rows(current_domain, include_web_users=True, include_mobile_users=False,
-                                      include_inactive=False, include_docs=True):
+        for user in get_users_by_filters(current_domain, user_filters, include_web_users=True):
             user_dict = make_web_user_dict(user, location_cache, current_domain)
             user_dicts.append(user_dict)
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
             progress += 1
             if task:
                 DownloadBase.set_progress(task, progress, total_count)
-        for invite in Invitation.by_domain(current_domain):
+        for invite in get_invitations_by_filters(current_domain, user_filters):
             user_dict = make_invited_web_user_dict(invite, location_cache)
             user_dicts.append(user_dict)
             progress += 1
@@ -405,7 +404,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
 
 def dump_web_users(domain, download_id, user_filters, task, owner_id):
-    users_count = get_web_user_count(domain, include_inactive=False)
+    users_count = count_web_users_by_filters(domain, user_filters)
     DownloadBase.set_progress(task, 0, users_count)
 
     user_headers, user_rows = parse_web_users(domain, user_filters, task, users_count)

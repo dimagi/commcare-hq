@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors import (
     delete_all_users,
@@ -16,10 +16,10 @@ from corehq.apps.users.dbaccessors import (
     get_existing_usernames,
     get_invitations_by_filters,
     get_user_docs_by_username,
+    get_user_id_by_username,
     get_users_by_filters,
     hard_delete_deleted_users,
 )
-from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
@@ -27,6 +27,8 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
@@ -118,18 +120,11 @@ class AllCommCareUsersTest(TestCase):
         super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_users_by_filters(self):
-        from corehq.util.elastic import ensure_index_deleted
-        from corehq.elastic import get_es_new, send_to_elasticsearch
-        from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
-        from pillowtop.es_utils import initialize_index_and_mapping
-
-        es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        initialize_index_and_mapping(es, USER_INDEX_INFO)
-        send_to_elasticsearch('users', self.ccuser_1.to_json())
-        send_to_elasticsearch('users', self.ccuser_2.to_json())
-        send_to_elasticsearch('users', self.web_user.to_json())
-        es.indices.refresh(USER_INDEX)
+        populate_user_index([
+            self.ccuser_1.to_json(),
+            self.ccuser_2.to_json(),
+            self.web_user.to_json(),
+        ])
 
         def usernames(users):
             return [u.username for u in users]
