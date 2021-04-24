@@ -1424,7 +1424,11 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
     if not (include_mobile_users ^ include_web_users):
         raise AssertionError("count_users can count either mobile or web users")
 
-    from corehq.apps.users.dbaccessors import get_invitations_by_filters, get_users_by_filters
+    from corehq.apps.users.dbaccessors import (
+        count_mobile_users_by_filters,
+        count_web_users_by_filters,
+        get_invitations_by_filters,
+    )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
                           include_mobile_users=include_mobile_users, include_web_users=include_web_users)
     if form.is_valid():
@@ -1435,9 +1439,10 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
     user_count = 0
     (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
-        user_count += get_users_by_filters(current_domain, user_filters, include_mobile_users=include_mobile_users,
-                                           include_web_users=include_web_users, count_only=True)
-        if include_web_users:
+        if include_mobile_users:
+            user_count += count_mobile_users_by_filters(current_domain, user_filters)
+        elif include_web_users:
+            user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += get_invitations_by_filters(current_domain, user_filters, count_only=True)
 
     return json_response({

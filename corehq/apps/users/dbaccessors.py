@@ -93,7 +93,27 @@ def _get_es_query(domain, user_filters, include_mobile_users=False, include_web_
     return query
 
 
-def get_users_by_filters(domain, user_filters, count_only=False,
+def count_mobile_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, user_filters, count_only=True,
+                                 include_mobile_users=False, include_web_users=True)
+
+
+def count_web_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, user_filters, count_only=True,
+                                 include_mobile_users=True, include_web_users=False)
+
+
+def get_mobile_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, user_filters, count_only=False,
+                                 include_mobile_users=False, include_web_users=True)
+
+
+def get_web_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, user_filters, count_only=False,
+                                 include_mobile_users=True, include_web_users=False)
+
+
+def _get_users_by_filters(domain, user_filters, count_only=False,
                          include_mobile_users=False, include_web_users=False):
     """
     Returns users in domain per given filters. If user_filters is empty,
@@ -108,7 +128,7 @@ def get_users_by_filters(domain, user_filters, count_only=False,
         count_only: If True, returns count of search results
     """
     if not (include_mobile_users ^ include_web_users):
-        raise AssertionError("get_users_by_filters can get either mobile or web users")
+        raise AssertionError("_get_users_by_filters can get either mobile or web users")
 
     if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
                 user_filters.get('location_id', None), count_only]):
@@ -128,7 +148,7 @@ def get_users_by_filters(domain, user_filters, count_only=False,
 
 def get_invitations_by_filters(domain, user_filters, count_only=False):
     """
-    Similar to get_users_by_filters, but applites to invitations,
+    Similar to _get_users_by_filters, but applites to invitations,
     and only looks at the 'search_string' filter, which is applies
     to the invitations' emails.
     """

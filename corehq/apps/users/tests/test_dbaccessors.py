@@ -7,6 +7,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors import (
+    count_mobile_users_by_filters,
+    count_web_users_by_filters,
     delete_all_users,
     get_all_commcare_users_by_domain,
     get_all_user_ids,
@@ -17,7 +19,8 @@ from corehq.apps.users.dbaccessors import (
     get_invitations_by_filters,
     get_user_docs_by_username,
     get_user_id_by_username,
-    get_users_by_filters,
+    get_mobile_users_by_filters,
+    get_web_users_by_filters,
     hard_delete_deleted_users,
 )
 from corehq.apps.users.models import (
@@ -131,70 +134,50 @@ class AllCommCareUsersTest(TestCase):
 
         # if no filters are passed, should return all users of given type in the domain
         self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, {}, include_mobile_users=True)),
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, {})),
             usernames([self.ccuser_2, self.ccuser_1])
         )
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, {}, count_only=True, include_mobile_users=True),
-            2
-        )
+        self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, {}), 2)
         self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, {}, include_web_users=True)),
+            usernames(get_web_users_by_filters(self.ccdomain.name, {})),
             usernames([self.web_user])
         )
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, {}, count_only=True, include_web_users=True),
-            1
-        )
+        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 1)
+
         # can search by username
         filters = {'search_string': 'user_1'}
         self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_1.username]
         )
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
-            1
-        )
+        self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 1)
+
         filters = {'search_string': 'webuser'}
         self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, filters, include_web_users=True)),
+            usernames(get_web_users_by_filters(self.ccdomain.name, filters)),
             [self.web_user.username]
         )
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_web_users=True),
-            1
-        )
+        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, filters), 1)
+
         filters = {'search_string': 'notwebuser'}
-        self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
-            []
-        )
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
-            0
-        )
+        self.assertItemsEqual(usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)), [])
+        self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 0)
+
         # can search by role_id
         filters = {'role_id': self.custom_role._id}
         self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_2.username]
         )
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
-            1
-        )
+        self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 1)
         # can search by location
         filters = {'location_id': self.loc1._id}
         self.assertItemsEqual(
-            usernames(get_users_by_filters(self.ccdomain.name, filters, include_mobile_users=True)),
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_1.username]
         )
         filters = {'location_id': self.loc1._id}
-        self.assertEqual(
-            get_users_by_filters(self.ccdomain.name, filters, count_only=True, include_mobile_users=True),
-            1
-        )
+        self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 1)
 
         ensure_index_deleted(USER_INDEX)
 
