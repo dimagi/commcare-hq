@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors import (
+    count_invitations_by_filters,
     count_mobile_users_by_filters,
     count_web_users_by_filters,
     delete_all_users,
@@ -207,7 +208,7 @@ class AllCommCareUsersTest(TestCase):
             set(expected_emails)
         )
         self.assertEqual(
-            get_invitations_by_filters(self.ccdomain.name, filters, count_only=True),
+            count_invitations_by_filters(self.ccdomain.name, filters),
             len(expected_emails)
         )
 

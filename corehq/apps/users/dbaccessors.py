@@ -146,7 +146,15 @@ def _get_users_by_filters(domain, user_filters, count_only=False,
     return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
 
 
-def get_invitations_by_filters(domain, user_filters, count_only=False):
+def count_invitations_by_filters(domain, user_filters):
+    return _get_invitations_by_filters(domain, user_filters, count_only=True)
+
+
+def get_invitations_by_filters(domain, user_filters):
+    return _get_invitations_by_filters(domain, user_filters)
+
+
+def _get_invitations_by_filters(domain, user_filters, count_only=False):
     """
     Similar to _get_users_by_filters, but applites to invitations,
     and only looks at the 'search_string' filter, which is applies

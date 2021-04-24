@@ -1427,7 +1427,7 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
     from corehq.apps.users.dbaccessors import (
         count_mobile_users_by_filters,
         count_web_users_by_filters,
-        get_invitations_by_filters,
+        count_invitations_by_filters,
     )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user,
                           include_mobile_users=include_mobile_users, include_web_users=include_web_users)
@@ -1443,7 +1443,7 @@ def count_users(request, domain, include_mobile_users=False, include_web_users=F
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
         elif include_web_users:
             user_count += count_web_users_by_filters(current_domain, user_filters)
-            user_count += get_invitations_by_filters(current_domain, user_filters, count_only=True)
+            user_count += count_invitations_by_filters(current_domain, user_filters)
 
     return json_response({
         'count': user_count
