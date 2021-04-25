@@ -1032,24 +1032,9 @@ class InviteWebUserView(BaseManageWebUserView):
         return self.get(request, *args, **kwargs)
 
 
-class UploadWebUsers(BaseManageWebUserView):
-    template_name = 'hqwebapp/bulk_upload.html'
-    urlname = 'upload_web_users'
-    page_title = ugettext_noop("Bulk Upload Web Users")
-
-    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
-    def dispatch(self, request, *args, **kwargs):
-        return super(UploadWebUsers, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
-        from corehq.apps.users.views.mobile import get_user_upload_context
-        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
-
+class BaseUploadUser(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
-        # track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')  # TODO uncomment for kissmetrics
         try:
             self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
@@ -1069,6 +1054,27 @@ class UploadWebUsers(BaseManageWebUserView):
         except WorksheetNotFound:
             self.group_specs = []
 
+
+class UploadWebUsers(BaseUploadUser):
+    template_name = 'hqwebapp/bulk_upload.html'
+    urlname = 'upload_web_users'
+    page_title = ugettext_noop("Bulk Upload Web Users")
+
+    @method_decorator(always_allow_project_access)
+    @method_decorator(require_can_edit_web_users)
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadWebUsers, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
+        from corehq.apps.users.views.mobile import get_user_upload_context
+        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
+
+    def post(self, request, *args, **kwargs):
+        super(UploadWebUsers, self).post(request, *args, **kwargs)
+        # track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')  # TODO uncomment for kissmetrics
         try:
             check_headers(self.user_specs, self.domain, is_web_upload=True)
         except UserUploadError as e:

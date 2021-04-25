@@ -113,7 +113,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.views import (
     BaseEditUserView,
     BaseUserSettingsView,
-    get_domain_languages, BulkUploadResponseWrapper,
+    get_domain_languages, BulkUploadResponseWrapper, BaseUploadUser,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
@@ -1027,11 +1027,12 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
     return context
 
 
-class UploadCommCareUsers(BaseManageCommCareUserView):
+class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
+    @method_decorator(require_can_edit_commcare_users)
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
@@ -1043,26 +1044,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                                        "mobile workers")
 
     def post(self, request, *args, **kwargs):
-        """View's dispatch method automatically calls this"""
-        try:
-            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
-        except WorkbookJSONError as e:
-            messages.error(request, str(e))
-            return self.get(request, *args, **kwargs)
-
-        try:
-            self.user_specs = self.workbook.get_worksheet(title='users')
-        except WorksheetNotFound:
-            try:
-                self.user_specs = self.workbook.get_worksheet()
-            except WorksheetNotFound:
-                return HttpResponseBadRequest("Workbook has no worksheets")
-
-        try:
-            self.group_specs = self.workbook.get_worksheet(title='groups')
-        except WorksheetNotFound:
-            self.group_specs = []
-
+        super(UploadCommCareUsers, self).post(request, *args, **kwargs)
         try:
             check_headers(self.user_specs, self.domain)
         except UserUploadError as e:
