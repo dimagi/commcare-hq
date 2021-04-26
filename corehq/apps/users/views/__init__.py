@@ -1074,7 +1074,7 @@ class UploadWebUsers(BaseUploadUser):
 
     def post(self, request, *args, **kwargs):
         super(UploadWebUsers, self).post(request, *args, **kwargs)
-        # track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')  # TODO uncomment for kissmetrics
+        track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
         try:
             check_headers(self.user_specs, self.domain, is_web_upload=True)
         except UserUploadError as e:
