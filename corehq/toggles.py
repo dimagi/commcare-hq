@@ -767,11 +767,12 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
-CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     '''
-        Support several different case search/claim workflows in web apps:
-        "search first", "see more", and "skip to default case search results"
+        USH Specific toggle to support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results", Geocoder
+        and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
@@ -1551,6 +1552,15 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     "Allow linked apps to pull from multiple master apps in the upstream domain",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+SESSION_ENDPOINTS = StaticToggle(
+    'session_endpoints',
+    'Enable session endpoints',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    description='Support external Android apps calling in to an endpoint in a '
+                'CommCare app. (Used by the Reminders App)',
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
