@@ -1032,24 +1032,9 @@ class InviteWebUserView(BaseManageWebUserView):
         return self.get(request, *args, **kwargs)
 
 
-class UploadWebUsers(BaseManageWebUserView):
-    template_name = 'hqwebapp/bulk_upload.html'
-    urlname = 'upload_web_users'
-    page_title = ugettext_noop("Bulk Upload Web Users")
-
-    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
-    def dispatch(self, request, *args, **kwargs):
-        return super(UploadWebUsers, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
-        from corehq.apps.users.views.mobile import get_user_upload_context
-        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
-
+class BaseUploadUser(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
-        # track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')  # TODO uncomment for kissmetrics
         try:
             self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
@@ -1069,6 +1054,27 @@ class UploadWebUsers(BaseManageWebUserView):
         except WorksheetNotFound:
             self.group_specs = []
 
+
+class UploadWebUsers(BaseUploadUser):
+    template_name = 'hqwebapp/bulk_upload.html'
+    urlname = 'upload_web_users'
+    page_title = ugettext_noop("Bulk Upload Web Users")
+
+    @method_decorator(always_allow_project_access)
+    @method_decorator(require_can_edit_web_users)
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadWebUsers, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
+        from corehq.apps.users.views.mobile import get_user_upload_context
+        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
+
+    def post(self, request, *args, **kwargs):
+        super(UploadWebUsers, self).post(request, *args, **kwargs)
+        track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
         try:
             check_headers(self.user_specs, self.domain, is_web_upload=True)
         except UserUploadError as e:
@@ -1108,7 +1114,7 @@ class WebUserUploadStatusView(BaseManageWebUserView):
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('web_user_upload_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': reverse(WebUserUploadJobPollView.urlname, args=[self.domain, kwargs['download_id']]),
             'title': _("Web User Upload Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
@@ -1121,22 +1127,34 @@ class WebUserUploadStatusView(BaseManageWebUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-@require_can_edit_web_users
-def web_user_upload_job_poll(request, domain, download_id,
-                             template="users/mobile/partials/user_upload_status.html"):
-    try:
-        context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError()
+class UserUploadJobPollView(BaseManageWebUserView):
 
-    context.update({
-        'on_complete_short': _('Bulk upload complete.'),
-        'on_complete_long': _('Web Worker upload has finished'),
-        'user_type': _('web users'),
-    })
+    def get(self, request, domain, download_id):
+        try:
+            context = get_download_context(download_id)
+        except TaskFailedError:
+            return HttpResponseServerError()
 
-    context['result'] = BulkUploadResponseWrapper(context)
-    return render(request, template, context)
+        context.update({
+            'on_complete_short': _('Bulk upload complete.'),
+            'on_complete_long': _(self.on_complete_long),
+            'user_type': _(self.user_type),
+        })
+
+        context['result'] = BulkUploadResponseWrapper(context)
+        return render(request, 'users/mobile/partials/user_upload_status.html', context)
+
+
+class WebUserUploadJobPollView(UserUploadJobPollView):
+    urlname = "web_user_upload_job_poll"
+
+    def __init__(self):
+        self.on_complete_long = 'Web Worker upload has finished'
+        self.user_type = 'web users'
+
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(WebUserUploadJobPollView, self).dispatch(request, *args, **kwargs)
 
 
 @require_POST
