@@ -10,7 +10,7 @@ from corehq.apps.domain.decorators import (
     redirect_for_login_or_domain,
 )
 from corehq.apps.users.dbaccessors import get_deleted_user_by_username
-from corehq.apps.users.models import CommCareUser, CouchUser, DomainPermissionsMirror
+from corehq.apps.users.models import CommCareUser, CouchUser
 
 
 def require_permission_raw(permission_check,
@@ -183,7 +183,7 @@ def require_can_use_filtered_user_download(view_func):
 def can_use_filtered_user_download(domain):
     if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(domain):
         return True
-    if len(DomainPermissionsMirror.mirror_domains(domain)) == 0:
+    if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         return True
     return False
 
