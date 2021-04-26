@@ -597,6 +597,19 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_form, sql_form)
 
+    def test_case_time_value_diff(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "some_property": "11:49:00",
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+            "some_property": "11:49:00.000",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
     def test_form_with_number_with_extra_leading_zero(self):
         couch_form = {
             "doc_type": "XFormInstance",

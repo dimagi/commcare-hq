@@ -142,6 +142,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
 
         Ignore('diff', 'name', check=is_truncated_255),
         Ignore('diff', check=has_date_values),
+        Ignore('diff', check=has_equivalent_times),
         Ignore('diff', check=sql_number_has_leading_zero),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
