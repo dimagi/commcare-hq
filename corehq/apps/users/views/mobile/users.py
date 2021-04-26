@@ -113,7 +113,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.views import (
     BaseEditUserView,
     BaseUserSettingsView,
-    get_domain_languages, BulkUploadResponseWrapper, BaseUploadUser,
+    get_domain_languages, BaseUploadUser, UserUploadJobPollView,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
@@ -1098,7 +1098,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('user_upload_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': reverse(CommcareUserUploadJobPollView.urlname, args=[self.domain, kwargs['download_id']]),
             'title': _("Mobile Worker Upload Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
@@ -1111,22 +1111,16 @@ class UserUploadStatusView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-@require_can_edit_commcare_users
-def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
-    try:
-        context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError()
+class CommcareUserUploadJobPollView(UserUploadJobPollView):
+    urlname = "commcare_user_upload_job_poll"
 
-    context.update({
-        'on_complete_short': _('Bulk upload complete.'),
-        'on_complete_long': _('Mobile Worker upload has finished'),
-        'user_type': _('mobile workers'),
+    def __init__(self):
+        self.on_complete_long = 'Mobile Worker upload has finished'
+        self.user_type = 'mobile users'
 
-    })
-
-    context['result'] = BulkUploadResponseWrapper(context)
-    return render(request, template, context)
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommcareUserUploadJobPollView, self).dispatch(request, *args, **kwargs)
 
 
 @require_can_edit_or_view_commcare_users
