@@ -1169,7 +1169,6 @@ class UserFilterForm(forms.Form):
         required=False,
         label=_('Project Spaces'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Add project spaces containing the desired users'),
     )
 
     def __init__(self, *args, **kwargs):
