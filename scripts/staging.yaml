@@ -78,7 +78,6 @@ branches:
   - ce/index-deletion
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
   - sr/ush-ff  # Sravan April 12
-  - jls/case-search-case-list-show-related-properties # Jenny April 12
   - gh/fix-email-large-ucrs # Graham April 14
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - sr/sort-cs # Sravan April 19
