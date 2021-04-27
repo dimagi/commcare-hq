@@ -324,6 +324,20 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
         # this is only here to add the login_required decorator
         return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def page_context(self):
+        if not (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
+                and is_request_using_sso(self.request)):
+            return {}
+
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.request.user.username
+        )
+        return {
+            'is_using_sso': True,
+            'idp_name': idp.name,
+        }
+
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
