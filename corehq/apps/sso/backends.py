@@ -67,8 +67,13 @@ class SsoBackend(ModelBackend):
 
         try:
             user = User.objects.get(username=username)
+            is_new_user = False
         except User.DoesNotExist:
             user = self._create_new_user(request, username, invitation)
+            is_new_user = True
+
+        if invitation:
+            self._process_invitation(request, invitation, user, is_new_user)
 
         request.sso_login_error = None
         return user
@@ -139,3 +144,29 @@ class SsoBackend(ModelBackend):
                 user_data['additional_hubspot_data'],
             )
 
+    @staticmethod
+    def _process_invitation(request, invitation, web_user, is_new_user=False):
+        """
+        Processes the Invitation (if available) and sets up the user in the
+        new domain they were invited to.
+        :param request: HttpRequest
+        :param invitation: Invitation or None
+        :param web_user: WebUser
+        """
+        request.sso_invitation_status = {}
+        if invitation.is_expired:
+            return
+
+        invitation.accept_invitation_and_join_domain(web_user)
+
+        if settings.IS_SAAS_ENVIRONMENT and is_new_user:
+            track_workflow(
+                web_user.username,
+                "New User Accepted a project invitation with SSO",
+                {"New User Accepted a project invitation": "yes"}
+            )
+            send_hubspot_form(
+                HUBSPOT_NEW_USER_INVITE_FORM,
+                request,
+                user=web_user
+            )
