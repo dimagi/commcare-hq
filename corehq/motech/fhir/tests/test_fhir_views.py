@@ -3,7 +3,12 @@ from contextlib import contextmanager
 from datetime import datetime
 from uuid import uuid4
 
-from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    JsonResponse,
+)
 from django.test import TestCase
 from django.urls import reverse
 
@@ -16,7 +21,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.models import HQApiKey, WebUser
+from corehq.apps.users.models import HQApiKey, Permissions, UserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.motech.fhir.tests.utils import (
@@ -41,8 +46,13 @@ class BaseFHIRViewTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(DOMAIN, use_sql_backend=True)
-        cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
-                                  created_by=None, created_via=None)
+        cls.role = UserRole.get_or_create_with_permissions(
+            DOMAIN, Permissions(edit_data=True), 'edit-data'
+        )
+        cls.user = WebUser.create(
+            DOMAIN, USERNAME, PASSWORD,
+            created_by=None, created_via=None, role_id=cls.role.get_id,
+        )
         cls.django_user = WebUser.get_django_user(cls.user)
         cls.api_key = HQApiKey.objects.create(user=cls.django_user)
 
@@ -54,6 +64,7 @@ class BaseFHIRViewTest(TestCase):
         delete_all_cases()
         cls.api_key.delete()
         cls.user.delete(deleted_by=None)
+        cls.role.delete()
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -223,6 +234,21 @@ class APIAuthenticationTests(BaseFHIRViewTest):
         ),
     )
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cant_edit_username = f'joe.bloggs@{DOMAIN}.commcarehq.org'
+        cls.cant_edit_password = 'Passw0rd!'
+        cls.cant_edit_user = WebUser.create(
+            DOMAIN, cls.cant_edit_username, cls.cant_edit_password,
+            created_by=None, created_via=None,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.cant_edit_user.delete(deleted_by=None)
+        super().tearDownClass()
+
     @flag_enabled('FHIR_INTEGRATION')
     @privilege_enabled(privileges.API_ACCESS)
     def test_api_key_auth(self):
@@ -255,6 +281,20 @@ class APIAuthenticationTests(BaseFHIRViewTest):
             )
             self.assertIsInstance(response, HttpResponseNotFound)
             self.assertHQStandard404Page(response)
+
+    @flag_enabled('FHIR_INTEGRATION')
+    @privilege_enabled(privileges.API_ACCESS)
+    def test_cant_edit_data(self):
+        self.client.login(
+            username=self.cant_edit_username,
+            password=self.cant_edit_password,
+        )
+        for url in self.api_endpoints:
+            response = self.client.get(
+                url,
+                HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}',
+            )
+            self.assertIsInstance(response, HttpResponseForbidden)
 
     def test_basic_auth(self):
         self.client.login(username=USERNAME, password=PASSWORD)
