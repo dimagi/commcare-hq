@@ -62,7 +62,6 @@ branches:
   - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
   - nh/dhis2/sqldataset_maps  # Norman Dec 18
   - sr/cs-bulk-translations+sr/ush-ff+sr/ucr-cs+nh/reminders
-  - sr/ush-ff+sr/ucr-cs+nh/reminders  # Sravan April 12
   - sr/cs-bulk-translations # Sravan April 22
   - nh/reminders  # Norman Jan 26
   - smh/bulk-upload-web-users+jls/cross-domain-web-user-download
@@ -77,7 +76,6 @@ branches:
   - fr/smart-oauth-views # Farid April 7
   - ce/index-deletion
   - gh/remove-filters-from-saved-ucrs # Graham Apr 9
-  - sr/ush-ff  # Sravan April 12
   - gh/fix-email-large-ucrs # Graham April 14
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - sr/sort-cs # Sravan April 19
