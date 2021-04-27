@@ -4795,6 +4795,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id)
 
+    @time_method()
     def set_form_versions(self):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new
