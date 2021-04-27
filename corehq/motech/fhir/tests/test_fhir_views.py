@@ -4,6 +4,8 @@ from uuid import uuid4
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from bs4 import BeautifulSoup
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.api.resources.auth import LoginAuthentication
@@ -57,13 +59,28 @@ class BaseFHIRViewTest(TestCase):
             HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}'
         )
 
+    def assertHQStandard404Page(self, response):
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response['content-type'], 'text/html; charset=utf-8')
+        title = BeautifulSoup(response.content).find('title')
+        self.assertEqual(title.text, '\n'.join((
+            '',
+            '      404 Not Found',
+            '      - ',
+            '      CommCare HQ',
+            '    '
+        )))
+
 
 class TestFHIRGetView(BaseFHIRViewTest):
+    """
+    Tests to confirm the responses of ``fhir_get_view``
+    """
 
     def test_flag_not_enabled(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID])
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertHQStandard404Page(response)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
@@ -80,7 +97,7 @@ class TestFHIRGetView(BaseFHIRViewTest):
     def test_missing_case_id(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", 'just-a-case-id'])
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertHQStandard404Page(response)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_auth_bad_resource(self):
@@ -109,10 +126,14 @@ class TestFHIRGetView(BaseFHIRViewTest):
 
 
 class TestFHIRSearchView(BaseFHIRViewTest):
+    """
+    Tests to confirm the responses of the ``fhir_search`` view
+    """
+
     def test_flag_not_enabled(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertHQStandard404Page(response)
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
