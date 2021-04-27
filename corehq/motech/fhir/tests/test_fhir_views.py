@@ -237,22 +237,23 @@ class APIAuthenticationTests(BaseFHIRViewTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.cant_edit_username = f'joe.bloggs@{DOMAIN}.commcarehq.org'
-        cls.cant_edit_password = 'Passw0rd!'
-        cls.cant_edit_user = WebUser.create(
-            DOMAIN, cls.cant_edit_username, cls.cant_edit_password,
+        cls.username_cant_edit = f'joe.bloggs@{DOMAIN}.commcarehq.org'
+        cls.user_cant_edit = WebUser.create(
+            DOMAIN, cls.username_cant_edit, 'Passw0rd!',
             created_by=None, created_via=None,
         )
+        django_user = WebUser.get_django_user(cls.user_cant_edit)
+        cls.api_key_cant_edit = HQApiKey.objects.create(user=django_user)
 
     @classmethod
     def tearDownClass(cls):
-        cls.cant_edit_user.delete(deleted_by=None)
+        cls.api_key_cant_edit.delete()
+        cls.user_cant_edit.delete(deleted_by=None)
         super().tearDownClass()
 
     @flag_enabled('FHIR_INTEGRATION')
     @privilege_enabled(privileges.API_ACCESS)
     def test_api_key_auth(self):
-        self.client.login(username=USERNAME, password=PASSWORD)
         for url in self.api_endpoints:
             response = self.client.get(
                 url,
@@ -262,7 +263,6 @@ class APIAuthenticationTests(BaseFHIRViewTest):
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_api_key_auth_without_api_access(self):
-        self.client.login(username=USERNAME, password=PASSWORD)
         for url in self.api_endpoints:
             response = self.client.get(
                 url,
@@ -273,7 +273,6 @@ class APIAuthenticationTests(BaseFHIRViewTest):
 
     @privilege_enabled(privileges.API_ACCESS)
     def test_api_key_auth_without_fhir_integration(self):
-        self.client.login(username=USERNAME, password=PASSWORD)
         for url in self.api_endpoints:
             response = self.client.get(
                 url,
@@ -285,19 +284,15 @@ class APIAuthenticationTests(BaseFHIRViewTest):
     @flag_enabled('FHIR_INTEGRATION')
     @privilege_enabled(privileges.API_ACCESS)
     def test_cant_edit_data(self):
-        self.client.login(
-            username=self.cant_edit_username,
-            password=self.cant_edit_password,
-        )
+        extra = {
+            'HTTP_AUTHORIZATION':
+                f'ApiKey {self.username_cant_edit}:{self.api_key_cant_edit.key}'
+        }
         for url in self.api_endpoints:
-            response = self.client.get(
-                url,
-                HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}',
-            )
+            response = self.client.get(url, **extra)
             self.assertIsInstance(response, HttpResponseForbidden)
 
     def test_basic_auth(self):
-        self.client.login(username=USERNAME, password=PASSWORD)
         b64_bytes = b64encode(f'{USERNAME}:{PASSWORD}'.encode('utf8'))
         basic_auth = b64_bytes.decode('utf8')
         for url in self.api_endpoints:
@@ -309,7 +304,6 @@ class APIAuthenticationTests(BaseFHIRViewTest):
 
     def test_superuser_login(self):
         with user_is_superuser(self.django_user):
-            self.client.login(username=USERNAME, password=PASSWORD)
             for url in self.api_endpoints:
                 response = self.client.get(url)
                 self.assertIsInstance(response, HttpUnauthorized)
