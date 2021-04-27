@@ -15,7 +15,6 @@ from django.http import (
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.text import slugify
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 from django.utils.translation import ugettext as _
@@ -93,6 +92,8 @@ from corehq.apps.app_manager.views.utils import (
     get_langs,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
+    InvalidSessionEndpoint,
+    set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -687,15 +688,13 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl = request.POST.getlist('excl_form_ids')
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
+
     if should_edit('session_endpoint_id'):
-        raw_endpoint_id = request.POST['session_endpoint_id'].strip()
-        module.session_endpoint_id = slugify(raw_endpoint_id)
-        if module.session_endpoint_id != raw_endpoint_id:
-            msg = _(
-                "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
-                "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
-            ).format(invalid_id=raw_endpoint_id, valid_id=module.session_endpoint_id)
-            return HttpResponseBadRequest(msg)
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        try:
+            set_session_endpoint(module, raw_endpoint_id, app)
+        except InvalidSessionEndpoint as e:
+            return HttpResponseBadRequest(str(e))
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
