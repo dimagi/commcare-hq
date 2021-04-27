@@ -8,7 +8,6 @@
         <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
         {% for phone in phonenumbers %}
           <div class="form-group">
-            <div class="row">
               <label class="control-label col-sm-3 col-md-4 col-lg-2">+{{ phone.number }}<br />
                 {% if user_type == "mobile" %}
 
@@ -82,7 +81,6 @@
                   </button>
                 </form>
               {% endif %}
-            </div>
           </div>
         {% endfor %}
       </fieldset>
