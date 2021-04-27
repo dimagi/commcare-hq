@@ -137,19 +137,9 @@ hqDefine("reports/js/report_config_models", [
         self.setUserConfigurableConfigBeingViewed = function (config) {
             self.configBeingViewed(config);
 
-            var filters = config.filters;
-            update_filters = function () {
-                for (var filter_name in filters) {
-                    var val = filters[filter_name];
-                    $('[name="' + filter_name + '"]').val(val);
-                }
-            };
-
             if (self.initialLoad) {
                 self.initialLoad = false;
-                update_filters();
             } else {
-                update_filters();
                 window.location.href = "?config_id=" + config._id();
             }
         };
