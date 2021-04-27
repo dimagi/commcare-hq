@@ -3,7 +3,8 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import api_key_auth
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -45,6 +46,7 @@ class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
 
 @require_GET
 @api_key_auth
+@requires_privilege_with_fallback(privileges.API_ACCESS)
 @toggles.FHIR_INTEGRATION.required_decorator()
 def get_view(request, domain, fhir_version_name, resource_type, resource_id):
     fhir_version = _get_fhir_version(fhir_version_name)
@@ -70,6 +72,7 @@ def get_view(request, domain, fhir_version_name, resource_type, resource_id):
 
 @require_GET
 @api_key_auth
+@requires_privilege_with_fallback(privileges.API_ACCESS)
 @toggles.FHIR_INTEGRATION.required_decorator()
 def search_view(request, domain, fhir_version_name, resource_type):
     fhir_version = _get_fhir_version(fhir_version_name)

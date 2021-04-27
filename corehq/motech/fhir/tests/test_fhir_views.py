@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from uuid import uuid4
 
-from django.http import HttpResponseNotFound, JsonResponse
+from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.test import TestCase
 from django.urls import reverse
 
@@ -13,6 +13,7 @@ from tastypie.http import HttpUnauthorized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import HQApiKey, WebUser
@@ -23,7 +24,7 @@ from corehq.motech.fhir.tests.utils import (
     add_case_type_with_resource_type,
 )
 from corehq.motech.utils import get_endpoint_url
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 DOMAIN = 'fhir-drill'
 FHIR_VERSION = 'R4'
@@ -74,8 +75,20 @@ class BaseFHIRViewTest(TestCase):
             '    '
         )))
 
+    def assertHQUpgradeRequiredPage(self, response):
+        self.assertEqual(response['content-type'], 'text/html; charset=utf-8')
+        title = BeautifulSoup(response.content).find('title')
+        self.assertEqual(title.text, '\n'.join((
+            '',
+            '      : Upgrade Required',
+            '      - ',
+            '      CommCare HQ',
+            '    '
+        )))
+
 
 @flag_enabled('FHIR_INTEGRATION')
+@privilege_enabled(privileges.API_ACCESS)
 class TestFHIRGetView(BaseFHIRViewTest):
     """
     Tests to confirm the responses of ``fhir_get_view``
@@ -121,6 +134,7 @@ class TestFHIRGetView(BaseFHIRViewTest):
 
 
 @flag_enabled('FHIR_INTEGRATION')
+@privilege_enabled(privileges.API_ACCESS)
 class TestFHIRSearchView(BaseFHIRViewTest):
     """
     Tests to confirm the responses of the ``fhir_search`` view
@@ -210,6 +224,7 @@ class APIAuthenticationTests(BaseFHIRViewTest):
     )
 
     @flag_enabled('FHIR_INTEGRATION')
+    @privilege_enabled(privileges.API_ACCESS)
     def test_api_key_auth(self):
         self.client.login(username=USERNAME, password=PASSWORD)
         for url in self.api_endpoints:
@@ -219,6 +234,18 @@ class APIAuthenticationTests(BaseFHIRViewTest):
             )
             self.assertIsInstance(response, JsonResponse)
 
+    @flag_enabled('FHIR_INTEGRATION')
+    def test_api_key_auth_without_api_access(self):
+        self.client.login(username=USERNAME, password=PASSWORD)
+        for url in self.api_endpoints:
+            response = self.client.get(
+                url,
+                HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}',
+            )
+            self.assertIsInstance(response, HttpResponse)
+            self.assertHQUpgradeRequiredPage(response)
+
+    @privilege_enabled(privileges.API_ACCESS)
     def test_api_key_auth_without_fhir_integration(self):
         self.client.login(username=USERNAME, password=PASSWORD)
         for url in self.api_endpoints:
