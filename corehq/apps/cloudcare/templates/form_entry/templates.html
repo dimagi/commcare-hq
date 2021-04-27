@@ -114,7 +114,9 @@
         <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
         <p>
           {% blocktrans %}
-            Product Update - Use the below links to navigate to missing questions or questions that contain errors. You can use the button displayed on the bottom left-hand side of the screen to navigate between questions.
+            Product Update - Until your form is complete, before submitting you will now see links to the missing questions or questions that contain errors.
+            <br>
+            You can use the <strong><i class="fa fa-arrow-down"></i> Next Question</strong> button displayed on the bottom left-hand side of the screen to navigate between questions that need attention.
           {% endblocktrans %}
           <br>
           <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
@@ -134,13 +136,11 @@
           </div>
           <div class="row" data-bind="visible: erroredQuestions().length > 0">
             <div class="col-sm-12 alert alert-danger">
-              <strong>
-                {% blocktrans %}
+              {% blocktrans %}
                 Please correct the answers below before submitting.
                 <br>
-                You can use the <i class='fa fa-arrow-down'></i> button on the left-hand side of the screen to navigate between required fields.
-                {% endblocktrans %}
-              </strong>
+                You can use the <strong><i class='fa fa-arrow-down'></i> Next Question</strong> button on the left-hand side of the screen to navigate between required fields.
+              {% endblocktrans %}
               <ul data-bind="foreach: erroredQuestions">
                   <li>
                       <a href="#" data-bind="click: navigateTo, text: caption_markdown() || caption()"></a>
