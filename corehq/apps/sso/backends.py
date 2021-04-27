@@ -1,14 +1,22 @@
+from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
 from dimagi.utils.web import get_ip
 
+from corehq.apps.analytics.tasks import (
+    track_workflow,
+    track_web_user_registration_hubspot,
+    send_hubspot_form,
+    HUBSPOT_NEW_USER_INVITE_FORM,
+)
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.utils.session_helpers import (
     get_sso_invitation_from_session,
     get_sso_user_first_name_from_session,
     get_sso_user_last_name_from_session,
+    get_new_sso_user_data_from_session,
 )
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.models import CouchUser
@@ -89,4 +97,45 @@ class SsoBackend(ModelBackend):
             domain=domain,
             ip=get_ip(request),
         )
+        self._process_new_user_data(request, new_web_user)
         return new_web_user
+
+    @staticmethod
+    def _process_new_user_data(request, new_web_user):
+        """
+        If available, this makes sure we apply any relevant user data
+        :param request: HttpRequest
+        :param new_web_user: WebUser
+        :return:
+        """
+        user_data = get_new_sso_user_data_from_session(request)
+        if not user_data:
+            return
+
+        phone_number = user_data['phone_number']
+        if phone_number:
+            new_web_user.phone_numbers.append(phone_number)
+            new_web_user.save()
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            track_workflow(
+                new_web_user.username,
+                "Requested New Account via SSO",
+                {
+                    'environment': settings.SERVER_ENVIRONMENT,
+                }
+            )
+            track_workflow(
+                new_web_user.username,
+                "Persona Field Filled Out via SSO",
+                {
+                    'personachoice': user_data['persona'],
+                    'personaother': user_data['persona_other'],
+                }
+            )
+            track_web_user_registration_hubspot(
+                request,
+                new_web_user,
+                user_data['additional_hubspot_data'],
+            )
+
