@@ -1169,7 +1169,6 @@ class UserFilterForm(forms.Form):
         required=False,
         label=_('Project Spaces'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Add project spaces containing the desired users'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -1204,15 +1203,13 @@ class UserFilterForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
 
-        fields = []
+        fields = [
+            crispy.Field('role_id', css_class="hqwebapp-select2"),
+            crispy.Field('search_string'),
+            crispy.Field('location_id'),
+        ]
         if self.user_type == MOBILE_USER_TYPE:
-            fields += crispy.Field('role_id', css_class="hqwebapp-select2")
-        fields += [crispy.Field('search_string')]
-        if self.user_type == MOBILE_USER_TYPE:
-            fields += [
-                crispy.Field('location_id'),
-                crispy.Field('columns'),
-            ]
+            fields += [crispy.Field('columns')]
         fields += [crispy.Field('domains')]
 
         self.helper.layout = crispy.Layout(
