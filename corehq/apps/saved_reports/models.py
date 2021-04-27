@@ -134,11 +134,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return result
 
     @classmethod
-    def default(self):
+    def default(cls):
         return {
             'name': '',
             'description': '',
-            #'date_range': 'last7',
             'days': None,
             'start_date': None,
             'end_date': None,

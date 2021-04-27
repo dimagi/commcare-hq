@@ -113,7 +113,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     :param query_dict: a QueryDict
     :param domain:
-    :string_type_params: list of params that should not be autocasted to boolean/numbers
+    :param string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
     request_dict = json_request(query_dict)

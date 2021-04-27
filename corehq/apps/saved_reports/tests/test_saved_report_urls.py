@@ -1,5 +1,3 @@
-from urllib.parse import urlencode
-
 from django.test import TestCase
 
 from corehq.apps.saved_reports.models import ReportConfig
@@ -8,39 +6,38 @@ from corehq.apps.userreports.reports.view import ConfigurableReportView
 
 class SavedReportURLTest(TestCase):
 
-    def tearDown(self):
-        self.saved_report_config.delete()
-        super(SavedReportURLTest, self).tearDown()
+    def test_saved_standard_report_returns_query_string_with_filters(self):
+        report_config = ReportConfig.wrap({
+            "domain": 'saved-report-tests',
+            "report_slug": "worker_activity",
+            "owner_id": '0123456789',
+            "report_type": "project_report",
+            "filters": {
+                "date-start": "2020-01-01",
+                "date-end": "2020-12-31"
+            }
+        })
+        report_config._id = 'abc123'
 
-    def test_standard_saved_report_query_string(self):
-        self.saved_report_config = _create_saved_report()
+        query = report_config.query_string
 
-        actual_query = self.saved_report_config.query_string
+        expected_query = 'config_id=abc123&date-start=2020-01-01&date-end=2020-12-31'
+        self.assertEqual(query, expected_query)
 
-        params = {'config_id': self.saved_report_config._id}
-        params.update(self.saved_report_config.filters)
-        params.update(self.saved_report_config.get_date_range())
-        expected_query = urlencode(params)
-        self.assertEqual(expected_query, actual_query)
+    def test_saved_ucr_returns_query_string_without_filters(self):
+        report_config = ReportConfig.wrap({
+            "domain": 'saved-report-tests',
+            "report_slug": "worker_activity",
+            "owner_id": '0123456789',
+            "report_type": ConfigurableReportView.prefix,
+            "filters": {
+                "date-start": "2020-01-01",
+                "date-end": "2020-12-31"
+            }
+        })
+        report_config._id = 'abc123'
 
-    def test_ucr_saved_report_query_string_only_contains_config_id(self):
-        self.saved_report_config = _create_saved_report(configurable=True)
+        query = report_config.query_string
 
-        actual_query = self.saved_report_config.query_string
-
-        params = {'config_id': self.saved_report_config._id}
-        expected_query = urlencode(params)
-        self.assertEqual(expected_query, actual_query)
-
-
-def _create_saved_report(configurable=False):
-    report_config = ReportConfig.wrap({
-        "date_range": "last30",
-        "days": 30,
-        "domain": 'saved-report-tests',
-        "report_slug": "worker_activity",
-        "owner_id": '0123456789',
-        "report_type": ConfigurableReportView.prefix if configurable else "project_report"
-    })
-    report_config.save()
-    return report_config
+        expected_query = 'config_id=abc123'
+        self.assertEqual(expected_query, query)
