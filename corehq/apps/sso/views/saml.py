@@ -10,9 +10,12 @@ from django.http import (
 )
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import ugettext as _
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
 from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.registration.utils import request_new_domain
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
@@ -20,6 +23,7 @@ from corehq.apps.sso.decorators import (
 from corehq.apps.sso.configuration import get_saml2_config
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
+    get_new_sso_user_project_name_from_session,
 )
 
 
@@ -85,6 +89,22 @@ def sso_saml_acs(request, idp_slug):
 
         if user:
             auth.login(request, user)
+
+            # activate new project if needed
+            project_name = get_new_sso_user_project_name_from_session(request)
+            if project_name:
+                try:
+                    request_new_domain(request, project_name, is_new_user=True)
+                except NameUnavailableException:
+                    # this should never happen, but in the off chance it does
+                    # we don't want to throw a 500 on this view
+                    messages.error(
+                        request,
+                        _("We were unable to create your requested project "
+                          "because the name was already taken."
+                          "Please contact support.")
+                    )
+
             return redirect("homepage")
 
         # todo for debugging purposes to dump into the response below
