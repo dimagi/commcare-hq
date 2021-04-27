@@ -64,3 +64,40 @@ def get_sso_invitation_from_session(request):
         log.exception(
             f"Error fetching invitation from sso create user request: {uuid}"
         )
+
+
+def prepare_session_with_new_sso_user_data(request, reg_form,
+                                           additional_hubspot_data=None):
+    """
+    Prepares the Request's Session to store registration form details
+    when a user is signing up for an account on HQ and using SSO to login.
+    :param request: HttpRequest
+    :param reg_form: RegisterWebUserForm
+    :param additional_hubspot_data: dict or None (Hubspot related data from A/B tests etc)
+    """
+    persona = reg_form.cleaned_data['persona']
+    persona_other = reg_form.cleaned_data['persona_other']
+    additional_hubspot_data = additional_hubspot_data or {}
+    additional_hubspot_data.update({
+        'buyer_persona': persona,
+        'buyer_persona_other': persona_other,
+    })
+
+    request.session['ssoNewUserData'] = {
+        'phone_number': reg_form.cleaned_data['phone_number'],
+        'persona': persona,
+        'persona_other': persona_other,
+        'project_name': reg_form.cleaned_data['project_name'],
+        'atypical_user': reg_form.cleaned_data.get('atypical_user'),
+        'additional_hubspot_data': additional_hubspot_data,
+    }
+
+
+def get_new_sso_user_data_from_session(request):
+    """
+    Fetches data related to the a new user that is registering and logging on
+    using sso (if that data is available).
+    :param request: HttpRequest
+    :return: dict or None
+    """
+    return request.session.get('ssoNewUserData', {})
