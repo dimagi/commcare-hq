@@ -143,7 +143,7 @@
               {% endblocktrans %}
               <ul data-bind="foreach: erroredQuestions">
                   <li>
-                      <a href="#" data-bind="click: navigateTo, text: caption_markdown() || caption()"></a>
+                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption()"></a>
                       <span class="error-message server-error-message" data-bind="
                                 visible: serverError,
                                 text: serverError
