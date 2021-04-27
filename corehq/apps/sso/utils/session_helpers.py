@@ -129,9 +129,7 @@ def get_new_sso_user_project_name_from_session(request):
     :param request: HttpRequest
     :return: String (project name) or None
     """
-    return request.session.get('ssoNewUserData', {}).get(
-        'project_name'
-    )
+    return request.session.get('ssoNewUserData', {}).get('project_name')
 
 
 def clear_sso_registration_data_from_session(request):
