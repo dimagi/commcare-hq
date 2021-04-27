@@ -26,6 +26,7 @@ from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
     get_sso_username_from_session,
     get_new_sso_user_project_name_from_session,
+    clear_sso_registration_data_from_session,
 )
 
 
@@ -107,6 +108,7 @@ def sso_saml_acs(request, idp_slug):
                           "Please contact support.")
                     )
 
+            clear_sso_registration_data_from_session(request)
             return redirect("homepage")
 
         # todo for debugging purposes to dump into the response below
