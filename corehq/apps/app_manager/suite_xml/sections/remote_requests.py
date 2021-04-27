@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
@@ -130,7 +131,7 @@ class RemoteRequestFactory(object):
             long_detail_id = 'search_long'
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
-        if self.module.search_config.search_filter:
+        if self.module.search_config.search_filter and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
