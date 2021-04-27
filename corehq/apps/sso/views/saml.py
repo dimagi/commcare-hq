@@ -9,6 +9,7 @@ from django.http import (
     Http404,
 )
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
@@ -25,9 +26,12 @@ from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
     get_sso_username_from_session,
+    prepare_session_with_sso_username,
     get_new_sso_user_project_name_from_session,
+    prepare_session_for_sso_invitation,
     clear_sso_registration_data_from_session,
 )
+from corehq.apps.users.models import Invitation
 
 
 @identity_provider_required
@@ -224,3 +228,25 @@ def sso_saml_logout(request, idp_slug):
         name_id_format=request.session.get('samlNameIdFormat'),
         spnq=request.session.get('samlNameIdSPNameQualifier')
     ))
+
+
+@use_saml2_auth
+def sso_test_create_user(request, idp_slug):
+    """
+    A testing view exclusively for staging. This will be removed once the
+    UIs are in place to sign up users or invite new users who must log in with
+    SSO.
+    """
+    if settings.SERVER_ENVIRONMENT not in ['staging']:
+        raise Http404()
+
+    username = request.GET.get('username')
+    if username:
+        prepare_session_with_sso_username(request, username)
+
+    invitation_uuid = request.GET.get('invitation')
+    invitation = Invitation.objects.get(uuid=invitation_uuid)
+    if invitation:
+        prepare_session_for_sso_invitation(request, invitation)
+
+    return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))
