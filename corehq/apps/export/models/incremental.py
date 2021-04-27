@@ -7,7 +7,7 @@ from couchexport.models import Format
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
     ExportFile,
-    _get_export_query,
+    get_export_query,
     get_export_writer,
     write_export_instance,
 )
@@ -125,7 +125,7 @@ def _generate_incremental_export(incremental_export, last_doc_date=None):
     with TransientTempfile() as temp_path, metrics_track_errors('generate_incremental_exports'):
         writer = get_export_writer([export_instance], temp_path, allow_pagination=False)
         with writer.open([export_instance]):
-            query = _get_export_query(export_instance, filters)
+            query = get_export_query(export_instance, filters)
             query = query.sort('server_modified_on')  # reset sort to this instead of opened_on
             docs = LastDocTracker(query.run().hits)
             write_export_instance(writer, export_instance, docs)
