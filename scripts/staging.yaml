@@ -80,7 +80,7 @@ branches:
   - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
   - sr/sort-cs # Sravan April 19
   - kev/markdown-case-views # Kevin Apr 9
-  - bmb/get-account-rename  # Biyeun Apr 19 - IN QA
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
+  - bmb/sso-create-new-user  # Biyeun Apr 27
 
 submodules: {}
