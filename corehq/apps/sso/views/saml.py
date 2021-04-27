@@ -1,7 +1,7 @@
 import json
 
 from django.conf import settings
-from django.contrib import auth
+from django.contrib import auth, messages
 from django.http import (
     HttpResponse,
     HttpResponseServerError,
@@ -74,6 +74,14 @@ def sso_saml_acs(request, idp_slug):
             idp_slug=idp_slug,
             is_handshake_successful=True,
         )
+
+        # we add the messages to the django messages framework here since
+        # that middleware was not available for SsoBackend
+        if hasattr(request, 'sso_new_user_messages'):
+            for success_message in request.sso_new_user_messages['success']:
+                messages.success(request, success_message)
+            for error_message in request.sso_new_user_messages['error']:
+                messages.error(request, error_message)
 
         if user:
             auth.login(request, user)

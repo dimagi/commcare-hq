@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.web import get_ip
 
@@ -65,6 +66,12 @@ class SsoBackend(ModelBackend):
 
         invitation = get_sso_invitation_from_session(request)
 
+        # because the django messages middleware is not yet available...
+        request.sso_new_user_messages = {
+            'success': [],
+            'error': [],
+        }
+
         try:
             user = User.objects.get(username=username)
             is_new_user = False
@@ -101,6 +108,9 @@ class SsoBackend(ModelBackend):
             last_name=get_sso_user_last_name_from_session(request),
             domain=domain,
             ip=get_ip(request),
+        )
+        request.sso_new_user_messages['success'].append(
+            _("User account for {} created.").format(new_web_user.username)
         )
         self._process_new_user_data(request, new_web_user)
         return new_web_user
@@ -155,9 +165,17 @@ class SsoBackend(ModelBackend):
         """
         request.sso_invitation_status = {}
         if invitation.is_expired:
+            request.sso_new_user_messages['error'].append(
+                _("Could not accept invitation because it is expired.")
+            )
             return
 
         invitation.accept_invitation_and_join_domain(web_user)
+        request.sso_new_user_messages['success'].append(
+            _('You have been added to the "{}" project space.').format(
+                invitation.domain,
+            )
+        )
 
         if settings.IS_SAAS_ENVIRONMENT and is_new_user:
             track_workflow(
