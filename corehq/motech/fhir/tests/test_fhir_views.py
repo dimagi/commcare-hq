@@ -315,6 +315,73 @@ class APIAuthenticationTests(BaseFHIRViewTest):
                 self.assertIsInstance(response, HttpUnauthorized)
 
 
+@flag_enabled('FHIR_INTEGRATION')
+@privilege_enabled(privileges.API_ACCESS)
+class APIAuthorizationTests(BaseFHIRViewTest):
+    """
+    Tests to confirm what API users are authorized to see.
+    """
+
+    other_domain = 'where-there-is-smhok'
+    other_owner_id = uuid4().hex
+    other_patient_id = uuid4().hex
+    other_observation_id = uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.other_domain_obj = create_domain(
+            cls.other_domain,
+            use_sql_backend=True,
+        )
+        cls._set_up_other_cases()
+
+    @classmethod
+    def _set_up_other_cases(cls):
+        submit_case_blocks([
+            _get_caseblock(
+                cls.other_patient_id, 'person', cls.other_owner_id,
+                {'first_name': 'Eilidh'}
+            ).as_text(),
+            _get_caseblock(
+                cls.other_observation_id, 'test', cls.other_owner_id,
+            ).as_text(),
+        ], cls.other_domain)
+
+        case_accessor = CaseAccessors(cls.other_domain)
+        test_case = case_accessor.get_case(cls.other_observation_id)
+        test_case.track_create(CommCareCaseIndexSQL(
+            case=test_case,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=cls.other_patient_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        ))
+        case_accessor.db_accessor.save_case(test_case)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.other_domain_obj.delete()
+        super().tearDownClass()
+
+    def test_get(self):
+        url = reverse("fhir_get_view", args=[
+            DOMAIN, FHIR_VERSION, "Patient", self.other_patient_id
+        ])
+        response = self._get_response(url)
+        self.assertHQStandard404Page(response)
+
+    def test_search(self):
+        url = reverse("fhir_search", args=[
+            DOMAIN, FHIR_VERSION, "Observation"
+        ]) + f"?patient_id={self.other_patient_id}"
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {
+            'message': f'Could not find patient with ID {self.other_patient_id}'
+        })
+
+
 @contextmanager
 def user_is_superuser(user):
     is_superuser = user.is_superuser

@@ -87,6 +87,10 @@ def search_view(request, domain, fhir_version_name, resource_type):
     case_accessor = CaseAccessors(domain)
     try:
         patient_case = case_accessor.get_case(patient_case_id)
+        if patient_case.domain != domain:
+            return JsonResponse(status=404, data={
+                'message': f"Could not find patient with ID {patient_case_id}"
+            })
         if patient_case.is_deleted:
             return JsonResponse(status=400, data={'message': f"Patient with ID {patient_case_id} was removed"})
     except CaseNotFound:
