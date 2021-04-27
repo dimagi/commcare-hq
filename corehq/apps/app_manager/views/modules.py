@@ -135,7 +135,7 @@ def get_module_view_context(request, app, module, lang=None):
         'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
-            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
     }
     module_brief = {
@@ -198,7 +198,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
-            'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
+            'has_geocoder_privs': (
+                domain_has_privilege(app.domain, privileges.GEOCODER)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
+            ),
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
