@@ -1,5 +1,4 @@
 import uuid
-from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.test import TestCase
@@ -8,8 +7,8 @@ from django.urls import reverse
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.fixtures import FlatLocationSerializer
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
@@ -20,7 +19,7 @@ from corehq.util.test_utils import flag_enabled
 from ..views import get_case_hierarchy_for_restore
 
 
-class TestRelatedCases(TestCase):
+class TestRelatedCases(TestCase, TestXmlMixin):
     domain = 'related-cases-domain'
 
     @classmethod
@@ -83,7 +82,7 @@ class TestRelatedCases(TestCase):
         self.addCleanup(domain_obj.delete)
 
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
-        SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
+        location = SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
 
         # a location in different domain that should not be present
         create_domain("random-domain")
@@ -95,14 +94,52 @@ class TestRelatedCases(TestCase):
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
-        locations_content = b""
-        locations = SQLLocation.active_objects.filter(domain=self.domain)
-        for xml_node in FlatLocationSerializer().get_xml_nodes('locations', self.domain, case_id, locations):
-            locations_content += ElementTree.tostring(xml_node, encoding='utf-8')
-        self.assertIn(locations_content, response_content)
+
+        locations_content = location_fixture_content.format(
+            user_id=case_id,
+            location_id=location.location_id
+        )
+        self.assertXmlPartialEqual(schema_fixture_content, response_content,
+                                   '{http://openrosa.org/http/response}schema')
+        self.assertXmlPartialEqual(locations_content, response_content,
+                                   '{http://openrosa.org/http/response}fixture[@id="locations"]')
 
     def _generate_restore(self, case_id, user):
         self.client.login(username=user.username, password=user.password)
         url = reverse("migration_restore", args=[self.domain, case_id])
         hmac_header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, url)
         return self.client.get(url, HTTP_X_MAC_DIGEST=hmac_header_value)
+
+
+schema_fixture_content = """
+<partial>
+    <ns0:schema xmlns:ns0="http://openrosa.org/http/response" id="locations">
+        <ns0:indices>
+            <ns0:index>@id</ns0:index>
+            <ns0:index>@top_id</ns0:index>
+            <ns0:index>@type</ns0:index>
+            <ns0:index>name</ns0:index>
+        </ns0:indices>
+    </ns0:schema>
+</partial>
+"""
+
+
+location_fixture_content = """
+<partial>
+    <ns0:fixture xmlns:ns0="http://openrosa.org/http/response" id="locations" indexed="true" user_id="{user_id}">
+        <ns0:locations>
+            <ns0:location id="{location_id}" top_id="{location_id}" type="top">
+                <ns0:name>Top Location</ns0:name>
+                <ns0:site_code>top_location</ns0:site_code>
+                <ns0:external_id/>
+                <ns0:latitude/>
+                <ns0:longitude/>
+                <ns0:location_type>Top</ns0:location_type>
+                <ns0:supply_point_id/>
+                <ns0:location_data/>
+            </ns0:location>
+        </ns0:locations>
+    </ns0:fixture>
+</partial>
+"""
