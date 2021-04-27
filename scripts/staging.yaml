@@ -80,6 +80,5 @@ branches:
   - sr/sort-cs # Sravan April 19
   - kev/markdown-case-views # Kevin Apr 9
   - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-  - bmb/sso-create-new-user  # Biyeun Apr 27
 
 submodules: {}
