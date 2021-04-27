@@ -1,14 +1,17 @@
+from base64 import b64encode
+from contextlib import contextmanager
 from datetime import datetime
 from uuid import uuid4
 
-from django.test import RequestFactory, TestCase
+from django.http import HttpResponseNotFound, JsonResponse
+from django.test import TestCase
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
+from tastypie.http import HttpUnauthorized
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.api.resources.auth import LoginAuthentication
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -72,17 +75,12 @@ class BaseFHIRViewTest(TestCase):
         )))
 
 
+@flag_enabled('FHIR_INTEGRATION')
 class TestFHIRGetView(BaseFHIRViewTest):
     """
     Tests to confirm the responses of ``fhir_get_view``
     """
 
-    def test_flag_not_enabled(self):
-        url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID])
-        response = self._get_response(url)
-        self.assertHQStandard404Page(response)
-
-    @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", TEST_CASE_ID])
         url = url.replace(FHIR_VERSION, 'A4')
@@ -93,13 +91,11 @@ class TestFHIRGetView(BaseFHIRViewTest):
             {'message': "Unsupported FHIR version"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_missing_case_id(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", 'just-a-case-id'])
         response = self._get_response(url)
         self.assertHQStandard404Page(response)
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_auth_bad_resource(self):
         # requesting for a patient i.e person but case id of a test case type
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", TEST_CASE_ID])
@@ -110,7 +106,6 @@ class TestFHIRGetView(BaseFHIRViewTest):
             {'message': "Invalid Resource Type"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_get(self):
         url = reverse("fhir_get_view", args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID])
         response = self._get_response(url)
@@ -125,17 +120,12 @@ class TestFHIRGetView(BaseFHIRViewTest):
         )
 
 
+@flag_enabled('FHIR_INTEGRATION')
 class TestFHIRSearchView(BaseFHIRViewTest):
     """
     Tests to confirm the responses of the ``fhir_search`` view
     """
 
-    def test_flag_not_enabled(self):
-        url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
-        response = self._get_response(url)
-        self.assertHQStandard404Page(response)
-
-    @flag_enabled('FHIR_INTEGRATION')
     def test_unsupported_fhir_version(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
         url = url.replace(FHIR_VERSION, 'A4')
@@ -146,7 +136,6 @@ class TestFHIRSearchView(BaseFHIRViewTest):
             {'message': "Unsupported FHIR version"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_no_patient_id(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"])
         response = self._get_response(url)
@@ -156,7 +145,6 @@ class TestFHIRSearchView(BaseFHIRViewTest):
             {'message': "Please pass patient_id"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_deleted_case(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={DELETED_CASE_ID}"
         response = self._get_response(url)
@@ -166,7 +154,6 @@ class TestFHIRSearchView(BaseFHIRViewTest):
             {'message': f"Patient with ID {DELETED_CASE_ID} was removed"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_missing_case_id(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + "?patient_id=just-a-case-id"
         response = self._get_response(url)
@@ -176,7 +163,6 @@ class TestFHIRSearchView(BaseFHIRViewTest):
             {'message': "Could not find patient with ID just-a-case-id"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_no_case_types_for_resource_type(self):
         url = reverse("fhir_search",
                       args=[DOMAIN, FHIR_VERSION, "DiagnosticReport"]) + f"?patient_id={PERSON_CASE_ID}"
@@ -187,7 +173,6 @@ class TestFHIRSearchView(BaseFHIRViewTest):
             {'message': f"Resource type DiagnosticReport not available on {DOMAIN}"}
         )
 
-    @flag_enabled('FHIR_INTEGRATION')
     def test_search(self):
         url = reverse("fhir_search", args=[DOMAIN, FHIR_VERSION, "Observation"]) + f"?patient_id={PERSON_CASE_ID}"
         response = self._get_response(url)
@@ -208,32 +193,71 @@ class TestFHIRSearchView(BaseFHIRViewTest):
         )
 
 
-class ViewsPermissionsTests(BaseFHIRViewTest):
+class APIAuthenticationTests(BaseFHIRViewTest):
+    """
+    Tests to confirm the authentication requirements of the FHIR API.
+    """
 
-    def test_api_key_authenticated(self):
-        for url in (
-            reverse("fhir_get_view",
-                    args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID]),
-            reverse("fhir_search",
-                    args=[DOMAIN, FHIR_VERSION, "Observation"])
-        ):
-            request = _get_request(url, self.django_user, self.api_key.key)
-            is_authenticated = LoginAuthentication().is_authenticated(request)
-            self.assertTrue(is_authenticated)
+    api_endpoints = (
+        reverse(
+            "fhir_get_view",
+            args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID],
+        ),
+        reverse(
+            "fhir_search",
+            args=[DOMAIN, FHIR_VERSION, "Observation"],
+        ),
+    )
 
-    def test_superuser_not_authenticated(self):
-        self.django_user.is_superuser = True
-        self.django_user.save()
+    @flag_enabled('FHIR_INTEGRATION')
+    def test_api_key_auth(self):
+        self.client.login(username=USERNAME, password=PASSWORD)
+        for url in self.api_endpoints:
+            response = self.client.get(
+                url,
+                HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}',
+            )
+            self.assertIsInstance(response, JsonResponse)
 
-        for url in (
-            reverse("fhir_get_view",
-                    args=[DOMAIN, FHIR_VERSION, "Patient", PERSON_CASE_ID]),
-            reverse("fhir_search",
-                    args=[DOMAIN, FHIR_VERSION, "Observation"])
-        ):
-            request = _get_request(url, self.django_user)
-            is_authenticated = LoginAuthentication().is_authenticated(request)
-            self.assertFalse(is_authenticated)
+    def test_api_key_auth_without_fhir_integration(self):
+        self.client.login(username=USERNAME, password=PASSWORD)
+        for url in self.api_endpoints:
+            response = self.client.get(
+                url,
+                HTTP_AUTHORIZATION=f'ApiKey {USERNAME}:{self.api_key.key}',
+            )
+            self.assertIsInstance(response, HttpResponseNotFound)
+            self.assertHQStandard404Page(response)
+
+    def test_basic_auth(self):
+        self.client.login(username=USERNAME, password=PASSWORD)
+        b64_bytes = b64encode(f'{USERNAME}:{PASSWORD}'.encode('utf8'))
+        basic_auth = b64_bytes.decode('utf8')
+        for url in self.api_endpoints:
+            response = self.client.get(
+                url,
+                HTTP_AUTHORIZATION=f'Basic {basic_auth}',
+            )
+            self.assertIsInstance(response, HttpUnauthorized)
+
+    def test_superuser_login(self):
+        with user_is_superuser(self.django_user):
+            self.client.login(username=USERNAME, password=PASSWORD)
+            for url in self.api_endpoints:
+                response = self.client.get(url)
+                self.assertIsInstance(response, HttpUnauthorized)
+
+
+@contextmanager
+def user_is_superuser(user):
+    is_superuser = user.is_superuser
+    try:
+        user.is_superuser = True
+        user.save()
+        yield
+    finally:
+        user.is_superuser = is_superuser
+        user.save()
 
 
 def _setup_cases(owner_id):
@@ -274,14 +298,3 @@ def _setup_mappings():
     add_case_property_with_resource_property_path(person_case_type, 'first_name', patient_resource_type,
                                                   '$.name[0].given[0]')
     add_case_type_with_resource_type(DOMAIN, 'test', 'Observation')
-
-
-def _get_request(path, user, api_key=None):
-    if api_key:
-        extra = {'HTTP_AUTHORIZATION': f'ApiKey {USERNAME}:{api_key}'}
-    else:
-        extra = {}
-    request = RequestFactory().get(path, **extra)
-    request.domain = DOMAIN
-    request.user = user
-    return request
