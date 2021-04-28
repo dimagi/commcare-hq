@@ -46,3 +46,12 @@ def track_es_report_load(domain, report_slug, owner_count):
             owner_count,
             tags={'report_slug': report_slug, 'domain': domain}
         )
+
+
+def es_format_datetime(date_or_datetime):
+    """
+    Takes a date or datetime object and converts it to a format ES can read
+    (see DATE_FORMATS_ARR). Timezone-aware values are converted to UTC. Strings
+    are returned unmodified.
+    """
+    return date_or_datetime if isinstance(date_or_datetime, str) else date_or_datetime.isoformat()
