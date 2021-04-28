@@ -68,6 +68,11 @@ def sso_saml_acs(request, idp_slug):
     request_session_data = None
     saml_relay = None
 
+    new_user_info_from_request = {
+        'invitation': request.sso_invitation.uuid if request.sso_invitation else "NO INVITE PRESENT",
+        'new_user_info': request.sso_new_user_data,
+    }
+
     invitation = get_sso_invitation_from_session(request)
     new_user_info_prior_to_process_response = {
         'invitation': invitation.uuid if invitation else "NO INVITE PRESENT",
@@ -148,6 +153,7 @@ def sso_saml_acs(request, idp_slug):
         "processed_response": processed_response,
         "saml_relay": saml_relay,
         "request_session_data": request_session_data,
+        "new_user_info_from_request": new_user_info_from_request,
         "new_user_info_prior_to_process_response": new_user_info_prior_to_process_response,
         "new_user_info_prior_to_auth": new_user_info_prior_to_auth,
         "login_error": getattr(request, 'sso_login_error', None),
