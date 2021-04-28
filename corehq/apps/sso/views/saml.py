@@ -30,7 +30,7 @@ from corehq.apps.sso.utils.session_helpers import (
     get_new_sso_user_project_name_from_session,
     prepare_session_for_sso_invitation,
     clear_sso_registration_data_from_session,
-)
+    get_sso_invitation_from_session, get_new_sso_user_data_from_session)
 from corehq.apps.users.models import Invitation
 
 
@@ -68,6 +68,18 @@ def sso_saml_acs(request, idp_slug):
     request_session_data = None
     saml_relay = None
 
+    new_user_info_from_request = {
+        'invitation': request.sso_invitation.uuid if request.sso_invitation else "NO INVITE PRESENT",
+        'new_user_info': request.sso_new_user_data,
+    }
+
+    invitation = get_sso_invitation_from_session(request)
+    new_user_info_prior_to_process_response = {
+        'invitation': invitation.uuid if invitation else "NO INVITE PRESENT",
+        'new_user_info': get_new_sso_user_data_from_session(request),
+    }
+    new_user_info_prior_to_auth = None
+
     request_id = request.session.get('AuthNRequestID')
     processed_response = request.saml2_auth.process_response(request_id=request_id)
     errors = request.saml2_auth.get_errors()
@@ -78,6 +90,11 @@ def sso_saml_acs(request, idp_slug):
             del request.session['AuthNRequestID']
 
         store_saml_data_in_session(request)
+        invitation = get_sso_invitation_from_session(request)
+        new_user_info_prior_to_auth = {
+            'invitation': invitation.uuid if invitation else "NO INVITE PRESENT",
+            'new_user_info': get_new_sso_user_data_from_session(request),
+        }
 
         user = auth.authenticate(
             request=request,
@@ -113,7 +130,7 @@ def sso_saml_acs(request, idp_slug):
                     )
 
             clear_sso_registration_data_from_session(request)
-            return redirect("homepage")
+            # return redirect("homepage")
 
         # todo for debugging purposes to dump into the response below
         request_session_data = {
@@ -136,6 +153,9 @@ def sso_saml_acs(request, idp_slug):
         "processed_response": processed_response,
         "saml_relay": saml_relay,
         "request_session_data": request_session_data,
+        "new_user_info_from_request": new_user_info_from_request,
+        "new_user_info_prior_to_process_response": new_user_info_prior_to_process_response,
+        "new_user_info_prior_to_auth": new_user_info_prior_to_auth,
         "login_error": getattr(request, 'sso_login_error', None),
     }), 'text/json')
 

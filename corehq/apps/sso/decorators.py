@@ -6,6 +6,8 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.configuration import get_saml2_config
 from corehq.apps.sso.utils.request_helpers import get_request_data
+from corehq.apps.sso.utils.session_helpers import \
+    get_sso_invitation_from_session, get_new_sso_user_data_from_session
 
 
 def identity_provider_required(view_func):
@@ -20,6 +22,8 @@ def use_saml2_auth(view_func):
     @wraps(view_func)
     def _inner(request, idp_slug, *args, **kwargs):
         request.idp = _get_idp_or_404(idp_slug)
+        request.sso_invitation = get_sso_invitation_from_session(request)
+        request.sso_new_user_data = get_new_sso_user_data_from_session(request)
         request.saml2_request_data = get_request_data(request)
         request.saml2_auth = OneLogin_Saml2_Auth(
             request.saml2_request_data, get_saml2_config(request.idp)
