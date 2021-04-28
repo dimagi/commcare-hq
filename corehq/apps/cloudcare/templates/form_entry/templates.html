@@ -104,6 +104,28 @@
           css: { 'form-single-question': showInFormNavigation },
       ">
 
+    {% if environment != "preview-app" %}
+      {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
+        <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+             data-slug="{{ 'JUMP_TO_INVALID_QUESTIONS_WEBAPPS'|ui_notify_slug }}"
+             role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
+          <p>
+            {% blocktrans %}
+              Product Update - Until your form is complete, before submitting you will now see links to the missing questions or questions that contain errors.
+              <br>
+              You can use the <strong><i class="fa fa-arrow-down"></i> Next Question</strong> button displayed on the bottom left-hand side of the screen to navigate between questions that need attention.
+            {% endblocktrans %}
+            <br>
+            <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
+          </p>
+        </div>
+      {% endif %}
+    {% endif %}
+
     <div class="page-header">
       <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
     </div>
@@ -114,21 +136,50 @@
           <div class="question-container">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
-          <div class="form-actions form-group" data-bind="visible: showSubmitButton">
+          <div class="row" data-bind="visible: erroredQuestions().length > 0">
+            <div class="col-sm-12 alert alert-danger">
+              {% blocktrans %}
+                Please correct the answers below before submitting.
+                <br>
+                You can use the <strong><i class='fa fa-arrow-down'></i> Next Question</strong> button on the left-hand side of the screen to navigate between required fields.
+              {% endblocktrans %}
+              <ul data-bind="foreach: erroredQuestions">
+                  <li>
+                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption()"></a>
+                      <span class="error-message server-error-message" data-bind="
+                                visible: serverError,
+                                text: serverError
+                            "></span>
+                      <span class="error-message server-error-message" data-bind="
+                                ifnot: serverError
+                            ">
+                      {% trans "An answer is required." %}
+                      </span>
+                      </li>
+                  </li>
+              </ul>
+            </div>
+          </div>
+          <div id="submit-button" class="form-actions form-group" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"
                      data-bind="enable: enableSubmitButton">
-                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton()"></i>
+                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"></i>
                 <!-- ko text: submitText --><!-- /ko -->
               </button>
             </div>
           </div>
         </form>
       </div>
+      <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="Jump between required/errored questions" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
+        <i class='fa fa-arrow-down'> </i>
+            {% trans "Next Question" %}
+      </div>
     </div>
   </div>
 </script>
+
 
 <script type="text/html" id="question-fullform-ko-template">
   <!-- ko if: datatype() !== 'info' -->
