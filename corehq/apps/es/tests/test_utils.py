@@ -21,7 +21,7 @@ def test_es_format_datetime():
             (datetime(2021, 4, 28, 11, 47, 22, 300000), "2021-04-28T11:47:22.300000"),
             (datetime(2021, 4, 28, 11, tzinfo=UTC), "2021-04-28T11:00:00+00:00"),
             (ET.localize(datetime(2021, 4, 28, 11)), "2021-04-28T11:00:00-04:00"),
-            # This is not a format we support in ES:
-            (ET.localize(datetime(2021, 4, 28, 11, microsecond=1)), "2021-04-28T11:00:00.000001-04:00"),
+            # 2021-04-28T11:00:00.000001-04:00 isn't supported in ES, so convert to server time
+            (ET.localize(datetime(2021, 4, 28, 11, microsecond=1)), "2021-04-28T15:00:00.000001"),
     ]:
         yield _assert_returns, date_or_datetime, expected
