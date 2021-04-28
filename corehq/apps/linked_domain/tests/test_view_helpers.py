@@ -103,7 +103,7 @@ class TestGetDataModels(TestCase):
         cls.original_app.save()
 
         cls.linked_app = LinkedApplication.new_app(cls.downstream_domain, "Linked Application")
-        cls.linked_app.family_id = cls.original_app._id
+        cls.linked_app.upstream_app_id = cls.original_app._id
         cls.linked_app.save()
 
         cls.original_report = _create_report(cls.upstream_domain)
