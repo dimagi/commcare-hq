@@ -288,6 +288,10 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.erroredQuestions = ko.computed(function () {
+            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps()) {
+                return [];
+            }
+
             var questions = getQuestions(self);
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
