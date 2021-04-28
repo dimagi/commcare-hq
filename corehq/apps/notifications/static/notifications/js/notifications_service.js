@@ -120,10 +120,11 @@ hqDefine('notifications/js/notifications_service', [
         }
         module.serviceModel = new NotificationsServiceModel();
         module.serviceModel.init();
-        if (!ko.dataFor($(notificationsKoSelector)[0])) {
+        $(notificationsKoSelector).koApplyBindings(module.serviceModel);
+        /*if (!ko.dataFor($(notificationsKoSelector)[0])) {
             // avoid multiple inits
             $(notificationsKoSelector).koApplyBindings(module.serviceModel);
-        }
+        }*/
     };
 
     module.relativelyPositionUINotify = function (uiNotifySelector) {

@@ -287,7 +287,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.erroredQuestions = ko.computed(function () {
-            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps()) {
+            if (!Utils.isWebApps()) {
                 return [];
             }
 
