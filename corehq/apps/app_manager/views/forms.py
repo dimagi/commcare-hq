@@ -15,6 +15,7 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -437,6 +438,17 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
+
+    if should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id'].strip()
+        form.session_endpoint_id = slugify(raw_endpoint_id)
+        if form.session_endpoint_id != raw_endpoint_id:
+            msg = _(
+                "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
+                "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
+            ).format(invalid_id=raw_endpoint_id, valid_id=form.session_endpoint_id)
+            return json_response({'message': msg}, status_code=400)
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -765,6 +777,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             for assertion in form.custom_assertions
         ],
         'form_icon': None,
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
