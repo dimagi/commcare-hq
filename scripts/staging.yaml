@@ -82,4 +82,5 @@ branches:
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
     - feature/SC-751-automatic_build_version_retrieval_command # Charl April 28
     - bmb/sso-data-fixes  # Biyeun 28th April
+    - bmb/sso-create-debug  # Biyeun 28th April
 submodules: { }
