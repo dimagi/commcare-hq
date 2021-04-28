@@ -24,9 +24,13 @@ def get_sso_user_first_name_from_session(request):
     :param request: HttpRequest
     :return: string or None
     """
-    return request.session.get('samlUserdata', {}).get(
+    first_name = request.session.get('samlUserdata', {}).get(
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
     )
+    if isinstance(first_name, list):
+        # for Azure AD the data is usually returned as a list
+        first_name = first_name[0] if first_name else ''
+    return first_name
 
 
 def get_sso_user_last_name_from_session(request):
@@ -35,9 +39,13 @@ def get_sso_user_last_name_from_session(request):
     :param request: HttpRequest
     :return: string or None
     """
-    return request.session.get('samlUserdata', {}).get(
+    last_name = request.session.get('samlUserdata', {}).get(
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
     )
+    if isinstance(last_name, list):
+        # for Azure AD the data is usually returned as a list
+        last_name = last_name[0] if last_name else ''
+    return last_name
 
 
 def prepare_session_for_sso_invitation(request, invitation):
