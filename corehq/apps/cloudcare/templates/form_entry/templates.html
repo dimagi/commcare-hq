@@ -153,7 +153,7 @@
       {% if environment != "preview-app" %}
         {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
           <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
-               style="position: fixed; width: 700px; bottom: 65px;"
+               style="position: fixed; width: 300px; bottom: 65px;"
                data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
                role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
