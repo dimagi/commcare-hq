@@ -49,6 +49,8 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.xpath import XPath, session_var
 
+AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
+
 
 class DetailContributor(SectionContributor):
     section_name = 'details'
@@ -297,12 +299,17 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_case_search_action(module, in_search=False):
-        relevant_kwarg = {}
+        action_kwargs = {}
         if not in_search and module.search_config.search_button_display_condition:
-            relevant_kwarg = dict(
+            action_kwargs = dict(
                 relevant=XPath(module.search_config.search_button_display_condition),
             )
+
         allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
+        auto_launch_expression = "false()"
+        if allow_auto_launch and module.search_config.auto_launch:
+            auto_launch_expression = AUTO_LAUNCH_EXPRESSION
+
         action = Action(
             display=Display(
                 text=Text(locale_id=(
@@ -311,9 +318,9 @@ class DetailContributor(SectionContributor):
                 ))
             ),
             stack=Stack(),
-            auto_launch=allow_auto_launch and module.search_config.auto_launch,
+            auto_launch=auto_launch_expression,
             redo_last=in_search,
-            **relevant_kwarg
+            **action_kwargs
         )
         frame = PushFrame()
         frame.add_mark()
