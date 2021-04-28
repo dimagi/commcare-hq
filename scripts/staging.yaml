@@ -70,7 +70,6 @@ branches:
     - nh/fhir/repeater  # Norman Mar 1
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - fr/consumer-user             # Farid March 17
-    - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
     - sr/jumptoErrors # Sravan April 6
     - mk/form-mm-exports-filters-2 # MK April 16
     - fr/smart-metadata-urls       # Farid April 28
