@@ -72,7 +72,7 @@ FILTERS.update(chain(*[
 
 
 def get_list(domain, params):
-    start = _to_int(params.pop('offset', 0), 'offset')
+    raw_params = params.copy()
     page_size = _to_int(params.pop('limit', DEFAULT_PAGE_SIZE), 'limit')
     if page_size > MAX_PAGE_SIZE:
         raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
@@ -80,7 +80,6 @@ def get_list(domain, params):
     query = (case_search.CaseSearchES()
              .domain(domain)
              .size(page_size)
-             .start(start)
              .sort("@indexed_on"))
 
     for key, val in params.items():
@@ -93,7 +92,15 @@ def get_list(domain, params):
         else:
             raise UserError(f"'{key}' is not a valid parameter.")
 
-    return [serialize_es_case(case) for case in query.run().hits]
+    es_result = query.run()
+    ret = {
+        "total": es_result.total,
+        "cases": [serialize_es_case(case) for case in es_result.hits],
+    }
+    cases_in_result = len(es_result.hits)
+    if cases_in_result and es_result.total > cases_in_result:
+        ret['next'] = {**raw_params, **{'indexed_on.gt': es_result.hits[-1]["@indexed_on"]}}
+    return ret
 
 
 def _get_custom_property_filter(key, val):

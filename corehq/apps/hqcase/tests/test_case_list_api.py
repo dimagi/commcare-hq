@@ -21,7 +21,7 @@ from corehq.util.test_utils import (
 )
 
 from ..api.core import UserError
-from ..api.get_list import get_list, MAX_PAGE_SIZE
+from ..api.get_list import MAX_PAGE_SIZE, get_list
 from ..utils import submit_case_blocks
 
 
@@ -94,6 +94,29 @@ class TestCaseListAPI(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDownClass()
 
+    def test_pagination(self):
+        res = get_list(self.domain, {"limit": "3", "case_type": "person"})
+        self.assertItemsEqual(res.keys(), ['next', 'cases', 'total'])
+        self.assertEqual(res['total'], 5)
+        self.assertEqual(
+            ['mattie', 'rooster', 'laboeuf'],
+            [c['external_id'] for c in res['cases']]
+        )
+        self.assertDictContainsSubset({
+            "limit": "3",
+            "case_type": "person",
+        }, res['next'])
+        self.assertIn('indexed_on.gt', res['next'])
+
+        res = get_list(self.domain, res['next'])
+        self.assertEqual(res['total'], 2)
+        self.assertEqual(
+            ['chaney', 'ned'],
+            [c['external_id'] for c in res['cases']]
+        )
+        self.assertNotIn('next', res)  # No pages after this one
+
+
 
 @generate_cases([
     ("", ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
@@ -121,7 +144,7 @@ class TestCaseListAPI(TestCase):
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()
-    actual = [c['external_id'] for c in get_list(self.domain, params)]
+    actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
 
