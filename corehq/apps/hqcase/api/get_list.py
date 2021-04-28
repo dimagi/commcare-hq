@@ -93,13 +93,14 @@ def get_list(domain, params):
             raise UserError(f"'{key}' is not a valid parameter.")
 
     es_result = query.run()
+    hits = es_result.hits
     ret = {
         "total": es_result.total,
-        "cases": [serialize_es_case(case) for case in es_result.hits],
+        "cases": [serialize_es_case(case) for case in hits],
     }
-    cases_in_result = len(es_result.hits)
+    cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        ret['next'] = {**raw_params, **{'indexed_on.gt': es_result.hits[-1]["@indexed_on"]}}
+        ret['next'] = {**raw_params, **{'indexed_on.gt': hits[-1]["@indexed_on"]}}
     return ret
 
 
