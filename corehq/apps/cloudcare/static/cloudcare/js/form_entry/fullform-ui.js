@@ -612,10 +612,10 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
                 currentNode = parent;
             }
             var el = $("label[for='" + self.entry.entryId + "']");
-            $('html, body').animate({
+            /*$('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });
-            el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
+            el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);*/
         };
     }
 
