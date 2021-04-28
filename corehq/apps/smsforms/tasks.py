@@ -61,9 +61,6 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             xforms_session_couch_id=session.couch_id,
             messaging_subevent_id=logged_subevent.pk
         )
-        if not message:
-            logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
-            return
 
         if isinstance(phone_entry_or_number, PhoneNumber):
             send_sms_to_verified_number(

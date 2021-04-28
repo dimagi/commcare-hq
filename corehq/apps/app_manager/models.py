@@ -118,6 +118,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -1966,6 +1967,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
+    instance_name = StringProperty(default='casedb')
+
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
     persistent_case_context_xml = StringProperty(default='case_name')
@@ -2023,11 +2026,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
 
-    def overwrite_from_module_detail(self, src_module_detail_type, attr_dict):
+    def overwrite_attrs(self, src_detail, attrs):
         """
-        This method is used to overwrite configurations present
-        in attr_dict(column, filter, and other_configurations)
-        from source module to current object.
+        This method is used to overwrite a limited set of attributes
+        based on a detail from another module and a list of attributes.
+
+        This method is relevant only for short details.
         """
         case_tile_configuration_list = [
             'use_case_tiles',
@@ -2037,13 +2041,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             'persist_case_context',
             'persistent_case_context_xml',
         ]
-        for k, v in attr_dict.items():
-            if v:
-                if k == "case_tile_configuration":
-                    for ele in case_tile_configuration_list:
-                        setattr(self, ele, getattr(src_module_detail_type, ele))
-                else:
-                    setattr(self, k, getattr(src_module_detail_type, k))
+        for attr in attrs:
+            if attr == "case_tile_configuration":
+                for ele in case_tile_configuration_list:
+                    setattr(self, ele, getattr(src_detail, ele))
+            else:
+                setattr(self, attr, getattr(src_detail, attr))
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
@@ -2399,9 +2402,10 @@ class ModuleDetailsMixin(object):
         except Exception:
             return []
 
-    @property
-    def search_detail(self):
-        return deepcopy(self.case_details.short)
+    def search_detail(self, short_or_long):
+        detail = deepcopy(getattr(self.case_details, short_or_long))
+        detail.instance_name = RESULTS_INSTANCE
+        return detail
 
     def rename_lang(self, old_lang, new_lang):
         super(Module, self).rename_lang(old_lang, new_lang)
@@ -2416,7 +2420,8 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         if module_offers_search(self) and not self.case_details.short.custom_xml:
-            details.append(('search_short', self.search_detail, True))
+            details.append(('search_short', self.search_detail("short"), True))
+            details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
 
 
@@ -3108,9 +3113,10 @@ class AdvancedModule(ModuleBase):
     def all_forms_require_a_case(self):
         return all(form.requires_case() for form in self.get_forms())
 
-    @property
-    def search_detail(self):
-        return deepcopy(self.case_details.short)
+    def search_detail(self, short_or_long):
+        detail = deepcopy(getattr(self.case_details, short_or_long))
+        detail.instance_name = RESULTS_INSTANCE
+        return detail
 
     def get_details(self):
         details = [
@@ -3120,7 +3126,8 @@ class AdvancedModule(ModuleBase):
             ('product_long', self.product_details.long, False),
         ]
         if module_offers_search(self) and not self.case_details.short.custom_xml:
-            details.append(('search_short', self.search_detail, True))
+            details.append(('search_short', self.search_detail("short"), True))
+            details.append(('search_long', self.search_detail("long"), True))
         return details
 
     @property
@@ -4788,6 +4795,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id)
 
+    @time_method()
     def set_form_versions(self):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new

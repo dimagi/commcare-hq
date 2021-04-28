@@ -21,6 +21,8 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
@@ -244,6 +246,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
+        self.is_using_sso = (
+            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
+            and is_request_using_sso(kwargs['request'])
+        )
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -268,8 +274,23 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             crispy.Div(*username_controls),
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
-            hqcrispy.Field('email'),
         ]
+
+        if self.is_using_sso:
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            self.fields['email'].initial = self.user.email
+            self.fields['email'].help_text = _(
+                "This email is managed by {} and cannot be edited."
+            ).format(idp.name)
+
+            # It is the presence of the "readonly" attribute that determines
+            # whether an input is readonly. Its value does not matter.
+            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+        else:
+            basic_fields.append(hqcrispy.Field('email'))
+
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
@@ -308,6 +329,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         result = list(self.fields)
+        if self.is_using_sso:
+            result.remove('email')
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
         return result
