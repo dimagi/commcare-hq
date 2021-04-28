@@ -84,7 +84,8 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
     }
 
     function getQuestions(o) {
-        if (ko.utils.unwrapObservable(o.type) === 'question') {
+        return [];
+        /*if (ko.utils.unwrapObservable(o.type) === 'question') {
             return [o];
         } else {
             var qs = [];
@@ -96,7 +97,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
                 }
             }
             return qs;
-        }
+        }*/
     }
 
     function parseMeta(type, style) {
