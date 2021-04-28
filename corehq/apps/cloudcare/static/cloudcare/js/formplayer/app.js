@@ -262,8 +262,8 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         var sess = WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        var notifications = hqImport('notifications/js/notifications_service_main');
-        notifications.initNotifications();
+        //var notifications = hqImport('notifications/js/notifications_service_main');
+        //notifications.initNotifications();
         $('.menu-scrollable-container').addClass('hide');
     });
 
