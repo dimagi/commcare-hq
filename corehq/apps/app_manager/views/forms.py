@@ -15,7 +15,6 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import reverse
-from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -94,6 +93,8 @@ from corehq.apps.app_manager.views.utils import (
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
+    InvalidSessionEndpoint,
+    set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -440,14 +441,11 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
 
     if should_edit('session_endpoint_id'):
-        raw_endpoint_id = request.POST['session_endpoint_id'].strip()
-        form.session_endpoint_id = slugify(raw_endpoint_id)
-        if form.session_endpoint_id != raw_endpoint_id:
-            msg = _(
-                "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
-                "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
-            ).format(invalid_id=raw_endpoint_id, valid_id=form.session_endpoint_id)
-            return json_response({'message': msg}, status_code=400)
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        try:
+            set_session_endpoint(form, raw_endpoint_id, app)
+        except InvalidSessionEndpoint as e:
+            return json_response({'message': str(e)}, status_code=400)
 
     handle_media_edits(request, form, should_edit, resp, lang)
 
