@@ -25,7 +25,7 @@ hqDefine('notifications/js/notifications_service_main', [
         });
         googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     };
-    $(document).ready(initNotifications);
+    //$(document).ready(initNotifications);
     return {
         'initNotifications': initNotifications,
     };
