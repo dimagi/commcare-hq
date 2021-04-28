@@ -31,3 +31,9 @@ class ConnectionSettingsFormTests(SimpleTestCase):
         with unresolvable_hostname('unreachableurl'):
             self.assertTrue(form.is_valid())
         self.assertIsInstance(form.cleaned_data['url'], UnrecognizedHost)
+
+    def test_helper_does_not_change_between_references(self):
+        form = self.create_form()
+        first_helper = form.helper
+        second_helper = form.helper
+        self.assertIs(first_helper, second_helper)

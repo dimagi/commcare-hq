@@ -3,6 +3,7 @@ import re
 from django import forms
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -95,7 +96,7 @@ class ConnectionSettingsForm(forms.ModelForm):
 
         self.domain = domain
 
-    @property
+    @cached_property
     def helper(self):
         from corehq.motech.views import ConnectionSettingsListView
 
