@@ -104,24 +104,26 @@
           css: { 'form-single-question': showInFormNavigation },
       ">
 
-    {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
-      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-           data-slug="{{ 'JUMP_TO_INVALID_QUESTIONS_WEBAPPS'|ui_notify_slug }}"
-           role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
-        <p>
-          {% blocktrans %}
-            Product Update - Until your form is complete, before submitting you will now see links to the missing questions or questions that contain errors.
+    {% if environment == "preview-app" %}
+      {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
+        <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+             data-slug="{{ 'JUMP_TO_INVALID_QUESTIONS_WEBAPPS'|ui_notify_slug }}"
+             role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
+          <p>
+            {% blocktrans %}
+              Product Update - Until your form is complete, before submitting you will now see links to the missing questions or questions that contain errors.
+              <br>
+              You can use the <strong><i class="fa fa-arrow-down"></i> Next Question</strong> button displayed on the bottom left-hand side of the screen to navigate between questions that need attention.
+            {% endblocktrans %}
             <br>
-            You can use the <strong><i class="fa fa-arrow-down"></i> Next Question</strong> button displayed on the bottom left-hand side of the screen to navigate between questions that need attention.
-          {% endblocktrans %}
-          <br>
-          <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
-        </p>
-      </div>
+            <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
+          </p>
+        </div>
+      {% endif %}
     {% endif %}
 
     <div class="page-header">
