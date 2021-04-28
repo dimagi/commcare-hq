@@ -19,11 +19,10 @@ from corehq.motech.utils import (
     unpack_request_args,
 )
 from corehq.util.metrics import metrics_counter
-from corehq.util.urlsanitize.urlsanitize import (
-    CannotResolveHost,
+from corehq.util.urlvalidate.urlvalidate import (
     InvalidURL,
     PossibleSSRFAttempt,
-    sanitize_user_input_url,
+    validate_user_input_url,
 )
 from corehq.util.view_utils import absolute_reverse
 
@@ -132,7 +131,7 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        sanitize_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
+        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:
@@ -273,10 +272,10 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     return response
 
 
-def sanitize_user_input_url_for_repeaters(url, domain, src):
+def validate_user_input_url_for_repeaters(url, domain, src):
     try:
-        sanitize_user_input_url(url)
-    except (CannotResolveHost, InvalidURL):
+        validate_user_input_url(url)
+    except InvalidURL:
         pass
     except PossibleSSRFAttempt as e:
         if settings.DEBUG and e.reason == 'is_loopback':
