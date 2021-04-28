@@ -173,7 +173,7 @@ def require_permission_to_edit_user(view_func):
 
 def require_can_use_filtered_user_download(view_func):
     @wraps(view_func)
-    def _inner(request, domain, couch_user_id, *args, **kwargs):
+    def _inner(request, domain, *args, **kwargs):
         if can_use_filtered_user_download(request.domain):
             return view_func(request, domain, *args, **kwargs)
         raise Http404()
