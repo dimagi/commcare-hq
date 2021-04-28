@@ -81,5 +81,4 @@ branches:
     - kev/markdown-case-views # Kevin Apr 9
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
     - feature/SC-751-automatic_build_version_retrieval_command # Charl April 28
-    - sk/case-search-expression  # SK April 28
 submodules: { }
