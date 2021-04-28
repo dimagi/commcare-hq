@@ -91,8 +91,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             for (var i = 0; i < o.children().length; i++) {
                 if (ko.utils.unwrapObservable(o.children()[i].type) === 'question') {
                     qs.push(o.children()[i]);
-                }
-                else {
+                } else {
                     qs = qs.concat(getQuestions(o.children()[i]));
                 }
             }
@@ -304,18 +303,17 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.currentJumpPoint = null;
-        self.jumpToErrors = function() {
+        self.jumpToErrors = function () {
             var erroredQuestions = self.erroredQuestions();
             for (var i = erroredQuestions.length - 1; i >= 0; i--) {
-                if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)){
+                if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)) {
                     self.currentJumpPoint = erroredQuestions[i];
                     break;
                 }
                 if (self.currentJumpPoint.entry.entryId === erroredQuestions[i].entry.entryId) {
                     if (i === erroredQuestions.length - 1) {
                         self.currentJumpPoint = erroredQuestions[0];
-                    }
-                    else {
+                    } else {
                         self.currentJumpPoint = erroredQuestions[i + 1];
                     }
                     break;
