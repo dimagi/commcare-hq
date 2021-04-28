@@ -202,11 +202,14 @@ def _get_couch_view_keys(user=None, start_date=None, end_date=None):
         startkey.extend(date_key(start_date))
 
     endkey = [user] if user else []
-    if end_date:
-        end = end_date + timedelta(days=1)
-        endkey.extend(date_key(end))
+
+    sql_start_date = get_sql_start_date()
+    if not end_date:
+        end_date = sql_start_date
     else:
-        endkey.append({})
+        end_date = min(end_date, sql_start_date)
+    end = end_date + timedelta(days=1)
+    endkey.extend(date_key(end))
 
     return startkey, endkey
 
