@@ -2026,11 +2026,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
 
-    def overwrite_from_module_detail(self, src_module_detail_type, attr_dict):
+    def overwrite_attrs(self, src_detail, attrs):
         """
-        This method is used to overwrite configurations present
-        in attr_dict(column, filter, and other_configurations)
-        from source module to current object.
+        This method is used to overwrite a limited set of attributes
+        based on a detail from another module and a list of attributes.
+
+        This method is relevant only for short details.
         """
         case_tile_configuration_list = [
             'use_case_tiles',
@@ -2040,13 +2041,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             'persist_case_context',
             'persistent_case_context_xml',
         ]
-        for k, v in attr_dict.items():
-            if v:
-                if k == "case_tile_configuration":
-                    for ele in case_tile_configuration_list:
-                        setattr(self, ele, getattr(src_module_detail_type, ele))
-                else:
-                    setattr(self, k, getattr(src_module_detail_type, k))
+        for attr in attrs:
+            if attr == "case_tile_configuration":
+                for ele in case_tile_configuration_list:
+                    setattr(self, ele, getattr(src_detail, ele))
+            else:
+                setattr(self, attr, getattr(src_detail, attr))
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
