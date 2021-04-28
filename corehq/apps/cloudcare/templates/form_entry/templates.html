@@ -104,7 +104,7 @@
           css: { 'form-single-question': showInFormNavigation },
       ">
 
-    {% if environment == "preview-app" %}
+    {% if environment != "preview-app" %}
       {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
         <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
              data-slug="{{ 'JUMP_TO_INVALID_QUESTIONS_WEBAPPS'|ui_notify_slug }}"
