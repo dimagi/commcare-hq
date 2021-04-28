@@ -149,3 +149,8 @@ MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS = StaticUINotify(
     'multi_domain_download_mobile_workers_nov2020',
     ends_on=datetime(2021, 5, 28),
 )
+
+JUMP_TO_INVALID_QUESTIONS_WEBAPPS = StaticUINotify(
+    'jump_to_invalid_questions_webapps_april2021',
+    ends_on=datetime(2021, 5, 28),
+)
