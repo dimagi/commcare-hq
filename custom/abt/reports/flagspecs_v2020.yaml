@@ -1423,10 +1423,10 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
   - question: [loose_items_removed]
     comment: [loose_items_removed_comments]
     base_path: [spray_observe_grp, Q18]
-    flag_name: "18. Have all loose items (clothes, mosquito nets, posters/pictures on the wall) been taken out of the house?"
-    flag_name_fr: "18. Est-ce-que tous les objets en vrac (vêtements, moustiquaires, affiches / photos sur le mur) ont été retirés de la maison?"
-    flag_name_por: "18. Todos os artigos (roupas, redes mosquiteiras, cartazes, fotos na parede) foram retirados para fora da casa?"
-    answer: "no"
+    flag_name: "18. Are there any loose items (clothes, mosquito nets, posters/pictures on the wall) still in the house?
+    flag_name_fr: "18. Y a-t-il encore des objets en vrac (vêtements, moustiquaires, affiches / photos sur le mur) dans la maison?"
+    flag_name_por: "18. Ainda há artigos soltos (roupas, redes mosquiteiras, cartazes, fotos na parede) na casa?"
+    answer: "yes"
     warning: "Problem reported: Loose items (clothes, mosquito nets, pictures/posters) not removed from the house before spraying"
     warning_fr: "Problème signalé: Les objets en vrac (vêtements, moustiquaires, photos / affiches) ne sont pas retirés de la maison avant d'être pulvérisés"
     warning_por: "Problema reportado: items soltos (roupa, rede mosquiteiras, fotografias/cartazes) não removidos da casa antes da pulverização"
