@@ -135,7 +135,7 @@ def get_module_view_context(request, app, module, lang=None):
         'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
-            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
     }
     module_brief = {
@@ -198,7 +198,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
-            'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
+            'has_geocoder_privs': (
+                domain_has_privilege(app.domain, privileges.GEOCODER)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
+            ),
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
@@ -816,20 +819,20 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
-    attrs_dict = {
-        'columns': request.POST.get('display_properties') == 'on',
-        'filter': request.POST.get('case_list_filter') == 'on',
-        'sort_elements': request.POST.get('sort_configuration') == 'on',
-        'sort_nodeset_columns': request.POST.get('nodeset_sorting') == 'on',
-        'custom_variables': request.POST.get('custom_variables') == 'on',
-        'custom_xml': request.POST.get('custom_case_list_xml') == 'on',
-        'case_tile_configuration': request.POST.get('case_tile_configuration') == 'on',
-        'print_template': request.POST.get('print_template') == 'on',
-    }
+    all_attrs = [
+        'columns',
+        'filter',
+        'sort_elements',
+        'custom_variables',
+        'custom_xml',
+        'case_tile_configuration',
+        'print_template',
+    ]
+    short_attrs = [a for a in all_attrs if request.POST.get(a) == 'on']
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
 
-    error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, attrs_dict)
+    error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
         for err in error_list:
             messages.error(
@@ -842,20 +845,15 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
-        if not hasattr(dest_module, 'case_details'):
+        if dest_module.case_type != src_module.case_type:
             messages.error(
                 request,
-                _("Sorry, couldn't find case list configuration for module {}. "
-                "Please report an issue if you believe this is a mistake.").format(dest_module.default_name()))
-        elif dest_module.case_type != src_module.case_type:
-            messages.error(
-                request,
-                _("Please choose a module with the same case type as the current one ({}).").format(
+                _("Please choose a menu with the same case type as the current one ({}).").format(
                     src_module.case_type)
             )
         else:
             try:
-                _update_module_case_list(detail_type, src_module, dest_module, attrs_dict)
+                _update_module_detail(detail_type, src_module, dest_module, short_attrs)
                 updated_modules.append(dest_module.default_name())
             except Exception:
                 notify_exception(
@@ -878,27 +876,25 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
-def _validate_overwrite_request(request, detail_type, dest_modules, attrs_dict):
+def _validate_overwrite_request(request, detail_type, dest_modules, short_attrs):
     assert detail_type in ['short', 'long']
     error_list = []
 
     if not dest_modules:
         error_list.append(_("Please choose at least one menu to overwrite."))
     if detail_type == 'short':
-        if not any(attrs_dict.values()):
+        if not short_attrs:
             error_list.append(_("Please choose at least one option to overwrite."))
     return error_list
 
 
-def _update_module_case_list(detail_type, src_module, dest_module, attrs_dict):
+def _update_module_detail(detail_type, src_module, dest_module, short_attrs):
     if detail_type == 'long':
         setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
     else:
-        src_module_detail_type = getattr(src_module.case_details, detail_type)
-        dest_module_detail_type = getattr(dest_module.case_details, detail_type)
-
-        # begin overwrite
-        dest_module_detail_type.overwrite_from_module_detail(src_module_detail_type, attrs_dict)
+        src_detail = getattr(src_module.case_details, detail_type)
+        dest_detail = getattr(dest_module.case_details, detail_type)
+        dest_detail.overwrite_attrs(src_detail, short_attrs)
 
 
 def _update_search_properties(module, search_properties, lang='en'):

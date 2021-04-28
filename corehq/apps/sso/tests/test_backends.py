@@ -1,10 +1,19 @@
+import datetime
+
+from dateutil.relativedelta import relativedelta
 from django.contrib import auth
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.registration.forms import RegisterWebUserForm
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
-from corehq.apps.users.models import WebUser
+from corehq.apps.sso.tests.generator import create_request_session
+from corehq.apps.sso.utils.session_helpers import (
+    prepare_session_with_new_sso_user_data,
+    prepare_session_for_sso_invitation,
+)
+from corehq.apps.users.models import WebUser, Invitation, AdminUserRole
 
 
 class TestSsoBackend(TestCase):
@@ -43,6 +52,13 @@ class TestSsoBackend(TestCase):
         AuthenticatedEmailDomain.objects.all().delete()
         IdentityProvider.objects.all().delete()
         cls.user.delete(None)
+
+        # cleanup "new" users
+        for username in ['m@vaultwax.com', 'isa@vaultwax.com', 'zee@vaultwax.com']:
+            web_user = WebUser.get_by_username(username)
+            if web_user:
+                web_user.delete(None)
+
         cls.domain.delete()
         cls.account.delete()
         super().tearDownClass()
@@ -50,6 +66,7 @@ class TestSsoBackend(TestCase):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
+        create_request_session(self.request)
 
     def test_backend_failure_without_username(self):
         """
@@ -191,25 +208,124 @@ class TestSsoBackend(TestCase):
             "this Identity Provider (vaultwax)."
         )
 
-    def test_login_error_if_user_does_not_exist(self):
+    def test_new_user_created_and_data_is_saved(self):
         """
-        SsoBackend should fail to return a user if the username passed to does
-        not exist. It should also populate request.sso_login_error with an
-        error message.
+        SsoBackend should create a new user if the username passed to does
+        not exist and the email domain matches an AuthenticatedEmailDomain
+        for the given IdentityProvider. It should also ensure that any
+        user data from a registration form and/or the samlUserdata are all
+        properly saved to the User model.
+        """
+        reg_form = RegisterWebUserForm()
+        reg_form.cleaned_data = {
+            'phone_number': '+15555555555',
+            'project_name': 'test-vault',
+            'persona': 'Other',
+            'persona_other': "for tests",
 
-        todo this test will change with additional user creation workflows
-         that will be introduced later
-        """
+        }
+        generator.store_full_name_in_saml_user_data(
+            self.request,
+            'Maarten',
+            'van der Berg'
+        )
+        prepare_session_with_new_sso_user_data(self.request, reg_form)
         user = auth.authenticate(
             request=self.request,
-            username='testnoexist@vaultwax.com',
+            username='m@vaultwax.com',
             idp_slug=self.idp.slug,
             is_handshake_successful=True,
         )
-        self.assertIsNone(user)
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, 'm@vaultwax.com')
+        self.assertEqual(user.first_name, 'Maarten')
+        self.assertEqual(user.last_name, 'van der Berg')
+        self.assertEqual(user.phone_numbers[0], '+15555555555')
         self.assertEqual(
-            self.request.sso_login_error,
-            "User testnoexist@vaultwax.com does not exist."
+            self.request.sso_new_user_messages['success'],
+            [
+                "User account for m@vaultwax.com created."
+            ]
+        )
+
+    def test_new_user_created_and_invitation_accepted(self):
+        """
+        When SsoBackend creates a new user and an invitation is present, that
+        invitation should add the user to the invited project
+        space and accept the invitation
+        """
+        admin_role = AdminUserRole(domain=self.domain.name)
+        invitation = Invitation(
+            domain=self.domain.name,
+            email='isa@vaultwax.com',
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow(),
+            role=admin_role.get_qualified_id(),
+        )
+        invitation.save()
+        prepare_session_for_sso_invitation(self.request, invitation)
+        generator.store_full_name_in_saml_user_data(
+            self.request,
+            'Isa',
+            'Baas'
+        )
+        user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, invitation.email)
+        self.assertEqual(user.first_name, 'Isa')
+        self.assertEqual(user.last_name, 'Baas')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {invitation.email} created.',
+                f'You have been added to the "{invitation.domain}" project space.',
+            ]
+        )
+
+    def test_new_user_created_and_expired_invitation_declined(self):
+        """
+        When SsoBackend creates a new user and an EXPIRED invitation is present,
+        a new user should still be created, but the invitation should be declined.
+        """
+        invitation = Invitation(
+            domain=self.domain.name,
+            email='zee@vaultwax.com',
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow() - relativedelta(months=2),
+        )
+        invitation.save()
+        prepare_session_for_sso_invitation(self.request, invitation)
+        generator.store_full_name_in_saml_user_data(
+            self.request,
+            'Zee',
+            'Bos'
+        )
+        user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, invitation.email)
+        self.assertEqual(user.first_name, 'Zee')
+        self.assertEqual(user.last_name, 'Bos')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {invitation.email} created.',
+            ]
+        )
+        self.assertEqual(
+            self.request.sso_new_user_messages['error'],
+            [
+                'Could not accept invitation because it is expired.',
+            ]
         )
 
     def test_successful_login(self):
