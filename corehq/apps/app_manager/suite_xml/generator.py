@@ -57,16 +57,18 @@ class SuiteGenerator(object):
         self.build_profile_id = build_profile_id
 
     def _add_sections(self, contributors):
+        elements = {}
         for contributor in contributors:
             section = contributor.section_name
-            getattr(self.suite, section).extend(
-                contributor.get_section_elements()
-            )
+            section_elements = contributor.get_section_elements()
+            elements[section] = section_elements
+            getattr(self.suite, section).extend(section_elements)
+        return elements
 
     def generate_suite(self):
         # Note: the order in which things happen in this function matters
 
-        self._add_sections([
+        basic_elements = self._add_sections([
             FormResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
             LocaleResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
             DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
@@ -88,7 +90,7 @@ class SuiteGenerator(object):
         else:
             training_menu = None
 
-        detail_section_elements = DetailContributor(None, self.app, self.modules).get_section_elements()
+        detail_section_elements = basic_elements[DetailContributor.section_name]
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 

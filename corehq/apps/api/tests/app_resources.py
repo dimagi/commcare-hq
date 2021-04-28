@@ -50,6 +50,19 @@ class TestAppResource(APIResourceTest):
             self.get_expected_structure(with_version=False),
         ])
 
+    def test_get_list_null_sorting(self):
+        another_app = self.make_app()
+        another_app.date_created = None
+        another_app.save()
+        self.addCleanup(another_app.delete)
+        response = self._assert_auth_get_resource(self.list_endpoint, allow_session_auth=True)
+        content = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content["meta"], {
+            'limit': None, 'next': None, 'offset': 0, 'previous': None,
+            'total_count': 3
+        })
+
     def test_get_single(self):
         response = self._assert_auth_get_resource(self.single_endpoint(self.apps[0]._id), allow_session_auth=True)
         self.assertEqual(response.status_code, 200)

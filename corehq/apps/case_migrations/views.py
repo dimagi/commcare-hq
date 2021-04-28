@@ -15,9 +15,13 @@ from casexml.apps.phone.xml import (
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.locations.fixtures import (
+    FlatLocationSerializer
+)
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import WEBAPPS_CASE_MIGRATION
+from corehq.toggles import WEBAPPS_CASE_MIGRATION, ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
 from corehq.util import reverse
 
 from .forms import MigrationForm
@@ -81,6 +85,14 @@ def migration_restore(request, domain, case_id):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
+        if ADD_LIMITED_FIXTURES_TO_CASE_RESTORE.enabled(domain):
+            _add_limited_fixtures(domain, case_id, content)
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
+
+
+def _add_limited_fixtures(domain, case_id, content):
+    serializer = FlatLocationSerializer()
+    content.extend(serializer.get_xml_nodes(domain, 'locations', case_id,
+                                            SQLLocation.active_objects.filter(domain=domain)))

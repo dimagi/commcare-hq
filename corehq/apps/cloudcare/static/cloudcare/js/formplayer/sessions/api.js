@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
     var API = {
 
-        getSessions: function () {
+        getSessions: function (pageNumber, pageSize) {
 
             var user = FormplayerFrontend.getChannel().request('currentUser');
             var domain = user.domain;
@@ -18,6 +18,8 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                     "username": user.username,
                     "domain": domain,
                     "restoreAs": user.restoreAs,
+                    "page_number": pageNumber,
+                    "page_size": pageSize,
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (parsed, response) {
@@ -99,8 +101,8 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
         return API.deleteSession(sessionId);
     });
 
-    FormplayerFrontend.getChannel().reply("sessions", function () {
-        return API.getSessions();
+    FormplayerFrontend.getChannel().reply("sessions", function (pageNumber, pageSize) {
+        return API.getSessions(pageNumber, pageSize);
     });
 
     return API;

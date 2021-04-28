@@ -80,12 +80,17 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         if 'sp_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_cert_public,
-                f"{self.identity_provider.slug}_sp_public.cert"
+                f"{self.identity_provider.slug}_sp_public.cer"
+            )
+        if 'idp_cert_public' in request.GET:
+            return get_certificate_response(
+                self.identity_provider.idp_cert_public,
+                f"{self.identity_provider.slug}_idp_public.cer"
             )
         if 'sp_rollover_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_rollover_cert_public,
-                f"{self.identity_provider.slug}_sp_rollover_public.cert"
+                f"{self.identity_provider.slug}_sp_rollover_public.cer"
             )
         return super().get(request, args, kwargs)
 
@@ -93,7 +98,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     @memoized
     def edit_enterprise_idp_form(self):
         if self.request.method == 'POST':
-            return SSOEnterpriseSettingsForm(self.identity_provider, self.request.POST)
+            return SSOEnterpriseSettingsForm(
+                self.identity_provider, self.request.POST, self.request.FILES
+            )
         return SSOEnterpriseSettingsForm(self.identity_provider)
 
     def post(self, request, *args, **kwargs):
@@ -105,4 +112,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             # we redirect here to force the memoized identity_provider property
             # to re-fetch its data.
             return HttpResponseRedirect(self.page_url)
+        else:
+            messages.error(
+                request,
+                _("Please check form for errors.")
+            )
         return self.get(request, *args, **kwargs)

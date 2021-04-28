@@ -20,11 +20,10 @@ from corehq.motech.utils import (
     unpack_request_args,
 )
 from corehq.util.metrics import metrics_counter
-from corehq.util.urlsanitize.urlsanitize import (
-    CannotResolveHost,
+from corehq.util.urlvalidate.urlvalidate import (
     InvalidURL,
     PossibleSSRFAttempt,
-    sanitize_user_input_url,
+    validate_user_input_url,
 )
 from corehq.util.view_utils import absolute_reverse
 
@@ -117,7 +116,7 @@ class Requests(object):
         self.notify_addresses = notify_addresses if notify_addresses else []
         self.payload_id = payload_id
         self.logger = logger or RequestLog.log
-        self.send_request = log_request(self, self._send_request, self.logger)
+        self.send_request = log_request(self, self.send_request_unlogged, self.logger)
         self._session = None
 
     def __enter__(self):
@@ -128,12 +127,12 @@ class Requests(object):
         self._session.close()
         self._session = None
 
-    def _send_request(self, method, url, *args, **kwargs):
+    def send_request_unlogged(self, method, url, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        sanitize_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
+        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:
@@ -284,10 +283,10 @@ def json_or_http_error(response):
         ) from err
 
 
-def sanitize_user_input_url_for_repeaters(url, domain, src):
+def validate_user_input_url_for_repeaters(url, domain, src):
     try:
-        sanitize_user_input_url(url)
-    except (CannotResolveHost, InvalidURL):
+        validate_user_input_url(url)
+    except InvalidURL:
         pass
     except PossibleSSRFAttempt as e:
         if settings.DEBUG and e.reason == 'is_loopback':

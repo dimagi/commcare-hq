@@ -21,6 +21,8 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -37,12 +39,11 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.models import DomainMembershipError, UserRole, DomainPermissionsMirror
+from corehq.apps.users.dbaccessors import user_exists
+from corehq.apps.users.models import UserRole, DomainPermissionsMirror
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds_core.view_utils import is_icds_cas_project
 
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 
@@ -246,6 +247,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
+        self.is_using_sso = (
+            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
+            and is_request_using_sso(kwargs['request'])
+        )
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -270,8 +275,23 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             crispy.Div(*username_controls),
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
-            hqcrispy.Field('email'),
         ]
+
+        if self.is_using_sso:
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            self.fields['email'].initial = self.user.email
+            self.fields['email'].help_text = _(
+                "This email is managed by {} and cannot be edited."
+            ).format(idp.name)
+
+            # It is the presence of the "readonly" attribute that determines
+            # whether an input is readonly. Its value does not matter.
+            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+        else:
+            basic_fields.append(hqcrispy.Field('email'))
+
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
@@ -310,6 +330,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         result = list(self.fields)
+        if self.is_using_sso:
+            result.remove('email')
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
         return result
@@ -1183,14 +1205,9 @@ class CommCareUserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        if is_icds_cas_project(self.domain) and not self.couch_user.is_domain_admin(self.domain):
-            roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
-                                              use_qualified_id=False)
-            self.fields['role_id'].choices = roles
-        else:
-            roles = UserRole.by_domain(self.domain)
-            self.fields['role_id'].choices = [('', _('All Roles'))] + [
-                (role._id, role.name or _('(No Name)')) for role in roles]
+        roles = UserRole.by_domain(self.domain)
+        self.fields['role_id'].choices = [('', _('All Roles'))] + [
+            (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.fields['domains'].choices = [(self.domain, self.domain)]
         if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
@@ -1228,26 +1245,12 @@ class CommCareUserFilterForm(forms.Form):
 
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
-        restricted_role_access = (
-            is_icds_cas_project(self.domain)
-            and not self.couch_user.is_domain_admin(self.domain)
-        )
         if not role_id:
-            if restricted_role_access:
-                raise forms.ValidationError(_("Please select a role"))
-            else:
-                return None
+            return None
 
         role = UserRole.get(role_id)
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
-        if restricted_role_access:
-            try:
-                user_role_id = self.couch_user.get_role(self.domain).get_id
-            except DomainMembershipError:
-                user_role_id = None
-            if not role.accessible_by_non_admin_role(user_role_id):
-                raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
     def clean_search_string(self):

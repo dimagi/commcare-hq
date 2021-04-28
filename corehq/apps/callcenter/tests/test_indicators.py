@@ -24,7 +24,7 @@ from corehq.apps.callcenter.models import (
     CallCenterIndicatorConfig,
     TypedIndicator,
 )
-from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
+from corehq.apps.callcenter.sync_usercase import sync_call_center_user_case
 from corehq.apps.callcenter.tests.sql_fixture import (
     clear_data,
     load_custom_data,

@@ -22,7 +22,12 @@ from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
-from ..models import Repeater, RepeatRecord, get_all_repeater_types
+from ..models import (
+    Repeater,
+    RepeatRecord,
+    are_repeat_records_migrated,
+    get_all_repeater_types,
+)
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
                               'class_name friendly_name has_config instances')
@@ -53,7 +58,12 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        if are_repeat_records_migrated(self.domain):
+            report = 'repeat_record_report'
+        else:
+            report = 'couch_repeat_record_report'
         return {
+            'report': report,
             'repeater_types_info': self.repeater_types_info,
             'pending_record_count': RepeatRecord.count(self.domain),
             'user_can_configure': (

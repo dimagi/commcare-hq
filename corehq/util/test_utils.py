@@ -571,7 +571,7 @@ def _create_case(domain, **kwargs):
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
-        drop_signals=True, owner_id=None, user_id=None):
+        drop_signals=True, owner_id=None, user_id=None, index=None):
     from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
@@ -580,6 +580,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
         'case_id': case_id,
         'case_name': case_name,
         'update': case_properties,
+        'index': index,
     }
 
     if case_type:
