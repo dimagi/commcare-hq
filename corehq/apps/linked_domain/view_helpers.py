@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.fixtures.dbaccessors import (
@@ -9,16 +8,12 @@ from corehq.apps.fixtures.dbaccessors import (
 )
 from corehq.apps.linked_domain.const import (
     DOMAIN_LEVEL_DATA_MODELS,
+    FEATURE_FLAG_DATA_MODEL_TOGGLES,
     FEATURE_FLAG_DATA_MODELS,
     LINKED_MODELS_MAP,
     MODEL_APP,
-    MODEL_CASE_SEARCH,
-    MODEL_DATA_DICTIONARY,
-    MODEL_DIALER_SETTINGS,
     MODEL_FIXTURE,
-    MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_KEYWORD,
-    MODEL_OTP_SETTINGS,
     MODEL_REPORT,
 )
 from corehq.apps.linked_domain.dbaccessors import (
@@ -172,13 +167,7 @@ def build_feature_flag_view_models(domain):
     view_models = []
 
     for model, name in FEATURE_FLAG_DATA_MODELS:
-        if (
-            (model == MODEL_CASE_SEARCH and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain))
-            or (model == MODEL_DATA_DICTIONARY and toggles.DATA_DICTIONARY.enabled(domain))
-            or (model == MODEL_DIALER_SETTINGS and toggles.WIDGET_DIALER.enabled(domain))
-            or (model == MODEL_OTP_SETTINGS and toggles.GAEN_OTP_SERVER.enabled(domain))
-            or (model == MODEL_HMAC_CALLOUT_SETTINGS and toggles.HMAC_CALLOUT.enabled(domain))
-        ):
+        if FEATURE_FLAG_DATA_MODEL_TOGGLES[model].enabled(domain):
             view_models.append(
                 build_linked_data_view_model(
                     model_type=model,
