@@ -79,7 +79,6 @@ branches:
     - sr/sort-cs # Sravan April 19
     - kev/markdown-case-views # Kevin Apr 9
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-    - bmb/sso-data-fixes  # Biyeun 28th April
-    - bmb/sso-create-debug  # Biyeun 28th April
     - sk/case-search-expression  # SK April 29
+    - bmb/sso-async-signup-create  # Biyeun April 29
 submodules: { }
