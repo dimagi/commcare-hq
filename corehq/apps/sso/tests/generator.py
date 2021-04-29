@@ -80,8 +80,8 @@ def create_request_session(request, use_sso=False):
 @unit_testing_only
 def store_full_name_in_saml_user_data(request, first_name, last_name):
     request.session['samlUserdata'] = {
-        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': first_name,
-        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': last_name,
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': [first_name],
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': [last_name],
     }
 
 
