@@ -83,4 +83,5 @@ branches:
     - feature/SC-751-automatic_build_version_retrieval_command # Charl April 28
     - bmb/sso-data-fixes  # Biyeun 28th April
     - bmb/sso-create-debug  # Biyeun 28th April
+    - sk/case-search-expression  # SK April 29
 submodules: { }
