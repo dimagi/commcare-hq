@@ -3,6 +3,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 
+from corehq.apps.registration.models import AsyncSignupRequest
 from dimagi.utils.web import get_ip
 
 from corehq.apps.analytics.tasks import (
@@ -14,7 +15,6 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.utils.session_helpers import (
-    get_sso_invitation_from_session,
     get_sso_user_first_name_from_session,
     get_sso_user_last_name_from_session,
     get_new_sso_user_data_from_session,
@@ -64,7 +64,7 @@ class SsoBackend(ModelBackend):
             )
             return None
 
-        invitation = get_sso_invitation_from_session(request)
+        async_signup = AsyncSignupRequest.get_by_username(username)
 
         # because the django messages middleware is not yet available...
         request.sso_new_user_messages = {
@@ -77,23 +77,24 @@ class SsoBackend(ModelBackend):
             is_new_user = False
             web_user = WebUser.get_by_username(username)
         except User.DoesNotExist:
-            user, web_user = self._create_new_user(request, username, invitation)
+            user, web_user = self._create_new_user(request, username, async_signup)
             is_new_user = True
 
-        if invitation:
-            self._process_invitation(request, invitation, web_user, is_new_user)
+        if async_signup and async_signup.invitation:
+            self._process_invitation(request, async_signup.invitation, web_user, is_new_user)
 
         request.sso_login_error = None
         return user
 
-    def _create_new_user(self, request, username, invitation):
+    def _create_new_user(self, request, username, async_signup):
         """
         This creates a new user in HQ based on information in the request.
         :param request: HttpRequest
         :param username: String (username)
-        :param invitation: Invitation
+        :param async_signup: AsyncSignupRequest
         :return: User, WebUser
         """
+        invitation = async_signup.invitation if async_signup else None
         created_via = (USER_CHANGE_VIA_SSO_INVITE if invitation
                        else USER_CHANGE_VIA_SSO_NEW_USER)
         created_by = (CouchUser.get_by_user_id(invitation.invited_by) if invitation
