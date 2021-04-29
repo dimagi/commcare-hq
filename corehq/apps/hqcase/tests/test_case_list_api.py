@@ -106,12 +106,12 @@ class TestCaseListAPI(TestCase):
             "limit": "3",
             "case_type": "person",
         }, res['next'])
-        self.assertIn('indexed_on.gt', res['next'])
+        self.assertIn('indexed_on.gte', res['next'])
 
         res = get_list(self.domain, res['next'])
-        self.assertEqual(res['total'], 2)
+        self.assertEqual(res['total'], 3)
         self.assertEqual(
-            ['chaney', 'ned'],
+            ['laboeuf', 'chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
         )
         self.assertNotIn('next', res)  # No pages after this one

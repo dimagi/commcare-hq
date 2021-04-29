@@ -100,7 +100,7 @@ def get_list(domain, params):
     }
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        ret['next'] = {**raw_params, **{'indexed_on.gt': hits[-1]["@indexed_on"]}}
+        ret['next'] = {**raw_params, **{'indexed_on.gte': hits[-1]["@indexed_on"]}}
     return ret
 
 
