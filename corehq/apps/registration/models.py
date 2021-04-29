@@ -72,7 +72,7 @@ class AsyncSignupRequest(models.Model):
     process must resume when they return.
     """
     username = models.CharField(max_length=255, db_index=True)
-    invitation = models.ForeignKey('users.Invitation', null=True, blank=True, on_delete=models.PROTECT)
+    invitation = models.ForeignKey('users.Invitation', null=True, blank=True, on_delete=models.SET_NULL)
     phone_number = models.CharField(max_length=126, null=True, blank=True)
     project_name = models.CharField(max_length=255, null=True, blank=True)
     atypical_user = models.BooleanField(default=False)
