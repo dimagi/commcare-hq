@@ -215,7 +215,7 @@ CACHES = {
 
 # on both a local and a distributed environment this should be localhost
 ELASTICSEARCH_HOST = 'localhost'
-ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_PORT = 6200       # 6200 for ES2, 9200 for ES7
 ELASTICSEARCH_MAJOR_VERSION = 2
 
 LOCAL_PILLOWTOPS = {
