@@ -97,8 +97,8 @@ TEST_CASES = [
             {'email': 'Joe Smith <email@example.com>'},
             {'email': 'email@example.com'}
         ],
-        EmailValidator('domain'),
-        {0: EmailValidator.error_message}
+        EmailValidator('domain', 'email'),
+        {0: EmailValidator.error_message.format('email')}
     ),
     (
         [
