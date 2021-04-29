@@ -147,3 +147,12 @@ class AsyncSignupRequest(models.Model):
         async_signup.invitation = invitation
         async_signup.save()
         return async_signup
+
+    @classmethod
+    def clear_data_for_username(cls, username):
+        """
+        This makes sure that any outstanding AsyncSignupRequest associated with
+        username is deleted.
+        :param username: string
+        """
+        cls.objects.filter(username=username).delete()
