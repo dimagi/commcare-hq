@@ -1,11 +1,10 @@
 from dev_settings import *
 
-import os
-
-####### Database config. This assumes Postgres #######
+####### Database config #######
 
 USE_PARTITIONED_DATABASE = False
 
+# example partitioned DB set up
 if USE_PARTITIONED_DATABASE:
 
     DATABASES.update({
