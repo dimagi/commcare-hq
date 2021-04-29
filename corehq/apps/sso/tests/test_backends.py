@@ -10,9 +10,6 @@ from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
 from corehq.apps.sso.tests.generator import create_request_session
-from corehq.apps.sso.utils.session_helpers import (
-    prepare_session_with_new_sso_user_data,
-)
 from corehq.apps.users.models import WebUser, Invitation, UserRole
 
 
@@ -216,8 +213,10 @@ class TestSsoBackend(TestCase):
         user data from a registration form and/or the samlUserdata are all
         properly saved to the User model.
         """
+        username = 'm@vaultwax.com'
         reg_form = RegisterWebUserForm()
         reg_form.cleaned_data = {
+            'email': username,
             'phone_number': '+15555555555',
             'project_name': 'test-vault',
             'persona': 'Other',
@@ -229,15 +228,15 @@ class TestSsoBackend(TestCase):
             'Maarten',
             'van der Berg'
         )
-        prepare_session_with_new_sso_user_data(self.request, reg_form)
+        AsyncSignupRequest.create_from_registration_form(reg_form)
         user = auth.authenticate(
             request=self.request,
-            username='m@vaultwax.com',
+            username=username,
             idp_slug=self.idp.slug,
             is_handshake_successful=True,
         )
         self.assertIsNotNone(user)
-        self.assertEqual(user.username, 'm@vaultwax.com')
+        self.assertEqual(user.username, username)
         self.assertEqual(user.first_name, 'Maarten')
         self.assertEqual(user.last_name, 'van der Berg')
         web_user = WebUser.get_by_username(user.username)
