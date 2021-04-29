@@ -43,7 +43,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
-      $ sudo apt install python3-dev python3-pip python3-venv
+      $ sudo apt install python3.6-dev python3-pip python3-venv
 
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
