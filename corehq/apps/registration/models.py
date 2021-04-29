@@ -133,3 +133,17 @@ class AsyncSignupRequest(models.Model):
 
         async_signup.save()
         return async_signup
+
+    @classmethod
+    def create_from_invitation(cls, invitation):
+        """
+        Creates an AsyncSignupRequest to store invitation details when a user
+        is accepting an invitation on HQ and must navigate away in the middle
+        of the process to sign in or perform another action
+        :param invitation: Invitation
+        :return: AsyncSignupRequest
+        """
+        async_signup, _ = cls.objects.get_or_create(username=invitation.email)
+        async_signup.invitation = invitation
+        async_signup.save()
+        return async_signup
