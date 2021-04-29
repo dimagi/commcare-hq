@@ -84,7 +84,7 @@ COUCH_DATABASES = {
     'default': {
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'localhost:5984',
-        'COUCH_USERNAME': 'commcarehq',
+        'COUCH_USERNAME': '',
         'COUCH_PASSWORD': '',
         'COUCH_DATABASE_NAME': 'commcarehq'
     },
