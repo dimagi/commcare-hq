@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.conf import settings
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -100,3 +101,35 @@ class AsyncSignupRequest(models.Model):
             return cls.objects.first(username=username)
         except cls.DoesNotExist:
             return None
+
+    @classmethod
+    def create_from_registration_form(cls, reg_form, additional_hubspot_data=None):
+        """
+        Creates an AsyncSignupRequest to store registration form details
+        when a user is signing up for an account on HQ and must navigate
+        away in the middle of the process
+        :param reg_form: RegisterWebUserForm
+        :return: AsyncSignupRequest
+        """
+        username = reg_form.cleaned_data['email']
+        async_signup, _ = cls.objects.get_or_create(username=username)
+
+        async_signup.phone_number = reg_form.cleaned_data['phone_number']
+        async_signup.project_name = reg_form.cleaned_data['project_name']
+        async_signup.atypical_user = reg_form.cleaned_data.get('atypical_user', False)
+
+        # SaaS analytics related
+        if settings.IS_SAAS_ENVIRONMENT:
+            persona = reg_form.cleaned_data['persona']
+            persona_other = reg_form.cleaned_data['persona_other']
+            additional_hubspot_data = additional_hubspot_data or {}
+            additional_hubspot_data.update({
+                'buyer_persona': persona,
+                'buyer_persona_other': persona_other,
+            })
+            async_signup.persona = persona
+            async_signup.persona_other = persona_other
+            async_signup.additional_hubspot_data = additional_hubspot_data
+
+        async_signup.save()
+        return async_signup
