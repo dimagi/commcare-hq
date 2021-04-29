@@ -9,9 +9,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     };
 
     module.isWebApps = function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        return true;
+        /*var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             environment = FormplayerFrontend.getChannel().request('currentUser').environment;
-        return environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
+        return environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;*/
     };
 
     module.reloginErrorHtml = function () {
