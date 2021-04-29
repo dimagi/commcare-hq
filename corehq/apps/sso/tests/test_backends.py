@@ -51,7 +51,12 @@ class TestSsoBackend(TestCase):
         cls.user.delete(None)
 
         # cleanup "new" users
-        for username in ['m@vaultwax.com', 'isa@vaultwax.com', 'zee@vaultwax.com']:
+        for username in [
+            'm@vaultwax.com',
+            'isa@vaultwax.com',
+            'zee@vaultwax.com',
+            'exist@vaultwax.com',
+        ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
                 web_user.delete(None)
@@ -325,6 +330,42 @@ class TestSsoBackend(TestCase):
             self.request.sso_new_user_messages['error'],
             [
                 'Could not accept invitation because it is expired.',
+            ]
+        )
+
+    def test_existing_user_invitation_accepted(self):
+        """
+        SsoBackend should create a new user if the username passed to does
+        not exist and the email domain matches an AuthenticatedEmailDomain
+        for the given IdentityProvider. It should also ensure that any
+        user data from a registration form and/or the samlUserdata are all
+        properly saved to the User model.
+        """
+        admin_role = UserRole.admin_role(domain=self.domain.name)
+        existing_user = WebUser.create(
+            None, 'exist@vaultwax.com', 'testpwd', None, None
+        )
+        invitation = Invitation(
+            domain=self.domain.name,
+            email=existing_user.username,
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow(),
+            role=admin_role.get_qualified_id(),
+        )
+        invitation.save()
+        AsyncSignupRequest.create_from_invitation(invitation)
+        user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, invitation.email)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'You have been added to the "{invitation.domain}" project space.',
             ]
         )
 
