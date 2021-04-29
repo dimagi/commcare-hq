@@ -1,7 +1,5 @@
 import logging
 
-from corehq.apps.users.models import Invitation
-
 log = logging.getLogger(__name__)
 
 
@@ -55,32 +53,6 @@ def get_sso_user_last_name_from_session(request):
         request,
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
     )
-
-
-def prepare_session_for_sso_invitation(request, invitation):
-    """
-    This prepares the Request's Session to store invitation details for use
-    when logging in as a new or existing user through SSO.
-    :param request: HttpRequest
-    :param invitation: Invitation
-    """
-    request.session['ssoInvitation'] = invitation.uuid
-
-
-def get_sso_invitation_from_session(request):
-    """
-    Fetches an Invitation object from the ssoInvitation information
-    (if available) stored in the request session.
-    :param request: HttpRequest
-    :return: Invitation or None
-    """
-    uuid = request.session.get('ssoInvitation')
-    try:
-        return Invitation.objects.get(uuid=uuid) if uuid else None
-    except Invitation.DoesNotExist:
-        log.exception(
-            f"Error fetching invitation from sso create user request: {uuid}"
-        )
 
 
 def prepare_session_with_sso_username(request, username):
