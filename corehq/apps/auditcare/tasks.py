@@ -1,10 +1,15 @@
-from dimagi.utils.dates import force_to_datetime
+import sys
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from couchdbkit.ext.django.loading import get_db
 
+from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
 from corehq.apps.auditcare.utils.export import get_sql_start_date
+from corehq.util.soft_assert import soft_assert
 
 
 @periodic_task(run_every=crontab(minute="30"), queue='background_queue')
