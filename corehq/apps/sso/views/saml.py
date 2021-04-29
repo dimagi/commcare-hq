@@ -28,7 +28,6 @@ from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
     get_sso_username_from_session,
     prepare_session_with_sso_username,
-    clear_sso_registration_data_from_session,
 )
 from corehq.apps.users.models import Invitation
 
@@ -111,7 +110,7 @@ def sso_saml_acs(request, idp_slug):
                           "Please contact support.")
                     )
 
-            clear_sso_registration_data_from_session(request)
+            AsyncSignupRequest.clear_data_for_username(user.username)
             return redirect("homepage")
 
         # todo for debugging purposes to dump into the response below
