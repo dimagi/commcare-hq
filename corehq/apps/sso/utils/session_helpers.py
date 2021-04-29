@@ -73,17 +73,3 @@ def get_sso_username_from_session(request):
     :return: string or None - username
     """
     return request.session.get('ssoNewUsername')
-
-
-def clear_sso_registration_data_from_session(request):
-    """
-    Clears up any registration / invitation related data from the request's
-    session.
-    :param request: HttpRequest
-    """
-    if 'ssoNewUserData' in request.session:
-        del request.session['ssoNewUserData']
-    if 'ssoNewUsername' in request.session:
-        del request.session['ssoNewUsername']
-    if 'ssoInvitation' in request.session:
-        del request.session['ssoInvitation']
