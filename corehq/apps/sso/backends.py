@@ -179,7 +179,6 @@ class SsoBackend(ModelBackend):
         :param invitation: Invitation or None
         :param web_user: WebUser
         """
-        request.sso_invitation_status = {}
         if invitation.is_expired:
             request.sso_new_user_messages['error'].append(
                 _("Could not accept invitation because it is expired.")
