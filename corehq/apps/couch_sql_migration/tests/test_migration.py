@@ -633,7 +633,6 @@ class MigrationTestCase(BaseMigrationTestCase):
             </n1:meta>
         </data>""".format(
             date='2016-03-01T12:04:16Z',
-            attachment_source=attachment_source,
             form_id=uuid.uuid4().hex
         )
         submit_form_locally(
