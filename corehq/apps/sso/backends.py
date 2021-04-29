@@ -20,7 +20,7 @@ from corehq.apps.sso.utils.session_helpers import (
     get_new_sso_user_data_from_session,
 )
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.const import (
     USER_CHANGE_VIA_SSO_INVITE,
     USER_CHANGE_VIA_SSO_NEW_USER,
@@ -75,12 +75,13 @@ class SsoBackend(ModelBackend):
         try:
             user = User.objects.get(username=username)
             is_new_user = False
+            web_user = WebUser.get_by_username(username)
         except User.DoesNotExist:
-            user = self._create_new_user(request, username, invitation)
+            user, web_user = self._create_new_user(request, username, invitation)
             is_new_user = True
 
         if invitation:
-            self._process_invitation(request, invitation, user, is_new_user)
+            self._process_invitation(request, invitation, web_user, is_new_user)
 
         request.sso_login_error = None
         return user
@@ -91,7 +92,7 @@ class SsoBackend(ModelBackend):
         :param request: HttpRequest
         :param username: String (username)
         :param invitation: Invitation
-        :return: User
+        :return: User, WebUser
         """
         created_via = (USER_CHANGE_VIA_SSO_INVITE if invitation
                        else USER_CHANGE_VIA_SSO_NEW_USER)
@@ -113,7 +114,7 @@ class SsoBackend(ModelBackend):
             _("User account for {} created.").format(new_web_user.username)
         )
         self._process_new_user_data(request, new_web_user)
-        return new_web_user
+        return User.objects.get(username=username), new_web_user
 
     @staticmethod
     def _process_new_user_data(request, new_web_user):

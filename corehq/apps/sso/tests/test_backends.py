@@ -240,7 +240,8 @@ class TestSsoBackend(TestCase):
         self.assertEqual(user.username, 'm@vaultwax.com')
         self.assertEqual(user.first_name, 'Maarten')
         self.assertEqual(user.last_name, 'van der Berg')
-        self.assertEqual(user.phone_numbers[0], '+15555555555')
+        web_user = WebUser.get_by_username(user.username)
+        self.assertEqual(web_user.phone_numbers[0], '+15555555555')
         self.assertEqual(
             self.request.sso_new_user_messages['success'],
             [
