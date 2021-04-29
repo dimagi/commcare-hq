@@ -232,7 +232,9 @@ following should cover the needs of most developers.
     # Or, omit the '-d' option to keep the containers attached in the foreground
     $ ./scripts/docker up
     # Optionally, bring up only specific containers (add '-d' to detach)
-    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio formplayer
+    # Note that elasticsearch2 is for ES2, whereas elasticsearch is for ES7.
+    # Which container you use should match the version set with ELASTICSEARCH_MAJOR_VERSION
+    $ ./scripts/docker up postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
     ```
 
 1. If you are planning on running Formplayer from source, stop the formplayer
